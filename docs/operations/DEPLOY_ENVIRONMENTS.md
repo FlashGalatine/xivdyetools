@@ -123,6 +123,23 @@ rule (2026-10-03 audit FINDING-023): `DISCORD_TOKEN` and `MODERATION_DISCORD_TOK
 environment secrets, with no repository-level copy left; the maintainer makes the move before the
 PR documenting it merges (tracked in `OPEN_ITEMS.md`).
 
+### Update 2026-10-13 — a beta deploy follows the branch's own changes
+
+The three beta workflows filter on `push.paths`, and a push filter sees only the pushed
+commits. Merging `main` into a branch therefore started every beta deploy whose paths `main` had
+changed, although the branch itself changed nothing there. On 2026-10-12/13 four such merges
+redeployed the shared betas from docs-only branches, among them a research PR (#303). A
+`CLAUDE.md` or `README.md` edit inside an app or package directory did the same (a CLAUDE.md
+freshness branch deployed beta twice).
+
+Each workflow now runs a `changes` job first. It checks out with full history, diffs the pushed
+commit against `git merge-base origin/main HEAD` over the deploy paths minus `CLAUDE.md` and
+`README.md`, and the deploy job runs only when that diff is non-empty; a manual run always
+deploys. The `concurrency` group moved from the workflow to the deploy job, so a run that skips
+cannot cancel another branch's deploy in progress. Details and the residual case (a branch stacked
+on another inherits its base's changes) are in
+[`deployment.md`](../developer-guides/deployment.md#beta-deploys-follow-the-branchs-own-changes).
+
 ---
 
 ## Problem
@@ -320,15 +337,17 @@ deliberately out of scope (see below).
 
 ## Continuous deployment of the beta bot
 
-`.github/workflows/deploy-discord-worker-beta.yml` deploys the beta bot on **any push to a
-non-main branch** that touches `apps/discord-worker/**`, one of its packages, or one of the four
-root inputs (`pnpm-lock.yaml`, `pnpm-workspace.yaml`, `turbo.json`, `tsconfig.base.json`). It runs the same
+`.github/workflows/deploy-discord-worker-beta.yml` deploys the beta bot on **a push to a
+non-main branch** whose own changes, measured against its merge base with `main`, touch
+`apps/discord-worker/**`, one of its packages, or one of the four root inputs (`pnpm-lock.yaml`,
+`pnpm-workspace.yaml`, `turbo.json`, `tsconfig.base.json`); `CLAUDE.md` and `README.md` edits do
+not count (Update 2026-10-13 above). It runs the same
 build / type-check / test gate as production, then `wrangler deploy` with **no `--env`** — which
 is the beta worker.
 
 | | Production workflow | Beta workflow |
 |---|---|---|
-| Trigger | push to `main`/`master` | push to any other branch (excluding `dependabot/**`) |
+| Trigger | push to `main`/`master` | push to any other branch (excluding `dependabot/**`) whose own changes touch the deploy paths |
 | Deploy command | `deploy --env production` | `deploy` |
 | `cancel-in-progress` | `false` | `true` — a newer commit supersedes |
 | Command registration | global, always | **guild-scoped**, only if secrets are set |

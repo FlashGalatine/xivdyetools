@@ -49,6 +49,53 @@ for (const file of deploys) {
   });
 }
 
+/** The beta guard job's `DEPLOY_PATHS:` value, split into pathspecs. */
+function guardPaths(yaml: string): string[] {
+  const value = /^ {10}DEPLOY_PATHS: (.+)$/m.exec(yaml)?.[1] ?? '';
+  return value.trim().split(/\s+/).filter(Boolean);
+}
+/** A `push.paths` glob as the git pathspec the guard uses: `apps/x/**` is `apps/x`. */
+const asPathspec = (glob: string): string => glob.replace(/\/\*\*$/, '');
+const betas = deploys.filter((f) => /-beta\.yml$/.test(f));
+
+test('Beta guard: there are 3 beta deploy workflows', () => {
+  assert.equal(betas.length, 3, `found ${betas.join(', ')}`);
+});
+
+// A push filter sees only the pushed commits, so merging main into a branch used
+// to redeploy the shared betas; each beta workflow now runs a `changes` job that
+// diffs the branch against its merge base on main. These pin that design.
+for (const file of betas) {
+  const yaml = read(file);
+
+  test(`Beta guard: ${file} guard pathspec mirrors push.paths`, () => {
+    const filter = pushPaths(yaml)
+      .filter((p) => !p.startsWith('!'))
+      .map(asPathspec);
+    assert.deepEqual([...guardPaths(yaml)].sort(), [...filter].sort());
+  });
+
+  test(`Beta guard: ${file} leaves out CLAUDE.md and README.md in the filter and the guard`, () => {
+    const negated = pushPaths(yaml).filter((p) => p.startsWith('!'));
+    assert.deepEqual([...negated].sort(), ['!**/CLAUDE.md', '!**/README.md']);
+    for (const name of ['CLAUDE.md', 'README.md']) {
+      assert.ok(yaml.includes(`':(exclude,glob)**/${name}'`), `the guard does not exclude ${name}`);
+    }
+  });
+
+  test(`Beta guard: ${file} deploy waits on the guard and holds the concurrency group`, () => {
+    assert.doesNotMatch(
+      yaml,
+      /^concurrency:/m,
+      'workflow-level concurrency lets a skipping run cancel a real deploy',
+    );
+    const deploy = yaml.slice(yaml.indexOf('\n  deploy:\n'));
+    assert.match(deploy, /^ {4}needs: changes$/m);
+    assert.match(deploy, /^ {4}if: needs\.changes\.outputs\.deploy == 'true'$/m);
+    assert.match(deploy, /^ {4}concurrency:$/m);
+  });
+}
+
 test('BUG-152: ci.yml cancels only superseded pull_request runs', () => {
   const yaml = read('ci.yml');
   const block = yaml.slice(yaml.indexOf('\nconcurrency:'));

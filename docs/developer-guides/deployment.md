@@ -20,10 +20,10 @@ A bare `wrangler deploy` does **not** mean the same thing on every worker.
 | Workflow | Deploys | Triggered by changes to |
 |----------|---------|-------------------------|
 | `deploy-web-app.yml` | Cloudflare Pages project `xivdyetools` | `apps/web-app/**`, `packages/{core,types,logger,svg}/**` |
-| `deploy-web-app-beta.yml` | The beta Pages project (`beta.xivdyetools.app`) | same paths as `deploy-web-app.yml` above, but push to **any non-main branch** (not just `main`) — this is the premise of 2026-08-29 FINDING-028, not a typo |
+| `deploy-web-app-beta.yml` | The beta Pages project (`beta.xivdyetools.app`) | same paths as `deploy-web-app.yml` above, but push to **any non-main branch** (not just `main`) — this is the premise of 2026-08-29 FINDING-028, not a typo — and only when the branch's own changes touch them (see *Beta deploys follow the branch's own changes* below) |
 | `deploy-discord-worker.yml` | `xivdyetools-discord-worker` | `apps/discord-worker/**`, `packages/{core,types,logger,auth,bot-logic,svg,worker-kit}/**` |
-| `deploy-discord-worker-beta.yml` | `xivdyetools-discord-worker-dev` (the beta bot) | same paths as `deploy-discord-worker.yml` above, but push to **any non-main branch** (not just `main`) |
-| `deploy-og-worker-beta.yml` | `xivdyetools-og-worker-dev` (the routed beta worker: `beta.xivdyetools.app/*` + `og-beta.xivdyetools.app`) | same paths as `deploy-og-worker.yml` below, but push to **any non-main branch** (not just `main`) |
+| `deploy-discord-worker-beta.yml` | `xivdyetools-discord-worker-dev` (the beta bot) | same paths as `deploy-discord-worker.yml` above, but push to **any non-main branch** (not just `main`), and only when the branch's own changes touch them |
+| `deploy-og-worker-beta.yml` | `xivdyetools-og-worker-dev` (the routed beta worker: `beta.xivdyetools.app/*` + `og-beta.xivdyetools.app`) | same paths as `deploy-og-worker.yml` below, but push to **any non-main branch** (not just `main`), and only when the branch's own changes touch them |
 | `deploy-image-worker.yml` | `xivdyetools-image-worker` | `apps/image-worker/**`, `packages/{logger,worker-kit}/**` |
 | `deploy-moderation-worker.yml` | `xivdyetools-moderation-worker` | `apps/moderation-worker/**` + shared packages |
 | `deploy-presets-api.yml` | `xivdyetools-presets-api` | `apps/presets-api/**` + shared packages |
@@ -50,6 +50,27 @@ bump, even a dev-only Dependabot one, redeploys every production worker with ide
 (idempotent, serialized per workflow), and **merging such a change to `main` starts all 8
 production deploys, `oauth` included, whose bare deploy is production**. `scripts/check-workflows.test.ts`
 (run by `pnpm test:scripts`) fails when any `deploy-*.yml` loses one of the four.
+
+### Beta deploys follow the branch's own changes
+
+A push filter compares only the pushed commits. So before 2026-10-13, merging `main` into a
+branch started every beta deploy whose paths `main` had changed, even when the branch itself
+changed nothing there, and the deploy took the shared beta bot, site or OG worker from whoever
+was testing on it. A `CLAUDE.md` or `README.md` edit inside an app or package directory did the
+same. Each of the three `*-beta.yml` workflows now starts with a `changes` job: it diffs the
+pushed commit against its merge base with `main` over the workflow's deploy paths, minus
+`CLAUDE.md` and `README.md`, and the deploy job runs only when that diff is non-empty. A manual
+`workflow_dispatch` always deploys. The `push.paths` filters also leave out those two file
+names, so a push that edits only them does not start a run at all. The exclusion is by name,
+never `*.md`: discord-worker bundles `CHANGELOG-laymans.md` for `/changelog`.
+
+The beta deploy's `concurrency` group sits on the deploy job, not the workflow, so a run whose
+guard skips the deploy cannot cancel another branch's deploy in progress.
+`scripts/check-workflows.test.ts` checks that each guard's path list matches its `push.paths`,
+that both exclusions are in place, and that the deploy job owns the concurrency group.
+
+One case still deploys: a branch stacked on another branch inherits its base's app changes,
+because both are measured against `main`.
 
 ### Required secrets
 
