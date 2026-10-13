@@ -83,8 +83,8 @@
     }
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20261002.1",
-    "hono": "^4.13.12",
+    "@cloudflare/workers-types": "^5.20261010.1",
+    "hono": "^4.13.13",
     "@vitest/coverage-v8": "^5.0.3",
     "vitest": "^5.0.3"
   },
