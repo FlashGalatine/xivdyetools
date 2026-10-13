@@ -1,0 +1,1667 @@
+{
+  "summary": "Re-verify the 73 merged documentation findings at exact file:line before the coordinator files them",
+  "agentCount": 13,
+  "logs": [
+    "13 batches covering 73 findings",
+    "verdicts: 62 confirmed, 11 adjusted, 0 rejected"
+  ],
+  "result": {
+    "results": [
+      {
+        "id": "DOC-001",
+        "verdict": "CONFIRMED",
+        "severity": "MEDIUM",
+        "location": [
+          "apps/web-app/PRIVACY.md:262 — \"**Discord:** join https://discord.gg/rzxDHNr6Wv and send a direct message to \\\"Flash Galatine\\\"\"",
+          "apps/discord-worker/PRIVACY_POLICY.md:170 — \"**Discord**: Join https://discord.gg/rzxDHNr6Wv and DM \\\"Flash Galatine\\\"\"",
+          "apps/web-app/TERMS_OF_SERVICE.md:73 — \"Join the Discord: <https://discord.gg/rzxDHNr6Wv>\""
+        ],
+        "evidence": [
+          "`curl -s https://discord.com/api/v10/invites/rzxDHNr6Wv` returns {\"message\": \"Invite is expired.\", \"code\": 50270}; the same call for 5VUSKTZCe5 returns a live invite (inviter flashgalatine)",
+          "packages/core/src/config/product-links.ts:35 — `{ label: 'Discord', url: 'https://discord.gg/5VUSKTZCe5' }`",
+          "`git grep -l rzxDHNr6Wv` outside docs/audits lists exactly the 24 policy files (6 languages x web-app PRIVACY/TOS + discord-worker PRIVACY_POLICY/TOS); every README, manual.ts:304 and the user-guide FAQs use 5VUSKTZCe5"
+        ],
+        "fix": "Replace the invite in all 24 policy files in one commit and bump each document's Last updated date. Use 5VUSKTZCe5 once the maintainer confirms it reaches the support channel, or mint a non-expiring invite.",
+        "reason": "Verified by Discord API today that the policy invite is expired, so the deletion and appeal DM route in every policy file is dead. Line numbers differ in the localized files (they are not the same lines as English), so the exact lines are listed in 'also'.",
+        "also": "apps/web-app/TERMS_OF_SERVICE.md:175; apps/discord-worker/PRIVACY_POLICY.md:218; apps/discord-worker/TERMS_OF_SERVICE.md:66,143; apps/web-app/PRIVACY.{de:299,fr:312,ja:109,ko:109,zh:109}.md; apps/web-app/TERMS_OF_SERVICE.{de:81,194; fr:83,191; ja:47,117; ko:47,117; zh:47,117}.md; apps/discord-worker/PRIVACY_POLICY.{de:209,263; fr/zh:170,218; ja/ko:172,220}.md; apps/discord-worker/TERMS_OF_SERVICE.{de:85,178; fr/ja/ko/zh:66,143}.md",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-002",
+        "verdict": "CONFIRMED",
+        "severity": "MEDIUM",
+        "location": [
+          "docs/developer-guides/deployment.md:132-136 — \"Migrations are applied explicitly:\" ... `run db:migrate:local` / `run db:migrate   # remote`",
+          "docs/developer-guides/release-process.md:175 — \"6. Apply D1 migrations if the schema changed.\"",
+          "docs/developer-guides/contributing.md:151 — \"D1 schema changes ship a migration, applied before the dependent code\""
+        ],
+        "evidence": [
+          "apps/presets-api/package.json:12-13 — db:migrate / db:migrate:local = `wrangler d1 execute xivdyetools-presets --remote|--local --file=./schema.sql`; schema.sql:8,32,81 are all `CREATE TABLE/INDEX IF NOT EXISTS`",
+          "`git ls-files apps/presets-api/migrations apps/oauth/migrations` lists 0002-0015 plus oauth 0001, and no package.json script references any of them (the only per-file script, db:migrate:indexes at line 14, targets the older 002_add_composite_indexes.sql)",
+          "docs/operations/index.md:18 and apps/presets-api/README.md:97 already state the real rule: hand-run `wrangler d1 execute … --file=`, never `d1 migrations apply`, because db:migrate cannot alter a live schema"
+        ],
+        "fix": "State that db:migrate only re-applies schema.sql (CREATE IF NOT EXISTS, for a fresh DB). Give the per-file command, e.g. `pnpm --filter xivdyetools-presets-api exec wrangler d1 execute xivdyetools-presets --remote --file=./migrations/<NNNN>.sql`, plus the oauth equivalent against xivdyetools-users. Repeat the never-`migrations apply` rule, and link release-process step 6 and the contributing checklist to that section.",
+        "reason": "Following deployment.md would run an idempotent schema.sql against remote production and apply none of the numbered migrations, and the other two guides give no procedure.",
+        "also": "",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-003",
+        "verdict": "CONFIRMED",
+        "severity": "MEDIUM",
+        "location": [
+          "docs/user-guides/web-app/faq.md:99-104 — \"expand the **Favorites** panel above the dye list, and press **Manage Collections**. That window has **Export All** and **Import**\"",
+          "docs/user-guides/web-app/favorites-collections.md:87 — \"expand the **Favorites** panel at the top of the Color Palette drawer and press **Manage Collections**\"",
+          "docs/user-guides/web-app/favorites-collections.md:86 — \"those have their own export\""
+        ],
+        "evidence": [
+          "apps/web-app/src/components/dye-selector.ts:556-565 — the only external caller of showCollectionManagerModal() is the DyeSelector's #manage-collections-btn (git grep finds no other caller outside the modal itself)",
+          "apps/web-app/src/components/v4-layout.ts:595-660 — harmony/accessibility/comparison/gradient/mixer all get leftPanel === rightPanel === mainPanel and `drawerContent: null`; mixer-tool.ts:627 skips renderLeftPanel in V4, and harmony/comparison/accessibility build the selector and then clearContainer(right) on the same element (harmony-tool.ts:1124, comparison-tool.ts:890, accessibility-tool.ts:745)",
+          "apps/web-app/src/components/v4/dye-palette-drawer.ts:778-945 uses CollectionService only for favorites get/toggle, and advanced-options-panel.ts:283-289 Backup exports exportAllConfigs() (settings) only, so no rendered control in the V4 shell reaches export or import"
+        ],
+        "fix": "Remove the export/import steps, or say that saved palettes cannot be exported in this release (the Backup card exports settings only), until a route to the collection manager returns. Whether the orphaned modal is a product bug is the maintainer's call.",
+        "reason": "Code confirms the Manage Collections button lives only in a DyeSelector that the V4 shell never keeps mounted, so the documented steps cannot be followed. I did not repeat the live DOM check, but the code is unambiguous.",
+        "also": "docs/user-guides/web-app/faq.md:93 (\"export what you want to keep\"); apps/web-app/PRIVACY.md:60 (\"Manage Collections → Delete Collection\" as a deletion route); docs/specifications/feature-roadmap.md:183 (lists the button as shipped)",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-004",
+        "verdict": "CONFIRMED",
+        "severity": "MEDIUM",
+        "location": [
+          "docs/user-guides/web-app/faq.md:163 — \"Yes, contact us via GitHub issues or Discord to request data deletion.\"",
+          "docs/user-guides/web-app/faq.md:155 — \"Discord ID (if logged in)\"",
+          "docs/user-guides/web-app/community-presets.md:85 — \"*We store your display name and provider ID. No character data, no email, nothing sold.*\""
+        ],
+        "evidence": [
+          "apps/web-app/PRIVACY.md:258-266 — self-service deletes, then for anything else ask privately by email (line 261) or Discord DM, and line 265: \"Please don't ask in a public GitHub issue: that would publish the very details you want removed.\"",
+          "apps/web-app/PRIVACY.md:82-86 — a Discord record holds the Discord user ID + display name; an XIVAuth record holds the XIVAuth ID and the verified character's name, plus a linked Discord user ID if there is one",
+          "apps/web-app/src/locales/en.json:1018 — preset.privacyNote (rendered by signin-modal.ts:62) reads \"Signing in creates an account record: your Discord or XIVAuth ID and a name … With XIVAuth, that name is your verified character's … No email, nothing sold.\" It does not say \"No character data\"."
+        ],
+        "fix": "Point the FAQ deletion answer at the Privacy Guide's deletion section: self-service delete first, then email or DM, never a public issue. List the stored data as 'your Discord or XIVAuth ID and a display name (your verified character's name with XIVAuth)'. Quote en.json preset.privacyNote verbatim in community-presets.md.",
+        "reason": "All three sub-claims match the source. The FAQ points users to a public channel that the policy forbids, and both the stored-data list and the quoted sign-in text omit the XIVAuth ID and character name that the shipped app discloses.",
+        "also": "",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-005",
+        "verdict": "CONFIRMED",
+        "severity": "MEDIUM",
+        "location": [
+          "docs/user-guides/discord-bot/faq.md:189 — \"Yes, contact us via GitHub issues to request deletion.\"",
+          "docs/user-guides/discord-bot/faq.md:181 — \"Anonymous usage statistics\""
+        ],
+        "evidence": [
+          "apps/discord-worker/PRIVACY_POLICY.md:163-170 — Request Full Data Deletion: email FlashGalatineFGC@gmail.com, subject \"XIV Dye Tools Privacy\" (line 167), or a Discord DM (line 170); no GitHub route",
+          "apps/discord-worker/PRIVACY_POLICY.md:19,47 — the Discord User ID is recorded in usage statistics \"(used only to count unique users)\"; apps/discord-worker/src/services/analytics.ts:94 writes `event.userId` as blob2 (\"pseudonymous; unique-user counting\")",
+          "docs/operations/ANALYTICS_QUERIES.md:167 — `blob2` | Discord user id (pseudonymous; use only for count(DISTINCT blob2))"
+        ],
+        "fix": "Deletion: email FlashGalatineFGC@gmail.com (subject 'XIV Dye Tools Privacy') with your Discord User ID, or DM, never a public issue. The DM invite is expired, so fix it together with DOC-001. Stats: 'usage statistics keyed to your Discord ID, used only to count unique users'.",
+        "reason": "Both claims are contradicted by the bot's policy and code: deletion goes through email or DM, and every analytics row carries the user ID, so the statistics are pseudonymous rather than anonymous.",
+        "also": "",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-006",
+        "verdict": "CONFIRMED",
+        "severity": "MEDIUM",
+        "location": [
+          "docs/user-guides/web-app/glamour-reader.md:212 — \"Facewear always starts blank.\"",
+          "docs/user-guides/web-app/glamour-reader.md:73 — \"*Dated Hempen Coif* and *Hempen Coif*\" as a twins example",
+          "docs/user-guides/web-app/glamour-reader.md:103 — \"| **DATED** | A retired version the game still draws |\" (chip table at 95-104 with no retired-family note)"
+        ],
+        "evidence": [
+          "apps/web-app/src/components/glamour-list-actions.ts:150-154 — Facewear `generated = glasses?.acquisition`, served by api-worker resolver.ts:148-156 via facewearAcquisitionFor (acquisition.ts:42-45). Counting the table, facewear-unlocks.json maps to 61 distinct unlock items and 54 of them have a line in acquisition.en.json (web-app 5.15.0 CHANGELOG.md:14,18)",
+          "apps/api-worker/src/chara/resolver.ts:86-101 — selectableItem drops Aetherial/Deepmist rows and Dated rows with levelEquip <= 50 whenever an eligible row exists. XIVAPI Item/372 returns {LevelEquip:1, Name:\"Dated Hempen Coif\"}, so it is never offered beside Hempen Coif (resolver.test.ts:99-121)",
+          "resolver.ts:96-101 — a family with only retired rows is named with `retired: true`; glamour-block.ts:1324-1326 appends en.json:1342 glamour.row.retired \"A retired item, no longer obtainable\""
+        ],
+        "fix": "Say Facewear is filled when the table knows the style's unlock source, else blank. Replace the Hempen Coif example with a pair that is actually served, and say Aetherial, Deepmist and level-50-or-lower Dated gear is never offered as a twin. Add the 'A retired item, no longer obtainable' row note. Keep the DATED chip row: Dated items above level 50 still appear.",
+        "reason": "Each sub-claim checks out in code and live data. The DATED chip definition is still accurate for Dated rows above level 50, so the defect at 95-104 is the missing retired-family note, not that row's wording.",
+        "also": "",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-007",
+        "verdict": "CONFIRMED",
+        "severity": "MEDIUM",
+        "location": [
+          "docs/user-guides/web-app/dye-mixer.md:60 — \"| **RYB** | Paint | ... | Olive |\"",
+          "docs/user-guides/web-app/dye-mixer.md:62-63 — \"| **OKLAB** | Perceptual |\" / \"| **LAB** | LAB |\"",
+          "docs/user-guides/web-app/dye-mixer.md:56 — \"the settings dropdown and the cell hints use plain ones\""
+        ],
+        "evidence": [
+          "apps/web-app/src/locales/en.json:193 — mixingRybDesc \"Paint simulation. Blue + Yellow = Green.\"; mixer-blending-engine.ts:53,57-58 — RYB #008000 green; Gossett-Chen cube (olive) retired in core 5.0.0",
+          "apps/web-app/src/locales/en.json:479-484 — hint names (mixer.model*, used at mixer-tool.ts:1359): Paint, Pigment, Modern Perceptual (OKLAB), Perceptual (LAB), Hue, Light",
+          "apps/web-app/src/components/v4/config-sidebar.ts:1451-1458 + en.json:184-189 — dropdown: Spectral 'Realistic Paint', RYB 'Paint', OKLAB 'Modern Perceptual', LAB 'Perceptual', HSL 'Hue-based', RGB 'Light'"
+        ],
+        "fix": "RYB row -> Green. Name OKLAB 'Modern Perceptual' and LAB 'Perceptual'. Say the dropdown and hints differ: Spectral is 'Realistic Paint' in the dropdown and 'Pigment' in hints; HSL is 'Hue-based' in the dropdown and 'Hue' in hints.",
+        "reason": "Locale strings and the engine docblock show RYB gives green now, and the OKLAB/LAB names are wrong. The dropdown and hint labels also differ from each other. The draft's sidebar path is missing the v4/ segment, but its content is correct.",
+        "also": "",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-008",
+        "verdict": "ADJUSTED",
+        "severity": "MEDIUM",
+        "location": [
+          "docs/projects/web-app/components.md:35 — \"`addAll(...unsubs)`\"; :37 — \"`setError()` / `clearError()`\"",
+          "docs/projects/web-app/components.md:160 — \"| `resolveCharaGear` | `chara-resolve-service.ts` |\"; :163 — \"| `MixerBlendingEngine` | ... | `blendColors`, `findMatchingDyes`\"",
+          "docs/projects/web-app/tools.md:91 — \"`services/mixer-blending-engine.ts` (`blendColors`, `findMatchingDyes`\""
+        ],
+        "evidence": [
+          "git grep -n -w <each of the 9 symbols> -- apps/web-app/src apps/web-app/functions — 0 hits for every one",
+          "apps/web-app/src/shared/subscription-manager.ts:46,55 — add() / unsubscribeAll(); v4/base-lit-component.ts:93 setError only; storage-service.ts:20,295,344 StorageService/NamespacedStorage/appStorage; market-board-service.ts:133 static getInstance()",
+          "apps/web-app/src/services/chara-resolve-service.ts:147 resolveCharaEquipment; mixer-blending-engine.ts:69,128 blendTwoColors/findMatchingDyes; display-options-helper.ts:97 applyDisplayOptions; auth-service.ts:116 inline OAUTH_RETURN_TOOL_KEY"
+        ],
+        "fix": "Rename each symbol to the real one: add/unsubscribeAll, setError, MarketBoardService.getInstance, StorageService/NamespacedStorage/appStorage, the inline OAUTH_RETURN_TOOL_KEY handling, resolveCharaEquipment, blendTwoColors/findMatchingDyes (plain functions, not a class) and applyDisplayOptions. Or drop them. Removals: 057cba2f, b3b7f252.",
+        "reason": "None of the nine names exists in web-app source, and every real replacement checks out. Only the claim of zero repo-wide grep hits is too broad.",
+        "also": "docs/projects/web-app/components.md:136 (getMarketBoardService, SecureStorage), :140 (SecureStorage), :158 (consumeReturnTool), :164 and :185 (getCardDisplayOptions)",
+        "dropped": "'git grep finds none at HEAD' is too broad for blendColors: it exists in @xivdyetools/core/blending (packages/core). It is absent only from web-app's mixer-blending-engine.ts, so the doc attributes it to the wrong module. Other docs that cite core's blendColors are correct."
+      },
+      {
+        "id": "DOC-009",
+        "verdict": "CONFIRMED",
+        "severity": "MEDIUM",
+        "location": [
+          "docs/user-guides/discord-bot/getting-started.md:52 — \"A **share link** that opens the same result in the web app\" (under the /extractor color example)",
+          "docs/user-guides/discord-bot/getting-started.md:10-11 — \"Every result is a redrawn image card with a one-line embed and a share link into the web app\"",
+          "docs/user-guides/discord-bot/command-reference.md:373 — \"Image commands include a card attachment and a share link into the web app\""
+        ],
+        "evidence": [
+          "apps/discord-worker/src/handlers/commands/extractor.ts:366-396 — /extractor color embed description is only the tail lines (matches 6+), with no web-app URL",
+          "packages/bot-logic/src/commands/harmony.ts:333-339, dye-info.ts:175-181, swatch.ts:271, glamour.ts:185 and apps/discord-worker/src/handlers/commands/budget.ts:386-389 — the only xivdyetools.app share URLs",
+          "gradient.ts:230, comparison.ts:140, mixer-v4.ts:127 (bot-logic mixer.ts:163), contrast.ts:136 (bot-logic :139), accessibility.ts:171 — descriptions carry no URL"
+        ],
+        "fix": "Delete the share-link bullet at getting-started.md:52. Narrow the general sentences to say that /harmony, /dye info, /swatch, /glamour and /budget link to the matching web-app tool.",
+        "reason": "git grep finds web-app URLs in only five command paths. /extractor and the other card commands carry none.",
+        "also": "docs/user-guides/discord-bot/command-reference.md:11-12 (\"the text embed is a one-liner plus a share link\"); docs/projects/discord-worker/commands.md:75 (\"Since 5.0 the embed is one line plus a share URL\")",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-010",
+        "verdict": "CONFIRMED",
+        "severity": "MEDIUM",
+        "location": [
+          "docs/projects/discord-worker/overview.md:167 — \"const svg = buildComparisonSvg(dyes);\"",
+          "docs/projects/discord-worker/overview.md:170-176 — \"renderSvgToPng(svg)\" ... \"await sendFollowup(interaction, env, { embeds: [...], files: [...] })\"",
+          "docs/projects/discord-worker/rendering.md:13 — \"const png = await renderSvgToPng(svg);\""
+        ],
+        "evidence": [
+          "git grep buildComparisonSvg / sendFollowup in apps and packages — no code hits; the real function is generateComparisonCard(options) at packages/svg/src/comparison-card.ts:96",
+          "apps/discord-worker/src/services/svg/renderer.ts:78-92 — renderSvgToPng(svgString, { scale?, background?, locale: LocaleCode }); locale is required",
+          "apps/discord-worker/src/utils/discord-api.ts:47-56,71 — sendFollowUp(applicationId, interactionToken, options) with a single `file` {name,data,contentType}; editOriginalResponse at :160"
+        ],
+        "fix": "In overview.md, use generateComparisonCard({...}), renderSvgToPng(svg, { locale }) and sendFollowUp(env.DISCORD_CLIENT_ID, interaction.token, { embeds, file }). In rendering.md, add { locale } only; its generateComparisonCard and editOriginalResponse calls are already real.",
+        "reason": "The overview example calls two functions that do not exist and passes a `files` array. Both examples leave out the required locale.",
+        "also": "apps/discord-worker/CLAUDE.md:212 — \"call `sendFollowup()` (utils/discord-api.ts)\" (the real name is sendFollowUp)",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-011",
+        "verdict": "CONFIRMED",
+        "severity": "MEDIUM",
+        "location": [
+          "docs/projects/og-worker/overview.md:112 — \"`SUPPORTED_TOOLS` = `harmony`, ... `presets`, `budget`\" (nine; the route table below has no /glamour row)",
+          "docs/architecture/overview.md:329 — \"One 15E band frame for all nine tools\"; :337 — \"**Routes**: `/og/:tool/*` for harmony, ... and budget.\"",
+          "docs/operations/DEPLOY_ENVIRONMENTS.md:31-32 — \"`beta.xivdyetools.app/<tool>/*` ×9\" / \"`xivdyetools.app/<tool>/*` ×9\""
+        ],
+        "evidence": [
+          "apps/og-worker/src/index.ts:100-111 — SUPPORTED_TOOLS has ten entries, ending with 'glamour'; :716-719 register GET /<tool> and /<tool>/ for each",
+          "apps/og-worker/wrangler.toml:29-38 and :76-85 — ten <tool>/* routes in each env, including glamour/*",
+          "apps/og-worker/src/og-data-generator.ts:1083-1086 — glamour has no share grammar and always returns toolDefault('glamour')"
+        ],
+        "fix": "Change nine to ten. Add a /glamour row to the og-worker route table: no share parameters, always the default card (/og/glamour/default.png). Change ×9 to ×10 in DEPLOY_ENVIRONMENTS. Leave the history rows (index.md:260, versions.md:427, CHANGELOG.md:442) as they are.",
+        "reason": "Source and wrangler.toml both serve ten tools, including glamour, so all three docs undercount.",
+        "also": "docs/projects/og-worker/overview.md:114-124 (route table without /glamour)",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-012",
+        "verdict": "ADJUSTED",
+        "severity": "MEDIUM",
+        "location": [
+          "docs/projects/api-worker/overview.md:111-123 — Environment Bindings table lists only API_/TELEMETRY_RATE_LIMITER and RATE_LIMIT \"(`api:ip:` / `telemetry:ip:`)\"",
+          "docs/projects/api-worker/overview.md:93 — \"services/ # cached-fetch, cache-service, request-coalescer, memory rate-limiter\"",
+          "docs/projects/api-worker/overview.md:125 — \"api-worker calls no other worker; discord-worker's `UNIVERSALIS_PROXY` service binding targets it (`/api/v2/aggregated/...`)\""
+        ],
+        "evidence": [
+          "apps/api-worker/wrangler.toml:68-86 and :149-163 — SERVICE_RATE_LIMITER (1300/60), UNIVERSALIS_RATE_LIMITER (60/60 dev, 30/60 prod), UNIVERSALIS_SERVICE_RATE_LIMITER (1200/60 dev, 600/60 prod)",
+          "apps/api-worker/src/middleware/rate-limit.ts:68,71 'api:svc:'; universalis/services/rate-limiter.ts:9-17 (FINDING-011 replaced MemoryRateLimiter) and :79 'universalis:ip:' / 'universalis:svc:'",
+          "apps/discord-worker/src/handlers/commands/glamour.ts:43,64-65 — POST /v1/chara/resolve through env.UNIVERSALIS_PROXY"
+        ],
+        "fix": "In the api-worker bindings table, add SERVICE_RATE_LIMITER, UNIVERSALIS_RATE_LIMITER and UNIVERSALIS_SERVICE_RATE_LIMITER, plus all five KV prefixes. Change 'memory rate-limiter' to 'rate-limiter (native binding, KV fallback)'. Name POST /v1/chara/resolve as a binding caller. In architecture/overview.md, add only the two UNIVERSALIS_* bindings.",
+        "reason": "The api-worker bindings table omits three bindings and two KV prefixes. The services comment and the binding-caller line are stale.",
+        "also": "",
+        "dropped": "In docs/architecture/overview.md:449-455, only two bindings are missing: SERVICE_RATE_LIMITER is already listed at :453. Also, api-worker overview.md:62 already names both UNIVERSALIS_* limiters in its feature table; only the bindings table omits them."
+      },
+      {
+        "id": "DOC-013",
+        "verdict": "CONFIRMED",
+        "severity": "MEDIUM",
+        "location": [
+          "docs/projects/presets-api/moderation.md:31-33 — \"The *only* thing that skips this tier is an **absent** `PERSPECTIVE_API_KEY`, in which case the local word list alone decides\"",
+          "docs/projects/presets-api/overview.md:187 — \"Requires `PERSPECTIVE_API_KEY`; **fail-closed** — with a key set, an error or timeout also queues\" (the no-key case is never described)",
+          "docs/projects/presets-api/overview.md:196-206 — flow diagram: Perspective \"[clean]\" leads to \"status = 'approved' (auto-approved)\", with no branch for a missing key"
+        ],
+        "evidence": [
+          "apps/presets-api/src/services/moderation-service.ts:376-386 — `if (!perspectiveResult)` returns `passed: false, method: 'unscored'`, flaggedReason 'No external moderation scorer configured — queued for manual review' (FINDING-019)",
+          "apps/presets-api/src/handlers/presets.ts:1039 — `const status = moderationResult.passed ? 'approved' : 'pending'`, so `unscored` lands as pending",
+          "apps/presets-api/CHANGELOG.md:137-138 (under [2.4.0], line 101) — \"No scorer, no auto-approve (FINDING-019). Without PERSPECTIVE_API_KEY, new presets and text edits are queued for review (method unscored)\""
+        ],
+        "fix": "Say that a missing key reports locally clean text as `unscored` and queues it for a moderator, and add the no-key branch to the overview flow diagram. Rewrite moderation.md:33-34: deleting the key now sends every submission to manual review rather than turning moderation off.",
+        "reason": "Since presets-api 2.4.0 a missing key yields passed:false/unscored, which the handler persists as pending. The doc's claim that the word list alone decides and that clean text is auto-approved is wrong.",
+        "also": "docs/architecture/security-trade-offs.md:290 (\"PERSPECTIVE_API_KEY unset ─► local list alone decides\"), docs/architecture/security-trade-offs.md:312 (\"the local list alone decides\"), DEPRECATIONS.md:31-38 (\"deleting the key alone turns moderation off\" / \"moderateContent then passes anything the local word list does not match\": stale since 2.4.0 shipped the pending default)",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-014",
+        "verdict": "CONFIRMED",
+        "severity": "MEDIUM",
+        "location": [
+          "docs/architecture/api-contracts.md:555 — \"## OAuth API Endpoints\" (subsections: GET /auth/discord :559, GET /auth/callback :573, POST /auth/callback :588, struck POST /auth/refresh :629)",
+          "docs/architecture/api-contracts.md:636-662 — \"### GET /auth/me\" is the last OAuth entry; `---` at :662, then \"## Discord Worker Webhook Endpoints\" :664",
+          "docs/architecture/api-contracts.md:609 — `POST /auth/xivauth/callback` is mentioned only in passing inside the POST /auth/callback notes and has no section of its own"
+        ],
+        "evidence": [
+          "apps/oauth/src/index.ts:290-293 — mounts authorizeRouter, callbackRouter, xivauthRouter (\"/auth/xivauth, /auth/xivauth/callback\") and tokenRouter (\"/auth/me, /auth/revoke\")",
+          "apps/oauth/src/handlers/token.ts:101-190 — POST /revoke: 401 for a missing or invalid Bearer token, 200 `revoked: true`, 503 `revoked: false` when the KV write fails (BUG-050), 200 `revoked: false` with a `note` when there is no KV or no jti, 500 on an exception",
+          "apps/oauth/src/handlers/xivauth.ts:58-59,77 — GET /xivauth, GET /xivauth/callback, POST /xivauth/callback"
+        ],
+        "fix": "After GET /auth/me, add a POST /auth/revoke section (Bearer header; 200 revoked:true; 200 revoked:false + note when there is no blacklist or jti; 401; 503 when the KV write fails; 500). Add GET /auth/xivauth and GET/POST /auth/xivauth/callback sections that mirror the Discord ones.",
+        "reason": "The live router mounts /auth/revoke and the three XIVAuth routes. api-contracts.md documents none of them as endpoints; its only trace is a passing mention of the XIVAuth POST callback.",
+        "also": "",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-015",
+        "verdict": "CONFIRMED",
+        "severity": "MEDIUM",
+        "location": [
+          "docs/architecture/security-trade-offs.md:70-72 — \"1. **Version metadata** ... 2. **Retry logic**: 3 retries with exponential backoff (10ms, 20ms, 30ms) 3. **Write verification**: Read-after-write\"",
+          "docs/architecture/security-trade-offs.md:79 — \"// MOD-BUG-001 FIX: Optimistic concurrency with retries\"",
+          "docs/architecture/security-trade-offs.md:26 — \"Our rate limiting implementation uses optimistic concurrency with retries\""
+        ],
+        "evidence": [
+          "packages/worker-kit/src/rate-limiter/backends/kv.ts:12-21 — BUG-022/OPT-002: honestly best-effort; the version metadata and post-put verification read were removed; retries apply only to thrown KV errors; use Upstash or a Durable Object for strict limits",
+          "packages/worker-kit/src/rate-limiter/backends/kv.ts:203-209 — increment docblock: plain read-modify-write, the retry loop exists ONLY for thrown KV errors",
+          "packages/worker-kit/src/rate-limiter/backends/kv.ts:219-266 (DEFAULT_MAX_RETRIES = 3 at :59) — the loop does get then put and returns; the catch only logs on the last attempt, with no delay or backoff"
+        ],
+        "fix": "Replace the mitigations with honest best-effort wording: no atomic read-modify-write, so the limit can be exceeded by roughly the concurrency factor, and the 3 retries cover thrown KV errors only, with no backoff. Point to Upstash or a Durable Object for atomic limits. Drop the \"optimistic concurrency\" wording at :26 and :79.",
+        "reason": "The source records that the version metadata and verification read were removed. The retry loop has no delay and covers only thrown errors.",
+        "also": "docs/architecture/security-trade-offs.md:26",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-016",
+        "verdict": "ADJUSTED",
+        "severity": "MEDIUM",
+        "location": [
+          "docs/CLAUDE.md:155 — \"import { Dye, RGB, HexColor } from '@xivdyetools/types';\"",
+          "docs/projects/core/overview.md:93 — \"import { Dye, RGB, HexColor, DyeId, PresetCategory }\"; :324 — \"import { createHexColor, createDyeId, HexColor, DyeId }\"",
+          "docs/projects/types/overview.md:34, :55, :91, :131, :163-170 — plain `import { RGB, HSV, ... }`, `{ Dye, DyeId, ... }`, `{ PresetPalette, ... }`, `{ JWTPayload, AuthProvider }`, and the multi-line `{ HexColor, DyeId, Hue, Saturation, createHexColor, createDyeId }`"
+        ],
+        "evidence": [
+          "packages/types/src/index.ts:26-27 — `export type { RGB, HSV, LAB, ..., HSL, ... }` and `export type { HexColor, DyeId, Hue, Saturation }`; :36-42 Dye/DyeWithDistance/FacewearColor, :62-79 PresetCategory/PresetStatus/PresetPalette/CommunityPreset, :112+ AuthProvider/JWTPayload are all in `export type` blocks",
+          "tsconfig.base.json:14 — \"verbatimModuleSyntax\": true (a plain import of a type-only export is TS1484)",
+          "docs/projects/core/types.md:37-38 — already shows the correct split: value import of create* plus `import type { HexColor, DyeId, Hue, Saturation }`"
+        ],
+        "fix": "Use `import type { ... }` for the all-type lines. Split the mixed lines into `import { createHexColor, createDyeId, type HexColor, type DyeId } from '@xivdyetools/types'`.",
+        "reason": "Every named symbol is a type-only export and the base tsconfig enables verbatimModuleSyntax. The defect is real, but the cited locations hold eight import statements in eight code blocks, not seven.",
+        "also": "packages/types/README.md:47, :50, :64, :81, :88, :103, :165, :288, :298, :308 (the published npm README makes the same plain imports of type-only names; :288/:298 mix in the runtime AppError/ErrorCode and need splitting). docs/developer-guides/contributing.md:77 and monorepo-setup.md:145 are deliberate counter-examples, not defects.",
+        "dropped": "Title count \"seven code examples\": the listed locations contain eight plain type-only imports (docs/CLAUDE.md 1, core/overview.md 2, types/overview.md 5)."
+      },
+      {
+        "id": "DOC-017",
+        "verdict": "CONFIRMED",
+        "severity": "MEDIUM",
+        "location": [
+          "docs/projects/core/algorithms.md:226 — \"`classifyBandTier(distance, context, method)` returns the `BandTier`;\""
+        ],
+        "evidence": [
+          "packages/core/src/config/band-vocabulary.ts:158-165 — `export function classifyBandTier(value: number, method: BandMethod, context: BandContext)`; the body reads `BAND_VOCABULARY[context][method]`",
+          "Swapped call: classifyBandTier(d, 'match', 'ciede2000') reads BAND_VOCABULARY['ciede2000'], which is undefined, so destructuring ['match'] throws a TypeError (it is also a compile-time type error)",
+          "packages/svg/CLAUDE.md:56 and packages/core/CHANGELOG.md:849 both give the correct order `classifyBandTier(value, method, context)`"
+        ],
+        "fix": "Change it to `classifyBandTier(distance, method, context)`.",
+        "reason": "The doc swaps the second and third parameters relative to the source signature.",
+        "also": "",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-018",
+        "verdict": "CONFIRMED",
+        "severity": "MEDIUM",
+        "location": [
+          "docs/developer-guides/deployment.md:71 — \"`discord-worker`, `moderation-worker`, `presets-api`, `api-worker`, `og-worker`, `image-worker`.\" (under \"Convention A — top level is a `-dev` worker (the safe one)\" at :69)",
+          "docs/developer-guides/deployment.md:73 — \"The top-level `wrangler.toml` block declares a `…-dev` name and **no routes**.\"",
+          "docs/developer-guides/deployment.md:26 — the same doc's table row calls `xivdyetools-og-worker-dev` \"the routed beta worker: `beta.xivdyetools.app/*` + `og-beta.xivdyetools.app`\""
+        ],
+        "evidence": [
+          "apps/og-worker/wrangler.toml:6-12 — \"The top-level env is the BETA worker — it now carries live beta.xivdyetools.app routes ... A bare `wrangler deploy` therefore publishes to a real, public hostname\"; name = \"xivdyetools-og-worker-dev\"",
+          "apps/og-worker/wrangler.toml:28-38 — top-level `routes = [ { pattern = \"beta.xivdyetools.app/harmony/*\" ... } ]`",
+          "docs/operations/DEPLOY_ENVIRONMENTS.md:25-31 — og-worker's top-level env is the beta OG worker with live routes (`beta.xivdyetools.app/<tool>/*` ×9 + og-beta)"
+        ],
+        "fix": "Remove og-worker from the Convention A list, or add a caveat: its top-level `-dev` block is the routed public beta, so a bare deploy is live (production is still `--env production`). Link DEPLOY_ENVIRONMENTS.md.",
+        "reason": "og-worker's top-level block carries beta.xivdyetools.app routes, which contradicts Convention A's \"no routes / the safe one\". The other five listed workers have no top-level routes.",
+        "also": "",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-019",
+        "verdict": "CONFIRMED",
+        "severity": "MEDIUM",
+        "location": [
+          "docs/versions.md:736 — \"a BARE `deploy` targets the DEV/BETA worker.\"",
+          "docs/versions.md:737 — \"Production always needs the explicit :production script.\""
+        ],
+        "evidence": [
+          "apps/oauth/package.json:10-11 — \"deploy\": \"wrangler deploy\" and \"deploy:production\": \"wrangler deploy\" (identical)",
+          "apps/oauth/wrangler.toml:1,9,59 — top-level name xivdyetools-oauth with routes; the only env block is [env.development] (no [env.production]), so a bare deploy is production",
+          "apps/og-worker/wrangler.toml:12,28-41 + package.json:9 — bare `wrangler deploy` hits xivdyetools-og-worker-dev, which carries the beta.xivdyetools.app routes and og-beta custom domain (the live beta)"
+        ],
+        "fix": "Drop 'always'. Add: 'oauth is the exception: it has no [env.production], so its bare deploy IS production; og-worker's bare deploy is the routed, live beta.' Link DEPLOY_ENVIRONMENTS.md (already present at :739).",
+        "reason": "oauth's bare and :production scripts are the same production deploy, so 'always' is false. The og-worker point fits the doc's 'DEV/BETA' wording but is worth stating, since that beta is live.",
+        "also": "apps/api-worker/README.md:208 — a monorepo-wide statement: \"Production always needs an explicit `--env production`\" (also false for oauth). The per-app README lines (discord-worker:92, image-worker:85, moderation-worker:85, og-worker:87, presets-api:106) say 'here' and are correct for their own worker.",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-020",
+        "verdict": "CONFIRMED",
+        "severity": "MEDIUM",
+        "location": [
+          "docs/developer-guides/contributing.md:65 — \"pnpm --filter <project> run lint:fix\""
+        ],
+        "evidence": [
+          "`git grep -l '\"lint:fix\"' -- '*/package.json' package.json` → only apps/web-app/package.json and packages/core/package.json",
+          "apps/web-app/package.json:14 and packages/core/package.json:38 — \"lint:fix\": \"eslint src --fix\"",
+          "`git ls-files 'apps/*/package.json' 'packages/*/package.json' | wc -l` → 17 workspaces; the root package.json has no lint:fix either"
+        ],
+        "fix": "Say lint:fix exists only in web-app and core, or give `pnpm --filter <project> exec eslint src --fix` as the general form. Note that `lint` (incl. knip) is the gate.",
+        "reason": "Running the command against any of the other 15 workspaces fails with a missing-script error.",
+        "also": "",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-021",
+        "verdict": "CONFIRMED",
+        "severity": "MEDIUM",
+        "location": [
+          "docs/developer-guides/local-setup.md:73 — \"pnpm --filter @xivdyetools/core exec vitest run src/services/DyeService.test.ts\""
+        ],
+        "evidence": [
+          "`git ls-files packages/core | grep DyeService.test` → only packages/core/src/services/__tests__/DyeService.test.ts",
+          "vitest treats positional args as path substrings. 'src/services/DyeService.test.ts' is not a substring of 'src/services/__tests__/DyeService.test.ts', so no file matches and vitest exits 1 ('No test files found'; passWithNoTests is off)",
+          "CLAUDE.md (Working in this checkout → The gate): a single-file run needs `--coverage.enabled=false`, or a green subset run still exits 1 on coverage thresholds"
+        ],
+        "fix": "pnpm --filter @xivdyetools/core exec vitest run src/services/__tests__/DyeService.test.ts --coverage.enabled=false",
+        "reason": "The example path matches no test file, so the command fails. Even with the right path it needs the coverage flag to exit 0.",
+        "also": "",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-022",
+        "verdict": "ADJUSTED",
+        "severity": "MEDIUM",
+        "location": [
+          "docs/operations/MODERATION.md:15 — \"**Reviewing flagged presets** (via the web moderation queue)\"",
+          "docs/operations/MODERATION.md:37 — \"/preset ban_user user:<discord_user>\"",
+          "docs/operations/MODERATION.md:100 — \"/preset unban_user user:<discord_user>\""
+        ],
+        "evidence": [
+          "apps/moderation-worker/scripts/register-commands.ts:55-80 — `moderate` subcommand: action choices pending/approve/reject/stats plus a `preset_id` STRING autocomplete. apps/moderation-worker/src/handlers/review-message.ts:181-183 adds Approve/Reject/Revert buttons. No moderation queue UI exists in apps/web-app/src (only submitter-facing 'pending review' strings).",
+          "apps/moderation-worker/scripts/register-commands.ts:86-92,100-106 — `user` is type STRING with autocomplete ('search by username'), not a USER option. The value is the author id: a Discord snowflake or an XIVAuth UUID (src/index.ts:471-480,505-511 label choices `discord:`/`xivauth:`).",
+          "apps/moderation-worker/src/services/ban-service.ts:487-491 — XIVAuth-only targets are bannable (UUID also stored in xivauth_id). src/handlers/commands/preset.ts:526-533 labels the confirmation field 'Discord ID' or 'XIVAuth ID'."
+        ],
+        "fix": "Replace :15 with `/preset moderate` (pending/approve/reject/stats) plus the review-embed Approve/Reject/Revert buttons. Write `user:<username search>` and pick a choice; mention the discord:/xivauth: labels and the Discord ID / XIVAuth ID confirmation field. Fix the @mention examples at :54/:111.",
+        "reason": "There is no web review queue, and `user` is a string autocomplete, not a Discord user mention. The line 136 sub-claim holds only as an omission, so it is narrowed.",
+        "also": "docs/operations/MODERATION.md:42 — \"Username and Discord ID\" (can be XIVAuth ID); :54 and :111 — \"user:@SomeUser\" (a mention is not a valid choice value); :136 — \"Matches by username or Discord ID\" (omits xivauth_id)",
+        "dropped": "Narrowed: line 136 ('Matches by username or Discord ID') is not wrong. searchBannedUsers (ban-service.ts:189-194) matches username, discord_id OR xivauth_id, so the doc only omits XIVAuth ID and was not misstating it."
+      },
+      {
+        "id": "DOC-023",
+        "verdict": "CONFIRMED",
+        "severity": "MEDIUM",
+        "location": [
+          "docs/operations/MODERATION.md:86 — \"User ID: 123456789\" (ban success embed)",
+          "docs/operations/MODERATION.md:184 — \"Ban history is preserved (unbanning doesn't delete the record)\"",
+          "docs/operations/MODERATION.md:230 — \"Logged with target user, moderator, reason, and preset count\""
+        ],
+        "evidence": [
+          "apps/moderation-worker/src/handlers/modals/ban-reason.ts:194-201 — the channel embed deliberately has no `User ID` field (FINDING-008, privacy policies), only Presets Hidden / Banned By / Reason. Lines 228-233: the log line carries targetUserId, moderatorId, presetsHidden and reasonLength only (FINDING-011).",
+          "apps/moderation-worker/src/services/ban-service.ts:604-606 — the unban UPDATE sets `username = '', reason = ''`. apps/presets-api/src/services/moderation-retention-service.ts:22,79 deletes lifted bans after 90 days (LIFTED_BAN_RETENTION_DAYS), run daily (wrangler.toml:126 cron) and after moderation writes. ban-service.ts:413-428 restoreGuard skips hidden presets whose dye_signature collides, leaving them hidden.",
+          "apps/moderation-worker/src/index.ts:509 — unban choices are `${username} (${idKind}:${id})`, with no ban date. apps/presets-api/src/middleware/ban-check.ts:71 — 'You have been banned from using Preset Palettes.' src/services/bot-i18n.ts:84 (used at preset.ts:481,591) — 'This command can only be used in the moderation channel.'"
+        ],
+        "fix": "Drop the ban embed's User ID line. Say unban blanks username and reason and presets-api deletes the row 90 days later. Logs carry ids, counts and reason length; the reason itself lives in D1 moderation_log. Quote the real strings, and note that collisions stay hidden ('Presets Still Hidden').",
+        "reason": "Every sub-claim matches the source. Two nuances: the web app shows its own 'banned from submitting community presets' string, and `/preset moderate` (preset.ts:363) does use the doc's 'must be used' wording, but ban/unban do not.",
+        "also": "docs/operations/MODERATION.md:106 and :158 — \"Restores all hidden presets\" / \"All 'hidden' presets → 'approved'\" (collisions skipped); :135 — \"Shows username and ban date\"; :150 — \"You have been banned from submitting presets\"; :193 — \"This command must be used in the moderation channel.\"; :231 — unban log also has no reason. The unban embed's 'User ID' at :118 IS correct (preset.ts:664).",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-024",
+        "verdict": "CONFIRMED",
+        "severity": "MEDIUM",
+        "location": [
+          "docs/reference/glossary.md:94-95 — \"### Special Dye / Rare dyes obtained from crafting, dungeons, or events. Often more expensive.\""
+        ],
+        "evidence": [
+          "packages/core/src/config/dye-vocabulary.ts:28 — 'Special' is a value of DYE_CATEGORIES (lines 20-29). DYE_ACQUISITIONS (lines 34-39) is only Dye Vendor / The Firmament / Cosmic Exploration / Venture Coffers, with no crafting, dungeon or event source.",
+          "`grep -c '\"category\": \"Special\"' packages/core/src/data/dyes.json` → 27. By acquisition: Venture Coffers 20, Cosmic Exploration 4, The Firmament 3."
+        ],
+        "fix": "Special Dye: the 'Special' category of 27 dyes (the Metallic series incl. Gunmetal Black and Pearl White, the Pastel and Dark series, plus Pure White and Jet Black), obtained from Venture Coffers, Cosmic Exploration or The Firmament.",
+        "reason": "The schema has no crafting, dungeon or event acquisition, and 'Special' is a category. The draft's fix leaves out Gunmetal Black and Pearl White, which carry no 'Metallic' prefix, so they are named here.",
+        "also": "",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-025",
+        "verdict": "CONFIRMED",
+        "severity": "MEDIUM",
+        "location": [
+          "docs/superpowers/README.md:24 — \"In progress — PR A (api-worker 0.15.0) open\"",
+          "docs/superpowers/README.md:25 — \"Approved 2026-09-27 — in progress (PRs B–D)\"",
+          "docs/research/index.md:15 — \"Design proposed: Teamcraft files + XIVAPI at build time\""
+        ],
+        "evidence": [
+          "git log main: cfc82df3 \"Merge pull request #207 ... feat/glamour-acquisition\", e24741c6 #208 (glamour-reader), 6982e0d5 #210 (glamour-bot); apps/api-worker/CHANGELOG.md:139 \"## [0.15.0] - 2026-09-27\", :115 \"the acquisition lines, PR #207\"",
+          "docs/superpowers/specs/2026-09-27-glamour-reader-design.md:6 \"implemented 2026-09-27 — web + api-worker #208, og-worker #209, bot #210\"; docs/superpowers/plans/2026-09-27-glamour-reader.md:3 \"executed 2026-09-27 — B #208, C #209, D #210\"",
+          "docs/reference/ffxiv-terminology.md:460 \"Core follows this table\" (buildSheets at packages/core/scripts/build-locales.ts:1061, TERM-021); client terms present in apps/web-app/src/locales/ja.json:1194 \"瞳の輪郭\", zh.json:1196 \"面妆\", packages/bot-logic/src/i18n/locales/ja.json:594 \"瞳の輪郭\""
+        ],
+        "also": "docs/research/index.md:12 \"Not yet applied to core / web-app / bot\"; docs/superpowers/plans/2026-09-27-glamour-acquisition.md:3 \"in progress — Tasks 1–6 done, PR A (api-worker 0.15.0) open\"; docs/superpowers/specs/2026-09-27-glamour-acquisition-design.md:5 \"in progress — PR A (api-worker 0.15.0) open\"",
+        "dropped": "",
+        "fix": "Set the two superpowers README Status cells and the acquisition spec:5 and plan:3 Status lines to Shipped with #207 (and #208–#210 for the web half/Reader). Reword research/index.md:12 and :15 Outcome cells to what shipped. These are Status lines, which docs/CLAUDE.md allows editing in the frozen-body tier.",
+        "reason": "Every PR named merged on main, and the Reader spec/plan already say implemented/executed. The 'spec/plan say implemented' sub-claim holds for the Reader pair only; the acquisition spec/plan are themselves stale locations, added under also. The draft's research lines 10,14 are actually 12 and 15."
+      },
+      {
+        "id": "DOC-026",
+        "verdict": "CONFIRMED",
+        "severity": "MEDIUM",
+        "location": [
+          "docs/specifications/community-presets.md:311 — \"Production: https://presets-api.xivdyetools.workers.dev\"",
+          "docs/specifications/community-presets.md:472 — \"#### POST /api/v1/presets/:id/vote\" (also 504 DELETE …/vote, 519 PATCH …/status, 543 GET …/pending)",
+          "docs/specifications/community-presets.md:337 — \"Results per page (max 100)\""
+        ],
+        "evidence": [
+          "apps/presets-api/wrangler.toml:16 \"workers_dev = false\"; :69-75 production name xivdyetools-presets-api, route \"api.xivdyetools.app\" custom_domain",
+          "apps/presets-api/src/index.ts:256-259 mounts /api/v1/presets, /api/v1/votes, /api/v1/categories, /api/v1/moderation; votes.ts:166/:204 POST/DELETE '/:presetId'; moderation.ts:148 GET '/pending', :161 PATCH '/:presetId/status'",
+          "apps/presets-api/src/handlers/presets.ts:250 limit capped at 50; :1159-1168 submit returns remaining_submissions with 201; :162-203 pending duplicate owned by someone else → bare 409; src/services/rate-limit-service.ts:24,27,30,46 limits 10 submissions, 10 flagged edits, 20 preview uploads, 30 text edits per day"
+        ],
+        "also": "docs/specifications/community-presets.md:450-457 duplicate response with no 201/remaining_submissions; :606-608 \"Automatically add their vote to it\"; :1238 \"Rate limiting (10/day per user)\"; :1246 \"Submit preset | 10 per day per user\"; endpoint list at :324-543 omits shipped routes (presets.ts:282 /mine, :307 /rate-limit, :334 /refresh-author, :410 DELETE /:id, :560 PATCH /:id, :1178/:1380 preview-image, votes.ts:232 /:presetId/check, moderation.ts:258 revert, :471 history, :493 stats, :523/:539 failed-notifications)",
+        "dropped": "",
+        "fix": "Correct the base URL (api.xivdyetools.app), the vote/moderation paths, the 50 cap, the 201 body with remaining_submissions, the duplicate rules (approved → vote, own pending → returned, other pending → 409) and the four daily caps. Or add an 'as shipped' callout linking docs/projects/presets-api/endpoints.md, which already says 1–50 (:92).",
+        "reason": "Every sub-claim matches the source: dead workers.dev URL, wrong vote/moderation mounts, cap 50 not 100, 201 with remaining_submissions, a 409 for another user's pending duplicate, and three more daily caps."
+      },
+      {
+        "id": "DOC-027",
+        "verdict": "CONFIRMED",
+        "severity": "MEDIUM",
+        "location": [
+          "docs/specifications/community-presets.md:316-320 — \"Bot (POST/PATCH/DELETE) | Bearer Token | `Authorization: Bearer <BOT_API_SECRET>`\"",
+          "docs/specifications/community-presets.md:1236 — \"Unauthorized submissions | Bot-only authentication via shared secret\"",
+          "docs/specifications/community-presets.md:1256-1266 — \"wrangler secret put BOT_API_SECRET … MODERATOR_IDS … PERSPECTIVE_API_KEY\""
+        ],
+        "evidence": [
+          "apps/presets-api/src/middleware/auth.ts:269-290 Bearer BOT_API_SECRET matches, but outside development/test bot auth is rejected unless BOT_SIGNING_SECRET is set; :292-341 only a v2 signature is accepted (\"it is now the ONLY accepted signature\"), then isFreshBotNonce gives single-use nonce checking in TOKEN_BLACKLIST (bound in production, wrangler.toml:110-112)",
+          "apps/presets-api/src/middleware/auth.ts:352-377 Method 2: Bearer JWT verified with JWT_SECRET → authSource 'web'; handlers/presets.ts:984-990 POST / needs only requireAuth + requireUserContext, so web users can submit too",
+          "apps/presets-api/src/types.ts:136-155 secrets BOT_API_SECRET, BOT_SIGNING_SECRET, MODERATOR_IDS, PERSPECTIVE_API_KEY, JWT_SECRET, INTERNAL_WEBHOOK_SECRET"
+        ],
+        "also": "docs/specifications/community-presets.md:437-441 submit headers show only \"Authorization: Bearer <BOT_API_SECRET>\" with no signature/timestamp/nonce headers",
+        "dropped": "",
+        "fix": "Rewrite the auth table with a bot row (BOT_API_SECRET bearer plus v2 HMAC signature, timestamp and single-use nonce; required outside dev/test) and a web row (oauth JWT). Fix the 'bot-only' mitigation row. Complete the secret list or point only to environment-variables.md.",
+        "reason": "The source shows that production bot auth needs a v2 HMAC signature and a fresh nonce on top of the bearer secret. Web JWT users can submit, and three more secrets exist that the spec omits."
+      },
+      {
+        "id": "DOC-028",
+        "verdict": "ADJUSTED",
+        "severity": "MEDIUM",
+        "location": [
+          "docs/specifications/community-presets.md:613-627 — \"Multi-Language Profanity Filter … Detect Language (from user locale or content analysis)\"",
+          "docs/specifications/community-presets.md:654 — \"English (en) | `bad-words` npm + custom\"; :756-776 moderateContent(name, description, locale, env); :797-798 \"`franc` npm package for language detection\"",
+          "docs/specifications/community-presets.md:811-815 — \"Auto-Approve Criteria … Passes Perspective API check (if enabled)\""
+        ],
+        "evidence": [
+          "apps/presets-api/src/services/moderation-service.ts:349-354 moderateContent(name, description, env, logger) has no locale parameter; :356 checkLocalFilter(name, description); :104 compiles all six lists into one pattern; `grep bad-words|franc apps/presets-api/package.json` → no match",
+          "apps/presets-api/src/services/moderation-service.ts:369-378 no key configured → passed:false, method 'unscored' (queued); :215-229/:248 a configured key that cannot answer → moderationUnavailable (queued); :266-270 attributes TOXICITY, SEVERE_TOXICITY, INSULT, PROFANITY; :203-214 \"SUNSET 2026-12-31\"",
+          "apps/presets-api/src/data/profanity/en.ts:8-15 holds one entry ('ai slop'); de/fr/ja/ko/zh.ts each hold two anti-AI-slop terms and no profanity"
+        ],
+        "also": "docs/specifications/community-presets.md:641 \"Perspective API ← Optional\"; :695 \"Perspective API (Optional Secondary Filter)\"; :702-741 TOXICITY/SEVERE_TOXICITY only; :804 \"PERSPECTIVE_API_KEY | No\"; :1265 \"Multi-language moderation (optional)\"; :1314 \"Integrate Google Perspective API (optional ML toxicity detection)\"",
+        "dropped": "Do not imply that per-language lists are missing. Six per-language files exist (src/data/profanity/{en,ja,de,fr,ko,zh}.ts), so :1313's '6 languages' is literally true. What is wrong is that the lists are profanity lists selected by locale: they hold only 1–2 anti-AI-slop terms each and are all merged into one pattern.",
+        "fix": "Describe the shipped flow: one merged local list (anti-AI-slop terms in six languages, no locale), then Perspective (INSULT/PROFANITY added). A missing key queues as 'unscored' and an outage queues as unavailable, so nothing auto-approves without a scorer. Note the 2026-12-31 Perspective sunset and label the bad-words/franc/locale design as unshipped.",
+        "reason": "No locale parameter, no bad-words or franc dependency, the no-key/outage fail-closed behavior and the sunset are all confirmed. The draft's wording about per-language lists overstates the gap, because six list files do exist."
+      },
+      {
+        "id": "DOC-029",
+        "verdict": "CONFIRMED",
+        "severity": "MEDIUM",
+        "location": [
+          "docs/specifications/multi-color-extraction.md:119 — \"extractPalette(pixels: RGB[], colorCount: number): RGB[];\"",
+          "docs/specifications/multi-color-extraction.md:129-133 — \"extractAndMatchPalette(pixels: RGB[], colorCount: number, dyeService: DyeService)\"",
+          "docs/specifications/multi-color-extraction.md:216-224 — \"Enhanced `/match_image` Command … [colors:<1-5>] … default: 1\""
+        ],
+        "evidence": [
+          "packages/core/src/services/PaletteService.ts:416 \"extractPalette(pixels: RGB[], options: PaletteExtractionOptions = {}): ExtractedColor[]\"; :554-558 extractAndMatchPalette(pixels, dyeService, options = {})",
+          "apps/discord-worker/src/commands/schemas.ts:363-381 /extractor subcommand 'image' with 'colors' option \"(3-10)\", min_value 3, max_value 10; apps/discord-worker/src/commands/registry.ts:32 registers 'extractor' and has no match_image; handlers/commands/about.ts:65 lists '/match_image' in REMOVED_IN_V5",
+          "git ls-files: packages/svg/src/palette-grid.ts is the renderer (the spec says create src/renderers/palette-grid.ts)"
+        ],
+        "also": "docs/specifications/multi-color-extraction.md:345, :351, :359 \"paletteService.extractPalette(pixels, 3)\"; :395 \"Integrate into Discord bot `/match_image` command\"; :253 \"Create `src/renderers/palette-grid.ts`\". The source has the same stale two-number call shape in its own docblock: packages/core/src/services/PaletteService.ts:16 and :19.",
+        "dropped": "",
+        "fix": "Use the shipped signatures extractPalette(pixels, options): ExtractedColor[] and extractAndMatchPalette(pixels, dyeService, options), and write the tests as extractPalette(pixels, { colorCount: 3 }). Retitle the bot section /extractor image [colors:<3-10>] and point the renderer at packages/svg/src/palette-grid.ts.",
+        "reason": "The spec's positional signatures don't match PaletteService.ts:416/554 and would not compile. /match_image was removed in v5 and replaced by /extractor image with 3–10 colors."
+      },
+      {
+        "id": "DOC-030",
+        "verdict": "CONFIRMED",
+        "severity": "MEDIUM",
+        "location": [
+          "docs/specifications/feature-roadmap.md:174-175 — \"Keyboard shortcut `F` to toggle favorite — never shipped; … the whole shortcut set\"",
+          "docs/specifications/feature-roadmap.md:184 — \"Keyboard shortcut `C` to open the add-to-collection menu — never shipped\"",
+          "docs/specifications/feature-roadmap.md:368 — \"`F` / `C` keyboard shortcuts (web app) | Never shipped\""
+        ],
+        "evidence": [
+          "apps/web-app/src/components/dye-grid.ts:444-460 case 'f'/'F' toggles the favorite on the focused dye (BUG-069 fix); :462-480 case 'c'/'C' opens the add-to-collection menu; wired via :265 keydown → handleKeydown (:381); showFavorites defaults to true (:37); dye-grid also handles Arrow/Home/End/PageUp/PageDown/Enter/Space/Escape",
+          "docs/specifications/collections.md:340-342 lists `F`, `C` and `Ctrl+Shift+C`",
+          "`git grep ctrlKey.*shiftKey apps/web-app/src` → only keyboard-service.ts:125 (a Shift-only check); no Ctrl+Shift+C handler, so Ctrl+Shift+C is the shortcut that never shipped"
+        ],
+        "also": "",
+        "dropped": "",
+        "fix": "Mark F and C as shipped (they act on the focused dye card in the dye grid) and remove the 'whole shortcut set' wording. Replace the Declined row at :368 with Ctrl+Shift+C (collection manager), which never shipped.",
+        "reason": "dye-grid.ts handles F and C on the focused card and is wired to keydown. The 'whole shortcut set' claim is also false because the grid handles navigation keys."
+      },
+      {
+        "id": "DOC-031",
+        "verdict": "CONFIRMED",
+        "severity": "LOW",
+        "location": [
+          "docs/projects/web-app/components.md:49 — \"**Behaviour** (\"Performance Mode\", \"Enable Analytics\"\"",
+          "docs/user-guides/web-app/faq.md:101 — \"Open any tool with a dye picker (Color Harmony, Dye Mixer, ...\"",
+          "docs/user-guides/web-app/budget-suggestions.md:35 — \"What {target}'s colour is worth, line by line.\""
+        ],
+        "evidence": [
+          "apps/web-app/src/locales/en.json:1160 — advanced.behaviorTitle \"Behavior\" (rendered at advanced-options-panel.ts:340); en.json:176 — config.colorWheel \"Color wheel\" (rendered at v4/config-sidebar.ts:1016)",
+          "apps/web-app/src/locales/en.json:41 — tools.harmony.title \"Harmony Explorer\"; the string \"Color Harmony\" appears nowhere in en.json",
+          "apps/web-app/src/locales/en.json:586 — budget.ledgerHead \"What {t}'s color is worth, line by line.\"; :296-297 — marketFailTitle \"Prices unavailable\", marketFailBody \"The market board did not answer. Color matching is unaffected...\""
+        ],
+        "also": "docs/projects/web-app/components.md:47 (**Colour wheel**); docs/user-guides/web-app/faq.md:158 (**Behaviour**); docs/user-guides/web-app/getting-started.md:113 (Color Harmony), :144 (**Behaviour**); docs/user-guides/web-app/favorites-collections.md:87 (Color Harmony); docs/projects/web-app/tools.md:31 (**Colour wheel** select); docs/user-guides/web-app/color-harmony.md:51 (\"Colour matching is unaffected\")",
+        "dropped": "",
+        "fix": "Quote each label exactly as en.json renders it: **Behavior**, **Color wheel**, \"Harmony Explorer\", \"What {target}'s color is worth...\", and \"Prices unavailable — The market board did not answer. Color matching is unaffected...\" at every listed location.",
+        "reason": "Every quoted label or string differs from the en.json value the UI renders: British spellings, and \"Color Harmony\" instead of the actual tool title. Navigation and quoting issue only."
+      },
+      {
+        "id": "DOC-032",
+        "verdict": "CONFIRMED",
+        "severity": "LOW",
+        "location": [
+          "docs/projects/web-app/components.md:48 — \"Hidden for `extractor` and `presets` (`TOOLS_WITHOUT_PALETTE`)\"",
+          "docs/projects/web-app/components.md:23 — \"abstract base for the eight imperative tools\"; ToolId table :60-70 has no `glamour` row",
+          "docs/projects/web-app/overview.md:124 — \"glamour-block.ts   # the Swatch Matcher's .chara views\"; :136 — \"# the ninth tool, Lit\""
+        ],
+        "evidence": [
+          "apps/web-app/src/components/v4/v4-layout-shell.ts:97 — TOOLS_WITHOUT_PALETTE = ['extractor', 'presets', 'glamour']",
+          "apps/web-app/src/components/glamour-tool.ts:29 — `export class GlamourTool extends BaseComponent` (nine BaseComponent tools; overview.md:121 itself already says \"nine of the ten tools\" for the imperative files)",
+          "apps/web-app/src/components/glamour-tool.ts:143 — `import('@components/glamour-block')`; it is the only importer of glamour-block in src (the swatch tool no longer imports it)"
+        ],
+        "also": "docs/user-guides/web-app/getting-started.md:45 (\"all but Palette Extractor and Community Presets\"); docs/user-guides/web-app/favorites-collections.md:34 (\"Not available in Palette Extractor or Community Presets\")",
+        "dropped": "",
+        "fix": "Add glamour to the drawer exclusion lists and a `glamour` | `GlamourTool` | `components/glamour-tool.ts` | BaseComponent row; change to \"nine imperative tools\"; move glamour-block under the Glamour Reader. ROUTES puts presets sixth (router-service.ts:80), so call the preset tool \"the tenth tool component\" or \"the one Lit tool\", not \"the tenth tool\".",
+        "reason": "The source shows the Glamour Reader has no palette drawer, is a BaseComponent tool, and owns glamour-block. All three doc lists predate it."
+      },
+      {
+        "id": "DOC-033",
+        "verdict": "CONFIRMED",
+        "severity": "LOW",
+        "location": [
+          "docs/projects/web-app/components.md:191 — \"reports **JS payload (one locale)** against a 2,200 KB total\"; :197 — \"(1,152 keys per language, parity-validated...)\"",
+          "docs/projects/web-app/theming.md:83-85 — \"consumed by the `.glass-panel` rule in `components/v4/base-lit-component.ts`'s shared `baseStyles`\"",
+          "docs/projects/web-app/overview.md:228 — \"under the `apps/web-app/**` + `packages/{core,types,logger,svg}/**` path filter\""
+        ],
+        "evidence": [
+          "apps/web-app/scripts/check-bundle-size.js:200 — `const PAYLOAD_JS_LIMIT = 2250 * KB;` (:194 \"5.13.0 raises it to 2250 KB\")",
+          "node leaf-key count over apps/web-app/src/locales/{en,ja,de,fr,ko,zh}.json → 1177 each; `git grep glass-panel -- apps/web-app/src` → no hits, while `var(--v4-glass` is read directly in config-sidebar.ts, dye-palette-drawer.ts, v4-layout-shell.ts and four other components",
+          "/.github/workflows/deploy-web-app.yml:6-20 — paths also list pnpm-lock.yaml, pnpm-workspace.yaml, turbo.json, tsconfig.base.json (BUG-153)"
+        ],
+        "also": "",
+        "dropped": "",
+        "fix": "Change to 2,250 KB; drop the key count or say 1,177; say the components read var(--v4-glass-*) directly with no shared .glass-panel rule; add the four root inputs to the production path filter.",
+        "reason": "All four figures disagree with the current source: the bundle limit, the key count, the removed CSS rule and the deploy path filter."
+      },
+      {
+        "id": "DOC-034",
+        "verdict": "CONFIRMED",
+        "severity": "LOW",
+        "location": [
+          "docs/user-guides/web-app/color-harmony.md:70 — \"exclude metallic, pastel, dark, cosmic, coffer, vendor or crafted dyes\"",
+          "docs/user-guides/web-app/dye-mixer.md:49 — \"Exclude metallic, pastel, dark, cosmic, coffer, vendor or crafted dyes\"",
+          "docs/user-guides/web-app/gradient-builder.md:59 — \"exclude metallic, pastel, dark, cosmic, coffer, vendor or crafted dyes\""
+        ],
+        "evidence": [
+          "apps/web-app/src/components/v4/dye-filters-v4.ts:289-370 — nine unconditional <v4-toggle-switch> rows: Metallic, Pastel, Dark, Cosmic, Ishgardian (:321), Expensive (:329), Coffers, VendorDyes, CraftDyes",
+          "apps/web-app/src/locales/en.json:549-550 — \"Exclude Ishgardian Dyes\", \"Exclude Expensive Dyes\""
+        ],
+        "also": "docs/user-guides/web-app/palette-extractor.md:74; docs/user-guides/web-app/swatch-matcher.md:65 (ends in an ellipsis, so it is incomplete rather than wrong)",
+        "dropped": "",
+        "fix": "Add Ishgardian and expensive to each list, or refer generically to \"the Dye Filters toggles\".",
+        "reason": "The panel renders nine toggles with no conditions, and the guides list seven of them. Ishgardian and Expensive are missing."
+      },
+      {
+        "id": "DOC-035",
+        "verdict": "CONFIRMED",
+        "severity": "LOW",
+        "location": [
+          "docs/projects/web-app/components.md:117 — \"VERSION / BUILD / DYES mono cells ..., seven 44 px icon links ..., dev-API disclosure, boxed attribution.\"",
+          "docs/user-guides/web-app/getting-started.md:34 — \"version, build date, dye count, links, and attribution.\""
+        ],
+        "evidence": [
+          "apps/web-app/src/components/about-modal.ts:181 — `container.appendChild(this.createPoliciesRow())`; :429-461 builds links 'about.privacyPolicy' and 'about.termsOfService'",
+          "apps/web-app/src/components/about-modal.ts:90-91 — policyDocFile() returns `<STEM>.<locale>.md` for ja/de/fr/ko/zh, otherwise the English `<STEM>.md`",
+          "apps/web-app/src/locales/en.json:29-31 — policiesLabel \"POLICIES\", privacyPolicy \"Privacy\", termsOfService \"Terms of Service\"; no other web-app src file links PRIVACY/TERMS (git grep)"
+        ],
+        "also": "",
+        "dropped": "",
+        "fix": "Add the POLICIES row to both descriptions: Privacy and Terms of Service links, opening the viewer's-locale version with English fallback. The draft fix's label \"Privacy Guide\" is wrong; the UI label is \"Privacy\".",
+        "reason": "The About modal renders a Policies row, the only in-app link to the policy documents, and neither doc mentions it. I corrected the label in the fix."
+      },
+      {
+        "id": "DOC-036",
+        "verdict": "CONFIRMED",
+        "severity": "LOW",
+        "location": [
+          "docs/user-guides/discord-bot/faq.md:37 — \"Typing at least 2 characters\"",
+          "docs/user-guides/discord-bot/faq.md:126 — \"| 15 | `/extractor color`, `/harmony`, ... `/swatch`, `/stats` |\" (no `/glamour`)",
+          "docs/user-guides/discord-bot/command-reference.md:289 — \"Submit a new community preset (goes to moderation first).\""
+        ],
+        "evidence": [
+          "apps/discord-worker/src/index.ts:1270 — `query.length >= 1 ? searchDyesByName(query, locale) : dyeService.getAllDyes()` (an empty query lists dyes)",
+          "packages/worker-kit/src/rate-limiter/presets/configs.ts:68-103 — no `glamour` key, `default: { maxRequests: 15 }`; apps/discord-worker/src/services/rate-limiter.ts:189-192 adds only `changelog`; /glamour is registered at commands/registry.ts:34",
+          "apps/presets-api/src/handlers/presets.ts:1039 — `status = moderationResult.passed ? 'approved' : 'pending'`, returned as moderation_status at :1164; apps/discord-worker/src/handlers/commands/preset.ts:556-560 shows submittedApproved \"approved and is now live\" when approved"
+        ],
+        "also": "",
+        "dropped": "",
+        "fix": "Change to \"1 character (an empty field lists dyes)\"; add `/glamour` to the 15/min row; reword /preset submit to \"clean submissions go live immediately; flagged ones wait for a moderator\".",
+        "reason": "All three sub-claims are contradicted by code. Autocomplete starts at 1 character, /glamour falls to the default 15/min, and clean submissions are auto-approved."
+      },
+      {
+        "id": "DOC-037",
+        "verdict": "CONFIRMED",
+        "severity": "LOW",
+        "location": [
+          "docs/projects/discord-worker/commands.md:241 — \"plus the 20 Cosmic Exploration dyes\"",
+          "docs/projects/discord-worker/commands.md:489 — \"Default clan for `/swatch`\" (the gender row at 490 has no caveat either)",
+          "docs/projects/discord-worker/overview.md:213 — \"Only `validateEnv` reads it\""
+        ],
+        "evidence": [
+          "apps/discord-worker/src/services/budget/quick-picks.ts:35-175 — 9 Wave 1 plus 7 Wave 2 Cosmic Exploration dyes (16), plus 4 'Cosmic Fortunes' dyes (149-175); apps/discord-worker/src/commands/schemas.ts:715,723 — clan and gender are 'saved with your preferences; no command reads it yet'",
+          "apps/discord-worker/src/index.ts:316 and src/handlers/commands/stats.ts:408 both read env.ENVIRONMENT; src/index.ts:70,1270 — autocomplete calls searchDyesByName from @xivdyetools/bot-logic",
+          "apps/discord-worker/src/index.ts:400,407 — custom_id is previewimg_approve_${payload.preview_image_key}; apps/discord-worker/CHANGELOG.md:121 (in the [5.8.9] section) — the gzipped Worker is 2,717.2 KiB"
+        ],
+        "fix": "commands.md:241 → 16 Cosmic Exploration + 4 Cosmic Fortunes. commands.md:489-490 → 'saved; no command reads it yet'. overview.md:213 → add index.ts and /stats as readers.\ninteractions.md:33 → {previewImageKey}. interactions.md:48 → searchDyesByName from bot-logic. rendering.md:62 → 2,717.2 KiB at 5.8.9, or point to the bundle gate.",
+        "reason": "Every sub-claim matches the source. 20 is the correct total of Cosmic dyes, but 4 of them are Cosmic Fortunes. The ~2,632 KiB figure is the post-split number, written in the present tense.",
+        "also": "docs/projects/discord-worker/interactions.md:33 (previewimg_{presetId}); docs/projects/discord-worker/interactions.md:48 (DyeService.searchByName from core); docs/projects/discord-worker/rendering.md:62 (~2,632 KiB)",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-038",
+        "verdict": "CONFIRMED",
+        "severity": "LOW",
+        "location": [
+          "docs/projects/discord-worker/interactions.md:83-86 — the route table lists only POST /webhooks/preset-submission and POST /webhooks/github",
+          "docs/projects/discord-worker/rendering.md:24-38 — a 13-row generator table ending with \"generatePresetSwatch\", and no generateGlamourCard",
+          "docs/projects/discord-worker/overview.md:11-15 — \"Recent Features\" stops at v5.0.0"
+        ],
+        "evidence": [
+          "apps/discord-worker/src/index.ts:277 — app.get('/health', ...) returns {status:'healthy', service, timestamp}",
+          "packages/svg/src/glamour-card.ts:240 exports generateGlamourCard, called by packages/bot-logic/src/commands/glamour.ts:469 for /glamour (apps/discord-worker/CHANGELOG.md:495, [5.7.0]); the emoji system exists as apps/discord-worker/src/services/emoji.ts, scripts/upload-emojis.ts and .github/workflows/sync-dye-emojis.yml, and git grep -i emoji over docs/projects/discord-worker finds nothing",
+          "\".github/workflows/deploy-discord-worker.yml:78-79 — a 'Check bundle size' step runs check-bundle-size\"; rendering.md:60-62 and overview.md:239 mention only the 3,072 KiB ceiling, not the gate"
+        ],
+        "fix": "Add a GET /health row to interactions.md, a dye-emoji paragraph, a generateGlamourCard row (/glamour) to rendering.md, 5.7.0+ highlights or a CHANGELOG pointer to overview.md, and the check-bundle-size deploy gate under Bundle Size Constraints.",
+        "reason": "Each omission is real. The code is on HEAD, and none of these items appears in docs/projects/discord-worker.",
+        "also": "docs/projects/discord-worker/rendering.md:60-62 (Bundle Size Constraints has no gate)",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-039",
+        "verdict": "CONFIRMED",
+        "severity": "LOW",
+        "location": [
+          "docs/projects/api-worker/endpoints.md:365 — \"Answer per requested slot: { itemId, names ..., alternates[], viaMainHand, acquisition?, retired? }\" (no rules[] and no top-level shape)",
+          "docs/projects/api-worker/endpoints.md:407 — \"Errors are a bare { \\\"error\\\": \\\"...\\\" } object with the upstream status code\"; :415 — \"other upstream statuses forwarded\"",
+          "docs/projects/api-worker/endpoints.md:361 — \"Powers the web app's Swatch Matcher \\\"Dyes on this glamour\\\"\""
+        ],
+        "evidence": [
+          "apps/api-worker/src/chara/types.ts:55 — rules: CharaTwinRules[]; types.ts:87-97 — CharaResolveResponse {version, items, glasses?}; apps/api-worker/src/chara/resolver.ts:42 — MAX_ALTERNATES = 8",
+          "apps/api-worker/src/universalis/router.ts:100-105 — PASSTHROUGH_UPSTREAM_STATUSES = {400,404,429,500,503}, and any other status becomes 502 (applied at 308, 361, 390); apps/web-app/CHANGELOG.md:740 (5.13.0) — 'DYES ON THIS GLAMOUR left the Swatch Matcher' for the Glamour Reader",
+          "apps/api-worker/src/lib/validation.ts:189,209-211,345 — DECIMAL_INTEGER and CANONICAL_DYE_ID give 400 VALIDATION_ERROR; routes/dyes.ts:212-213 (/v1/dyes/:id), routes/harmony.ts:76-77 and chara/router.ts:284-285 (iconId) reject non-canonical spellings"
+        ],
+        "fix": "Add rules[], the {version, items, glasses?} top level and the 8-alternate cap, or link chara.md. State the pass-through set {400,404,429,500,503} and else 502. Name the Glamour Reader.\nAdd a strict-parsing note: leading zeros, signs, exponent forms and trailing characters give 400 VALIDATION_ERROR. /v1/dyes/stain uses the same canonical check but answers INVALID_STAIN_ID.",
+        "reason": "All four sub-claims hold against the source. One nuance: the stain route's strict rejection uses INVALID_STAIN_ID, not VALIDATION_ERROR, so line 143 is correct about the code but omits the spelling rule.",
+        "also": "docs/projects/api-worker/endpoints.md:79-83 (/v1/dyes/:id gives only the range rules, not the 400 for a malformed id); docs/projects/api-worker/endpoints.md:143 (stain: no canonical-spelling rule); docs/projects/api-worker/endpoints.md:369 (icon lists 404/503 only, missing 400 VALIDATION_ERROR)",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-040",
+        "verdict": "CONFIRMED",
+        "severity": "LOW",
+        "location": [
+          "docs/projects/presets-api/database.md:88 — \"the Sprint 5 privacy-policy amendment will publish these periods\" (same at moderation.md:140-141)",
+          "docs/projects/presets-api/database.md:184-197 — the migration table ends at \"0014_add_content_revision.sql\"",
+          "docs/projects/presets-api/overview.md:157-158 — \"action TEXT NOT NULL, -- approve | reject | flag | unflag | requeue | revert | ban | unban | hide | restore\" (no image_approve or image_reject)"
+        ],
+        "evidence": [
+          "apps/presets-api/migrations/0015_rewrite_legacy_dead_letters.sql:1-2 — 'hand-run AFTER the deploy' of presets-api 2.4.0; apps/presets-api/wrangler.toml:125-126 — [env.production.triggers] crons = [\"23 4 * * *\"] runs src/retention-job.ts",
+          "apps/presets-api/src/handlers/moderation.ts:415,429,448 write image_approve/image_reject; rate-limit-service.ts:146 SUBMISSION_EVENT_RETENTION_DAYS = 30; notification-service.ts:198,205 keep failed_notifications 30 days resolved, 90 unresolved",
+          "apps/discord-worker/PRIVACY_POLICY.md:187-190 and apps/web-app/PRIVACY.md:160-173 already publish the periods; apps/moderation-worker/src/services/ban-service.ts:605 — unban sets username = '' and reason = ''"
+        ],
+        "fix": "Add 0015 (hand-run after 2.4.0) to the migration table. Add retention-job.ts and the 23 4 * * * cron to the overview tree, and add image_approve/image_reject to the overview and moderation.md action lists.\nAdd submission_events (30 d) and failed_notifications (30/90 d) rows to the retention table. Change 'will publish' to 'publish'. Say an unban also blanks username and reason.",
+        "reason": "Every sub-claim holds. Note that database.md:81 already lists the two image actions; the lists that lack them are overview.md:157-158 and moderation.md:165.",
+        "also": "docs/projects/presets-api/moderation.md:140-141 ('will publish'); docs/projects/presets-api/moderation.md:144-148 (retention table has no submission_events or failed_notifications rows); docs/projects/presets-api/moderation.md:165 (action list); docs/projects/presets-api/overview.md:61-76 (tree has no retention-job.ts); docs/projects/presets-api/database.md:137 and moderation.md:127 (unban 'closes the row')",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-041",
+        "verdict": "CONFIRMED",
+        "severity": "LOW",
+        "location": [
+          "docs/projects/moderation-worker/overview.md:103-106 — \"types/ ... env.ts, ban.ts, preset.ts\"",
+          "docs/projects/moderation-worker/overview.md:41-45 — bare \"wrangler secret put DISCORD_TOKEN\" ...; then :56 \"run deploy:production\"",
+          "docs/projects/moderation-worker/overview.md:274 — \"**User storage** | Favorites, collections\""
+        ],
+        "evidence": [
+          "git ls-files apps/moderation-worker/src/types → ban.ts, env.ts, modal.ts, preset.ts",
+          "apps/moderation-worker/wrangler.toml:11 — top-level name = \"xivdyetools-moderation-worker-dev\"; :68-69 — [env.production] name = \"xivdyetools-moderation-worker\"; package.json:10 — deploy:production = wrangler deploy --env production",
+          "apps/discord-worker/CHANGELOG.md:1053 — /favorites and /collection deleted in 5.0 along with src/services/user-storage.ts; still present: src/services/preferences.ts and src/services/preset-favorites.ts"
+        ],
+        "fix": "Add types/modal.ts to the tree. Add `wrangler secret put <NAME> --env production` before deploy:production, noting that a bare put targets -dev. Change the storage cell to 'Preferences, preset favorites'.",
+        "reason": "All three sub-claims match the source. As written, the Quick Start sets secrets only on the -dev worker and then deploys production.",
+        "also": "",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-042",
+        "verdict": "CONFIRMED",
+        "severity": "LOW",
+        "location": [
+          "docs/architecture/data-flow.md:109-110 — \"alt Duplicate found / Presets->>Client: 409 Conflict\"",
+          "docs/architecture/api-contracts.md:381-385 — the preview-image error table lists only 400 VALIDATION_ERROR, 403 FORBIDDEN and 415"
+        ],
+        "evidence": [
+          "apps/presets-api/src/handlers/presets.ts:171-205 respondToDuplicate — an approved duplicate gets 200 {success, duplicate, vote_added} after addVote; a pending duplicate shown to its owner or a moderator gets 200 with vote_added: false; anyone else gets a bare 409 DUPLICATE_RESOURCE",
+          "apps/presets-api/src/handlers/presets.ts:1225-1243 — reserveDailyEvent 'preview_upload'; when it is refused, the route answers 429 RATE_LIMITED with remaining: 0 and reset_at",
+          "apps/presets-api/src/services/rate-limit-service.ts:30 — DAILY_PREVIEW_UPLOAD_LIMIT = 20"
+        ],
+        "fix": "Redraw the duplicate branch in data-flow.md as three outcomes: approved → 200 + vote; owner/moderator → 200, no vote; anyone else → 409. Add a 429 RATE_LIMITED row to the preview-image table with the 20-per-UTC-day cap.",
+        "reason": "Both sub-claims are confirmed against presets.ts on HEAD.",
+        "also": "",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-043",
+        "verdict": "CONFIRMED",
+        "severity": "LOW",
+        "location": [
+          "docs/projects/oauth/overview.md:32 — \"npm run deploy\" (in the block headed `# From the monorepo root (xivdyetools/)` at :19)",
+          "docs/projects/oauth/overview.md:22-24 — \"wrangler secret put DISCORD_CLIENT_SECRET / JWT_SECRET\" (no XIVAUTH_CLIENT_SECRET)",
+          "docs/projects/oauth/overview.md:200-204 — \"**Secrets:**\" block, same two secrets only"
+        ],
+        "evidence": [
+          "apps/oauth/src/types.ts:64 — `XIVAUTH_CLIENT_SECRET?: string; // Optional - only needed for confidential client mode`; apps/oauth/wrangler.toml:86 — `# Secrets: DISCORD_CLIENT_SECRET, JWT_SECRET, XIVAUTH_CLIENT_SECRET`",
+          "apps/oauth/src/handlers/xivauth.ts:172-173 — client_secret added to the token exchange only `if (c.env.XIVAUTH_CLIENT_SECRET)`",
+          "`grep -n deploy package.json` → no match (the root has no deploy script); apps/oauth/package.json:10 — `\"deploy\": \"wrangler deploy\"` (bare = production, since there is no [env.production])"
+        ],
+        "fix": "Add `wrangler secret put XIVAUTH_CLIENT_SECRET  # optional, confidential-client mode` to both secret blocks. Replace `npm run deploy` with `pnpm --filter xivdyetools-oauth-worker run deploy` and say it deploys production.",
+        "reason": "Both secret blocks omit the optional third secret, and `npm run deploy` fails from the monorepo root the block says it runs from.",
+        "also": "",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-044",
+        "verdict": "CONFIRMED",
+        "severity": "LOW",
+        "location": [
+          "docs/projects/oauth/endpoints.md:25-30 — GET /auth/discord errors list only code_challenge / method / redirect_uri / 429 (XIVAuth inherits them at :117)",
+          "docs/projects/oauth/endpoints.md:106-108 — \"401 | Token exchange failed / Missing required scope / Invalid user data from Discord\"",
+          "docs/architecture/api-contracts.md:568 — \"| `redirect_uri` | Yes | Frontend callback URL ...\""
+        ],
+        "evidence": [
+          "apps/oauth/src/handlers/oauth-flow.ts:151 — `redirect_uri || ${FRONTEND_URL}/auth/callback` (optional); :168-177 400 `Invalid return_path`; :179-187 400 `Invalid state`",
+          "apps/oauth/src/handlers/callback.ts:178/193/211/229 — 401s `Failed to exchange authorization code`, `Token missing required permissions`, `Failed to fetch user information`, `Invalid user data received`; :278 — 500 `Authentication failed`",
+          "packages/worker-kit/src/rate-limiter/presets/configs.ts:26 — `'/auth/xivauth/callback': { maxRequests: 20, windowMs: 60_000 }`"
+        ],
+        "fix": "Add the return_path / state 400 rows to the authorize errors, and replace the 401 paraphrases with the four real strings plus the 500. Add GET/POST /auth/xivauth/callback at 20/min to the rate table, so the 30/min default note no longer covers them. Set redirect_uri Required to No in api-contracts.md.",
+        "reason": "Every sub-claim matches the source. Because the rate table omits the xivauth callback, the doc's own fallback rule wrongly puts it at 30/min.",
+        "also": "docs/projects/oauth/endpoints.md:249-262 (rate table without the xivauth callback rows, plus the :260 default-30/min sentence)",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-045",
+        "verdict": "ADJUSTED",
+        "severity": "LOW",
+        "location": [
+          "docs/projects/oauth/overview.md:194 — the only database mention: \"Bindings: `DB` (D1 `xivdyetools-users`)\"; there is no Database or migration section in overview.md, endpoints.md, jwt.md or pkce-flow.md"
+        ],
+        "evidence": [
+          "apps/oauth/wrangler.toml:72-74 — `[[d1_databases]]` `database_name = \"xivdyetools-users\"`; apps/oauth/schema/users.sql:14-25 — the single `users` table",
+          "apps/oauth/migrations/0001_drop_xivauth_characters.sql header — \"HAND-RUN. NOT part of any deploy. RUN ONLY AFTER ... oauth 3.0.0 is live\"",
+          "apps/oauth/CLAUDE.md:50-55 (Database Setup commands) and :156-166 (`## Database`: table, indexes, 0001 hand-run via `wrangler d1 execute … --file=`, never `d1 migrations apply`) — a living-tier doc already covers this"
+        ],
+        "fix": "In docs/projects/oauth/overview.md, add a short Database section (one `users` table, fresh-DB `wrangler d1 execute xivdyetools-users --remote --file=./schema/users.sql`, 0001 hand-run via `--file`, never `migrations apply`) or a link to apps/oauth/CLAUDE.md § Database.",
+        "reason": "The claim that no living doc covers this is wrong: apps/oauth/CLAUDE.md, which is in the living tier, documents the schema and the hand-run migration. Only the docs/projects/oauth pages lack it.",
+        "also": "",
+        "dropped": "The claim that \"no living doc describes oauth's users database or its hand-run migration\" is dropped: apps/oauth/CLAUDE.md:50-55 and :156-166 describe both (apps/oauth/CHANGELOG.md:184,208 also give the exact commands). The gap is confined to docs/projects/oauth/."
+      },
+      {
+        "id": "DOC-046",
+        "verdict": "CONFIRMED",
+        "severity": "LOW",
+        "location": [
+          "docs/projects/og-worker/overview.md:302-303 — \"One datapoint per **crawler** hit — human page views produce nothing here\"",
+          "docs/projects/og-worker/overview.md:307 — blobs `[event, tool, crawler]` with \"the detected crawler type\"",
+          "docs/projects/og-worker/overview.md:106-148 — the Routes tables (tool intercepts and /og/* images) have no `/health` or `/` row and no crawler-404 fallthrough row"
+        ],
+        "evidence": [
+          "apps/og-worker/src/index.ts:681-688 — `og_request` written per crawler page hit; :933-937 (and 9 more image routes through :1338) — `og_image_request` with `crawler: 'none'`; the `/og/:tool/default.png` (:888) and `/og/default.png` (:1348) routes write nothing",
+          "apps/og-worker/src/index.ts:508-518 — the /og/* cache middleware returns `hit` before the route handler runs, so cache hits write no datapoint",
+          "apps/og-worker/src/index.ts:566-572 `GET /health`; :1364-1376 `GET /` (crawler embed, else 302 to APP_BASE_URL); :1384-1393 catch-all → crawlers get the fallback embed as a `404` with `no-store`"
+        ],
+        "fix": "Describe both datapoint kinds: og_request per crawler page hit, and og_image_request with crawler 'none' per uncached parameterized image render (cache hits and default cards write nothing). Add an \"Other routes\" table for GET /health, GET / and the crawler 404 no-store fallthrough.",
+        "reason": "The doc describes only crawler-hit datapoints, but most writes are image renders tagged crawler 'none'. /health, / and the crawler 404 appear in no route table.",
+        "also": "",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-047",
+        "verdict": "CONFIRMED",
+        "severity": "LOW",
+        "location": [
+          "docs/projects/core/services.md:137-138 — \"dyeService.getCategories(); // ['Neutral', 'Reds', 'Browns', 'Yellows', ...]\"",
+          "docs/projects/core/algorithms.md:385-391 — \"1. Convert RGB to LMS ... L_simulated = 2.02344 × M - 2.52581 × S\"",
+          "docs/projects/core/services.md:270 — \"LocalizationService.getLabel('metallic');       // TranslationKey\""
+        ],
+        "evidence": [
+          "packages/core/src/services/dye/DyeDatabase.ts:496-504 — `return Array.from(categories).sort()` → ['Blues','Browns','Greens','Neutral','Purples','Reds','Special','Yellows'] (DyeService.ts:141-142 delegates)",
+          "packages/core/src/services/ColorService.ts:63-66 — clearCaches() calls `ColorConverter.clearCaches()` and also `ColorblindnessSimulator.clearCache()`; :71-89 getCacheStats returns 8 keys including `colorblind`",
+          "packages/core/src/services/color/ColorblindnessSimulator.ts:67-84 — multiplies gamma sRGB/255 by `BRETTEL_MATRICES[visionType]` with no LMS step; packages/core/src/services/LocalizationService.ts:349,356 — `getLabel(key: TranslationKey, locale?): string`"
+        ],
+        "fix": "Show the alphabetical getCategories() result. Say clearCaches/getCacheStats cover the seven converter caches plus the colorblind cache (8). Replace the LMS steps and coefficient with \"a 3×3 BRETTEL_MATRICES multiply on gamma-encoded sRGB\" (as :396-398 already says), and comment the getLabel example as `// string`.",
+        "reason": "All four sub-claims contradict the source. algorithms.md:466 (\"ColorConverter builds seven\") is correct; only the ColorService coverage sentences are wrong.",
+        "also": "docs/projects/core/services.md:118 (\"clearCaches() and getCacheStats() cover the seven LRU caches\"); docs/projects/core/algorithms.md:473 (\"ColorService.clearCaches() empties all seven\")",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-048",
+        "verdict": "CONFIRMED",
+        "severity": "LOW",
+        "location": [
+          "docs/projects/core/services.md:212-218 — APIService example shows only getPriceData / getPricesForDataCenter, plus isAPIAvailable / getAPIStatus / clearCache / formatPrice",
+          "docs/projects/types/overview.md:29-158 — Key Types limited to Color / Dye / Preset / Auth and Branded Types; no ErrorCode/AppError, review custom_id grammar, subpath list or README link",
+          "docs/projects/test-utils/overview.md:131-161 — Domain Object Factories with no randomId / randomStringId / nextStringId"
+        ],
+        "evidence": [
+          "packages/core/src/services/APIService.ts:346,352,1060 — `PriceBatchOutcome`, `PriceBatchResult`, `getPricesForDataCenterWithOutcome` (core CHANGELOG.md:78-85, 5.9.0); packages/core/src/index.ts:131-133,184,199,243,294-295 export CONSOLIDATED_DYES, getMarketItemID, parseCharaFile, resolveCharaColors, CHARA_DYEABLE_SLOTS, getFacewearColor(ByLegacyItemID), none of them covered by services.md",
+          "packages/types/package.json exports → 8 subpaths besides '.' (color, dye, character, preset, auth, api, error, localization); packages/types/src/error/codes.ts:14 `enum ErrorCode`, app-error.ts:36 `class AppError`; types CHANGELOG.md:8-15 — 3.3.0 adds the review custom_id grammar (preset/review-custom-id.ts)",
+          "packages/test-utils/src/utils/counters.ts:32,42,52 — `randomId`, `randomStringId`, `nextStringId`, re-exported from the root via utils/index.ts; no hit in the overview or README"
+        ],
+        "fix": "Add short sections: the WithOutcome method and its types, and the .chara / consolidation / Facewear getters, to core services.md (packages/core/README.md lacks WithOutcome and .chara too, so the existing Full-reference link does not cover them). Add ErrorCode/AppError, review custom_id and the subpath list to the types overview, plus a README link. Add the id helpers to the test-utils overview.",
+        "reason": "Every named export exists and is missing from the cited pages, and the six-service and types-scope descriptions are accurate. core services.md and test-utils overview already link their READMEs, so a link alone is not enough for core.",
+        "also": "",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-049",
+        "verdict": "CONFIRMED",
+        "severity": "LOW",
+        "location": [
+          "docs/architecture/dependency-graph.md:135 — \"| **moderation-worker** | types, logger, auth, worker-kit, bot-logic, hono |\" (likewise og-worker :138 and image-worker :141, no workers-types)",
+          "docs/architecture/dependency-graph.md:196 — \"| `hono` | ^4.13.5 | HTTP framework for Workers (floor set by FINDING-001...\"",
+          "docs/architecture/dependency-graph.md:189 — \"| `vite` | ^8.2.2 | Build tool and dev server (devDependency) |\""
+        ],
+        "evidence": [
+          "apps/moderation-worker/package.json:29, apps/og-worker/package.json:23, apps/image-worker/package.json:21 — \"@cloudflare/workers-types\": \"^5.20260925.1\" sits under \"dependencies\" (blocks open at :28 / :22 / :19)",
+          "`grep '\"hono\"' apps/*/package.json` returns \"hono\": \"^4.13.9\" in all seven CF workers (e.g. apps/discord-worker/package.json:35, apps/image-worker/package.json:23)",
+          "apps/web-app/package.json:50 — \"vite\": \"^8.3.1\""
+        ],
+        "fix": "Add @cloudflare/workers-types to the three runtime-deps rows, or move it to devDependencies in those manifests. Update the hono/vite ranges, or drop the pinned ranges and point to the manifests.",
+        "reason": "Every sub-claim checks out against the manifests, and the draft line numbers are exact.",
+        "also": "docs/architecture/dependency-graph.md:138, docs/architecture/dependency-graph.md:141, docs/architecture/dependency-graph.md:209, docs/architecture/dependency-graph.md:216",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-050",
+        "verdict": "CONFIRMED",
+        "severity": "LOW",
+        "location": [
+          "docs/architecture/overview.md:471 — \"| Presets API | OAuth Worker | JWT verification (shared secret) |\"",
+          "docs/architecture/service-bindings.md:256 — \"└── Called by: Web app, Presets API (for JWT verification)\""
+        ],
+        "evidence": [
+          "apps/presets-api/src/middleware/auth.ts:93-108 — verifyJWT verifies locally with env.JWT_SECRET through sharedVerifyJWT (HS256, optional issuer pin), then checks the jti against env.TOKEN_BLACKLIST",
+          "apps/presets-api/wrangler.toml:27-37,42 — the only [[services]] bindings are DISCORD_WORKER and IMAGE_WORKER; TOKEN_BLACKLIST is a KV binding (oauth's namespace)",
+          "`git grep -n -i oauth -- apps/presets-api/src` (non-test) shows only comments and types, with no fetch or binding to the oauth worker"
+        ],
+        "fix": "Drop the Presets API -> OAuth Worker row and change line 256 to 'Called by: Web app'. Note that presets-api shares JWT_SECRET and the TOKEN_BLACKLIST KV namespace with oauth but makes no call to it.",
+        "reason": "presets-api verifies JWTs in-process and never calls oauth, so the REST-call row and 'Called by' entry are wrong (the '(shared secret)' wording only partly softens it).",
+        "also": "",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-051",
+        "verdict": "CONFIRMED",
+        "severity": "LOW",
+        "location": [
+          "docs/architecture/overview.md:30 — \"10 interactive tools,<br/>Light + Dark, PWA,<br/>Vite + Lit\"",
+          "docs/projects/index.md:41 — \"│ Light + Dark, PWA    │\""
+        ],
+        "evidence": [
+          "docs/projects/web-app/overview.md:172-178 — \"Installable, but not offline\": manifest only, \"No service worker and no offline cache\"; the v3 service-worker.js was deleted 2026-08-16",
+          "`git ls-files apps/web-app | grep -i 'manifest|sw.|service-worker|workbox'` returns only apps/web-app/public/manifest.json",
+          "`git grep -i 'serviceWorker|vite-plugin-pwa|workbox' -- apps/web-app` returns no hits"
+        ],
+        "fix": "Replace 'PWA' with 'installable' in both diagrams.",
+        "reason": "The web app has a manifest but no service worker, so calling it a PWA overstates it. The project's own overview says so.",
+        "also": "",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-052",
+        "verdict": "CONFIRMED",
+        "severity": "LOW",
+        "location": [
+          "docs/developer-guides/environment-variables.md:65 — \"`ENVIRONMENT` gates exactly one behaviour: `validateEnv` ...\"",
+          "docs/developer-guides/environment-variables.md:75 — \"| `INTERNAL_WEBHOOK_SECRET` | No | Webhook authentication |\" (no length rule; same gap at :196 for presets-api)",
+          "docs/operations/SECRET_ROTATION.md:45 — \"| `INTERNAL_WEBHOOK_SECRET` | presets-api → discord-worker ... | shared HMAC key |\""
+        ],
+        "evidence": [
+          "apps/discord-worker/src/index.ts:315-322 — if ENVIRONMENT === 'production' and the secret is shorter than MIN_WEBHOOK_SECRET_LENGTH, the webhook answers 503 'Webhook misconfigured'. This is a second ENVIRONMENT gate outside validateEnv (env-validation.ts:136-148 records it as a deliberately non-fatal error)",
+          "apps/presets-api/src/utils/env-validation.ts:148-156 — a missing secret is a production error, but a short one only triggers warnings.push (never makes valid false)",
+          "apps/discord-worker/src/index.ts:298,325 — expectedAuth = `Bearer ${env.INTERNAL_WEBHOOK_SECRET}`, compared with timingSafeEqual (a bearer secret, not an HMAC key); presets-api sends it as an Authorization Bearer header at notification-service.ts:279"
+        ],
+        "fix": "In environment-variables.md:65, name both ENVIRONMENT gates (validateEnv plus the webhook length check). On :75 and :196 add 'min. 32 chars in production (discord-worker answers 503 on the webhook, presets-api only warns)'. In SECRET_ROTATION.md:45, change 'shared HMAC key' to 'shared bearer secret (≥ 32 chars in prod)'.",
+        "reason": "The source confirms all three sub-claims: a second production gate, the undocumented 32-character floor with asymmetric enforcement, and bearer rather than HMAC usage.",
+        "also": "docs/developer-guides/environment-variables.md:196, docs/developer-guides/environment-variables.md:397",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-053",
+        "verdict": "ADJUSTED",
+        "severity": "LOW",
+        "location": [
+          "docs/developer-guides/contributing.md:107 — \"`.github/workflows/ci.yml` (lint, type-check, test, build, production-dependency audit, E2E) runs\"",
+          "docs/developer-guides/contributing.md:144 — \"- [ ] `pnpm turbo run lint type-check test build` passes for the affected projects\""
+        ],
+        "evidence": [
+          "`.github/workflows/ci.yml` also runs: Wrangler config invariants (:192), `pnpm type-check:scripts` (:238), `pnpm test:scripts` (:241), `pnpm dead-code:check` (:244), `pnpm docs:check-versions` (:252), `pnpm docs:check-links` (:259), check-bundle-size (:281), `pnpm workers:check-logs` (:294, 'Workers Logs pinned off (all workers)')",
+          "package.json:16 — \"workers:check-logs\": \"tsx scripts/check-worker-logs.ts\"",
+          "`git grep -n check-logs -- docs ':!docs/audits'` returns no hits, so no living doc under docs/ describes that gate (FINDING-022 appears only in versions.md release notes)"
+        ],
+        "fix": "Extend the contributing.md:107 CI description to list the repo-wide gates. Make the :144 checklist item the root pre-commit command (gate + test:scripts + dead-code:check + docs:check-versions + docs:check-links + workers:check-logs), and briefly describe workers:check-logs.",
+        "reason": "Both contributing.md omissions hold against ci.yml. The docs/CLAUDE.md location is not itself inaccurate.",
+        "also": "docs/CLAUDE.md:119-125 (the 'Documentation Gates' block could gain workers:check-logs, but this is optional)",
+        "dropped": "The docs/CLAUDE.md:119-125 location was dropped as a defect. That block is titled 'Documentation Gates' and accurately lists the two docs gates plus test:scripts. It does not claim to be a full CI list, so omitting workers:check-logs there is not an error."
+      },
+      {
+        "id": "DOC-054",
+        "verdict": "CONFIRMED",
+        "severity": "LOW",
+        "location": [
+          "docs/developer-guides/deployment.md:116 — \"deploy (`deploy-discord-worker.yml:81-83`, `deploy-moderation-worker.yml:74-76`).\""
+        ],
+        "evidence": [
+          ".github/workflows/deploy-discord-worker.yml:90-92 — '- name: Register Discord commands' / working-directory apps/discord-worker / run: pnpm run register-commands (lines 81-83 are now the 'Deploy to Cloudflare' wrangler-action step)",
+          ".github/workflows/deploy-moderation-worker.yml:83-85 — '- name: Register Discord commands' / apps/moderation-worker / pnpm run register-commands (lines 74-76 are now 'packageManager: pnpm' and a comment)"
+        ],
+        "fix": "Cite the step by name ('Register Discord commands' in each workflow) rather than by line numbers.",
+        "reason": "The cited ranges point at other steps. The real steps are at :90-92 and :83-85, as the draft says.",
+        "also": "",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-055",
+        "verdict": "CONFIRMED",
+        "severity": "LOW",
+        "location": [
+          "docs/developer-guides/testing.md:7 — \"~480 test files across the monorepo\"",
+          "docs/developer-guides/testing.md:6 — \"per-package thresholds (typically 80%+)\"",
+          "docs/maintainer/index.md:109 — \"| Test coverage | Core library | Increase from 85% to 90% |\""
+        ],
+        "evidence": [
+          "`git ls-files | grep -E '\\.(test|spec)\\.(ts|tsx|js|mjs)$' | wc -l` gives 571 tracked test/spec files (4 of them are font-/item-name-coverage tests, not coverage output)",
+          "packages/core/vitest.config.ts:23-28: thresholds lines/functions/branches/statements all set to 90, as are the other seven packages' vitest configs",
+          "apps/*/vitest.config.ts: apps range from 65 (web-app branches, apps/web-app/vitest.config.ts:79) to 90 (api-worker, moderation-worker, oauth)"
+        ],
+        "fix": "Drop the count or say ~570. Replace 'typically 80%+' with 'packages 90% on all four metrics, apps 65-90%'. Remove the core-coverage row from maintainer/index.md, since the 90% threshold is already enforced.",
+        "reason": "All three statements disagree with the tracked tree and the vitest configs. These are minor maintainer facts.",
+        "also": "",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-056",
+        "verdict": "CONFIRMED",
+        "severity": "LOW",
+        "location": [
+          "docs/maintainer/adding-dyes.md:233 — \"\\\"stainID\\\": 38,\" (in the Soot Black sample)",
+          "docs/maintainer/adding-dyes.md:158 — \"FFXIV doesn't expose dye RGB values in its data files\"",
+          "docs/maintainer/adding-dyes.md:160 — \"Method: Visual Color Picking from Lodestone\""
+        ],
+        "evidence": [
+          "packages/core/src/data/dyes.json:48-49: Soot Black has \"stainID\": 6; dyes.json:336-337 shows stainID 38 is Millioncorn Yellow",
+          "docs/maintainer/adding-dyes.md:47: the same doc says the Stain sheet gives the stainID, name, packed BGR color and gloss flag",
+          "docs/maintainer/adding-dyes.md:24 and 30-31: hex is \"the single colour source of truth\", and the HSV and other formats are derived at initialize()"
+        ],
+        "fix": "Change the sample to \"stainID\": 6. Rewrite Step 2 around the Stain sheet's packed BGR color converted to hex. Keep Lodestone sampling only as a fallback, and delete the hand HSV conversion (lines 171-190), since HSV is derived.",
+        "reason": "The sample stainID is wrong per dyes.json. Step 2 contradicts the doc's own game-data and schema-v2 sections.",
+        "also": "docs/maintainer/adding-dyes.md:66 — \"RGB/HSV values for the actual dye color\"; docs/maintainer/adding-dyes.md:171-173 — \"Converting to HSV\"; docs/maintainer/adding-dyes.md:404 — Lodestone listed for \"Color sampling\"",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-057",
+        "verdict": "CONFIRMED",
+        "severity": "LOW",
+        "location": [
+          "docs/developer-guides/troubleshooting.md:198 — \"how to get useful structured logs out of a worker\"",
+          "docs/developer-guides/logging-standards.md:103 — \"## Current Package Status\" (first)",
+          "docs/developer-guides/logging-standards.md:109 — \"## Current Package Status\" (duplicate; table lists only core, logger, types, test-utils)"
+        ],
+        "evidence": [
+          "apps/*/wrangler.toml: every worker pins `[observability]` `enabled = false` (e.g. apps/api-worker/wrangler.toml:99-100, apps/discord-worker/wrangler.toml:103-104), and six have `[env.production.observability]` too",
+          "scripts/check-worker-logs.ts:6-22: the `workers:check-logs` gate (package.json:16) requires observability disabled and forbids Logpush and tail consumers",
+          "apps/moderation-worker/src/index.ts:126: \"Workers Logs are off on this script\"; `grep -i 'observability|workers logs|tail' docs/developer-guides/logging-standards.md` finds only the generic word 'observability' at lines 3 and 8"
+        ],
+        "fix": "State in logging-standards.md that Workers Logs, Logpush and tail consumers are disabled by policy, so logs show up only in a live `wrangler tail`. Reword the troubleshooting link to match. Merge the two 'Current Package Status' sections and add svg, bot-logic, worker-kit and auth to the table.",
+        "reason": "The doc never mentions that log retention is off by policy. It repeats a heading, and its status table is missing four packages.",
+        "also": "",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-058",
+        "verdict": "CONFIRMED",
+        "severity": "LOW",
+        "location": [
+          "docs/operations/OPEN_ITEMS.md:150 — \"the moderation-worker side follows in Sprint 4\"",
+          "docs/operations/OPEN_ITEMS.md:3 — \"living list, last walked 2026-09-05\"",
+          "docs/operations/OPEN_ITEMS.md:168 — \"only because of two scoped overrides (FINDING-036)\""
+        ],
+        "evidence": [
+          "apps/moderation-worker/CHANGELOG.md:73-75 and 103: [1.8.0] - 2026-10-04, Sprint 4, \"Bans follow XIVAuth identities (FINDING-014)\"; the package is now at 1.8.2",
+          "pnpm-workspace.yaml overrides: three scoped overrides, 'vitepress>vite', 'tsup>esbuild' (FINDING-036) and 'miniflare>undici' (FINDING-025). `git log -- docs/operations/OPEN_ITEMS.md` shows edits through 2026-10-05",
+          "apps/discord-worker/src/services/rate-limiter.ts:254: the only emitted warning reads 'Rate limiter using KV fallback: ...', and `git grep` finds no 'KV rate limiter fallback' string. apps/oauth/wrangler.toml:6-8 and apps/discord-worker/wrangler.toml:125-127 show the projectgalatine route lines already removed"
+        ],
+        "fix": "Mark cross-identity bans as shipped (moderation-worker 1.8.0, 2026-10-04) and update the 'last walked' date. Change line 94 to past tense ('the route lines left with...'). Change line 116 to grep for 'Rate limiter using KV fallback'. Say three scoped overrides, with FINDING-036 and FINDING-025.",
+        "reason": "Each stale line was checked against a CHANGELOG, a source file, a wrangler config or pnpm-workspace.yaml.",
+        "also": "docs/operations/OPEN_ITEMS.md:94 — \"route lines leave with the 2026-10-03 security audit batch\"; docs/operations/OPEN_ITEMS.md:116 — \"`KV rate limiter fallback` warning\"",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-059",
+        "verdict": "CONFIRMED",
+        "severity": "LOW",
+        "location": [
+          "docs/operations/DEPLOY_ENVIRONMENTS.md:80-81 — \"all three beta deploys fail ... That is true right now\"",
+          "docs/operations/DEPLOY_ENVIRONMENTS.md:20 — \"shared D1 and shared `PRESETS_API` / `UNIVERSALIS_PROXY`\"",
+          "docs/operations/DEPLOY_ENVIRONMENTS.md:27 — \"`pnpm --filter xivdyetools-og-worker deploy`\""
+        ],
+        "evidence": [
+          "docs/operations/OPEN_ITEMS.md:52-53: the `beta` environment exists with CLOUDFLARE_API_TOKEN_BETA, and the three beta deploy workflows succeed (green 2026-09-05)",
+          "apps/discord-worker/wrangler.toml:29-38 and 153-162: only `[[services]]` PRESETS_API / UNIVERSALIS_PROXY / IMAGE_WORKER bindings and no d1_databases; apps/discord-worker/CHANGELOG.md:1129 (DEAD-007) deleted the D1 block from both environments",
+          "`pnpm help deploy` (pnpm 11.17.0): \"Usage: pnpm --filter=<deployed project name> deploy <target directory>\". `deploy` is a built-in, so the package script (apps/og-worker/package.json:9) needs `run deploy`"
+        ],
+        "fix": "Put the beta-token sentence in the past tense ('until the environment existed, which it has since 2026-09-05'). Replace 'shared D1' with 'shared PRESETS_API / UNIVERSALIS_PROXY / IMAGE_WORKER service bindings (no D1 binding)', also in the 238 and 258 rows. Use `pnpm --filter xivdyetools-og-worker run deploy`.",
+        "reason": "All three sub-claims hold against OPEN_ITEMS, the discord-worker wrangler.toml and pnpm's built-in help.",
+        "also": "docs/operations/DEPLOY_ENVIRONMENTS.md:238 — \"| D1 / `PRESETS_API` binding | live | **live (shared)** |\"; docs/operations/DEPLOY_ENVIRONMENTS.md:258 — \"live D1 + presets-api\"; docs/operations/DEPLOY_ENVIRONMENTS.md:428 — \"the beta bot shares production D1\"",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-060",
+        "verdict": "CONFIRMED",
+        "severity": "LOW",
+        "location": [
+          "docs/operations/security-remediation-2026-09-15.md:3 — \"The procedure below supersedes the earlier partial-merge procedure\" (no Status line, present-tense runbook)",
+          "docs/operations/security-remediation-2026-09-15.md:40 — \"Record the current enabled/disabled state of all eleven deployment workflows ... then disable them\"",
+          "docs/operations/index.md:9 — \"Migration 0014, independent auth/bot/API/OG rollouts, and acceptance checks\""
+        ],
+        "evidence": [
+          "packages/auth/package.json:3 has version 2.0.2 (npm == local) and apps/presets-api/package.json:3 has 2.6.1, past the 2.3.2 this procedure gates, so the rollout has been executed",
+          "apps/presets-api/CHANGELOG.md:101 and 106-107: [2.4.0] - 2026-10-04, \"one hand-run data migration (`0015`) is **required** in the same window\"; CHANGELOG.md:200 gives the `wrangler d1 execute ... --file=migrations/0015_rewrite_legacy_dead_letters.sql` command",
+          "`git grep -n 0015 -- docs/operations docs/developer-guides/contributing.md` returns nothing, so no operations page records whether 0015 was applied"
+        ],
+        "fix": "Add 'Status: executed 2026-09-15, kept as the rollout record' under the title, and reword the index row as a record. Add an OPEN_ITEMS checkbox to confirm that presets-api 0015 was applied in production. Do not fold 0015 into this page, which covers a different rollout.",
+        "reason": "The page reads as a live procedure for a rollout that has already shipped. 0015 is a 2026-10-03 batch step that no operations page tracks; the draft cited index.md:11, but the row is on line 9.",
+        "also": "",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-061",
+        "verdict": "CONFIRMED",
+        "severity": "LOW",
+        "location": [
+          "docs/operations/SECRET_ROTATION.md:4 — \"**Last updated:** August 21, 2026 (2026-08-21 security audit, FINDING-010 — full rewrite)\"",
+          "docs/operations/SECRET_ROTATION.md:170 — \"5. Write the incident up in `docs/incidents/`.\""
+        ],
+        "evidence": [
+          "`git log -3 -- docs/operations/SECRET_ROTATION.md` → 60f5d35c 2026-10-03 (INTERNAL_WEBHOOK_SECRET rotation logged), 3a158847 2026-10-04 (secrets docs, Sprint 11), e815a51c 2026-10-05 (merge)",
+          "`git ls-files docs/incidents` → empty; `ls docs` shows no incidents/ directory"
+        ],
+        "fix": "Bump the Last updated date to the latest substantive edit (2026-10-04). Point step 5 at an existing home (for example the dated audit/rotation log already used) or create docs/incidents/ with a README.",
+        "reason": "Both sub-claims hold: the file was edited 2026-10-03..05 after the stated Aug 21 date, and docs/incidents/ has no tracked files.",
+        "also": "",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-062",
+        "verdict": "CONFIRMED",
+        "severity": "LOW",
+        "location": [
+          "docs/operations/DOMAIN_DEPRECATION.md:52 — \"`apps/presets-api/wrangler.toml:64` | `ADDITIONAL_CORS_ORIGINS` — retire only the `xivdyetools.projectgalatine.com` entry\" (row not struck)",
+          "docs/operations/DOMAIN_DEPRECATION.md:175 — \"(`apps/oauth/wrangler.toml:17, 50`)\"; :147 — \"`Invalid signature` (`discord.ts:134`)\"",
+          "docs/operations/DOMAIN_DEPRECATION.md:284-287 — \"Production deploys are deliberately paused until the `monorepo-2.0-prep` branch merges to `main`\""
+        ],
+        "evidence": [
+          "apps/oauth/wrangler.toml:19 and :61 — DISCORD_CLIENT_ID = \"1447108133020369048\" (not 17/50); packages/auth/src/discord.ts:152 — error: 'Invalid signature' (not 134)",
+          "apps/presets-api/wrangler.toml:76 — ADDITIONAL_CORS_ORIGINS = \"https://xiv-colorexplorer.pages.dev,https://beta.xivdyetools.app\" (old entry already gone; file is 76+ lines, :64 is the [observability] comment); presets-api CHANGELOG.md:101 [2.4.0] 2026-10-04, package now 2.6.1",
+          "`git log --merges --grep=monorepo-2.0-prep` → 2790344a 2026-08-28 Merge pull request #123 from monorepo-2.0-prep; apps/oauth/src/constants/oauth.ts:14 — ALLOWED_REDIRECT_ORIGINS"
+        ],
+        "fix": "Replace line-number citations with symbol names (DISCORD_CLIENT_ID, 'Invalid signature', ADDITIONAL_CORS_ORIGINS, ALLOWED_REDIRECT_ORIGINS). Strike the line-52 row as done in presets-api 2.4.0. Rewrite the 'Sequencing against the 5.0 release' section in past tense (5.0 merged 2026-08-28) or delete it.",
+        "reason": "Every cited line is stale against current source, the presets-api row is finished but unstruck, and the deploy pause ended with PR #123 on 2026-08-28.",
+        "also": "docs/operations/DOMAIN_DEPRECATION.md:195 (oauth.ts:17, the removed entry's former line), docs/operations/DOMAIN_DEPRECATION.md:197 (presets-api wrangler.toml:64)",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-063",
+        "verdict": "CONFIRMED",
+        "severity": "LOW",
+        "location": [
+          "docs/versions.md:5 — \"*Last Updated: October 6, 2026*\"",
+          "docs/versions.md:9-12 — \"`@xivdyetools/logger` 2.3.0 and `@xivdyetools/worker-kit` 1.5.0 on this branch are ahead of npm (2.2.1, 1.4.1) and await publication\"",
+          "docs/versions.md:679 — \"| Web App v5.12.6+ | @xivdyetools/core v5.7.0+ |\" (top web-app row of the Compatibility Matrix, :666)"
+        ],
+        "evidence": [
+          "`npm view @xivdyetools/logger version` → 2.3.0; `npm view @xivdyetools/worker-kit version` → 1.5.0 (both at parity with packages/*/package.json:3)",
+          "`git log -2 -- docs/versions.md` → d8cd25fc / d99e5e10, both 2026-10-09",
+          "docs/versions.md:125 — web-app v5.14.8 'core 5.9.0'; docs/versions.md:123 — v5.14.10 'Core 5.10.0'; packages/core/package.json:3 = 5.10.0, matrix rows top out at core v5.7.0+"
+        ],
+        "fix": "Drop the 'ahead of npm / await publication' sentence (all packages at parity). Update the Last Updated date. Add Compatibility Matrix rows for web-app 5.14.8+ (core 5.9.0+) and 5.14.10+ (core 5.10.0+), plus any worker rows that likewise moved.",
+        "reason": "npm now serves logger 2.3.0 and worker-kit 1.5.0, the file changed 2026-10-09, and the file's own history rows name core 5.9.0/5.10.0 minimums the matrix omits.",
+        "also": "",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-064",
+        "verdict": "CONFIRMED",
+        "severity": "LOW",
+        "location": [
+          "docs/user-guides/index.md:33 — \"**Community Presets** (app title: *Preset Palettes*)\""
+        ],
+        "evidence": [
+          "apps/web-app/src/locales/en.json:71 — \"title\": \"Community Presets\" (tools.presets.title)",
+          "apps/web-app/CHANGELOG.md:861,865 — [5.12.4] 2026-09-21: \"The presets tool is titled \\\"Community Presets\\\" in all six languages\" (resolves DOC-015)",
+          "`git log -S'Preset Palettes' -- apps/web-app/src/locales/en.json` → 7ce6830c 2026-09-21 feat(web-app): title the presets tool \"Community Presets\" (DOC-015)"
+        ],
+        "fix": "Drop the bracketed '(app title: Preset Palettes)' note.",
+        "reason": "The app title has been 'Community Presets' since web-app 5.12.4; the note describes the pre-fix state.",
+        "also": "",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-065",
+        "verdict": "CONFIRMED",
+        "severity": "LOW",
+        "location": [
+          "docs/reference/ffxiv-terminology.md:35 — \"| 13116 | Metallic Silver | メタリックシルバー |\""
+        ],
+        "evidence": [
+          "packages/core/dyenames.csv:89 — 13116,Metallic Silver ,シャインシルバー,...",
+          "packages/core/src/data/locales/ja.json:105 — \"13116\": \"シャインシルバー\"",
+          "`git grep メタリックシルバー` → only the doc and a mock in packages/core/src/services/localization/__tests__/TranslationProvider.test.ts:115 (test fixture, not data)"
+        ],
+        "fix": "Change the JA cell for 13116 to シャインシルバー.",
+        "reason": "Both source-of-truth files give シャインシルバー; the doc value appears nowhere in shipped data.",
+        "also": "",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-066",
+        "verdict": "CONFIRMED",
+        "severity": "LOW",
+        "location": [
+          "docs/reference/glossary.md:5 — \"official in-game terms (dye names, races, jobs, currencies)\"",
+          "docs/reference/glossary.md:105 — \"## XIV Dye Tools (v4)\" (tool entries at :107, :116, :122, :125, :128 — five tools)",
+          "docs/reference/glossary.md:91 — \"### Marketboard\"; :101 — \"real-time FFXIV marketboard prices\""
+        ],
+        "evidence": [
+          "docs/reference/ffxiv-terminology.md:532 — \"There is **no** `jobNames` or `grandCompanyNames` section\" (no Jobs heading in the file)",
+          "apps/web-app/src/components/v4/v4-app-header.ts:54-65 — TOOL_MENU lists ten tools: harmony, extractor, accessibility, comparison, gradient, mixer, presets, budget, swatch, glamour",
+          "docs/reference/ffxiv-terminology.md:287 — the Market and Server Terms table fixes EN \"Market Board\""
+        ],
+        "fix": "Drop 'jobs' from the line-5 pointer. Retitle the section 'Web app tools' and cover all ten tools (or link the tool list). Use 'Market Board' in the heading and in the Universalis entry.",
+        "reason": "The terminology reference has no jobs section, the glossary covers five of ten tools under a v4 heading, and the pinned EN term is 'Market Board'.",
+        "also": "",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-067",
+        "verdict": "CONFIRMED",
+        "severity": "LOW",
+        "location": [
+          "docs/index.md:198 — \"*Last updated: September 5, 2026*\"",
+          "docs/index.md:200 — \"### September 2026 Highlights\" (newest block; nothing for October)",
+          "docs/index.md:225 — \"Show all pieces\" in the Swatch Matcher's glamour block (the only glamour mention; the Glamour Reader tool is never named)"
+        ],
+        "evidence": [
+          "docs/versions.md:138 — \"v5.13.0 | Sep 2026 | The Glamour Reader, tenth tool (`/glamour`, key 0)\" (apps/web-app/CHANGELOG.md:681 dates it 2026-09-28, after the index cutoff)",
+          "docs/versions.md:26 and :120-133 — web-app v5.15.0; 5.14.x rows for the 2026-10-04 remediation sprints (apps/web-app/package.json:3 = 5.15.0)",
+          "docs/versions.md:42,72 — core v5.10.0, Oct 2026, 2026-10-04 remediation Sprint 13 (packages/core/package.json:3 = 5.10.0)"
+        ],
+        "fix": "Add an October 2026 block (Glamour Reader 5.13.0, web-app 5.14.x-5.15.0, core 5.10.0, the 2026-10-04 remediation) and bump the date, or replace the section with a pointer to versions.md and the changelogs.",
+        "reason": "The index's newest entry is dated 2026-09-05. Web-app 5.13.0 (Glamour Reader, 2026-09-28) and every October release in versions.md are missing.",
+        "also": "",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-068",
+        "verdict": "ADJUSTED",
+        "severity": "LOW",
+        "location": [
+          "docs/specifications/community-presets.md:1318 — \"- [x] Add DM notifications to bot owner\"",
+          "docs/specifications/community-presets.md:80 — \"-- As shipped: apps/presets-api/schema.sql plus migrations 0002-0013.\" (presets table :112-138 has no content_revision; action list :173-174 has no image_approve/image_reject)",
+          "docs/specifications/community-presets.md:1300 — \"Add autocomplete for dye selection (5 slots)\""
+        ],
+        "evidence": [
+          "apps/presets-api/migrations/0014_add_content_revision.sql:3,5 — adds content_revision plus trigger presets_content_revision_after_update; 0015_rewrite_legacy_dead_letters.sql also exists; apps/presets-api/schema.sql:57,64,142 — content_revision, trigger, and actions \"... | image_approve | image_reject\"",
+          "packages/types/src/preset/community.ts:37,126 — CommunityPreset and PresetSubmission live in @xivdyetools/types (web-app community-preset-service.ts:9 imports them from there); apps/web-app/src/services/preset-submission-service.ts:295,440,482 — submitPreset / deletePreset / editPreset ship",
+          "docs/specifications/community-presets.md:976 and :996-1001 — the same file lists dye1-dye6; :871-876 say the webhook/DM path was deleted 2026-09-01 (DEAD-009). No OWNER_DISCORD_ID or DM code exists in presets-api or discord-worker"
+        ],
+        "fix": "Untick :1318 (mark the DM item removed); change :1300 to 6 slots; extend :80 to 0015 and add content_revision plus image_approve/image_reject to the schema excerpt. Point :5 and :1356 at @xivdyetools/types. Mark the web UI mock (:1111-1150) and 'Web App Submissions' (:1364) as design-era or shipped.",
+        "reason": "Most sub-claims check out against the migrations, schema.sql, packages/types and web-app services. One sub-claim is wrong: the moderation-channel notification tick is accurate, because presets-api does notify that channel through discord-worker.",
+        "also": "docs/specifications/community-presets.md:5 (\"Types defined locally in each consumer\"); :1356 (\"xivdyetools-core/src/types/index.ts | Add community types\"); :1129,:1135 (mock shows the dropped '👥 Community' category); :1146 (\"Use the /submit-palette command on Discord!\"); :1364 (\"Web App Submissions - Add Discord OAuth to enable web-based submissions\")",
+        "dropped": "Dropped: the claim that the :1317 tick (\"Add webhook notifications to moderation channel\") is false. Moderation-channel notifications do ship. presets-api's notification-service.ts calls discord-worker's /webhooks/preset-submission, and apps/discord-worker/src/handlers/commands/preset-notifications.ts:292-298 posts to MODERATION_CHANNEL_ID. Only the DM-to-owner item is false. Also, the draft cited :80 for the '5 dye slots' claim, but that text is at :1300."
+      },
+      {
+        "id": "DOC-069",
+        "verdict": "ADJUSTED",
+        "severity": "LOW",
+        "location": [
+          "docs/specifications/community-presets.md:1330-1356 — \"`xivdyetools-worker/...`\", \"`xivdyetools-discord-bot/src/commands/submit-palette.ts`\", \"`xivdyetools-core/src/types/index.ts`\"",
+          "docs/specifications/multi-color-extraction.md:253 — \"Create `src/renderers/palette-grid.ts`:\"",
+          "docs/specifications/preset-palettes.md:416 — \"Create `src/renderers/preset-swatch.ts`:\" (plus the `xivdyetools-core/` tree at :266-272)"
+        ],
+        "evidence": [
+          "`git ls-files | grep renderers/` returns nothing; the renderers are packages/svg/src/palette-grid.ts and packages/svg/src/preset-swatch.ts",
+          "`git ls-files apps/presets-api/src/services` lists preset-service.ts, moderation-service.ts and notification-service.ts: the old xivdyetools-worker now lives in apps/presets-api, and the bot in apps/discord-worker",
+          "docs/specifications/feature-roadmap.md:11-14 — carries the caveat \"The file paths are pre-monorepo\" with the apps/* and packages/* mapping; none of the three specs has a matching note"
+        ],
+        "fix": "Add feature-roadmap.md's one-line pre-monorepo path caveat under the status banner of community-presets.md, multi-color-extraction.md and preset-palettes.md. Alternatively, rewrite the paths to apps/presets-api, apps/discord-worker, apps/web-app, packages/core and packages/svg.",
+        "reason": "Three Implemented specs cite pre-monorepo repo paths and src/renderers/ paths that no longer exist, with no caveat. Some of the draft's cited locations are bare design-era filenames, not pre-monorepo paths.",
+        "also": "docs/specifications/community-presets.md:664,700,1191-1192 (xivdyetools-worker / xivdyetools-core paths in code comments); docs/specifications/preset-palettes.md:266-272 (xivdyetools-core/ file tree)",
+        "dropped": "Dropped multi-color-extraction.md:199-200,293-295 and preset-palettes.md:350-353. They are bare filenames for design-era files that never existed, not pre-monorepo repo paths; the preset-palettes ones are covered by DOC-072. Also dropped collections.md:274 (`dye-card.ts`), a bare filename. collections.md carries no pre-monorepo repo path, so three specs are affected, not four."
+      },
+      {
+        "id": "DOC-070",
+        "verdict": "CONFIRMED",
+        "severity": "LOW",
+        "location": [
+          "docs/specifications/feature-roadmap.md:286 — \"✅ `pixelDataToRGB()` / `pixelDataToRGBFiltered()` - Canvas data conversion helpers\"",
+          "docs/specifications/feature-roadmap.md:290 — \"✅ Extraction mode toggle (Single Color / Palette Mode) in Color Matcher\"",
+          "docs/specifications/feature-roadmap.md:292 — \"✅ \\\"Extract Palette\\\" button with loading state\""
+        ],
+        "evidence": [
+          "packages/core/src/services/PaletteService.ts:605 — only `static pixelDataToRGBFiltered(` exists; packages/core/CHANGELOG.md:895 (under 4.0.0, :826) — \"`PaletteService.pixelDataToRGB` (apps use `pixelDataToRGBFiltered`)\" removed",
+          "apps/web-app/src/components/extractor-tool.ts:19-20 — \"Bulk extraction is no longer a mode: K-means runs on image load and again on a colour-count change\"",
+          "`git grep -i 'Extract Palette|Single Color|Palette Mode' apps/web-app/src/locales/en.json` returns no hits. `git grep -i sampl packages/svg/src/palette-grid.ts` also returns none, and extractor-tool.ts has only the pointer loupe (:888), with no sampling-position indicators"
+        ],
+        "fix": "Drop `pixelDataToRGB()` from :286. Replace :290 and :292 with the shipped behavior: extraction runs on load and on a Max Colors change, plus the loupe and dominance bar. Drop the sampling-indicator lines at :293 and :302 (and the 'Added sampling indicators' note at :310), or describe the loupe instead.",
+        "reason": "Every listed piece is absent from the code. pixelDataToRGB was removed in core 4.0.0, there is no mode toggle or Extract button, and no sampling-indicator rendering exists in web-app or packages/svg.",
+        "also": "docs/specifications/feature-roadmap.md:293 (web 'Visual sampling indicators - circles on image'); :302 (bot 'Visual sampling indicators on source image preview'); :310 ('palette-grid.ts - Added sampling indicators')",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-071",
+        "verdict": "CONFIRMED",
+        "severity": "LOW",
+        "location": [
+          "docs/specifications/collections.md:131-132 — \"export class CollectionService { private storage: StorageService;\" (instance API; :160 \"errors: string[];\")",
+          "docs/specifications/collections.md:320 — \"Allowed name characters | Alphanumeric, spaces, hyphens, underscores\"; :332 — \"Rename with suffix (_imported_1)\"",
+          "docs/specifications/collections.md:342 — \"`Ctrl+Shift+C` | Open collection manager\""
+        ],
+        "evidence": [
+          "apps/web-app/src/services/collection-service.ts:172-190 — every member is `private static` / `static` (StorageService is called statically, e.g. :210); :116,129 — `errors: ImportError[]` with ImportErrorCode",
+          "apps/web-app/src/services/collection-service.ts:145,630-640 — MAX_COLLECTION_NAME_LENGTH = 50; validation is trimmed non-empty, length at most 50, and a duplicate-name check only, with no character rule; :889-893 plus en.json:751 — import rename is \"{name} (imported {n})\"",
+          "`git grep 'ctrlKey|metaKey' apps/web-app/src` (excluding tests and negations) shows only dye-selector.ts:302 (Ctrl+F) and image-zoom/item-links handlers. No Ctrl+Shift+C handler exists"
+        ],
+        "fix": "Show CollectionService as all-static. Change ImportResult.errors to ImportError[]. Remove the character-rule row. Change the rename suffix to '{name} (imported {n})'. Delete the Ctrl+Shift+C row, or mark it as not implemented.",
+        "reason": "All five sub-claims differ from collection-service.ts, en.json and the keyboard handlers as the draft describes.",
+        "also": "",
+        "dropped": ""
+      },
+      {
+        "id": "DOC-072",
+        "verdict": "ADJUSTED",
+        "severity": "LOW",
+        "location": [
+          "docs/specifications/preset-palettes.md:38 — \"version: string;      // For future updates\" (required) and :47 — \"| 'community';\"",
+          "docs/specifications/preset-palettes.md:195 — \"constructor() {\" and :237 — \"getRandomPreset(category?: PresetCategory): PresetPalette {\"",
+          "docs/specifications/preset-palettes.md:350-353 — \"`preset-browser.ts` | New component\", \"`preset-detail-modal.ts`\", \"`app-layout.ts` | Add navigation item\""
+        ],
+        "evidence": [
+          "packages/types/src/preset/core.ts:18-26 — PresetCategory is 8 values (jobs, grand-companies, seasons, events, aesthetics, appearance, zones, raids-trials), with no 'community'; :89,92 — `author?: string`, `version?: string` (both optional). All 15 palettes in packages/core/src/data/presets.json carry only id/name/category/description/dyes/tags",
+          "packages/core/src/services/PresetService.ts:75 — `constructor(presetData: PresetData)`; :220 — `getRandomPreset(category?: PresetCategory): PresetPalette | undefined`",
+          "`git ls-files apps/web-app/src/components | grep preset` returns v4/preset-tool.ts, v4/preset-card.ts and v4/preset-detail.ts, with no preset-browser.ts, preset-detail-modal.ts or app-layout.ts; renderer is packages/svg/src/preset-swatch.ts (doc :416 says src/renderers/)"
+        ],
+        "fix": "Widen the 'As shipped' banner (:7-10) to say the type, service and file sections are the original design, or correct them. Make version optional, drop 'community' and add the three new categories, use constructor(presetData) and the `| undefined` return, and point the file table at components/v4/preset-tool.ts and preset-detail.ts and packages/svg/src/preset-swatch.ts.",
+        "reason": "The category union, constructor, getRandomPreset return and component file names all differ from the shipped code. Two sub-claims are only partly right: the author field and preset-card.ts.",
+        "also": "docs/specifications/preset-palettes.md:50 (PresetData `version: string`); :416 (\"Create `src/renderers/preset-swatch.ts`\")",
+        "dropped": "Dropped 'author' from the wrong-field claim, because the shipped PresetPalette type keeps `author?: string` (types/src/preset/core.ts:89), exactly as the doc shows. The `version` issue is narrowed: the doc marks it required, but it is optional in the type and absent from the data. Also, preset-card.ts does exist (apps/web-app/src/components/v4/preset-card.ts), so only the other three rows of the file table are wrong."
+      },
+      {
+        "id": "DOC-073",
+        "verdict": "ADJUSTED",
+        "severity": "LOW",
+        "location": [
+          "apps/web-app/PRIVACY.ko.md:65 — \"[봇의 방침](../discord-worker/PRIVACY_POLICY.ko.md)\" (the only localized cross-link; lines 5 and 90 of the same file link ../discord-worker/PRIVACY_POLICY.md)",
+          "apps/web-app/TERMS_OF_SERVICE.ko.md:5 — \"[`PRIVACY.md`](PRIVACY.md) ... [`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.md)\" (also :13 and :51 link PRIVACY.md)",
+          "apps/discord-worker/TERMS_OF_SERVICE.ko.md:7 — \"[`apps/web-app/TERMS_OF_SERVICE.md`](../web-app/TERMS_OF_SERVICE.md) ... [개인정보처리방침](PRIVACY_POLICY.md)\""
+        ],
+        "evidence": [
+          "git ls-files 'apps/*/PRIVACY*.md' 'apps/*/TERMS_OF_SERVICE*.md' -> 24 files: all four documents exist in all six locales, so every localized link target (e.g. PRIVACY.ko.md, PRIVACY_POLICY.ko.md, TERMS_OF_SERVICE.ko.md) exists",
+          "git grep of policy-to-policy links in the 20 translations -> outside the line-3 English-prevails notice (which correctly links English), every cross-link targets the English file except apps/web-app/PRIVACY.ko.md:65",
+          "./.agents/skills/audit-shared/policy-documents.md:27-29 — \"The surface that links a document links the viewer's locale variant, falling back to English\" (the rule names the About modal, policyDocFile() at apps/web-app/src/components/about-modal.ts:90-92, and any future bot link; it does not mention cross-links inside the documents)"
+        ],
+        "fix": "Maintainer picks one rule. Either localize every in-document cross-link in the 15 translations that have them (web-app PRIVACY/TERMS and discord-worker TERMS, x5 locales; leave the line-3 English notice links alone), or write 'in-document cross-links point at English' into policy-documents.md and change PRIVACY.ko.md:65 back to PRIVACY_POLICY.md.",
+        "reason": "The inconsistency is real: one Korean link points at the localized file, and every other cross-link in the translations points at English. Two counts in the draft's 'truth' are overstated, and the policy rule covers linking surfaces, not cross-links inside the documents.",
+        "also": "apps/web-app/PRIVACY.ja.md:5,65,90; apps/web-app/PRIVACY.de.md:6,205,270; apps/web-app/PRIVACY.fr.md:6,216,282; apps/web-app/PRIVACY.zh.md:5,65,90; apps/web-app/TERMS_OF_SERVICE.ja.md:5,13,51; apps/web-app/TERMS_OF_SERVICE.de.md:6,8,24,86; apps/web-app/TERMS_OF_SERVICE.fr.md:6,8,25,88; apps/web-app/TERMS_OF_SERVICE.zh.md:5,13,51; apps/discord-worker/TERMS_OF_SERVICE.ja.md:7; apps/discord-worker/TERMS_OF_SERVICE.de.md:8-9; apps/discord-worker/TERMS_OF_SERVICE.fr.md:7; apps/discord-worker/TERMS_OF_SERVICE.zh.md:7",
+        "dropped": "Dropped 'all five *.ko.md': there are four Korean policy files, not five. Also dropped 'the other cross-links in all 20 variants link English': the five discord-worker PRIVACY_POLICY.<lc>.md translations have no sibling cross-links beyond the required English-prevails notice, so 15 variants carry cross-links, not 20. Also narrowed the policy-documents.md reading: line 27 requires the linking surface (About modal or bot) to use the viewer's locale, and says nothing about links inside the documents, so it does not by itself make English cross-links a defect."
+      }
+    ],
+    "missing": []
+  },
+  "workflowProgress": [
+    {
+      "type": "workflow_phase",
+      "index": 1,
+      "title": "Verify"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 1,
+      "label": "verify:DOC-001-DOC-006",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "a7037ef034b9d5681",
+      "agentType": "xivdye-verifier",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1791695064700,
+      "queuedAt": 1791695064626,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are the VERIFIER for merged documentation-audit findings (xivdyetools, run 2026-10-11; repo = current working directory, a worktree at 42c35e87 == origin/main; production serves 16a6123f, which equals HEAD for all code; npm == local for all packages).\nRead docs/audits/2026-10-11-documentation/evidence/findings-draft.json (a JSON array) and verify exactly these findings: DOC-001, DOC-002, DOC-0…",
+      "promptFramed": true,
+      "lastProgressAt": 1791695402006,
+      "tokens": 176560,
+      "toolCalls": 39,
+      "durationMs": 337302,
+      "resultPreview": "{\"results\":[{\"id\":\"DOC-001\",\"verdict\":\"CONFIRMED\",\"severity\":\"MEDIUM\",\"location\":[\"apps/web-app/PRIVACY.md:262 — \\\"**Discord:** join https://discord.gg/rzxDHNr6Wv and send a direct message to \\\\\\\"Flash Galatine\\\\\\\"\\\"\",\"apps/discord-worker/PRIVACY_POLICY.md:170 — \\\"**Discord**: Join https://discord.gg/rzxDHNr6Wv and DM \\\\\\\"Flash Galatine\\\\\\\"\\\"\",\"apps/web-app/TERMS_OF_SERVICE.md:73 — \\\"Join the Disc…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 2,
+      "label": "verify:DOC-007-DOC-012",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "af8b59eca69f9081e",
+      "agentType": "xivdye-verifier",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1791695064701,
+      "queuedAt": 1791695064626,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are the VERIFIER for merged documentation-audit findings (xivdyetools, run 2026-10-11; repo = current working directory, a worktree at 42c35e87 == origin/main; production serves 16a6123f, which equals HEAD for all code; npm == local for all packages).\nRead docs/audits/2026-10-11-documentation/evidence/findings-draft.json (a JSON array) and verify exactly these findings: DOC-007, DOC-008, DOC-0…",
+      "promptFramed": true,
+      "lastProgressAt": 1791695398480,
+      "tokens": 127716,
+      "toolCalls": 32,
+      "durationMs": 329134,
+      "resultPreview": "{\"results\":[{\"id\":\"DOC-007\",\"verdict\":\"CONFIRMED\",\"severity\":\"MEDIUM\",\"location\":[\"docs/user-guides/web-app/dye-mixer.md:60 — \\\"| **RYB** | Paint | ... | Olive |\\\"\",\"docs/user-guides/web-app/dye-mixer.md:62-63 — \\\"| **OKLAB** | Perceptual |\\\" / \\\"| **LAB** | LAB |\\\"\",\"docs/user-guides/web-app/dye-mixer.md:56 — \\\"the settings dropdown and the cell hints use plain ones\\\"\"],\"evidence\":[\"apps/web-app/…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 3,
+      "label": "verify:DOC-013-DOC-018",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "ae9854e688b8d9fc2",
+      "agentType": "xivdye-verifier",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1791695064701,
+      "queuedAt": 1791695064626,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are the VERIFIER for merged documentation-audit findings (xivdyetools, run 2026-10-11; repo = current working directory, a worktree at 42c35e87 == origin/main; production serves 16a6123f, which equals HEAD for all code; npm == local for all packages).\nRead docs/audits/2026-10-11-documentation/evidence/findings-draft.json (a JSON array) and verify exactly these findings: DOC-013, DOC-014, DOC-0…",
+      "promptFramed": true,
+      "lastProgressAt": 1791695313144,
+      "tokens": 143205,
+      "toolCalls": 26,
+      "durationMs": 243797,
+      "resultPreview": "{\"results\":[{\"id\":\"DOC-013\",\"verdict\":\"CONFIRMED\",\"severity\":\"MEDIUM\",\"location\":[\"docs/projects/presets-api/moderation.md:31-33 — \\\"The *only* thing that skips this tier is an **absent** `PERSPECTIVE_API_KEY`, in which case the local word list alone decides\\\"\",\"docs/projects/presets-api/overview.md:187 — \\\"Requires `PERSPECTIVE_API_KEY`; **fail-closed** — with a key set, an error or timeout also …"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 4,
+      "label": "verify:DOC-019-DOC-024",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "aecced1e55261f274",
+      "agentType": "xivdye-verifier",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1791695064701,
+      "queuedAt": 1791695064626,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are the VERIFIER for merged documentation-audit findings (xivdyetools, run 2026-10-11; repo = current working directory, a worktree at 42c35e87 == origin/main; production serves 16a6123f, which equals HEAD for all code; npm == local for all packages).\nRead docs/audits/2026-10-11-documentation/evidence/findings-draft.json (a JSON array) and verify exactly these findings: DOC-019, DOC-020, DOC-0…",
+      "promptFramed": true,
+      "lastProgressAt": 1791695305865,
+      "tokens": 127246,
+      "toolCalls": 25,
+      "durationMs": 236518,
+      "resultPreview": "{\"results\":[{\"id\":\"DOC-019\",\"verdict\":\"CONFIRMED\",\"severity\":\"MEDIUM\",\"location\":[\"docs/versions.md:736 — \\\"a BARE `deploy` targets the DEV/BETA worker.\\\"\",\"docs/versions.md:737 — \\\"Production always needs the explicit :production script.\\\"\"],\"evidence\":[\"apps/oauth/package.json:10-11 — \\\"deploy\\\": \\\"wrangler deploy\\\" and \\\"deploy:production\\\": \\\"wrangler deploy\\\" (identical)\",\"apps/oauth/wrangler…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 5,
+      "label": "verify:DOC-025-DOC-030",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "a9d99ee1c7a478c88",
+      "agentType": "xivdye-verifier",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1791695064701,
+      "queuedAt": 1791695064627,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are the VERIFIER for merged documentation-audit findings (xivdyetools, run 2026-10-11; repo = current working directory, a worktree at 42c35e87 == origin/main; production serves 16a6123f, which equals HEAD for all code; npm == local for all packages).\nRead docs/audits/2026-10-11-documentation/evidence/findings-draft.json (a JSON array) and verify exactly these findings: DOC-025, DOC-026, DOC-0…",
+      "promptFramed": true,
+      "lastProgressAt": 1791695369318,
+      "tokens": 136305,
+      "toolCalls": 30,
+      "durationMs": 299970,
+      "resultPreview": "{\"results\":[{\"id\":\"DOC-025\",\"verdict\":\"CONFIRMED\",\"severity\":\"MEDIUM\",\"location\":[\"docs/superpowers/README.md:24 — \\\"In progress — PR A (api-worker 0.15.0) open\\\"\",\"docs/superpowers/README.md:25 — \\\"Approved 2026-09-27 — in progress (PRs B–D)\\\"\",\"docs/research/index.md:15 — \\\"Design proposed: Teamcraft files + XIVAPI at build time\\\"\"],\"evidence\":[\"git log main: cfc82df3 \\\"Merge pull request #207 .…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 6,
+      "label": "verify:DOC-031-DOC-036",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "a2f571bb2fb026fdd",
+      "agentType": "xivdye-verifier",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1791695064701,
+      "queuedAt": 1791695064627,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are the VERIFIER for merged documentation-audit findings (xivdyetools, run 2026-10-11; repo = current working directory, a worktree at 42c35e87 == origin/main; production serves 16a6123f, which equals HEAD for all code; npm == local for all packages).\nRead docs/audits/2026-10-11-documentation/evidence/findings-draft.json (a JSON array) and verify exactly these findings: DOC-031, DOC-032, DOC-0…",
+      "promptFramed": true,
+      "lastProgressAt": 1791695375585,
+      "tokens": 124122,
+      "toolCalls": 27,
+      "durationMs": 306237,
+      "resultPreview": "{\"results\":[{\"id\":\"DOC-031\",\"verdict\":\"CONFIRMED\",\"severity\":\"LOW\",\"location\":[\"docs/projects/web-app/components.md:49 — \\\"**Behaviour** (\\\"Performance Mode\\\", \\\"Enable Analytics\\\"\\\"\",\"docs/user-guides/web-app/faq.md:101 — \\\"Open any tool with a dye picker (Color Harmony, Dye Mixer, ...\\\"\",\"docs/user-guides/web-app/budget-suggestions.md:35 — \\\"What {target}'s colour is worth, line by line.\\\"\"],\"ev…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 7,
+      "label": "verify:DOC-037-DOC-042",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "a4cfacb5cece78032",
+      "agentType": "xivdye-verifier",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1791695064702,
+      "queuedAt": 1791695064627,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are the VERIFIER for merged documentation-audit findings (xivdyetools, run 2026-10-11; repo = current working directory, a worktree at 42c35e87 == origin/main; production serves 16a6123f, which equals HEAD for all code; npm == local for all packages).\nRead docs/audits/2026-10-11-documentation/evidence/findings-draft.json (a JSON array) and verify exactly these findings: DOC-037, DOC-038, DOC-0…",
+      "promptFramed": true,
+      "lastProgressAt": 1791695440759,
+      "tokens": 139216,
+      "toolCalls": 29,
+      "durationMs": 371410,
+      "resultPreview": "{\"results\":[{\"id\":\"DOC-037\",\"verdict\":\"CONFIRMED\",\"severity\":\"LOW\",\"location\":[\"docs/projects/discord-worker/commands.md:241 — \\\"plus the 20 Cosmic Exploration dyes\\\"\",\"docs/projects/discord-worker/commands.md:489 — \\\"Default clan for `/swatch`\\\" (the gender row at 490 has no caveat either)\",\"docs/projects/discord-worker/overview.md:213 — \\\"Only `validateEnv` reads it\\\"\"],\"evidence\":[\"apps/discord…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 8,
+      "label": "verify:DOC-043-DOC-048",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "aeb841691b5a6b540",
+      "agentType": "xivdye-verifier",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1791695064702,
+      "queuedAt": 1791695064627,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are the VERIFIER for merged documentation-audit findings (xivdyetools, run 2026-10-11; repo = current working directory, a worktree at 42c35e87 == origin/main; production serves 16a6123f, which equals HEAD for all code; npm == local for all packages).\nRead docs/audits/2026-10-11-documentation/evidence/findings-draft.json (a JSON array) and verify exactly these findings: DOC-043, DOC-044, DOC-0…",
+      "promptFramed": true,
+      "lastProgressAt": 1791695387107,
+      "tokens": 165759,
+      "toolCalls": 40,
+      "durationMs": 317758,
+      "resultPreview": "{\"results\":[{\"id\":\"DOC-043\",\"verdict\":\"CONFIRMED\",\"severity\":\"LOW\",\"location\":[\"docs/projects/oauth/overview.md:32 — \\\"npm run deploy\\\" (in the block headed `# From the monorepo root (xivdyetools/)` at :19)\",\"docs/projects/oauth/overview.md:22-24 — \\\"wrangler secret put DISCORD_CLIENT_SECRET / JWT_SECRET\\\" (no XIVAUTH_CLIENT_SECRET)\",\"docs/projects/oauth/overview.md:200-204 — \\\"**Secrets:**\\\" bloc…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 9,
+      "label": "verify:DOC-049-DOC-054",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "ab91ac4fef0477ca3",
+      "agentType": "xivdye-verifier",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1791695064702,
+      "queuedAt": 1791695064627,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are the VERIFIER for merged documentation-audit findings (xivdyetools, run 2026-10-11; repo = current working directory, a worktree at 42c35e87 == origin/main; production serves 16a6123f, which equals HEAD for all code; npm == local for all packages).\nRead docs/audits/2026-10-11-documentation/evidence/findings-draft.json (a JSON array) and verify exactly these findings: DOC-049, DOC-050, DOC-0…",
+      "promptFramed": true,
+      "lastProgressAt": 1791695267961,
+      "tokens": 110734,
+      "toolCalls": 17,
+      "durationMs": 198612,
+      "resultPreview": "{\"results\":[{\"id\":\"DOC-049\",\"verdict\":\"CONFIRMED\",\"severity\":\"LOW\",\"location\":[\"docs/architecture/dependency-graph.md:135 — \\\"| **moderation-worker** | types, logger, auth, worker-kit, bot-logic, hono |\\\" (likewise og-worker :138 and image-worker :141, no workers-types)\",\"docs/architecture/dependency-graph.md:196 — \\\"| `hono` | ^4.13.5 | HTTP framework for Workers (floor set by FINDING-001...\\\"\",\"…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 10,
+      "label": "verify:DOC-055-DOC-060",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "ae22837f55183aa2a",
+      "agentType": "xivdye-verifier",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1791695064702,
+      "queuedAt": 1791695064627,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are the VERIFIER for merged documentation-audit findings (xivdyetools, run 2026-10-11; repo = current working directory, a worktree at 42c35e87 == origin/main; production serves 16a6123f, which equals HEAD for all code; npm == local for all packages).\nRead docs/audits/2026-10-11-documentation/evidence/findings-draft.json (a JSON array) and verify exactly these findings: DOC-055, DOC-056, DOC-0…",
+      "promptFramed": true,
+      "lastProgressAt": 1791695355608,
+      "tokens": 120599,
+      "toolCalls": 26,
+      "durationMs": 286258,
+      "resultPreview": "{\"results\":[{\"id\":\"DOC-055\",\"verdict\":\"CONFIRMED\",\"severity\":\"LOW\",\"location\":[\"docs/developer-guides/testing.md:7 — \\\"~480 test files across the monorepo\\\"\",\"docs/developer-guides/testing.md:6 — \\\"per-package thresholds (typically 80%+)\\\"\",\"docs/maintainer/index.md:109 — \\\"| Test coverage | Core library | Increase from 85% to 90% |\\\"\"],\"evidence\":[\"`git ls-files | grep -E '\\\\.(test|spec)\\\\.(ts|ts…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 11,
+      "label": "verify:DOC-061-DOC-066",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "abfde93a6b8894d9a",
+      "agentType": "xivdye-verifier",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1791695064702,
+      "queuedAt": 1791695064627,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are the VERIFIER for merged documentation-audit findings (xivdyetools, run 2026-10-11; repo = current working directory, a worktree at 42c35e87 == origin/main; production serves 16a6123f, which equals HEAD for all code; npm == local for all packages).\nRead docs/audits/2026-10-11-documentation/evidence/findings-draft.json (a JSON array) and verify exactly these findings: DOC-061, DOC-062, DOC-0…",
+      "promptFramed": true,
+      "lastProgressAt": 1791695230631,
+      "tokens": 104700,
+      "toolCalls": 14,
+      "durationMs": 161281,
+      "resultPreview": "{\"results\":[{\"id\":\"DOC-061\",\"verdict\":\"CONFIRMED\",\"severity\":\"LOW\",\"location\":[\"docs/operations/SECRET_ROTATION.md:4 — \\\"**Last updated:** August 21, 2026 (2026-08-21 security audit, FINDING-010 — full rewrite)\\\"\",\"docs/operations/SECRET_ROTATION.md:170 — \\\"5. Write the incident up in `docs/incidents/`.\\\"\"],\"evidence\":[\"`git log -3 -- docs/operations/SECRET_ROTATION.md` → 60f5d35c 2026-10-03 (INTE…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 12,
+      "label": "verify:DOC-067-DOC-072",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "abb2b3674314ad210",
+      "agentType": "xivdye-verifier",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1791695064702,
+      "queuedAt": 1791695064627,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are the VERIFIER for merged documentation-audit findings (xivdyetools, run 2026-10-11; repo = current working directory, a worktree at 42c35e87 == origin/main; production serves 16a6123f, which equals HEAD for all code; npm == local for all packages).\nRead docs/audits/2026-10-11-documentation/evidence/findings-draft.json (a JSON array) and verify exactly these findings: DOC-067, DOC-068, DOC-0…",
+      "promptFramed": true,
+      "lastProgressAt": 1791695450749,
+      "tokens": 135737,
+      "toolCalls": 37,
+      "durationMs": 381398,
+      "resultPreview": "{\"results\":[{\"id\":\"DOC-067\",\"verdict\":\"CONFIRMED\",\"severity\":\"LOW\",\"location\":[\"docs/index.md:198 — \\\"*Last updated: September 5, 2026*\\\"\",\"docs/index.md:200 — \\\"### September 2026 Highlights\\\" (newest block; nothing for October)\",\"docs/index.md:225 — \\\"Show all pieces\\\" in the Swatch Matcher's glamour block (the only glamour mention; the Glamour Reader tool is never named)\"],\"evidence\":[\"docs/ver…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 13,
+      "label": "verify:DOC-073-DOC-073",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "a97415c28e9edd746",
+      "agentType": "xivdye-verifier",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1791695064702,
+      "queuedAt": 1791695064627,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are the VERIFIER for merged documentation-audit findings (xivdyetools, run 2026-10-11; repo = current working directory, a worktree at 42c35e87 == origin/main; production serves 16a6123f, which equals HEAD for all code; npm == local for all packages).\nRead docs/audits/2026-10-11-documentation/evidence/findings-draft.json (a JSON array) and verify exactly these findings: DOC-073. Each merges ca…",
+      "promptFramed": true,
+      "lastProgressAt": 1791695159125,
+      "tokens": 98607,
+      "toolCalls": 5,
+      "durationMs": 89774,
+      "resultPreview": "{\"results\":[{\"id\":\"DOC-073\",\"verdict\":\"ADJUSTED\",\"severity\":\"LOW\",\"location\":[\"apps/web-app/PRIVACY.ko.md:65 — \\\"[봇의 방침](../discord-worker/PRIVACY_POLICY.ko.md)\\\" (the only localized cross-link; lines 5 and 90 of the same file link ../discord-worker/PRIVACY_POLICY.md)\",\"apps/web-app/TERMS_OF_SERVICE.ko.md:5 — \\\"[`PRIVACY.md`](PRIVACY.md) ... [`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-w…"
+    }
+  ],
+  "totalTokens": 1710506,
+  "totalToolCalls": 347
+}

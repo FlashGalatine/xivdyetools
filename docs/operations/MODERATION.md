@@ -12,7 +12,7 @@ The Community Presets feature allows users to share color palettes with the comm
 
 - **Banning users** who submit inappropriate content
 - **Unbanning users** to restore access
-- **Reviewing flagged presets** (via the web moderation queue)
+- **Reviewing flagged presets** with `/preset moderate` (pending, approve, reject, stats) and the Approve / Reject / Revert buttons on each preset's review embed
 
 ---
 
@@ -34,12 +34,14 @@ Ban a user from the Preset Palettes feature.
 
 **Usage:**
 ```
-/preset ban_user user:<discord_user>
+/preset ban_user user:<username search>
 ```
+
+The `user` option is a text field with autocomplete, not a Discord user picker. Type part of a username, then pick one of the suggestions, each labeled `Username (discord:<id>) - N presets` (or `xivauth:<id>` for an author known only by their XIVAuth ID). Typing an @mention does not work; the bot replies "Invalid user ID. Pick a user from the suggestions."
 
 **What it does:**
 1. Shows a confirmation embed with:
-   - Username and Discord ID
+   - Username and ID (the field is labeled **Discord ID** or **XIVAuth ID**, depending on the target)
    - Total number of presets they've submitted
    - Links to their 3 most recent presets
 2. Presents **Yes/No buttons** to confirm
@@ -51,7 +53,7 @@ Ban a user from the Preset Palettes feature.
 
 **Example Flow:**
 ```
-You: /preset ban_user user:@SomeUser
+You: /preset ban_user user:Some  [pick "SomeUser (discord:123456789) - 5 presets"]
 
 Bot: [Confirmation Embed]
      ⚠️ Confirm User Ban
@@ -83,7 +85,6 @@ Bot: [Success Embed]
 
      SomeUser has been banned from Preset Palettes.
 
-     User ID: 123456789
      Presets Hidden: 5
      Banned By: YourName
      Reason: Inappropriate content in presets
@@ -97,18 +98,20 @@ Restore a banned user's access to Preset Palettes.
 
 **Usage:**
 ```
-/preset unban_user user:<discord_user>
+/preset unban_user user:<username search>
 ```
+
+Like `ban_user`, `user` is an autocomplete text field: pick a currently banned user from the suggestions rather than typing an @mention.
 
 **What it does:**
 1. Immediately processes the unban (no confirmation needed)
-2. Marks the ban record as `unbanned`
-3. **Restores all hidden presets** (sets status back to 'approved')
+2. Marks the ban record as lifted (sets `unbanned_at`) and blanks its stored `username` and `reason`
+3. **Restores hidden presets** (sets status back to 'approved'), except any whose dye combination is now held by another approved or pending preset; those stay hidden and are reported as **Presets Still Hidden**
 4. Posts a success embed
 
 **Example:**
 ```
-You: /preset unban_user user:@SomeUser
+You: /preset unban_user user:Some  [pick "SomeUser (discord:123456789)"]
 
 Bot: [Success Embed]
      ✅ User Unbanned
@@ -127,13 +130,13 @@ Both commands feature smart autocomplete:
 
 ### `ban_user` Autocomplete
 - Searches users who have **submitted presets**
-- Shows username and preset count
+- Shows username, ID kind and ID, and preset count (for example `SomeUser (discord:123456789) - 5 presets`)
 - **Excludes already-banned users**
 
 ### `unban_user` Autocomplete
 - Searches **currently banned users only**
-- Shows username and ban date
-- Matches by username or Discord ID
+- Shows username and ID (for example `SomeUser (discord:123456789)`, or `xivauth:<id>` for an XIVAuth-only ban); no ban date
+- Matches by username, Discord ID or XIVAuth ID
 
 ---
 
@@ -147,7 +150,7 @@ Both commands feature smart autocomplete:
 | **Edit Access** | Cannot edit existing presets |
 | **View Access** | Can still browse community presets |
 
-The user is **not notified** of the ban via Discord DM. They will see "You have been banned from submitting presets" if they try to use preset features.
+The user is **not notified** of the ban via Discord DM. The API rejects their writes with the `USER_BANNED` error code and the message "You have been banned from using Preset Palettes.", but neither client shows that sentence. The web app maps the code to its localized `preset.bannedFromPresets` string (in English, "You have been banned from submitting community presets.") on submit and edit, and shows its generic vote-failure message on a vote. The Discord bot shows its generic `preset.api.permissionDenied` message ("Permission denied.") on `/preset submit` and `/preset edit`, and `preset.voteFailed` ("Failed to process vote.") on `/preset vote`.
 
 ---
 
@@ -155,7 +158,7 @@ The user is **not notified** of the ban via Discord DM. They will see "You have 
 
 | Action | Effect |
 |--------|--------|
-| **Preset Status** | All 'hidden' presets → 'approved' |
+| **Preset Status** | Hidden presets → 'approved' (a preset whose dye combination is now held by another approved or pending preset stays hidden and is listed as **Presets Still Hidden** in the unban embed) |
 | **All Access** | Fully restored |
 
 ---
@@ -181,7 +184,7 @@ CREATE TABLE banned_users (
 Key fields:
 - `unbanned_at` is NULL for active bans
 - `reason` must be at least 10 characters
-- Ban history is preserved (unbanning doesn't delete the record)
+- Unbanning blanks the record's `username` and `reason` but keeps the row (with `unbanned_at`); presets-api deletes lifted bans 90 days after the unban (a daily cron, plus a best-effort sweep after its own moderation writes). The accountability history lives in the D1 `moderation_log` table, which keeps ban and unban rows for 12 months
 
 ---
 
@@ -190,8 +193,10 @@ Key fields:
 These commands **only work in the moderation channel**. Using them elsewhere returns:
 
 ```
-This command must be used in the moderation channel.
+This command can only be used in the moderation channel.
 ```
+
+(`/preset moderate` words it "This command must be used in the moderation channel.")
 
 This prevents accidental public exposure of moderation actions.
 
@@ -227,10 +232,10 @@ The worker's full secret list is `DISCORD_TOKEN`, `DISCORD_PUBLIC_KEY`, `BOT_API
 
 All moderation actions are logged:
 
-- **Ban actions**: Logged with target user, moderator, reason, and preset count
-- **Unban actions**: Logged with target user, moderator, and restored preset count
+- **Ban actions**: Logged with target user ID, moderator ID, preset count, and reason length (the reason text itself is recorded in the D1 `moderation_log` table, not in the logs)
+- **Unban actions**: Logged with target user ID, moderator ID, restored preset count, and still-hidden count (unban takes no reason)
 
-Logs can be viewed in the Cloudflare Workers dashboard or via `wrangler tail`.
+Workers Logs are off for this worker (`[observability] enabled = false`, FINDING-022), so these lines are not stored: watch them live with `pnpm exec wrangler tail --env production` from `apps/moderation-worker` (or the dashboard's real-time logs). The ban reason and the action history are in the D1 `moderation_log` table.
 
 ---
 

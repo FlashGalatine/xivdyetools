@@ -246,12 +246,16 @@ export {
   gposersSlotLabel,
   gposersSameRings,
   gposersGroups,
+  gposersOmittedSlots,
+  /** @public */ CHARA_OFF_HAND_MAIN_CATEGORIES,
 } from './services/chara/chara-gposers.js';
 export type {
   GposersSlot,
   GposersPiece,
   GposersInput,
   GposersLine,
+  GposersSlotFacts,
+  /** @public */ GposersOmitContext,
 } from './services/chara/chara-gposers.js';
 export type {
   ResolvedCharaCharacter,

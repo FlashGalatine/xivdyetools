@@ -28,6 +28,7 @@ import {
   formatCharaModelLabel,
   GPOSERS_HEADER,
   gposersGroups,
+  gposersOmittedSlots,
   parseCharaFile,
   resolveCharaColors,
   type CharaGearModel,
@@ -37,6 +38,7 @@ import {
   type CharaTwin,
   type CharaTwinRules,
   type GposersInput,
+  type GposersSlotFacts,
   type ResolvedCharaCharacter,
 } from '@xivdyetools/core';
 import type { Race, RaceKey } from '@xivdyetools/types';
@@ -74,6 +76,8 @@ export interface GlamourResolvedItem {
   rules?: CharaTwinRules[];
   /** The item's GPOSERS acquisition line (api-worker ≥ 0.15.0) */
   acquisition?: string;
+  /** The named item's ItemUICategory row (api-worker ≥ 0.20.0); what decides whether an Off Hand is listed */
+  uiCategory?: number;
 }
 
 export interface GlamourResolveAnswer {
@@ -337,10 +341,17 @@ function plain(text: string): string {
  * the web reader renders too — with Discord-bold labels and no blank lines.
  * A worn piece with no name (no item behind the model, glasses the resolve
  * didn't name) keeps its label bare; `facewear` null = the file wears none.
+ * `omitted` are the worn slots the guide wants erased (invisible pieces, an
+ * Off Hand the main hand can't carry): left out of the list, still on the card.
  */
-function gposersList(pieces: Piece[], facewear: { name: string | null } | null): string[] {
+function gposersList(
+  pieces: Piece[],
+  facewear: { name: string | null } | null,
+  omitted: ReadonlySet<string>
+): string[] {
   const input: GposersInput = {};
   for (const piece of pieces) {
+    if (omitted.has(piece.slot)) continue;
     const dye = (channel: 1 | 2): string | null => piece.dyes.find((d) => d.channel === channel)?.name ?? null;
     input[piece.slot] = { name: piece.listName, dye1: dye(1), dye2: dye(2), acquisition: piece.acquisition };
   }
@@ -486,7 +497,18 @@ export async function executeGlamour(input: GlamourInput): Promise<GlamourResult
     // file wearing glasses puts Facewear in the list whether or not the resolve
     // named them (the parser answers null for none — row 0 is "none").
     const facewear = glassesId ? { name: answer.glasses ? localName(answer.glasses.names, locale) : null } : null;
-    const list = gposersList(pieces, facewear);
+    // Every worn slot is a key, so an Off Hand with no item behind it is still
+    // judged by the main hand; a slot with no named family stays (unknown).
+    const facts: Partial<Record<CharaGearSlotId, GposersSlotFacts>> = {};
+    for (const p of pieces) {
+      const item = answer.items[p.slot] ?? null;
+      facts[p.slot] = item ? { familyEn: [item.names.en, ...item.alternates.map((a) => a.names.en)] } : {};
+    }
+    const omitted = gposersOmittedSlots(facts, {
+      gender,
+      mainHandUiCategory: answer.items.MainHand?.uiCategory ?? null,
+    });
+    const list = gposersList(pieces, facewear, omitted);
     const notes: string[] = [];
     const fixed = pieces.filter((p) => p.fixed);
     if (fixed.length > 0) {

@@ -7,6 +7,67 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.15.4] - 2026-10-11
+
+### Changed
+
+- The GPOSERS list (Copy list, Save .md and the export sheet) leaves out invisible pieces: any worn slot whose look family includes a "The Emperor's New …" item, which also covers the Promise bracelets and the Heroic Spirit / Divine Beast shields. The Emperor's New Gloves are always kept, and The Emperor's New Robe is kept unless the character is known to be female. The reader's rows and the twin picker still show every piece.
+- The list writes the Off Hand only when the main hand is a Paladin weapon, a one-handed Thaumaturge or Conjurer weapon, a crafting or gathering tool, or a Beastmaster weapon (ItemUICategory 2, 6, 8, 12–32 even, 113); the second weapon of a pair, a quiver or a focus is part of the main hand. An Off Hand that is the main hand's own model (api-worker's `viaMainHand`, e.g. a crafting tool's second model) is left out under any main hand, as `/glamour` already did. An unknown main hand, or an api-worker older than 0.20.0, keeps the Off Hand.
+- Over the 1,093-file `.chara` corpus, 913 lists get shorter: 2,765 invisible slots and 357 more Off Hands are left out (354 by the main-hand rule, 3 a crafting tool's own second model), while 71 Emperor's New Gloves and 37 of 524 worn Off Hands stay.
+- Build: the core runtime chunk (`modals`) is re-budgeted from 286 to 287 KB for measured growth. Core 5.11.0 and 5.12.0 add 575 B (285.71 KB), and the pending dev-deps bump adds 170–310 B more (vite 8.3.3 / 8.3.4), which with 8.3.4 is 11 B over 286 KB.
+
+## [5.15.3] - 2026-10-11
+
+Sprint 1 of the 2026-10-11 documentation remediation
+(`docs/audits/2026-10-11-documentation/REMEDIATION_PLAN.md`). **Documents only** — no web-app
+source changed. `PRIVACY*.md` and `TERMS_OF_SERVICE*.md` are served from `main`
+(`about-modal.ts` `POLICY_DOCS_BASE`), so they are live at merge; the deployed bundle differs
+only in its version string. `Last updated` is 2026-10-12 (the merge date) on all six variants of both documents.
+5.15.1 and 5.15.2 are #284 and #285, open at the time of writing; merge them first.
+
+### Fixed
+
+- **The contact route works again** (DOC-001). Both documents, in all six languages, sent deletion,
+  appeal and contact requests to the Discord invite `rzxDHNr6Wv`, which has expired. They now use
+  `5VUSKTZCe5`, the invite `product-links.ts` and every README already use.
+- **Privacy Guide, "What is stored on your device", all six languages:** the list no longer names
+  "Manage Collections → Delete Collection", which no tool in the current layout reaches (the same
+  root as DOC-003; the collection manager itself is handed to the web-app owner). It now says that
+  Clear Saved Palettes deletes every saved palette at once, that the app has no control for one
+  palette, and that saved Budget swaps and Swatch Matcher character colors have no delete control in
+  the app, so only the browser's site-data controls clear them (security-audit hand-off, ruled
+  CORRECT).
+- **Translations link their own language** (DOC-073). Inside the ten translated web-app documents,
+  links to the sibling document and to the bot's documents now open the same language's file, as
+  `PRIVACY.ko.md` already did for one link. The English-prevails notice on line 3 still links
+  the English file.
+
+### Changed
+
+- **American spelling** in `PRIVACY.md` and `TERMS_OF_SERVICE.md` (DOC-079: colour → color,
+  favourite → favorite, centre → center, licence → license, unauthorised → unauthorized; 17 words).
+  In its own commit, before the date bump, because a spelling-only change bumps no date.
+- **Translation fixes from the audit's i18n hand-offs**, in the same commit as the date bump so no
+  document needs a second one: ja grammar in the harassment rule, the untranslated trademark
+  sentence and the content-check sentence, and か (not ヶ) in 三か月; fr "recours" (not "appel") for an
+  appeal, "Services tiers", "Fin de l'utilisation", "auto-hébergées"; zh 集合 for collections
+  (收藏 is favorites), the 已投票 label for removing a vote, localized DevTools labels, and stray
+  spaces after full-width punctuation. No translation changes a claim; English governs.
+
+## [5.15.2] - 2026-10-11
+
+### Fixed
+
+- Glamour Reader names a piece by a visually identical twin you can still get when the lowest-numbered one has no known source (core 5.11.0 `defaultCharaTwin`, api-worker 0.19.0). Examples: Augmented Crystarium Ring of Fending instead of the retired Crystarium Ring of Fending, Loyal Housemaid's instead of Housemaid's, Exclusive Far Eastern Journey instead of Far Eastern Journey. The export sheet's Acquisition line follows. Dyeable, any-Grand-Company and non-Dated twins still win first. Over the 1,093-file `.chara` corpus (with api-worker 0.18.1's acquisition table), pieces named with no Acquisition line drop from 469 to 103 of 10,875.
+- Saved Acquisition edits are keyed by the family's lowest row (the smaller of `itemId` and the alternates), not by the named row, so edits saved before this change keep applying and a later source change cannot orphan them. Such an edit was made against the old default twin, so where the default moved to a twin with a source, the sheet shows Keep mine / Use new source once (its copy still reads "You picked …").
+- The `+N` tooltip lists every family member except the twin the row shows. It listed `alternates`, so whenever the shown twin was not the API-named row it named the shown item as its own twin and left out the named one.
+
+## [5.15.1] - 2026-10-11
+
+### Fixed
+
+- Glamour Reader fills 803 more Acquisition fields from api-worker 0.18.1's researched table: current store sets, quest rewards, seasonal and collaboration events (`Event Name (YYYY)`, the year first offered), five Dawntrail duty sets, Feast ranking rewards, Veteran Rewards, Hall of the Novice, edition bonuses, Moogle Treasure Trove, Cosmic Fortune and Ceremony of Eternal Bonding attire. Every PvP Series reward reads `PvP Series Rewards`. Facewear sources cover 60 of 61 styles. No web-app source changed; this release carries the What's New note.
+
 ## [5.15.0] - 2026-10-09
 
 ### Added

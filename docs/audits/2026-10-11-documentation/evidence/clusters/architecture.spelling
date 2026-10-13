@@ -1,0 +1,32 @@
+# default sweep (20)
+| docs/architecture/api-contracts.md:107 | prose | serialised | serialized | — |
+| docs/architecture/api-contracts.md:243 | prose | normalised | normalized | — |
+| docs/architecture/api-contracts.md:765 | prose | Behaviour | Behavior | — |
+| docs/architecture/data-flow.md:196 | prose | colours | colors | — |
+| docs/architecture/overview.md:24 | diagram | colours | colors | — |
+| docs/architecture/overview.md:24 | diagram | colour | color | — |
+| docs/architecture/overview.md:161 | prose | colour | color | — |
+| docs/architecture/overview.md:161 | prose | colours | colors | — |
+| docs/architecture/overview.md:164 | prose | Colour | Color | — |
+| docs/architecture/overview.md:165 | prose | neighbour | neighbor | — |
+| docs/architecture/overview.md:166 | prose | Colour | Color | — |
+| docs/architecture/overview.md:167 | prose | Colourblindness | Colorblindness | — |
+| docs/architecture/overview.md:171 | prose | Colour | Color | — |
+| docs/architecture/overview.md:174 | prose | colours | colors | — |
+| docs/architecture/overview.md:223 | prose | Colour | Color | — |
+| docs/architecture/overview.md:253 | prose | authorises | authorizes | — |
+| docs/architecture/overview.md:355 | prose | normalised | normalized | — |
+| docs/architecture/overview.md:357 | prose | colour | color | — |
+| docs/architecture/overview.md:358 | prose | colour | color | — |
+| docs/architecture/overview.md:393 | prose | Colour | Color | — |
+
+# --all extras: code/link zones, triage by hand (9)
+| docs/architecture/api-contracts.md:444 | code | colours | colors | — |
+| docs/architecture/dependency-graph.md:163 | code | colour | color | — |
+| docs/architecture/dependency-graph.md:165 | code | colour | color | — |
+| docs/architecture/dependency-graph.md:177 | code | colours | colors | — |
+| docs/architecture/overview.md:132 | code | Colour | Color | — |
+| docs/architecture/overview.md:426 | code | favourites | favorites | — |
+| docs/architecture/overview.md:508 | code | favourites | favorites | — |
+| docs/architecture/service-bindings.md:69 | code | favourites | favorites | — |
+| docs/architecture/service-bindings.md:210 | code | favourites | favorites | — |

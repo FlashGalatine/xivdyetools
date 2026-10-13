@@ -62,7 +62,7 @@ PRESETS_API_URL = "https://api.xivdyetools.app"
 ANNOUNCEMENT_CHANNEL_ID = "..."      # release-announcement channel (differs per environment)
 ```
 
-`ENVIRONMENT` gates exactly one behaviour: `validateEnv` (`src/utils/env-validation.ts`) — `/stats`'s System Health embed also prints it (`handlers/commands/stats.ts`), but only as a label. When it reads `production` the six `RL_*` rate-limit bindings become **required**, and `src/index.ts` refuses every request with `500 {"error":"Service misconfigured"}` — `/health` included — while any of them is unbound, the same as for a missing `DISCORD_TOKEN` (FINDING-013, `docs/audits/2026-08-29-security`). Losing a tier is otherwise silent: worker-kit routes the orphaned commands to the next larger tier, and Workers Logs are off on this script. On the beta worker (`development`) they stay optional and the limiter falls back to KV.
+`ENVIRONMENT` gates two behaviors. The first is `validateEnv` (`src/utils/env-validation.ts`) — `/stats`'s System Health embed also prints it (`handlers/commands/stats.ts`), but only as a label. When it reads `production` the six `RL_*` rate-limit bindings become **required**, and `src/index.ts` refuses every request with `500 {"error":"Service misconfigured"}` — `/health` included — while any of them is unbound, the same as for a missing `DISCORD_TOKEN` (FINDING-013, `docs/audits/2026-08-29-security`). Losing a tier is otherwise silent: worker-kit routes the orphaned commands to the next larger tier, and Workers Logs are off on this script. On the beta worker (`development`) they stay optional and the limiter falls back to KV. The second gate is the webhook length check in `src/index.ts`: while `ENVIRONMENT` reads `production`, `/webhooks/preset-submission` answers `503 "Webhook misconfigured"` if `INTERNAL_WEBHOOK_SECRET` is shorter than 32 characters. It is deliberately outside `validateEnv`, which records the short secret as a non-fatal error, so only preset notifications wait and every other request is served.
 
 ### Secrets (set via `wrangler secret put`)
 
@@ -72,7 +72,7 @@ ANNOUNCEMENT_CHANNEL_ID = "..."      # release-announcement channel (differs per
 | `DISCORD_PUBLIC_KEY` | ✅ Yes | Ed25519 public key for verification |
 | `BOT_API_SECRET` | No | Shared secret for presets API |
 | `BOT_SIGNING_SECRET` | No | HMAC-SHA256 key for signing bot→presets-api requests — min. 32 characters |
-| `INTERNAL_WEBHOOK_SECRET` | No | Webhook authentication |
+| `INTERNAL_WEBHOOK_SECRET` | No | Webhook authentication — min. 32 characters in production (the webhook answers 503 below that) |
 | `GITHUB_WEBHOOK_SECRET` | No | HMAC-SHA256 key verifying the `/webhooks/github` release-announcement webhook |
 | `STATS_AUTHORIZED_USERS` | No | Comma-separated user IDs |
 | `MODERATOR_IDS` | No | Comma-separated moderator user IDs |
@@ -193,7 +193,7 @@ Bindings: `DB` (D1), `DISCORD_WORKER` (service → `xivdyetools-discord-worker`,
 | `BOT_SIGNING_SECRET` | ✅ Yes (production) | HMAC signing key for bot request verification |
 | `PERSPECTIVE_API_KEY` | No | Google Perspective API for ML moderation. **⚠️ Service shuts down 2026-12-31** — delete the secret before then; with it set and the API gone, every preset submission fails closed into the moderator queue (FINDING-005). See `DEPRECATIONS.md` |
 | `CACHE_PURGE_API_TOKEN` | No | API token scoped to *Zone → Cache Purge* on the `xivdyetools.app` zone — enables single-file edge purge of deleted/replaced preview images (FINDING-018); pairs with the `CACHE_PURGE_ZONE_ID` **var** (see above). Without it the 1-day `s-maxage` is the bound. Set on production 2026-08-21 |
-| `INTERNAL_WEBHOOK_SECRET` | ✅ Yes (production) | Shared secret for the `DISCORD_WORKER` service-binding notification call |
+| `INTERNAL_WEBHOOK_SECRET` | ✅ Yes (production) | Shared secret for the `DISCORD_WORKER` service-binding notification call — min. 32 characters in production (a shorter one only logs a warning here; discord-worker answers 503 on the webhook) |
 
 While `ENVIRONMENT` reads `production`, `validateEnv` refuses every request — `/health` included — with `500 "Service misconfigured"` for as long as any "✅ Yes (production)" secret above is missing (`src/utils/env-validation.ts`, `src/index.ts`).
 
@@ -226,7 +226,7 @@ MODERATOR_IDS=123456789,987654321
 ## xivdyetools-api-worker
 
 > The standalone `xivdyetools-universalis-proxy` worker was **merged into `api-worker` on
-> 2026-07-31**; its behaviour lives on behind the `/universalis` and `/api/v2` compatibility
+> 2026-07-31**; its behavior lives on behind the `/universalis` and `/api/v2` compatibility
 > routes, and the `api-docs` VitePress site became this worker's static assets. Anywhere older
 > notes say `cd xivdyetools-universalis-proxy` or `cd xivdyetools-api-docs`, use
 > `apps/api-worker`.

@@ -27,7 +27,7 @@ pnpm turbo run test --filter=@xivdyetools/bot-logic
 pnpm --filter @xivdyetools/bot-logic exec vitest run src/commands/harmony.test.ts --coverage.enabled=false
 ```
 
-Coverage is **enforced** (BUG-127): `vitest.config.ts` sets `coverage.enabled: true`, so `run test` (and `turbo run test`, and CI) fails when any of lines / functions / branches / statements drops below 90%. `run test:coverage` is now the same run. A single-file run needs `--coverage.enabled=false`, because a green subset otherwise exits 1 on the global thresholds. Add tests that pin behaviour, not ones that only execute lines, and list a branch that cannot be reached without a source change instead of contorting a test to hit it.
+Coverage is **enforced** (BUG-127): `vitest.config.ts` sets `coverage.enabled: true`, so `run test` (and `turbo run test`, and CI) fails when any of lines / functions / branches / statements drops below 90%. `run test:coverage` is now the same run. A single-file run needs `--coverage.enabled=false`, because a green subset otherwise exits 1 on the global thresholds. Add tests that pin behavior, not ones that only execute lines, and list a branch that cannot be reached without a source change instead of contorting a test to hit it.
 
 ## Architecture
 
@@ -46,9 +46,10 @@ A small set of shared utilities lives at the top level of `src/`:
 src/
 ├── index.ts                       # Public re-exports
 ├── input-resolution.ts            # Hex / dye-name / CSS-color resolution + dyeService singleton
-├── localization.ts                # initializeLocale, getLocalizedDyeName, getLocalizedCategory
+├── localization.ts                # initializeLocale + per-locale getLocalized* lookups (dye name, category, acquisition, currency, harmony, wheel, vision, race, clan)
 ├── css-colors.ts                  # CSS named-color → hex (BlueViolet, coral, ...)
 ├── moderators.ts                  # parseModeratorIds / isModeratorId / isValidDiscordSnowflake (shared MODERATOR_IDS grammar)
+├── discord-markdown.ts            # escapeDiscordMarkdown / sanitizeEmbedText / ALLOWED_MENTIONS_NONE (user-sourced text in bot-authored embeds)
 ├── i18n/                          # Bot UI Translator + six locale JSONs — subpath @xivdyetools/bot-logic/i18n
 └── commands/
     ├── types.ts                   # EmbedData, EmbedField (platform-neutral)
@@ -58,10 +59,11 @@ src/
     ├── gradient.ts                # /gradient — N-step gradient + dye matches per stop
     ├── comparison.ts              # /comparison — side-by-side dye grid
     ├── contrast.ts                # /contrast — WCAG 1.4.11 ratios between dye pairs
-    ├── swatch.ts                  # /swatch — character-colour reference matching
+    ├── swatch.ts                  # /swatch — character-color reference matching
     ├── glamour.ts                 # /glamour — the Glamour Reader (resolver injected) + GPOSERS list
     ├── chara-identity.ts          # what /swatch and /glamour share: palette service, producer token, tribe line
-    └── accessibility.ts           # /accessibility — colorblind sim + WCAG matrix
+    ├── accessibility.ts           # /accessibility — colorblind sim + WCAG matrix
+    └── failure-kind.ts            # failureKind(): error class/code for failure log lines, never the message (internal)
 ```
 
 ## Public API
@@ -169,10 +171,11 @@ Every `*Input` takes an optional `logger?: TranslatorLogger` (`{ warn(msg) }`). 
 ```
 [<cmd>] generation failed: <Name>[ <code>]     every execute*'s final catch; [dye info] / [dye random] for dye-info.ts
 [swatch] parse failed: <Name>[ <code>]         the .chara read (parse + resolve + nickname strip)
+[glamour] parse failed: <Name>[ <code>]        the .chara read (parse + resolve)
 [glamour] resolve failed: <Name>[ (status N)]  RESOLVE_FAILED only; 429 and 400/413/422 are answers, not logged
 ```
 
-`<Name>` is the error's class, plus its `code` when it carries a string one: an `AppError`'s (`AppError INVALID_HEX_COLOR`), but also a runtime error's (`Error ECONNREFUSED`). A thrown non-Error is named by its `typeof` (`string`). The error's **message is never logged**: core's colour helpers quote the hex they were given, which can be what the user typed, and the `.chara` parser quotes field values from the player's file (PRIVACY_POLICY §3). New catches use `failureKind`, never `` `${error.name}: ${error.message}` ``. Glamour's parse catch is still bare, so a `PARSE_FAILED` from `/glamour` is not logged yet.
+`<Name>` is the error's class, plus its `code` when it carries a string one: an `AppError`'s (`AppError INVALID_HEX_COLOR`), but also a runtime error's (`Error ECONNREFUSED`). A thrown non-Error is named by its `typeof` (`string`). The error's **message is never logged**: core's color helpers quote the hex they were given, which can be what the user typed, and the `.chara` parser quotes field values from the player's file (PRIVACY_POLICY §3). New catches use `failureKind`, never `` `${error.name}: ${error.message}` ``. Glamour's parse catch logs the same way; only a `PARSE_FAILED` from api-worker refusing the body (400/413/422) is an answer and is not logged.
 
 ### `EmbedData` is platform-neutral
 Discord adapters map `EmbedData` onto `APIEmbed` (`title → title`, `color → number`, `fields → fields[]`, etc.). Revolt's adapter maps it onto its own message structure. **Never** put Discord-specific types like `APIEmbed`, `Snowflake`, or interaction objects in this package.
@@ -184,16 +187,16 @@ Discord adapters map `EmbedData` onto `APIEmbed` (`title → title`, `color → 
 `input-resolution.ts` constructs one `DyeService(dyeDatabase)` at module load. Re-importing won't rebuild the database. If a command needs a custom dye filter view, **filter the result** rather than constructing a second `DyeService`.
 
 ### Input resolution order
-Every resolver trims its input once at the top, so surrounding whitespace never changes how it is read (BUG-034: `' 013114'` is the colour #013114, and `' #FF0000 '` is red).
+Every resolver trims its input once at the top, so surrounding whitespace never changes how it is read (BUG-034: `' 013114'` is the color #013114, and `' #FF0000 '` is red).
 
 `resolveColorInput` takes the first step that applies:
 
 1. **A bare number that is not six digits** is a dye id, through `parseDyeIdInput`. 1–5 digits look up a stainID (1–254, the value every autocomplete sends) or a legacy item id (≥ 5729). Zero, the gap between the ranges, and seven or more digits resolve to `null`, with no fallthrough. That is why `'101'` is Pure White and not shorthand for #110011.
-2. **Hex**: `#FF0000` / `FF0000` / `#F00` / `F00`, plus **six bare digits, which are always a colour** (`'000000'`, `'013114'`). No real id needs six digits: the highest legacy item id is 48227 and the consolidated market items are 52254–52256. A shorthand without `#` must carry a hex letter.
+2. **Hex**: `#FF0000` / `FF0000` / `#F00` / `F00`, plus **six bare digits, which are always a color** (`'000000'`, `'013114'`). No real id needs six digits: the highest legacy item id is 48227 and the consolidated market items are 52254–52256. A shorthand without `#` must carry a hex letter.
 3. **Dye name**: a case-insensitive partial match on the English name, plus the localized name when `options.locale` is set and `initializeLocale` has run (`searchDyesByName`).
 4. **CSS named color** (`BlueViolet`).
 
-`resolveDyeInput` runs in a different order: name search, which reads 1–5 digits as an id; then a six-character hex (no shorthand), answered with the closest dye; then `null`. It has no CSS step. `findDyeByName` is exact-match only, with the same id rule. `excludeFacewear` (default `true`) filters `category === 'Facewear'` and is effectively a no-op since schema v2, because Facewear colours are no longer in the dye database at all. Pass `findClosestForHex: true` when the command needs a dye attached to an arbitrary hex code.
+`resolveDyeInput` runs in a different order: name search, which reads 1–5 digits as an id; then a six-character hex (no shorthand), answered with the closest dye; then `null`. It has no CSS step. `findDyeByName` is exact-match only, with the same id rule. `excludeFacewear` (default `true`) filters `category === 'Facewear'` and is effectively a no-op since schema v2, because Facewear colors are no longer in the dye database at all. Pass `findClosestForHex: true` when the command needs a dye attached to an arbitrary hex code.
 
 ## Consumers
 
@@ -202,7 +205,7 @@ Every resolver trims its input once at the top, so surrounding whitespace never 
 
 ## Internal Dependencies
 
-- `@xivdyetools/types` — `Dye`, `DyeTypeFilters`, `LocaleCode`, etc.
+- `@xivdyetools/types` — `Dye`, `DyeTypeFilters`, `isValidSnowflake`, etc.
 - `@xivdyetools/core` — `DyeService`, `dyeDatabase`, `LocalizationService`, harmony types, `filterDyes`.
 - `@xivdyetools/core/blending` — `blendColors`, `BlendingMode` (subpath of core since the retired `@xivdyetools/color-blending` was absorbed).
 - `@xivdyetools/svg` — every `generate*` SVG used by command results.
@@ -217,11 +220,14 @@ Every resolver trims its input once at the top, so surrounding whitespace never 
 
 `includeEntryExports` is on, so `src/index.ts` and `src/i18n/index.ts` (the
 `/i18n` subpath) are in scope. Barrel symbols nothing imports must carry
-`/** @public */` on the specifier (`"tags": ["-public"]` excludes them) — that is
-the `*Input`/`*Result` contract types plus `HARMONY_TYPES`,
-`getHarmonyTypeChoices`, `VISION_TYPES`, `isValidDiscordSnowflake`,
-`isValidHex`/`normalizeHex`, `getLocalizedCurrency`, `LocaleData`,
-`TranslatorLogger`. A new command export with no handler wiring and no tag fails
+`/** @public */` on the specifier (knip always ignores `@public`; the `"tags": ["-public"]` line in `knip.jsonc` is inert) — that is
+the `*Input`/`*Result` contract types (all but `GlamourInput` and `SwatchInput`) and their
+companions `GradientStepResult`, `GlamourResolvedItem`/`GlamourItemNames`/`GlamourResolver`,
+`SwatchCharacter`, `EmbedData`/`EmbedField`, `ResolveColorOptions`, `LocaleCode`, plus
+`HARMONY_TYPES`, `getHarmonyTypeChoices`, `VISION_TYPES`, `isValidDiscordSnowflake`,
+`isValidHex`/`normalizeHex`, `resolveDyeInput`, `getLocalizedCurrency`,
+`escapeDiscordMarkdown`/`sanitizeEmbedText`/`ALLOWED_MENTIONS_NONE`, and on `/i18n`
+`LocaleData`, `TranslatorLogger`, `LocaleResolutionLogger`. A new command export with no handler wiring and no tag fails
 `lint`.
 
 ## Publishing

@@ -2,7 +2,7 @@
 
 **Read a character file as a glamour**
 
-The Glamour Reader shows what a character is wearing. Load a `.chara` file and it lists every piece of gear with the dyes on it, checks whether the game lets this character wear each piece the way the file shows it, and writes the whole outfit in the format glamour showcases such as GPOSERS ask for, with where each piece comes from.
+The Glamour Reader shows what a character is wearing. Load a `.chara` file and it lists every piece of gear with the dyes on it, checks whether the game lets this character wear each piece the way the file shows it, and writes the outfit's visible pieces in the format glamour showcases such as GPOSERS ask for, with where each piece comes from.
 
 > **Note**: New in 5.13.0. In the tool rail this is the **Glamour** chip, and the `0` key opens it. It has no settings column and no Color Palette drawer: the character file is the input. Before 5.13.0, DYES ON THIS GLAMOUR was a section of the [Swatch Matcher](swatch-matcher.md).
 
@@ -70,16 +70,19 @@ An off hand that belongs to the main weapon, such as a bow's quiver, is checked 
 
 ## Twins: the Same Look
 
-A `.chara` file stores the model a piece draws, not the item. One model often stands for several items that the game draws identically: *Dated Hempen Coif* and *Hempen Coif*, *Curtana Zenith* and its *Replica*, *Lord's Yukata* and *Lady's Yukata*. Their rules can differ (one takes a dye and its twin doesn't), so for each piece the reader names the twin the list will write:
+A `.chara` file stores the model a piece draws, not the item. One model often stands for several items that the game draws identically: *Curtana Zenith* and its *Replica*, *Lord's Yukata* and *Lady's Yukata*. Their rules can differ (one takes a dye and its twin doesn't), so for each piece the reader names the twin the list will write:
 
 1. one that passes the check for this file and this character,
 2. preferring one that takes dyes (GPOSERS asks for an identical dyeable version over an undyeable one),
 3. then one that members of any Grand Company can wear,
 4. then one that isn't a **Dated** version,
-5. then the one with more dye channels,
-6. then the lowest item number.
+5. then one with a known Acquisition line, so the list says where to get it,
+6. then the one with more dye channels,
+7. then the lowest item number.
 
-When no twin passes, the reader names the one with the lowest item number.
+When no twin passes, the reader names the lowest-numbered twin with a known Acquisition line, or else the one with the lowest item number, counting only twins whose rules it could check.
+
+The reader never offers Aetherial or Deepmist gear, or **Dated** gear of level 50 or lower, as a twin while any other kind of item has the same look. A piece whose look only those items carry is still named, and its row ends with the note *"A retired item, no longer obtainable"*.
 
 ### The +N chip
 
@@ -193,7 +196,10 @@ Acquisition:
 - **The labels are the form's own English words in every language:** Main Hand, Off Hand, Head, Body, Hands, Legs, Feet, Earrings, Necklace, Bracelets, Right Ring, Left Ring and Facewear, with Right Ring before Left Ring and Facewear last. Item and dye names are in the app's language, as on screen.
 - **Two identical rings are written once**, as **Rings:**.
 - **Each piece is the twin the reader names**, or the one you picked.
-- **The whole glamour is written.** The **Pieces / Dyes** view and **Show all** change what is on screen, not what is in the list.
+- **Every worn piece is written, except the two cases below.** The **Pieces / Dyes** view and **Show all** change what is on screen, not what is in the list.
+- **Invisible pieces are left out.** A piece whose look is one of The Emperor's New items (the Promise of Innocence, Passion and Devotion bracelets share The Emperor's New Bracelet's look) has nothing to show off, so it gets no entry. The exceptions are The Emperor's New Gloves, which are always listed, and The Emperor's New Robe, which is listed for a male character or one whose gender the file doesn't record.
+- **Off Hand is written only under a weapon that really takes one:** a Paladin weapon, a Beastmaster weapon, a one-handed Thaumaturge or Conjurer weapon, or a crafting or gathering tool. A fist pair, a quiver, a focus or a tool's own second model is part of the main weapon, so it isn't listed a second time. Any case the reader can't tell yet keeps its line.
+- **Only the list changes.** The list and its export sheet leave these pieces out; the reader itself is unchanged, and **Show all** still lists every worn piece.
 - **A piece whose name never arrived** keeps its slot label with nothing after it, for you to fill in after copying.
 - **Your character's name is never in the list**, and the download is always called `glamour-equipment.md`.
 
@@ -209,7 +215,7 @@ Each row is marked, and the header counts the marks:
 | **EDITED** | You changed the line, or emptied it on purpose |
 | **BLANK** | No source is known, so the field is empty: *"No source found: type one, or leave it blank"* |
 
-The table is rebuilt after each game patch from the game's data and Teamcraft's data files. It is in English, like the form, and covers the twin the list names: pick another twin and its own line comes with it. Facewear always starts blank. A line is always one line, so a line break you type becomes a space in the list.
+The table is rebuilt after each game patch from the game's data and Teamcraft's data files. It is in English, like the form, and covers the twin the list names: pick another twin and its own line comes with it. Facewear is filled when the table knows where the style's unlock item comes from, and blank otherwise. A line is always one line, so a line break you type becomes a space in the list.
 
 Typing a filled line back to what it was turns the row back to **FILLED**.
 

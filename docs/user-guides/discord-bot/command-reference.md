@@ -6,10 +6,11 @@
 
 > **Coming from the v4 bot?** The 5.0 release replaced the v4 command set. `/match`, `/match_image`, `/favorites`,
 > `/collection` and `/language` are gone — dye matching is `/extractor color` / `/extractor image`,
-> language is `/preferences set language:`, and saved dyes/palettes live in the web app (favourite
+> language is `/preferences set language:`, and saved dyes/palettes live in the web app (favorite
 > *presets* are `/preset favorite`). `/contrast`, `/a11y` and `/changelog` are new, and `/swatch` now
-> reads a `.chara` character file. Every card is a redrawn image; the text embed is a one-liner plus
-> a share link. Type `/about` in Discord for the live roster.
+> reads a `.chara` character file. Every card is a redrawn image; the text embed is a one-liner, and
+> `/harmony`, `/dye info`, `/swatch`, `/glamour` and `/budget` add a share link into the web app.
+> Type `/about` in Discord for the live roster.
 >
 > | Discord Command | Web App Tool |
 > |-----------------|--------------|
@@ -22,7 +23,7 @@
 > | `/budget` | Budget Suggestions |
 > | `/preset` commands | Community Presets |
 
-Most colour options accept **either a hex code (`#FF6B6B`) or a dye name** (autocomplete). Every
+Most color options accept **either a hex code (`#FF6B6B`) or a dye name** (autocomplete). Every
 `matching` option offers the same six methods: `ciede2000` (ΔE2000, the default), `oklab` (ΔEOK2),
 `cie76` (ΔE76), `redmean`, `rgb`, `distinguish` — set your own default with
 `/preferences set matching:`.
@@ -40,7 +41,7 @@ Generate harmonious dye combinations based on color theory.
 |-----------|-------------|----------|
 | `color` | Starting hex color or dye name | Yes |
 | `type` | triadic (default), complementary, analogous, split-complementary, tetradic, inverted-tetradic, square, monochromatic, compound, shades | No |
-| `wheel` | Colour wheel the harmony angles are measured on: rgb (default), ryb, munsell, oklch-hue, oklch-lightness | No |
+| `wheel` | Color wheel the harmony angles are measured on: rgb (default), ryb, munsell, oklch-hue, oklch-lightness | No |
 | `companions` | Companion dyes per slot (1-3) | No |
 | `matching` | Matching method (see above) | No |
 | `strict_matching` | Tighten the distance threshold | No |
@@ -49,7 +50,7 @@ Generate harmonious dye combinations based on color theory.
 ---
 
 ### /extractor color
-Find the closest FFXIV dyes to a colour (this is what `/match` used to do).
+Find the closest FFXIV dyes to a color (this is what `/match` used to do).
 
 **Usage**: `/extractor color color:#FF6B6B count:5`
 
@@ -76,7 +77,7 @@ Extract colors from an image and match them to FFXIV dyes (this is what `/match_
 ---
 
 ### /gradient
-Create a color gradient between two colours, with the closest dye at each step.
+Create a color gradient between two colors, with the closest dye at each step.
 
 **Usage**: `/gradient start_color:Dalamud Red end_color:Jet Black steps:6`
 
@@ -143,9 +144,9 @@ Read a `.chara` file (Anamnesis / Ktisis / Brio export) as a glamour: every piec
 | **LOCKED** | This character's race or gender can't wear the piece, and no twin fixes it. When exactly one race can wear it and it isn't this character's, the card names that race instead |
 | **—** | The model has no item behind it, such as an NPC outfit or a prop. Its name reads *Model* and the model number |
 
-**How the bot picks a twin.** One model can stand for several items the game draws identically. The bot names one that passes the check for this file and character, preferring one that takes dyes, then one that members of any Grand Company can wear, then one that isn't a Dated version, then the one with more dye channels, then the lowest item number. When none passes, it names the lowest item number. You can't choose in Discord: the web app's [Glamour Reader](https://xivdyetools.app/glamour), linked at the end of the reply, lets you pick a twin yourself.
+**How the bot picks a twin.** One model can stand for several items the game draws identically. The bot names one that passes the check for this file and character, preferring one that takes dyes, then one that members of any Grand Company can wear, then one that isn't a Dated version, then one with a known Acquisition line, then the one with more dye channels, then the lowest item number. When none passes, it names the lowest-numbered one with a known Acquisition line, or else the lowest item number, counting only twins whose rules the bot could check. You can't choose in Discord: the web app's [Glamour Reader](https://xivdyetools.app/glamour), linked at the end of the reply, lets you pick a twin yourself.
 
-**The message** lists every worn piece in the GPOSERS submission form, ready to copy: a bold slot label, the piece, a Dye 1 / Dye 2 line for each dye it wears, and an Acquisition line. The labels and the Acquisition lines are in English in every language; item and dye names follow your language (an item the Korean or Chinese game data doesn't have yet stays in English). A blank Acquisition line means no source is known. Two identical rings are written once, as Rings, and facewear comes last. Under the list, notes say which pieces were named from a twin and why, which have no fix, and which need the right Grand Company. A `.chara` file doesn't record a Grand Company, so a piece locked to one is flagged, never failed. A very long list is cut short with "…".
+**The message** lists the worn pieces in the GPOSERS submission form (it leaves out invisible pieces, meaning any piece that looks like one of The Emperor's New items, the Promise bracelets included, except the Gloves and, for a male or unrecorded-gender character, the Robe; it writes an Off Hand line only under a Paladin, Beastmaster, one-handed Thaumaturge or Conjurer weapon or a crafting or gathering tool; a case the bot can't tell keeps its line, and the card still shows every piece), ready to copy: a bold slot label, the piece, a Dye 1 / Dye 2 line for each dye it wears, and an Acquisition line. The labels and the Acquisition lines are in English in every language; item and dye names follow your language (an item the Korean or Chinese game data doesn't have yet stays in English). A blank Acquisition line means no source is known. Two identical rings are written once, as Rings, and facewear comes last. Under the list, notes say which pieces were named from a twin and why, which have no fix, and which need the right Grand Company. A `.chara` file doesn't record a Grand Company, so a piece locked to one is flagged, never failed. A very long list is cut short with "…".
 
 If the item lookup is busy or unavailable, the reply says so; try again in a minute. See `/manual topic:character_file` (👤 Character File) for the short version.
 
@@ -165,7 +166,7 @@ Search dyes by name.
 ---
 
 ### /dye info
-Get detailed information about a specific dye (colour values, source, market price incl. the consolidated Spectrum item, nearest dyes).
+Get detailed information about a specific dye (color values, source, market price incl. the consolidated Spectrum item, nearest dyes).
 
 **Usage**: `/dye info name:Dalamud Red`
 
@@ -245,7 +246,7 @@ Find cheaper look-alikes for an expensive dye using live market board prices.
 - `/budget find target_dye:Metallic Gold world:Balmung` — the ledger of alternatives (options: `matching`, `max_distance` 2-20 ΔE2000 default 8, `exclude_coffers`, `exclude_wide_spectrum`)
 - `/budget quick preset:jet_black` — one-click check for 22 popular expensive dyes. Discord shows the
   whole list when you pick the `preset` option: Jet Black, Pure White, Pearl White and Gunmetal Black,
-  the Cosmic Exploration colours (Ruby Red, Cherry Pink, Canary Yellow, Vanilla Yellow, Dragoon Blue,
+  the Cosmic Exploration colors (Ruby Red, Cherry Pink, Canary Yellow, Vanilla Yellow, Dragoon Blue,
   Turquoise Blue), the neons (Neon Pink, Neon Green, Neon Yellow, Bright Orange), and the metallics
   (Metallic Brass, Metallic Pink, Metallic Ruby Red, Metallic Cobalt Green, Metallic Dark Blue),
   plus Violet Purple, Azure Blue and Carmine Red. Takes an optional `world`.
@@ -286,7 +287,7 @@ Get a random approved preset, optionally within a category.
 ---
 
 ### /preset submit
-Submit a new community preset (goes to moderation first).
+Submit a new community preset (clean submissions go live immediately; flagged ones wait for a moderator).
 
 **Usage**: `/preset submit preset_name:My Outfit description:... category:jobs dye1:Dalamud Red dye2:Jet Black dye3:Soot Black`
 
@@ -361,7 +362,7 @@ Bot information, version, dye count, links, and (for one release) where each rem
 ---
 
 ### /stats
-`/stats summary` is public; `overview`, `commands`, `health` are for authorised users only.
+`/stats summary` is public; `overview`, `commands`, `health` are for authorized users only.
 
 ---
 
@@ -370,7 +371,7 @@ Bot information, version, dye count, links, and (for one release) where each rem
 - **Autocomplete** - Start typing and the bot suggests options
 - **Dye names** - Use exact names or close matches
 - **Colors** - Use standard hex format (#RRGGBB) or a dye name
-- **Results** - Image commands include a card attachment and a share link into the web app
+- **Results** - Image commands include a card attachment; `/harmony`, `/dye info`, `/swatch`, `/glamour` and `/budget` also add a share link into the web app
 - **Card theme** - `/preferences set theme:light` if you prefer light cards
 
 ---

@@ -5,6 +5,67 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.8.14] - 2026-10-11
+
+No source change here: `/glamour`'s GPOSERS list comes from bot-logic 4.9.0, which applies core
+5.12.0's `gposersOmittedSlots`, and api-worker 0.20.0 sends the main hand's `uiCategory`. No command
+shapes change; the production deploy's `register-commands` run re-registers an unchanged roster.
+
+### Changed
+
+- **`/glamour`'s list leaves out invisible pieces** (anything that looks like one of The Emperor's
+  New items, the Promise bracelets included), except The Emperor's New Gloves, and the Robe unless
+  the character is known female. The card still shows every piece.
+- **The Off Hand line is written only under a weapon that takes one:** a Paladin, Beastmaster or
+  one-handed Thaumaturge or Conjurer weapon, or a crafting or gathering tool. Under any other main
+  hand the Off Hand is left out. For the bot that only changes an Off Hand that is not the main
+  weapon's own model (a quiver or focus from a different weapon): `/glamour` has always skipped the
+  main weapon's own second model (`viaMainHand`), so fist pairs, quivers, foci and a tool's own
+  second model were never listed twice here.
+
+## [5.8.13] - 2026-10-11
+
+Sprint 1 of the 2026-10-11 documentation remediation
+(`docs/audits/2026-10-11-documentation/REMEDIATION_PLAN.md`). **Documents only** — no
+discord-worker source changed and no command schema; the production deploy re-runs
+`register-commands` on an unchanged roster. `Last Updated` is October 12, 2026 (the merge date) on all six
+variants of both documents. 5.8.12 is #285, open at the time of writing; merge it first.
+
+### Fixed
+
+- **The contact route works again** (DOC-001). `PRIVACY_POLICY.md` and `TERMS_OF_SERVICE.md`, in
+  all six languages, sent deletion, appeal and contact requests to the Discord invite
+  `rzxDHNr6Wv`, which has expired. They now use `5VUSKTZCe5`, the invite `product-links.ts`
+  and `/about` already use.
+- **Privacy Policy, "First-run notice flag", all six languages:** the row said the flag records
+  that the 5.0 welcome notice was shown. `maybeSendFirstRunNotice` sets it on the user's first
+  command, before it checks for stored preferences, and never sends the notice to a user who has
+  them, so the row now says exactly that (security-audit hand-off, ruled CORRECT; the behavior is
+  deliberate per the code's comments, so the text changed, not the code).
+- **Translations link their own language** (DOC-073): the five translated Terms of Service link
+  the same language's Privacy Policy and web-app terms. The English-prevails notice still links
+  English.
+
+### Changed
+
+- **Translation fixes from the audit's i18n hand-offs**, in the same commit as the date bump: ja
+  defined terms (本Bot / 運営者) and spacing; de "Datenschutzrichtlinie des Anbieters" for the
+  third-party column, which read as the formal "your"; fr dye-category adjectives as the bot shows
+  them, "soumis à la limitation de débit", "Procédure de recours" and a translated copyright line;
+  zh stray spaces after full-width punctuation. No translation changes a claim; English governs.
+
+## [5.8.12] - 2026-10-11
+
+No source change in this app: `/glamour`'s pick comes from `@xivdyetools/core` 5.11.0 through
+bot-logic, and api-worker 0.19.0 names families the same way. No command shapes change.
+
+### Fixed
+
+- **`/glamour` names a twin you can still get** when the lowest-numbered item with the look has no
+  known source, e.g. Augmented Crystarium Ring of Fending instead of the retired one and Loyal
+  Housemaid's instead of Housemaid's, so the GPOSERS list's Acquisition line is filled. A dyeable
+  twin, one any Grand Company can wear, or one that isn't Dated still wins first.
+
 ## [5.8.11] - 2026-10-06
 
 `/manual` catches up with `/glamour`, with `@xivdyetools/bot-logic` 4.8.3 in the same PR (#251,

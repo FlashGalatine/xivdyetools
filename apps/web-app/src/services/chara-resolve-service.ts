@@ -31,7 +31,12 @@ export interface CharaItemNames {
 }
 
 export interface CharaResolvedItem {
-  /** Item sheet row — the lowest row_id of the same-model family */
+  /**
+   * Item sheet row the same-model family is named by: its lowest eligible row
+   * that has an acquisition line, else its lowest row. The family's lowest row
+   * is therefore the smaller of this and the `alternates` (api-worker always
+   * lists it when it is not this row).
+   */
   itemId: number;
   names: CharaItemNames;
   iconId: number | null;
@@ -58,6 +63,12 @@ export interface CharaResolvedItem {
    * wears, named as usual. Absent otherwise, and from a worker that predates it.
    */
   retired?: true;
+  /**
+   * The named item's ItemUICategory row (api-worker ≥ 0.20.0). The list writes
+   * an Off Hand only under a main hand whose category takes one. Absent from an
+   * older worker, in which case the Off Hand is kept.
+   */
+  uiCategory?: number;
 }
 
 export interface CharaResolvedGlasses {

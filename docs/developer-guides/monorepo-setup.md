@@ -16,7 +16,7 @@ xivdyetools/
 │   ├── logger/              # Multi-runtime logging with secret redaction
 │   ├── auth/                # JWT, HMAC, Discord Ed25519 (+ /encoding)
 │   ├── worker-kit/          # Hono middleware + rate limiting (+ /rate-limiter)
-│   ├── core/                # Colour algorithms, 125-dye database (+ /blending)
+│   ├── core/                # Color algorithms, 125-dye database (+ /blending)
 │   ├── svg/                 # Pure SVG card generators (data → SVG string)
 │   ├── bot-logic/           # Platform-agnostic bot logic (+ /i18n)
 │   └── test-utils/          # CF Workers mocks and factories (workspace-private)

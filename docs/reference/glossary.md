@@ -2,7 +2,7 @@
 
 **Terms and concepts used throughout XIV Dye Tools**
 
-**See also:** [FFXIV Terminology Reference](ffxiv-terminology.md) for official in-game terms (dye names, races, jobs, currencies) across all 6 supported languages.
+**See also:** [FFXIV Terminology Reference](ffxiv-terminology.md) for official in-game terms (dye names, races, currencies) across all 6 supported languages.
 
 ---
 
@@ -23,19 +23,19 @@ Colors opposite each other on the color wheel (180° apart). Create high-contras
 ### Delta E (ΔE)
 Measure of perceptual color difference. Lower values = more similar.
 
-On the default method (ΔE2000) every match falls into one of four bands. The Dye Comparison tool and the bot's comparison card print the word; elsewhere the band sets the colour of the distance number:
+On the default method (ΔE2000) every match falls into one of four bands. The Dye Comparison tool and the bot's comparison card print the word; elsewhere the band sets the color of the distance number:
 
 | ΔE2000 | Band | Meaning |
 |--------|------|---------|
 | under 5 | SAME | You would not tell them apart |
 | 5 to 10 | CLOSE | A very good stand-in |
 | 10 to 20 | NEAR | In the same family, but visibly different |
-| 20 and up | FAR | A different colour |
+| 20 and up | FAR | A different color |
 
 These cuts (5 / 10 / 20) are the `match` bands for `ciede2000` in `BAND_VOCABULARY` (`packages/core/src/config/band-vocabulary.ts`); every other method has its own calibrated cuts on its own scale (`classifyBandTier` in `@xivdyetools/core`), so compare the band, never the raw number, across methods. In the Dye Comparison tool the SAME cut follows its **Match line** setting (5 by default).
 
 ### Matching method
-The distance function used to rank dyes against a target colour. One vocabulary across core, web app, bot, og-worker and api-worker since 5.0: `ciede2000` (default), `oklab`, `cie76`, `redmean`, `rgb`, `distinguish`. The former `hyab` and `oklch-weighted` methods were retired; stored values normalise on read via `normalizeMatchingMethod()`.
+The distance function used to rank dyes against a target color. One vocabulary across core, web app, bot, og-worker and api-worker since 5.0: `ciede2000` (default), `oklab`, `cie76`, `redmean`, `rgb`, `distinguish`. The former `hyab` and `oklch-weighted` methods were retired; stored values normalize on read via `normalizeMatchingMethod()`.
 
 ### HSV / HSB
 Hue-Saturation-Value (or Brightness) color model. More intuitive than RGB for color selection:
@@ -88,21 +88,21 @@ Dyes that can be purchased from NPC vendors for gil. Cheaper and more accessible
 ### Glamour
 FFXIV's transmog/appearance system allowing players to change equipment appearance.
 
-### Marketboard
+### Market Board
 In-game auction house where players buy/sell items, including dyes.
 
 ### Special Dye
-Rare dyes obtained from crafting, dungeons, or events. Often more expensive.
+The 27 dyes in the database's `Special` category: the Metallic series (including Gunmetal Black and Pearl White), the Pastel and Dark series, and Pure White and Jet Black. They come from Venture Coffers, Cosmic Exploration or The Firmament, not from vendors.
 
 ### stainID
 The row ID of the game's own `Stain` sheet, and the **canonical identifier** for a dye since schema v2. Preferred over `itemID` because future dyes may ship without an individual itemID, resolving instead to a consolidated "Spectrum" item via `consolidationType`. `itemID` is now a market-board resolution concern rather than an identity.
 
 ### Universalis API
-Community-maintained API providing real-time FFXIV marketboard prices across all data centers.
+Community-maintained API providing real-time FFXIV Market Board prices across all data centers.
 
 ---
 
-## XIV Dye Tools (v4)
+## Web App Tools
 
 ### Community Presets
 Web app tool (v4) for browsing and sharing community dye palettes. Formerly called "Preset Browser" in v3. Discord bot uses `/preset` commands.
@@ -128,6 +128,21 @@ Web app tool (v4) for finding the closest FFXIV dye to any color and extracting 
 ### Swatch Matcher
 Web app tool (v4) for matching specific colors sampled from FFXIV character customization (hair, eyes, skin) to FFXIV dyes. Formerly called "Character Color Matcher" in v3.
 
+### Harmony Explorer
+Web app tool for generating harmonious dye palettes (complementary, triadic, tetradic and so on) from a base dye. The Discord bot equivalent is `/harmony`.
+
+### Accessibility Checker
+Web app tool for simulating how a dye palette looks under color-vision deficiencies, using the Brettel algorithm.
+
+### Dye Comparison
+Web app tool for comparing up to four dyes side by side.
+
+### Budget Suggestions
+Web app tool for finding cheaper dye alternatives, using Market Board prices from the Universalis API.
+
+### Glamour Reader
+Web app tool (tenth tool, since web app 5.13.0) that lists every piece a loaded `.chara` character wears, with its dyes and where to get it. The Discord bot equivalent is `/glamour`.
+
 ---
 
 ## Technical Terms
@@ -139,7 +154,7 @@ TypeScript pattern using intersection types to create nominally distinct types f
 Cloudflare's serverless SQLite database. Used for community presets storage.
 
 ### Cloudflare KV
-Cloudflare's key-value store. Used for user preferences, preset favourites, analytics counters, revoked-JWT jti lists, and as the fallback backend for rate limiting. (v4's "collections" were removed in 5.0 and their keys purged.)
+Cloudflare's key-value store. Used for user preferences, preset favorites, analytics counters, revoked-JWT jti lists, and as the fallback backend for rate limiting. (v4's "collections" were removed in 5.0 and their keys purged.)
 
 ### Cloudflare Workers
 Serverless edge compute platform. Hosts Discord bot, OAuth, and presets API.

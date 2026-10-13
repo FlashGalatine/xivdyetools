@@ -1,6 +1,6 @@
 {
   "name": "@xivdyetools/bot-logic",
-  "version": "4.8.3",
+  "version": "4.9.0",
   "description": "Platform-agnostic command business logic for the XIV Dye Tools Discord bot",
   "author": "XIV Dye Tools",
   "license": "MIT",
@@ -39,9 +39,9 @@
     "@xivdyetools/types": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "^26.6.2",
-    "@vitest/coverage-v8": "^5.0.2",
-    "vitest": "^5.0.2"
+    "@types/node": "^26.6.4",
+    "@vitest/coverage-v8": "^5.0.3",
+    "vitest": "^5.0.3"
   },
   "engines": {
     "node": ">=18.0.0"

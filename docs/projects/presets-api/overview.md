@@ -61,6 +61,7 @@ Request → Auth Middleware → Handler → D1 Database
 src/
 ├── index.ts                 # Hono app, CORS, routes
 ├── types.ts                 # Env bindings, domain types
+├── retention-job.ts         # Daily Cron prune (production only, 23 4 * * *)
 ├── middleware/
 │   └── auth.ts              # Bot API + JWT authentication
 ├── handlers/
@@ -155,6 +156,7 @@ CREATE TABLE moderation_log (
   preset_id TEXT,                -- NULL for the user-level ban / unban (migration 0013)
   moderator_discord_id TEXT NOT NULL,
   action TEXT NOT NULL,          -- approve | reject | flag | unflag | requeue | revert
+                                 -- | image_approve | image_reject
                                  -- | ban | unban | hide | restore (moderation-worker)
   reason TEXT,
   target_discord_id TEXT,        -- the moderated user (migration 0013)
@@ -185,7 +187,8 @@ CREATE TABLE submission_events (
 2. **Perspective API** (optional, ML-based)
    - `TOXICITY`, `SEVERE_TOXICITY`, `IDENTITY_ATTACK`, `INSULT`, `PROFANITY`; flags at ≥ 0.7
    - Requires `PERSPECTIVE_API_KEY`; **fail-closed** — with a key set, an error or timeout also
-     queues the preset for a moderator (FINDING-005)
+     queues the preset for a moderator (FINDING-005). With no key, locally clean text is reported
+     as `unscored` and queued the same way (FINDING-019)
 
 3. **Manual Review** (for anything not cleared above)
    - Moderators approve/reject
@@ -198,13 +201,16 @@ Submission → Local Filter ─[hit]──────────────�
                   │                                     │
                [clean]                                  │
                   ▼                                     │
-           Perspective API ─[≥ 0.7 or unavailable]──────┤
+           Perspective API ─[≥ 0.7 or no verdict]───────┤
                   │                                     │
                [clean]                                  ▼
                   ▼                            status = 'pending'
         status = 'approved'                  → moderation channel
          (auto-approved)                      → moderator decides
 ```
+
+"No verdict" covers a timeout or error with a key set (`perspective_unavailable`) and a missing
+`PERSPECTIVE_API_KEY` (`unscored`); only a scored, clean result is auto-approved.
 
 Nothing on this path rejects a submission outright: the preset is always created, and the only
 question the pipeline answers is `approved` vs `pending`.

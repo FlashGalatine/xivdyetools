@@ -25,7 +25,7 @@ different models.
 |---|---|---|---|
 | `collector` | `xivdye-collector`: `haiku` · `low` | `gpt-6-luna` · `low` | Its smallest model that runs shell commands reliably, at its lowest effort |
 | `worker` | `xivdye-worker`: `sonnet` · `medium` | `gpt-6.1-sol` · `medium` | Its default mid-tier model at its balanced effort |
-| `worker` (difficult) | `xivdye-worker` + `model: 'opus'` · `high` via Workflow (`medium` via `Agent`) | `gpt-6.1-sol` · `high`; raise to `xhigh` when needed | A stronger model or higher effort for an unfamiliar subsystem, cross-unit refactor, or subtle concurrency |
+| `worker` (difficult) | `xivdye-worker` + `model: 'opus'` + `effort: 'high'`: `opus` · `high` (`model` alone keeps the file's `medium`) | `gpt-6.1-sol` · `high`; raise to `xhigh` when needed | A stronger model or higher effort for an unfamiliar subsystem, cross-unit refactor, or subtle concurrency |
 | `verifier` (ordinary) | `xivdye-verifier`: `opus` · `high` | `gpt-6.1-sol` · `xhigh` | A strong reasoning model at high effort; inline if the coordinator already meets that task's requirements |
 | `verifier` (escalated) | `xivdye-verifier` + `model: 'fable'` · `high` | `gpt-6-astra` · `high` | Its strongest reasoning model for no clear verifier majority, a security-critical final call, or a root cause the ordinary verifier missed |
 
@@ -109,20 +109,24 @@ entry, PR bodies).
 
 ## Runtime tools and coordinator rules
 
-**Claude Code:** use `Agent` with `subagent_type` set to the role's agent and no `model` argument
-(except the two standing overrides under *Claude Code Workflow scripts* below).
-The Agent tool has no effort argument, so the agent file is the only per-role effort control; its
-`effort` beats the session's effort and `modelSettings`, and only a `CLAUDE_CODE_EFFORT_LEVEL`
-environment variable overrides it. Do not use `general-purpose` or `fork` for role work: they run
-at the session's effort (a fork also at its model). If a role agent is missing (a session opened
-above the repo root without the junction in `README.md` § *Discovery*), use `general-purpose` with
-the role's model alias (`haiku` / `sonnet` / `opus`) and report that it ran at the session's
-effort. For collector work, prefer a Workflow `agent()` with `model: 'haiku', effort: 'low'`
-instead: Haiku 5.5 honors effort, so a general-purpose Haiku spawned through `Agent` runs at the
-session's level (`xhigh` from an `xhigh` session). Send independent calls together where
-supported. An Opus or Sonnet coordinator may do verifier work inline only while its session runs at
-`high` or above (current builds set `CLAUDE_EFFORT` in Bash's environment); otherwise, or when
-unsure, delegate it. **Fable coordinates:** delegate every role to its agent, worker work even for
+**Claude Code:** use `Agent` with `subagent_type` set to the role's agent and no `model` or
+`effort` argument, except for the two standing overrides under *Claude Code Workflow scripts* below,
+which `Agent` takes the same way. The agent file's `effort` beats the session's effort and
+`modelSettings`. Since Claude Code 2.1.292 the `Agent` tool also takes a per-invocation `effort`,
+which beats the file's and stays in effect when the agent is resumed; a `CLAUDE_CODE_EFFORT_LEVEL`
+environment variable beats both. The tool's description says to pass `effort` only when the user,
+`CLAUDE.md` or a skill names a level: the levels in this file and in the `CLAUDE.md` tier table are
+that instruction. Do not use `fork` for role work: it runs at the session's model and effort and
+takes no `effort`. Do not use `general-purpose` while the role agent exists: it lacks the role's
+prompt and return contract, and without `model` and `effort` it runs at the session's model and
+effort. If a role agent is missing (a session opened above the repo root without the junction in
+`README.md` § *Discovery*), use `general-purpose` with the role's model alias **and** its effort
+(`haiku` + `low`, `sonnet` + `medium`, `opus` + `high`), never one without the other, and put the
+role's contract in the prompt. A Claude desktop app session in a worktree loads the role agents
+from the main checkout instead (`README.md` § *Discovery*), so confirm a role's model and effort
+before relying on them there. Send independent calls together where supported. An Opus or Sonnet
+coordinator may do verifier work inline only while its session runs at `high` or above (current
+builds set `CLAUDE_EFFORT` in Bash's environment); otherwise, or when unsure, delegate it. **Fable coordinates:** delegate every role to its agent, worker work even for
 one unit. Fable retains prompts, collation, coordinator edits, final writing, and the
 responsibilities below.
 
@@ -130,16 +134,17 @@ responsibilities below.
 `agentType`, for skill work and for any other task; this overrides the workflow reference's default
 of omitting `model`, because a bare call runs at the session's model **and** effort. If a role
 agent is missing, pass the role's `model` alias **and** its `effort` instead (`haiku` + `low`,
-`sonnet` + `medium`, `opus` + `high`), never neither. `agent()` also takes `model` and `effort`,
-which the `Agent` tool lacks: `model` swaps the model and keeps the agent file's prompt and effort,
-`effort` replaces the file's effort (Haiku 5.5 honors it; Haiku 4.5 ignored it). Two overrides are
-standing. A worker task too hard for Sonnet (a cross-unit refactor, an unfamiliar subsystem) runs as
-`agentType: 'xivdye-worker', model: 'opus', effort: 'high'`. An escalated verdict (verifier votes
-with no clear majority, a security-critical final call, a root cause the verifier missed) runs as
-`agentType: 'xivdye-verifier', model: 'fable'`, Fable at `high`, about 2.5× Opus per token as of Fable 5.1,
-so use a handful per run at most; a Fable coordinator makes that call itself. With the `Agent` tool, the
-same `model` override also keeps the file's effort, so the Opus worker runs at `medium` there and
-the Fable verifier at `high`. The 2026-10-06 Claude setup observed about 75k tokens of system prompt
+`sonnet` + `medium`, `opus` + `high`), never neither. `agent()` and, since Claude Code 2.1.292, the
+`Agent` tool both take `model` and `effort`: `model` swaps the model and keeps the agent file's
+prompt and effort, `effort` replaces the file's effort (Haiku 5.5 honors it; Haiku 4.5 ignored it).
+Two overrides are standing, the same on either tool (`Agent` names the agent `subagent_type`). A
+worker task too hard for Sonnet (a cross-unit refactor, an unfamiliar subsystem) runs as
+`agentType: 'xivdye-worker', model: 'opus', effort: 'high'`; pass both, because `model: 'opus'`
+alone keeps the file's `medium`. An escalated verdict (verifier votes with no clear majority, a
+security-critical final call, a root cause the verifier missed) runs as
+`agentType: 'xivdye-verifier', model: 'fable'`, Fable at the file's `high`, about 2.5× Opus per
+token as of Fable 5.1, so use a handful per run at most; a Fable coordinator makes that call itself.
+The 2026-10-06 Claude setup observed about 75k tokens of system prompt
 and project instructions per spawn; that is an observation about that setup, not a fixed spawn
 cost across clients or models. A single short command still runs inline (*Delegate when it helps*)
 except under a Fable coordinator, which delegates every role.
@@ -244,10 +249,20 @@ by model ID and `printenv CLAUDE_EFFORT` inside the agent. Rechecked 2026-10-11 
 desktop app from an `xhigh` Opus 5.5 session through Workflow `model` / `effort` options: `haiku`,
 `sonnet` and `opus` resolved to `claude-haiku-5-5`, `claude-sonnet-5-5` and `claude-opus-5-5`; the
 collector with no effort ran at `xhigh` and with `effort: 'low'` at `low`; the worker ran at
-`medium` and the verifier at `high`. Agent files load when a session starts, so that session could
-not exercise the new alias files themselves (a bare collector spawned there still reported the old
-file's `claude-haiku-4-5` with no effort): after an agent-file change, spawn each role bare
-(`agentType` only) in a fresh session and record its model ID and effort here. Sources: the
+`medium` and the verifier at `high`. That session did not exercise the new alias files: a bare
+collector spawned there reported the pre-#286 file's `claude-haiku-4-5` with no effort, consistent
+with the desktop-app trap in `README.md` § *Discovery*. Rechecked the same day for the `Agent`
+tool's per-invocation `effort`, from a Claude desktop app session in a worktree (bundled Claude Code
+2.1.295, Opus 5.5 at `xhigh`, `CLAUDE_CODE_EFFORT_LEVEL` unset): `xivdye-worker` with
+`model: 'opus', effort: 'high'` ran as `claude-opus-5-5` at `high`, and `general-purpose` with
+`model: 'haiku', effort: 'low'` as `claude-haiku-5-5` at `low`. Bare spawns there loaded the main
+checkout's pre-#286 files (the collector again as `claude-haiku-4-5` with no effort), so the alias
+files were spawned bare from a headless `claude -p` session (Claude Code 2.1.296, Opus 5.5 at
+`xhigh`) in a clean directory holding only copies of them: the collector ran as `claude-haiku-5-5`
+at `low`, the worker as `claude-sonnet-5-5` at `medium`, the verifier as `claude-opus-5-5` at
+`high`, and the worker with `model: 'opus'` and no `effort` as `claude-opus-5-5` at `medium`. After
+an agent-file change, spawn each role bare (`subagent_type` only) from a session that loads the
+changed files and record its model ID and effort here. Sources: the
 [Claude Code subagent docs](https://code.claude.com/docs/en/sub-agents), Anthropic's per-model
 effort guidance, and OpenAI's
 [subagent guidance](https://learn.chatgpt.com/docs/agent-configuration/subagents),

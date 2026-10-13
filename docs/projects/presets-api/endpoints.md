@@ -148,7 +148,7 @@ Submit a new preset.
 | `tags` | string[] | Max 10 tags, each max 30 characters |
 | `category_id` | string | One of `jobs`, `grand-companies`, `seasons`, `events`, `aesthetics`, `appearance`, `zones`, `raids-trials` |
 | `secondary_categories` | string[] | Optional, max 2, must not repeat `category_id` |
-| `example_link` | string | Optional URL to a page about the glamour (validated + normalised) |
+| `example_link` | string | Optional URL to a page about the glamour (validated + normalized) |
 
 **Moderation:** Runs content moderation on submission (local profanity filter + Perspective API).
 

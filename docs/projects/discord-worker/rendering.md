@@ -9,8 +9,8 @@ Commands that produce images follow a three-stage pipeline: build an SVG from a 
 3. Send as a Discord file attachment.
 
 ```typescript
-const svg = generateComparisonCard({ dyes, theme, labels, lang });
-const png = await renderSvgToPng(svg);
+const svg = generateComparisonCard({ dyes, deltaE, labels, theme, lang });
+const png = await renderSvgToPng(svg, { locale: lang });
 await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
   embeds: [...],
   file: { name: 'comparison.png', data: png, contentType: 'image/png' },
@@ -27,7 +27,7 @@ Shared SVG template library (`@xivdyetools/svg`) used by both `discord-worker` a
 | `generateRandomDyesGrid` | `/dye random` — 11B table |
 | `generateHarmonyCard` | `/harmony` — 11A ideal-vs-found |
 | `generatePaletteGrid` | `/extractor image` — 14K ramp |
-| `generateNearestSheet` | `/extractor color`, `/swatch slot:` — 14J·2 colour sheet |
+| `generateNearestSheet` | `/extractor color`, `/swatch slot:` — 14J·2 color sheet |
 | `generateGradientCard` | `/gradient` — 12H strip |
 | `generateMixerCard` | `/mixer` — 12F ratio sweep |
 | `generateA11yCard` | `/accessibility`, `/a11y` — 13D / 13E / 13H |
@@ -36,6 +36,7 @@ Shared SVG template library (`@xivdyetools/svg`) used by both `discord-worker` a
 | `generateBudgetLedger` | `/budget` — 13G ledger |
 | `generateSwatchCard` | `/swatch` — character-file frame |
 | `generatePresetSwatch` | `/preset` swatch strip |
+| `generateGlamourCard` | `/glamour` — 2a Glamour Reader card |
 
 ## CJK Font Rendering
 
@@ -53,13 +54,19 @@ Rust-based SVG renderer compiled to WebAssembly.
 - Runs inside Cloudflare Workers (no browser needed)
 - High-fidelity rendering with support for text, gradients, filters, and embedded fonts
 
+## Dye Emoji
+
+Embeds can show a dye chip as a Discord application emoji (`getDyeEmoji` in `src/services/emoji.ts`, keyed by stainID). The 125 chips are generated from `dyes.json` by `scripts/upload-emojis.ts`; the manual `sync-dye-emojis.yml` workflow runs that script for the production bot, and the `src/data/emoji-mapping.json` it rewrites still has to be committed and deployed. Discord application emoji belong to the application that uploaded them, so the beta and production bots each carry their own slot in that mapping, and an application with no uploaded set simply omits the emoji.
+
 ## Image decoding (image-worker)
 
 `@cf-wasm/photon` is no longer bundled here. `/extractor image` sends the attachment to `xivdyetools-image-worker` over the `IMAGE_WORKER` service binding (`POST /extract`, `services/image-client.ts`), which decodes/resizes with Photon and returns pixels; K-means++ clustering then runs in this worker via `@xivdyetools/core`. See [`docs/operations/IMAGE_WORKER_SPLIT.md`](../../operations/IMAGE_WORKER_SPLIT.md).
 
 ## Bundle Size Constraints
 
-Cloudflare enforces a 3,072 KiB **gzip** limit on the deployed script. Photon had pushed the bot to 3,209 KiB; after the split it sits at ~2,632 KiB (~14 % headroom).
+Cloudflare enforces a 3,072 KiB **gzip** limit on the deployed script. Photon had pushed the bot to 3,209 KiB; after the split it sat at ~2,632 KiB; at 5.8.9 it measured 2,717.2 KiB (88.5 % of the cap).
+
+The production deploy workflow (`deploy-discord-worker.yml`) runs `check-bundle-size` (`scripts/check-bundle-size.mjs`) before it deploys: it bundles with `wrangler deploy --dry-run`, fails past the 3,072 KiB cap and warns from 92 % of it (2,826 KiB).
 
 | Dependency | Notes |
 |------------|-------|

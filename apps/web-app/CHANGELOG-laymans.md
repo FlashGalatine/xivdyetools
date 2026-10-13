@@ -2,6 +2,37 @@
 
 ---
 
+## Web-App Version 5.15.4 — October 11, 2026
+
+### Glamour Reader: a tidier list
+- **Invisible gear stays off the list.** Pieces that show nothing, such as The Emperor's New items, aren't written, except the gloves, and the robe on a character who isn't female.
+- **The Off Hand line is written only when it matters.** Paired weapons, quivers and foci are part of the main hand, so only shields and secondary tools get one.
+- **The reader itself is unchanged.** Every piece still shows there; only the list and its export sheet are shorter.
+
+## Web-App Version 5.15.3 — October 11, 2026
+
+### Privacy Guide and Terms
+- **Contacting us works again.** The Privacy Guide and Terms pointed to a Discord invite that had expired, so deletion and appeal requests had nowhere to go. Every language now links the current invite.
+- **The Privacy Guide says how saved work can be deleted today.** Clear Saved Palettes in Advanced Settings removes all saved palettes at once; saved Budget swaps and Swatch Matcher character colors can only be cleared from your browser's site data.
+- **Each translation links to the same language.** A link from the Japanese Terms to the Privacy Guide opens the Japanese Privacy Guide, and so on.
+
+## Web-App Version 5.15.2 — October 11, 2026
+
+### Glamour Reader: named by gear you can still get
+- **Pieces are named by a look-alike you can still get.** When the lowest-numbered item with a look has no known source, an identical twin that has one is named, so its Acquisition line fills in.
+- **Retired tomestone accessories show their Augmented versions,** and Housemaid's gear shows Loyal Housemaid's. A dyeable twin still comes first, and you can pick any twin yourself.
+- **Lines you rewrote keep applying.** If the piece now has a known source, the export sheet offers it once: Keep mine or Use new source.
+- **The +N tooltip lists the other items** with the same look, never the one the row already names.
+
+## Web-App Version 5.15.1 — October 11, 2026
+
+### Glamour Reader: 803 more Acquisition lines
+- **803 more pieces have an Acquisition line.** Each was checked before it was added: against the official Online Store, the quest's own rewards, or a second independent look, mostly at official Lodestone pages. 15 follow a set-mate's source or were decided by hand.
+- **Seasonal and collaboration gear names its event and the year it was first offered,** such as "Valentione's Day (2026)", when it isn't sold in the Online Store.
+- **Store sets, quest rewards and duty drops are filled in,** including five Dawntrail dungeon and raid sets, Feast ranking rewards and Ceremony of Eternal Bonding attire.
+- **More rewards use their guide names:** Veteran Rewards, Hall of the Novice, edition bonuses, Moogle Treasure Trove and Cosmic Fortune. Every PvP Series reward now reads "PvP Series Rewards".
+- **Facewear sources now cover 60 of 61 styles,** six more than before. Only the Thick-rimmed Goggles source is still unknown.
+
 ## Web-App Version 5.15.0 — October 9, 2026
 
 ### Glamour Reader: where to get each piece

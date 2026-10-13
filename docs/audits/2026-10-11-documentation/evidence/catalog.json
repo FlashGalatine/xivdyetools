@@ -1,0 +1,634 @@
+[
+  {
+    "id": "DOC-001",
+    "title": "all 24 policy documents send deletion, appeal and contact requests to an expired Discord invite",
+    "sev": "MEDIUM",
+    "unit": "web-app, discord-worker",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-002",
+    "title": "deployment.md says `db:migrate` applies D1 migrations; it only re-runs schema.sql, so numbered migrations never get applied",
+    "sev": "MEDIUM",
+    "unit": "repo-wide (presets-api, oauth)",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-003",
+    "title": "the web FAQ and favorites guide give collection export/import steps through a Manage Collections button the app no longer renders",
+    "sev": "MEDIUM",
+    "unit": "web-app",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-004",
+    "title": "web-app user guides misstate privacy facts: deletion via public GitHub issues, an incomplete stored-data list, a stale sign-in quote",
+    "sev": "MEDIUM",
+    "unit": "web-app",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-005",
+    "title": "the bot FAQ sends deletion requests to public GitHub issues and calls usage statistics anonymous",
+    "sev": "MEDIUM",
+    "unit": "discord-worker",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-006",
+    "title": "the Glamour Reader guide says Facewear always starts blank, uses a retired item as its twins example, and omits the retired-family note",
+    "sev": "MEDIUM",
+    "unit": "web-app",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-007",
+    "title": "dye-mixer.md's mixing-mode table says RYB Blue + Yellow = Olive and gives mode names the UI does not show",
+    "sev": "MEDIUM",
+    "unit": "web-app",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-008",
+    "title": "components.md and tools.md name nine symbols the web app does not have",
+    "sev": "MEDIUM",
+    "unit": "web-app",
+    "supersedes": "",
+    "verdict": "ADJUSTED"
+  },
+  {
+    "id": "DOC-009",
+    "title": "the bot guides promise a web-app share link on every reply; only five commands carry one",
+    "sev": "MEDIUM",
+    "unit": "discord-worker",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-010",
+    "title": "discord-worker's overview and rendering examples call functions that do not exist and omit the required locale",
+    "sev": "MEDIUM",
+    "unit": "discord-worker",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-011",
+    "title": "the docs say og-worker renders nine tool cards; it serves ten, and the Glamour Reader route is undocumented",
+    "sev": "MEDIUM",
+    "unit": "og-worker",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-012",
+    "title": "api-worker's bindings documentation omits three rate-limiter bindings, their KV prefixes and the /v1/chara/resolve service-binding caller",
+    "sev": "MEDIUM",
+    "unit": "api-worker",
+    "supersedes": "",
+    "verdict": "ADJUSTED"
+  },
+  {
+    "id": "DOC-013",
+    "title": "presets-api's moderation docs say a missing PERSPECTIVE_API_KEY lets the word list decide alone; every submission is queued instead",
+    "sev": "MEDIUM",
+    "unit": "presets-api",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-014",
+    "title": "api-contracts.md's OAuth section omits the live `POST /auth/revoke` and the three XIVAuth routes",
+    "sev": "MEDIUM",
+    "unit": "oauth",
+    "supersedes": "2026-09-21-documentation/DOC-007",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-015",
+    "title": "security-trade-offs.md credits the KV rate limiter with conflict detection, backoff and read-after-write checks that were removed",
+    "sev": "MEDIUM",
+    "unit": "worker-kit",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-016",
+    "title": "eight code examples import type-only names with a plain `import`, a compile error under verbatimModuleSyntax",
+    "sev": "MEDIUM",
+    "unit": "repo-wide (types, core docs)",
+    "supersedes": "",
+    "verdict": "ADJUSTED"
+  },
+  {
+    "id": "DOC-017",
+    "title": "algorithms.md gives `classifyBandTier` the wrong parameter order",
+    "sev": "MEDIUM",
+    "unit": "core",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-018",
+    "title": "deployment.md's Convention A lists og-worker as a routeless -dev worker; its bare deploy is the live routed beta",
+    "sev": "MEDIUM",
+    "unit": "repo-wide",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-019",
+    "title": "versions.md says production 'always' needs the :production script; oauth's bare deploy is production",
+    "sev": "MEDIUM",
+    "unit": "repo-wide",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-020",
+    "title": "contributing.md tells contributors to run `lint:fix`, which 15 of 17 workspaces do not define",
+    "sev": "MEDIUM",
+    "unit": "repo-wide",
+    "supersedes": "2026-09-21-documentation/DOC-008",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-021",
+    "title": "local-setup.md's single-test example points at a path that matches no test file",
+    "sev": "MEDIUM",
+    "unit": "repo-wide",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-022",
+    "title": "the moderation runbook describes a web review queue that does not exist and the wrong ban/unban option syntax",
+    "sev": "MEDIUM",
+    "unit": "moderation-worker",
+    "supersedes": "2026-09-21-documentation/DOC-018",
+    "verdict": "ADJUSTED"
+  },
+  {
+    "id": "DOC-023",
+    "title": "the moderation runbook misstates what a ban shows and keeps",
+    "sev": "MEDIUM",
+    "unit": "moderation-worker",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-024",
+    "title": "the glossary still defines 'Special Dye' by acquisition sources the schema does not have",
+    "sev": "MEDIUM",
+    "unit": "repo-wide",
+    "supersedes": "2026-09-21-documentation/DOC-020",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-025",
+    "title": "the superpowers and research indexes still list shipped Glamour work as in progress or proposed",
+    "sev": "MEDIUM",
+    "unit": "repo-wide",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-026",
+    "title": "the community-presets spec's API section gives a dead base URL, wrong vote/moderation paths, a wrong page-size cap and an incomplete route list",
+    "sev": "MEDIUM",
+    "unit": "presets-api",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-027",
+    "title": "the community-presets spec describes bot-only Bearer auth and a three-secret list; production uses HMAC v2 + nonce and web JWTs",
+    "sev": "MEDIUM",
+    "unit": "presets-api",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-028",
+    "title": "the community-presets spec presents a multi-language filter with language detection as shipped moderation",
+    "sev": "MEDIUM",
+    "unit": "presets-api",
+    "supersedes": "",
+    "verdict": "ADJUSTED"
+  },
+  {
+    "id": "DOC-029",
+    "title": "the multi-color-extraction spec still shows PaletteService signatures that do not compile and a `/match_image` bot section",
+    "sev": "MEDIUM",
+    "unit": "core",
+    "supersedes": "2026-09-21-documentation/DOC-021",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-030",
+    "title": "feature-roadmap.md says the F and C dye-card shortcuts never shipped; both work",
+    "sev": "MEDIUM",
+    "unit": "web-app",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-031",
+    "title": "web-app docs quote UI labels and strings the app no longer shows",
+    "sev": "LOW",
+    "unit": "web-app",
+    "supersedes": "2026-09-21-documentation/DOC-014",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-032",
+    "title": "web-app docs leave the Glamour Reader out of tool lists and tables",
+    "sev": "LOW",
+    "unit": "web-app",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-033",
+    "title": "web-app developer docs carry stale figures: the bundle limit, the locale key count, a removed CSS rule and the deploy path filter",
+    "sev": "LOW",
+    "unit": "web-app",
+    "supersedes": "2026-09-21-documentation/DOC-012",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-034",
+    "title": "five tool guides list seven Dye Filters toggles; the panel has nine",
+    "sev": "LOW",
+    "unit": "web-app",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-035",
+    "title": "the web-app docs never mention the About modal's Policies row, the only in-app route to the policies",
+    "sev": "LOW",
+    "unit": "web-app",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-036",
+    "title": "bot user guides: autocomplete needs 2 characters, the rate-limit table omits /glamour, /preset submit always goes to moderation",
+    "sev": "LOW",
+    "unit": "discord-worker",
+    "supersedes": "2026-09-21-documentation/DOC-010",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-037",
+    "title": "discord-worker project docs: /budget quick picks, unread clan/gender prefs, ENVIRONMENT readers, autocomplete source and a stale bundle size",
+    "sev": "LOW",
+    "unit": "discord-worker",
+    "supersedes": "2026-09-21-documentation/DOC-011",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-038",
+    "title": "discord-worker docs omit GET /health, the dye-emoji system, the /glamour card, releases after 5.0 and the bundle-size gate",
+    "sev": "LOW",
+    "unit": "discord-worker",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-039",
+    "title": "api-worker endpoints.md: incomplete .chara response shape, wrong upstream-status rule, stale tool name, undocumented strict parsing",
+    "sev": "LOW",
+    "unit": "api-worker",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-040",
+    "title": "presets-api docs omit migration 0015, the daily retention cron and two moderation actions, and say the policies 'will publish' retention",
+    "sev": "LOW",
+    "unit": "presets-api",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-041",
+    "title": "moderation-worker overview: file tree misses types/modal.ts, Quick Start sets dev-only secrets, and it credits discord-worker with removed storage",
+    "sev": "LOW",
+    "unit": "moderation-worker",
+    "supersedes": "2026-09-21-documentation/DOC-017",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-042",
+    "title": "architecture docs show every duplicate preset as 409 and omit the preview-upload 429",
+    "sev": "LOW",
+    "unit": "presets-api",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-043",
+    "title": "oauth overview's setup blocks omit XIVAUTH_CLIENT_SECRET and end with `npm run deploy` from the root",
+    "sev": "LOW",
+    "unit": "oauth",
+    "supersedes": "2026-09-21-documentation/DOC-016",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-044",
+    "title": "oauth error, rate-limit and parameter tables are incomplete",
+    "sev": "LOW",
+    "unit": "oauth",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-045",
+    "title": "the oauth project docs never describe the users database or its hand-run migration (only apps/oauth/CLAUDE.md does)",
+    "sev": "LOW",
+    "unit": "oauth",
+    "supersedes": "",
+    "verdict": "ADJUSTED"
+  },
+  {
+    "id": "DOC-046",
+    "title": "og-worker overview misdescribes its analytics datapoints and omits /health, / and the crawler 404",
+    "sev": "LOW",
+    "unit": "og-worker",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-047",
+    "title": "core service docs: getCategories order, cache count, Brettel steps and getLabel's return type are wrong",
+    "sev": "LOW",
+    "unit": "core",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-048",
+    "title": "core and types API references omit published exports",
+    "sev": "LOW",
+    "unit": "core, types",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-049",
+    "title": "dependency-graph.md omits @cloudflare/workers-types from three runtime rows and pins stale hono/vite ranges",
+    "sev": "LOW",
+    "unit": "repo-wide",
+    "supersedes": "2026-09-21-documentation/DOC-009",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-050",
+    "title": "two architecture docs say presets-api calls oauth to verify JWTs; it verifies locally",
+    "sev": "LOW",
+    "unit": "presets-api",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-051",
+    "title": "two overview diagrams call the web app a PWA; it has a manifest but no service worker",
+    "sev": "LOW",
+    "unit": "web-app",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-052",
+    "title": "env-var docs miss ENVIRONMENT's second gate and the 32-character webhook secret; SECRET_ROTATION calls it an HMAC key",
+    "sev": "LOW",
+    "unit": "repo-wide",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-053",
+    "title": "contributing.md's CI description and PR checklist leave out the repo-wide gates, including workers:check-logs",
+    "sev": "LOW",
+    "unit": "repo-wide",
+    "supersedes": "",
+    "verdict": "ADJUSTED"
+  },
+  {
+    "id": "DOC-054",
+    "title": "deployment.md cites the register-commands steps at the wrong workflow lines",
+    "sev": "LOW",
+    "unit": "repo-wide",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-055",
+    "title": "testing.md's test-file count and thresholds and the maintainer coverage row are stale",
+    "sev": "LOW",
+    "unit": "repo-wide",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-056",
+    "title": "adding-dyes.md's schema sample has the wrong stainID and Step 2 describes the retired color workflow",
+    "sev": "LOW",
+    "unit": "core",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-057",
+    "title": "logging-standards.md never says Workers Logs are off, and repeats a heading",
+    "sev": "LOW",
+    "unit": "repo-wide",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-058",
+    "title": "OPEN_ITEMS.md still lists cross-identity bans as unfinished and carries other stale lines",
+    "sev": "LOW",
+    "unit": "repo-wide",
+    "supersedes": "2026-09-21-documentation/DOC-019",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-059",
+    "title": "DEPLOY_ENVIRONMENTS.md says beta deploys fail 'right now', gives the beta bot a D1, and shows a bare `pnpm deploy`",
+    "sev": "LOW",
+    "unit": "repo-wide",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-060",
+    "title": "security-remediation-2026-09-15.md reads as a live procedure and stops before migration 0015",
+    "sev": "LOW",
+    "unit": "presets-api",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-061",
+    "title": "SECRET_ROTATION.md's date is stale and it files incidents in a folder that does not exist",
+    "sev": "LOW",
+    "unit": "repo-wide",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-062",
+    "title": "DOMAIN_DEPRECATION.md cites stale line numbers, leaves a finished row unstruck and keeps a 'deploys paused' section",
+    "sev": "LOW",
+    "unit": "repo-wide",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-063",
+    "title": "versions.md's header says logger and worker-kit await publication, and its compatibility table stops at core 5.7.0",
+    "sev": "LOW",
+    "unit": "repo-wide",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-064",
+    "title": "user-guides/index.md still says the presets tool's app title is 'Preset Palettes'",
+    "sev": "LOW",
+    "unit": "web-app",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-065",
+    "title": "ffxiv-terminology.md gives the wrong Japanese name for Metallic Silver",
+    "sev": "LOW",
+    "unit": "core",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-066",
+    "title": "glossary.md lists jobs it does not cover, defines only five of ten tools under a v4 heading, and spells Marketboard",
+    "sev": "LOW",
+    "unit": "repo-wide",
+    "supersedes": "2026-09-21-documentation/DOC-022",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-067",
+    "title": "index.md's Recent Updates stops at 2026-09-05 and misses the Glamour Reader",
+    "sev": "LOW",
+    "unit": "repo-wide",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-068",
+    "title": "community-presets spec: a ticked owner-DM item that was deleted, a stale schema description and unlabelled design-era sections",
+    "sev": "LOW",
+    "unit": "presets-api",
+    "supersedes": "",
+    "verdict": "ADJUSTED"
+  },
+  {
+    "id": "DOC-069",
+    "title": "three Implemented specs cite pre-monorepo repo paths without the caveat feature-roadmap.md carries",
+    "sev": "LOW",
+    "unit": "repo-wide",
+    "supersedes": "",
+    "verdict": "ADJUSTED"
+  },
+  {
+    "id": "DOC-070",
+    "title": "feature-roadmap.md lists extractor pieces that do not exist",
+    "sev": "LOW",
+    "unit": "web-app",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-071",
+    "title": "collections.md describes an instance API, a name character rule, a rename suffix and a shortcut that the code does not have",
+    "sev": "LOW",
+    "unit": "web-app",
+    "supersedes": "",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-072",
+    "title": "preset-palettes.md's type, service and file sections describe the design, not the shipped shapes",
+    "sev": "LOW",
+    "unit": "core",
+    "supersedes": "",
+    "verdict": "ADJUSTED"
+  },
+  {
+    "id": "DOC-073",
+    "title": "localized policy variants cross-link the English sibling policies, except one Korean link that points at its locale",
+    "sev": "LOW",
+    "unit": "web-app, discord-worker",
+    "supersedes": "",
+    "verdict": "ADJUSTED"
+  },
+  {
+    "id": "DOC-074",
+    "title": "web-app docs are British English — 229 spellings across 14 documents",
+    "sev": "LOW",
+    "unit": "web-app",
+    "supersedes": "2026-09-21-documentation/DOC-001",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-075",
+    "title": "discord-bot docs are British English — 48 spellings across 8 documents",
+    "sev": "LOW",
+    "unit": "discord-worker",
+    "supersedes": "2026-09-21-documentation/DOC-002",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-076",
+    "title": "worker and package docs are British English — 52 spellings across 15 documents",
+    "sev": "LOW",
+    "unit": "repo-wide (api-worker, presets-api, moderation-worker, oauth, og-worker, core, types, logger)",
+    "supersedes": "2026-09-21-documentation/DOC-003",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-077",
+    "title": "architecture, developer and maintainer guides are British English — 44 spellings across 11 documents",
+    "sev": "LOW",
+    "unit": "repo-wide",
+    "supersedes": "2026-09-21-documentation/DOC-004",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-078",
+    "title": "entry, reference, operations and specification docs are British English — 83 spellings across 12 documents",
+    "sev": "LOW",
+    "unit": "repo-wide",
+    "supersedes": "2026-09-21-documentation/DOC-005",
+    "verdict": "CONFIRMED"
+  },
+  {
+    "id": "DOC-079",
+    "title": "the two English web-app policy documents are British English — 17 spellings",
+    "sev": "LOW",
+    "unit": "web-app",
+    "supersedes": "2026-09-21-documentation/DOC-006",
+    "verdict": "CONFIRMED"
+  }
+]

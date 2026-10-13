@@ -106,7 +106,11 @@ sequenceDiagram
     Note over Presets: 5. Duplicate detection
     Presets->>Presets: Generate dye_signature (sorted IDs)
     Presets->>Presets: Check existing presets
-    alt Duplicate found
+    alt Approved duplicate
+        Presets->>Client: 200 OK (duplicate + vote added)
+    else Pending duplicate, owner or moderator
+        Presets->>Client: 200 OK (duplicate, no vote)
+    else Pending duplicate, anyone else
         Presets->>Client: 409 Conflict
     end
 
@@ -193,7 +197,7 @@ sequenceDiagram
 
 | Operation | Time Complexity | Typical Time |
 |-----------|-----------------|--------------|
-| Build tree (startup) | O(n log n) | ~2ms for 125 dyes (Facewear colours are excluded — not tradeable) |
+| Build tree (startup) | O(n log n) | ~2ms for 125 dyes (Facewear colors are excluded — not tradeable) |
 | Nearest neighbor query | O(log n) | <0.1ms |
 | k-nearest neighbors | O(k log n) | <0.5ms for k=5 |
 

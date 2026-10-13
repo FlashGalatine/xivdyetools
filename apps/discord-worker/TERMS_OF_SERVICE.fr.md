@@ -2,9 +2,9 @@
 
 > Ceci est une traduction fournie à titre pratique. La version anglaise fait foi ; en cas de divergence, c'est elle qui prévaut. [Anglais](TERMS_OF_SERVICE.md)
 
-**Dernière mise à jour** : 2026-10-09
+**Dernière mise à jour** : 2026-10-12
 
-> L'application web sur xivdyetools.app a ses propres conditions : [`apps/web-app/TERMS_OF_SERVICE.md`](../web-app/TERMS_OF_SERVICE.md). Le traitement des données est couvert par la [Politique de confidentialité](PRIVACY_POLICY.md).
+> L'application web sur xivdyetools.app a ses propres conditions : [`apps/web-app/TERMS_OF_SERVICE.md`](../web-app/TERMS_OF_SERVICE.fr.md). Le traitement des données est couvert par la [Politique de confidentialité](PRIVACY_POLICY.fr.md).
 
 ## 1. Introduction
 
@@ -59,20 +59,20 @@ Les préréglages soumis par les utilisateurs sont soumis à modération :
 - Les modérateurs se réservent le droit de supprimer ou de modifier tout contenu soumis
 - Des violations répétées peuvent entraîner la perte des privilèges de soumission
 
-### Processus d'appel
+### Procédure de recours
 
 Si vous pensez que votre contenu a été modéré à tort :
 
-1. Rejoignez notre serveur Discord : https://discord.gg/rzxDHNr6Wv
+1. Rejoignez notre serveur Discord : https://discord.gg/5VUSKTZCe5
 2. Contactez un modérateur ou mentionnez « Flash Galatine » dans #dyetools-issues-and-suggestions
 3. Indiquez votre identifiant utilisateur Discord et le nom du préréglage rejeté
-4. Les appels sont examinés sous 7 jours
+4. Les recours sont examinés sous 7 jours
 
 ## 6. Propriété intellectuelle
 
 ### Contenu Square Enix
 
-FINAL FANTASY XIV © SQUARE ENIX CO., LTD. All Rights Reserved.
+FINAL FANTASY XIV © SQUARE ENIX CO., LTD. Tous droits réservés.
 
 Ce Bot est un outil créé par des fans et n'est **pas affilié à, approuvé par, ou parrainé par Square Enix Co., Ltd.** FINAL FANTASY est une marque déposée de Square Enix Holdings Co., Ltd.
 
@@ -140,7 +140,7 @@ Rien dans ces Conditions ne retire un droit de protection du consommateur que le
 Pour toute question sur ces Conditions ou sur le Bot :
 
 - **E-mail** : FlashGalatineFGC@gmail.com (Objet : « XIV Dye Tools Terms »)
-- **Discord** : https://discord.gg/rzxDHNr6Wv
+- **Discord** : https://discord.gg/5VUSKTZCe5
 - **Canal d'assistance** : #dyetools-issues-and-suggestions
 
 ---

@@ -2,7 +2,7 @@
 
 **Compare up to 4 dyes side-by-side**
 
-The Dye Comparison tool puts two dyes head to head and gives you a straight answer: are they the same colour, can one stand in for the other, or are they clearly different — and if they tie, which one is cheaper. Load up to four dyes; the tool pairs them off and you pick which pair to look at.
+The Dye Comparison tool puts two dyes head to head and gives you a straight answer: are they the same color, can one stand in for the other, or are they clearly different — and if they tie, which one is cheaper. Load up to four dyes; the tool pairs them off and you pick which pair to look at.
 
 > **Note**: In the 5.0 tool rail this is the **Compare** chip; the tool menu lists it as **Dye Comparison**.
 
@@ -12,7 +12,7 @@ The Dye Comparison tool puts two dyes head to head and gives you a straight answ
 
 ### 1. Load dyes
 
-Open the **Color Palette** drawer (the palette button; on phones it starts closed) and click dyes. Up to **four** slots fill; a fifth pick pushes the oldest one out. **Custom Color** in the drawer adds an arbitrary hex, so you can measure a dye against a colour that isn't one. Other tools send dyes here through **Inspect Dye in… → Comparison**, the **SEND TO** rows, and a preset's **TAKE THIS PALETTE INTO** row.
+Open the **Color Palette** drawer (the palette button; on phones it starts closed) and click dyes. Up to **four** slots fill; a fifth pick pushes the oldest one out. **Custom Color** in the drawer adds an arbitrary hex, so you can measure a dye against a color that isn't one. Other tools send dyes here through **Inspect Dye in… → Comparison**, the **SEND TO** rows, and a preset's **TAKE THIS PALETTE INTO** row.
 
 With nothing loaded you see four dashed **Add Dye** slots and *"Select at least 2 dyes to compare"*. With one dye loaded, its card is shown on its own under **Selected Dyes**; the comparison starts at two.
 
@@ -53,11 +53,11 @@ When both dyes have a vendor price the verdict adds a **cost line**: *"{cheaper}
 | **RGB distance** | Straight-line distance in the RGB cube (0–441.67) |
 | **Distinguishability %** | The same RGB distance as a percentage — the number the Accessibility Checker uses |
 
-Tap a method row and it becomes the tool's method — the chips re-sort, the split badge and verdict switch to it, and every tier word is that method's own calibrated cut, never ΔE2000's number under another name. The seventh readout, **RATIO**, sits last after a rule: the WCAG contrast ratio of the pair. It is not a colour difference, so it carries no tier word.
+Tap a method row and it becomes the tool's method — the chips re-sort, the split badge and verdict switch to it, and every tier word is that method's own calibrated cut, never ΔE2000's number under another name. The seventh readout, **RATIO**, sits last after a rule: the WCAG contrast ratio of the pair. It is not a color difference, so it carries no tier word.
 
-The **ⓘ** beside **What actually differs** opens the method help: the current method's plain-language definition, its caveat, a **PERCEPTUAL / APPROXIMATE / NOT PERCEPTUAL** badge, a switcher for the six methods, and a link labelled **How color difference is measured**.
+The **ⓘ** beside **What actually differs** opens the method help: the current method's plain-language definition, its caveat, a **PERCEPTUAL / APPROXIMATE / NOT PERCEPTUAL** badge, a switcher for the six methods, and a link labeled **How color difference is measured**.
 
-**This pair — each measured against the other.** Two mirrored full-size result cards, one per dye, each showing the other dye's colour as its reference and their ΔE2000. The cards keep price and source visible — once the colours tie, that is the decision. **Remove** on a card takes that dye out.
+**This pair — each measured against the other.** Two mirrored full-size result cards, one per dye, each showing the other dye's color as its reference and their ΔE2000. The cards keep price and source visible — once the colors tie, that is the decision. **Remove** on a card takes that dye out.
 
 **Also loaded.** When you have three or four dyes, the ones not in the duel wait on a bench of chips under the cards. Click one to swap it in as the second half of the pair.
 
@@ -66,14 +66,14 @@ The **ⓘ** beside **What actually differs** opens the method help: the current 
 In the settings column (the gear icon on phones):
 
 - **Match line** (1–15, default 5) — the ΔE2000 value under which a pair is called **SAME COLOR**; the verdict quotes it (*"the match line sits at ΔE 5"*). Other methods keep their fixed cut.
-- **Display options** — which colour values and readouts the cards print
-- **Market Board** — turn prices on and choose your data centre or world; the duel refreshes when prices arrive
+- **Display options** — which color values and readouts the cards print
+- **Market Board** — turn prices on and choose your data center or world; the duel refreshes when prices arrive
 
 ---
 
 ## Export and Share
 
-The header row over the loaded dye carries **Export** — the export sheet with the loaded dyes as CSS custom properties, SCSS, JSON, plain HEX or a Tailwind theme, each entry annotated with the dye's name and number — and **Share**, which copies a link that reopens the same dyes. Custom hex colours have no dye behind them and are left out of the link.
+The header row over the loaded dye carries **Export** — the export sheet with the loaded dyes as CSS custom properties, SCSS, JSON, plain HEX or a Tailwind theme, each entry annotated with the dye's name and number — and **Share**, which copies a link that reopens the same dyes. Custom hex colors have no dye behind them and are left out of the link.
 
 ---
 
@@ -83,7 +83,7 @@ The tier words are calibrated per method, so a **CLOSE** in ΔEOK2 means the sam
 
 | ΔE2000 | Tier | Meaning |
 |--------|------|---------|
-| under the match line (5 by default) | SAME | Reads as the same dye on armour |
+| under the match line (5 by default) | SAME | Reads as the same dye on armor |
 | up to 10 | CLOSE | Tell them apart side by side, not at arm's length |
 | up to 20 | NEAR | Two different dyes, in the same family |
 | beyond 20 | FAR | Two different dyes at any distance |
@@ -102,10 +102,10 @@ See the [Glossary](../../reference/glossary.md) for more on Delta E and the matc
 ### Similar Dye Investigation
 1. Load both dyes
 2. Read the verdict; check **What actually differs** to see whether it is lightness or hue that separates them
-3. Tap the other methods to see how much of the gap is the formula rather than the colour
+3. Tap the other methods to see how much of the gap is the formula rather than the color
 
 ### Category Exploration
-1. Load a few dyes from one family (all the greys, say)
+1. Load a few dyes from one family (all the grays, say)
 2. The chips sort them closest-first for you
 3. Pick the exact shade you want, then **Export** the set
 
@@ -115,7 +115,7 @@ See the [Glossary](../../reference/glossary.md) for more on Delta E and the matc
 
 - **Closest first** - the default pair is always the two most alike; scan the chips for the biggest number to find the odd one out
 - **TIE badges** are common under Distinguishability % — its whole numbers round together
-- **RATIO is for readability**, not for colour — use it when the two dyes will sit as text on background
+- **RATIO is for readability**, not for color — use it when the two dyes will sit as text on background
 - **The cost line only knows vendor prices** - for market-only dyes, take the pair to [Budget Suggestions](budget-suggestions.md)
 
 ---

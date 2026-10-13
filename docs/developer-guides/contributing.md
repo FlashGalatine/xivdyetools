@@ -36,7 +36,7 @@ registration, D1 migrations) identified. See [Release Process](release-process.m
 |------|---------|
 | `feat` | New capability |
 | `fix` | Bug fix |
-| `refactor` | Restructuring with no behaviour change |
+| `refactor` | Restructuring with no behavior change |
 | `test` | Adding or repairing tests |
 | `docs` | Documentation only |
 | `chore` | Tooling, dependencies, config |
@@ -45,7 +45,7 @@ registration, D1 migrations) identified. See [Release Process](release-process.m
 The scope is the package or app directory name — `web-app`, `presets-api`, `discord-worker`,
 `core`, `types`, `svg`, `test-utils`. Omit it for changes that genuinely span the workspace.
 
-Write the summary as a claim about behaviour, not a description of the diff:
+Write the summary as a claim about behavior, not a description of the diff:
 
 ```
 ✅ fix(presets-api): pending preview images now reach the moderator queue
@@ -62,8 +62,11 @@ Enforced by tooling, so let the tools decide:
 
 ```bash
 pnpm turbo run lint          # ESLint 10 flat config + typescript-eslint
-pnpm --filter <project> run lint:fix
+pnpm --filter <project> exec eslint src --fix   # `lint:fix` exists only in web-app and core
 ```
+
+`lint` (which also runs knip dead-code checks everywhere but the parked `stoat-worker`) is the gate;
+`eslint --fix` only saves you hand edits.
 
 Prettier 3 handles formatting. TypeScript is strict, ES2022, bundler resolution, from the shared
 `tsconfig.base.json`.
@@ -97,20 +100,25 @@ pnpm --filter @xivdyetools/core exec vitest run src/path/to/file.test.ts   # one
 pnpm --filter xivdyetools-web-app run test:e2e         # Playwright
 ```
 
-New behaviour needs a test. Bug fixes need a test that fails before the fix — a regression guard
+New behavior needs a test. Bug fixes need a test that fails before the fix — a regression guard
 that never went red is not a guard. See [Testing](testing.md) for the fuller strategy.
 
 ---
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` (lint, type-check, test, build, production-dependency audit, E2E) runs
-on **every pull request, whatever its base branch**, and on pushes to `main` and the long-lived
+`.github/workflows/ci.yml` (lint, type-check, test, build, production-dependency audit, E2E, plus
+the repo-wide gates below) runs on **every pull request, whatever its base branch**, and on pushes to `main` and the long-lived
 integration branches (`*-prep`, e.g. `monorepo-2.0-prep` for the 5.0 wave — that branch no longer
 exists). Feature branches get CI through their PR, not through pushes. `main` is protected with
 three required checks ("Lint, Type-check, Test, Build", "Security audit (production
 dependencies)", "E2E (Playwright, chromium)"), so a red PR cannot be merged without an explicit
 admin bypass — see [Open Items](../operations/OPEN_ITEMS.md) for the dated, live-checked state.
+Besides the per-project steps, the "Lint, Type-check, Test, Build" job runs gates that ignore the
+affected filter: Wrangler config invariants, `pnpm type-check:scripts`, `pnpm test:scripts`,
+`pnpm dead-code:check`, `pnpm docs:check-versions`, `pnpm docs:check-links`, and
+`pnpm workers:check-logs` (every `apps/*/wrangler.toml` pins `[observability] enabled = false` and
+declares no Logpush or tail consumers).
 The `deploy-*-beta.yml` workflows are **not** CI: they build and test only the app they deploy,
 fire on every non-main push touching it, and deploy to the beta worker as a side effect.
 
@@ -141,14 +149,14 @@ may be committed); worker secrets are set with `wrangler secret put` — see
 
 ## Pull request checklist
 
-- [ ] `pnpm turbo run lint type-check test build` passes for the affected projects
-- [ ] New behaviour is covered by a test; bug fixes have a regression guard
+- [ ] `pnpm turbo run build type-check lint test` passes for the affected projects, and the repo-wide gates pass: `pnpm test:scripts && pnpm dead-code:check && pnpm docs:check-versions && pnpm docs:check-links && pnpm workers:check-logs`
+- [ ] New behavior is covered by a test; bug fixes have a regression guard
 - [ ] Type-only imports use `import type`
 - [ ] Version bumped and `CHANGELOG.md` updated for every project you changed
 - [ ] User-visible web-app changes are in `CHANGELOG-laymans.md`
 - [ ] If a new shared-package dependency was added, the relevant deploy workflow's `paths:` filter includes it
 - [ ] Slash-command shape changes are flagged so `register-commands` gets run
-- [ ] D1 schema changes ship a migration, applied before the dependent code
+- [ ] D1 schema changes ship a migration, applied by hand before or after the deploy as its header says — per file, with `wrangler d1 execute --file`, never `d1 migrations apply` (see [deployment.md § Applying D1 migrations](deployment.md#applying-d1-migrations))
 - [ ] Documentation in `docs/` reflects the change — especially [versions.md](../versions.md)
 
 ---

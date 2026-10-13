@@ -22,7 +22,7 @@ DyeService (instance)
 └── HarmonyGenerator        - the legacy per-type find*Dyes() methods
 ```
 
-Colour *mixing* is not a class: it lives in `src/blending/` and is reached
+Color *mixing* is not a class: it lives in `src/blending/` and is reached
 through `ColorService.mixColors*` or the `@xivdyetools/core/blending` subpath.
 
 ---
@@ -44,7 +44,7 @@ ColorService.labToRgb(65.2, 48.1, 20.4);
 ColorService.normalizeHex('#f6b');           // expands shorthand, upper-cases
 ```
 
-Nine colour spaces are covered — RGB, HSV, HSL, LAB, OKLAB, OKLCH, LCH, CMYK and
+Nine color spaces are covered — RGB, HSV, HSL, LAB, OKLAB, OKLCH, LCH, CMYK and
 RYB — each with the full `rgbTo*` / `*ToRgb` / `hexTo*` / `*ToHex` set, all
 taking scalars. See [`packages/core/README.md`](../../../packages/core/README.md)
 for the exhaustive list.
@@ -98,7 +98,7 @@ ColorService.getOptimalTextColor('#FF6B6B');
 
 There is no `evaluateWCAG` and no `getRelativeLuminance`.
 
-### Colourblindness
+### Colorblindness
 
 `simulateColorblindness` takes an **RGB**; the hex convenience form has its own
 name.
@@ -116,7 +116,8 @@ ColorService.simulateColorblindnessMachadoHex('#FF6B6B', 'tritanopia');
 ### Caches
 
 `ColorService.clearCaches()` and `ColorService.getCacheStats()` cover the seven
-LRU caches (see [Algorithms](algorithms.md)).
+converter LRU caches plus the colorblindness cache, eight in all (see
+[Algorithms](algorithms.md)).
 
 ---
 
@@ -135,7 +136,7 @@ dyeService.getByStainId(102);       // by stainID (canonical key) → Dye | null
 dyeService.getDyeCount();
 dyeService.isLoadedStatus();
 dyeService.getCategories();
-// ['Neutral', 'Reds', 'Browns', 'Yellows', 'Greens', 'Blues', 'Purples', 'Special']
+// ['Blues', 'Browns', 'Greens', 'Neutral', 'Purples', 'Reds', 'Special', 'Yellows']  (sorted)
 ```
 
 `dyeDatabase` is the raw JSON array, **not** a service — call the methods on the
@@ -217,6 +218,21 @@ await api.getPricesForDataCenter([52254, 52255], 'Aether');
 Also: `isAPIAvailable()`, `getAPIStatus()` → `{ available, latency }`,
 `clearCache()`, and the static `APIService.formatPrice(price)`.
 
+`getPricesForDataCenterWithOutcome(itemIDs, dataCenterID)` returns the same
+prices as `getPricesForDataCenter` together with how the lookup went, and never
+throws:
+
+```typescript
+const { prices, outcome } = await api.getPricesForDataCenterWithOutcome([52254], 'Aether');
+// prices:  Map<number, PriceData>, the same Map getPricesForDataCenter returns
+// outcome: PriceBatchOutcome = 'ok' | 'partial' | 'error'
+//   'ok'      every upstream request it needed succeeded (or none was needed)
+//   'partial' a request failed, but prices still holds cached or fetched entries
+//   'error'   a request failed and prices is empty
+```
+
+`PriceBatchOutcome` and `PriceBatchResult` are exported types.
+
 `ICacheBackend` has **five** members and each may be sync or async:
 
 ```typescript
@@ -267,7 +283,7 @@ SUPPORTED_LOCALES;                              // ['en','ja','de','fr','ko','zh
 await LocalizationService.setLocale('ja');
 LocalizationService.getCurrentLocale();         // 'ja'
 LocalizationService.getDyeName(5729);           // string | null
-LocalizationService.getLabel('metallic');       // TranslationKey
+LocalizationService.getLabel('metallic');       // string
 ```
 
 There is no `translate()` and no `getLocale()`. Lookups are per-vocabulary:
@@ -280,6 +296,21 @@ a static on the singleton facade.
 
 For stateless, explicit-locale callers (og-worker), `LocaleLoader` /
 `LocaleRegistry` / `TranslationProvider` are exported directly.
+
+---
+
+## Other exports
+
+Barrel exports the sections above do not cover:
+
+- Consolidation: `CONSOLIDATED_DYES` (the Type A/B/C items with localized
+  names, acquisition and price) and `getMarketItemID(dye)` (legacy item ID →
+  consolidated market ID).
+- `.chara` import: `parseCharaFile(text)`, the async
+  `resolveCharaColors(parsed, characterColors, dyeLookup?)`, and
+  `CHARA_DYEABLE_SLOTS` (the seven gear slots that carry dye channels).
+- Facewear colors: `facewearColors`, `getFacewearColor(slug)` and
+  `getFacewearColorByLegacyItemID(legacyId)`.
 
 ---
 

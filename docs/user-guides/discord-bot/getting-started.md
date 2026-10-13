@@ -5,10 +5,11 @@
 > **Coming from the v4 bot?** The v4
 > commands `/match`, `/match_image`, `/favorites`, `/collection` and `/language` no longer exist:
 > dye matching is `/extractor color` / `/extractor image`, language is `/preferences set language:`,
-> and saved dyes/palettes live in the web app (only community *presets* can be favourited, via
+> and saved dyes/palettes live in the web app (only community *presets* can be favorited, via
 > `/preset favorite`). `/contrast`, `/a11y` and `/changelog` are new; `/swatch` now reads a `.chara`
-> file. Every result is a redrawn image card with a one-line embed and a share link into the web
-> app. `/about` shows the live command roster.
+> file. Every result is a redrawn image card with a one-line embed; `/harmony`, `/dye info`,
+> `/swatch`, `/glamour` and `/budget` also add a share link into the web app. `/about` shows the
+> live command roster.
 
 ---
 
@@ -25,14 +26,15 @@
 
 ## The "what changed in 5.0" notice
 
-The first time you run a command, the bot may send you one extra private message summarising what
+The first time you run a command, the bot may send you one extra private message summarizing what
 changed in the 5.0 redesign. It is a one-off:
 
 - Only you can see it, and it appears **once**.
 - If you already had bot preferences saved before 5.0, you never see it at all — the notice is for
   people meeting the bot fresh.
-- To remember that it has shown you the notice, the bot stores a single flag against your Discord
-  user ID. That flag expires by itself after 180 days.
+- The first time you run a command, the bot sets a small per-user marker so it does not check
+  again, whether or not the notice is sent. The marker carries no content and expires by itself
+  after 180 days.
 
 Nothing else happens, and there is nothing to dismiss.
 
@@ -48,8 +50,7 @@ Try the `/extractor color` command:
 
 The bot will respond with:
 - The **closest FFXIV dyes** to that color, ranked by ΔE2000
-- A **colour sheet** image showing each match and its distance
-- A **share link** that opens the same result in the web app
+- A **color sheet** image showing each match and its distance
 
 ---
 
@@ -62,9 +63,9 @@ The bot will respond with:
 | `/extractor color` | Find closest dyes to a color | `/extractor color color:#FF6B6B` |
 | `/extractor image` | Extract colors from an image | `/extractor image image:<attach>` |
 | `/harmony` | Generate color harmonies | `/harmony color:#FF6B6B type:triadic` |
-| `/gradient` | Gradient between two colours | `/gradient start_color:#FF0000 end_color:#0000FF` |
+| `/gradient` | Gradient between two colors | `/gradient start_color:#FF0000 end_color:#0000FF` |
 | `/mixer` | Blend two dyes | `/mixer dye1:Dalamud Red dye2:Metallic Gold` |
-| `/swatch` | Match a `.chara` character file's colours | `/swatch file:<attach .chara>` |
+| `/swatch` | Match a `.chara` character file's colors | `/swatch file:<attach .chara>` |
 | `/glamour` | List a `.chara` file's glamour: pieces, dyes, and whether they can be worn | `/glamour file:<attach .chara>` |
 
 > **Web app equivalents**
@@ -104,7 +105,7 @@ The bot will respond with:
 | `/preset show` | View preset details | `/preset show name:My Outfit` |
 | `/preset submit` | Submit new preset | `/preset submit preset_name:… category:… dye1:… dye2:… dye3:…` |
 | `/preset vote` | Toggle your vote | `/preset vote preset:My Outfit` |
-| `/preset favorite` | Favourite presets | `/preset favorite list` |
+| `/preset favorite` | Favorite presets | `/preset favorite list` |
 
 ### Utility
 
@@ -119,7 +120,7 @@ The bot will respond with:
 
 ## Understanding the Results
 
-When you use `/extractor color`, you'll see a colour-sheet card listing the nearest dyes and their distance. The v4 text layout looked roughly like this:
+When you use `/extractor color`, you'll see a color-sheet card listing the nearest dyes and their distance. The v4 text layout looked roughly like this:
 
 ```
 ┌─────────────────────────────────────────────┐
@@ -143,14 +144,14 @@ When you use `/extractor color`, you'll see a colour-sheet card listing the near
 
 ### Delta E Scale
 
-Distances are ΔE2000 by default (`matching:ciede2000`). Match results are labelled with four bands:
+Distances are ΔE2000 by default (`matching:ciede2000`). Match results are labeled with four bands:
 
 | ΔE2000 | Band | Meaning |
 |--------|------|---------|
 | under 5 | SAME | You would not tell them apart |
 | 5 to 10 | CLOSE | A very good stand-in |
 | 10 to 20 | NEAR | In the same family, but visibly different |
-| 20 and up | FAR | A different colour |
+| 20 and up | FAR | A different color |
 
 Every other matching method has its own calibrated cut-offs on its own scale, so never compare a
 number from one method against a number from another — compare the band instead. See the
@@ -161,7 +162,7 @@ number from one method against a number from another — compare the band instea
 ## Saving Favorites (removed in 5.0)
 
 `/favorites` and `/collection` were removed in 5.0. Saved dyes and palettes now live in the web app
-(every share link from the bot opens there). What you *can* keep in Discord is a list of favourite
+(every share link from the bot opens there). What you *can* keep in Discord is a list of favorite
 community presets:
 
 ```
@@ -221,7 +222,7 @@ Options:
 
 Available topics:
 - `match_image` - Image matching tips
-- `color_vision` - Colour vision
+- `color_vision` - Color vision
 - `contrast` - Contrast
 - `matching_methods` - Matching methods
 - `spectrum_prices` - Spectrum & prices

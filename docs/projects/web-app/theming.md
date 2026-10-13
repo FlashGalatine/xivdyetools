@@ -81,8 +81,8 @@ The v4 UI uses glassmorphism throughout:
 - Both themes supply compatible color values for glass effects
 
 There is no Tailwind plugin behind this. The look is a set of `--v4-glass-*` custom properties
-declared in `styles/themes.css` and refreshed by `ThemeService.applyTheme()`, consumed by the
-`.glass-panel` rule in `components/v4/base-lit-component.ts`'s shared `baseStyles`.
+declared in `styles/themes.css` and refreshed by `ThemeService.applyTheme()`, read directly as
+`var(--v4-glass-*)` by the components that draw a glass surface; there is no shared `.glass-panel` rule.
 
 ## Tailwind CSS Integration
 

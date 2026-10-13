@@ -31,6 +31,19 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.11.1] - 2026-10-12
+### 👗 Glamour Reader and /glamour
+- Web app and Discord bot: 803 more pieces have an Acquisition line, each checked against the official Online Store, the quest's own rewards or a second independent source, mostly official Lodestone pages (15 follow a set-mate or were decided by hand). Seasonal gear names its event and the year it was first offered, such as "Valentione's Day (2026)".
+- Web app and Discord bot: a piece is named by a look-alike you can still get when the lowest-numbered item with that look has no known source, so more Acquisition lines are filled. Retired tomestone accessories show their Augmented versions, and Housemaid's gear shows Loyal Housemaid's; a twin that takes dyes still comes first.
+- Web app and Discord bot: the copy-ready glamour list leaves out pieces that show nothing, like The Emperor's New items, but keeps the Gloves, and the Robe unless your character is female.
+- Web app and Discord bot: the list writes an Off Hand line only for a shield or a secondary tool. The Glamour Reader and the /glamour card still show every piece you wear.
+- Web app: a Monk's fists, a Bard's quiver, a Red Mage's focus or a crafting tool's second model is no longer listed twice in the copy-ready list.
+- Web app: Acquisition lines you rewrote in the export sheet keep applying. If the piece now has a known source, the sheet offers it once.
+### 📜 Privacy and Terms, every language
+- Web app and Discord bot: the Privacy and Terms documents pointed to a Discord invite that had expired. Every language now links the current invite, so deletion and appeal requests reach us again.
+- Web app: the Privacy Guide now says how saved work can be deleted today. Clear Saved Palettes removes all saved palettes at once; saved Budget swaps and Swatch Matcher character colors can only be cleared from your browser's site data.
+- Discord bot: the Privacy Policy describes the first-run flag as it works. It is set the first time you run a command, whether or not you see the welcome notice.
+
 ## [5.11.0] - 2026-10-09
 ### ⚙️ Web app: settings and tools you can rely on
 - Web app: the Swatch Matcher keeps the palette you picked, saved dye filters work as soon as a tool opens, and settings from a shared link no longer snap back.

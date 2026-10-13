@@ -82,7 +82,7 @@ Click a card to open it. **Back to list** returns. The page shows:
 
 ## Signing In
 
-Browsing and saving need no account. Voting and submitting do. Press **Vote** signed out and the sign-in sheet explains itself — *"Browsing and saving work without an account."* — with a **WHAT AN ACCOUNT ADDS** table (Browse and search ✓, Save presets ✓, Vote ★, Submit and edit ★) and two providers: **Discord** (*Most players already have one*) and **XIVAuth** (*Verifies your character*). *We store your display name and provider ID. No character data, no email, nothing sold.*
+Browsing and saving need no account. Voting and submitting do. Press **Vote** signed out and the sign-in sheet explains itself — *"Browsing and saving work without an account."* — with a **WHAT AN ACCOUNT ADDS** table (Browse and search ✓, Save presets ✓, Vote ★, Submit and edit ★) and two providers: **Discord** (*Most players already have one*) and **XIVAuth** (*Verifies your character*). *Signing in creates an account record: your Discord or XIVAuth ID and a name, shown as the author of presets you submit. With XIVAuth, that name is your verified character's, or "XIVAuth User" plus the first 8 characters of your XIVAuth ID if none is available when you sign in. If your XIVAuth account is linked to Discord, that Discord ID is stored too. No email, nothing sold.*
 
 The **Account** section of the settings column offers the same two buttons (**Login with Discord** / **Login with XIVAuth**) and, once signed in, your name, **+ Submit Preset** and **Logout**.
 

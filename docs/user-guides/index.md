@@ -30,7 +30,7 @@ heading, it is given in brackets.
 | **Dye Comparison** | [Guide](web-app/dye-comparison.md) | Compare dyes side-by-side |
 | **Gradient Builder** | [Guide](web-app/gradient-builder.md) | Create gradients between dyes |
 | **Dye Mixer** | [Guide](web-app/dye-mixer.md) | Blend two dyes together |
-| **Community Presets** (app title: *Preset Palettes*) | [Guide](web-app/community-presets.md) | Browse community dye palettes |
+| **Community Presets** | [Guide](web-app/community-presets.md) | Browse community dye palettes |
 | **Budget Suggestions** | [Guide](web-app/budget-suggestions.md) | Find affordable dye alternatives |
 | **Swatch Matcher** | [Guide](web-app/swatch-matcher.md) | Match character colors to dyes |
 | **Glamour Reader** | [Guide](web-app/glamour-reader.md) | Read a character file as a glamour: verdict, twins, and the GPOSERS list with acquisition lines |

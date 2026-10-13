@@ -180,7 +180,7 @@ the roster of record precisely so a command cannot exist in the dispatch switch,
 
 Discord routes component clicks to the application that **owns the message**. Embeds posted with
 the main bot's token can never reach moderation-worker's handlers. The `MODERATION_BOT_TOKEN`
-secret must be set; when it isn't, the buttons are deliberately omitted in favour of a
+secret must be set; when it isn't, the buttons are deliberately omitted in favor of a
 `/preset moderate` hint rather than shipping dead UI.
 
 ### CJK text renders as tofu boxes in generated images
@@ -195,5 +195,5 @@ card strings — if you add card strings elsewhere, they will be covered by luck
 
 - [Environment Variables](environment-variables.md) — the full var/secret inventory per project
 - [Deploy Environments](../operations/DEPLOY_ENVIRONMENTS.md) — the deploy-target evidence table
-- [Logging Standards](logging-standards.md) — how to get useful structured logs out of a worker
+- [Logging Standards](logging-standards.md) — the logging conventions, and why worker logs are only visible in a live `wrangler tail`
 - `docs/audits/` — dated audit archives; many failure modes here were first documented there

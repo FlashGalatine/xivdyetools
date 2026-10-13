@@ -1,0 +1,19 @@
+# default sweep (15)
+| docs/developer-guides/contributing.md:39 | prose | behaviour | behavior | — |
+| docs/developer-guides/contributing.md:48 | prose | behaviour | behavior | — |
+| docs/developer-guides/contributing.md:100 | prose | behaviour | behavior | — |
+| docs/developer-guides/contributing.md:145 | prose | behaviour | behavior | — |
+| docs/developer-guides/environment-variables.md:65 | prose | behaviour | behavior | — |
+| docs/developer-guides/environment-variables.md:229 | prose | behaviour | behavior | — |
+| docs/developer-guides/release-process.md:202 | prose | behaviour | behavior | — |
+| docs/developer-guides/troubleshooting.md:183 | prose | favour | favor | — |
+| docs/maintainer/adding-dyes.md:24 | prose | colour | color | — |
+| docs/maintainer/adding-dyes.md:31 | prose | colour | color | — |
+| docs/maintainer/adding-dyes.md:38 | prose | colour | color | — |
+| docs/maintainer/adding-dyes.md:40 | prose | colours | colors | — |
+| docs/maintainer/adding-dyes.md:272 | prose | grey | gray | glossary? |
+| docs/maintainer/adding-dyes.md:281 | prose | colours | colors | — |
+| docs/maintainer/adding-dyes.md:385 | prose | colour | color | — |
+
+# --all extras: code/link zones, triage by hand (1)
+| docs/developer-guides/monorepo-setup.md:19 | code | Colour | Color | — |

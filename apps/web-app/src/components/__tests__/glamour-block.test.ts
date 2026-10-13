@@ -772,12 +772,13 @@ describe('GlamourBlock — Copy list / Save .md', () => {
   };
 
   /**
-   * What FIXTURE + RESOLVED must write: the five worn slots only, names where
+   * What FIXTURE + RESOLVED must write: the worn slots only, names where
    * known, dyes only where a channel is dyed, Feet worn-undyed with no item.
+   * The Off Hand is the bow's own quiver (RESOLVED answers it `viaMainHand`),
+   * so it is the same weapon and is left out, as the bot leaves it out.
    */
   const EXPECTED_INPUT = {
     MainHand: { name: 'Runaway Bow', dye1: 'Soot Black' },
-    OffHand: { name: 'Runaway Bow', dye1: 'Soot Black' },
     HeadGear: { name: 'Beech Mask of Casting', dye1: 'Snow White' },
     Body: { dye1: 'Deepwood Green', dye2: 'Loam Brown' },
     Feet: {},
@@ -909,10 +910,6 @@ describe('GlamourBlock — Copy list / Save .md', () => {
       [
         'Glamour Items:',
         'Main Hand: Runaway Bow',
-        'Dye 1: Soot Black',
-        'Acquisition:',
-        '',
-        'Off Hand: Runaway Bow',
         'Dye 1: Soot Black',
         'Acquisition:',
         '',
@@ -1177,9 +1174,11 @@ describe('GlamourBlock — IN THE GAME (the reader verdict) and twins', () => {
     await vi.waitFor(() => expect(verdict(glamour)).not.toBeNull());
 
     expect(part(glamour, 'HeadGear', 'item-name')).toBe('Hempen Coif');
-    expect(
-      row(glamour, 'HeadGear').querySelector<HTMLElement>('[data-role="twin-chip"]')!.dataset.tone
-    ).toBe('fix');
+    const chip = row(glamour, 'HeadGear').querySelector<HTMLElement>('[data-role="twin-chip"]')!;
+    expect(chip.dataset.tone).toBe('fix');
+    // The tooltip lists the twin the row does NOT show, even when that is the
+    // row api-worker named, never the shown twin itself
+    expect(chip.title).toBe('Same model: Dated Hempen Coif');
     expect(part(glamour, 'HeadGear', 'piece-tag')).toBe('FIXED BY A TWIN');
     expect(part(glamour, 'HeadGear', 'piece-note')).toBe(
       "Named instead of Dated Hempen Coif, which can't take these dyes"

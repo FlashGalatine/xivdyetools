@@ -1,0 +1,25 @@
+# default sweep (15)
+| docs/projects/core/algorithms.md:172 | prose | Colour | Color | — |
+| docs/projects/core/algorithms.md:190 | prose | behaviour | behavior | — |
+| docs/projects/core/algorithms.md:196 | prose | colour | color | — |
+| docs/projects/core/algorithms.md:197 | prose | colour | color | — |
+| docs/projects/core/overview.md:146 | prose | colour | color | — |
+| docs/projects/core/overview.md:156 | prose | colours | colors | — |
+| docs/projects/core/overview.md:209 | prose | colour | color | — |
+| docs/projects/core/services.md:25 | prose | Colour | Color | — |
+| docs/projects/core/services.md:47 | prose | colour | color | — |
+| docs/projects/core/services.md:101 | prose | Colourblindness | Colorblindness | — |
+| docs/projects/core/types.md:10 | prose | behaviour | behavior | — |
+| docs/projects/core/types.md:54 | prose | Colour | Color | — |
+| docs/projects/index.md:102 | prose | colour | color | — |
+| docs/projects/index.md:145 | prose | behaviour | behavior | — |
+| docs/projects/types/overview.md:7 | prose | colours | colors | — |
+
+# --all extras: code/link zones, triage by hand (7)
+| docs/projects/core/types.md:43 | code | normalised | normalized | — |
+| docs/projects/core/types.md:77 | code | normalisation | normalization | — |
+| docs/projects/core/types.md:128 | code | colour | color | — |
+| docs/projects/index.md:63 | code | colours | colors | — |
+| docs/projects/index.md:64 | code | Colour | Color | — |
+| docs/projects/logger/overview.md:112 | code | sanitisation | sanitization | — |
+| docs/projects/types/overview.md:74 | code | colour | color | — |

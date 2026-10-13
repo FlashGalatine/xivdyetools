@@ -100,7 +100,7 @@ class MyService {
 }
 ```
 
-## Current Package Status
+## Library Logger Location
 
 `NoOpLogger`, `ConsoleLogger` and `createLibraryLogger()` all live in `@xivdyetools/logger`
 (the `/library` preset); the `Logger` interface is defined there too and re-exported from the
@@ -114,6 +114,17 @@ preset. `@xivdyetools/types` carries no logger symbols.
 | `@xivdyetools/logger` | N/A | Is the logger itself |
 | `@xivdyetools/types` | N/A | Type definitions only |
 | `@xivdyetools/test-utils` | Minimal | Test utilities don't need extensive logging |
+| `@xivdyetools/svg` | None | Pure data-to-SVG generators; no logging |
+| `@xivdyetools/auth` | None | Verification and signing helpers; no logging |
+| `@xivdyetools/worker-kit` | Request-scoped | Provides the request-ID and structured-logger middleware (built on `@xivdyetools/logger/worker`) that every Worker mounts |
+| `@xivdyetools/bot-logic` | Optional | Commands take an optional injected `logger` (e.g. Translator missing-key warnings) |
+
+## Workers Logs Are Off
+
+Every Worker pins `[observability] enabled = false` in its `wrangler.toml`, and Logpush and tail
+consumers are disabled by policy (the `workers:check-logs` gate enforces it). Worker logs are
+therefore not retained anywhere: they show up only in a live `wrangler tail` session. Anything that
+must reach a person has to be surfaced another way, such as a fatal refusal or a health signal.
 
 ## Future Work
 

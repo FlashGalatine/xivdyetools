@@ -92,9 +92,9 @@ web app's **Budget Suggestions** tool and the Discord bot's `/budget` command (`
 
 **Key Components:**
 - Market prices via the Universalis API, proxied and cached by `api-worker`
-- Colour-distance ledger of substitutes with a configurable match line (ΔE2000 2–20, default 8)
+- Color-distance ledger of substitutes with a configurable match line (ΔE2000 2–20, default 8)
 - 22 quick-pick presets for the popular expensive dyes
-- Per-user saved world / data centre
+- Per-user saved world / data center
 
 [View Full Specification →](budget-aware-suggestions.md)
 

@@ -3,6 +3,10 @@
 > Feature Status: ✅ Implemented
 > Platforms: Web App + Discord Bot
 > Core Library Changes: Yes (clustering algorithm — shipped as `PaletteService` in `@xivdyetools/core`)
+>
+> **File paths are pre-monorepo:** `xivdyetools-core` is `packages/core`, so the
+> `src/services/PaletteService.ts` below is `packages/core/src/services/PaletteService.ts`. Many of the
+> other named files no longer exist after the 5.0 rewrite.
 
 ## Overview
 
@@ -96,7 +100,7 @@ interface PaletteExtractionOptions {
 ```
 
 **Why K-Means:**
-- Most flexible for a variable colour count
+- Most flexible for a variable color count
 - Well-supported in both JavaScript (web) and Node.js (bot)
 - Existing libraries available, or straightforward to implement
 
@@ -114,22 +118,22 @@ export class PaletteService {
   /**
    * Extract dominant colors from pixel data
    * @param pixels - Array of RGB values [{r, g, b}, ...]
-   * @param colorCount - Number of colors to extract (clamped to 1-10, default 4)
-   * @returns Array of extracted RGB colors, sorted by dominance
+   * @param options - `colorCount` (clamped to 1-10, default 4) plus clustering tuning options
+   * @returns Array of extracted colors with their dominance, sorted by dominance
    */
-  extractPalette(pixels: RGB[], colorCount: number): RGB[];
+  extractPalette(pixels: RGB[], options?: PaletteExtractionOptions): ExtractedColor[];
 
   /**
    * Extract palette and match to closest dyes
    * @param pixels - Array of RGB values
-   * @param colorCount - Number of colors to extract
    * @param dyeService - DyeService instance for matching
+   * @param options - Same extraction options as `extractPalette`
    * @returns Array of {extracted: RGB, matchedDye: Dye, distance: number}
    */
   extractAndMatchPalette(
     pixels: RGB[],
-    colorCount: number,
-    dyeService: DyeService
+    dyeService: DyeService,
+    options?: PaletteExtractionOptions
   ): PaletteMatch[];
 }
 
@@ -213,19 +217,19 @@ If core library changes are deferred:
 
 ## Discord Bot Implementation
 
-### Enhanced `/match_image` Command
+### `/extractor image` Command
 
 ```
-/match_image image:<attachment> [colors:<1-5>]
+/extractor image image:<attachment> [colors:<3-10>]
 ```
 
 **Parameters:**
 - `image` (required): Image file (PNG, JPG, GIF, WebP)
-- `colors` (optional, default: 1): Number of colors to extract (1-5)
+- `colors` (optional, default: 4): Number of colors to extract (3-10)
 
 ### Response Format
 
-**Single Color (colors=1)** - Current behavior unchanged
+**Single Color** - Not offered here (`colors` starts at 3); `/extractor color` matches one color
 
 **Multi-Color (colors=3-10):**
 ```
@@ -250,7 +254,7 @@ Color 4 (9%) → Metallic Gold
 
 ### New Renderer: Palette Grid
 
-Create `src/renderers/palette-grid.ts`:
+Create `palette-grid.ts` (shipped as `packages/svg/src/palette-grid.ts`):
 
 ```typescript
 interface PaletteGridOptions {
@@ -342,23 +346,23 @@ function samplePixels(imageData: ImageData, maxSamples: number): RGB[] {
 describe('PaletteService', () => {
   it('should extract correct number of colors', () => {
     const pixels = generateTestPixels();
-    const palette = paletteService.extractPalette(pixels, 3);
+    const palette = paletteService.extractPalette(pixels, { colorCount: 3 });
     expect(palette).toHaveLength(3);
   });
 
   it('should return colors sorted by dominance', () => {
     const pixels = generateRedDominantPixels();
-    const palette = paletteService.extractPalette(pixels, 3);
+    const palette = paletteService.extractPalette(pixels, { colorCount: 3 });
     // First color should be reddish
-    expect(palette[0].r).toBeGreaterThan(palette[0].g);
-    expect(palette[0].r).toBeGreaterThan(palette[0].b);
+    expect(palette[0].color.r).toBeGreaterThan(palette[0].color.g);
+    expect(palette[0].color.r).toBeGreaterThan(palette[0].color.b);
   });
 
   it('should handle single-color images', () => {
     const pixels = generateSolidColorPixels('#FF0000');
-    const palette = paletteService.extractPalette(pixels, 3);
+    const palette = paletteService.extractPalette(pixels, { colorCount: 3 });
     // All colors should be similar to red
-    palette.forEach(color => {
+    palette.forEach(({ color }) => {
       expect(color.r).toBeGreaterThan(200);
     });
   });
@@ -392,7 +396,7 @@ describe('PaletteService', () => {
 ## Rollout Plan
 
 1. **Phase 1:** Implement in core library with unit tests
-2. **Phase 2:** Integrate into Discord bot `/match_image` command
+2. **Phase 2:** Integrate into the Discord bot (`/extractor image`; the original `/match_image` command was removed in 5.0)
 3. **Phase 3:** Integrate into web app Color Matcher
 4. **Phase 4:** Add save/export functionality
 

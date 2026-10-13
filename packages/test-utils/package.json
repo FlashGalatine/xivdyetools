@@ -55,9 +55,9 @@
     "@xivdyetools/types": "workspace:*"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20260925.1",
-    "@vitest/coverage-v8": "^5.0.2",
-    "vitest": "^5.0.2"
+    "@cloudflare/workers-types": "^5.20261002.1",
+    "@vitest/coverage-v8": "^5.0.3",
+    "vitest": "^5.0.3"
   },
   "engines": {
     "node": ">=18.0.0"

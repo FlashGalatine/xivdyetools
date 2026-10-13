@@ -53,6 +53,12 @@ describe('cleanName / parseItemRow', () => {
     expect(parseItemRow({ row_id: 372, fields: {} }).levelEquip).toBeNull();
     expect(parseItemRow({ row_id: 372, fields: { LevelEquip: '50' } }).levelEquip).toBeNull();
   });
+  it('reads the ItemUICategory row and answers null when absent or the blank row 0', () => {
+    const cat = (id: number) => ({ value: id, sheet: 'ItemUICategory', row_id: id, fields: {} });
+    expect(parseItemRow({ row_id: 1, fields: { ItemUICategory: cat(2) } }).uiCategory).toBe(2);
+    expect(parseItemRow({ row_id: 1, fields: { ItemUICategory: cat(0) } }).uiCategory).toBeNull();
+    expect(parseItemRow({ row_id: 1, fields: {} }).uiCategory).toBeNull();
+  });
   it('strips U+00AD soft hyphens (German names) and trims', () => {
     expect(cleanName('Erzfeind-Pan­zer­hand­schu­he ')).toBe(
       'Erzfeind-Panzerhandschuhe',
@@ -90,6 +96,7 @@ describe('cleanName / parseItemRow', () => {
       modelSub: '0',
       slots: ['FingerL', 'FingerR'],
       levelEquip: null,
+      uiCategory: null,
       rules: null,
     });
   });
@@ -268,7 +275,7 @@ describe('XivapiClient', () => {
     // The in-game check's fields ride the same single search
     const fields = u.searchParams.get('fields')!.split(',');
     expect(fields).toEqual(
-      expect.arrayContaining(['DyeCount', 'IsGlamorous', 'EquipRestriction.Viera', 'EquipRestriction.Female', 'GrandCompany.row_id'])
+      expect.arrayContaining(['DyeCount', 'IsGlamorous', 'EquipRestriction.Viera', 'EquipRestriction.Female', 'GrandCompany.row_id', 'ItemUICategory.row_id'])
     );
     // Since 7.4 any job wears any piece for glamour: no ClassJobCategory columns
     expect(fields.some((f) => f.startsWith('ClassJobCategory'))).toBe(false);

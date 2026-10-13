@@ -169,7 +169,7 @@ anyone's dye-filter shape, and pre-filtering is what makes the answer "the
 nearest *allowed* dye to the ideal" rather than "the nearest allowed dye to a
 dye that was thrown away". Facewear entries are skipped unconditionally.
 
-### Colour wheels
+### Color wheels
 
 `config.wheel` selects which wheel the offsets are measured on. The registry
 (`src/services/dye/wheels/`) is the one list every surface reads:
@@ -187,14 +187,14 @@ import {
 
 | Wheel | What it preserves |
 |-------|-------------------|
-| `rgb` | HSV hue directly — byte-identical to pre-5.2.0 behaviour, and the default |
+| `rgb` | HSV hue directly — byte-identical to pre-5.2.0 behavior, and the default |
 | `ryb` | Artist's red-yellow-blue wheel (the 25-pair NodeBox/Paletton/Adobe hue-warp table) |
 | `munsell` | Munsell renotation hues, from the committed `munsell-hues.json` |
 | `oklch-hue` | Perceptual OKLCH hue, from the committed `oklch-hue-table.json` |
 | `oklch-lightness` | The base's OKLab **L and C** instead of its HSV S/V |
 
-Each `ColorWheel` exposes `hueOf(hex)` (where a colour sits on the wheel, 0-360),
-`target(baseHex, wheelHue)` (`{ targetHex, targetHue }` — the ideal colour for a
+Each `ColorWheel` exposes `hueOf(hex)` (where a color sits on the wheel, 0-360),
+`target(baseHex, wheelHue)` (`{ targetHex, targetHue }` — the ideal color for a
 slot), `ringStops(count)` (ring paint at evenly spaced angles) and the
 `carriesBaseHsv` flag.
 
@@ -223,7 +223,7 @@ harmony:    ciede2000 [6, 12, 20]   oklab [0.041, 0.101, 0.174]   cie76 [6.7, 14
 separation: ciede2000 [8, 15, 30]   oklab [0.08, 0.144, 0.281]    cie76 [10.4, 19.3, 38.4] …
 ```
 
-`classifyBandTier(distance, context, method)` returns the `BandTier`;
+`classifyBandTier(distance, method, context)` returns the `BandTier`;
 `roundToBandDisplay` applies the per-method decimal places (`BAND_METHOD_DP`).
 `RATIO_BANDS` covers WCAG contrast, which is a ratio rather than a distance and
 prints last.
@@ -337,7 +337,7 @@ Delta E (CIE76) = √[(L₁-L₂)² + (a₁-a₂)² + (b₁-b₂)²]
 
 ### Implementation
 
-CIE76 in the shape core computes it. Note `LAB.L` is **capitalised**, and the
+CIE76 in the shape core computes it. Note `LAB.L` is **capitalized**, and the
 conversions take scalars:
 
 ```typescript
@@ -382,13 +382,9 @@ The library implements the Brettel algorithm for accurate colorblindness simulat
 The Brettel algorithm projects colors onto a reduced color space:
 
 ```
-1. Convert RGB to LMS (Long, Medium, Short cone response)
-2. Apply confusion matrix based on colorblindness type
-3. Convert back to RGB
-
-For protanopia:
-L_simulated = 2.02344 × M - 2.52581 × S
-(L cone response estimated from M and S)
+1. Take the gamma-encoded sRGB channels, scaled to 0-1
+2. Multiply by the 3×3 BRETTEL_MATRICES entry for the vision type
+3. Scale back by 255, clamp to 0-255 and round
 ```
 
 ### Confusion Matrices
@@ -470,8 +466,9 @@ ColorConverter maintains LRU (Least Recently Used) caches for repeated conversio
 hexToRgb, rgbToHex, rgbToHsv, hsvToRgb, hexToHsv, rgbToLab, rgbToOklab
 ```
 
-There is no `labToRgb` cache. `ColorService.clearCaches()` empties all seven and
-`ColorService.getCacheStats()` reports on them.
+There is no `labToRgb` cache. `ColorService.clearCaches()` empties all seven plus the colorblindness
+simulator's cache (eight in total), and `ColorService.getCacheStats()` reports
+on them, including a `colorblind` entry.
 
 ### How LRU Works
 

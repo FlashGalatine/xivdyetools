@@ -54,6 +54,15 @@ for compatible definitions, the verifier's read-only contract, and Astra escalat
   (`mklink /J <link> <target>`). Claude Code looks for agents only in the launch folder and its
   parents, never below it, so `XIVProjects/.claude/agents` is a third junction, to
   `xivdyetools/.claude/agents`.
+- **Claude desktop app worktree sessions** load the role agents from the main checkout, not the
+  worktree: the app starts the session with `--project-config-root` set to the main checkout, so
+  its `.claude/agents/` is only as current as that checkout's last pull. On 2026-10-11 a desktop
+  session in a worktree of current `main` listed the pre-#286 agents, and its bare collector ran
+  as `claude-haiku-4-5` with no effort, from a main checkout 253 commits behind; a `claude -p`
+  session in the same worktree listed the worktree's own files, and the main checkout's again when
+  given `--project-config-root <main checkout>` (CLI 2.1.296). Before relying on a role's model
+  or effort there, compare the agent types' descriptions with `.claude/agents/` or have one agent
+  report its model ID and `printenv CLAUDE_EFFORT`; to test changed agent files, use a CLI session.
 - Invoke by name: `/<skill-name>` in Claude Code, `$<skill-name>` in Codex. Restart the client if
   a new skill does not appear.
 

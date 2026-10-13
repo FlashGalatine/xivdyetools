@@ -152,7 +152,7 @@ For detailed architecture documentation, see:
 ### Service Usage (Core)
 ```typescript
 // Types from @xivdyetools/types (since core v2.0.0)
-import { Dye, RGB, HexColor } from '@xivdyetools/types';
+import type { Dye, RGB, HexColor } from '@xivdyetools/types';
 
 // Services from @xivdyetools/core
 import { ColorService, DyeService, dyeDatabase } from '@xivdyetools/core';
