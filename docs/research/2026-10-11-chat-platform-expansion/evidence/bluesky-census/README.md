@@ -22,6 +22,7 @@ Raw output of [`../scripts/bsky-ffxiv-census.mjs`](../scripts/bsky-ffxiv-census.
 | `20261012T1547Z-focus-handcount-kaiyoko.tsv` | hand count | Every original Kaiyoko post (56), labelled `ffxiv`, `other` or `unclear` by an Opus verifier |
 | `20261012T1547Z-focus-handcount-mrhappy1227.tsv` | hand count | The same for the 166 Mrhappy1227 originals in the `focus` window |
 | `20261012T1605Z-focus-top50.json` | `focus 200 <actors file>` | The same count for the top 50 accounts of the `actors` run |
+| `20261013T0338Z-x-followers.json` | [`x-follower-counts.mjs`](../scripts/x-follower-counts.mjs) | X follower counts for the 10 accounts, paired with their Bluesky handles |
 | `20261012T1605Z-focus-top50-verdicts.json` | review | The grade for each of those 50 and what it rests on: keyword share, the worker's verdict, and the hand counts and Fable ruling where there was one |
 
 ## Results
@@ -118,6 +119,26 @@ What this means for README §2.2's ratio table:
   - One account (`greenbeannsfw`) could not be settled from text: most of its posts are uncaptioned images, and images were not inspected. Fable ruled it *focused*, because all 10 captions that name a subject are FFXIV and none names anything else.
   - The 30 *not* grades rest on the workers' reading of samples, not on hand counts.
 
+**Bluesky and X followers.** X counts are from 2026-10-13 03:38 UTC; Bluesky counts are from the `focus` run, 12 hours earlier. The X counts come from FxTwitter's public API, which relays X's profile data, so they are `secondary`.
+
+| Bluesky account | X account | Bluesky | X | Bluesky ÷ X | Note |
+|---|---|---:|---:|---:|---|
+| `en.finalfantasyxiv.com` | `@FF_XIV_EN` | 100,602 | 652,230 | **0.154** | A clean pair |
+| `jp.finalfantasyxiv.com` | `@FF_XIV_JP` | 20,851 | 665,093 | 0.031 | |
+| `fr.finalfantasyxiv.com` | `@FF_XIV_FR` | 3,751 | 58,624 | 0.064 | |
+| `de.finalfantasyxiv.com` | `@FF_XIV_DE` | 3,119 | 38,512 | 0.081 | |
+| `gposers.org` | `@GPOSERS_FFXIV` | 2,048 | 19,818 | **0.103** | A clean pair |
+| `mrhappy1227.bsky.social` | `@Mrhappy1227` | 5,042 | 49,882 | 0.101 | Bluesky 27% FFXIV, quiet since June |
+| `kaiyoko.bsky.social` | `@KaiyokoStar` | 2,616 | 77,680 | 0.034 | Bluesky dormant since 2024-12-20 |
+| `zepla.bsky.social` | `@Xepla` | 977 | 91,525 | 0.011 | Bluesky 23% FFXIV |
+| `ffxivteamcraft.com` | `@FFXIVTeamcraft` | 152 | 2,132 | 0.071 | |
+| `gamerescape.com` | `@gamerescape` | 321 | 3,728 | 0.086 | A general games site |
+
+- **The cloud report's X snippets were current.** Every count is within 2% of B1a's, GPOSERS included (19.8K, which B1a marked "likely stale").
+- **README §2.2's median ratio holds at 0.10, but on two clean pairs.** The official EN account (0.154) and GPOSERS (0.103) are 3 to 4.5 times the platform baseline of 0.034 (Similarweb mobile MAU, `snippet`). The other three pairs in that table are the accounts the focus check found dormant or mostly off-topic on Bluesky.
+- **The official accounts split by language.** EN 0.154, DE 0.081, FR 0.064, JP 0.031. The Japanese account sits at the global baseline, so the over-indexing is an English-language effect, weaker in French and German, and absent in Japanese. The baseline is a global figure, not a per-language one.
+- **These are audiences, not activity.** Followers accumulate, and an account can keep them after it goes quiet. Post volume on X is still unmeasured.
+
 ## Corrections to the cloud reports
 
 | Cloud report says | Census found |
@@ -130,9 +151,11 @@ What this means for README §2.2's ratio table:
 | Feeds: no like counts retrievable (B1b) | 748 feeds with likes, above |
 | GPOSERS 2,043 / Kaiyoko 2,612 / Zepla 959 Bluesky followers (B1a) | 2,048 / 2,616 / 977: the snippets were current to within 2% |
 | Mrhappy1227, "FFXIV focus unconfirmed" (README §2.2, B1a) | FFXIV-primary on Twitch, but only 27% of their Bluesky posts are FFXIV and the account has been quiet since 2026-06-15 |
+| X follower counts, all undated snippets; GPOSERS 19.8K "likely stale" (B1a) | All current to within 2% on 2026-10-13, GPOSERS included (19,818) |
+| Median ratio 0.10 over five pairs, about 3 times the baseline (README §2.2) | The median holds at 0.101, but only two pairs are clean: EN 0.154 and GPOSERS 0.103. The official JP account is at 0.031, the baseline itself |
 | The ratio table treats all five pairs as FFXIV accounts (README §2.2) | Two are: the official EN account and GPOSERS. Kaiyoko's Bluesky has been dormant since 2024-12-20, and Zepla's is 23% FFXIV |
 
-The X side of B1a's ratio table is still unverified, so its 0.10 median ratio stands or falls with the X numbers.
+The X side is now measured as well; see *Bluesky and X followers*.
 
 ## Limits
 
@@ -140,7 +163,7 @@ The X side of B1a's ratio table is still unverified, so its 0.10 median ratio st
 - **Jetstream sends some posts twice.** Its stored log holds bursts of re-sent posts: thousands of recent posts arrive again, each copy 30 seconds to 10 minutes after the first and stamped with the later time. The NA hour held four bursts (21,592 copies, 14% of raw events), the EU hour one (7,163, 5%). They sit near the dropped connections, but they are in the log itself, so any client reading the stream sees them. `stream` now counts each post once, by repo and record key; the live files predate that.
 - **Hashtags only count hashtags.** Posts that mention FFXIV without one of the 10 tags are missed. The stream sample matches text too.
 - **Search results are what Bluesky's index returns.** Posts or accounts hidden by moderation, or never indexed, are invisible to every mode.
-- **No X comparison.** These modes have no X equivalent without the paid API.
+- **X is measured by followers only.** X's API is paid, and Social Blade refuses scripted requests, so the X counts come from a relay of X's own profile data (`secondary`). X post volume has no free source and is not estimated.
 - **`tags` needs a login.** Bluesky refused `searchPosts` without one (HTTP 403, 2026-10-11), so the script signs in with `BSKY_HANDLE` / `BSKY_APP_PASSWORD`. The app password used for these runs was revoked on 2026-10-12; a rerun needs a new one. Every other mode runs without a login.
 
 ## Script changes made during these runs
@@ -155,6 +178,7 @@ All uncommitted edits to `bsky-ffxiv-census.mjs`, in order:
 7. A new `focus` mode measures how much of each handle's own feed is about FFXIV. It uses a wider term list than the other modes (expansion names, races, "fashion report" and the like), records which term matched each post, and leaves image-only posts out of the share. `mrhappy1227.bsky.social` joins the handle list, since README §2.2's ratio table includes it; the `profiles` file above predates that.
 8. `focus` can take an `actors` output file and check its top 50 instead of the handle list.
 9. `stream` counts each post once, by repo and record key, and reports how many re-sent copies it skipped. Given a start time, it replays that hour from Jetstream's log instead of listening live. The search modes (`tags`, `actors`, `starterpacks`, `feeds`) are unaffected: their results are keyed by URI.
+10. A separate script, [`x-follower-counts.mjs`](../scripts/x-follower-counts.mjs), reads the X follower counts through FxTwitter's public API, with vxTwitter as a fallback.
 
 ## Runs not kept
 
@@ -165,5 +189,5 @@ All uncommitted edits to `bsky-ffxiv-census.mjs`, in order:
 ## Still to run
 
 - `stream 60` in the JP evening (about 11:00–14:00 UTC). The NA and EU hours are done. Run it live, then replay the same hour (`stream 60 <start>`) while Jetstream still holds it, and keep the replay's counts.
-- Record X follower counts by hand for the same accounts (README §5). Check that each X figure comes from the same persona: GPOSERS posts on X as `GPOSERS_FFXIV`.
+- Spot-check two or three of the X counts by hand against the X profiles, since they come from a relay.
 - The focus check stops at the top 50 accounts by followers. Smaller accounts are unchecked.

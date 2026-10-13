@@ -1,0 +1,116 @@
+{
+  "asOf": "2026-10-13T03:38:30.592Z",
+  "source": "api.fxtwitter.com, falling back to api.vxtwitter.com (both relay X profile data; secondary)",
+  "accounts": [
+    {
+      "x": "FF_XIV_EN",
+      "name": "FINAL FANTASY XIV",
+      "followers": 652230,
+      "following": 7,
+      "posts": 13721,
+      "joined": "Wed Jun 30 08:41:19 +0000 2010",
+      "description": "The critically acclaimed MMORPG with a Free Trial up to level 80!\n#Dawntrail available now 🏝️ http://sqex.to/ffxiv_dawntrail\nService updates: @FFXIV_NEWS_EN",
+      "source": "https://api.fxtwitter.com/FF_XIV_EN",
+      "bsky": "en.finalfantasyxiv.com"
+    },
+    {
+      "x": "FF_XIV_FR",
+      "name": "FINAL FANTASY XIV",
+      "followers": 58624,
+      "following": 7,
+      "posts": 29941,
+      "joined": "Wed Jun 30 08:42:36 +0000 2010",
+      "description": "Compte officiel 🇫🇷 #FFXIV, le MMORPG avec un essai gratuit jusqu'au niveau 80 ! Embarquez vers #Dawntrail dès maintenant ! 🏝️ Actu : @FFXIV_NEWS_FR",
+      "source": "https://api.fxtwitter.com/FF_XIV_FR",
+      "bsky": "fr.finalfantasyxiv.com"
+    },
+    {
+      "x": "FF_XIV_DE",
+      "name": "FINAL FANTASY XIV",
+      "followers": 38512,
+      "following": 7,
+      "posts": 9376,
+      "joined": "Wed Jun 30 08:43:49 +0000 2010",
+      "description": "Offizieller 🇩🇪 Account für #FFXIV! Gratis testen bis Stufe 80!\n#Dawntrail ist jetzt verfügbar! 🏝️ https://sqex.to/e1cQI\nUpdates: @FFXIV_NEWS_DE",
+      "source": "https://api.fxtwitter.com/FF_XIV_DE",
+      "bsky": "de.finalfantasyxiv.com"
+    },
+    {
+      "x": "FF_XIV_JP",
+      "name": "FINAL FANTASY XIV／FF14",
+      "followers": 665093,
+      "following": 10,
+      "posts": 15867,
+      "joined": "Wed Jun 30 08:37:59 +0000 2010",
+      "description": "ファイナルファンタジーXIVに関する情報をお知らせする公式アカウントです。最新ニュースは @FFXIV_NEWS_JP をご覧ください。",
+      "source": "https://api.fxtwitter.com/FF_XIV_JP",
+      "bsky": "jp.finalfantasyxiv.com"
+    },
+    {
+      "x": "GPOSERS_FFXIV",
+      "name": "GPOSERS",
+      "followers": 19818,
+      "following": 2291,
+      "posts": 1713139,
+      "joined": "Mon Jul 30 12:47:28 +0000 2018",
+      "description": "#GPOSERS is a #FFXIV community dedicated to connecting with and inspiring others while producing creative works!\nCheck out our website! https://gposers.org/",
+      "source": "https://api.fxtwitter.com/GPOSERS_FFXIV",
+      "bsky": "gposers.org"
+    },
+    {
+      "x": "KaiyokoStar",
+      "name": "Kaiyoko 💫",
+      "followers": 77680,
+      "following": 2622,
+      "posts": 15356,
+      "joined": "Thu Jan 28 19:24:06 +0000 2016",
+      "description": "Kai | Twitch Partner\n🔗 http://twitch.tv/kaiyokostar\n💯 https://fashionreportxiv.com/\n💬 https://discord.kaiyoko.org/",
+      "source": "https://api.fxtwitter.com/KaiyokoStar",
+      "bsky": "kaiyoko.bsky.social"
+    },
+    {
+      "x": "Xepla",
+      "name": "Zepla 🇺🇦 🇺🇸",
+      "followers": 91525,
+      "following": 1297,
+      "posts": 6124,
+      "joined": "Tue Apr 21 07:38:45 +0000 2009",
+      "description": "Bun Enthusiast • Twitch Partner • MMO Content Conjurer • \nhttp://linktr.ee/zeplahq",
+      "source": "https://api.fxtwitter.com/Xepla",
+      "bsky": "zepla.bsky.social"
+    },
+    {
+      "x": "FFXIVTeamcraft",
+      "name": "FFXIV Teamcraft",
+      "followers": 2132,
+      "following": 371,
+      "posts": 453,
+      "joined": "Mon Jun 11 06:42:05 +0000 2018",
+      "description": "A #FFXIV database with tooling to handle collaborative crafts easily. Powered by open source and community ! Made by  @Supamiu_, tweets by @Supamiu_ and Venili",
+      "source": "https://api.fxtwitter.com/FFXIVTeamcraft",
+      "bsky": "ffxivteamcraft.com"
+    },
+    {
+      "x": "gamerescape",
+      "name": "Gamer Escape",
+      "followers": 3728,
+      "following": 25,
+      "posts": 10190,
+      "joined": "Mon Feb 07 04:11:11 +0000 2011",
+      "description": "A website that loves to talk about video games.\n\n📺 https://www.twitch.tv/gamerescape\n🗣️ https://discord.com/invite/gamerescape",
+      "source": "https://api.fxtwitter.com/gamerescape",
+      "bsky": "gamerescape.com"
+    },
+    {
+      "x": "Mrhappy1227",
+      "name": "Mrhappy1227",
+      "followers": 49882,
+      "following": 1175,
+      "posts": 39393,
+      "joined": "Tue Dec 04 01:20:07 +0000 2012",
+      "description": "I Make Videos & Stream in the US :)\n\nBusiness Inquiries: [email redacted] \n\nSponsored by @Steelseries | Partnered with @AdvancedGG",
+      "source": "https://api.fxtwitter.com/Mrhappy1227",
+      "bsky": "mrhappy1227.bsky.social"
+    }
+  ]
+}
