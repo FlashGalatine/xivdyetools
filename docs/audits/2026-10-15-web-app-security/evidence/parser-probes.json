@@ -1,0 +1,76 @@
+{
+  "prototypeUnchanged": true,
+  "results": [
+    {
+      "label": "Trick & Treat Duo (L) F Middie Hyur.pose",
+      "bytes": 40782,
+      "expected": "rejected",
+      "outcome": "rejected",
+      "errorName": "AppError",
+      "message": ".chara file carries no character colour fields (expected at least one of: REyeColor, LEyeColor, HairTone, Highlights, Skintone, LimbalEyes, LipsToneFurPattern, FacePaintColor, SkinColor, LeftEyeColor, RightEyeColor, LimbalRingColor, HairColor, HairHighlight, MouthColor)",
+      "matchesExpected": true
+    },
+    {
+      "label": "Trick & Treat Duo (R) F Middie Hyur.pose",
+      "bytes": 39007,
+      "expected": "rejected",
+      "outcome": "rejected",
+      "errorName": "AppError",
+      "message": ".chara file carries no character colour fields (expected at least one of: REyeColor, LEyeColor, HairTone, Highlights, Skintone, LimbalEyes, LipsToneFurPattern, FacePaintColor, SkinColor, LeftEyeColor, RightEyeColor, LimbalRingColor, HairColor, HairHighlight, MouthColor)",
+      "matchesExpected": true
+    },
+    {
+      "label": "minimal colour field",
+      "bytes": 14,
+      "expected": "accepted",
+      "outcome": "accepted",
+      "slotCount": 8,
+      "gearDyeCount": 0,
+      "producer": null,
+      "nickname": null,
+      "matchesExpected": true
+    },
+    {
+      "label": "current null-only compatibility",
+      "bytes": 17,
+      "expected": "accepted",
+      "outcome": "accepted",
+      "slotCount": 8,
+      "gearDyeCount": 0,
+      "producer": null,
+      "nickname": null,
+      "matchesExpected": true
+    },
+    {
+      "label": "prototype key discarded",
+      "bytes": 54,
+      "expected": "accepted",
+      "outcome": "accepted",
+      "slotCount": 8,
+      "gearDyeCount": 0,
+      "producer": null,
+      "nickname": null,
+      "matchesExpected": true
+    },
+    {
+      "label": "HTML-shaped nickname retained as data",
+      "bytes": 46,
+      "expected": "accepted",
+      "outcome": "accepted",
+      "slotCount": 8,
+      "gearDyeCount": 0,
+      "producer": null,
+      "nickname": "<b>audit probe</b>",
+      "matchesExpected": true
+    },
+    {
+      "label": "deep malformed index",
+      "bytes": 20014,
+      "expected": "rejected",
+      "outcome": "rejected",
+      "errorName": "RangeError",
+      "message": "Maximum call stack size exceeded",
+      "matchesExpected": true
+    }
+  ]
+}
