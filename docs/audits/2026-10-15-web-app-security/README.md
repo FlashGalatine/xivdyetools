@@ -1,12 +1,13 @@
-# Glamour Reader import security review — 2026-10-15
+# Glamour Reader import security review — web and Discord (2026-10-15)
 
-Focused follow-up to an accidental `.pose` drop into the Glamour Reader. Two deferred hardening items are recorded: one informational file-type rejection gap and one low-severity malformed-input handling issue. No exploitable-now issue was demonstrated, and no application source files were modified by the audit.
+Focused follow-up to an accidental `.pose` drop into the Glamour Reader, extended at the maintainer's request to Discord `/glamour` and its shared `/swatch` import path. Three deferred hardening items are recorded: two informational file-type rejection gaps and one low-severity shared-parser issue, now confirmed reachable in the Discord worker too. No exploitable-now issue was demonstrated, and no application source files were modified by the audit.
 
 - **Status:** Draft for later scheduling; implementation has not started.
 - **Source snapshot:** `main` / `origin/main` at `e4fd9fc0f5e45e398e14010e6894eed12d272dbc`.
 - **Document branch:** `codex/glamour-import-audit`.
-- **Scope:** Web character-file ingestion and display, core character parser, and the equipment API's request boundary. This is not a full application security or privacy audit.
-- **Method:** Source inspection, bounded parser probes, independent review, and attempted focused tests; see the evidence notes for limitations.
+- **Scope:** Web character-file ingestion/display, Discord attachment download and command/output boundaries, shared core/bot-logic parsing, and the equipment API's request boundary. This is not a full application security or privacy audit.
+- **Method:** Source inspection, bounded probes, independent review, and focused tests. The Discord follow-up passed 16 mocked probes and 215 tests after installing/building dependencies in the document worktree; the initial web review's limitations remain recorded.
+- **Follow-up baseline:** Audit commit `c8cba17b`; application source remains the snapshot above. The folder keeps its original name to preserve finding links.
 
 | File | Purpose |
 | --- | --- |
@@ -15,8 +16,14 @@ Focused follow-up to an accidental `.pose` drop into the Glamour Reader. Two def
 | [evidence/review-notes.md](evidence/review-notes.md) | Source references, verification history and test limitations |
 | [evidence/scripts/probe-chara-import.mjs](evidence/scripts/probe-chara-import.mjs) | Small, reusable parser probes; no network or writes |
 | [evidence/parser-probes.json](evidence/parser-probes.json) | Captured results from the supplied files and synthetic cases |
+| [evidence/discord-review-notes.md](evidence/discord-review-notes.md) | Discord comparison, source map, test results and limits |
+| [evidence/scripts/probe-discord-chara-import.mjs](evidence/scripts/probe-discord-chara-import.mjs) | Local attachment/command probes with all external calls mocked |
+| [evidence/discord-parser-probes.json](evidence/discord-parser-probes.json) | Captured Discord helper and command results |
+| [evidence/discord-focused-tests.txt](evidence/discord-focused-tests.txt) | 54 passing attachment/adapter tests |
+| [evidence/bot-logic-focused-tests.txt](evidence/bot-logic-focused-tests.txt) | 161 passing command, identity and failure-classification tests |
 
 ## Top items
 
 1. **FINDING-001 (INFO)** — web-app: reject unsupported file extensions before reading, using the shared loader for both import controls and both tools.
-2. **FINDING-002 (LOW)** — core: bound malformed-field processing and diagnostic output; a small nested input currently produces a caught stack error.
+2. **FINDING-002 (LOW)** — core: bound malformed-field processing and diagnostic output; a small nested input produces a caught stack error in the browser and in both Discord commands. Prioritize this shared work when scheduling remediation.
+3. **FINDING-003 (INFO)** — discord-worker: refuse unsupported attachment extensions before downloading; `/glamour` and `/swatch` share the same guard.

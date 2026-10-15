@@ -1,11 +1,11 @@
-# Security review — Glamour Reader file imports (2026-10-15)
+# Security review — Glamour Reader file imports, web and Discord (2026-10-15)
 
 - **Status:** Draft; deferred at the maintainer's request. No implementation, release or deployment is authorized by this document.
 - **Branch/commit:** Inspected `main` at `e4fd9fc0f5e45e398e14010e6894eed12d272dbc`; documentation branch `codex/glamour-import-audit`.
-- **Scope:** `glamour-tool.ts` → shared `CharaFileCard` → `loadCharaFile` → core parsing/resolution → character session and display. The equipment API was inspected only for the data sent and its independent input guards.
-- **Source versions:** web-app 5.15.4; core 5.12.0; api-worker 0.20.0. These are historical snapshot versions, not a current-version table.
-- **Method:** Source review, bounded local probes, independent worker/verifier review, and focused test attempts. [Evidence and limitations](evidence/review-notes.md).
-- **Totals:** 2 hardening findings: INFO × 1, LOW × 1. Neither is a demonstrated code-execution or arbitrary-file-upload exploit.
+- **Scope:** Web `glamour-tool.ts` → shared `CharaFileCard` → `loadCharaFile` → core parsing/resolution → session/display; Discord `/glamour` and `/swatch` → shared attachment guards → bot-logic/core → public response. The equipment API was inspected only for the data sent and its independent input guards.
+- **Source versions:** web-app 5.15.4; core 5.12.0; api-worker 0.20.0; discord-worker 5.8.14; bot-logic 4.9.0. These are historical snapshot versions, not a current-version table.
+- **Method:** Source review, bounded local probes, independent worker/verifier review, and focused tests. [Initial web evidence](evidence/review-notes.md); [Discord follow-up](evidence/discord-review-notes.md). The follow-up begins at audit commit `c8cba17b` with unchanged application source.
+- **Totals:** 3 hardening findings: INFO × 2, LOW × 1. None is a demonstrated code-execution or arbitrary-file-upload exploit.
 - **Sprint 0 — exploitable now:** None identified within this review's scope.
 
 ## Assessment
@@ -14,18 +14,37 @@ The drop zone accepts the browser's first dropped file and sends it to the loade
 
 Both supplied `Trick & Treat Duo` `.pose` samples are JSON pose documents. The current parser rejects both because they contain no recognized character colour fields. A successful drop event therefore does not mean a successful character import.
 
-The relevant threat is a user being induced to import a crafted file into their own browser. The reviewed path parses data locally, renders imported labels/errors as text, and sends only extracted equipment model numbers and facewear IDs for item lookup. An attacker can also call the public equipment API directly; an extension check in the web app cannot replace server-side validation.
+For the web app, the relevant threat is a user being induced to import a crafted file into their own browser. That path parses data locally, renders imported labels/errors as text, and sends only extracted equipment model numbers and facewear IDs for item lookup. An attacker can also call the public equipment API directly; an extension check in the web app cannot replace server-side validation.
 
 The confirmed residual concern is unnecessary work on malformed data and oversized diagnostics inside the existing file-size ceiling. A roughly 20 KB deeply nested invalid field produces a `RangeError` during diagnostic serialization. The web loader catches it. This review did not demonstrate a tab hang, persistent denial of service, cross-user compromise or server compromise.
+
+### Discord follow-up
+
+Discord is similarly permissive at the file-type boundary: its shared attachment helper checks presence, size and URL, but never the filename extension or MIME metadata. `/glamour` and `/swatch` therefore download an under-limit `.pose` from Discord before the parser refuses it. Local probes of the actual helper and command logic confirmed this for both supplied files, including copies renamed `.chara`.
+
+The exposure differs materially from the web app: the user uploads to Discord, and the worker downloads and parses the file on Cloudflare. A command user can supply crafted input to this server-side parser. Interactions require Discord's valid signature, and commands pass a per-user rate check before dispatch (15/minute for these commands under the reviewed configuration). Download controls are stronger than the web file cap: **1 MiB counted from the response stream**, an exact HTTPS Discord-CDN host allowlist, a 10-second timeout and no redirect following.
+
+The same 20,014-byte nested input is below that cap and reaches the shared parser. Both command functions catch the exception, return `PARSE_FAILED` with a fixed localized explanation, and log only `RangeError`; neither calls the equipment resolver. Catching the error contains the failure but cannot undo CPU or allocation already spent. FINDING-002 therefore now includes authenticated server-side exposure, with LOW severity retained on the demonstrated bounded/caught evidence. This is a reason to prioritize shared-parser hardening when scheduled, not evidence of a live service outage.
+
+| Boundary | Web app | Discord `/glamour` and `/swatch` |
+| --- | --- | --- |
+| Unsupported extension rejected early | No | No |
+| File parsing location | User's browser | Cloudflare worker after Discord upload |
+| File ceiling | 20 MiB before local read | 1 MiB metadata check plus authoritative streamed download cap |
+| Supplied pose-only samples | Rejected by parser | Rejected by parser; fixed command error |
+| Nested malformed field | Caught loader failure | Caught `PARSE_FAILED`; no equipment lookup |
+| Failure text | Parser reason displayed as plain text | Fixed localized explanation; 1,024-character sanitized adapter limit |
+| Character name/producer display | Plain-text labels | Nickname omitted; only fixed known producer tokens displayed |
 
 ## Catalog
 
 | ID | Title | Severity | Exposure | Deploy unit | Rotation |
 | --- | --- | --- | --- | --- | --- |
 | [FINDING-001](findings/FINDING-001.md) | Shared loader reads unsupported file types before rejecting their contents | INFO | INTERNET-UNAUTH; requires user import, browser-local effect | web-app | NONE |
-| [FINDING-002](findings/FINDING-002.md) | Malformed fields have no local processing or diagnostic budgets | LOW | INTERNET-UNAUTH through web import; requires user action | core | NONE |
+| [FINDING-002](findings/FINDING-002.md) | Malformed fields have no processing or diagnostic budgets | LOW | INTERNET-UNAUTH via user-assisted web import; INTERNET-AUTH via Discord commands | core | NONE |
+| [FINDING-003](findings/FINDING-003.md) | Discord attachment helper downloads unsupported file types | INFO | INTERNET-AUTH; Discord command user, signed interaction | discord-worker | NONE |
 
-Exposure labels describe availability through the public web app, not a remotely triggerable server parser. Other core consumers were not assessed; do not extrapolate this impact rating to them without inspection.
+The original web exposure describes user-assisted local parsing. Discord adds a server parser reachable by a command user through signed interactions; the signature authenticates Discord's request, not the safety of the attached file. Other core consumers were not assessed; do not extrapolate this impact rating to them without inspection. Per-user limits are a mitigation, not a global workload guarantee or a claim that limiter failures are fail-closed.
 
 ## Positive controls
 
@@ -36,15 +55,20 @@ Exposure labels describe availability through the public web app, not a remotely
 - Failed parsing does not publish a new character session; existing session state is preserved.
 - Equipment requests contain extracted model numbers and facewear IDs, not the original file, nickname or image data. Enabled telemetry separately records an allowlisted parse outcome and producer category.
 - The equipment API independently validates slots, duplicates, item count and uint16 values, and enforces an **8 KiB streamed request-body cap**.
+- Discord attachment downloads use the 1 MiB streamed cap, exact HTTPS CDN host allowlist, timeout and manual redirect mode; a redirect response is refused.
+- Both bot command functions return fixed localized parse errors and log only exception class/code. Adapters additionally sanitize/cap error text and default outbound messages to no mentions.
+- Bot cards omit nicknames and filenames and display only known producer tokens. The inspected adapters do not serialize the internal parsed character into a Discord response.
 
 ## Rejected suspicions and compatibility constraints
 
 - **The supplied poses become valid characters:** rejected by direct source probes.
-- **A successful drop executes the file or uploads it wholesale:** no such path was found in the inspected code.
+- **A successful web drop executes the file or uploads it wholesale:** no such path was found in the inspected web code. Discord's separate flow does upload the file to Discord and download it to the worker.
 - **HTML in imported labels is directly interpreted as markup:** inspected labels and error messages use text rendering.
 - **Extension or MIME checking alone would secure imports:** filenames can be changed and MIME metadata is not trustworthy. Content and server checks remain necessary.
 - **Require an exact producer declaration:** unsuitable; key-based parsing intentionally supports different Anamnesis, Ktisis and Brio exports.
 - **An all-empty parsed character is automatically a security defect:** not established. `{"Skintone":null}` currently yields empty slots; decide any stricter validity policy separately against sparse legitimate exports.
+- **The Discord signature makes a user's attachment trusted:** false; valid command users can still supply malformed files. Content/resource guards remain necessary.
+- **Discord publishes the parser's quoted field values or stack error:** direct command probes returned fixed localized text and short class/code logs, with zero equipment calls after parse failure.
 
 ## Deferred work and acceptance criteria
 
@@ -63,8 +87,17 @@ Exposure labels describe availability through the public web app, not a remotely
 - Evaluate whole-document size/depth limits at the appropriate boundary. A depth check after `JSON.parse` does not prevent parsing allocation; do not claim that it does. Preserve legitimate embedded-image exports even though image data is not used by this feature.
 - Add small deterministic tests for nested malformed fields, excessive comma-separated components, long metadata and bounded errors. Avoid stress tests large enough to destabilize developer machines.
 - Preserve legitimate Anamnesis/Ktisis/Brio fixtures, sparse-file behavior unless deliberately changed, prototype defenses, plain-text display, and API numeric-only requests.
+- Regress both bot command functions against the nested input and oversized malformed fields. Assert fixed localized errors, bounded class/code-only logs, no gear-resolution call and no successful render result after rejection. Retain the worker's independent 1 MiB streamed cap.
+- Schedule this shared-parser work ahead of the early-extension UX improvements: it protects both browser and server consumers. Reassess severity if realistic Worker CPU/memory testing demonstrates a wider effect.
 
-### 3. Verify before closing
+### 3. Early rejection in the shared Discord attachment helper — FINDING-003
+
+- Apply the agreed supported-extension policy to `attachment.filename` before deferring/downloading, with a localized ephemeral refusal for both `/glamour` and `/swatch`.
+- Treat MIME metadata as advisory; do not reject a legitimate `.chara` solely because Discord reports a generic or absent MIME type. Do not rely on the CDN URL suffix as the file-type decision.
+- Test `.pose`, `.png`, misleading suffixes, uppercase `.CHARA`, renamed pose contents and missing MIME metadata. Assert refused filenames cause no fetch, API lookup or render work.
+- Preserve the host/scheme allowlist, timeout, redirect refusal, stream cap, failure classification, name omission and no-mention output defaults. Early worker rejection cannot undo the user's existing upload to Discord.
+
+### 4. Verify before closing
 
 - Recheck these findings against the then-current branch; line numbers and implementations may have changed.
 - Install/build dependencies in the implementation worktree, then rerun focused parser, loader, file-card and API boundary suites. Resolve the recorded setup failures before claiming a clean test run.
@@ -77,7 +110,7 @@ None identified; no exposed credential was found in this focused path review.
 
 ## Pending policy edits
 
-None proposed by these two findings. Existing character-file privacy wording was checked for the reviewed flow; this is not a certification of all policies, translations or data flows. Keep raw file data and unrestricted metadata out of telemetry while fixing these issues.
+None proposed by these three findings. Existing web and Discord character-file privacy wording was checked for the reviewed flows; the bot policy explicitly describes downloading and parsing files on Cloudflare. This is not a certification of all policies, translations or data flows. Keep raw file data and unrestricted metadata out of telemetry while fixing these issues.
 
 ## Remediation status
 
@@ -85,6 +118,7 @@ None proposed by these two findings. Existing character-file privacy wording was
 | --- | --- | --- |
 | FINDING-001 | OPEN — deferred; implementation not started | — |
 | FINDING-002 | OPEN — deferred; implementation not started | — |
+| FINDING-003 | OPEN — deferred; implementation not started | — |
 
 ## Next steps
 
@@ -93,4 +127,4 @@ When this work is scheduled, use the catalog and acceptance criteria to prepare 
 ## External guidance
 
 - [MDN: `accept` is a file-picker hint, not validation](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/accept).
-- [OWASP: layered file validation and resource limits](https://cheatsheetseries.owasp.org/cheatsheets/File_Upload_Cheat_Sheet.html). Server-upload/storage controls apply only where a file is actually uploaded; this path reads the file locally.
+- [OWASP: layered file validation and resource limits](https://cheatsheetseries.owasp.org/cheatsheets/File_Upload_Cheat_Sheet.html). Apply the guidance to each boundary: the web import reads locally, while Discord imports involve a Discord upload and a worker download.
