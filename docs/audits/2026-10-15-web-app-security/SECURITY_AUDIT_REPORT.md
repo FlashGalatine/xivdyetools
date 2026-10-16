@@ -36,6 +36,16 @@ The same 20,014-byte nested input is below that cap and reaches the shared parse
 | Failure text | Parser reason displayed as plain text | Fixed localized explanation; 1,024-character sanitized adapter limit |
 | Character name/producer display | Plain-text labels | Nickname omitted; only fixed known producer tokens displayed |
 
+### Proposed 8 KiB ceiling
+
+The maintainer requested a smaller character-file ceiling to exclude large image-bearing exports. A fresh, read-only profile of the supplied `CharaSamples` folder found **1,093 distinct files**, all accepted by the current core parser. The **1,092 files without nonempty `Base64Image` are 1,837–2,777 bytes**. The sole larger file is **3,128,021 bytes** and declares `Anamnesis Character File`, with a 2,898,324-character `Base64Image` value. Its image data was not decoded or authenticated. Discord's existing 1 MiB cap already refuses that particular file; the web cap admits it to parsing.
+
+Recommend **8 KiB = 8,192 bytes for the complete `.chara` file**, enforced before the web read and against actual Discord download bytes. A literal decimal 8 KB (8,000 bytes) rejects the same single corpus file; the proposed exact boundary is 8,192 bytes so implementation and translated messages agree. This corpus supports that compatibility choice, not a guarantee that every legitimate or future export fits. Extra whitespace and metadata count toward the limit too.
+
+Size does **not** prove that an image claim is authentic or absent. A 94-byte synthetic file with non-image text in `Base64Image` passes both the proposed size check and the current parser. The parser reads JSON but omits that field from its output; it does not decode or render its contents. If the intended policy is to reject every file carrying embedded image data, add a separate rule rejecting nonempty `Base64Image` strings and non-string/non-null values, while accepting missing/null/empty placeholders. This is a proposed companion decision for remediation, not a demonstrated image-execution vulnerability. Producer declarations and apparent age are not security checks.
+
+The lower ceiling would reject the recorded 20,014-byte nested diagnostic case before parsing, but smaller malformed inputs still require field/depth/diagnostic bounds. [Measurements, nine probes and verification](evidence/size-cap-review-notes.md) document the recommendation. Current application limits remain the values in the comparison table; no runtime behavior changed.
+
 ## Catalog
 
 | ID | Title | Severity | Exposure | Deploy unit | Rotation |
@@ -69,6 +79,7 @@ The original web exposure describes user-assisted local parsing. Discord adds a 
 - **An all-empty parsed character is automatically a security defect:** not established. `{"Skintone":null}` currently yields empty slots; decide any stricter validity policy separately against sparse legitimate exports.
 - **The Discord signature makes a user's attachment trusted:** false; valid command users can still supply malformed files. Content/resource guards remain necessary.
 - **Discord publishes the parser's quoted field values or stack error:** direct command probes returned fixed localized text and short class/code logs, with zero equipment calls after parse failure.
+- **An 8 KiB file cannot carry spoofed image data:** false; small `Base64Image` values pass a size check. Size restriction and any explicit no-image policy are distinct controls.
 
 ## Deferred work and acceptance criteria
 
@@ -84,10 +95,10 @@ The original web exposure describes user-assisted local parsing. Discord adds a 
 
 - Replace whole-value serialization in error messages with a bounded, depth-safe description. Errors must remain useful without echoing arbitrary input at full length.
 - Bound float-colour field length and component processing before splitting/mapping all segments. Bound retained/displayed metadata where justified by real exports.
-- Evaluate whole-document size/depth limits at the appropriate boundary. A depth check after `JSON.parse` does not prevent parsing allocation; do not claim that it does. Preserve legitimate embedded-image exports even though image data is not used by this feature.
+- Adopt the proposed 8 KiB character-import ceilings described below and evaluate depth limits at the appropriate boundary. A depth check after `JSON.parse` does not prevent parsing allocation; do not claim that it does. At the maintainer's request, preserving large embedded-image exports is no longer a remediation requirement; record the deliberate compatibility change and explain the refusal.
 - Add small deterministic tests for nested malformed fields, excessive comma-separated components, long metadata and bounded errors. Avoid stress tests large enough to destabilize developer machines.
 - Preserve legitimate Anamnesis/Ktisis/Brio fixtures, sparse-file behavior unless deliberately changed, prototype defenses, plain-text display, and API numeric-only requests.
-- Regress both bot command functions against the nested input and oversized malformed fields. Assert fixed localized errors, bounded class/code-only logs, no gear-resolution call and no successful render result after rejection. Retain the worker's independent 1 MiB streamed cap.
+- Regress both bot command functions against malformed fields that fit the new cap; oversized inputs must be rejected before parsing. Assert fixed localized errors, bounded class/code-only logs, no gear-resolution call and no successful render result after rejection. Preserve the worker's independent streamed-byte enforcement using the proposed new limit.
 - Schedule this shared-parser work ahead of the early-extension UX improvements: it protects both browser and server consumers. Reassess severity if realistic Worker CPU/memory testing demonstrates a wider effect.
 
 ### 3. Early rejection in the shared Discord attachment helper — FINDING-003
@@ -97,7 +108,17 @@ The original web exposure describes user-assisted local parsing. Discord adds a 
 - Test `.pose`, `.png`, misleading suffixes, uppercase `.CHARA`, renamed pose contents and missing MIME metadata. Assert refused filenames cause no fetch, API lookup or render work.
 - Preserve the host/scheme allowlist, timeout, redirect refusal, stream cap, failure classification, name omission and no-mention output defaults. Early worker rejection cannot undo the user's existing upload to Discord.
 
-### 4. Verify before closing
+### 4. Character-file ceiling and image-field policy — supports FINDING-002
+
+- Use a dedicated `.chara` limit of **8,192 bytes**, applied to the complete original file without stripping fields or compacting it to gain admission. Accept exactly 8,192 bytes at the size gate and reject 8,193; passing the gate still requires valid content.
+- Web: enforce before `file.text()` in the shared loader for both tools. Do not lower the shared `MAX_USER_FILE_BYTES` constant, which also serves image uploads; keep the Palette Extractor's existing image allowance. Preserve the previous character session on rejection.
+- Discord: apply the same limit to attachment metadata and the streamed CDN response, including absent or misleading declared sizes. Keep scheme/host restrictions, timeout, redirect refusal and early localized ephemeral errors. The user has already uploaded to Discord before this guard runs.
+- Use byte counts, not JavaScript string length. Update dedicated size wording in all six web and bot locales; merely lowering `MAX_FILE_BYTES` would currently display `0.0078125 MB` in the bot. Update living guides and tests when behavior changes.
+- Proposed companion policy: refuse nonempty `Base64Image` and invalid non-string/non-null values with a localized explanation; permit missing/null/empty placeholders. Decide this explicitly when scheduling implementation. Do not decode images to determine eligibility, and do not reject by `TypeName` or purported producer age.
+- Add boundary cases at 8,191/8,192/8,193 bytes, multibyte text, the oversized image-bearing export represented by a safe synthetic fixture, small spoofed image fields, and normal Anamnesis/Ktisis/Brio fixtures. Keep extension/content checks and bounded parser diagnostics; do not equate this cap with safety or close FINDING-002 based on it alone.
+- Document the supported file policy and explain that oversized exports need an image-free, sufficiently small export. The corpus samples are compatibility evidence only; do not commit users' raw files or automatically rewrite their originals.
+
+### 5. Verify before closing
 
 - Recheck these findings against the then-current branch; line numbers and implementations may have changed.
 - Install/build dependencies in the implementation worktree, then rerun focused parser, loader, file-card and API boundary suites. Resolve the recorded setup failures before claiming a clean test run.

@@ -8,6 +8,7 @@ Focused follow-up to an accidental `.pose` drop into the Glamour Reader, extende
 - **Scope:** Web character-file ingestion/display, Discord attachment download and command/output boundaries, shared core/bot-logic parsing, and the equipment API's request boundary. This is not a full application security or privacy audit.
 - **Method:** Source inspection, bounded probes, independent review, and focused tests. The Discord follow-up passed 16 mocked probes and 215 tests after installing/building dependencies in the document worktree; the initial web review's limitations remain recorded.
 - **Follow-up baseline:** Audit commit `c8cba17b`; application source remains the snapshot above. The folder keeps its original name to preserve finding links.
+- **Size-policy follow-up:** At the maintainer's request, evaluate a dedicated 8 KiB (8,192-byte) `.chara` ceiling. Fresh measurement: 1,092 of 1,093 supplied corpus files fit; the only larger file carries nonempty `Base64Image`. This is a proposed resource limit, not a content-safety guarantee; see the separate image-field policy below.
 
 | File | Purpose |
 | --- | --- |
@@ -21,9 +22,12 @@ Focused follow-up to an accidental `.pose` drop into the Glamour Reader, extende
 | [evidence/discord-parser-probes.json](evidence/discord-parser-probes.json) | Captured Discord helper and command results |
 | [evidence/discord-focused-tests.txt](evidence/discord-focused-tests.txt) | 54 passing attachment/adapter tests |
 | [evidence/bot-logic-focused-tests.txt](evidence/bot-logic-focused-tests.txt) | 161 passing command, identity and failure-classification tests |
+| [evidence/size-cap-review-notes.md](evidence/size-cap-review-notes.md) | 8 KiB compatibility evidence, security limits and proposed implementation boundaries |
+| [evidence/scripts/profile-chara-size-policy.mjs](evidence/scripts/profile-chara-size-policy.mjs) | Read-only corpus byte measurements and small policy probes |
+| [evidence/chara-size-profile.json](evidence/chara-size-profile.json) | Captured statistics for 1,093 files and nine policy probes; no raw file payloads |
 
 ## Top items
 
 1. **FINDING-001 (INFO)** — web-app: reject unsupported file extensions before reading, using the shared loader for both import controls and both tools.
-2. **FINDING-002 (LOW)** — core: bound malformed-field processing and diagnostic output; a small nested input produces a caught stack error in the browser and in both Discord commands. Prioritize this shared work when scheduling remediation.
+2. **FINDING-002 (LOW)** — core: bound malformed-field processing and diagnostic output; a small nested input produces a caught stack error in the browser and in both Discord commands. Prioritize this shared work and the proposed 8 KiB import ceilings when scheduling remediation.
 3. **FINDING-003 (INFO)** — discord-worker: refuse unsupported attachment extensions before downloading; `/glamour` and `/swatch` share the same guard.

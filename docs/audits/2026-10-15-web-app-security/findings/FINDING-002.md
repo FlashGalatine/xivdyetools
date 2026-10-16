@@ -14,8 +14,8 @@
 
 ## Fix
 - Use bounded depth-safe diagnostics and cap field processing before splitting; choose metadata limits against supported exports.
-- Evaluate document limits without misrepresenting post-parse checks as protection from parsing allocation; add bounded regression tests.
+- Propose dedicated 8 KiB (8,192-byte) web pre-read and Discord metadata/stream caps, with [corpus evidence](../evidence/size-cap-review-notes.md); retain field/depth bounds and separate image-upload limits. The cap alone cannot exclude small spoofed image fields or establish safety.
 - Prioritize this shared fix when scheduling; cover both bot commands and retain their stream cap, fixed public errors and class/code-only logs.
 
 ## Status
-OPEN — deferred; Discord exposure verified in the 2026-10-15 follow-up. No implementation started.
+OPEN — deferred; Discord exposure and proposed 8 KiB import limits reviewed on 2026-10-15. No implementation started.
