@@ -29,10 +29,10 @@ The notes below summarize observed tool results; they are not claimed to be raw 
 
 | File | Bytes | Bones | Top-level fields | Parser result |
 | --- | --- | --- | --- | --- |
-| Trick & Treat Duo (L) F Middie Hyur.pose | 40,782 | 195 | FileExtension, TypeName, Position, Rotation, Scale, Bones | Rejected: no character colour fields |
-| Trick & Treat Duo (R) F Middie Hyur.pose | 39,007 | 189 | Same six fields | Rejected: no character colour fields |
+| Trick & Treat Duo (L) F Middie Hyur.pose | 40,782 | 195 | FileExtension, TypeName, Position, Rotation, Scale, Bones | Rejected: no character color fields |
+| Trick & Treat Duo (R) F Middie Hyur.pose | 39,007 | 189 | Same six fields | Rejected: no character color fields |
 
-Both declare `Anamnesis Pose`; neither contains character colour keys. Producer text is not used as an authenticity or security check.
+Both declare `Anamnesis Pose`; neither contains character color keys. Producer text is not used as an authenticity or security check.
 
 ## Reproduction
 

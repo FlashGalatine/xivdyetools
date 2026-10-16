@@ -53,7 +53,7 @@ node --import tsx docs/audits/2026-10-15-web-app-security/evidence/scripts/probe
 | 10,000-deep invalid `Skintone` (20,014 bytes) | 1 | Caught `RangeError` in both commands, fixed public text, zero equipment calls; below the 1 MiB cap |
 | Malformed value with a private marker, mention and HTML-shaped text | 1 | Fixed public error; the supplied value does not appear in either captured log |
 | Redirect response | 1 | Refused |
-| Stream larger than the cap, with no declared length | 1 | Refused and cancelled after bounded chunk production |
+| Stream larger than the cap, with no declared length | 1 | Refused and canceled after bounded chunk production |
 | **Total** | **16** | **All expected outcomes observed** |
 
 Every document probe also asserts manual redirect mode and an abort signal passed to fetch. The 10-second duration is source-confirmed; these mocks do not measure a real timeout. Stack limits vary by runtime: Node reproduces the nested diagnostic failure, while Cloudflare CPU/memory behavior and deployed availability were not measured. No service-level denial of service is claimed.

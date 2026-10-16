@@ -32,7 +32,7 @@ All 1,092 remaining files fit either interpretation of “8 KB.” The proposal 
 With dependencies available, run from the repository root:
 
 ```powershell
-node --import tsx docs/audits/2026-10-15-web-app-security/evidence/scripts/profile-chara-size-policy.mjs . 'C:\dev\XIVProjects\CharaSamples'
+node --import tsx docs/audits/2026-10-15-web-app-security/evidence/scripts/profile-chara-size-policy.mjs . 'path/to/CharaSamples'
 ```
 
 [Saved script](scripts/profile-chara-size-policy.mjs) and [captured output](chara-size-profile.json). The script scans top-level `.chara` files only, uses original bytes for size statistics, runs the actual `parseCharaFile`, and prints JSON. The proposed cap is simulated; no production guard has been implemented or integration-tested at the new threshold.
@@ -55,11 +55,11 @@ Validation passed for the saved script's syntax, all 34 local audit links, the r
 
 ## What the change would protect
 
-An early whole-file byte ceiling reduces memory and parsing work before JSON interpretation. It would exclude the recorded large image-bearing sample from the web path, further constrain Discord inputs and exclude the existing 20,014-byte diagnostic reproducer from both. That is a resource restriction. It does not authenticate payloads, guarantee absence of image data, or replace semantic validation, depth/field limits and bounded error construction.
+An early whole-file byte ceiling reduces memory and parsing work before JSON interpretation. It would exclude the recorded large image-bearing sample from the web path, further constrain Discord inputs and exclude that specific 20,014-byte diagnostic file from both. It is not a mitigation for the stack overflow: a 2026-10-16 re-measurement (Node 22) found the smallest overflowing nested file is 8,195 bytes on a bare stack, and an 8,191-byte file overflows with about 25 extra caller frames. The bounded-diagnostics fix in FINDING-002 is required regardless of the cap. That is a resource restriction. It does not authenticate payloads, guarantee absence of image data, or replace semantic validation, depth/field limits and bounded error construction.
 
 Core currently calls `JSON.parse` (`packages/core/src/services/chara/chara-parser.ts:384`), which allocates strings including image data, but returns only selected character fields (`:521`). The module explicitly says never to read `Base64Image` (`:50`); the reviewed web and bot flows do not decode or render it. A spoofed string was not demonstrated to execute or cross a new trust boundary.
 
-If the maintainer's desired product policy is “no embedded images in character files,” the recommended companion rule is explicit refusal of **nonempty `Base64Image` strings and non-string/non-null values**. Keep missing, null and empty-string placeholders compatible; 93 corpus files use null. Perform that semantic check after the early byte guard, without decoding the image or interpolating its contents into a diagnostic. The decision is deferred with implementation. Rejecting one known field is not a generic payload detector: unrecognized fields can also hold small arbitrary data and must remain inert/bounded.
+If the maintainer's desired product policy is “no embedded images in character files,” the recommended companion rule is explicit refusal of **nonempty `Base64Image` strings and non-string/non-null values**. Keep missing, null and empty-string placeholders compatible; 93 corpus files use null. Perform that semantic check after the early byte guard, without decoding the image or interpolating its contents into a diagnostic. Decided 2026-10-16: not adopted. Under an 8 KiB cap the rule would only add inert strings of 8 KiB or less to the refusal set, and it cannot give a distinct message for a real thumbnail export, which the cap refuses before it is read. The size message carries the embedded-image hint instead; Anamnesis attaches images only when the user opts in, up to 6 MiB and without downscaling. The profile also measured whole-file bytes only, not Author/Description/Tags lengths, and the corpus is one maintainer's collection. Rejecting one known field is not a generic payload detector: unrecognized fields can also hold small arbitrary data and must remain inert/bounded.
 
 ## Implementation boundaries to preserve
 
