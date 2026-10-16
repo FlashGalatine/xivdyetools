@@ -7,10 +7,9 @@
 > **Versions below match each project's `package.json` in this checkout** and are checked
 > against it by `pnpm docs:check-versions` (`scripts/check-doc-versions.ts`, run in CI), so
 > this table cannot silently drift again. The 5.0 wave merged to `main` on 2026-08-28
-> (PR #123). As of 2026-10-12 (checked against the registry API), every published
-> package here is at parity with npm except the two the 2026-10-12 batch bumped, which are
-> published right after it: `@xivdyetools/core` 5.12.0 (npm 5.10.0; 5.11.0 is not published on
-> its own) and `@xivdyetools/bot-logic` 4.9.0 (npm 4.8.3);
+> (PR #123). As of 2026-10-16 (checked against the registry API), every published
+> package here is at parity with npm except `@xivdyetools/core` 5.13.0 (npm 5.12.0), which is
+> published right after the change that bumped it merges;
 > Actions → **"Publish Packages to npm"** publishes whatever differs from the registry, so check
 > there rather than trusting this sentence to stay current. Merging to
 > `main` is the release — see [Release Process](developer-guides/release-process.md) and the
@@ -40,7 +39,7 @@
 
 | Package | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Core** (incl. `/blending` + schema-v2 data) | v5.12.0 | `@xivdyetools/core` | npm | Active |
+| **Core** (incl. `/blending` + schema-v2 data) | v5.13.0 | `@xivdyetools/core` | npm | Active |
 | **Types** | v3.3.0 | `@xivdyetools/types` | npm | Active |
 | **Auth** (incl. `/encoding`) | v2.0.2 | `@xivdyetools/auth` | npm | Active |
 | **Logger** | v2.3.0 | `@xivdyetools/logger` | npm | Active |
@@ -70,6 +69,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.13.0 | Oct 2026 | `.chara` error messages are bounded (2026-10-15 import audit, FINDING-002): a value is quoted only up to 64 characters, otherwise described by kind and size, and nothing walks it, so a nested palette index that fits in 8 KiB no longer overflows the stack and a 1 MiB Tribe value no longer becomes a 1 MiB message. A float color string over 128 characters is refused before it is split |
 | v5.12.0 | Oct 2026 | `gposersOmittedSlots` + `CHARA_OFF_HAND_MAIN_CATEGORIES`: the GPOSERS list leaves out invisible pieces (an Emperor's New twin in the family; the Gloves and, unless the character is known female, the Robe are kept) and an Off Hand under a main hand outside ItemUICategory 2/6/8/12–32 even/113; unknown keeps the slot. Corpus, with the callers' `viaMainHand` skip: 2,765 invisible slots and 357 more off-hands (354 by this rule, 3 a crafting tool's own model) leave the list across 913 of 1,093 files |
 | v5.11.0 | Oct 2026 | `defaultCharaTwin` prefers a twin with a known acquisition line: passes → dyeable → any Grand Company → not Dated → has a line → more dye channels → lowest row; when nothing passes, the lowest judged twin with a line, else the lowest row. Over the 1,093-file `.chara` corpus (api-worker 0.18.1's table) the default names an unsourced piece on 103 of 10,875 slots, down from 469 |
 | v5.10.0 | Oct 2026 | 2026-10-04 remediation, Sprint 13 — a gray input keeps the other color's hue in an HSL mix (BUG-035); palette extraction returns only colors the image holds (BUG-036); the locale build checks dyes and facewear against their CSVs before writing (BUG-128, BUG-130); character-creation sheet names follow the game clients (TERM-021); `DyeDatabase.initialize` throws on an empty or colliding payload (BUG-136); text color by real contrast (BUG-134); parser, search, cache and harmony-pin fixes (BUG-129, BUG-131 to BUG-133, BUG-135, BUG-137) |
