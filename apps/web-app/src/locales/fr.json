@@ -633,7 +633,6 @@
   "errors": {
     "apiFailed": "Échec de la récupération des données du tableau des ventes.",
     "imageTooLarge": "Le fichier image est trop volumineux. Taille maximale : 20 Mo.",
-    "fileTooLarge": "Le fichier est trop volumineux. Taille maximale : 20 Mo.",
     "failedToReadImage": "Échec de la lecture de l'image",
     "failedToReadFile": "Échec de la lecture du fichier",
     "copyLinkFailed": "Échec de la copie du lien",
@@ -1289,6 +1288,8 @@
     "rowColumn": "Ligne {row}, colonne {col}",
     "exploreDye": "Explorer la teinture",
     "parseFailed": "Impossible de lire ce fichier de personnage : {reason}",
+    "charaNotChara": "Seuls les fichiers .chara peuvent être lus ici.",
+    "charaTooLarge": "Ce fichier de personnage dépasse {kb} Ko. Un fichier de personnage fait normalement moins de 3 Ko ; si vous avez joint une image dans Anamnesis, enregistrez à nouveau le personnage sans elle.",
     "slotError": {
       "midRangeIndex": "Cette couleur se situe dans l'intervalle inutilisé 96–127 entre les plages opaque et translucide",
       "indexOutOfRange": "Cet indice de couleur est en dehors de la plage de sa grille",

@@ -22,4 +22,4 @@
 - Prioritize this shared fix when scheduling; cover both bot commands and retain their stream cap, fixed public errors and class/code-only logs.
 
 ## Status
-OPEN — deferred; Discord exposure and proposed 8 KiB import limits reviewed on 2026-10-15. No implementation started.
+FIXED 2026-10-16 — `d8490205`, PR #315, merged as `f5ea2272` (core 5.13.0). A private, non-recursive `describeValue()` replaces the whole-value interpolation at `:281`, `:323` and `:364`; float strings over 128 characters are refused before `split`. An 8,192-byte nested index under 200 extra frames, a 200,000-level one, a 1 MiB comma string and 1 MiB Tribe/Gender values all give short `AppError` messages. The supporting 8 KiB caps ship in PR #316 (core 5.14.0 `MAX_CHARA_FILE_BYTES`).

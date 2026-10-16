@@ -2,7 +2,7 @@
 
 Focused follow-up to an accidental `.pose` drop into the Glamour Reader, extended at the maintainer's request to Discord `/glamour` and its shared `/swatch` import path. Three deferred hardening items are recorded: two informational file-type rejection gaps and one low-severity shared-parser issue, now confirmed reachable in the Discord worker too. No exploitable-now issue was demonstrated, and no application source files were modified by the audit.
 
-- **Status:** Draft for later scheduling; implementation has not started.
+- **Status:** Remediated 2026-10-16. FINDING-002 by PR #315 (core 5.13.0); FINDING-001, FINDING-003 and the 8 KiB cap by PR #316 (core 5.14.0, web-app 5.15.5, bot-logic 4.10.0, discord-worker 5.8.15). See the report's [Remediation status](SECURITY_AUDIT_REPORT.md#remediation-status).
 - **Source snapshot:** `main` / `origin/main` at `e4fd9fc0f5e45e398e14010e6894eed12d272dbc`.
 - **Document branch:** `codex/glamour-import-audit`.
 - **Scope:** Web character-file ingestion/display, Discord attachment download and command/output boundaries, shared core/bot-logic parsing, and the equipment API's request boundary. This is not a full application security or privacy audit.

@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.14.0] - 2026-10-16
+
+The `.chara` file cap of the 2026-10-15 import review (`docs/audits/2026-10-15-web-app-security/`),
+stacked on 5.13.0. MINOR: one new export. Every app takes core through `workspace:*`, so the two
+apps that enforce it, web-app 5.15.5 and discord-worker 5.8.15, ship in the same merge.
+
+### Added
+
+- **`MAX_CHARA_FILE_BYTES` (8,192): the largest `.chara` file the web app and the Discord bot accept.**
+  - Over the 1,093-file corpus, exports without an attached image are 1,837–2,777 bytes. The one
+    larger file carried an image the user attached in Anamnesis (3,128,021 bytes); Anamnesis stores
+    such an image as Base64 without shrinking it, so those files are now refused on purpose.
+  - `parseCharaFile` does not enforce it: it receives decoded text, whose length is not the file's
+    byte count. Each caller checks it where the bytes are (the browser's `File.size`, the bot's
+    attachment size and streamed download). It is a resource limit, not a safety check.
+
 ## [5.13.0] - 2026-10-16
 
 FINDING-002 of the 2026-10-15 `.chara` import review

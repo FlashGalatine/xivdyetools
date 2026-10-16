@@ -12,7 +12,7 @@ The Glamour Reader shows what a character is wearing. Load a `.chara` file and i
 
 ### Drop a `.chara` file
 
-Until a file is loaded, the reader shows a **Drop a .chara file** zone. Drag a file onto it, or click it (or **Choose file**) to browse. It reads character files exported by **Anamnesis, Ktisis or Brio**, up to 20 MB. A file it can't read gets a message naming what went wrong.
+Until a file is loaded, the reader shows a **Drop a .chara file** zone. Drag a file onto it, or click it (or **Choose file**) to browse. It reads character files exported by **Anamnesis, Ktisis or Brio**, named `.chara` and up to 8 KB; normal exports are under 3 KB. If you attached an image to the character in Anamnesis, the file is larger: save the character again without the image. A file it can't read gets a message naming what went wrong.
 
 The file is parsed on your device. To put names to the gear, the reader sends the XIV Dye Tools API one request with the model numbers of the worn pieces and the ID of the facewear, and nothing else: not the character's name, not its colors, not the file. The line under the card says so: *"Parsed on this device. To name the gear, only its model numbers and the facewear ID are sent to our API. The character name and colors stay here."* For the same reason this card has no **LOCAL ONLY** chip. The Swatch Matcher's card keeps one, because the Swatch Matcher sends nothing.
 

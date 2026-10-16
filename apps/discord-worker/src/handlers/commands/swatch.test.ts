@@ -47,9 +47,9 @@ vi.mock('@xivdyetools/bot-logic', async (importOriginal) => {
 });
 
 const CDN_URL = 'https://cdn.discordapp.com/attachments/1/2/char.chara?ex=1&is=2&hm=3';
-const MIB = 1_048_576;
+const CAP = 8_192;
 
-function makeInteraction(url: string, size = 2048): DiscordInteraction {
+function makeInteraction(url: string, size = 2048, filename = 'char.chara'): DiscordInteraction {
   return {
     id: 'int-1',
     application_id: 'app-1',
@@ -64,7 +64,7 @@ function makeInteraction(url: string, size = 2048): DiscordInteraction {
         attachments: {
           'att-1': {
             id: 'att-1',
-            filename: 'char.chara',
+            filename,
             size,
             url,
             proxy_url: url,
@@ -190,24 +190,24 @@ describe('/swatch attachment handling', () => {
 
     it('rejects a response whose Content-Length exceeds the cap without reading it', async () => {
       vi.mocked(fetch).mockResolvedValue(
-        new Response(streamOf(10), { headers: { 'content-length': String(2 * MIB) } }),
+        new Response(streamOf(10), { headers: { 'content-length': String(2 * CAP) } }),
       );
 
       await handleSwatchCommand(makeInteraction(CDN_URL), env, ctx);
       await settle();
 
       expect(mockExecuteSwatch).not.toHaveBeenCalled();
-      expect(lastEditEmbed().description).toContain('it is larger than 1 MB');
+      expect(lastEditEmbed().description).toContain('it is larger than 8 KB');
     });
 
     it('rejects a body that turns out larger than the cap even when Discord reported a small size', async () => {
-      vi.mocked(fetch).mockResolvedValue(new Response(streamOf(MIB + 1)));
+      vi.mocked(fetch).mockResolvedValue(new Response(streamOf(CAP + 1)));
 
       await handleSwatchCommand(makeInteraction(CDN_URL, 512), env, ctx);
       await settle();
 
       expect(mockExecuteSwatch).not.toHaveBeenCalled();
-      expect(lastEditEmbed().description).toContain('it is larger than 1 MB');
+      expect(lastEditEmbed().description).toContain('it is larger than 8 KB');
     });
 
     it('hands the downloaded text to executeSwatch when it is within the cap', async () => {
@@ -222,8 +222,19 @@ describe('/swatch attachment handling', () => {
       expect(mockExecuteSwatch.mock.calls[0][0]).not.toHaveProperty('fileName');
     });
 
+    it('refuses a .pose by name before deferring, without downloading it (FINDING-003)', async () => {
+      const res = await handleSwatchCommand(makeInteraction(CDN_URL, 2048, 'look.pose'), env, ctx);
+      const body = (await res.json()) as InteractionResponseBody;
+
+      expect(body.type).toBe(4);
+      expect(body.data!.flags).toBe(64);
+      expect(body.data!.content).toBe('Could not read the file — it must be a .chara file');
+      expect(fetch).not.toHaveBeenCalled();
+      expect(mockExecuteSwatch).not.toHaveBeenCalled();
+    });
+
     it('still refuses an attachment Discord itself reports as over the cap', async () => {
-      const res = await handleSwatchCommand(makeInteraction(CDN_URL, MIB + 1), env, ctx);
+      const res = await handleSwatchCommand(makeInteraction(CDN_URL, CAP + 1), env, ctx);
       const body = (await res.json()) as InteractionResponseBody;
 
       expect(body.type).toBe(4);

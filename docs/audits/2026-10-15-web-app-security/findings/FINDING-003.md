@@ -16,4 +16,4 @@
 - Keep MIME advisory and all content/transport safeguards; test rejected filenames cause no fetch, lookup or render work, and renamed poses still fail parsing.
 
 ## Status
-OPEN — deferred; confirmed in the 2026-10-15 Discord follow-up. No implementation started.
+FIXED 2026-10-16 — `e7919b2f`, PR #316 (discord-worker 5.8.15, bot-logic 4.10.0). `checkCharaAttachment` refuses a filename not ending in `.chara` (case-insensitive) before the size and host checks and before deferring, with the new localized `card.charaFileReason.notChara`; tests assert no fetch and no command run. The reported-size and streamed caps are 8 KiB.

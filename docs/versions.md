@@ -8,7 +8,8 @@
 > against it by `pnpm docs:check-versions` (`scripts/check-doc-versions.ts`, run in CI), so
 > this table cannot silently drift again. The 5.0 wave merged to `main` on 2026-08-28
 > (PR #123). As of 2026-10-16 (checked against the registry API), every published
-> package here is at parity with npm except `@xivdyetools/core` 5.13.0 (npm 5.12.0), which is
+> package here is at parity with npm except `@xivdyetools/core` 5.14.0 (npm 5.12.0; 5.13.0 is
+> PR #315's, published after it merges) and `@xivdyetools/bot-logic` 4.10.0 (npm 4.9.0), each
 > published right after the change that bumped it merges;
 > Actions → **"Publish Packages to npm"** publishes whatever differs from the registry, so check
 > there rather than trusting this sentence to stay current. Merging to
@@ -23,8 +24,8 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.15.4 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v5.8.14 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
+| **Web Application** | v5.15.5 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Discord Bot** | v5.8.15 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.4 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.8.2 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.3 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
@@ -39,13 +40,13 @@
 
 | Package | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Core** (incl. `/blending` + schema-v2 data) | v5.13.0 | `@xivdyetools/core` | npm | Active |
+| **Core** (incl. `/blending` + schema-v2 data) | v5.14.0 | `@xivdyetools/core` | npm | Active |
 | **Types** | v3.3.0 | `@xivdyetools/types` | npm | Active |
 | **Auth** (incl. `/encoding`) | v2.0.2 | `@xivdyetools/auth` | npm | Active |
 | **Logger** | v2.3.0 | `@xivdyetools/logger` | npm | Active |
 | **Worker Kit** (middleware + `/rate-limiter`) | v1.5.0 | `@xivdyetools/worker-kit` | npm | Active |
 | **SVG** | v4.4.0 | `@xivdyetools/svg` | npm | Active |
-| **Bot Logic** (incl. `/i18n`) | v4.9.0 | `@xivdyetools/bot-logic` | npm | Active |
+| **Bot Logic** (incl. `/i18n`) | v4.10.0 | `@xivdyetools/bot-logic` | npm | Active |
 | **Test Utils** | v3.0.0 | `@xivdyetools/test-utils` | workspace-private | Active (never published) |
 
 ### Deprecated
@@ -69,6 +70,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.14.0 | Oct 2026 | `MAX_CHARA_FILE_BYTES` (8,192): the largest `.chara` file the web app and the bot accept, enforced by them on the original bytes (2026-10-15 import review). Exports without an attached image measured 1,837–2,777 bytes; the corpus's one larger file carried an image attached in Anamnesis (3,128,021 bytes) |
 | v5.13.0 | Oct 2026 | `.chara` error messages are bounded (2026-10-15 import audit, FINDING-002): a value is quoted only up to 64 characters, otherwise described by kind and size, and nothing walks it, so a nested palette index that fits in 8 KiB no longer overflows the stack and a 1 MiB Tribe value no longer becomes a 1 MiB message. A float color string over 128 characters is refused before it is split |
 | v5.12.0 | Oct 2026 | `gposersOmittedSlots` + `CHARA_OFF_HAND_MAIN_CATEGORIES`: the GPOSERS list leaves out invisible pieces (an Emperor's New twin in the family; the Gloves and, unless the character is known female, the Robe are kept) and an Off Hand under a main hand outside ItemUICategory 2/6/8/12–32 even/113; unknown keeps the slot. Corpus, with the callers' `viaMainHand` skip: 2,765 invisible slots and 357 more off-hands (354 by this rule, 3 a crafting tool's own model) leave the list across 913 of 1,093 files |
 | v5.11.0 | Oct 2026 | `defaultCharaTwin` prefers a twin with a known acquisition line: passes → dyeable → any Grand Company → not Dated → has a line → more dye channels → lowest row; when nothing passes, the lowest judged twin with a line, else the lowest row. Over the 1,093-file `.chara` corpus (api-worker 0.18.1's table) the default names an unsourced piece on 103 of 10,875 slots, down from 469 |
@@ -120,6 +122,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.15.5 | Oct 2026 | Core 5.13.0 + 5.14.0 (2026-10-15 import review): the Glamour Reader and Swatch Matcher read only files named `.chara`, refuse one over 8 KB (was 20 MB) before reading it, and say to re-save an Anamnesis export without its attached image; a malformed file's error no longer quotes the whole value. The Palette Extractor keeps 20 MB |
 | v5.15.4 | Oct 2026 | Core 5.12.0 + api-worker 0.20.0: the GPOSERS list and its export sheet leave out invisible pieces and an Off Hand the main hand doesn't take; the reader's rows are unchanged |
 | v5.15.3 | Oct 2026 | Documents only (2026-10-11 documentation remediation, Sprint 1): `PRIVACY.md` and `TERMS_OF_SERVICE.md` in all six languages send deletion, appeal and contact requests to the live Discord invite (the old one had expired); the Privacy Guide no longer names the unreachable Manage Collections → Delete Collection route and says which saved records only the browser can clear; translations link their own language's sibling documents; American spelling in the English text |
 | v5.15.2 | Oct 2026 | Core 5.11.0 + api-worker 0.19.0: the Glamour Reader names a look-alike you can still get when the lowest-numbered twin has no known source (Augmented Crystarium over Crystarium, Loyal Housemaid's over Housemaid's); saved Acquisition edits key on the family's lowest row, so they keep applying |
@@ -200,6 +203,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.8.15 | Oct 2026 | Core 5.13.0 + 5.14.0, bot-logic 4.10.0 (2026-10-15 import review): `/swatch` and `/glamour` refuse an attachment not named `.chara` before deferring, and the cap is 8 KiB (was 1 MiB) on the reported size and the streamed download, with an 8 KB message; no command shape changes |
 | v5.8.14 | Oct 2026 | bot-logic 4.9.0 (no source change here): `/glamour`'s list leaves out invisible pieces and an Off Hand the main hand doesn't take; the card is unchanged; no command shape changes |
 | v5.8.13 | Oct 2026 | Documents only (2026-10-11 documentation remediation, Sprint 1): `PRIVACY_POLICY.md` and `TERMS_OF_SERVICE.md` in all six languages send deletion, appeal and contact requests to the live Discord invite (the old one had expired); the first-run notice flag is described as what it is, a marker set on your first command whether or not the notice is sent; translations link their own language's sibling documents |
 | v5.8.12 | Oct 2026 | Core 5.11.0 (no source change here): `/glamour` names a look-alike with a known source when the lowest-numbered twin has none, so more GPOSERS Acquisition lines are filled. No command shape changes |
@@ -560,6 +564,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v4.10.0 | Oct 2026 | `card.charaFileReason.tooLarge` takes `{kb}` (was `{mb}`) and says to re-save an Anamnesis export without its attached image; new `card.charaFileReason.notChara`; the `/manual` Character File topic states the `.chara` name and 8 KB limits, all six languages |
 | v4.9.0 | Oct 2026 | `/glamour`'s GPOSERS list applies core 5.12.0's `gposersOmittedSlots` (invisible pieces, unsupported Off Hand); `GlamourResolvedItem.uiCategory`; the card is unchanged |
 | v4.8.3 | Oct 2026 | Text only: Brio named as a `.chara` producer ×6 (`manual.swatch` / `manual.glamour` descriptions, the character-file topic, the `file` option text); the character-file topic lists every `/glamour` verdict (OK, the race name, the dash for a model with no item), says the bot picks the twin, and says the GPOSERS labels and Acquisition lines are English |
 | v4.8.2 | Oct 2026 | 2026-10-04 remediation, Sprint 13 — a gray `/gradient` endpoint keeps the other end's hue in hsv, oklch and lch |
@@ -690,7 +695,8 @@ and the [rollout runbook](operations/security-remediation-2026-09-15.md) for the
 
 | Consumer | Minimum Core Version | Notes |
 |----------|---------------------|-------|
-| Web App v5.15.4+ | @xivdyetools/core v5.12.0+ | `gposersOmittedSlots` — the GPOSERS list leaves out invisible pieces and an Off Hand the main hand doesn't take |
+| Web App v5.15.5+ | @xivdyetools/core v5.14.0+ | `MAX_CHARA_FILE_BYTES` — the `.chara` cap, and core 5.13.0's bounded parse errors |
+| Web App v5.15.4 | @xivdyetools/core v5.12.0+ | `gposersOmittedSlots` — the GPOSERS list leaves out invisible pieces and an Off Hand the main hand doesn't take |
 | Web App v5.15.2–5.15.3 | @xivdyetools/core v5.11.0+ | `defaultCharaTwin` prefers a twin with a known acquisition line |
 | Web App v5.14.10–5.15.1 | @xivdyetools/core v5.10.0+ | 2026-10-04 remediation Sprint 13 — below this an HSL mix of an exactly gray dye loses the other dye's hue (BUG-035), Harmony's "no duplicates" can repeat a swapped-in dye in an earlier slot (BUG-137), and an unreadable `.chara` color is drawn instead of refused (BUG-133) |
 | Web App v5.14.8–5.14.9 | @xivdyetools/core v5.9.0+ | `APIService.getPricesForDataCenterWithOutcome` (market failures shown, BUG-090) and `CHARA_DYEABLE_SLOTS` (the Glamour Reader's dyeable slots) |
@@ -700,7 +706,8 @@ and the [rollout runbook](operations/security-remediation-2026-09-15.md) for the
 | Web App v5.12.2–5.12.4 | @xivdyetools/core v5.5.0+ | Tribe-derived `.chara` race — below this the Swatch Matcher refuses every Lalafell file |
 | Web App v5.7–5.12.1 | @xivdyetools/core v5.2.0+ | Color-wheel selector (`getColorWheel`, `HarmonySelectionConfig.wheel`); `@xivdyetools/types` v3.2.0+ (`ColorWheelId`) |
 | Web App v5.1–5.6 | @xivdyetools/core v4.2.0+ | `generateHarmonySlots` + `HARMONY_OFFSETS` (harmony convergence); 5.4+ needs core v5.0.0+ (one RYB mixer), 5.5+ core v5.1.0+ (ΔEOK2 labels) |
-| Discord Worker v5.8.14+ | @xivdyetools/core v5.12.0+ | `@xivdyetools/bot-logic` v4.9.0+ — `/glamour`'s list applies `gposersOmittedSlots` |
+| Discord Worker v5.8.15+ | @xivdyetools/core v5.14.0+ | `MAX_CHARA_FILE_BYTES`; `@xivdyetools/bot-logic` v4.10.0+ — the `{kb}` size reason and `notChara` |
+| Discord Worker v5.8.14 | @xivdyetools/core v5.12.0+ | `@xivdyetools/bot-logic` v4.9.0+ — `/glamour`'s list applies `gposersOmittedSlots` |
 | Discord Worker v5.8.12–5.8.13 | @xivdyetools/core v5.11.0+ | `/glamour` names pieces through core's `defaultCharaTwin`, which prefers a twin with a known acquisition line |
 | Discord Worker v5.8.7–5.8.11 | @xivdyetools/core v5.10.0+ | CJK subsets cut for core 5.10.0's character-creation sheet names (TERM-021); `/mixer` (HSL) keeps a gray dye's partner hue (BUG-035), `/extractor` shows only the colors an image holds (BUG-036), and `/swatch` / `/glamour` refuse an unreadable `.chara` color (BUG-133) |
 | Discord Worker v5.8.1–5.8.6 | @xivdyetools/core v5.8.1+ | CJK subsets cut for core 5.8.1's Korean race names (the `/glamour` card's wear chip) |

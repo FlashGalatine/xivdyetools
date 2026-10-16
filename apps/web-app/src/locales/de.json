@@ -633,7 +633,6 @@
   "errors": {
     "apiFailed": "Daten konnten nicht vom Marktbrett abgerufen werden.",
     "imageTooLarge": "Bilddatei ist zu groß. Maximale Größe ist 20MB.",
-    "fileTooLarge": "Datei ist zu groß. Maximale Größe ist 20MB.",
     "failedToReadImage": "Bild konnte nicht gelesen werden",
     "failedToReadFile": "Datei konnte nicht gelesen werden",
     "copyLinkFailed": "Link konnte nicht kopiert werden",
@@ -1289,6 +1288,8 @@
     "rowColumn": "Zeile {row}, Spalte {col}",
     "exploreDye": "Farbstoff erkunden",
     "parseFailed": "Diese Charakterdatei konnte nicht gelesen werden: {reason}",
+    "charaNotChara": "Hier können nur .chara-Dateien gelesen werden.",
+    "charaTooLarge": "Diese Charakterdatei ist größer als {kb} KB. Charakterdateien sind normalerweise kleiner als 3 KB; wenn du in Anamnesis ein Bild angehängt hast, speichere den Charakter ohne Bild neu.",
     "slotError": {
       "midRangeIndex": "Diese Farbe liegt in der ungenutzten Lücke 96–127 zwischen dunklem und hellem Bereich",
       "indexOutOfRange": "Dieser Farbindex liegt außerhalb des Bereichs seiner Tabelle",

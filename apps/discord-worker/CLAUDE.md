@@ -151,7 +151,7 @@ src/
 │   ├── discord-api.ts             # REST helpers (sendMessage, follow-ups, edits)
 │   ├── sanitize.ts                # sanitizePresetName / sanitizePresetDescription
 │   ├── text.ts                    # Line-boundary truncation for embed budgets
-│   ├── chara-attachment.ts        # The .chara attachment guards /swatch and /glamour share (CDN allowlist, 1 MiB, bounded download)
+│   ├── chara-attachment.ts        # The .chara attachment guards /swatch and /glamour share (`*.chara` names only, CDN allowlist, core's 8 KiB MAX_CHARA_FILE_BYTES, bounded download)
 │   ├── read-text-capped.ts        # Stream-counted body reads (`.chara` downloads, `/webhooks/preset-submission`)
 │   └── env-validation.ts          # Validate required env vars at first request
 └── types/

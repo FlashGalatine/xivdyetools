@@ -633,7 +633,6 @@
   "errors": {
     "apiFailed": "Failed to fetch data from market board.",
     "imageTooLarge": "Image file is too large. Maximum size is 20MB.",
-    "fileTooLarge": "File is too large. Maximum size is 20MB.",
     "failedToReadImage": "Failed to read image",
     "failedToReadFile": "Failed to read file",
     "copyLinkFailed": "Failed to copy link",
@@ -1289,6 +1288,8 @@
     "rowColumn": "Row {row}, Column {col}",
     "exploreDye": "Explore Dye",
     "parseFailed": "Couldn't read this character file: {reason}",
+    "charaNotChara": "Only .chara files can be read here.",
+    "charaTooLarge": "This character file is over {kb} KB. Character files are normally under 3 KB; if you attached an image in Anamnesis, save the character again without it.",
     "slotError": {
       "midRangeIndex": "This color sits in the unused 96–127 gap between the dark and light ranges",
       "indexOutOfRange": "This color index is outside the range of its sheet",

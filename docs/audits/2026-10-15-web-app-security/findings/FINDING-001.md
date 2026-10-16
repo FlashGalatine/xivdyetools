@@ -16,4 +16,4 @@
 - Decided 2026-10-16: `.chara` only, matched case-insensitively on `file.name`, never on MIME (`.chara` has no registered type, so `File.type` is usually empty). Test both entry points through real DOM events, including renamed invalid content.
 
 ## Status
-OPEN — deferred at maintainer request on 2026-10-15; no implementation started.
+FIXED 2026-10-16 — `e7919b2f`, PR #316 (web-app 5.15.5). `loadCharaFile` refuses a file not named `*.chara` (case-insensitive, by name) before the size check and before `file.text()`, covering drag-and-drop and Choose file in both tools; DOM-event tests drive both entry points. The picker's `accept` keeps `application/json` until a `.chara`-only picker is tested on iOS.

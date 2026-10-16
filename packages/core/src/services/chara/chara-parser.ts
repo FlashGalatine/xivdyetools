@@ -62,6 +62,24 @@ import { AppError, ErrorCode, SUBRACE_TO_RACE } from '@xivdyetools/types';
 import { clamp } from '../../utils/index.js';
 import { isWornCharaModel, isCharaWeaponSlot, type CharaGearModel } from './chara-models.js';
 
+/**
+ * Largest `.chara` file the web app and the Discord bot accept: 8 KiB of the
+ * original file's bytes, not its decoded text (2026-10-15 import review).
+ *
+ * Exports without an attached image measured 1,837–2,777 bytes over a
+ * 1,093-file corpus. The one larger file carried an image the user attached
+ * in Anamnesis (3,128,021 bytes); Anamnesis stores such an image as Base64
+ * without shrinking it, so those files are refused on purpose, and the
+ * refusal says to save the character again without the image.
+ *
+ * `parseCharaFile` does not check it: it receives decoded text, whose length
+ * is not the file's byte count. Each caller enforces it where the bytes are
+ * (the browser's `File.size`, the bot's attachment size and streamed
+ * download). It is a resource limit, not a safety check: a file under it
+ * still has to parse.
+ */
+export const MAX_CHARA_FILE_BYTES = 8 * 1024;
+
 /** Colour slots a `.chara` file can populate. */
 export type CharaSlotId =
   'leftEye' | 'rightEye' | 'hair' | 'highlights' | 'skin' | 'limbal' | 'lip' | 'facePaint';
