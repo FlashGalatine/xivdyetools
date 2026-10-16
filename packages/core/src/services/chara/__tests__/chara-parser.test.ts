@@ -544,4 +544,117 @@ describe('parseCharaFile', () => {
       expect(lip?.index).toBe(12);
     });
   });
+
+  /**
+   * FINDING-002 (2026-10-15 import audit): an error message must never grow
+   * with the file, and building one must never recurse into the value. The
+   * palette-index message used `JSON.stringify`, so a nested array that fits
+   * in 8 KiB overflowed the stack while the error was being built, and the
+   * float and Tribe/Gender messages quoted a whole megabyte back.
+   */
+  describe('bounded diagnostics', () => {
+    const MAX_MESSAGE = 300;
+
+    /** The AppError a parse throws; fails the test if it is anything else. */
+    const failure = (text: string): Error => {
+      try {
+        parseCharaFile(text);
+      } catch (error) {
+        return error as Error;
+      }
+      throw new Error('expected parseCharaFile to throw');
+    };
+
+    /** `{"Skintone":[[…]]}` nested as deep as fits in exactly `bytes` bytes. */
+    const nestedIndex = (bytes: number): string => {
+      const room = bytes - '{"Skintone":}'.length;
+      const depth = Math.floor(room / 2);
+      // An odd byte left over becomes a space, which JSON ignores
+      return `{"Skintone":${' '.repeat(room % 2)}${'['.repeat(depth)}${']'.repeat(depth)}}`;
+    };
+
+    /** Call `fn` from under `frames` extra stack frames. */
+    const underFrames = <T>(frames: number, fn: () => T): T =>
+      frames === 0 ? fn() : underFrames(frames - 1, fn);
+
+    it('describes a nested palette index without walking it, even at 8 KiB under a deep stack', () => {
+      const text = nestedIndex(8_192);
+      expect(new TextEncoder().encode(text).length).toBe(8_192);
+      // 200 frames is far more than the ~25 that overflowed the old message
+      const error = underFrames(200, () => failure(text));
+      expect(error.name).toBe('AppError');
+      expect(error.message).toBe(
+        '.chara field Skintone: expected a numeric palette index, got an array of 1 item',
+      );
+    });
+
+    it('describes a 200,000-level nested index the same way', () => {
+      const error = failure(nestedIndex(400_013));
+      expect(error.name).toBe('AppError');
+      expect(error.message).toMatch(/Skintone: expected a numeric palette index, got an array of 1 item$/);
+    });
+
+    it.each([
+      [{ HairTone: { a: 1 } }, 'HairTone', 'an object'],
+      [{ HairTone: [1, 2, 3] }, 'HairTone', 'an array of 3 items'],
+      [{ HairTone: '12' }, 'HairTone', '"12"'],
+      [{ HairTone: true }, 'HairTone', 'true'],
+    ])('names a non-numeric palette index by kind (%j)', (record, field, described) => {
+      expect(failure(JSON.stringify(record)).message).toBe(
+        `.chara field ${field}: expected a numeric palette index, got ${described}`,
+      );
+    });
+
+    it('refuses a megabyte float string before splitting it, with a short message', () => {
+      const value = '0.5,'.repeat(262_144);
+      const error = failure(JSON.stringify({ SkinColor: value }));
+      expect(error.name).toBe('AppError');
+      expect(error.message).toBe(
+        `.chara field SkinColor: unparseable float colour a string of ${value.length} characters`,
+      );
+    });
+
+    it('splits a float string of up to 128 characters and refuses one longer', () => {
+      const clean = '0.8858132, 0.6977163, 0.7579239';
+      // Trailing spaces are trimmed off the last channel, so only the length differs
+      const atLimit = clean.padEnd(128, ' ');
+      const overLimit = clean.padEnd(129, ' ');
+      expect(parseCharaFile(JSON.stringify({ SkinColor: atLimit }))).toEqual(
+        parseCharaFile(JSON.stringify({ SkinColor: clean })),
+      );
+      expect(failure(JSON.stringify({ SkinColor: overLimit })).message).toBe(
+        '.chara field SkinColor: unparseable float colour a string of 129 characters',
+      );
+    });
+
+    it('still quotes a short malformed float string verbatim', () => {
+      expect(failure(JSON.stringify({ SkinColor: 'red, green, blue' })).message).toBe(
+        '.chara field SkinColor: unparseable float colour "red, green, blue"',
+      );
+    });
+
+    it.each(['Tribe', 'Gender'])('describes a long %s value by length only', (field) => {
+      const value = 'x'.repeat(1_048_576);
+      const error = failure(JSON.stringify({ [field]: value, Skintone: 1 }));
+      expect(error.message).toMatch(
+        new RegExp(`^\\.chara field ${field}: unrecognised value a string of 1048576 characters \\(expected one of: `),
+      );
+      expect(error.message.length).toBeLessThan(MAX_MESSAGE);
+    });
+
+    it('escapes rather than echoes quote marks in a short value', () => {
+      expect(failure(JSON.stringify({ Tribe: 'Pad"jal' })).message).toMatch(
+        /^\.chara field Tribe: unrecognised value "Pad\\"jal" \(expected one of: /,
+      );
+    });
+  });
+
+  // The 2026-10-15 import audit considered refusing files that carry an
+  // embedded image and decided against it: the field is never read, so a
+  // populated one is ignored like any other unknown key.
+  it('ignores a populated Base64Image and leaves it out of the result', () => {
+    const parsed = parseCharaFile(JSON.stringify({ Skintone: 3, Base64Image: 'aGVsbG8gd29ybGQ=' }));
+    expect(parsed.slots.find((s) => s.slot === 'skin')?.index).toBe(3);
+    expect(JSON.stringify(parsed)).not.toContain('aGVsbG8gd29ybGQ=');
+  });
 });
