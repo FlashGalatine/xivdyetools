@@ -1,0 +1,173 @@
+
+ RUN  v5.0.3 C:/dev/XIVProjects/xivdyetools/.claude/worktrees/glamour-import-audit/packages/bot-logic
+
+ ✓ src/commands/failure-kind.test.ts > failureKind > names an Error by its class 2ms
+ ✓ src/commands/failure-kind.test.ts > failureKind > names an AppError by its class and code 0ms
+ ✓ src/commands/failure-kind.test.ts > failureKind > ignores a code that is not a string 0ms
+ ✓ src/commands/failure-kind.test.ts > failureKind > names a thrown non-Error by its type only — even one shaped like an AppError 0ms
+ ✓ src/commands/failure-kind.test.ts > failureKind > never carries the message 1ms
+ ✓ src/commands/chara-identity.test.ts > tribeDisplay > en: Midlander reads exactly as it did before 2ms
+ ✓ src/commands/chara-identity.test.ts > tribeDisplay > en: Highlander reads exactly as it did before 0ms
+ ✓ src/commands/chara-identity.test.ts > tribeDisplay > en: Wildwood reads exactly as it did before 0ms
+ ✓ src/commands/chara-identity.test.ts > tribeDisplay > en: Duskwight reads exactly as it did before 0ms
+ ✓ src/commands/chara-identity.test.ts > tribeDisplay > en: Plainsfolk reads exactly as it did before 0ms
+ ✓ src/commands/chara-identity.test.ts > tribeDisplay > en: Dunesfolk reads exactly as it did before 0ms
+ ✓ src/commands/chara-identity.test.ts > tribeDisplay > en: SeekerOfTheSun reads exactly as it did before 0ms
+ ✓ src/commands/chara-identity.test.ts > tribeDisplay > en: KeeperOfTheMoon reads exactly as it did before 0ms
+ ✓ src/commands/chara-identity.test.ts > tribeDisplay > en: SeaWolf reads exactly as it did before 1ms
+ ✓ src/commands/chara-identity.test.ts > tribeDisplay > en: Hellsguard reads exactly as it did before 0ms
+ ✓ src/commands/chara-identity.test.ts > tribeDisplay > en: Raen reads exactly as it did before 0ms
+ ✓ src/commands/chara-identity.test.ts > tribeDisplay > en: Xaela reads exactly as it did before 0ms
+ ✓ src/commands/chara-identity.test.ts > tribeDisplay > en: Helions reads exactly as it did before 0ms
+ ✓ src/commands/chara-identity.test.ts > tribeDisplay > en: TheLost reads exactly as it did before 0ms
+ ✓ src/commands/chara-identity.test.ts > tribeDisplay > en: Rava reads exactly as it did before 0ms
+ ✓ src/commands/chara-identity.test.ts > tribeDisplay > en: Veena reads exactly as it did before 0ms
+ ✓ src/commands/chara-identity.test.ts > tribeDisplay > de: Midlander is the client’s clan name, WIESLÄNDER 0ms
+ ✓ src/commands/chara-identity.test.ts > tribeDisplay > de: SeekerOfTheSun is the client’s clan name, GOLDTATZE 0ms
+ ✓ src/commands/chara-identity.test.ts > tribeDisplay > de: Duskwight is the client’s clan name, DUNKELALB 0ms
+ ✓ src/commands/chara-identity.test.ts > tribeDisplay > fr: Plainsfolk is the client’s clan name, PEUPLE DES PLAINES 0ms
+ ✓ src/commands/chara-identity.test.ts > tribeDisplay > fr: Duskwight is the client’s clan name, CRÉPUSCULAIRE 0ms
+ ✓ src/commands/chara-identity.test.ts > tribeDisplay > ja: Raen is the client’s clan name, アウラ・レン 0ms
+ ✓ src/commands/chara-identity.test.ts > tribeDisplay > ko: Midlander is the client’s clan name, 중원 부족 0ms
+ ✓ src/commands/chara-identity.test.ts > tribeDisplay > zh: SeekerOfTheSun is the client’s clan name, 逐日之民 0ms
+ ✓ src/commands/chara-identity.test.ts > tribeDisplay > prints no English clan in ja, ko or zh 1ms
+ ✓ src/commands/chara-identity.test.ts > tribeDisplay > prints nothing for a file with no tribe 0ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > asks the resolver for every worn piece, weapons with their set 10ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > draws the dyed pieces in slot order, each named as the twin it can be worn as 4ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > marks three twins, one free choice, and a Viera-only piece nothing fixes 2ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > heads the card with the counts and the file by producer and tribe 2ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > names the clan in the reader's language, as the game does (HC-001) 2ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > counts one other look in the singular (I18N-016) 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > never prints the character name 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > keeps five rows and counts the rest in the footer 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > writes every piece in the GPOSERS form in the embed 2ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > says in the embed which pieces were named from a twin, and why 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > writes two identical rings once, as Rings 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > what the GPOSERS list leaves out > leaves out a bracelet whose family holds the invisible one, but keeps it on the card 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > what the GPOSERS list leaves out > keeps The Emperor’s New Gloves 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > what the GPOSERS list leaves out > leaves out The Emperor’s New Robe for a woman and keeps it for a man or an unknown gender 2ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > what the GPOSERS list leaves out > the Off Hand > is left out under a main hand outside the list, such as a Pugilist weapon 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > what the GPOSERS list leaves out > the Off Hand > is left out when it has no item behind it 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > what the GPOSERS list leaves out > the Off Hand > stays under a Gladiator’s arm 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > what the GPOSERS list leaves out > the Off Hand > stays when the answer carries no category 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > a piece with no item behind it (BUG-124) > keeps its slot label bare in the list, as a prompt to fill in — never the model placeholder 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > a piece with no item behind it (BUG-124) > names the slot in the no-fix note > for undyed unresolved rings beside the dyed pieces 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > a piece with no item behind it (BUG-124) > names the slot in the no-fix note > in the reader’s language 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > a piece with no item behind it (BUG-124) > treats a slot the answer leaves out the same way 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > a piece with no item behind it (BUG-124) > writes two unresolved rings as two bare slots, not one merged "Rings: Model …" 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > facewear (BUG-124) > asks the resolver for the glasses the file wears 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > facewear (BUG-124) > names the facewear last in the list when it resolves 2ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > facewear (BUG-124) > names it in the reader’s language 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > facewear (BUG-124) > keeps the worn facewear as a bare slot when the glasses do not resolve (null) 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > facewear (BUG-124) > keeps the worn facewear as a bare slot when the glasses do not resolve (absent) 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > facewear (BUG-124) > writes no facewear for a file that wears none, even if the answer names some 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > what blocks a piece nothing fixes (BUG-127) > says the dyes or the glamour rule, on the card and in the notes 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > what blocks a piece nothing fixes (BUG-127) > reads an item the worker gave no rules for as wearable, not as a problem 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > names the pieces locked to a Grand Company (BUG-127) 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > writes no Grand Company line when nothing is locked to one 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > names an item in English when the regional tables do not know it (ko / zh) 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > writes a stain the dye table does not know as its number, and draws no chip for it 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > colours the embed with the first dye on the card 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > a file with no dyes on it (BUG-127) > draws every worn piece and counts pieces, not dyed pieces 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > a file with no dyes on it (BUG-127) > writes no twin or no-fix notes and takes the brand red 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > a file with no dyes on it (BUG-127) > counts a single piece in the singular 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > a list longer than an embed (BUG-127) > cuts the list at a whole line and keeps the closing lines 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > a list longer than an embed (BUG-127) > leaves a list that fits alone 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > a card that fails to draw (BUG-125) > answers GENERATION_FAILED in the reader’s language and logs the error class 2ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > a card that fails to draw (BUG-125) > never logs the message — it can quote what it was given 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > a card that fails to draw (BUG-125) > names an AppError by its code 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > a card that fails to draw (BUG-125) > names a thrown non-error by its type only 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > a card that fails to draw (BUG-125) > still answers without a logger 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > speaks the requested locale on the card 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > draws a name the fonts cannot draw in English, and keeps it in the embed 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > names the race only when the race is what blocks it: Hyur man, piece for Hyur women → LOCKED 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > names the race only when the race is what blocks it: Elezen man, piece for Elezen women → LOCKED 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > names the race only when the race is what blocks it: Lalafell man, piece for Lalafell women → LOCKED 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > names the race only when the race is what blocks it: Miqo'te man, piece for Miqo'te women → LOCKED 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > names the race only when the race is what blocks it: Roegadyn man, piece for Roegadyn women → LOCKED 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > names the race only when the race is what blocks it: AuRa man, piece for AuRa women → LOCKED 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > names the race only when the race is what blocks it: Hrothgar man, piece for Hrothgar women → LOCKED 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > names the race only when the race is what blocks it: Viera man, piece for Viera women → LOCKED 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > and the other way round: Hyur woman, piece for Hyur men → LOCKED 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > and the other way round: Elezen woman, piece for Elezen men → LOCKED 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > and the other way round: Lalafell woman, piece for Lalafell men → LOCKED 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > and the other way round: Miqo'te woman, piece for Miqo'te men → LOCKED 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > and the other way round: Roegadyn woman, piece for Roegadyn men → LOCKED 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > and the other way round: AuRa woman, piece for AuRa men → LOCKED 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > and the other way round: Hrothgar woman, piece for Hrothgar men → LOCKED 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > and the other way round: Viera woman, piece for Viera men → LOCKED 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > but a piece for Hyur alone names the race to anyone else 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > but a piece for Elezen alone names the race to anyone else 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > but a piece for Lalafell alone names the race to anyone else 2ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > but a piece for Miqo'te alone names the race to anyone else 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > but a piece for Roegadyn alone names the race to anyone else 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > but a piece for AuRa alone names the race to anyone else 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > but a piece for Hrothgar alone names the race to anyone else 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > but a piece for Viera alone names the race to anyone else 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > counts the whole family in +N, as the web does, not just the named alternates 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > escapes Discord formatting in the note lines too 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > says the lookup is busy, not broken, when api-worker rate-limits it 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > answers api-worker refusing what the file describes (400) as a problem with the file, not an outage 0ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > answers api-worker refusing what the file describes (413) as a problem with the file, not an outage 0ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > answers api-worker refusing what the file describes (422) as a problem with the file, not an outage 0ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > a file it cannot read is refused in the reader’s language (HC-002) > the reason is a real key, not its own name 0ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > a file it cannot read is refused in the reader’s language (HC-002) > when api-worker refuses what the file describes 0ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > a file it cannot read is refused in the reader’s language (HC-002) > when the parser refuses the file 0ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > answers a 401 as RESOLVE_FAILED: the fault is ours 0ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > answers a 403 as RESOLVE_FAILED: the fault is ours 0ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > answers a 404 as RESOLVE_FAILED: the fault is ours 0ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > still answers a server error with a status as RESOLVE_FAILED 0ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > answers a file it cannot read with the parse error 0ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > a read that fails is logged > logs a bot-side failure inside the read, so it is not mistaken for a bad file 0ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > a read that fails is logged > logs the parser refusing the file by class and code, never the file 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > a read that fails is logged > still answers without a logger 0ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > answers a file that wears nothing without calling the resolver 0ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > a lookup that fails is logged (BUG-125) > names the class and the status of a 401 0ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > a lookup that fails is logged (BUG-125) > names the class and the status of a 403 0ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > a lookup that fails is logged (BUG-125) > names the class and the status of a 404 0ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > a lookup that fails is logged (BUG-125) > names the class and the status of a 500 0ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > a lookup that fails is logged (BUG-125) > names the class and the status of a 503 0ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > a lookup that fails is logged (BUG-125) > names the class alone when there is no status 0ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > a lookup that fails is logged (BUG-125) > names an AppError by its code 0ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > a lookup that fails is logged (BUG-125) > names a string thrown by its type only 0ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > a lookup that fails is logged (BUG-125) > names null thrown by its type only 0ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > a lookup that fails is logged (BUG-125) > still answers without a logger 0ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > answers a resolver failure as RESOLVE_FAILED, never a half-drawn card 0ms
+ ✓ src/commands/swatch.test.ts > executeSwatch > renders the character sheet with live slots only 257ms
+ ✓ src/commands/swatch.test.ts > executeSwatch > past five live slots the SAFEST match drops, whatever the order 12ms
+ ✓ src/commands/swatch.test.ts > executeSwatch > slot: routes to the 14J·2 nearest sheet with the chip still /SWATCH 6ms
+ ✓ src/commands/swatch.test.ts > executeSwatch > a missing slot is a sentence, not a frame 3ms
+ ✓ src/commands/swatch.test.ts > executeSwatch > a missing slot is named in the reader’s language (ja) 2ms
+ ✓ src/commands/swatch.test.ts > executeSwatch > a missing slot is named in the reader’s language (de) 2ms
+ ✓ src/commands/swatch.test.ts > executeSwatch > a missing slot is named in the reader’s language (fr) 2ms
+ ✓ src/commands/swatch.test.ts > executeSwatch > a missing slot is named in the reader’s language (ko) 2ms
+ ✓ src/commands/swatch.test.ts > executeSwatch > a missing slot is named in the reader’s language (zh) 2ms
+ ✓ src/commands/swatch.test.ts > executeSwatch > a file that fails to parse names the failure — never a frame 1ms
+ ✓ src/commands/swatch.test.ts > executeSwatch > a file that fails to parse is refused in the reader’s language, not with the parser’s English (HC-002) 0ms
+ ✓ src/commands/swatch.test.ts > executeSwatch > names the clan in the reader's language on the identifier line (HC-001) 6ms
+ ✓ src/commands/swatch.test.ts > executeSwatch > localizes slot shorts (DE) 3ms
+ ✓ src/commands/swatch.test.ts > executeSwatch > chara-name privacy (PRIVACY_POLICY §3) > the nickname fixture really carries the nickname — guards the guards below 0ms
+ ✓ src/commands/swatch.test.ts > executeSwatch > chara-name privacy (PRIVACY_POLICY §3) > never displays the character name on the card or the embed 3ms
+ ✓ src/commands/swatch.test.ts > executeSwatch > chara-name privacy (PRIVACY_POLICY §3) > never displays the character name on the slot: route either 3ms
+ ✓ src/commands/swatch.test.ts > executeSwatch > chara-name privacy (PRIVACY_POLICY §3) > never returns the Ktisis nickname on result.character 3ms
+ ✓ src/commands/swatch.test.ts > executeSwatch > chara-name privacy (PRIVACY_POLICY §3) > takes no filename — the attachment name cannot reach the renderer 0ms
+ ✓ src/commands/swatch.test.ts > executeSwatch > chara-name privacy (PRIVACY_POLICY §3) > prints only a known producer token — a hand-edited TypeName is omitted 5ms
+ ✓ src/commands/swatch.test.ts > executeSwatch > BUG-006: off-grid eyes keep their L/R marker > gives heterochromia off-grid eyes distinct ·L / ·R LABEL markers, addr unmarked 1ms
+ ✓ src/commands/swatch.test.ts > executeSwatch > BUG-006: off-grid eyes keep their L/R marker > gives heterochromia off-grid eyes their LABEL marker in a CJK locale too (zh) 1ms
+ ✓ src/commands/swatch.test.ts > executeSwatch > BUG-006: off-grid eyes keep their L/R marker > merges shared-index off-grid eyes into one row with an ·LR LABEL marker 1ms
+ ✓ src/commands/swatch.test.ts > the lip line > names the color the blend was made from: the creator swatch for an unedited lip 3ms
+ ✓ src/commands/swatch.test.ts > the lip line > names the file’s own color as raw once it won the verdict 3ms
+ ✓ src/commands/swatch.test.ts > slots the file leaves without an index > an eye with only a live float is an off-grid row whose index reads — 1ms
+ ✓ src/commands/swatch.test.ts > slots the file leaves without an index > a file with no live colour slot is refused with NO_LIVE_SLOTS 1ms
+ ✓ src/commands/swatch.test.ts > executeSwatch — a generation failure is logged (BUG-125) > logs the error class, never the message, when the card generator throws 3ms
+ ✓ src/commands/swatch.test.ts > executeSwatch — a generation failure is logged (BUG-125) > logs the parse failure by class and code, never the file 0ms
+ ✓ src/commands/swatch.test.ts > executeSwatch — a generation failure is logged (BUG-125) > logs a bot-side failure inside the read, so it is not mistaken for a bad file 0ms
+
+ Test Files  4 passed (4)
+      Tests  161 passed (161)
+   Start at  10:28:29
+   Duration  1.82s (transform 69%, import 20%, tests 10%, worker 1%)
+
+  Transform  transforming modules took 2.96s · 69% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns

@@ -1,0 +1,172 @@
+{
+  "network": "mocked only",
+  "scope": "source helpers and command logic; not a live Worker or rendered response",
+  "results": [
+    {
+      "label": "extension precheck: audit.pose",
+      "passed": true,
+      "guardAccepted": true
+    },
+    {
+      "label": "extension precheck: audit.png",
+      "passed": true,
+      "guardAccepted": true
+    },
+    {
+      "label": "extension precheck: audit.txt",
+      "passed": true,
+      "guardAccepted": true
+    },
+    {
+      "label": "extension precheck: audit.CHARA",
+      "passed": true,
+      "guardAccepted": true
+    },
+    {
+      "label": "URL rejected: https://example.invalid/audit.chara",
+      "passed": true,
+      "guardAccepted": false
+    },
+    {
+      "label": "URL rejected: http://cdn.discordapp.com/audit.chara",
+      "passed": true,
+      "guardAccepted": false
+    },
+    {
+      "label": "URL rejected: https://cdn.discordapp.com.example.invalid/audit.chara",
+      "passed": true,
+      "guardAccepted": false
+    },
+    {
+      "label": "declared oversize refused",
+      "passed": true,
+      "guardAccepted": false
+    },
+    {
+      "label": "Trick & Treat Duo (L) F Middie Hyur.pose",
+      "passed": true,
+      "bytes": 40782,
+      "guardAccepted": true,
+      "downloads": 1,
+      "fetchOptions": {
+        "redirect": "manual",
+        "timeoutSignal": true
+      },
+      "glamourError": "PARSE_FAILED",
+      "swatchError": "PARSE_FAILED",
+      "publicMessage": "Could not read the file — it is not a .chara file the bot can read",
+      "resolveCalls": 0,
+      "logs": [
+        "[glamour] parse failed: AppError INVALID_INPUT",
+        "[swatch] parse failed: AppError INVALID_INPUT"
+      ]
+    },
+    {
+      "label": "Trick & Treat Duo (L) F Middie Hyur.pose renamed .chara",
+      "passed": true,
+      "bytes": 40782,
+      "guardAccepted": true,
+      "downloads": 1,
+      "fetchOptions": {
+        "redirect": "manual",
+        "timeoutSignal": true
+      },
+      "glamourError": "PARSE_FAILED",
+      "swatchError": "PARSE_FAILED",
+      "publicMessage": "Could not read the file — it is not a .chara file the bot can read",
+      "resolveCalls": 0,
+      "logs": [
+        "[glamour] parse failed: AppError INVALID_INPUT",
+        "[swatch] parse failed: AppError INVALID_INPUT"
+      ]
+    },
+    {
+      "label": "Trick & Treat Duo (R) F Middie Hyur.pose",
+      "passed": true,
+      "bytes": 39007,
+      "guardAccepted": true,
+      "downloads": 1,
+      "fetchOptions": {
+        "redirect": "manual",
+        "timeoutSignal": true
+      },
+      "glamourError": "PARSE_FAILED",
+      "swatchError": "PARSE_FAILED",
+      "publicMessage": "Could not read the file — it is not a .chara file the bot can read",
+      "resolveCalls": 0,
+      "logs": [
+        "[glamour] parse failed: AppError INVALID_INPUT",
+        "[swatch] parse failed: AppError INVALID_INPUT"
+      ]
+    },
+    {
+      "label": "Trick & Treat Duo (R) F Middie Hyur.pose renamed .chara",
+      "passed": true,
+      "bytes": 39007,
+      "guardAccepted": true,
+      "downloads": 1,
+      "fetchOptions": {
+        "redirect": "manual",
+        "timeoutSignal": true
+      },
+      "glamourError": "PARSE_FAILED",
+      "swatchError": "PARSE_FAILED",
+      "publicMessage": "Could not read the file — it is not a .chara file the bot can read",
+      "resolveCalls": 0,
+      "logs": [
+        "[glamour] parse failed: AppError INVALID_INPUT",
+        "[swatch] parse failed: AppError INVALID_INPUT"
+      ]
+    },
+    {
+      "label": "deep malformed index",
+      "passed": true,
+      "bytes": 20014,
+      "guardAccepted": true,
+      "downloads": 1,
+      "fetchOptions": {
+        "redirect": "manual",
+        "timeoutSignal": true
+      },
+      "glamourError": "PARSE_FAILED",
+      "swatchError": "PARSE_FAILED",
+      "publicMessage": "Could not read the file — it is not a .chara file the bot can read",
+      "resolveCalls": 0,
+      "logs": [
+        "[glamour] parse failed: RangeError",
+        "[swatch] parse failed: RangeError"
+      ]
+    },
+    {
+      "label": "private malformed value",
+      "passed": true,
+      "bytes": 49,
+      "guardAccepted": true,
+      "downloads": 1,
+      "fetchOptions": {
+        "redirect": "manual",
+        "timeoutSignal": true
+      },
+      "glamourError": "PARSE_FAILED",
+      "swatchError": "PARSE_FAILED",
+      "publicMessage": "Could not read the file — it is not a .chara file the bot can read",
+      "resolveCalls": 0,
+      "logs": [
+        "[glamour] parse failed: AppError INVALID_INPUT",
+        "[swatch] parse failed: AppError INVALID_INPUT"
+      ]
+    },
+    {
+      "label": "redirect response refused",
+      "passed": true,
+      "refused": true
+    },
+    {
+      "label": "undeclared oversize stream refused and cancelled",
+      "passed": true,
+      "refused": true,
+      "cancelled": true,
+      "chunksProduced": 18
+    }
+  ]
+}
