@@ -227,6 +227,11 @@ export class CharaFileCard {
 
     const input = document.createElement('input');
     input.type = 'file';
+    // A hint for the picker, not the check: loadCharaFile refuses anything
+    // not named *.chara. `application/json` stays on purpose. `.chara` has no
+    // registered type, and a custom extension alone may leave exports
+    // unselectable in some mobile pickers (iOS untested), so narrow this only
+    // after testing there (2026-10-15 import review).
     input.accept = '.chara,application/json';
     input.style.display = 'none';
     input.addEventListener('change', () => {
