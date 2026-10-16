@@ -120,7 +120,8 @@ affected filter: Wrangler config invariants, `pnpm type-check:scripts`, `pnpm te
 `pnpm workers:check-logs` (every `apps/*/wrangler.toml` pins `[observability] enabled = false` and
 declares no Logpush or tail consumers).
 The `deploy-*-beta.yml` workflows are **not** CI: they build and test only the app they deploy,
-fire on every non-main push touching it, and deploy to the beta worker as a side effect.
+and deploy to the shared beta as a side effect of a non-main push whose own changes touch that app
+(see [Beta deploys follow the branch's own changes](deployment.md#beta-deploys-follow-the-branchs-own-changes)).
 
 ---
 

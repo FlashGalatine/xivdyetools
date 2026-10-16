@@ -49,6 +49,99 @@ for (const file of deploys) {
   });
 }
 
+/** The beta guard job's `DEPLOY_PATHS:` value, split into pathspecs. */
+function guardPaths(yaml: string): string[] {
+  const value = /^ {10}DEPLOY_PATHS: (.+)$/m.exec(yaml)?.[1] ?? '';
+  return value.trim().split(/\s+/).filter(Boolean);
+}
+/** A `push.paths` glob as the git pathspec the guard uses: `apps/x/**` is `apps/x`. */
+const asPathspec = (glob: string): string => glob.replace(/\/\*\*$/, '');
+/** One job's lines, from its `  <name>:` key to the next job or top-level key. */
+function jobBlock(yaml: string, name: string): string {
+  const lines = yaml.split('\n');
+  const start = lines.findIndex((l) => new RegExp(`^ {2}${name}:\\s*(#.*)?$`).test(l));
+  if (start < 0) return '';
+  const end = lines.findIndex((l, i) => i > start && /^ {0,2}[A-Za-z_][\w-]*:/.test(l));
+  return lines.slice(start, end < 0 ? undefined : end).join('\n');
+}
+const betas = deploys.filter((f) => /-beta\.yml$/.test(f));
+
+test('Beta guard: there are 3 beta deploy workflows', () => {
+  assert.equal(betas.length, 3, `found ${betas.join(', ')}`);
+});
+
+// A push filter sees only the pushed commits, so merging main into a branch used
+// to redeploy the shared betas; each beta workflow now runs a `changes` job that
+// diffs the branch against its merge base on main. These pin that design.
+for (const file of betas) {
+  const yaml = read(file);
+
+  test(`Beta guard: ${file} guard pathspec mirrors push.paths`, () => {
+    const filter = pushPaths(yaml)
+      .filter((p) => !p.startsWith('!'))
+      .map(asPathspec);
+    assert.deepEqual([...guardPaths(yaml)].sort(), [...filter].sort());
+  });
+
+  test(`Beta guard: ${file} leaves out CLAUDE.md and README.md, last in the filter`, () => {
+    const paths = pushPaths(yaml);
+    const negated = paths.filter((p) => p.startsWith('!'));
+    assert.deepEqual([...negated].sort(), ['!**/CLAUDE.md', '!**/README.md']);
+    // GitHub reads the list in order: a positive pattern after a `!` one matches the file again.
+    assert.deepEqual(paths.slice(-negated.length), negated, 'the `!` patterns must come last');
+  });
+
+  // Anchored at the step's indentation, so a commented-out or echoed copy cannot pass.
+  test(`Beta guard: ${file} guard script keeps its shape`, () => {
+    const changes = jobBlock(yaml, 'changes');
+    assert.match(changes, /^ {10}fetch-depth: 0$/m, 'the merge base needs full history');
+    assert.match(changes, /^ {10}EVENT: \$\{\{ github\.event_name \}\}$/m);
+    assert.match(
+      changes,
+      /^ {10}if \[ "\$EVENT" = workflow_dispatch \]; then\n {12}echo "deploy=true" >> "\$GITHUB_OUTPUT"\n {12}exit 0$/m,
+      'a manual run must always deploy',
+    );
+    assert.match(
+      changes,
+      /^ {10}if ! base=\$\(git merge-base origin\/main HEAD\); then\n {12}echo "::warning::.+"\n {12}echo "deploy=true" >> "\$GITHUB_OUTPUT"\n {12}exit 0$/m,
+      'a branch with no merge base must deploy',
+    );
+    // The deploy job reads this output; a lost id or mapping skips every deploy.
+    assert.match(changes, /^ {6}deploy: \$\{\{ steps\.diff\.outputs\.deploy \}\}$/m);
+    assert.match(changes, /^ {8}id: diff$/m);
+    // Without --quiet, git diff exits 0 and every push skips its deploy.
+    const diff =
+      /^ {10}if git diff --quiet "\$base" HEAD -- \$DEPLOY_PATHS ':\(exclude,glob\)\*\*\/CLAUDE\.md' ':\(exclude,glob\)\*\*\/README\.md'; then\n((?:(?: {12}.+)?\n)+) {10}else\n {12}echo "deploy=true" >> "\$GITHUB_OUTPUT"$/m.exec(
+        changes,
+      );
+    assert.ok(diff, 'the guard diff line or its else branch changed');
+    assert.match(diff[1], /^ {12}echo "deploy=false" >> "\$GITHUB_OUTPUT"$/m);
+  });
+
+  test(`Beta guard: ${file} serializes runs per ref and deploys through a shared group`, () => {
+    const deploy = jobBlock(yaml, 'deploy');
+    assert.match(deploy, /^ {4}needs: changes$/m);
+    assert.match(deploy, /^ {4}if: needs\.changes\.outputs\.deploy == 'true'$/m);
+    const shared =
+      /^ {4}concurrency:\n {6}group: (deploy-[a-z-]+-beta)\n(?: {6}#.*\n)* {6}cancel-in-progress: true$/m.exec(
+        deploy,
+      )?.[1];
+    assert.ok(shared, 'the deploy job holds no shared group with cancel-in-progress');
+    assert.equal(
+      shared,
+      file.replace(/\.yml$/, ''),
+      'the shared group is named after its own workflow',
+    );
+    // Per ref only: a shared workflow-level group would let a run that skips its deploy
+    // cancel another branch's deploy in progress. Per ref, a newer push cancels its own
+    // branch's older run, guard included, so two quick pushes no longer race to deploy.
+    const top = /^concurrency:\n {2}group: (.+)\n(?: {2}#.*\n)* {2}cancel-in-progress: true$/m.exec(
+      yaml,
+    )?.[1];
+    assert.equal(top, `${shared}-\${{ github.ref }}`, 'the workflow-level group must be per ref');
+  });
+}
+
 test('BUG-152: ci.yml cancels only superseded pull_request runs', () => {
   const yaml = read('ci.yml');
   const block = yaml.slice(yaml.indexOf('\nconcurrency:'));
