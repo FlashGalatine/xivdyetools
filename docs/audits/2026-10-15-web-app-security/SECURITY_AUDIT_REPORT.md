@@ -1,6 +1,6 @@
 # Security review — Glamour Reader file imports, web and Discord (2026-10-15)
 
-- **Status:** Draft; deferred at the maintainer's request. No implementation, release or deployment is authorized by this document.
+- **Status:** Remediated 2026-10-16 in PRs #315 and #316; see [Remediation status](#remediation-status). The audit text below is the reviewed snapshot.
 - **Branch/commit:** Inspected `main` at `e4fd9fc0f5e45e398e14010e6894eed12d272dbc`; documentation branch `codex/glamour-import-audit`.
 - **Scope:** Web `glamour-tool.ts` → shared `CharaFileCard` → `loadCharaFile` → core parsing/resolution → session/display; Discord `/glamour` and `/swatch` → shared attachment guards → bot-logic/core → public response. The equipment API was inspected only for the data sent and its independent input guards.
 - **Source versions:** web-app 5.15.4; core 5.12.0; api-worker 0.20.0; discord-worker 5.8.14; bot-logic 4.9.0. These are historical snapshot versions, not a current-version table.
@@ -138,9 +138,9 @@ Not reconciled. The full privacy-policy reconciliation the security-audit skill 
 
 | ID | Status | Commit |
 | --- | --- | --- |
-| FINDING-001 | OPEN — deferred; implementation not started | — |
-| FINDING-002 | OPEN — deferred; implementation not started | — |
-| FINDING-003 | OPEN — deferred; implementation not started | — |
+| FINDING-001 | FIXED — `loadCharaFile` refuses a non-`.chara` name before reading it, for both entry points and both tools (web-app 5.15.5) | `e7919b2f`, PR #316 |
+| FINDING-002 | FIXED — bounded, non-recursive diagnostics at all three interpolation sites and a 128-character float guard (core 5.13.0); the 8 KiB cap that supports it ships with FINDING-001/003 | `d8490205`, PR #315, merged as `f5ea2272` |
+| FINDING-003 | FIXED — `checkCharaAttachment` refuses a non-`.chara` filename before deferring or downloading; reported-size and streamed caps are 8 KiB (discord-worker 5.8.15, bot-logic 4.10.0) | `e7919b2f`, PR #316 |
 
 ## Next steps
 
