@@ -7,8 +7,11 @@
 # own Discord application, its own KV namespace, and NO routes. Production is
 # reachable only via `--env production`, which this workflow never passes.
 #
-# There is ONE beta bot. Concurrent branches share it, so the most recent push
-# wins; `cancel-in-progress: true` makes that explicit rather than a race.
+# There is ONE beta bot, shared by every branch, and two concurrency groups decide
+# who holds it. Per ref, at workflow level: a newer push cancels its own branch's
+# older run, guard included, so two quick pushes cannot deploy out of order.
+# Shared, on the deploy job: the deploy that starts last cancels any other
+# branch's deploy in progress.
 name: Deploy Beta Discord Worker
 
 on:
@@ -38,9 +41,16 @@ on:
       - 'tsconfig.base.json'
       # Never bundled, so an edit to these alone does not start a deploy. Not `*.md`
       # wholesale: this worker bundles CHANGELOG-laymans.md (wrangler.toml [[rules]]).
+      # Keep these two lines last: a later positive pattern would match the files again.
       - '!**/CLAUDE.md'
       - '!**/README.md'
   workflow_dispatch:
+
+# Per ref (see the header). Never shared across branches: a run whose `changes` job
+# skips the deploy would then cancel another branch's deploy in progress.
+concurrency:
+  group: deploy-discord-worker-beta-${{ github.ref }}
+  cancel-in-progress: true
 
 # FINDING-009 (2026-08-21 security audit): least-privilege GITHUB_TOKEN —
 # the default repo token is never needed beyond checkout here. Jobs that need
@@ -96,8 +106,8 @@ jobs:
     name: Deploy Beta Discord Worker
     needs: changes
     if: needs.changes.outputs.deploy == 'true'
-    # Job level, not workflow level: a run that skips its deploy must not cancel
-    # another branch's deploy in progress.
+    # The shared group sits on this job, not the workflow, so a run that skips its
+    # deploy never joins it and cannot cancel another branch's deploy in progress.
     concurrency:
       group: deploy-discord-worker-beta
       # Unlike production, a superseded beta deploy is worth cancelling: the newer

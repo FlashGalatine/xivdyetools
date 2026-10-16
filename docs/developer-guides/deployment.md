@@ -64,13 +64,20 @@ pushed commit against its merge base with `main` over the workflow's deploy path
 names, so a push that edits only them does not start a run at all. The exclusion is by name,
 never `*.md`: discord-worker bundles `CHANGELOG-laymans.md` for `/changelog`.
 
-The beta deploy's `concurrency` group sits on the deploy job, not the workflow, so a run whose
-guard skips the deploy cannot cancel another branch's deploy in progress.
-`scripts/check-workflows.test.ts` checks that each guard's path list matches its `push.paths`,
-that both exclusions are in place, and that the deploy job owns the concurrency group.
+Two `concurrency` groups decide who holds a shared beta. The shared group sits on the deploy job,
+not the workflow, so a run whose guard skips the deploy never joins it and cannot cancel another
+branch's deploy in progress. A per-ref group at workflow level (`deploy-<app>-beta-${{ github.ref }}`)
+cancels a branch's older run, guard included, when the branch is pushed again, so two quick pushes
+cannot deploy out of order. `scripts/check-workflows.test.ts` checks that each guard's path list
+matches its `push.paths`, that both exclusions are in place and come last in the filter, that the
+guard script keeps its shape, and that both groups are set this way.
 
-One case still deploys: a branch stacked on another branch inherits its base's app changes,
-because both are measured against `main`.
+Two cases do not follow the rule exactly:
+
+- A branch stacked on another branch inherits its base's app changes, because both are measured
+  against `main`, so it still deploys.
+- A push that fully reverts the branch's own app changes does not redeploy beta, because the branch
+  then matches `main` over the deploy paths. Run the workflow by hand to put the branch back.
 
 ### Required secrets
 

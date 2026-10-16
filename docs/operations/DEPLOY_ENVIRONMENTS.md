@@ -130,14 +130,16 @@ commits. Merging `main` into a branch therefore started every beta deploy whose 
 changed, although the branch itself changed nothing there. On 2026-10-12/13 four such merges
 redeployed the shared betas from docs-only branches, among them a research PR (#303). A
 `CLAUDE.md` or `README.md` edit inside an app or package directory did the same (a CLAUDE.md
-freshness branch deployed beta twice).
+freshness branch started two beta deploy runs, one of which deployed).
 
 Each workflow now runs a `changes` job first. It checks out with full history, diffs the pushed
 commit against `git merge-base origin/main HEAD` over the deploy paths minus `CLAUDE.md` and
 `README.md`, and the deploy job runs only when that diff is non-empty; a manual run always
-deploys. The `concurrency` group moved from the workflow to the deploy job, so a run that skips
-cannot cancel another branch's deploy in progress. Details and the residual case (a branch stacked
-on another inherits its base's changes) are in
+deploys. The shared `concurrency` group moved from the workflow to the deploy job, so a run that
+skips cannot cancel another branch's deploy in progress, and a per-ref workflow-level group keeps
+two quick pushes to one branch from deploying out of order. Details and the two residual cases (a
+branch stacked on another inherits its base's changes; a push that reverts the branch's own
+changes does not redeploy) are in
 [`deployment.md`](../developer-guides/deployment.md#beta-deploys-follow-the-branchs-own-changes).
 
 ---
@@ -422,7 +424,7 @@ Cloudflare Pages project** rather than a preview branch of the production one.
 |---|---|---|
 | Pages project | `xivdyetools` | `xivdyetools-beta` |
 | Domain | `xivdyetools.app` | `beta.xivdyetools.app` |
-| Workflow | `deploy-web-app.yml` (push to `main`) | `deploy-web-app-beta.yml` (push to any non-`main` branch that touches its `paths:` filter — `apps/web-app/**`, `packages/core/**`, `packages/types/**`, `packages/logger/**`, `packages/svg/**`, plus the four root inputs `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `turbo.json`, `tsconfig.base.json`) |
+| Workflow | `deploy-web-app.yml` (push to `main`) | `deploy-web-app-beta.yml` (push to any non-`main` branch whose own changes, measured against its merge base with `main`, touch its `paths:` filter — `apps/web-app/**`, `packages/core/**`, `packages/types/**`, `packages/logger/**`, `packages/svg/**`, plus the four root inputs `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `turbo.json`, `tsconfig.base.json`; `CLAUDE.md` and `README.md` edits do not count — Update 2026-10-13 above) |
 | Deploy command | `pages deploy dist --project-name=xivdyetools` | `pages deploy dist --project-name=xivdyetools-beta --branch=beta` |
 | Backends | production `auth.` / `api.xivdyetools.app` | **the same production backends** |
 | Cloudflare credential | `environment: production` + `secrets.CLOUDFLARE_API_TOKEN` | `environment: beta` + `secrets.CLOUDFLARE_API_TOKEN_BETA` — separate credential since 2026-08-29 (FINDING-028) |

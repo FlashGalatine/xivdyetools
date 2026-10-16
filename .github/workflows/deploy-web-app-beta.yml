@@ -13,8 +13,11 @@
 # other branch name lands as a preview and the custom domain keeps serving the
 # previous build - a silent no-op.
 #
-# There is ONE beta site. Concurrent branches share it, so the most recent push
-# wins; cancel-in-progress makes that explicit rather than a race.
+# There is ONE beta site, shared by every branch, and two concurrency groups decide
+# who holds it. Per ref, at workflow level: a newer push cancels its own branch's
+# older run, guard included, so two quick pushes cannot deploy out of order.
+# Shared, on the deploy job: the deploy that starts last cancels any other
+# branch's deploy in progress.
 name: Deploy Beta Web App
 
 on:
@@ -40,11 +43,18 @@ on:
       - 'turbo.json'
       - 'tsconfig.base.json'
       # Never bundled, so an edit to these alone does not start a deploy. Not `*.md`
-      # wholesale: kept in step with the other beta workflows, where one worker
-      # bundles a Markdown file.
+      # wholesale: this build reads apps/web-app/CHANGELOG-laymans.md into What's New,
+      # and discord-worker bundles its own for /changelog. Keep these two lines last:
+      # a later positive pattern would match the files again.
       - '!**/CLAUDE.md'
       - '!**/README.md'
   workflow_dispatch:
+
+# Per ref (see the header). Never shared across branches: a run whose `changes` job
+# skips the deploy would then cancel another branch's deploy in progress.
+concurrency:
+  group: deploy-web-app-beta-${{ github.ref }}
+  cancel-in-progress: true
 
 # FINDING-009 (2026-08-21 security audit): least-privilege GITHUB_TOKEN —
 # the default repo token is never needed beyond checkout here. Jobs that need
@@ -100,8 +110,8 @@ jobs:
     name: Build & Deploy Beta Web App
     needs: changes
     if: needs.changes.outputs.deploy == 'true'
-    # Job level, not workflow level: a run that skips its deploy must not cancel
-    # another branch's deploy in progress.
+    # The shared group sits on this job, not the workflow, so a run that skips its
+    # deploy never joins it and cannot cancel another branch's deploy in progress.
     concurrency:
       group: deploy-web-app-beta
       # Unlike production, a superseded beta deploy is worth cancelling: the newer

@@ -56,6 +56,14 @@ function guardPaths(yaml: string): string[] {
 }
 /** A `push.paths` glob as the git pathspec the guard uses: `apps/x/**` is `apps/x`. */
 const asPathspec = (glob: string): string => glob.replace(/\/\*\*$/, '');
+/** One job's lines, from its `  <name>:` key to the next job or top-level key. */
+function jobBlock(yaml: string, name: string): string {
+  const lines = yaml.split('\n');
+  const start = lines.indexOf(`  ${name}:`);
+  if (start < 0) return '';
+  const end = lines.findIndex((l, i) => i > start && /^ {0,2}[a-z][\w-]*:/.test(l));
+  return lines.slice(start, end < 0 ? undefined : end).join('\n');
+}
 const betas = deploys.filter((f) => /-beta\.yml$/.test(f));
 
 test('Beta guard: there are 3 beta deploy workflows', () => {
@@ -75,24 +83,48 @@ for (const file of betas) {
     assert.deepEqual([...guardPaths(yaml)].sort(), [...filter].sort());
   });
 
-  test(`Beta guard: ${file} leaves out CLAUDE.md and README.md in the filter and the guard`, () => {
-    const negated = pushPaths(yaml).filter((p) => p.startsWith('!'));
+  test(`Beta guard: ${file} leaves out CLAUDE.md and README.md, last in the filter`, () => {
+    const paths = pushPaths(yaml);
+    const negated = paths.filter((p) => p.startsWith('!'));
     assert.deepEqual([...negated].sort(), ['!**/CLAUDE.md', '!**/README.md']);
-    for (const name of ['CLAUDE.md', 'README.md']) {
-      assert.ok(yaml.includes(`':(exclude,glob)**/${name}'`), `the guard does not exclude ${name}`);
-    }
+    // GitHub reads the list in order: a positive pattern after a `!` one matches the file again.
+    assert.deepEqual(paths.slice(-negated.length), negated, 'the `!` patterns must come last');
   });
 
-  test(`Beta guard: ${file} deploy waits on the guard and holds the concurrency group`, () => {
-    assert.doesNotMatch(
-      yaml,
-      /^concurrency:/m,
-      'workflow-level concurrency lets a skipping run cancel a real deploy',
+  // Anchored at the step's indentation, so a commented-out or echoed copy cannot pass.
+  test(`Beta guard: ${file} guard script keeps its shape`, () => {
+    const changes = jobBlock(yaml, 'changes');
+    assert.match(changes, /^ {10}fetch-depth: 0$/m, 'the merge base needs full history');
+    assert.match(changes, /^ {10}EVENT: \$\{\{ github\.event_name \}\}$/m);
+    assert.match(
+      changes,
+      /^ {10}if \[ "\$EVENT" = workflow_dispatch \]; then\n {12}echo "deploy=true" >> "\$GITHUB_OUTPUT"\n {12}exit 0$/m,
+      'a manual run must always deploy',
     );
-    const deploy = yaml.slice(yaml.indexOf('\n  deploy:\n'));
+    assert.match(changes, /^ {10}if ! base=\$\(git merge-base origin\/main HEAD\); then$/m);
+    // Without --quiet, git diff exits 0 and every push skips its deploy.
+    const diff =
+      /^ {10}if git diff --quiet "\$base" HEAD -- \$DEPLOY_PATHS ':\(exclude,glob\)\*\*\/CLAUDE\.md' ':\(exclude,glob\)\*\*\/README\.md'; then\n((?: {12}.+\n)+) {10}else\n {12}echo "deploy=true" >> "\$GITHUB_OUTPUT"$/m.exec(
+        changes,
+      );
+    assert.ok(diff, 'the guard diff line or its else branch changed');
+    assert.match(diff[1], /^ {12}echo "deploy=false" >> "\$GITHUB_OUTPUT"$/m);
+  });
+
+  test(`Beta guard: ${file} serializes runs per ref and deploys through a shared group`, () => {
+    const deploy = jobBlock(yaml, 'deploy');
     assert.match(deploy, /^ {4}needs: changes$/m);
     assert.match(deploy, /^ {4}if: needs\.changes\.outputs\.deploy == 'true'$/m);
-    assert.match(deploy, /^ {4}concurrency:$/m);
+    const shared =
+      /^ {4}concurrency:\n {6}group: (deploy-[a-z-]+-beta)\n(?: {6}#.*\n)* {6}cancel-in-progress: true$/m.exec(
+        deploy,
+      )?.[1];
+    assert.ok(shared, 'the deploy job holds no shared group with cancel-in-progress');
+    // Per ref only: a shared workflow-level group would let a run that skips its deploy
+    // cancel another branch's deploy in progress. Per ref, a newer push cancels its own
+    // branch's older run, guard included, so two quick pushes cannot deploy out of order.
+    const top = /^concurrency:\n {2}group: (.+)\n {2}cancel-in-progress: true$/m.exec(yaml)?.[1];
+    assert.equal(top, `${shared}-\${{ github.ref }}`, 'the workflow-level group must be per ref');
   });
 }
 
