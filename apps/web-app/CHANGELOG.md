@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.15.5] - 2026-10-16
+
+FINDING-001 and the 8 KiB cap of the 2026-10-15 `.chara` import review
+(`docs/audits/2026-10-15-web-app-security/`), with core 5.13.0 (bounded parse errors) and 5.14.0
+(`MAX_CHARA_FILE_BYTES`).
+
+### Changed
+
+- **The Glamour Reader and Swatch Matcher read only files named `.chara`** (any case). A dropped
+  `.pose`, image or folder used to be read and parsed before it failed with a parser message; it is
+  now refused before it is read, with "Only .chara files can be read here." The check is on the
+  file name, not its MIME type, which browsers leave empty for `.chara`. It sits in `loadCharaFile`,
+  so it covers drag-and-drop and Choose file in both tools. A renamed pose is still refused by the
+  parser.
+- **A `.chara` file over 8 KB is refused before it is read** (was 20 MB), with a message that says
+  character files are normally under 3 KB and that one with an image attached in Anamnesis must be
+  saved again without it. The Palette Extractor keeps its 20 MB image limit (`MAX_USER_FILE_BYTES`).
+- **A refused file no longer cancels a `.chara` that is still loading.** Both checks now run before
+  the load takes its turn, so dropping a `.chara` and then the wrong file keeps the `.chara`.
+- **A malformed file's error no longer quotes the whole value.** That is core 5.13.0 (#315), which
+  reaches the web app as soon as it merges; this is the first web-app release to note it. A nested or
+  very long field is described by kind and size, and the toast can no longer read "Maximum call
+  stack size exceeded".
+
+### Removed
+
+- `errors.fileTooLarge` ("Maximum size is 20MB"), in all six locales. Its only use was the `.chara`
+  size toast, now `swatch.charaTooLarge`; the new wrong-type toast is `swatch.charaNotChara`.
+
 ## [5.15.4] - 2026-10-11
 
 ### Changed

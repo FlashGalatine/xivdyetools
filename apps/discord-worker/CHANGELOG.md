@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.8.15] - 2026-10-16
+
+FINDING-003 and the 8 KiB cap of the 2026-10-15 `.chara` import review
+(`docs/audits/2026-10-15-web-app-security/`), with bot-logic 4.10.0 and core 5.13.0 / 5.14.0. No
+command shapes change; the production deploy's `register-commands` run re-registers an unchanged
+roster.
+
+### Changed
+
+- **`/swatch` and `/glamour` refuse an attachment not named `.chara`** (any case) before deferring,
+  with an ephemeral "Could not read the file — it must be a .chara file". A `.pose` used to be
+  downloaded and parsed first. Neither `content_type`, which is optional, nor the CDN URL is
+  consulted.
+- **The attachment cap is 8 KiB (core's `MAX_CHARA_FILE_BYTES`), down from 1 MiB**, on both the size
+  Discord reports (refused ephemerally, before deferring) and the bytes actually streamed (refused in
+  the deferred reply, which is public). The message reads "larger than 8 KB" and says to save an
+  Anamnesis export again without its attached image; changing the byte constant alone would have
+  printed "0.0078125 MB".
+- **A malformed file still gets the fixed "not a .chara file the bot can read"**, and core 5.13.0
+  (#315, live as soon as it merges; this is the first bot release to note it) bounds the work behind
+  it: no error message walks or quotes the whole value any more.
+
 ## [5.8.14] - 2026-10-11
 
 No source change here: `/glamour`'s GPOSERS list comes from bot-logic 4.9.0, which applies core

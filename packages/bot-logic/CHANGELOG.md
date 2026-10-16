@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.10.0] - 2026-10-16
+
+The `.chara` refusals for the 8 KiB cap and the file-name check of the 2026-10-15 import review
+(`docs/audits/2026-10-15-web-app-security/`), used by discord-worker 5.8.15. Text only: one key added
+and one placeholder renamed, in all six languages.
+
+### Added
+
+- **`card.charaFileReason.notChara`** ("it must be a .chara file"), for an attachment with any other
+  extension.
+
+### Changed
+
+- **`card.charaFileReason.tooLarge` takes `{kb}` instead of `{mb}`** and says what to do: "it is
+  larger than {kb} KB; if you attached an image in Anamnesis, save the character again without it".
+  With the cap at 8 KiB, `{mb}` would have read "0.0078125 MB". A caller still passing `mb` gets the
+  placeholder back as written.
+- **The `/manual` Character File topic states the limits**: the file must be a `.chara` file of
+  8 KB or smaller, and an export with an image attached in Anamnesis must be saved again without it.
+
 ## [4.9.0] - 2026-10-11
 
 `/glamour`'s GPOSERS list now leaves out the worn slots the submission guide wants erased. Needs

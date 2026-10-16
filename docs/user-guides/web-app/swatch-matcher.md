@@ -16,7 +16,7 @@ The color sheet on the left is the character creator's palette, eight swatches t
 
 ### Drop a `.chara` file
 
-Above the grid is a **Drop a .chara file** zone (or press **Choose file**). It accepts character files exported by **Anamnesis, Ktisis or Brio**. The file is read entirely on your device — nothing is uploaded, and the screenshot some tools embed in the file is never opened. When it loads:
+Above the grid is a **Drop a .chara file** zone (or press **Choose file**). It accepts character files exported by **Anamnesis, Ktisis or Brio**, named `.chara` and up to 8 KB (an Anamnesis export with an attached image is larger: save the character again without the image). The file is read entirely on your device — nothing is uploaded, and the screenshot some tools embed in the file is never opened. When it loads:
 
 - A **CHARACTER FILE** card shows which tool made it, your character's name, a **LOCAL ONLY** chip, and the clan and gender it found. **SWAP** loads a different file.
 - The **CLAN & GENDER** selectors in the settings column become a read-only readout, so hair and skin are looked up on the right sheet automatically.
