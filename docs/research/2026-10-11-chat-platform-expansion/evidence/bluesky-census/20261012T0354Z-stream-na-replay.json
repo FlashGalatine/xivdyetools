@@ -1,0 +1,33 @@
+{
+  "window": {
+    "mode": "replay",
+    "start": "2026-10-12T03:54:03.763Z",
+    "minutes": 60,
+    "coveredMinutes": 60,
+    "reconnects": 0,
+    "firstEvent": "2026-10-12T03:54:03.821Z"
+  },
+  "allPosts": 134992,
+  "duplicatesSkipped": 21592,
+  "ffxivPosts": 121,
+  "ffxivPerHour": 121,
+  "allPerHour": 134995,
+  "ffxivSharePct": 0.0896,
+  "byLang": {
+    "en": 78,
+    "ja": 35,
+    "?": 5,
+    "pt": 2,
+    "es": 1
+  },
+  "byTerm": {
+    "ffxiv": 48,
+    "gpose": 48,
+    "eorzea": 4,
+    "ff14": 47,
+    "final fantasy xiv": 2,
+    "エオルゼア": 2
+  },
+  "note": "Substring match; \"gpose\"/\"eorzea\" also catch non-FFXIV uses rarely, and trending-hashtag bots that list #ff14 are counted. Each post counts once (by repo and record key); duplicatesSkipped are copies Jetstream sent again. Rates are per hour of event time covered (coveredMinutes), not wall time. Run at several times of day; one hour is not a daily rate.",
+  "redaction": "20 sampled post texts removed."
+}

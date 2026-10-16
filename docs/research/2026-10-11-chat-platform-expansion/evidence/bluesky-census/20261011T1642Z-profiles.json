@@ -1,0 +1,84 @@
+{
+  "asOf": "2026-10-11T16:42:09.186Z",
+  "profiles": [
+    {
+      "handle": "en.finalfantasyxiv.com",
+      "did": "did:plc:aquzm76xau5oikuadmsjbrhb",
+      "displayName": "FINAL FANTASY XIV",
+      "followers": 100568,
+      "follows": 4,
+      "posts": 1072,
+      "createdAt": "2025-05-15T04:53:00.840Z"
+    },
+    {
+      "handle": "fr.finalfantasyxiv.com",
+      "did": "did:plc:4go45ovrlltidg6dckrpwocl",
+      "displayName": "FINAL FANTASY XIV",
+      "followers": 3751,
+      "follows": 3,
+      "posts": 1440,
+      "createdAt": "2025-05-15T04:59:41.840Z"
+    },
+    {
+      "handle": "de.finalfantasyxiv.com",
+      "did": "did:plc:65hdvmf4sfubuq72z3mvnzlc",
+      "displayName": "FINAL FANTASY XIV",
+      "followers": 3119,
+      "follows": 3,
+      "posts": 824,
+      "createdAt": "2025-05-15T05:00:49.840Z"
+    },
+    {
+      "handle": "jp.finalfantasyxiv.com",
+      "did": "did:plc:cjy3o7mvkinvjiz6nqgckrxh",
+      "displayName": "FINAL FANTASY XIV／FF14",
+      "followers": 20850,
+      "follows": 3,
+      "posts": 1145,
+      "createdAt": "2025-05-15T04:51:29.941Z"
+    },
+    {
+      "handle": "gposers.org",
+      "did": "did:plc:esjfzoxc6si7mlwh7f6lwj2y",
+      "displayName": "GPOSERS",
+      "followers": 2048,
+      "follows": 268,
+      "posts": 563,
+      "createdAt": "2023-09-27T12:14:06.795Z"
+    },
+    {
+      "handle": "creator-1",
+      "followers": 2616,
+      "follows": 73,
+      "posts": 83,
+      "createdAt": "2023-07"
+    },
+    {
+      "handle": "creator-2",
+      "followers": 977,
+      "follows": 27,
+      "posts": 162,
+      "createdAt": "2023-10"
+    },
+    {
+      "handle": "ffxivteamcraft.com",
+      "did": "did:plc:4ifxvajb6rpzepfafkn57v5t",
+      "displayName": "FFXIV Teamcraft",
+      "followers": 152,
+      "follows": 16,
+      "posts": 23,
+      "createdAt": "2025-01-14T10:05:42.550Z"
+    },
+    {
+      "handle": "gamerescape.com",
+      "did": "did:plc:ro3zpsdloupryhlb7vitalwy",
+      "displayName": "Gamer Escape",
+      "followers": 321,
+      "follows": 4,
+      "posts": 91,
+      "createdAt": "2023-08-18T00:38:59.782Z"
+    }
+  ],
+  "notFound": [],
+  "redaction": "Individual accounts: handle is a label; did and displayName removed; createdAt to the month."
+}

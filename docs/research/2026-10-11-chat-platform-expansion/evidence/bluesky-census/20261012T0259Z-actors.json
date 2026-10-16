@@ -1,0 +1,608 @@
+{
+  "asOf": "2026-10-12T02:59:55.292Z",
+  "note": "relevant = the result's own text (handle, name, description) contains an FFXIV term after NFKC folding. It misses FFXIV accounts that never say so, and keeps any that mention FFXIV once: it is not a test of FFXIV focus. A term stops at its cursor's end (\"exhausted\"), after 20 pages adding under 20 new relevant accounts (\"dry\"), or at 400 pages (\"cap\", an undercount).",
+  "searchMatched": 46685,
+  "relevant": 42691,
+  "perTerm": {
+    "ffxiv": {
+      "hits": 21547,
+      "relevant": 21491,
+      "newRelevant": 21491,
+      "pages": 220,
+      "stop": "exhausted"
+    },
+    "ff14": {
+      "hits": 19222,
+      "relevant": 19214,
+      "newRelevant": 18839,
+      "pages": 195,
+      "stop": "exhausted"
+    },
+    "final fantasy xiv": {
+      "hits": 2962,
+      "relevant": 960,
+      "newRelevant": 798,
+      "pages": 30,
+      "stop": "dry"
+    },
+    "gpose": {
+      "hits": 2357,
+      "relevant": 2333,
+      "newRelevant": 1248,
+      "pages": 25,
+      "stop": "exhausted"
+    },
+    "eorzea": {
+      "hits": 459,
+      "relevant": 457,
+      "newRelevant": 300,
+      "pages": 5,
+      "stop": "exhausted"
+    },
+    "ＦＦ14": {
+      "hits": 1966,
+      "relevant": 1965,
+      "newRelevant": 0,
+      "pages": 20,
+      "stop": "dry"
+    },
+    "ファイナルファンタジー14": {
+      "hits": 1968,
+      "relevant": 59,
+      "newRelevant": 15,
+      "pages": 20,
+      "stop": "dry"
+    }
+  },
+  "followerBuckets": {
+    "100k+": 1,
+    "10k-100k": 12,
+    "1k-10k": 769,
+    "100-1k": 7384,
+    "<100": 34525
+  },
+  "droppedSample": [
+    {
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "matchedTerms": [
+        "ffxiv",
+        "gpose"
+      ]
+    },
+    {
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "matchedTerms": [
+        "ffxiv",
+        "gpose"
+      ]
+    },
+    {
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    }
+  ],
+  "top50": [
+    {
+      "handle": "en.finalfantasyxiv.com",
+      "displayName": "FINAL FANTASY XIV",
+      "matchedTerms": [
+        "ffxiv",
+        "final fantasy xiv"
+      ],
+      "followers": 100574,
+      "posts": 1072
+    },
+    {
+      "handle": "top50-02",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 29473,
+      "posts": 4600
+    },
+    {
+      "handle": "top50-03",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 25176,
+      "posts": 344
+    },
+    {
+      "handle": "jp.finalfantasyxiv.com",
+      "displayName": "FINAL FANTASY XIV／FF14",
+      "matchedTerms": [
+        "ff14",
+        "final fantasy xiv",
+        "ＦＦ14",
+        "ファイナルファンタジー14"
+      ],
+      "followers": 20850,
+      "posts": 1145
+    },
+    {
+      "handle": "top50-05",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 20111,
+      "posts": 661
+    },
+    {
+      "handle": "top50-06",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 17934,
+      "posts": 2734
+    },
+    {
+      "handle": "top50-07",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 16802,
+      "posts": 1975
+    },
+    {
+      "handle": "top50-08",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 13596,
+      "posts": 4489
+    },
+    {
+      "handle": "top50-09",
+      "matchedTerms": [
+        "ffxiv",
+        "final fantasy xiv",
+        "eorzea"
+      ],
+      "followers": 12604,
+      "posts": 1644
+    },
+    {
+      "handle": "top50-10",
+      "matchedTerms": [
+        "ffxiv",
+        "final fantasy xiv"
+      ],
+      "followers": 11943,
+      "posts": 11002
+    },
+    {
+      "handle": "top50-11",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 10743,
+      "posts": 1830
+    },
+    {
+      "handle": "top50-12",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 10594,
+      "posts": 244
+    },
+    {
+      "handle": "top50-13",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 10493,
+      "posts": 466
+    },
+    {
+      "handle": "top50-14",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 9761,
+      "posts": 3015
+    },
+    {
+      "handle": "top50-15",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 9719,
+      "posts": 239
+    },
+    {
+      "handle": "top50-16",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 9328,
+      "posts": 2216
+    },
+    {
+      "handle": "top50-17",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 9173,
+      "posts": 193
+    },
+    {
+      "handle": "top50-18",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 8618,
+      "posts": 2319
+    },
+    {
+      "handle": "top50-19",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 8434,
+      "posts": 6555
+    },
+    {
+      "handle": "top50-20",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 8146,
+      "posts": 12505
+    },
+    {
+      "handle": "top50-21",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 8134,
+      "posts": 5964
+    },
+    {
+      "handle": "top50-22",
+      "matchedTerms": [
+        "ffxiv",
+        "final fantasy xiv"
+      ],
+      "followers": 7966,
+      "posts": 445
+    },
+    {
+      "handle": "top50-23",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 7928,
+      "posts": 156
+    },
+    {
+      "handle": "top50-24",
+      "matchedTerms": [
+        "ffxiv",
+        "final fantasy xiv"
+      ],
+      "followers": 7877,
+      "posts": 1648
+    },
+    {
+      "handle": "top50-25",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 7770,
+      "posts": 22334
+    },
+    {
+      "handle": "top50-26",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 7608,
+      "posts": 68
+    },
+    {
+      "handle": "top50-27",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 7593,
+      "posts": 1950
+    },
+    {
+      "handle": "top50-28",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 7588,
+      "posts": 7061
+    },
+    {
+      "handle": "top50-29",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 7440,
+      "posts": 539
+    },
+    {
+      "handle": "top50-30",
+      "matchedTerms": [
+        "final fantasy xiv"
+      ],
+      "followers": 7362,
+      "posts": 602
+    },
+    {
+      "handle": "top50-31",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 7349,
+      "posts": 991
+    },
+    {
+      "handle": "top50-32",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 7338,
+      "posts": 5516
+    },
+    {
+      "handle": "top50-33",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 7206,
+      "posts": 5139
+    },
+    {
+      "handle": "top50-34",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 7164,
+      "posts": 607
+    },
+    {
+      "handle": "top50-35",
+      "matchedTerms": [
+        "eorzea"
+      ],
+      "followers": 7116,
+      "posts": 858
+    },
+    {
+      "handle": "top50-36",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 6974,
+      "posts": 137
+    },
+    {
+      "handle": "top50-37",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 6970,
+      "posts": 3547
+    },
+    {
+      "handle": "top50-38",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 6899,
+      "posts": 1100
+    },
+    {
+      "handle": "top50-39",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 6897,
+      "posts": 5497
+    },
+    {
+      "handle": "top50-40",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 6553,
+      "posts": 3235
+    },
+    {
+      "handle": "top50-41",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 6398,
+      "posts": 216
+    },
+    {
+      "handle": "top50-42",
+      "matchedTerms": [
+        "ffxiv",
+        "final fantasy xiv"
+      ],
+      "followers": 6211,
+      "posts": 5633
+    },
+    {
+      "handle": "top50-43",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 6183,
+      "posts": 3436
+    },
+    {
+      "handle": "top50-44",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 5994,
+      "posts": 242
+    },
+    {
+      "handle": "top50-45",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 5934,
+      "posts": 3397
+    },
+    {
+      "handle": "top50-46",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 5918,
+      "posts": 1855
+    },
+    {
+      "handle": "top50-47",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 5904,
+      "posts": 29
+    },
+    {
+      "handle": "top50-48",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 5858,
+      "posts": 303
+    },
+    {
+      "handle": "top50-49",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 5799,
+      "posts": 2751
+    },
+    {
+      "handle": "top50-50",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 5784,
+      "posts": 1486
+    }
+  ],
+  "redaction": "top50 individuals: handle is a label, displayName removed. droppedSample keeps only the matched terms."
+}
