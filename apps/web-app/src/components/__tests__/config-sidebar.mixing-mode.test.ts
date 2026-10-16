@@ -7,7 +7,7 @@
  * test read the labels. This one reads them as the browser shows them
  * (whitespace collapsed), so a missing space on either side of the dash fails.
  */
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import '@components/v4/config-sidebar';
 import { ConfigController } from '@services/config-controller';
 
@@ -15,6 +15,12 @@ describe('config-sidebar mixing mode select', () => {
   let el: HTMLElement & { activeTool: string; updateComplete: Promise<unknown> };
 
   beforeEach(async () => {
+    // The mount fetches the market server lists; nothing here awaits them, so
+    // answer locally rather than leave them in flight at MSW's teardown.
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => Response.json([]))
+    );
     ConfigController.resetInstance();
     el = document.createElement('v4-config-sidebar') as typeof el;
     el.activeTool = 'mixer';
@@ -25,6 +31,7 @@ describe('config-sidebar mixing mode select', () => {
   afterEach(() => {
     el.remove();
     ConfigController.resetInstance();
+    vi.unstubAllGlobals();
   });
 
   const labels = (): Record<string, string> => {

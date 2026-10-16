@@ -374,11 +374,19 @@ describe('every v4 custom element is accounted for', () => {
     locale = 'en';
     container = document.createElement('div');
     document.body.appendChild(container);
+    // Mounting fires real requests (<v4-preset-tool>'s health check,
+    // <v4-config-sidebar>'s server lists) that nothing here awaits. Left to
+    // MSW, one is still in flight at teardown and goes out to the network.
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(null, { status: 503 }))
+    );
   });
 
   afterEach(() => {
     container.remove();
     locale = 'en';
+    vi.unstubAllGlobals();
   });
 
   it('covers every element the v4 directory registers', async () => {

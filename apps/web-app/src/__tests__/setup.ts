@@ -51,7 +51,7 @@ vi.mock('@shared/logger', () => {
 // Initialize services and MSW server before all tests
 beforeAll(async () => {
   // Start MSW server for API mocking
-  server.listen({ onUnhandledRequest: 'bypass' });
+  server.listen({ onUnhandledFrame: 'bypass' });
 
   // Initialize LanguageService which loads English translations by default
   await LanguageService.initialize();

@@ -75,6 +75,12 @@ describe('config-sidebar follows the ConfigController (BUG-027)', () => {
   let el: SidebarEl | undefined;
 
   beforeEach(() => {
+    // Every mount fetches the market server lists; nothing here awaits them, so
+    // answer locally rather than leave them in flight at MSW's teardown.
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => Response.json([]))
+    );
     localStorage.clear();
     ConfigController.resetInstance();
   });
@@ -83,6 +89,7 @@ describe('config-sidebar follows the ConfigController (BUG-027)', () => {
     el?.remove();
     el = undefined;
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
     localStorage.clear();
     ConfigController.resetInstance();
   });
