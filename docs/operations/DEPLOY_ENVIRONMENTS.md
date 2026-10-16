@@ -130,7 +130,7 @@ commits. Merging `main` into a branch therefore started every beta deploy whose 
 changed, although the branch itself changed nothing there. On 2026-10-12/13 four such merges
 redeployed the shared betas from docs-only branches, among them a research PR (#303). A
 `CLAUDE.md` or `README.md` edit inside an app or package directory did the same (a CLAUDE.md
-freshness branch started two beta deploy runs, one of which deployed).
+freshness branch's two pushes each started the beta deploys, and the first deployed).
 
 Each workflow now runs a `changes` job first. It checks out with full history, diffs the pushed
 commit against `git merge-base origin/main HEAD` over the deploy paths minus `CLAUDE.md` and
@@ -367,8 +367,9 @@ so nothing breaks before they exist.
 that overwrites the entire command set at whichever scope it targets. Guild scope confines that
 to the test server; a global run from a feature branch would overwrite the live command set.
 
-**There is one beta bot.** Concurrent branches share it and the most recent push wins — inherent
-to having a single beta Discord application, not a flaw in the workflow.
+**There is one beta bot.** Concurrent branches share it, and the deploy that starts last wins; a
+push whose own changes skip the deploy never takes it (Update 2026-10-13). That is inherent to
+having a single beta Discord application, not a flaw in the workflow.
 
 ### Correction: production registration is automatic
 

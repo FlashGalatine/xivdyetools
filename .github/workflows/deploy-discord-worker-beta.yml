@@ -9,7 +9,7 @@
 #
 # There is ONE beta bot, shared by every branch, and two concurrency groups decide
 # who holds it. Per ref, at workflow level: a newer push cancels its own branch's
-# older run, guard included, so two quick pushes cannot deploy out of order.
+# older run, guard included, so two quick pushes no longer race to deploy.
 # Shared, on the deploy job: the deploy that starts last cancels any other
 # branch's deploy in progress.
 name: Deploy Beta Discord Worker

@@ -27,7 +27,7 @@ either: it changes no deploy path.
 - **A skipping beta run could cancel a real one**: each beta workflow's shared `concurrency` group moved from the
   workflow to the deploy job, so a run whose guard skips never joins it. A per-ref workflow-level group
   (`deploy-<app>-beta-${{ github.ref }}`) takes its place: a newer push cancels its own branch's older run, guard
-  included, so two quick pushes to one branch cannot deploy out of order.
+  included, so two quick pushes to one branch no longer race to deploy.
 
 ### Added
 
@@ -35,15 +35,18 @@ either: it changes no deploy path.
   - its guard's path list matches its `push.paths`;
   - both exclusions are present and come last in the filter;
   - the guard script keeps its shape (full-history checkout, the `workflow_dispatch` short-circuit, the merge-base
-    fallback, and the `git diff --quiet` line with its exclusions), anchored so a commented-out copy cannot pass;
-  - the deploy job waits on the guard and holds the shared group, and the workflow-level group is per ref.
+    fallback, the `git diff --quiet` line with its exclusions, and the step output the deploy job reads), anchored so
+    a commented-out copy cannot pass;
+  - the deploy job waits on the guard and holds its own workflow's shared group, and the workflow-level group is that
+    group per ref.
 
 ### Known gap
 
 - A branch stacked on another branch still deploys beta when its base changed an app, because both are measured
   against `main`. Comparing against the pull request's base branch would close it.
-- A push that fully reverts the branch's own app changes no longer redeploys beta, because the branch then matches
-  `main` over the deploy paths. Run the workflow by hand (`workflow_dispatch`) to put such a branch back on beta.
+- A push that fully reverts the branch's own app changes no longer redeploys beta, because the branch then matches its
+  merge base with `main` over the deploy paths. Run the workflow by hand (`workflow_dispatch`) to put such a branch back
+  on beta, once the branch's later pushes have finished: a newer push to the same branch cancels the manual run.
 
 ## [2.3.2] - 2026-10-06
 

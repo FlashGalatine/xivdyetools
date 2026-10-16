@@ -68,7 +68,7 @@ Two `concurrency` groups decide who holds a shared beta. The shared group sits o
 not the workflow, so a run whose guard skips the deploy never joins it and cannot cancel another
 branch's deploy in progress. A per-ref group at workflow level (`deploy-<app>-beta-${{ github.ref }}`)
 cancels a branch's older run, guard included, when the branch is pushed again, so two quick pushes
-cannot deploy out of order. `scripts/check-workflows.test.ts` checks that each guard's path list
+no longer race to deploy. `scripts/check-workflows.test.ts` checks that each guard's path list
 matches its `push.paths`, that both exclusions are in place and come last in the filter, that the
 guard script keeps its shape, and that both groups are set this way.
 
@@ -77,7 +77,8 @@ Two cases do not follow the rule exactly:
 - A branch stacked on another branch inherits its base's app changes, because both are measured
   against `main`, so it still deploys.
 - A push that fully reverts the branch's own app changes does not redeploy beta, because the branch
-  then matches `main` over the deploy paths. Run the workflow by hand to put the branch back.
+  then matches its merge base with `main` over the deploy paths. Run the workflow by hand to put the
+  branch back, once its later pushes have finished: a newer push to the branch cancels the manual run.
 
 ### Required secrets
 
