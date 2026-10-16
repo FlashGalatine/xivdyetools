@@ -1,0 +1,974 @@
+{
+  "asOf": "2026-10-12T16:05:06.245Z",
+  "source": "top50 of 20261012T0259Z-actors.json",
+  "method": "Grade = FFXIV share of classifiable original posts: 80%+ focused, 50-80% mostly, 20-50% partly, under 20% not. Accounts under 80% on the keyword count were graded by a Sonnet worker from the samples (one step of adjustment allowed); flagged and low-confidence ones were hand-counted by an Opus verifier, and the one it could not settle went to Fable.",
+  "tally": {
+    "focused": 6,
+    "not": 30,
+    "partly": 10,
+    "mostly": 4
+  },
+  "accounts": [
+    {
+      "rank": 1,
+      "handle": "en.finalfantasyxiv.com",
+      "followers": 100605,
+      "keywordSharePct": 80.4,
+      "keywordGrade": "focused",
+      "activity": "active",
+      "lastPost": "2026-10-12",
+      "grade": "focused",
+      "gradedBy": "official FFXIV account",
+      "mainContent": "official FFXIV news"
+    },
+    {
+      "rank": 2,
+      "handle": "top50-02",
+      "followers": 29473,
+      "keywordSharePct": 0,
+      "keywordGrade": "not",
+      "activity": "active",
+      "lastPost": "2026-10",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "not",
+        "moved": "none",
+        "confidence": "high",
+        "needsHandCount": false
+      },
+      "grade": "not",
+      "gradedBy": "Sonnet worker"
+    },
+    {
+      "rank": 3,
+      "handle": "top50-03",
+      "followers": 25178,
+      "keywordSharePct": 0,
+      "keywordGrade": "not",
+      "activity": "active",
+      "lastPost": "2026-10",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "not",
+        "moved": "none",
+        "confidence": "low",
+        "needsHandCount": true
+      },
+      "handCount": {
+        "window": "2025-08..2026-10",
+        "counts": {
+          "ffxiv": 0,
+          "other": 32,
+          "unclear": 17
+        },
+        "sharePct": 0,
+        "extendedWindow": null,
+        "confidence": "medium"
+      },
+      "grade": "not",
+      "gradedBy": "Opus verifier hand count"
+    },
+    {
+      "rank": 4,
+      "handle": "jp.finalfantasyxiv.com",
+      "followers": 20851,
+      "keywordSharePct": 100,
+      "keywordGrade": "focused",
+      "activity": "active",
+      "lastPost": "2026-10-09",
+      "grade": "focused",
+      "gradedBy": "official FFXIV account",
+      "mainContent": "official FFXIV news"
+    },
+    {
+      "rank": 5,
+      "handle": "top50-05",
+      "followers": 20109,
+      "keywordSharePct": 0,
+      "keywordGrade": "not",
+      "activity": "active",
+      "lastPost": "2026-10",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "not",
+        "moved": "none",
+        "confidence": "high",
+        "needsHandCount": false
+      },
+      "grade": "not",
+      "gradedBy": "Sonnet worker"
+    },
+    {
+      "rank": 6,
+      "handle": "top50-06",
+      "followers": 17933,
+      "keywordSharePct": 0.9,
+      "keywordGrade": "not",
+      "activity": "active",
+      "lastPost": "2026-10",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "not",
+        "moved": "none",
+        "confidence": "high",
+        "needsHandCount": false
+      },
+      "grade": "not",
+      "gradedBy": "Sonnet worker"
+    },
+    {
+      "rank": 7,
+      "handle": "top50-07",
+      "followers": 16801,
+      "keywordSharePct": 4.5,
+      "keywordGrade": "not",
+      "activity": "active",
+      "lastPost": "2026-10",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "not",
+        "moved": "none",
+        "confidence": "medium",
+        "needsHandCount": false
+      },
+      "grade": "not",
+      "gradedBy": "Sonnet worker"
+    },
+    {
+      "rank": 8,
+      "handle": "top50-08",
+      "followers": 13597,
+      "keywordSharePct": 0,
+      "keywordGrade": "not",
+      "activity": "active",
+      "lastPost": "2026-10",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "not",
+        "moved": "none",
+        "confidence": "high",
+        "needsHandCount": false
+      },
+      "grade": "not",
+      "gradedBy": "Sonnet worker"
+    },
+    {
+      "rank": 9,
+      "handle": "top50-09",
+      "followers": 12604,
+      "keywordSharePct": 8.7,
+      "keywordGrade": "not",
+      "activity": "active",
+      "lastPost": "2026-10",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "partly",
+        "moved": "up",
+        "confidence": "high",
+        "needsHandCount": true
+      },
+      "handCount": {
+        "window": "2026-08..2026-10",
+        "counts": {
+          "ffxiv": 45,
+          "other": 0,
+          "unclear": 1
+        },
+        "sharePct": 100,
+        "extendedWindow": null,
+        "confidence": "high"
+      },
+      "grade": "focused",
+      "gradedBy": "Opus verifier hand count"
+    },
+    {
+      "rank": 10,
+      "handle": "top50-10",
+      "followers": 11944,
+      "keywordSharePct": 25.7,
+      "keywordGrade": "partly",
+      "activity": "active",
+      "lastPost": "2026-10",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "partly",
+        "moved": "none",
+        "confidence": "high",
+        "needsHandCount": false
+      },
+      "grade": "partly",
+      "gradedBy": "Sonnet worker"
+    },
+    {
+      "rank": 11,
+      "handle": "top50-11",
+      "followers": 10743,
+      "keywordSharePct": 0,
+      "keywordGrade": "not",
+      "activity": "dormant",
+      "lastPost": "2026-03",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "not",
+        "moved": "none",
+        "confidence": "high",
+        "needsHandCount": false
+      },
+      "grade": "not",
+      "gradedBy": "Sonnet worker"
+    },
+    {
+      "rank": 12,
+      "handle": "top50-12",
+      "followers": 10602,
+      "keywordSharePct": 6.3,
+      "keywordGrade": "not",
+      "activity": "lapsed",
+      "lastPost": "2026-09",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "not",
+        "moved": "none",
+        "confidence": "medium",
+        "needsHandCount": false
+      },
+      "grade": "not",
+      "gradedBy": "Sonnet worker"
+    },
+    {
+      "rank": 13,
+      "handle": "top50-13",
+      "followers": 10492,
+      "keywordSharePct": 25,
+      "keywordGrade": "partly",
+      "activity": "active",
+      "lastPost": "2026-10",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "partly",
+        "moved": "none",
+        "confidence": "medium",
+        "needsHandCount": false
+      },
+      "grade": "partly",
+      "gradedBy": "Sonnet worker"
+    },
+    {
+      "rank": 14,
+      "handle": "top50-14",
+      "followers": 9773,
+      "keywordSharePct": 14.1,
+      "keywordGrade": "not",
+      "activity": "active",
+      "lastPost": "2026-10",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "partly",
+        "moved": "up",
+        "confidence": "medium",
+        "needsHandCount": false
+      },
+      "grade": "partly",
+      "gradedBy": "Sonnet worker"
+    },
+    {
+      "rank": 15,
+      "handle": "top50-15",
+      "followers": 9719,
+      "keywordSharePct": 0,
+      "keywordGrade": "not",
+      "activity": "dormant",
+      "lastPost": "2025-12",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "not",
+        "moved": "none",
+        "confidence": "high",
+        "needsHandCount": false
+      },
+      "grade": "not",
+      "gradedBy": "Sonnet worker"
+    },
+    {
+      "rank": 16,
+      "handle": "top50-16",
+      "followers": 9328,
+      "keywordSharePct": 0,
+      "keywordGrade": "not",
+      "activity": "active",
+      "lastPost": "2026-10",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "not",
+        "moved": "none",
+        "confidence": "medium",
+        "needsHandCount": false
+      },
+      "grade": "not",
+      "gradedBy": "Sonnet worker"
+    },
+    {
+      "rank": 17,
+      "handle": "top50-17",
+      "followers": 9173,
+      "keywordSharePct": 1.9,
+      "keywordGrade": "not",
+      "activity": "lapsed",
+      "lastPost": "2026-08",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "not",
+        "moved": "none",
+        "confidence": "high",
+        "needsHandCount": false
+      },
+      "grade": "not",
+      "gradedBy": "Sonnet worker"
+    },
+    {
+      "rank": 18,
+      "handle": "top50-18",
+      "followers": 8623,
+      "keywordSharePct": 9.4,
+      "keywordGrade": "not",
+      "activity": "active",
+      "lastPost": "2026-10",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "not",
+        "moved": "none",
+        "confidence": "high",
+        "needsHandCount": false
+      },
+      "grade": "not",
+      "gradedBy": "Sonnet worker"
+    },
+    {
+      "rank": 19,
+      "handle": "top50-19",
+      "followers": 8435,
+      "keywordSharePct": 4.3,
+      "keywordGrade": "not",
+      "activity": "active",
+      "lastPost": "2026-10",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "partly",
+        "moved": "up",
+        "confidence": "medium",
+        "needsHandCount": false
+      },
+      "grade": "partly",
+      "gradedBy": "Sonnet worker"
+    },
+    {
+      "rank": 20,
+      "handle": "top50-20",
+      "followers": 8147,
+      "keywordSharePct": 23.7,
+      "keywordGrade": "partly",
+      "activity": "active",
+      "lastPost": "2026-10",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "partly",
+        "moved": "none",
+        "confidence": "high",
+        "needsHandCount": false
+      },
+      "grade": "partly",
+      "gradedBy": "Sonnet worker"
+    },
+    {
+      "rank": 21,
+      "handle": "top50-21",
+      "followers": 8135,
+      "keywordSharePct": 0,
+      "keywordGrade": "not",
+      "activity": "active",
+      "lastPost": "2026-10",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "not",
+        "moved": "none",
+        "confidence": "high",
+        "needsHandCount": false
+      },
+      "grade": "not",
+      "gradedBy": "Sonnet worker"
+    },
+    {
+      "rank": 22,
+      "handle": "top50-22",
+      "followers": 7976,
+      "keywordSharePct": 6,
+      "keywordGrade": "not",
+      "activity": "active",
+      "lastPost": "2026-10",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "not",
+        "moved": "none",
+        "confidence": "high",
+        "needsHandCount": false
+      },
+      "grade": "not",
+      "gradedBy": "Sonnet worker"
+    },
+    {
+      "rank": 23,
+      "handle": "top50-23",
+      "followers": 7927,
+      "keywordSharePct": 0,
+      "keywordGrade": "not",
+      "activity": "active",
+      "lastPost": "2026-10",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "not",
+        "moved": "none",
+        "confidence": "high",
+        "needsHandCount": false
+      },
+      "grade": "not",
+      "gradedBy": "Sonnet worker"
+    },
+    {
+      "rank": 24,
+      "handle": "top50-24",
+      "followers": 7878,
+      "keywordSharePct": 24.4,
+      "keywordGrade": "partly",
+      "activity": "active",
+      "lastPost": "2026-10",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "partly",
+        "moved": "none",
+        "confidence": "high",
+        "needsHandCount": false
+      },
+      "grade": "partly",
+      "gradedBy": "Sonnet worker"
+    },
+    {
+      "rank": 25,
+      "handle": "top50-25",
+      "followers": 7768,
+      "keywordSharePct": 10.3,
+      "keywordGrade": "not",
+      "activity": "active",
+      "lastPost": "2026-10",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "not",
+        "moved": "none",
+        "confidence": "medium",
+        "needsHandCount": false
+      },
+      "grade": "not",
+      "gradedBy": "Sonnet worker"
+    },
+    {
+      "rank": 26,
+      "handle": "top50-26",
+      "followers": 7608,
+      "keywordSharePct": 27,
+      "keywordGrade": "partly",
+      "activity": "lapsed",
+      "lastPost": "2026-09",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "mostly",
+        "moved": "up",
+        "confidence": "medium",
+        "needsHandCount": false
+      },
+      "grade": "mostly",
+      "gradedBy": "Sonnet worker"
+    },
+    {
+      "rank": 27,
+      "handle": "top50-27",
+      "followers": 7595,
+      "keywordSharePct": 25.9,
+      "keywordGrade": "partly",
+      "activity": "active",
+      "lastPost": "2026-10",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "partly",
+        "moved": "none",
+        "confidence": "medium",
+        "needsHandCount": false
+      },
+      "grade": "partly",
+      "gradedBy": "Sonnet worker"
+    },
+    {
+      "rank": 28,
+      "handle": "top50-28",
+      "followers": 7590,
+      "keywordSharePct": 6.3,
+      "keywordGrade": "not",
+      "activity": "active",
+      "lastPost": "2026-10",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "not",
+        "moved": "none",
+        "confidence": "high",
+        "needsHandCount": false
+      },
+      "grade": "not",
+      "gradedBy": "Sonnet worker"
+    },
+    {
+      "rank": 29,
+      "handle": "top50-29",
+      "followers": 7445,
+      "keywordSharePct": 1.3,
+      "keywordGrade": "not",
+      "activity": "active",
+      "lastPost": "2026-10",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "not",
+        "moved": "none",
+        "confidence": "high",
+        "needsHandCount": false
+      },
+      "grade": "not",
+      "gradedBy": "Sonnet worker"
+    },
+    {
+      "rank": 30,
+      "handle": "top50-30",
+      "followers": 7363,
+      "keywordSharePct": 2.3,
+      "keywordGrade": "not",
+      "activity": "active",
+      "lastPost": "2026-10",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "partly",
+        "moved": "up",
+        "confidence": "low",
+        "needsHandCount": true
+      },
+      "handCount": {
+        "window": "2026-07..2026-10",
+        "counts": {
+          "ffxiv": 10,
+          "other": 0,
+          "unclear": 58
+        },
+        "sharePct": 100,
+        "extendedWindow": null,
+        "confidence": "medium"
+      },
+      "fableRuling": {
+        "verifierReadingSound": true,
+        "recordedGrade": "focused",
+        "confidence": "medium"
+      },
+      "grade": "focused",
+      "gradedBy": "Fable ruling on an unresolved hand count"
+    },
+    {
+      "rank": 31,
+      "handle": "top50-31",
+      "followers": 7349,
+      "keywordSharePct": 51.5,
+      "keywordGrade": "mostly",
+      "activity": "active",
+      "lastPost": "2026-10",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "mostly",
+        "moved": "none",
+        "confidence": "medium",
+        "needsHandCount": false
+      },
+      "grade": "mostly",
+      "gradedBy": "Sonnet worker"
+    },
+    {
+      "rank": 32,
+      "handle": "top50-32",
+      "followers": 7338,
+      "keywordSharePct": 20.3,
+      "keywordGrade": "partly",
+      "activity": "active",
+      "lastPost": "2026-10",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "partly",
+        "moved": "none",
+        "confidence": "medium",
+        "needsHandCount": false
+      },
+      "grade": "partly",
+      "gradedBy": "Sonnet worker"
+    },
+    {
+      "rank": 33,
+      "handle": "top50-33",
+      "followers": 7207,
+      "keywordSharePct": 0,
+      "keywordGrade": "not",
+      "activity": "active",
+      "lastPost": "2026-10",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "not",
+        "moved": "none",
+        "confidence": "high",
+        "needsHandCount": false
+      },
+      "grade": "not",
+      "gradedBy": "Sonnet worker"
+    },
+    {
+      "rank": 34,
+      "handle": "top50-34",
+      "followers": 7165,
+      "keywordSharePct": 0,
+      "keywordGrade": "not",
+      "activity": "active",
+      "lastPost": "2026-10",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "not",
+        "moved": "none",
+        "confidence": "medium",
+        "needsHandCount": false
+      },
+      "grade": "not",
+      "gradedBy": "Sonnet worker"
+    },
+    {
+      "rank": 35,
+      "handle": "top50-35",
+      "followers": 7115,
+      "keywordSharePct": 0,
+      "keywordGrade": "not",
+      "activity": "active",
+      "lastPost": "2026-10",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "not",
+        "moved": "none",
+        "confidence": "high",
+        "needsHandCount": false
+      },
+      "grade": "not",
+      "gradedBy": "Sonnet worker"
+    },
+    {
+      "rank": 36,
+      "handle": "top50-36",
+      "followers": 6974,
+      "keywordSharePct": 24.2,
+      "keywordGrade": "partly",
+      "activity": "lapsed",
+      "lastPost": "2026-07",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "partly",
+        "moved": "none",
+        "confidence": "high",
+        "needsHandCount": false
+      },
+      "grade": "partly",
+      "gradedBy": "Sonnet worker"
+    },
+    {
+      "rank": 37,
+      "handle": "top50-37",
+      "followers": 6969,
+      "keywordSharePct": 50,
+      "keywordGrade": "mostly",
+      "activity": "active",
+      "lastPost": "2026-10",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "mostly",
+        "moved": "none",
+        "confidence": "low",
+        "needsHandCount": false
+      },
+      "handCount": {
+        "window": "2026-09..2026-10",
+        "counts": {
+          "ffxiv": 9,
+          "other": 3,
+          "unclear": 0
+        },
+        "sharePct": 75,
+        "extendedWindow": {
+          "window": "2026-06..2026-10",
+          "counts": {
+            "ffxiv": 25,
+            "other": 15,
+            "unclear": 0
+          },
+          "sharePct": 62.5
+        },
+        "confidence": "high"
+      },
+      "grade": "mostly",
+      "gradedBy": "Opus verifier hand count"
+    },
+    {
+      "rank": 38,
+      "handle": "top50-38",
+      "followers": 6899,
+      "keywordSharePct": 5.9,
+      "keywordGrade": "not",
+      "activity": "active",
+      "lastPost": "2026-10",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "not",
+        "moved": "none",
+        "confidence": "high",
+        "needsHandCount": false
+      },
+      "grade": "not",
+      "gradedBy": "Sonnet worker"
+    },
+    {
+      "rank": 39,
+      "handle": "top50-39",
+      "followers": 6901,
+      "keywordSharePct": 19.5,
+      "keywordGrade": "not",
+      "activity": "active",
+      "lastPost": "2026-10",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "not",
+        "moved": "none",
+        "confidence": "medium",
+        "needsHandCount": false
+      },
+      "grade": "not",
+      "gradedBy": "Sonnet worker"
+    },
+    {
+      "rank": 40,
+      "handle": "top50-40",
+      "followers": 6553,
+      "keywordSharePct": 8.5,
+      "keywordGrade": "not",
+      "activity": "active",
+      "lastPost": "2026-10",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "partly",
+        "moved": "up",
+        "confidence": "medium",
+        "needsHandCount": true
+      },
+      "handCount": {
+        "window": "2026-04..2026-10",
+        "counts": {
+          "ffxiv": 24,
+          "other": 13,
+          "unclear": 10
+        },
+        "sharePct": 64.9,
+        "extendedWindow": null,
+        "confidence": "medium"
+      },
+      "grade": "mostly",
+      "gradedBy": "Opus verifier hand count"
+    },
+    {
+      "rank": 41,
+      "handle": "top50-41",
+      "followers": 6398,
+      "keywordSharePct": 30.9,
+      "keywordGrade": "partly",
+      "activity": "active",
+      "lastPost": "2026-09",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "mostly",
+        "moved": "up",
+        "confidence": "medium",
+        "needsHandCount": true
+      },
+      "handCount": {
+        "window": "2024-12..2026-09",
+        "counts": {
+          "ffxiv": 50,
+          "other": 1,
+          "unclear": 4
+        },
+        "sharePct": 98,
+        "extendedWindow": null,
+        "confidence": "high"
+      },
+      "grade": "focused",
+      "gradedBy": "Opus verifier hand count"
+    },
+    {
+      "rank": 42,
+      "handle": "top50-42",
+      "followers": 6211,
+      "keywordSharePct": 6.2,
+      "keywordGrade": "not",
+      "activity": "active",
+      "lastPost": "2026-10",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "not",
+        "moved": "none",
+        "confidence": "high",
+        "needsHandCount": false
+      },
+      "grade": "not",
+      "gradedBy": "Sonnet worker"
+    },
+    {
+      "rank": 43,
+      "handle": "top50-43",
+      "followers": 6184,
+      "keywordSharePct": 4.9,
+      "keywordGrade": "not",
+      "activity": "active",
+      "lastPost": "2026-10",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "not",
+        "moved": "none",
+        "confidence": "high",
+        "needsHandCount": false
+      },
+      "grade": "not",
+      "gradedBy": "Sonnet worker"
+    },
+    {
+      "rank": 44,
+      "handle": "top50-44",
+      "followers": 5994,
+      "keywordSharePct": 7.7,
+      "keywordGrade": "not",
+      "activity": "active",
+      "lastPost": "2026-10",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "not",
+        "moved": "none",
+        "confidence": "medium",
+        "needsHandCount": false
+      },
+      "grade": "not",
+      "gradedBy": "Sonnet worker"
+    },
+    {
+      "rank": 45,
+      "handle": "top50-45",
+      "followers": 5934,
+      "keywordSharePct": 19.2,
+      "keywordGrade": "not",
+      "activity": "lapsed",
+      "lastPost": "2026-08",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "partly",
+        "moved": "up",
+        "confidence": "medium",
+        "needsHandCount": false
+      },
+      "grade": "partly",
+      "gradedBy": "Sonnet worker"
+    },
+    {
+      "rank": 46,
+      "handle": "top50-46",
+      "followers": 5919,
+      "keywordSharePct": 4,
+      "keywordGrade": "not",
+      "activity": "active",
+      "lastPost": "2026-10",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "not",
+        "moved": "none",
+        "confidence": "high",
+        "needsHandCount": false
+      },
+      "grade": "not",
+      "gradedBy": "Sonnet worker"
+    },
+    {
+      "rank": 47,
+      "handle": "top50-47",
+      "followers": 5904,
+      "keywordSharePct": 80,
+      "keywordGrade": "focused",
+      "activity": "dormant",
+      "lastPost": "2025-05",
+      "grade": "focused",
+      "gradedBy": "keyword share of 80% or more (keyword matching only undercounts)"
+    },
+    {
+      "rank": 48,
+      "handle": "top50-48",
+      "followers": 5859,
+      "keywordSharePct": 0,
+      "keywordGrade": "not",
+      "activity": "lapsed",
+      "lastPost": "2026-09",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "not",
+        "moved": "none",
+        "confidence": "high",
+        "needsHandCount": false
+      },
+      "grade": "not",
+      "gradedBy": "Sonnet worker"
+    },
+    {
+      "rank": 49,
+      "handle": "top50-49",
+      "followers": 5799,
+      "keywordSharePct": 7.7,
+      "keywordGrade": "not",
+      "activity": "active",
+      "lastPost": "2026-10",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "not",
+        "moved": "none",
+        "confidence": "medium",
+        "needsHandCount": false
+      },
+      "grade": "not",
+      "gradedBy": "Sonnet worker"
+    },
+    {
+      "rank": 50,
+      "handle": "top50-50",
+      "followers": 5785,
+      "keywordSharePct": 4.4,
+      "keywordGrade": "not",
+      "activity": "active",
+      "lastPost": "2026-10",
+      "bioNamesFfxiv": true,
+      "worker": {
+        "grade": "not",
+        "moved": "none",
+        "confidence": "medium",
+        "needsHandCount": false
+      },
+      "grade": "not",
+      "gradedBy": "Sonnet worker"
+    }
+  ],
+  "redaction": "Individual accounts: handle is a label; lastPost and hand-count windows to the month; mainContent and every free-text reason, basis and spot-check removed. Grades, counts and confidences stay."
+}

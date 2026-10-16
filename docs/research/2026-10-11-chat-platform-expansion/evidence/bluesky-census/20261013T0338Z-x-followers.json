@@ -1,0 +1,104 @@
+{
+  "asOf": "2026-10-13T03:38:30.592Z",
+  "source": "api.fxtwitter.com, falling back to api.vxtwitter.com (both relay X profile data; secondary)",
+  "accounts": [
+    {
+      "x": "FF_XIV_EN",
+      "name": "FINAL FANTASY XIV",
+      "followers": 652230,
+      "following": 7,
+      "posts": 13721,
+      "joined": "Wed Jun 30 08:41:19 +0000 2010",
+      "source": "https://api.fxtwitter.com/FF_XIV_EN",
+      "bsky": "en.finalfantasyxiv.com"
+    },
+    {
+      "x": "FF_XIV_FR",
+      "name": "FINAL FANTASY XIV",
+      "followers": 58624,
+      "following": 7,
+      "posts": 29941,
+      "joined": "Wed Jun 30 08:42:36 +0000 2010",
+      "source": "https://api.fxtwitter.com/FF_XIV_FR",
+      "bsky": "fr.finalfantasyxiv.com"
+    },
+    {
+      "x": "FF_XIV_DE",
+      "name": "FINAL FANTASY XIV",
+      "followers": 38512,
+      "following": 7,
+      "posts": 9376,
+      "joined": "Wed Jun 30 08:43:49 +0000 2010",
+      "source": "https://api.fxtwitter.com/FF_XIV_DE",
+      "bsky": "de.finalfantasyxiv.com"
+    },
+    {
+      "x": "FF_XIV_JP",
+      "name": "FINAL FANTASY XIV／FF14",
+      "followers": 665093,
+      "following": 10,
+      "posts": 15867,
+      "joined": "Wed Jun 30 08:37:59 +0000 2010",
+      "source": "https://api.fxtwitter.com/FF_XIV_JP",
+      "bsky": "jp.finalfantasyxiv.com"
+    },
+    {
+      "x": "GPOSERS_FFXIV",
+      "name": "GPOSERS",
+      "followers": 19818,
+      "following": 2291,
+      "posts": 1713139,
+      "joined": "Mon Jul 30 12:47:28 +0000 2018",
+      "source": "https://api.fxtwitter.com/GPOSERS_FFXIV",
+      "bsky": "gposers.org"
+    },
+    {
+      "x": "creator-1",
+      "followers": 77680,
+      "following": 2622,
+      "posts": 15356,
+      "joined": "2016-01",
+      "source": "api.fxtwitter.com",
+      "bsky": "creator-1"
+    },
+    {
+      "x": "creator-2",
+      "followers": 91525,
+      "following": 1297,
+      "posts": 6124,
+      "joined": "2009-04",
+      "source": "api.fxtwitter.com",
+      "bsky": "creator-2"
+    },
+    {
+      "x": "FFXIVTeamcraft",
+      "name": "FFXIV Teamcraft",
+      "followers": 2132,
+      "following": 371,
+      "posts": 453,
+      "joined": "Mon Jun 11 06:42:05 +0000 2018",
+      "source": "https://api.fxtwitter.com/FFXIVTeamcraft",
+      "bsky": "ffxivteamcraft.com"
+    },
+    {
+      "x": "gamerescape",
+      "name": "Gamer Escape",
+      "followers": 3728,
+      "following": 25,
+      "posts": 10190,
+      "joined": "Mon Feb 07 04:11:11 +0000 2011",
+      "source": "https://api.fxtwitter.com/gamerescape",
+      "bsky": "gamerescape.com"
+    },
+    {
+      "x": "creator-3",
+      "followers": 49882,
+      "following": 1175,
+      "posts": 39393,
+      "joined": "2012-12",
+      "source": "api.fxtwitter.com",
+      "bsky": "creator-3"
+    }
+  ],
+  "redaction": "Bios removed for every account (unused). Individuals: X handle and Bluesky handle are labels, name removed, joined to the month."
+}

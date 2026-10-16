@@ -1,0 +1,2876 @@
+{
+  "asOf": "2026-10-12T16:05:06.245Z",
+  "maxItems": 200,
+  "source": "top50 of 20261012T0259Z-actors.json",
+  "note": "Shares are FFXIV posts over classifiable posts in the sampled feed. A post is FFXIV when its text, tags, alt text, link card or quoted post contains a focus term (termHits). Unclassified = fewer than 3 letters of text (image-only or emoji-only); they are left out of the share. nonFfxivWithImages counts non-FFXIV posts that carry images, which may still be FFXIV screenshots. The sample covers the newest items only, so an old account's history beyond it is not measured.",
+  "accounts": [
+    {
+      "handle": "en.finalfantasyxiv.com",
+      "displayName": "FINAL FANTASY XIV",
+      "description": "The official English FFXIV Bluesky account.\n\nThe critically acclaimed MMORPG with a Free Trial up to level 80! ✨ freetrial.finalfantasyxiv.com",
+      "bioTerms": [
+        "ffxiv",
+        "final fantasy xiv",
+        "finalfantasyxiv",
+        "xiv"
+      ],
+      "followers": 100605,
+      "follows": 4,
+      "postsCount": 1074,
+      "sample": {
+        "items": 200,
+        "pages": 2,
+        "exhausted": false,
+        "newest": "2026-10-12T15:30:27.098Z",
+        "oldest": "2026-07-21T18:23:28.965Z",
+        "daysSinceNewest": 0
+      },
+      "originals": {
+        "n": 189,
+        "ffxiv": 152,
+        "unclassified": 0,
+        "nonFfxivWithImages": 21,
+        "sharePct": 80.4
+      },
+      "replies": {
+        "n": 8,
+        "ffxiv": 5,
+        "unclassified": 1,
+        "nonFfxivWithImages": 0,
+        "sharePct": 71.4
+      },
+      "reposts": {
+        "n": 3,
+        "ffxiv": 3,
+        "unclassified": 0,
+        "nonFfxivWithImages": 0,
+        "sharePct": 100
+      },
+      "byMonth": {
+        "2026-07": 70,
+        "2026-08": 45,
+        "2026-09": 53,
+        "2026-10": 32
+      },
+      "termHits": {
+        "final fantasy 14": 124,
+        "ffxiv": 95,
+        "warrior of light": 13,
+        "xiv": 12,
+        "miqo'te": 10,
+        "final fantasy xiv": 10,
+        "dawntrail": 8,
+        "eorzea": 7,
+        "au ra": 6,
+        "hroth": 4,
+        "lalafell": 4,
+        "hyur": 2,
+        "viera": 2,
+        "finalfantasyxiv": 2,
+        "elezen": 1,
+        "roegadyn": 1
+      },
+      "topTags": [
+        [
+          "ffxiv",
+          22
+        ],
+        [
+          "ffxiv's",
+          2
+        ],
+        [
+          "ffxivpaxaus",
+          1
+        ],
+        [
+          "ffxiv_rotw",
+          1
+        ],
+        [
+          "ffxivgamescom",
+          1
+        ],
+        [
+          "ffxivfanfest",
+          1
+        ]
+      ],
+      "linkDomains": [
+        [
+          "sqex.to",
+          117
+        ],
+        [
+          "youtu.be",
+          4
+        ],
+        [
+          "youtube.com",
+          3
+        ],
+        [
+          "sqex.lnk.to",
+          2
+        ],
+        [
+          "discord.com",
+          1
+        ],
+        [
+          "bsky.app",
+          1
+        ]
+      ]
+    },
+    {
+      "handle": "top50-02",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 29473,
+      "follows": 3579,
+      "postsCount": 4600,
+      "sample": {
+        "items": 200,
+        "pages": 2,
+        "exhausted": false,
+        "newest": "2026-10",
+        "oldest": "2026-09"
+      },
+      "originals": {
+        "n": 54,
+        "ffxiv": 0,
+        "unclassified": 0,
+        "nonFfxivWithImages": 19,
+        "sharePct": 0
+      },
+      "replies": {
+        "n": 142,
+        "ffxiv": 0,
+        "unclassified": 32,
+        "nonFfxivWithImages": 0,
+        "sharePct": 0
+      },
+      "reposts": {
+        "n": 4,
+        "ffxiv": 0,
+        "unclassified": 0,
+        "nonFfxivWithImages": 0,
+        "sharePct": 0
+      },
+      "byMonth": {
+        "2026-09": 127,
+        "2026-10": 73
+      },
+      "termHits": {}
+    },
+    {
+      "handle": "top50-03",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 25178,
+      "follows": 183,
+      "postsCount": 345,
+      "sample": {
+        "items": 200,
+        "pages": 3,
+        "exhausted": false,
+        "newest": "2026-10",
+        "oldest": "2025-08"
+      },
+      "originals": {
+        "n": 49,
+        "ffxiv": 0,
+        "unclassified": 0,
+        "nonFfxivWithImages": 21,
+        "sharePct": 0
+      },
+      "replies": {
+        "n": 124,
+        "ffxiv": 1,
+        "unclassified": 2,
+        "nonFfxivWithImages": 4,
+        "sharePct": 0.8
+      },
+      "reposts": {
+        "n": 27,
+        "ffxiv": 0,
+        "unclassified": 0,
+        "nonFfxivWithImages": 26,
+        "sharePct": 0
+      },
+      "byMonth": {
+        "2025-08": 25,
+        "2025-09": 3,
+        "2025-10": 31,
+        "2025-11": 5,
+        "2025-12": 11,
+        "2026-01": 15,
+        "2026-02": 16,
+        "2026-03": 14,
+        "2026-04": 24,
+        "2026-05": 11,
+        "2026-07": 15,
+        "2026-08": 9,
+        "2026-09": 18,
+        "2026-10": 3
+      },
+      "termHits": {
+        "au ra": 1
+      }
+    },
+    {
+      "handle": "jp.finalfantasyxiv.com",
+      "displayName": "FINAL FANTASY XIV／FF14",
+      "description": "ファイナルファンタジーXIVに関する情報をお知らせする公式アカウントです。\n最新ニュースは https://sqex.to/STZ をご覧ください。\n\n今すぐ無料の冒険へ！「ファイナルファンタジーXIV　フリートライアル」配信中\nhttps://sqex.to/ff14ft",
+      "bioTerms": [
+        "ff14",
+        "final fantasy xiv",
+        "xiv"
+      ],
+      "followers": 20851,
+      "follows": 3,
+      "postsCount": 1145,
+      "sample": {
+        "items": 200,
+        "pages": 2,
+        "exhausted": false,
+        "newest": "2026-10-09T04:14:10.912Z",
+        "oldest": "2026-07-25T08:08:19.376Z",
+        "daysSinceNewest": 3
+      },
+      "originals": {
+        "n": 192,
+        "ffxiv": 192,
+        "unclassified": 0,
+        "nonFfxivWithImages": 0,
+        "sharePct": 100
+      },
+      "replies": {
+        "n": 7,
+        "ffxiv": 6,
+        "unclassified": 0,
+        "nonFfxivWithImages": 0,
+        "sharePct": 85.7
+      },
+      "reposts": {
+        "n": 1,
+        "ffxiv": 1,
+        "unclassified": 0,
+        "nonFfxivWithImages": 0,
+        "sharePct": 100
+      },
+      "byMonth": {
+        "2026-07": 57,
+        "2026-08": 77,
+        "2026-09": 55,
+        "2026-10": 11
+      },
+      "termHits": {
+        "ff14": 198,
+        "ffxiv": 79,
+        "final fantasy xiv": 19,
+        "xiv": 19,
+        "エオルゼア": 5,
+        "黄金のレガシー": 3,
+        "光の戦士": 1,
+        "dawntrail": 1,
+        "finalfantasyxiv": 1
+      },
+      "topTags": [
+        [
+          "ff14",
+          199
+        ],
+        [
+          "ffxivfanfest",
+          67
+        ],
+        [
+          "白銀のワンダラー",
+          28
+        ],
+        [
+          "ccrc2026",
+          27
+        ],
+        [
+          "xivlive",
+          17
+        ],
+        [
+          "彼方に至る路",
+          16
+        ],
+        [
+          "コミュニティ放送",
+          10
+        ],
+        [
+          "公式ブログ更新",
+          7
+        ],
+        [
+          "ff7r",
+          7
+        ],
+        [
+          "ミラプリコレクション",
+          7
+        ],
+        [
+          "diesel",
+          6
+        ],
+        [
+          "光の納涼祭2026",
+          6
+        ],
+        [
+          "theprimals",
+          5
+        ],
+        [
+          "新生祭",
+          5
+        ],
+        [
+          "エオカフェ",
+          4
+        ]
+      ],
+      "linkDomains": [
+        [
+          "sqex.to",
+          174
+        ],
+        [
+          "youtu.be",
+          19
+        ],
+        [
+          "youtube.com",
+          6
+        ],
+        [
+          "lin.ee",
+          4
+        ]
+      ]
+    },
+    {
+      "handle": "top50-05",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 20109,
+      "follows": 20522,
+      "postsCount": 661,
+      "sample": {
+        "items": 200,
+        "pages": 3,
+        "exhausted": false,
+        "newest": "2026-10",
+        "oldest": "2026-02"
+      },
+      "originals": {
+        "n": 49,
+        "ffxiv": 0,
+        "unclassified": 0,
+        "nonFfxivWithImages": 0,
+        "sharePct": 0
+      },
+      "replies": {
+        "n": 50,
+        "ffxiv": 1,
+        "unclassified": 4,
+        "nonFfxivWithImages": 0,
+        "sharePct": 2.2
+      },
+      "reposts": {
+        "n": 101,
+        "ffxiv": 3,
+        "unclassified": 0,
+        "nonFfxivWithImages": 20,
+        "sharePct": 3
+      },
+      "byMonth": {
+        "2026-02": 17,
+        "2026-03": 15,
+        "2026-04": 20,
+        "2026-05": 8,
+        "2026-06": 22,
+        "2026-07": 33,
+        "2026-08": 57,
+        "2026-09": 22,
+        "2026-10": 6
+      },
+      "termHits": {
+        "ffxiv": 3,
+        "final fantasy 14": 2,
+        "eorzea": 1
+      }
+    },
+    {
+      "handle": "top50-06",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 17933,
+      "follows": 1860,
+      "postsCount": 2734,
+      "sample": {
+        "items": 200,
+        "pages": 2,
+        "exhausted": false,
+        "newest": "2026-10",
+        "oldest": "2026-06"
+      },
+      "originals": {
+        "n": 113,
+        "ffxiv": 1,
+        "unclassified": 0,
+        "nonFfxivWithImages": 33,
+        "sharePct": 0.9
+      },
+      "replies": {
+        "n": 55,
+        "ffxiv": 0,
+        "unclassified": 0,
+        "nonFfxivWithImages": 3,
+        "sharePct": 0
+      },
+      "reposts": {
+        "n": 32,
+        "ffxiv": 0,
+        "unclassified": 2,
+        "nonFfxivWithImages": 21,
+        "sharePct": 0
+      },
+      "byMonth": {
+        "2026-06": 24,
+        "2026-07": 70,
+        "2026-08": 54,
+        "2026-09": 42,
+        "2026-10": 10
+      },
+      "termHits": {
+        "final fantasy xiv": 1,
+        "xiv": 1
+      }
+    },
+    {
+      "handle": "top50-07",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 16801,
+      "follows": 129,
+      "postsCount": 1975,
+      "sample": {
+        "items": 200,
+        "pages": 2,
+        "exhausted": false,
+        "newest": "2026-10",
+        "oldest": "2026-07"
+      },
+      "originals": {
+        "n": 22,
+        "ffxiv": 1,
+        "unclassified": 0,
+        "nonFfxivWithImages": 17,
+        "sharePct": 4.5
+      },
+      "replies": {
+        "n": 155,
+        "ffxiv": 0,
+        "unclassified": 7,
+        "nonFfxivWithImages": 1,
+        "sharePct": 0
+      },
+      "reposts": {
+        "n": 23,
+        "ffxiv": 0,
+        "unclassified": 0,
+        "nonFfxivWithImages": 23,
+        "sharePct": 0
+      },
+      "byMonth": {
+        "2026-07": 1,
+        "2026-08": 72,
+        "2026-09": 79,
+        "2026-10": 48
+      },
+      "termHits": {
+        "ffxiv": 1
+      }
+    },
+    {
+      "handle": "top50-08",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 13597,
+      "follows": 833,
+      "postsCount": 4491,
+      "sample": {
+        "items": 200,
+        "pages": 3,
+        "exhausted": false,
+        "newest": "2026-10",
+        "oldest": "2026-08"
+      },
+      "originals": {
+        "n": 46,
+        "ffxiv": 0,
+        "unclassified": 0,
+        "nonFfxivWithImages": 22,
+        "sharePct": 0
+      },
+      "replies": {
+        "n": 91,
+        "ffxiv": 0,
+        "unclassified": 0,
+        "nonFfxivWithImages": 7,
+        "sharePct": 0
+      },
+      "reposts": {
+        "n": 63,
+        "ffxiv": 2,
+        "unclassified": 0,
+        "nonFfxivWithImages": 44,
+        "sharePct": 3.2
+      },
+      "byMonth": {
+        "2026-08": 98,
+        "2026-09": 47,
+        "2026-10": 55
+      },
+      "termHits": {
+        "ffxiv": 2,
+        "final fantasy xiv": 1,
+        "xiv": 1,
+        "au ra": 1
+      }
+    },
+    {
+      "handle": "top50-09",
+      "bioTerms": [
+        "ffxiv",
+        "final fantasy xiv",
+        "eorzea",
+        "xiv"
+      ],
+      "followers": 12604,
+      "follows": 129,
+      "postsCount": 1645,
+      "sample": {
+        "items": 200,
+        "pages": 2,
+        "exhausted": false,
+        "newest": "2026-10",
+        "oldest": "2026-08"
+      },
+      "originals": {
+        "n": 46,
+        "ffxiv": 4,
+        "unclassified": 0,
+        "nonFfxivWithImages": 42,
+        "sharePct": 8.7
+      },
+      "replies": {
+        "n": 10,
+        "ffxiv": 0,
+        "unclassified": 2,
+        "nonFfxivWithImages": 0,
+        "sharePct": 0
+      },
+      "reposts": {
+        "n": 144,
+        "ffxiv": 93,
+        "unclassified": 1,
+        "nonFfxivWithImages": 50,
+        "sharePct": 65
+      },
+      "byMonth": {
+        "2026-08": 17,
+        "2026-09": 129,
+        "2026-10": 54
+      },
+      "termHits": {
+        "ffxiv": 86,
+        "ff14": 24,
+        "eorzea": 8,
+        "shadowbringers": 5,
+        "xiv": 5,
+        "final fantasy 14": 4,
+        "endwalker": 4,
+        "final fantasy xiv": 3,
+        "finalfantasyxiv": 3,
+        "heavensward": 2,
+        "stormblood": 2,
+        "miqo'te": 2,
+        "roegadyn": 1,
+        "msq": 1,
+        "au ra": 1,
+        "miqote": 1,
+        "warrior of light": 1,
+        "hyur": 1,
+        "lalafell": 1,
+        "a realm reborn": 1
+      }
+    },
+    {
+      "handle": "top50-10",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 11944,
+      "follows": 489,
+      "postsCount": 11002,
+      "sample": {
+        "items": 200,
+        "pages": 3,
+        "exhausted": false,
+        "newest": "2026-10",
+        "oldest": "2026-08"
+      },
+      "originals": {
+        "n": 35,
+        "ffxiv": 9,
+        "unclassified": 0,
+        "nonFfxivWithImages": 19,
+        "sharePct": 25.7
+      },
+      "replies": {
+        "n": 66,
+        "ffxiv": 5,
+        "unclassified": 6,
+        "nonFfxivWithImages": 0,
+        "sharePct": 8.3
+      },
+      "reposts": {
+        "n": 99,
+        "ffxiv": 4,
+        "unclassified": 2,
+        "nonFfxivWithImages": 81,
+        "sharePct": 4.1
+      },
+      "byMonth": {
+        "2026-08": 76,
+        "2026-09": 98,
+        "2026-10": 26
+      },
+      "termHits": {
+        "ffxiv": 18,
+        "final fantasy xiv": 11,
+        "xiv": 11,
+        "ff14": 10,
+        "miqote": 5,
+        "miqo'te": 5,
+        "viera": 3,
+        "elezen": 2,
+        "au ra": 2,
+        "hyur": 2,
+        "lalafell": 1
+      }
+    },
+    {
+      "handle": "top50-11",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 10743,
+      "follows": 18896,
+      "postsCount": 1830,
+      "sample": {
+        "items": 200,
+        "pages": 2,
+        "exhausted": false,
+        "newest": "2026-03",
+        "oldest": "2024-11"
+      },
+      "originals": {
+        "n": 22,
+        "ffxiv": 0,
+        "unclassified": 0,
+        "nonFfxivWithImages": 20,
+        "sharePct": 0
+      },
+      "replies": {
+        "n": 177,
+        "ffxiv": 1,
+        "unclassified": 15,
+        "nonFfxivWithImages": 10,
+        "sharePct": 0.6
+      },
+      "reposts": {
+        "n": 1,
+        "ffxiv": 0,
+        "unclassified": 0,
+        "nonFfxivWithImages": 1,
+        "sharePct": 0
+      },
+      "byMonth": {
+        "2024-11": 109,
+        "2024-12": 6,
+        "2025-01": 42,
+        "2025-02": 25,
+        "2025-03": 5,
+        "2025-04": 1,
+        "2025-05": 3,
+        "2025-08": 4,
+        "2025-10": 4,
+        "2026-03": 1
+      },
+      "termHits": {
+        "final fantasy xiv": 1,
+        "xiv": 1
+      }
+    },
+    {
+      "handle": "top50-12",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 10602,
+      "follows": 164,
+      "postsCount": 244,
+      "sample": {
+        "items": 200,
+        "pages": 2,
+        "exhausted": false,
+        "newest": "2026-09",
+        "oldest": "2024-10"
+      },
+      "originals": {
+        "n": 129,
+        "ffxiv": 7,
+        "unclassified": 17,
+        "nonFfxivWithImages": 89,
+        "sharePct": 6.3
+      },
+      "replies": {
+        "n": 39,
+        "ffxiv": 1,
+        "unclassified": 2,
+        "nonFfxivWithImages": 0,
+        "sharePct": 2.7
+      },
+      "reposts": {
+        "n": 32,
+        "ffxiv": 5,
+        "unclassified": 4,
+        "nonFfxivWithImages": 22,
+        "sharePct": 17.9
+      },
+      "byMonth": {
+        "2024-10": 58,
+        "2024-11": 35,
+        "2024-12": 20,
+        "2025-01": 8,
+        "2025-02": 11,
+        "2025-03": 19,
+        "2025-07": 1,
+        "2025-08": 3,
+        "2025-12": 5,
+        "2026-01": 1,
+        "2026-06": 9,
+        "2026-07": 13,
+        "2026-08": 16,
+        "2026-09": 1
+      },
+      "termHits": {
+        "ffxiv": 11,
+        "ff14": 9,
+        "warrior of light": 4,
+        "miqote": 1,
+        "hyur": 1,
+        "gpose": 1,
+        "miqo'te": 1,
+        "au ra": 1
+      }
+    },
+    {
+      "handle": "top50-13",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 10492,
+      "follows": 184,
+      "postsCount": 466,
+      "sample": {
+        "items": 200,
+        "pages": 2,
+        "exhausted": false,
+        "newest": "2026-10",
+        "oldest": "2025-06"
+      },
+      "originals": {
+        "n": 108,
+        "ffxiv": 27,
+        "unclassified": 0,
+        "nonFfxivWithImages": 80,
+        "sharePct": 25
+      },
+      "replies": {
+        "n": 85,
+        "ffxiv": 1,
+        "unclassified": 0,
+        "nonFfxivWithImages": 6,
+        "sharePct": 1.2
+      },
+      "reposts": {
+        "n": 7,
+        "ffxiv": 2,
+        "unclassified": 1,
+        "nonFfxivWithImages": 4,
+        "sharePct": 33.3
+      },
+      "byMonth": {
+        "2025-06": 18,
+        "2025-07": 19,
+        "2025-08": 17,
+        "2025-09": 4,
+        "2025-10": 6,
+        "2025-11": 11,
+        "2025-12": 10,
+        "2026-01": 16,
+        "2026-02": 9,
+        "2026-03": 7,
+        "2026-04": 11,
+        "2026-05": 22,
+        "2026-06": 17,
+        "2026-07": 10,
+        "2026-08": 10,
+        "2026-09": 12,
+        "2026-10": 1
+      },
+      "termHits": {
+        "ffxiv": 29,
+        "viera": 5,
+        "au ra": 3,
+        "miqo'te": 2,
+        "hyur": 1
+      }
+    },
+    {
+      "handle": "top50-14",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 9773,
+      "follows": 1441,
+      "postsCount": 3016,
+      "sample": {
+        "items": 200,
+        "pages": 2,
+        "exhausted": false,
+        "newest": "2026-10",
+        "oldest": "2026-08"
+      },
+      "originals": {
+        "n": 78,
+        "ffxiv": 11,
+        "unclassified": 0,
+        "nonFfxivWithImages": 7,
+        "sharePct": 14.1
+      },
+      "replies": {
+        "n": 24,
+        "ffxiv": 2,
+        "unclassified": 0,
+        "nonFfxivWithImages": 0,
+        "sharePct": 8.3
+      },
+      "reposts": {
+        "n": 98,
+        "ffxiv": 31,
+        "unclassified": 11,
+        "nonFfxivWithImages": 51,
+        "sharePct": 35.6
+      },
+      "byMonth": {
+        "2026-08": 14,
+        "2026-09": 117,
+        "2026-10": 69
+      },
+      "termHits": {
+        "ffxiv": 35,
+        "ff14": 6,
+        "eorzea": 3,
+        "dawntrail": 2,
+        "final fantasy 14": 2,
+        "xiv": 2,
+        "elezen": 2,
+        "warrior of light": 1,
+        "lalafell": 1,
+        "miqo'te": 1,
+        "hroth": 1,
+        "roegadyn": 1,
+        "au ra": 1,
+        "hyur": 1,
+        "viera": 1,
+        "finalfantasyxiv": 1
+      }
+    },
+    {
+      "handle": "top50-15",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 9719,
+      "follows": 161,
+      "postsCount": 239,
+      "sample": {
+        "items": 200,
+        "pages": 3,
+        "exhausted": true,
+        "newest": "2025-12",
+        "oldest": "2023-12"
+      },
+      "originals": {
+        "n": 65,
+        "ffxiv": 0,
+        "unclassified": 0,
+        "nonFfxivWithImages": 65,
+        "sharePct": 0
+      },
+      "replies": {
+        "n": 116,
+        "ffxiv": 0,
+        "unclassified": 34,
+        "nonFfxivWithImages": 0,
+        "sharePct": 0
+      },
+      "reposts": {
+        "n": 19,
+        "ffxiv": 0,
+        "unclassified": 2,
+        "nonFfxivWithImages": 17,
+        "sharePct": 0
+      },
+      "byMonth": {
+        "2023-12": 3,
+        "2024-01": 5,
+        "2024-02": 10,
+        "2024-03": 2,
+        "2024-05": 2,
+        "2024-09": 21,
+        "2024-10": 36,
+        "2024-11": 31,
+        "2024-12": 30,
+        "2025-01": 14,
+        "2025-02": 10,
+        "2025-03": 11,
+        "2025-04": 8,
+        "2025-05": 5,
+        "2025-06": 4,
+        "2025-09": 4,
+        "2025-12": 4
+      },
+      "termHits": {}
+    },
+    {
+      "handle": "top50-16",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 9328,
+      "follows": 870,
+      "postsCount": 2218,
+      "sample": {
+        "items": 200,
+        "pages": 3,
+        "exhausted": false,
+        "newest": "2026-10",
+        "oldest": "2026-08"
+      },
+      "originals": {
+        "n": 43,
+        "ffxiv": 0,
+        "unclassified": 0,
+        "nonFfxivWithImages": 18,
+        "sharePct": 0
+      },
+      "replies": {
+        "n": 93,
+        "ffxiv": 0,
+        "unclassified": 2,
+        "nonFfxivWithImages": 2,
+        "sharePct": 0
+      },
+      "reposts": {
+        "n": 64,
+        "ffxiv": 0,
+        "unclassified": 2,
+        "nonFfxivWithImages": 37,
+        "sharePct": 0
+      },
+      "byMonth": {
+        "2026-08": 81,
+        "2026-09": 40,
+        "2026-10": 79
+      },
+      "termHits": {}
+    },
+    {
+      "handle": "top50-17",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 9173,
+      "follows": 673,
+      "postsCount": 193,
+      "sample": {
+        "items": 200,
+        "pages": 2,
+        "exhausted": false,
+        "newest": "2026-08",
+        "oldest": "2023-10"
+      },
+      "originals": {
+        "n": 52,
+        "ffxiv": 1,
+        "unclassified": 0,
+        "nonFfxivWithImages": 40,
+        "sharePct": 1.9
+      },
+      "replies": {
+        "n": 138,
+        "ffxiv": 0,
+        "unclassified": 4,
+        "nonFfxivWithImages": 3,
+        "sharePct": 0
+      },
+      "reposts": {
+        "n": 10,
+        "ffxiv": 0,
+        "unclassified": 0,
+        "nonFfxivWithImages": 10,
+        "sharePct": 0
+      },
+      "byMonth": {
+        "2023-10": 7,
+        "2023-11": 1,
+        "2024-01": 2,
+        "2024-02": 4,
+        "2024-08": 5,
+        "2024-09": 39,
+        "2024-10": 97,
+        "2024-11": 6,
+        "2024-12": 12,
+        "2025-04": 2,
+        "2025-08": 7,
+        "2025-09": 1,
+        "2025-12": 8,
+        "2026-02": 2,
+        "2026-03": 2,
+        "2026-05": 2,
+        "2026-06": 1,
+        "2026-08": 2
+      },
+      "termHits": {
+        "ffxiv": 1,
+        "dawntrail": 1,
+        "miqo'te": 1
+      }
+    },
+    {
+      "handle": "top50-18",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 8623,
+      "follows": 3376,
+      "postsCount": 2319,
+      "sample": {
+        "items": 200,
+        "pages": 3,
+        "exhausted": false,
+        "newest": "2026-10",
+        "oldest": "2026-08"
+      },
+      "originals": {
+        "n": 64,
+        "ffxiv": 6,
+        "unclassified": 0,
+        "nonFfxivWithImages": 52,
+        "sharePct": 9.4
+      },
+      "replies": {
+        "n": 27,
+        "ffxiv": 0,
+        "unclassified": 0,
+        "nonFfxivWithImages": 0,
+        "sharePct": 0
+      },
+      "reposts": {
+        "n": 109,
+        "ffxiv": 9,
+        "unclassified": 1,
+        "nonFfxivWithImages": 89,
+        "sharePct": 8.3
+      },
+      "byMonth": {
+        "2026-08": 53,
+        "2026-09": 106,
+        "2026-10": 41
+      },
+      "termHits": {
+        "ffxiv": 15,
+        "lalafell": 6,
+        "elezen": 2,
+        "pictomancer": 2,
+        "xiv": 2,
+        "dawntrail": 1,
+        "warrior of light": 1
+      }
+    },
+    {
+      "handle": "top50-19",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 8435,
+      "follows": 419,
+      "postsCount": 6556,
+      "sample": {
+        "items": 200,
+        "pages": 2,
+        "exhausted": false,
+        "newest": "2026-10",
+        "oldest": "2026-08"
+      },
+      "originals": {
+        "n": 48,
+        "ffxiv": 2,
+        "unclassified": 1,
+        "nonFfxivWithImages": 25,
+        "sharePct": 4.3
+      },
+      "replies": {
+        "n": 122,
+        "ffxiv": 1,
+        "unclassified": 3,
+        "nonFfxivWithImages": 2,
+        "sharePct": 0.8
+      },
+      "reposts": {
+        "n": 30,
+        "ffxiv": 8,
+        "unclassified": 3,
+        "nonFfxivWithImages": 19,
+        "sharePct": 29.6
+      },
+      "byMonth": {
+        "2026-08": 40,
+        "2026-09": 94,
+        "2026-10": 66
+      },
+      "termHits": {
+        "ffxiv": 6,
+        "dawntrail": 2,
+        "eorzea": 2,
+        "msq": 1,
+        "ff14": 1,
+        "final fantasy 14": 1,
+        "heavensward": 1
+      }
+    },
+    {
+      "handle": "top50-20",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 8147,
+      "follows": 2323,
+      "postsCount": 12507,
+      "sample": {
+        "items": 200,
+        "pages": 3,
+        "exhausted": false,
+        "newest": "2026-10",
+        "oldest": "2026-09"
+      },
+      "originals": {
+        "n": 59,
+        "ffxiv": 14,
+        "unclassified": 0,
+        "nonFfxivWithImages": 7,
+        "sharePct": 23.7
+      },
+      "replies": {
+        "n": 133,
+        "ffxiv": 3,
+        "unclassified": 3,
+        "nonFfxivWithImages": 1,
+        "sharePct": 2.3
+      },
+      "reposts": {
+        "n": 8,
+        "ffxiv": 0,
+        "unclassified": 0,
+        "nonFfxivWithImages": 5,
+        "sharePct": 0
+      },
+      "byMonth": {
+        "2026-09": 29,
+        "2026-10": 171
+      },
+      "termHits": {
+        "ffxiv": 17,
+        "dawntrail": 2,
+        "msq": 1,
+        "shadowbringers": 1
+      }
+    },
+    {
+      "handle": "top50-21",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 8135,
+      "follows": 606,
+      "postsCount": 5966,
+      "sample": {
+        "items": 200,
+        "pages": 3,
+        "exhausted": false,
+        "newest": "2026-10",
+        "oldest": "2026-09"
+      },
+      "originals": {
+        "n": 82,
+        "ffxiv": 0,
+        "unclassified": 0,
+        "nonFfxivWithImages": 30,
+        "sharePct": 0
+      },
+      "replies": {
+        "n": 69,
+        "ffxiv": 0,
+        "unclassified": 0,
+        "nonFfxivWithImages": 8,
+        "sharePct": 0
+      },
+      "reposts": {
+        "n": 49,
+        "ffxiv": 0,
+        "unclassified": 1,
+        "nonFfxivWithImages": 39,
+        "sharePct": 0
+      },
+      "byMonth": {
+        "2026-09": 150,
+        "2026-10": 50
+      },
+      "termHits": {}
+    },
+    {
+      "handle": "top50-22",
+      "bioTerms": [
+        "ffxiv",
+        "xiv"
+      ],
+      "followers": 7976,
+      "follows": 36,
+      "postsCount": 445,
+      "sample": {
+        "items": 200,
+        "pages": 2,
+        "exhausted": false,
+        "newest": "2026-10",
+        "oldest": "2025-09"
+      },
+      "originals": {
+        "n": 52,
+        "ffxiv": 3,
+        "unclassified": 2,
+        "nonFfxivWithImages": 39,
+        "sharePct": 6
+      },
+      "replies": {
+        "n": 141,
+        "ffxiv": 1,
+        "unclassified": 5,
+        "nonFfxivWithImages": 3,
+        "sharePct": 0.7
+      },
+      "reposts": {
+        "n": 7,
+        "ffxiv": 1,
+        "unclassified": 0,
+        "nonFfxivWithImages": 3,
+        "sharePct": 14.3
+      },
+      "byMonth": {
+        "2025-09": 1,
+        "2025-10": 16,
+        "2025-11": 14,
+        "2025-12": 1,
+        "2026-01": 7,
+        "2026-02": 15,
+        "2026-03": 17,
+        "2026-04": 24,
+        "2026-05": 9,
+        "2026-06": 18,
+        "2026-07": 40,
+        "2026-08": 24,
+        "2026-09": 6,
+        "2026-10": 8
+      },
+      "termHits": {
+        "ffxiv": 4,
+        "xiv": 1,
+        "dawntrail": 1
+      }
+    },
+    {
+      "handle": "top50-23",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 7927,
+      "follows": 349,
+      "postsCount": 156,
+      "sample": {
+        "items": 200,
+        "pages": 3,
+        "exhausted": false,
+        "newest": "2026-10",
+        "oldest": "2026-02"
+      },
+      "originals": {
+        "n": 23,
+        "ffxiv": 0,
+        "unclassified": 0,
+        "nonFfxivWithImages": 10,
+        "sharePct": 0
+      },
+      "replies": {
+        "n": 27,
+        "ffxiv": 0,
+        "unclassified": 0,
+        "nonFfxivWithImages": 2,
+        "sharePct": 0
+      },
+      "reposts": {
+        "n": 150,
+        "ffxiv": 1,
+        "unclassified": 9,
+        "nonFfxivWithImages": 127,
+        "sharePct": 0.7
+      },
+      "byMonth": {
+        "2026-02": 12,
+        "2026-03": 8,
+        "2026-04": 14,
+        "2026-05": 44,
+        "2026-06": 17,
+        "2026-07": 58,
+        "2026-08": 23,
+        "2026-09": 17,
+        "2026-10": 7
+      },
+      "termHits": {
+        "ffxiv": 1
+      }
+    },
+    {
+      "handle": "top50-24",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 7878,
+      "follows": 428,
+      "postsCount": 1648,
+      "sample": {
+        "items": 200,
+        "pages": 3,
+        "exhausted": false,
+        "newest": "2026-10",
+        "oldest": "2026-07"
+      },
+      "originals": {
+        "n": 45,
+        "ffxiv": 11,
+        "unclassified": 0,
+        "nonFfxivWithImages": 21,
+        "sharePct": 24.4
+      },
+      "replies": {
+        "n": 139,
+        "ffxiv": 2,
+        "unclassified": 3,
+        "nonFfxivWithImages": 5,
+        "sharePct": 1.5
+      },
+      "reposts": {
+        "n": 16,
+        "ffxiv": 7,
+        "unclassified": 0,
+        "nonFfxivWithImages": 7,
+        "sharePct": 43.8
+      },
+      "byMonth": {
+        "2026-07": 9,
+        "2026-08": 103,
+        "2026-09": 67,
+        "2026-10": 21
+      },
+      "termHits": {
+        "ffxiv": 16,
+        "finalfantasyxiv": 6,
+        "pictomancer": 3,
+        "miqo'te": 3,
+        "msq": 1,
+        "stormblood": 1,
+        "shadowbringers": 1,
+        "au ra": 1,
+        "lalafell": 1
+      }
+    },
+    {
+      "handle": "top50-25",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 7768,
+      "follows": 641,
+      "postsCount": 22342,
+      "sample": {
+        "items": 200,
+        "pages": 2,
+        "exhausted": false,
+        "newest": "2026-10",
+        "oldest": "2026-10"
+      },
+      "originals": {
+        "n": 39,
+        "ffxiv": 4,
+        "unclassified": 0,
+        "nonFfxivWithImages": 12,
+        "sharePct": 10.3
+      },
+      "replies": {
+        "n": 138,
+        "ffxiv": 1,
+        "unclassified": 0,
+        "nonFfxivWithImages": 8,
+        "sharePct": 0.7
+      },
+      "reposts": {
+        "n": 23,
+        "ffxiv": 0,
+        "unclassified": 1,
+        "nonFfxivWithImages": 19,
+        "sharePct": 0
+      },
+      "byMonth": {
+        "2026-10": 200
+      },
+      "termHits": {
+        "ffxiv": 4,
+        "lalafell": 1
+      }
+    },
+    {
+      "handle": "top50-26",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 7608,
+      "follows": 99,
+      "postsCount": 68,
+      "sample": {
+        "items": 87,
+        "pages": 1,
+        "exhausted": true,
+        "newest": "2026-09",
+        "oldest": "2023-09"
+      },
+      "originals": {
+        "n": 37,
+        "ffxiv": 10,
+        "unclassified": 0,
+        "nonFfxivWithImages": 16,
+        "sharePct": 27
+      },
+      "replies": {
+        "n": 31,
+        "ffxiv": 1,
+        "unclassified": 2,
+        "nonFfxivWithImages": 1,
+        "sharePct": 3.4
+      },
+      "reposts": {
+        "n": 19,
+        "ffxiv": 16,
+        "unclassified": 0,
+        "nonFfxivWithImages": 2,
+        "sharePct": 84.2
+      },
+      "byMonth": {
+        "2023-09": 3,
+        "2024-08": 3,
+        "2024-10": 4,
+        "2024-11": 4,
+        "2024-12": 3,
+        "2025-02": 13,
+        "2025-04": 3,
+        "2025-06": 9,
+        "2025-07": 2,
+        "2025-09": 1,
+        "2025-10": 1,
+        "2025-11": 1,
+        "2025-12": 1,
+        "2026-01": 16,
+        "2026-02": 5,
+        "2026-03": 4,
+        "2026-04": 10,
+        "2026-05": 2,
+        "2026-07": 1,
+        "2026-09": 1
+      },
+      "termHits": {
+        "ffxiv": 27,
+        "ff14": 5,
+        "miqote": 1,
+        "warrior of light": 1,
+        "miqo'te": 1
+      }
+    },
+    {
+      "handle": "top50-27",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 7595,
+      "follows": 515,
+      "postsCount": 1950,
+      "sample": {
+        "items": 200,
+        "pages": 3,
+        "exhausted": false,
+        "newest": "2026-10",
+        "oldest": "2026-08"
+      },
+      "originals": {
+        "n": 27,
+        "ffxiv": 7,
+        "unclassified": 0,
+        "nonFfxivWithImages": 15,
+        "sharePct": 25.9
+      },
+      "replies": {
+        "n": 114,
+        "ffxiv": 2,
+        "unclassified": 3,
+        "nonFfxivWithImages": 2,
+        "sharePct": 1.8
+      },
+      "reposts": {
+        "n": 59,
+        "ffxiv": 23,
+        "unclassified": 2,
+        "nonFfxivWithImages": 29,
+        "sharePct": 40.4
+      },
+      "byMonth": {
+        "2026-08": 123,
+        "2026-09": 56,
+        "2026-10": 21
+      },
+      "termHits": {
+        "ffxiv": 25,
+        "warrior of light": 5,
+        "ff14": 3,
+        "final fantasy 14": 2,
+        "endwalker": 2,
+        "xiv": 2,
+        "shadowbringers": 1,
+        "eorzea": 1,
+        "lalafell": 1,
+        "heavensward": 1
+      }
+    },
+    {
+      "handle": "top50-28",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 7590,
+      "follows": 194,
+      "postsCount": 7064,
+      "sample": {
+        "items": 200,
+        "pages": 2,
+        "exhausted": false,
+        "newest": "2026-10",
+        "oldest": "2026-09"
+      },
+      "originals": {
+        "n": 64,
+        "ffxiv": 4,
+        "unclassified": 1,
+        "nonFfxivWithImages": 19,
+        "sharePct": 6.3
+      },
+      "replies": {
+        "n": 118,
+        "ffxiv": 3,
+        "unclassified": 4,
+        "nonFfxivWithImages": 8,
+        "sharePct": 2.6
+      },
+      "reposts": {
+        "n": 18,
+        "ffxiv": 3,
+        "unclassified": 0,
+        "nonFfxivWithImages": 10,
+        "sharePct": 16.7
+      },
+      "byMonth": {
+        "2026-09": 74,
+        "2026-10": 126
+      },
+      "termHits": {
+        "ffxiv": 5,
+        "ff14": 2,
+        "au ra": 1,
+        "stormblood": 1,
+        "dawntrail": 1,
+        "xiv": 1,
+        "eorzea": 1
+      }
+    },
+    {
+      "handle": "top50-29",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 7445,
+      "follows": 663,
+      "postsCount": 539,
+      "sample": {
+        "items": 200,
+        "pages": 2,
+        "exhausted": false,
+        "newest": "2026-10",
+        "oldest": "2025-08"
+      },
+      "originals": {
+        "n": 109,
+        "ffxiv": 1,
+        "unclassified": 34,
+        "nonFfxivWithImages": 47,
+        "sharePct": 1.3
+      },
+      "replies": {
+        "n": 68,
+        "ffxiv": 0,
+        "unclassified": 5,
+        "nonFfxivWithImages": 0,
+        "sharePct": 0
+      },
+      "reposts": {
+        "n": 23,
+        "ffxiv": 1,
+        "unclassified": 0,
+        "nonFfxivWithImages": 17,
+        "sharePct": 4.3
+      },
+      "byMonth": {
+        "2025-08": 9,
+        "2025-09": 41,
+        "2025-10": 20,
+        "2025-11": 16,
+        "2025-12": 13,
+        "2026-01": 19,
+        "2026-02": 12,
+        "2026-03": 6,
+        "2026-04": 2,
+        "2026-05": 16,
+        "2026-06": 11,
+        "2026-07": 2,
+        "2026-08": 8,
+        "2026-09": 15,
+        "2026-10": 10
+      },
+      "termHits": {
+        "ffxiv": 2
+      }
+    },
+    {
+      "handle": "top50-30",
+      "bioTerms": [
+        "final fantasy xiv",
+        "xiv"
+      ],
+      "followers": 7363,
+      "follows": 659,
+      "postsCount": 602,
+      "sample": {
+        "items": 200,
+        "pages": 2,
+        "exhausted": false,
+        "newest": "2026-10",
+        "oldest": "2026-07"
+      },
+      "originals": {
+        "n": 68,
+        "ffxiv": 1,
+        "unclassified": 25,
+        "nonFfxivWithImages": 42,
+        "sharePct": 2.3
+      },
+      "replies": {
+        "n": 19,
+        "ffxiv": 0,
+        "unclassified": 4,
+        "nonFfxivWithImages": 0,
+        "sharePct": 0
+      },
+      "reposts": {
+        "n": 113,
+        "ffxiv": 18,
+        "unclassified": 4,
+        "nonFfxivWithImages": 88,
+        "sharePct": 16.5
+      },
+      "byMonth": {
+        "2026-07": 40,
+        "2026-08": 83,
+        "2026-09": 48,
+        "2026-10": 29
+      },
+      "termHits": {
+        "ffxiv": 13,
+        "gpose": 3,
+        "au ra": 2,
+        "xiv": 2,
+        "finalfantasyxiv": 1,
+        "ff14": 1,
+        "miqote": 1,
+        "viera": 1,
+        "hroth": 1,
+        "final fantasy xiv": 1,
+        "miqo'te": 1
+      }
+    },
+    {
+      "handle": "top50-31",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 7349,
+      "follows": 347,
+      "postsCount": 991,
+      "sample": {
+        "items": 200,
+        "pages": 2,
+        "exhausted": false,
+        "newest": "2026-10",
+        "oldest": "2025-12"
+      },
+      "originals": {
+        "n": 67,
+        "ffxiv": 34,
+        "unclassified": 1,
+        "nonFfxivWithImages": 20,
+        "sharePct": 51.5
+      },
+      "replies": {
+        "n": 114,
+        "ffxiv": 4,
+        "unclassified": 2,
+        "nonFfxivWithImages": 11,
+        "sharePct": 3.6
+      },
+      "reposts": {
+        "n": 19,
+        "ffxiv": 0,
+        "unclassified": 0,
+        "nonFfxivWithImages": 14,
+        "sharePct": 0
+      },
+      "byMonth": {
+        "2025-12": 48,
+        "2026-01": 6,
+        "2026-02": 8,
+        "2026-08": 76,
+        "2026-09": 50,
+        "2026-10": 12
+      },
+      "termHits": {
+        "ffxiv": 33,
+        "endwalker": 8,
+        "gpose": 2,
+        "msq": 1
+      }
+    },
+    {
+      "handle": "top50-32",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 7338,
+      "follows": 216,
+      "postsCount": 5517,
+      "sample": {
+        "items": 200,
+        "pages": 2,
+        "exhausted": false,
+        "newest": "2026-10",
+        "oldest": "2026-09"
+      },
+      "originals": {
+        "n": 61,
+        "ffxiv": 12,
+        "unclassified": 2,
+        "nonFfxivWithImages": 20,
+        "sharePct": 20.3
+      },
+      "replies": {
+        "n": 91,
+        "ffxiv": 1,
+        "unclassified": 0,
+        "nonFfxivWithImages": 16,
+        "sharePct": 1.1
+      },
+      "reposts": {
+        "n": 48,
+        "ffxiv": 6,
+        "unclassified": 1,
+        "nonFfxivWithImages": 22,
+        "sharePct": 12.8
+      },
+      "byMonth": {
+        "2026-09": 148,
+        "2026-10": 52
+      },
+      "termHits": {
+        "ffxiv": 16,
+        "xiv": 2,
+        "ff14": 2,
+        "final fantasy xiv": 1,
+        "eorzea": 1,
+        "endwalker": 1,
+        "warrior of light": 1,
+        "pictomancer": 1
+      }
+    },
+    {
+      "handle": "top50-33",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 7207,
+      "follows": 2122,
+      "postsCount": 5141,
+      "sample": {
+        "items": 200,
+        "pages": 2,
+        "exhausted": false,
+        "newest": "2026-10",
+        "oldest": "2026-09"
+      },
+      "originals": {
+        "n": 12,
+        "ffxiv": 0,
+        "unclassified": 0,
+        "nonFfxivWithImages": 7,
+        "sharePct": 0
+      },
+      "replies": {
+        "n": 151,
+        "ffxiv": 0,
+        "unclassified": 9,
+        "nonFfxivWithImages": 3,
+        "sharePct": 0
+      },
+      "reposts": {
+        "n": 37,
+        "ffxiv": 1,
+        "unclassified": 0,
+        "nonFfxivWithImages": 26,
+        "sharePct": 2.7
+      },
+      "byMonth": {
+        "2026-09": 164,
+        "2026-10": 36
+      },
+      "termHits": {
+        "ffxiv": 1,
+        "shadowbringers": 1
+      }
+    },
+    {
+      "handle": "top50-34",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 7165,
+      "follows": 1329,
+      "postsCount": 607,
+      "sample": {
+        "items": 200,
+        "pages": 3,
+        "exhausted": false,
+        "newest": "2026-10",
+        "oldest": "2025-08"
+      },
+      "originals": {
+        "n": 14,
+        "ffxiv": 0,
+        "unclassified": 0,
+        "nonFfxivWithImages": 3,
+        "sharePct": 0
+      },
+      "replies": {
+        "n": 111,
+        "ffxiv": 0,
+        "unclassified": 6,
+        "nonFfxivWithImages": 0,
+        "sharePct": 0
+      },
+      "reposts": {
+        "n": 75,
+        "ffxiv": 11,
+        "unclassified": 7,
+        "nonFfxivWithImages": 51,
+        "sharePct": 16.2
+      },
+      "byMonth": {
+        "2025-08": 4,
+        "2025-09": 33,
+        "2025-10": 22,
+        "2025-11": 13,
+        "2025-12": 5,
+        "2026-01": 1,
+        "2026-02": 14,
+        "2026-03": 12,
+        "2026-04": 10,
+        "2026-05": 11,
+        "2026-06": 26,
+        "2026-07": 31,
+        "2026-08": 11,
+        "2026-09": 3,
+        "2026-10": 4
+      },
+      "termHits": {
+        "ffxiv": 11,
+        "ff14": 5,
+        "finalfantasyxiv": 1,
+        "final fantasy 14": 1,
+        "warrior of light": 1,
+        "au ra": 1,
+        "final fantasy xiv": 1,
+        "xiv": 1,
+        "shadowbringers": 1
+      }
+    },
+    {
+      "handle": "top50-35",
+      "bioTerms": [
+        "eorzea"
+      ],
+      "followers": 7115,
+      "follows": 298,
+      "postsCount": 861,
+      "sample": {
+        "items": 200,
+        "pages": 3,
+        "exhausted": false,
+        "newest": "2026-10",
+        "oldest": "2026-08"
+      },
+      "originals": {
+        "n": 34,
+        "ffxiv": 0,
+        "unclassified": 0,
+        "nonFfxivWithImages": 4,
+        "sharePct": 0
+      },
+      "replies": {
+        "n": 55,
+        "ffxiv": 0,
+        "unclassified": 0,
+        "nonFfxivWithImages": 0,
+        "sharePct": 0
+      },
+      "reposts": {
+        "n": 111,
+        "ffxiv": 3,
+        "unclassified": 0,
+        "nonFfxivWithImages": 64,
+        "sharePct": 2.7
+      },
+      "byMonth": {
+        "2026-08": 59,
+        "2026-09": 99,
+        "2026-10": 42
+      },
+      "termHits": {
+        "ffxiv": 2,
+        "final fantasy xiv": 1,
+        "finalfantasyxiv": 1,
+        "xiv": 1,
+        "final fantasy 14": 1
+      }
+    },
+    {
+      "handle": "top50-36",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 6974,
+      "follows": 64,
+      "postsCount": 137,
+      "sample": {
+        "items": 197,
+        "pages": 2,
+        "exhausted": true,
+        "newest": "2026-07",
+        "oldest": "2024-10"
+      },
+      "originals": {
+        "n": 74,
+        "ffxiv": 15,
+        "unclassified": 12,
+        "nonFfxivWithImages": 33,
+        "sharePct": 24.2
+      },
+      "replies": {
+        "n": 63,
+        "ffxiv": 3,
+        "unclassified": 1,
+        "nonFfxivWithImages": 0,
+        "sharePct": 4.8
+      },
+      "reposts": {
+        "n": 60,
+        "ffxiv": 12,
+        "unclassified": 12,
+        "nonFfxivWithImages": 35,
+        "sharePct": 25
+      },
+      "byMonth": {
+        "2024-10": 62,
+        "2024-11": 23,
+        "2024-12": 15,
+        "2025-01": 8,
+        "2025-02": 7,
+        "2025-03": 5,
+        "2025-04": 13,
+        "2025-05": 4,
+        "2025-06": 8,
+        "2025-07": 2,
+        "2025-08": 6,
+        "2025-09": 2,
+        "2025-10": 4,
+        "2025-11": 1,
+        "2025-12": 4,
+        "2026-01": 14,
+        "2026-02": 2,
+        "2026-03": 3,
+        "2026-04": 3,
+        "2026-05": 1,
+        "2026-06": 8,
+        "2026-07": 2
+      },
+      "termHits": {
+        "ffxiv": 21,
+        "ff14": 7,
+        "dawntrail": 1,
+        "final fantasy xiv": 1,
+        "warrior of light": 1,
+        "xiv": 1,
+        "endwalker": 1,
+        "shadowbringers": 1,
+        "stormblood": 1,
+        "heavensward": 1
+      }
+    },
+    {
+      "handle": "top50-37",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 6969,
+      "follows": 4551,
+      "postsCount": 3548,
+      "sample": {
+        "items": 200,
+        "pages": 2,
+        "exhausted": false,
+        "newest": "2026-10",
+        "oldest": "2026-09"
+      },
+      "originals": {
+        "n": 12,
+        "ffxiv": 6,
+        "unclassified": 0,
+        "nonFfxivWithImages": 6,
+        "sharePct": 50
+      },
+      "replies": {
+        "n": 112,
+        "ffxiv": 1,
+        "unclassified": 0,
+        "nonFfxivWithImages": 0,
+        "sharePct": 0.9
+      },
+      "reposts": {
+        "n": 76,
+        "ffxiv": 28,
+        "unclassified": 5,
+        "nonFfxivWithImages": 40,
+        "sharePct": 39.4
+      },
+      "byMonth": {
+        "2026-09": 130,
+        "2026-10": 70
+      },
+      "termHits": {
+        "ffxiv": 34,
+        "dawntrail": 9,
+        "elezen": 5,
+        "xiv": 4,
+        "endwalker": 3,
+        "shadowbringers": 2,
+        "hroth": 2,
+        "pictomancer": 1,
+        "final fantasy xiv": 1,
+        "stormblood": 1,
+        "miqo'te": 1,
+        "roegadyn": 1,
+        "msq": 1,
+        "ff14": 1
+      }
+    },
+    {
+      "handle": "top50-38",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 6899,
+      "follows": 1705,
+      "postsCount": 1100,
+      "sample": {
+        "items": 200,
+        "pages": 3,
+        "exhausted": false,
+        "newest": "2026-10",
+        "oldest": "2026-09"
+      },
+      "originals": {
+        "n": 17,
+        "ffxiv": 1,
+        "unclassified": 0,
+        "nonFfxivWithImages": 9,
+        "sharePct": 5.9
+      },
+      "replies": {
+        "n": 27,
+        "ffxiv": 0,
+        "unclassified": 2,
+        "nonFfxivWithImages": 5,
+        "sharePct": 0
+      },
+      "reposts": {
+        "n": 156,
+        "ffxiv": 2,
+        "unclassified": 2,
+        "nonFfxivWithImages": 138,
+        "sharePct": 1.3
+      },
+      "byMonth": {
+        "2026-09": 135,
+        "2026-10": 65
+      },
+      "termHits": {
+        "ffxiv": 2,
+        "pictomancer": 1,
+        "hroth": 1,
+        "shadowbringers": 1
+      }
+    },
+    {
+      "handle": "top50-39",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 6901,
+      "follows": 1576,
+      "postsCount": 5500,
+      "sample": {
+        "items": 200,
+        "pages": 3,
+        "exhausted": false,
+        "newest": "2026-10",
+        "oldest": "2026-09"
+      },
+      "originals": {
+        "n": 87,
+        "ffxiv": 17,
+        "unclassified": 0,
+        "nonFfxivWithImages": 32,
+        "sharePct": 19.5
+      },
+      "replies": {
+        "n": 65,
+        "ffxiv": 0,
+        "unclassified": 0,
+        "nonFfxivWithImages": 0,
+        "sharePct": 0
+      },
+      "reposts": {
+        "n": 48,
+        "ffxiv": 7,
+        "unclassified": 3,
+        "nonFfxivWithImages": 21,
+        "sharePct": 15.6
+      },
+      "byMonth": {
+        "2026-09": 127,
+        "2026-10": 73
+      },
+      "termHits": {
+        "ffxiv": 21,
+        "ff14": 3,
+        "msq": 3,
+        "xiv": 2,
+        "a realm reborn": 1,
+        "warrior of light": 1,
+        "shadowbringers": 1,
+        "final fantasy xiv": 1
+      }
+    },
+    {
+      "handle": "top50-40",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 6553,
+      "follows": 532,
+      "postsCount": 3235,
+      "sample": {
+        "items": 200,
+        "pages": 2,
+        "exhausted": false,
+        "newest": "2026-10",
+        "oldest": "2026-04"
+      },
+      "originals": {
+        "n": 47,
+        "ffxiv": 4,
+        "unclassified": 0,
+        "nonFfxivWithImages": 15,
+        "sharePct": 8.5
+      },
+      "replies": {
+        "n": 119,
+        "ffxiv": 5,
+        "unclassified": 3,
+        "nonFfxivWithImages": 4,
+        "sharePct": 4.3
+      },
+      "reposts": {
+        "n": 34,
+        "ffxiv": 4,
+        "unclassified": 3,
+        "nonFfxivWithImages": 23,
+        "sharePct": 12.9
+      },
+      "byMonth": {
+        "2026-04": 39,
+        "2026-05": 57,
+        "2026-06": 20,
+        "2026-07": 22,
+        "2026-09": 42,
+        "2026-10": 20
+      },
+      "termHits": {
+        "ffxiv": 9,
+        "xiv": 3,
+        "warrior of light": 1,
+        "endwalker": 1
+      }
+    },
+    {
+      "handle": "top50-41",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 6398,
+      "follows": 21,
+      "postsCount": 216,
+      "sample": {
+        "items": 200,
+        "pages": 3,
+        "exhausted": true,
+        "newest": "2026-09",
+        "oldest": "2024-12"
+      },
+      "originals": {
+        "n": 55,
+        "ffxiv": 17,
+        "unclassified": 0,
+        "nonFfxivWithImages": 25,
+        "sharePct": 30.9
+      },
+      "replies": {
+        "n": 109,
+        "ffxiv": 11,
+        "unclassified": 3,
+        "nonFfxivWithImages": 14,
+        "sharePct": 10.4
+      },
+      "reposts": {
+        "n": 36,
+        "ffxiv": 26,
+        "unclassified": 0,
+        "nonFfxivWithImages": 7,
+        "sharePct": 72.2
+      },
+      "byMonth": {
+        "2024-12": 49,
+        "2025-01": 11,
+        "2025-05": 1,
+        "2025-06": 2,
+        "2025-07": 1,
+        "2025-08": 3,
+        "2025-12": 12,
+        "2026-01": 10,
+        "2026-02": 17,
+        "2026-03": 15,
+        "2026-04": 11,
+        "2026-05": 14,
+        "2026-06": 16,
+        "2026-07": 14,
+        "2026-08": 18,
+        "2026-09": 6
+      },
+      "termHits": {
+        "ffxiv": 29,
+        "xiv": 13,
+        "dawntrail": 6,
+        "miqote": 5,
+        "eorzea": 5,
+        "gpose": 4,
+        "final fantasy 14": 3,
+        "miqo'te": 3,
+        "heavensward": 2,
+        "final fantasy xiv": 2,
+        "ff14": 2,
+        "finalfantasyxiv": 2,
+        "viera": 2,
+        "msq": 2,
+        "hroth": 1,
+        "endwalker": 1,
+        "warrior of light": 1,
+        "lalafell": 1,
+        "hyur": 1
+      }
+    },
+    {
+      "handle": "top50-42",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 6211,
+      "follows": 1521,
+      "postsCount": 5634,
+      "sample": {
+        "items": 200,
+        "pages": 3,
+        "exhausted": false,
+        "newest": "2026-10",
+        "oldest": "2026-09"
+      },
+      "originals": {
+        "n": 65,
+        "ffxiv": 4,
+        "unclassified": 0,
+        "nonFfxivWithImages": 11,
+        "sharePct": 6.2
+      },
+      "replies": {
+        "n": 81,
+        "ffxiv": 4,
+        "unclassified": 0,
+        "nonFfxivWithImages": 2,
+        "sharePct": 4.9
+      },
+      "reposts": {
+        "n": 54,
+        "ffxiv": 10,
+        "unclassified": 0,
+        "nonFfxivWithImages": 32,
+        "sharePct": 18.5
+      },
+      "byMonth": {
+        "2026-09": 165,
+        "2026-10": 35
+      },
+      "termHits": {
+        "ffxiv": 18,
+        "lalafell": 6,
+        "ff14": 2,
+        "shadowbringers": 2,
+        "warrior of light": 2,
+        "viera": 2,
+        "final fantasy 14": 1,
+        "miqo'te": 1,
+        "finalfantasyxiv": 1,
+        "au ra": 1,
+        "xiv": 1,
+        "a realm reborn": 1
+      }
+    },
+    {
+      "handle": "top50-43",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 6184,
+      "follows": 684,
+      "postsCount": 3436,
+      "sample": {
+        "items": 200,
+        "pages": 3,
+        "exhausted": false,
+        "newest": "2026-10",
+        "oldest": "2026-08"
+      },
+      "originals": {
+        "n": 61,
+        "ffxiv": 3,
+        "unclassified": 0,
+        "nonFfxivWithImages": 16,
+        "sharePct": 4.9
+      },
+      "replies": {
+        "n": 93,
+        "ffxiv": 0,
+        "unclassified": 1,
+        "nonFfxivWithImages": 1,
+        "sharePct": 0
+      },
+      "reposts": {
+        "n": 46,
+        "ffxiv": 1,
+        "unclassified": 5,
+        "nonFfxivWithImages": 33,
+        "sharePct": 2.4
+      },
+      "byMonth": {
+        "2026-08": 35,
+        "2026-09": 145,
+        "2026-10": 20
+      },
+      "termHits": {
+        "hroth": 3,
+        "ffxiv": 1
+      }
+    },
+    {
+      "handle": "top50-44",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 5994,
+      "follows": 267,
+      "postsCount": 242,
+      "sample": {
+        "items": 200,
+        "pages": 3,
+        "exhausted": false,
+        "newest": "2026-10",
+        "oldest": "2024-11"
+      },
+      "originals": {
+        "n": 82,
+        "ffxiv": 5,
+        "unclassified": 17,
+        "nonFfxivWithImages": 54,
+        "sharePct": 7.7
+      },
+      "replies": {
+        "n": 77,
+        "ffxiv": 0,
+        "unclassified": 2,
+        "nonFfxivWithImages": 0,
+        "sharePct": 0
+      },
+      "reposts": {
+        "n": 41,
+        "ffxiv": 5,
+        "unclassified": 4,
+        "nonFfxivWithImages": 30,
+        "sharePct": 13.5
+      },
+      "byMonth": {
+        "2024-11": 39,
+        "2024-12": 25,
+        "2025-01": 13,
+        "2025-02": 6,
+        "2025-03": 11,
+        "2025-04": 15,
+        "2025-05": 10,
+        "2025-06": 8,
+        "2025-07": 3,
+        "2025-08": 2,
+        "2025-09": 3,
+        "2025-10": 6,
+        "2025-11": 4,
+        "2025-12": 6,
+        "2026-01": 4,
+        "2026-02": 5,
+        "2026-03": 7,
+        "2026-04": 4,
+        "2026-05": 9,
+        "2026-06": 6,
+        "2026-07": 5,
+        "2026-08": 3,
+        "2026-09": 5,
+        "2026-10": 1
+      },
+      "termHits": {
+        "hroth": 10
+      }
+    },
+    {
+      "handle": "top50-45",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 5934,
+      "follows": 528,
+      "postsCount": 3397,
+      "sample": {
+        "items": 200,
+        "pages": 2,
+        "exhausted": false,
+        "newest": "2026-08",
+        "oldest": "2026-04"
+      },
+      "originals": {
+        "n": 80,
+        "ffxiv": 15,
+        "unclassified": 2,
+        "nonFfxivWithImages": 35,
+        "sharePct": 19.2
+      },
+      "replies": {
+        "n": 47,
+        "ffxiv": 0,
+        "unclassified": 0,
+        "nonFfxivWithImages": 3,
+        "sharePct": 0
+      },
+      "reposts": {
+        "n": 73,
+        "ffxiv": 16,
+        "unclassified": 10,
+        "nonFfxivWithImages": 39,
+        "sharePct": 25.4
+      },
+      "byMonth": {
+        "2026-04": 42,
+        "2026-05": 87,
+        "2026-06": 27,
+        "2026-07": 33,
+        "2026-08": 11
+      },
+      "termHits": {
+        "ffxiv": 27,
+        "warrior of light": 5,
+        "gpose": 3,
+        "ff14": 2,
+        "final fantasy 14": 1,
+        "shadowbringers": 1,
+        "eorzea": 1,
+        "lalafell": 1,
+        "miqo'te": 1,
+        "elezen": 1,
+        "dawntrail": 1,
+        "finalfantasyxiv": 1
+      }
+    },
+    {
+      "handle": "top50-46",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 5919,
+      "follows": 2864,
+      "postsCount": 1857,
+      "sample": {
+        "items": 200,
+        "pages": 2,
+        "exhausted": false,
+        "newest": "2026-10",
+        "oldest": "2026-06"
+      },
+      "originals": {
+        "n": 102,
+        "ffxiv": 4,
+        "unclassified": 1,
+        "nonFfxivWithImages": 38,
+        "sharePct": 4
+      },
+      "replies": {
+        "n": 97,
+        "ffxiv": 0,
+        "unclassified": 3,
+        "nonFfxivWithImages": 4,
+        "sharePct": 0
+      },
+      "reposts": {
+        "n": 1,
+        "ffxiv": 0,
+        "unclassified": 0,
+        "nonFfxivWithImages": 0,
+        "sharePct": 0
+      },
+      "byMonth": {
+        "2026-06": 12,
+        "2026-07": 28,
+        "2026-08": 75,
+        "2026-09": 49,
+        "2026-10": 36
+      },
+      "termHits": {
+        "ffxiv": 3,
+        "gpose": 2,
+        "final fantasy 14": 1,
+        "eorzea": 1,
+        "warrior of light": 1
+      }
+    },
+    {
+      "handle": "top50-47",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 5904,
+      "follows": 0,
+      "postsCount": 29,
+      "sample": {
+        "items": 29,
+        "pages": 1,
+        "exhausted": true,
+        "newest": "2025-05",
+        "oldest": "2024-10"
+      },
+      "originals": {
+        "n": 28,
+        "ffxiv": 8,
+        "unclassified": 18,
+        "nonFfxivWithImages": 0,
+        "sharePct": 80
+      },
+      "replies": {
+        "n": 1,
+        "ffxiv": 0,
+        "unclassified": 0,
+        "nonFfxivWithImages": 0,
+        "sharePct": 0
+      },
+      "reposts": null,
+      "byMonth": {
+        "2024-10": 12,
+        "2024-11": 8,
+        "2025-01": 4,
+        "2025-03": 1,
+        "2025-04": 3,
+        "2025-05": 1
+      },
+      "termHits": {
+        "ffxiv": 8,
+        "shadowbringers": 1
+      }
+    },
+    {
+      "handle": "top50-48",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 5859,
+      "follows": 314,
+      "postsCount": 303,
+      "sample": {
+        "items": 200,
+        "pages": 3,
+        "exhausted": false,
+        "newest": "2026-09",
+        "oldest": "2024-11"
+      },
+      "originals": {
+        "n": 40,
+        "ffxiv": 0,
+        "unclassified": 0,
+        "nonFfxivWithImages": 29,
+        "sharePct": 0
+      },
+      "replies": {
+        "n": 138,
+        "ffxiv": 0,
+        "unclassified": 3,
+        "nonFfxivWithImages": 4,
+        "sharePct": 0
+      },
+      "reposts": {
+        "n": 22,
+        "ffxiv": 0,
+        "unclassified": 0,
+        "nonFfxivWithImages": 17,
+        "sharePct": 0
+      },
+      "byMonth": {
+        "2024-11": 11,
+        "2024-12": 12,
+        "2025-01": 31,
+        "2025-02": 5,
+        "2025-03": 23,
+        "2025-04": 1,
+        "2025-05": 2,
+        "2025-06": 9,
+        "2025-08": 18,
+        "2025-09": 7,
+        "2025-11": 1,
+        "2025-12": 5,
+        "2026-01": 34,
+        "2026-05": 5,
+        "2026-06": 3,
+        "2026-07": 30,
+        "2026-08": 2,
+        "2026-09": 1
+      },
+      "termHits": {}
+    },
+    {
+      "handle": "top50-49",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 5799,
+      "follows": 5258,
+      "postsCount": 2751,
+      "sample": {
+        "items": 200,
+        "pages": 3,
+        "exhausted": false,
+        "newest": "2026-10",
+        "oldest": "2026-06"
+      },
+      "originals": {
+        "n": 26,
+        "ffxiv": 2,
+        "unclassified": 0,
+        "nonFfxivWithImages": 15,
+        "sharePct": 7.7
+      },
+      "replies": {
+        "n": 38,
+        "ffxiv": 0,
+        "unclassified": 0,
+        "nonFfxivWithImages": 5,
+        "sharePct": 0
+      },
+      "reposts": {
+        "n": 136,
+        "ffxiv": 44,
+        "unclassified": 7,
+        "nonFfxivWithImages": 60,
+        "sharePct": 34.1
+      },
+      "byMonth": {
+        "2026-06": 78,
+        "2026-07": 49,
+        "2026-08": 11,
+        "2026-09": 58,
+        "2026-10": 4
+      },
+      "termHits": {
+        "ffxiv": 38,
+        "ff14": 14,
+        "gpose": 3,
+        "finalfantasyxiv": 3,
+        "viera": 2,
+        "miqo'te": 2,
+        "final fantasy xiv": 1,
+        "xiv": 1,
+        "final fantasy 14": 1,
+        "au ra": 1,
+        "hroth": 1,
+        "roegadyn": 1,
+        "elezen": 1,
+        "hyur": 1,
+        "stormblood": 1
+      }
+    },
+    {
+      "handle": "top50-50",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 5785,
+      "follows": 395,
+      "postsCount": 1486,
+      "sample": {
+        "items": 200,
+        "pages": 3,
+        "exhausted": false,
+        "newest": "2026-10",
+        "oldest": "2026-06"
+      },
+      "originals": {
+        "n": 47,
+        "ffxiv": 2,
+        "unclassified": 2,
+        "nonFfxivWithImages": 24,
+        "sharePct": 4.4
+      },
+      "replies": {
+        "n": 105,
+        "ffxiv": 1,
+        "unclassified": 15,
+        "nonFfxivWithImages": 2,
+        "sharePct": 1.1
+      },
+      "reposts": {
+        "n": 48,
+        "ffxiv": 6,
+        "unclassified": 1,
+        "nonFfxivWithImages": 30,
+        "sharePct": 12.8
+      },
+      "byMonth": {
+        "2026-06": 42,
+        "2026-07": 43,
+        "2026-08": 40,
+        "2026-09": 53,
+        "2026-10": 22
+      },
+      "termHits": {
+        "ffxiv": 8,
+        "a realm reborn": 1,
+        "heavensward": 1,
+        "stormblood": 1,
+        "shadowbringers": 1,
+        "endwalker": 1,
+        "dawntrail": 1,
+        "warrior of light": 1,
+        "hyur": 1,
+        "eorzea": 1
+      }
+    }
+  ],
+  "redaction": "Post samples removed for every account. Individual accounts: handle is a label; displayName, description (bio), linkDomains and topTags removed; sample dates to the month, daysSinceNewest removed."
+}
