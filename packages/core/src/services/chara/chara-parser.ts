@@ -62,6 +62,24 @@ import { AppError, ErrorCode, SUBRACE_TO_RACE } from '@xivdyetools/types';
 import { clamp } from '../../utils/index.js';
 import { isWornCharaModel, isCharaWeaponSlot, type CharaGearModel } from './chara-models.js';
 
+/**
+ * Largest `.chara` file the web app and the Discord bot accept: 8 KiB of the
+ * original file's bytes, not its decoded text (2026-10-15 import review).
+ *
+ * Exports without an attached image measured 1,837–2,777 bytes over a
+ * 1,093-file corpus. The one larger file carried an image the user attached
+ * in Anamnesis (3,128,021 bytes); Anamnesis stores such an image as Base64
+ * without shrinking it, so those files are refused on purpose, and the
+ * refusal says to save the character again without the image.
+ *
+ * `parseCharaFile` does not check it: it receives decoded text, whose length
+ * is not the file's byte count. Each caller enforces it where the bytes are
+ * (the browser's `File.size`, the bot's attachment size and streamed
+ * download). It is a resource limit, not a safety check: a file under it
+ * still has to parse.
+ */
+export const MAX_CHARA_FILE_BYTES = 8 * 1024;
+
 /** Colour slots a `.chara` file can populate. */
 export type CharaSlotId =
   'leftEye' | 'rightEye' | 'hair' | 'highlights' | 'skin' | 'limbal' | 'lip' | 'facePaint';
@@ -228,6 +246,52 @@ interface ParsedFloat {
 const DOTNET_FLOAT = /^[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?$/;
 
 /**
+ * Longest float string `parseFloatColor` will split. Four channels of the
+ * longest shape .NET writes (a 17-digit double with an exponent, 23
+ * characters) plus their separators come to under 100; the fixtures top out
+ * at 46. A longer value is refused before `split`, so a single field can no
+ * longer make the parser split, trim, map and regex-test a megabyte of
+ * commas (FINDING-002, 2026-10-15 import audit).
+ */
+const MAX_FLOAT_COLOR_LENGTH = 128;
+
+/** Longest string an error message quotes verbatim. */
+const MAX_QUOTED_LENGTH = 64;
+
+/**
+ * A field value as an error message shows it. A short string is quoted; a
+ * long one, an array or an object is described by kind and size only.
+ *
+ * Nothing here recurses into the value, and the result never grows with the
+ * file. `JSON.stringify` on a palette index used to do both: a nested array
+ * that fits in 8 KiB overflowed the stack while the message was being built,
+ * and a megabyte string came back as a megabyte message that the web app
+ * showed in a toast (FINDING-002). Never pass a container to
+ * `JSON.stringify` or `String()` here: both walk it.
+ */
+function describeValue(value: unknown): string {
+  if (typeof value === 'string') {
+    return value.length <= MAX_QUOTED_LENGTH
+      ? JSON.stringify(value)
+      : `a string of ${value.length} characters`;
+  }
+  if (Array.isArray(value)) {
+    return `an array of ${value.length} ${value.length === 1 ? 'item' : 'items'}`;
+  }
+  if (value === null) return 'null';
+  if (typeof value === 'object') return 'an object';
+  return String(value);
+}
+
+function unparseableFloat(field: string, value: string): AppError {
+  return new AppError(
+    ErrorCode.INVALID_INPUT,
+    `.chara field ${field}: unparseable float colour ${describeValue(value)}`,
+    'error',
+  );
+}
+
+/**
  * Parse an extended-appearance float string ("r, g, b" or "r, g, b, a",
  * each channel squared — see `squaredToSrgb255`). Throws loudly on a malformed
  * value — a wrong-but-plausible colour is worse than a failure that names the
@@ -265,6 +329,7 @@ function parseFloatColor(
   // separator after a 3-channel float ("r, g, b, "), which the pre-BUG-133
   // parser also read correctly; on a `Color4` it is a deleted alpha instead,
   // and stays an error.
+  if (value.length > MAX_FLOAT_COLOR_LENGTH) throw unparseableFloat(field, value);
   const segments = value.split(',').map((p) => p.trim());
   if (stored === 'rgb' && segments.length === 4 && segments[3] === '') {
     segments.pop();
@@ -276,11 +341,7 @@ function parseFloatColor(
     // The pattern admits an overflowing exponent ("1e999" is Infinity)
     parts.some((n) => !Number.isFinite(n))
   ) {
-    throw new AppError(
-      ErrorCode.INVALID_INPUT,
-      `.chara field ${field}: unparseable float colour "${value}"`,
-      'error',
-    );
+    throw unparseableFloat(field, value);
   }
   const [r, g, b] = parts;
   return {
@@ -320,7 +381,7 @@ function readIndex(record: Record<string, unknown>, key: string): number | null 
   if (typeof value !== 'number' || !Number.isFinite(value)) {
     throw new AppError(
       ErrorCode.INVALID_INPUT,
-      `.chara field ${key}: expected a numeric palette index, got ${JSON.stringify(value)}`,
+      `.chara field ${key}: expected a numeric palette index, got ${describeValue(value)}`,
       'error',
     );
   }
@@ -361,7 +422,7 @@ function mapNamed<T>(
   if (mapped === undefined) {
     throw new AppError(
       ErrorCode.INVALID_INPUT,
-      `.chara field ${field}: unrecognised value "${value}" (expected one of: ${Object.keys(table).join(', ')})`,
+      `.chara field ${field}: unrecognised value ${describeValue(value)} (expected one of: ${Object.keys(table).join(', ')})`,
       'error',
     );
   }

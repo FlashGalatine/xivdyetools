@@ -633,7 +633,6 @@
   "errors": {
     "apiFailed": "マーケットボードからのデータ取得に失敗しました。",
     "imageTooLarge": "画像ファイルが大きすぎます。最大サイズは20MBです。",
-    "fileTooLarge": "ファイルが大きすぎます。最大サイズは20MBです。",
     "failedToReadImage": "画像の読み取りに失敗しました",
     "failedToReadFile": "ファイルの読み取りに失敗しました",
     "copyLinkFailed": "リンクのコピーに失敗しました",
@@ -1289,6 +1288,8 @@
     "rowColumn": "{row}行、{col}列",
     "exploreDye": "カララントを見る",
     "parseFailed": "このキャラクターファイルを読み込めませんでした：{reason}",
+    "charaNotChara": "読み込めるのは .chara ファイルのみです。",
+    "charaTooLarge": "このキャラクターファイルは{kb} KBを超えています。キャラクターファイルは通常3 KB未満です。Anamnesisで画像を添付した場合は、画像なしで保存し直してください。",
     "slotError": {
       "midRangeIndex": "この色は「濃い」と「薄い」の範囲の間にある未使用の96〜127に含まれます",
       "indexOutOfRange": "この色のインデックスはシートの範囲外です",

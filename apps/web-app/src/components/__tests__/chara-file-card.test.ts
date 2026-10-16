@@ -18,7 +18,7 @@ import { CharaFileCard, type CharaFileCardOptions } from '../chara-file-card';
 import { LanguageService, ToastService } from '@services/index';
 import { CharaSessionService } from '@services/chara-session-service';
 import { loadCharaFile } from '@services/chara-file-loader';
-import { MAX_USER_FILE_BYTES } from '@shared/constants';
+import { MAX_CHARA_FILE_BYTES } from '@xivdyetools/core';
 import { createTestContainer, cleanupTestContainer } from '../../__tests__/component-utils';
 
 /** Miqo'te female; the lip index sits in the unused 96–127 gap. */
@@ -124,14 +124,111 @@ describe('CharaFileCard — localized surfaces', () => {
     const errorToast = vi.spyOn(ToastService, 'error').mockImplementation(() => '');
     const { card } = mountCard();
     const file = charaFile('{}', 'huge.chara');
-    Object.defineProperty(file, 'size', { value: MAX_USER_FILE_BYTES + 1 });
+    Object.defineProperty(file, 'size', { value: MAX_CHARA_FILE_BYTES + 1 });
 
     await (card as unknown as LoadFile).loadFile(file);
 
-    expect(errorToast).toHaveBeenCalledWith(LanguageService.t('errors.fileTooLarge'));
-    // The key is a real translation, not an echo of the key
-    expect(LanguageService.t('errors.fileTooLarge')).not.toBe('errors.fileTooLarge');
+    const expected = LanguageService.tInterpolate('swatch.charaTooLarge', { kb: 8 });
+    expect(errorToast).toHaveBeenCalledWith(expected);
+    // A real translation that states the cap and what to do about an image
+    expect(expected).toContain('8 KB');
+    expect(expected).toContain('Anamnesis');
     expect(CharaSessionService.getSession()).toBeNull();
+  });
+
+  it('refuses a file not named .chara with the file-type toast (FINDING-001)', async () => {
+    const errorToast = vi.spyOn(ToastService, 'error').mockImplementation(() => '');
+    const { card } = mountCard();
+
+    await (card as unknown as LoadFile).loadFile(charaFile(FIXTURE, 'Trick & Treat Duo (L).pose'));
+
+    expect(errorToast).toHaveBeenCalledWith(LanguageService.t('swatch.charaNotChara'));
+    expect(LanguageService.t('swatch.charaNotChara')).toContain('.chara');
+    expect(CharaSessionService.getSession()).toBeNull();
+  });
+});
+
+/**
+ * The tests above call the private `loadFile` directly. These go through the
+ * real DOM events, so a check that lived only in one handler would show up
+ * here: both entry points must reach the loader's name and size guards.
+ */
+describe('CharaFileCard — drop and Choose file reach the same guards', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    CharaSessionService.setSession(null);
+  });
+
+  afterEach(() => {
+    for (const card of cards.splice(0)) card.destroy();
+    for (const host of hosts.splice(0)) cleanupTestContainer(host);
+    CharaSessionService.setSession(null);
+  });
+
+  const fileInputOf = (container: HTMLElement): HTMLInputElement =>
+    container.querySelector<HTMLInputElement>('input[type="file"]')!;
+
+  /** Drop `file` on the drop zone (the file input's parent). */
+  function drop(container: HTMLElement, file: File): void {
+    const event = new Event('drop', { bubbles: true, cancelable: true });
+    Object.defineProperty(event, 'dataTransfer', { value: { files: [file] } });
+    fileInputOf(container).parentElement!.dispatchEvent(event);
+  }
+
+  /** Pick `file` with the hidden file input. */
+  function choose(container: HTMLElement, file: File): void {
+    const input = fileInputOf(container);
+    Object.defineProperty(input, 'files', { value: [file], configurable: true });
+    input.dispatchEvent(new Event('change'));
+  }
+
+  it.each([
+    ['drop', drop],
+    ['Choose file', choose],
+  ] as const)(
+    '%s refuses a .pose with the file-type toast and reads nothing',
+    async (_entry, deliver) => {
+      const errorToast = vi.spyOn(ToastService, 'error').mockImplementation(() => '');
+      const { container } = mountCard();
+      const file = charaFile(FIXTURE, 'look.pose');
+      const textSpy = vi.spyOn(file, 'text');
+
+      deliver(container, file);
+
+      await vi.waitFor(() =>
+        expect(errorToast).toHaveBeenCalledWith(LanguageService.t('swatch.charaNotChara'))
+      );
+      expect(textSpy).not.toHaveBeenCalled();
+    }
+  );
+
+  it.each([
+    ['drop', drop],
+    ['Choose file', choose],
+  ] as const)('%s refuses an oversized .chara with the size toast', async (_entry, deliver) => {
+    const errorToast = vi.spyOn(ToastService, 'error').mockImplementation(() => '');
+    const { container } = mountCard();
+    const file = charaFile(FIXTURE, 'look.chara');
+    Object.defineProperty(file, 'size', { value: MAX_CHARA_FILE_BYTES + 1 });
+
+    deliver(container, file);
+
+    await vi.waitFor(() =>
+      expect(errorToast).toHaveBeenCalledWith(
+        LanguageService.tInterpolate('swatch.charaTooLarge', { kb: 8 })
+      )
+    );
+  });
+
+  it.each([
+    ['drop', drop],
+    ['Choose file', choose],
+  ] as const)('%s still loads a .chara', async (_entry, deliver) => {
+    const { container } = mountCard();
+
+    deliver(container, charaFile(FIXTURE, 'look.chara'));
+
+    await vi.waitFor(() => expect(CharaSessionService.getSession()?.fileName).toBe('look.chara'));
   });
 });
 

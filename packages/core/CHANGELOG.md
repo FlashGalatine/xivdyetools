@@ -5,6 +5,54 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.14.0] - 2026-10-16
+
+The `.chara` file cap of the 2026-10-15 import review (`docs/audits/2026-10-15-web-app-security/`),
+stacked on 5.13.0. MINOR: one new export. Every app takes core through `workspace:*`, so the two
+apps that enforce it, web-app 5.15.5 and discord-worker 5.8.15, ship in the same merge.
+
+### Added
+
+- **`MAX_CHARA_FILE_BYTES` (8,192): the largest `.chara` file the web app and the Discord bot accept.**
+  - Over the 1,093-file corpus, exports without an attached image are 1,837–2,777 bytes. The one
+    larger file carried an image the user attached in Anamnesis (3,128,021 bytes); Anamnesis stores
+    such an image as Base64 without shrinking it, so those files are now refused on purpose.
+  - `parseCharaFile` does not enforce it: it receives decoded text, whose length is not the file's
+    byte count. Each caller checks it where the bytes are (the browser's `File.size`, the bot's
+    attachment size and streamed download). It is a resource limit, not a safety check.
+
+## [5.13.0] - 2026-10-16
+
+FINDING-002 of the 2026-10-15 `.chara` import review
+(`docs/audits/2026-10-15-web-app-security/`). MINOR under the house rule that any observable
+change is minor: a new refusal and new message wording, no export changes shape. Every app takes
+core through `workspace:*`, so the web app's Glamour Reader / Swatch Matcher and the bot's
+`/glamour` / `/swatch` pick this up when it merges.
+
+### Fixed
+
+- **A malformed `.chara` field can no longer overflow the stack while its error is built.**
+  - `parseCharaFile` described an invalid palette index with `JSON.stringify(value)`, which
+    recurses. A nested array that fits in 8 KiB (`{"Skintone":[[[…]]]}`, 4,089 levels) overflowed
+    once the caller added about 25 stack frames, and the smallest file that overflowed on a bare
+    Node 22 stack was 8,195 bytes. Callers caught the `RangeError`, but the web app showed its
+    English "Maximum call stack size exceeded" as the reason.
+  - The message now names the value's kind and size (`got an array of 1 item`, `got an object`)
+    and never walks it. `JSON.parse` itself was never the problem: it reads a 1,000,000-level
+    array without trouble, and no code path recurses over parsed values any more.
+- **Error messages no longer grow with the file.**
+  - The float color, palette index and Tribe/Gender messages quoted the whole value. A 1 MiB
+    Tribe string gave a 1,048,232-character message, which the web app put in a toast and its
+    log.
+  - A string of up to 64 characters is still quoted, so `unrecognised value "Dunesfolke"` and
+    `unparseable float colour "red, green, blue"` read as before (quote marks are now escaped).
+    A longer one becomes `a string of N characters`.
+- **A float color string over 128 characters is refused before it is split.**
+  - `parseFloatColor` split, trimmed, mapped and regex-tested the whole string before checking it
+    had 3 or 4 channels: a 1 MiB comma string took about 95 ms and 44 MB per field under the bot's
+    1 MiB download cap. The longest real value is under 100 characters (four 23-character .NET
+    doubles and their separators); the fixtures top out at 46.
+
 ## [5.12.0] - 2026-10-11
 
 ### Added

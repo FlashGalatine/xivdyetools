@@ -2,6 +2,13 @@
 
 ---
 
+## Web-App Version 5.15.5 — October 16, 2026
+
+### Glamour Reader and Swatch Matcher: clearer file checks
+- **Only .chara files are read.** Dropping a pose file, an image or anything else now says so right away instead of failing to read it.
+- **Character files can be up to 8 KB.** Normal exports are under 3 KB. If you attached an image to a character in Anamnesis, save the character again without the image.
+- **Shorter errors for damaged files.** A file with a broken field gets a short message naming the field instead of a long or confusing one.
+
 ## Web-App Version 5.15.4 — October 11, 2026
 
 ### Glamour Reader: a tidier list

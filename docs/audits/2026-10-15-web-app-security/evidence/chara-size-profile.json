@@ -1,0 +1,163 @@
+{
+  "scope": "top-level .chara files only; no source files modified or image payloads decoded",
+  "proposedCapBytes": 8192,
+  "corpusDigestSha256": "b875e2327b8673c4d54cb821d6cd77870f0d7432ff781fb96dcee25d112434d6",
+  "totalBytes": 5864432,
+  "uniqueContentHashes": 1093,
+  "corpus": {
+    "count": 1093,
+    "minBytes": 1837,
+    "medianBytes": 2475,
+    "p95Bytes": 2725,
+    "maxBytes": 3128021,
+    "over8000Bytes": 1,
+    "over8192Bytes": 1
+  },
+  "withoutNonemptyImage": {
+    "count": 1092,
+    "minBytes": 1837,
+    "medianBytes": 2475,
+    "p95Bytes": 2725,
+    "maxBytes": 2777,
+    "over8000Bytes": 0,
+    "over8192Bytes": 0
+  },
+  "withImageValue": {
+    "count": 1,
+    "minBytes": 3128021,
+    "medianBytes": 3128021,
+    "p95Bytes": 3128021,
+    "maxBytes": 3128021,
+    "over8000Bytes": 1,
+    "over8192Bytes": 1
+  },
+  "imageStates": {
+    "absent": 999,
+    "null": 93,
+    "emptyString": 0,
+    "nonemptyString": 1,
+    "otherType": 0
+  },
+  "byProducer": {
+    "Anamnesis Character File": {
+      "count": 926,
+      "minBytes": 1837,
+      "medianBytes": 2550,
+      "p95Bytes": 2725,
+      "maxBytes": 3128021,
+      "over8000Bytes": 1,
+      "over8192Bytes": 1
+    },
+    "Ktisis Character File": {
+      "count": 22,
+      "minBytes": 2124,
+      "medianBytes": 2180,
+      "p95Bytes": 2202,
+      "maxBytes": 2204,
+      "over8000Bytes": 0,
+      "over8192Bytes": 0
+    },
+    "unspecified": {
+      "count": 93,
+      "minBytes": 2159,
+      "medianBytes": 2641,
+      "p95Bytes": 2735,
+      "maxBytes": 2743,
+      "over8000Bytes": 0,
+      "over8192Bytes": 0
+    },
+    "Ktisis/Anamnesis Character File": {
+      "count": 52,
+      "minBytes": 1844,
+      "medianBytes": 2182,
+      "p95Bytes": 2210,
+      "maxBytes": 2213,
+      "over8000Bytes": 0,
+      "over8192Bytes": 0
+    }
+  },
+  "currentParser": {
+    "passed": 1093,
+    "failed": 0
+  },
+  "oversized": [
+    {
+      "sha256": "9ab59a0433da2542071bc2393d3a9d02f7f7d8d8caec74b6ad25406c333f947d",
+      "bytes": 3128021,
+      "producer": "Anamnesis Character File",
+      "imageState": "nonemptyString",
+      "imageCharacters": 2898324,
+      "withoutImageCompactBytes": 1665,
+      "withoutImagePrettyBytes": 2106
+    }
+  ],
+  "probes": [
+    {
+      "label": "null image placeholder",
+      "bytes": 71,
+      "proposedCapAccepts": true,
+      "currentParserAccepts": true,
+      "imageOmittedFromParsedOutput": true,
+      "passed": true
+    },
+    {
+      "label": "empty image placeholder",
+      "bytes": 69,
+      "proposedCapAccepts": true,
+      "currentParserAccepts": true,
+      "imageOmittedFromParsedOutput": true,
+      "passed": true
+    },
+    {
+      "label": "non-image text in Base64Image",
+      "bytes": 94,
+      "proposedCapAccepts": true,
+      "currentParserAccepts": true,
+      "imageOmittedFromParsedOutput": true,
+      "passed": true
+    },
+    {
+      "label": "base64 of non-image text",
+      "bytes": 105,
+      "proposedCapAccepts": true,
+      "currentParserAccepts": true,
+      "imageOmittedFromParsedOutput": true,
+      "passed": true
+    },
+    {
+      "label": "proposed byte boundary 8191",
+      "bytes": 8191,
+      "proposedCapAccepts": true,
+      "currentParserAccepts": true,
+      "passed": true
+    },
+    {
+      "label": "proposed byte boundary 8192",
+      "bytes": 8192,
+      "proposedCapAccepts": true,
+      "currentParserAccepts": true,
+      "passed": true
+    },
+    {
+      "label": "proposed byte boundary 8193",
+      "bytes": 8193,
+      "proposedCapAccepts": false,
+      "currentParserAccepts": true,
+      "passed": true
+    },
+    {
+      "label": "UTF-8 bytes differ from string length",
+      "bytes": 9069,
+      "jsStringLength": 3069,
+      "proposedCapAccepts": false,
+      "passed": true
+    },
+    {
+      "label": "previous nested diagnostic reproducer exceeds proposed cap",
+      "bytes": 20014,
+      "proposedCapAccepts": false,
+      "passed": true
+    }
+  ],
+  "limit": "The cap is simulated, not implemented. Passing a size check does not validate content or establish safety."
+}

@@ -111,7 +111,7 @@ Match your character's colors to the nearest dyes from a `.chara` file (Anamnesi
 
 | Parameter | Description | Required |
 |-----------|-------------|----------|
-| `file` | `.chara` character file (1 MiB max) | Yes |
+| `file` | `.chara` character file (8 KB max) | Yes |
 | `order` | `slots` (file order, default) or `hardest` (worst match first) | No |
 | `slot` | Show the five nearest dyes for one slot: skin, hair, highlights, eyes, lip, facepaint, limbal | No |
 
@@ -126,7 +126,7 @@ Read a `.chara` file (Anamnesis / Ktisis / Brio export) as a glamour: every piec
 
 | Parameter | Description | Required |
 |-----------|-------------|----------|
-| `file` | `.chara` character file (1 MiB max) | Yes |
+| `file` | `.chara` character file (8 KB max) | Yes |
 
 **The card** shows the dyed pieces in slot order (the worn pieces when nothing is dyed), five at most, and its footer says how many it shows out of how many. Each row has the slot, the piece's name, its dye chips, a look chip and a verdict.
 

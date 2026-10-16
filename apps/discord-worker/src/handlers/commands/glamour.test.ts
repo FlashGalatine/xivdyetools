@@ -47,7 +47,7 @@ vi.mock('@xivdyetools/bot-logic', async (importOriginal) => {
 
 const CDN_URL = 'https://cdn.discordapp.com/attachments/1/2/look.chara?ex=1&is=2&hm=3';
 
-function makeInteraction(url: string, size = 2048): DiscordInteraction {
+function makeInteraction(url: string, size = 2048, filename = 'look.chara'): DiscordInteraction {
   return {
     id: 'int-1',
     application_id: 'app-1',
@@ -60,7 +60,7 @@ function makeInteraction(url: string, size = 2048): DiscordInteraction {
       options: [{ name: 'file', type: 11, value: 'att-1' }],
       resolved: {
         attachments: {
-          'att-1': { id: 'att-1', filename: 'look.chara', size, url, proxy_url: url, content_type: 'application/json' },
+          'att-1': { id: 'att-1', filename, size, url, proxy_url: url, content_type: 'application/json' },
         },
       },
     },
@@ -124,10 +124,24 @@ describe('/glamour', () => {
     expect(ctx.waitUntil).not.toHaveBeenCalled();
   });
 
-  it('refuses a file past 1 MiB before deferring', async () => {
-    const res = await handleGlamourCommand(makeInteraction(CDN_URL, 2 * 1_048_576), env, ctx);
+  it('refuses a file past 8 KiB before deferring', async () => {
+    const res = await handleGlamourCommand(makeInteraction(CDN_URL, 8_193), env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data?.content).toBe('Could not read the file — it is larger than 1 MB');
+    expect(body.data?.content).toBe(
+      'Could not read the file — it is larger than 8 KB; if you attached an image in Anamnesis, save the character again without it',
+    );
+    expect(body.data?.flags).toBe(64);
+    expect(ctx.waitUntil).not.toHaveBeenCalled();
+  });
+
+  it('refuses a .pose before deferring, without downloading it (FINDING-003)', async () => {
+    const res = await handleGlamourCommand(makeInteraction(CDN_URL, 2048, 'Trick & Treat Duo (L).pose'), env, ctx);
+    const body = (await res.json()) as InteractionResponseBody;
+    expect(body.type).toBe(4);
+    expect(body.data?.flags).toBe(64);
+    expect(body.data?.content).toBe('Could not read the file — it must be a .chara file');
+    expect(ctx.waitUntil).not.toHaveBeenCalled();
+    expect(mockExecuteGlamour).not.toHaveBeenCalled();
   });
 
   it('defers, reads the file and posts the card with the list in the embed', async () => {
