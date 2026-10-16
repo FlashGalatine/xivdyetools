@@ -633,7 +633,6 @@
   "errors": {
     "apiFailed": "장터에서 데이터를 가져오지 못했습니다.",
     "imageTooLarge": "이미지 파일이 너무 큽니다. 최대 크기는 20MB입니다.",
-    "fileTooLarge": "파일이 너무 큽니다. 최대 크기는 20MB입니다.",
     "failedToReadImage": "이미지를 읽지 못했습니다",
     "failedToReadFile": "파일을 읽지 못했습니다",
     "copyLinkFailed": "링크 복사 실패",
@@ -1289,6 +1288,8 @@
     "rowColumn": "{row}행, {col}열",
     "exploreDye": "염료 살펴보기",
     "parseFailed": "이 캐릭터 파일을 읽을 수 없습니다: {reason}",
+    "charaNotChara": ".chara 파일만 읽을 수 있습니다.",
+    "charaTooLarge": "이 캐릭터 파일은 {kb} KB를 초과합니다. 캐릭터 파일은 보통 3 KB 미만입니다. Anamnesis에서 이미지를 첨부했다면 이미지 없이 캐릭터를 다시 저장하세요.",
     "slotError": {
       "midRangeIndex": "이 색은 \"짙게\"와 \"옅게\" 범위 사이의 사용되지 않는 96–127 구간에 있습니다",
       "indexOutOfRange": "이 색 인덱스는 해당 시트의 범위를 벗어났습니다",

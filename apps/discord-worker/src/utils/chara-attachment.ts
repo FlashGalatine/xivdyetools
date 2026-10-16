@@ -4,20 +4,20 @@
  * FINDING-033 (2026-08-21 security audit): the download is hardened the way
  * image-worker hardens `/extractor image` — Discord-CDN host allowlist,
  * 10 s timeout, no redirect following, and a streamed byte cap that does not
- * trust the Discord-reported `size`.
+ * trust the Discord-reported `size`. Since the 2026-10-15 import review the
+ * file must also be named `*.chara` (FINDING-003) and the cap is core's
+ * 8 KiB `MAX_CHARA_FILE_BYTES`, down from 1 MiB.
  *
  * @module utils/chara-attachment
  */
 
+import { MAX_CHARA_FILE_BYTES } from '@xivdyetools/core';
 import type { Translator } from '@xivdyetools/bot-logic/i18n';
 import { readTextCapped } from './read-text-capped.js';
 import type { DiscordInteraction } from '../types/env.js';
 
-/** .chara files are small JSON — anything past 1 MiB is not one. */
-const MAX_FILE_BYTES = 1_048_576;
-
-/** The cap as the refusal states it ("larger than 1 MB"). */
-const MAX_FILE_MB = MAX_FILE_BYTES / 1_048_576;
+/** The cap as the refusal states it ("larger than 8 KB"). */
+const MAX_FILE_KB = MAX_CHARA_FILE_BYTES / 1024;
 
 /**
  * A refusal in the reader's language (HC-002, 2026-10-04 i18n audit): the
@@ -59,8 +59,8 @@ function isAllowedAttachmentUrl(url: string): boolean {
 
 /**
  * The checks that run before the command defers: the `file:` option names an
- * attachment, it is under the cap, and it lives on Discord's CDN. A failure
- * carries the localized reply for an ephemeral response.
+ * attachment called `*.chara`, it is under the cap, and it lives on Discord's
+ * CDN. A failure carries the localized reply for an ephemeral response.
  */
 export function checkCharaAttachment(
   interaction: DiscordInteraction,
@@ -72,8 +72,15 @@ export function checkCharaAttachment(
   if (!attachment) {
     return { ok: false, message: t.t('errors.missingInput') };
   }
-  if (attachment.size > MAX_FILE_BYTES) {
-    return refusal(t, 'card.charaFileReason.tooLarge', { mb: MAX_FILE_MB });
+  // FINDING-003 (2026-10-15 import review): a `.pose` used to be downloaded
+  // and parsed before it failed. The name decides, case-insensitive:
+  // `content_type` is optional and Discord's guess, and the CDN URL is not
+  // ours to interpret. A renamed pose still fails in the parser.
+  if (!attachment.filename.toLowerCase().endsWith('.chara')) {
+    return refusal(t, 'card.charaFileReason.notChara');
+  }
+  if (attachment.size > MAX_CHARA_FILE_BYTES) {
+    return refusal(t, 'card.charaFileReason.tooLarge', { kb: MAX_FILE_KB });
   }
   // FINDING-033: only Discord's own CDN hosts are ever fetched
   if (!isAllowedAttachmentUrl(attachment.url)) {
@@ -102,9 +109,10 @@ export async function downloadCharaAttachment(
     // An expired / forbidden attachment URL or a redirect: the file could not be read.
     return refusal(t, 'card.charaFileReason.downloadFailed', { status: response.status });
   }
-  const text = await readTextCapped(response, MAX_FILE_BYTES);
+  // The reported size can be absent or wrong: count the bytes that arrive
+  const text = await readTextCapped(response, MAX_CHARA_FILE_BYTES);
   if (text === null) {
-    return refusal(t, 'card.charaFileReason.tooLarge', { mb: MAX_FILE_MB });
+    return refusal(t, 'card.charaFileReason.tooLarge', { kb: MAX_FILE_KB });
   }
   return { ok: true, text };
 }

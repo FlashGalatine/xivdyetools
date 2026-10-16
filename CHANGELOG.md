@@ -8,6 +8,46 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [2.3.3] - 2026-10-13
+
+The three beta deploys follow the branch's own changes. Patch: no workspace, package or worker code changes, and no
+production workflow is touched, so **merging starts no production deploy**. Pushing this branch starts no beta deploy
+either: it changes no deploy path.
+
+### Fixed
+
+- **Beta deploys on a merge from `main`**: a push filter compares only the pushed commits, so merging `main` into a
+  branch started every beta deploy whose paths `main` had changed, even when the branch itself changed nothing there,
+  and took the shared beta bot, site or OG worker from whoever was testing on it (four times on 2026-10-12/13). Each
+  `*-beta.yml` now runs a `changes` job that diffs the pushed commit against its merge base with `main` over the deploy
+  paths; the deploy runs only when that diff is non-empty. A manual `workflow_dispatch` always deploys.
+- **`CLAUDE.md` and `README.md` edits inside app and package directories** no longer start a beta deploy: the
+  `push.paths` filters and the guard both leave them out. The exclusion is by name, never `*.md`, because discord-worker
+  bundles `CHANGELOG-laymans.md` for `/changelog`.
+- **A skipping beta run could cancel a real one**: each beta workflow's shared `concurrency` group moved from the
+  workflow to the deploy job, so a run whose guard skips never joins it. A per-ref workflow-level group
+  (`deploy-<app>-beta-${{ github.ref }}`) takes its place: a newer push cancels its own branch's older run, guard
+  included, so two quick pushes to one branch no longer race to deploy.
+
+### Added
+
+- `scripts/check-workflows.test.ts` checks each beta workflow (13 new cases):
+  - its guard's path list matches its `push.paths`;
+  - both exclusions are present and come last in the filter;
+  - the guard script keeps its shape (full-history checkout, the `workflow_dispatch` short-circuit, the merge-base
+    fallback, the `git diff --quiet` line with its exclusions, and the step output the deploy job reads), anchored so
+    a commented-out copy cannot pass;
+  - the deploy job waits on the guard and holds its own workflow's shared group, and the workflow-level group is that
+    group per ref.
+
+### Known gap
+
+- A branch stacked on another branch still deploys beta when its base changed an app, because both are measured
+  against `main`. Comparing against the pull request's base branch would close it.
+- A push that fully reverts the branch's own app changes no longer redeploys beta, because the branch then matches its
+  merge base with `main` over the deploy paths. Run the workflow by hand (`workflow_dispatch`) to put such a branch back
+  on beta, once the branch's later pushes have finished: a newer push to the same branch cancels the manual run.
+
 ## [2.3.2] - 2026-10-06
 
 Sprint 20 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`): CI,

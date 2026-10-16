@@ -1,0 +1,12 @@
+
+ RUN  v5.0.3 C:/dev/XIVProjects/xivdyetools/.claude/worktrees/glamour-import-audit/apps/discord-worker
+
+
+ Test Files  3 passed (3)
+      Tests  54 passed (54)
+   Start at  10:28:26
+   Duration  1.75s (transform 73%, import 22%, tests 4%, worker 1%)
+
+  Transform  transforming modules took 2.55s · 73% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns

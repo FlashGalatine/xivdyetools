@@ -35,6 +35,11 @@ Rules:
   path filter.
 -->
 
+## [5.8.15] - 2026-10-16
+### 🗂️ Clearer file checks for /swatch and /glamour
+- `/swatch` and `/glamour` say right away when the attachment isn't a .chara file, instead of trying to read it.
+- Character files can be up to 8 KB, and normal exports are under 3 KB. If you attached an image to a character in Anamnesis, save the character again without the image.
+
 ## [5.8.14] - 2026-10-11
 ### 👗 A tidier /glamour list
 - `/glamour`'s copy-ready list leaves out pieces that show nothing, like The Emperor's New items, but keeps The Emperor's New Gloves, and the Robe unless your character is female.

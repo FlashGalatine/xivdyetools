@@ -227,7 +227,7 @@ The shared mechanics are in [Deployment](../../developer-guides/deployment.md) a
 | Environment | Details |
 |---|---|
 | **Production** | Pages project `xivdyetools` → `xivdyetools.app`. `deploy-web-app.yml`, on push to `main`/`master` under the `apps/web-app/**` + `packages/{core,types,logger,svg}/**` path filter (plus four root inputs: `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `turbo.json`, `tsconfig.base.json`) |
-| **Beta** | A *second* Pages project, `xivdyetools-beta` → `beta.xivdyetools.app`. `deploy-web-app-beta.yml`, on push to any branch except `main`, `master` and `dependabot/**`. `--branch=beta` is load-bearing (the project's production branch) and fails **silently** without it. Beta reads and writes **production** preset data |
+| **Beta** | A *second* Pages project, `xivdyetools-beta` → `beta.xivdyetools.app`. `deploy-web-app-beta.yml`, on push to any branch except `main`, `master` and `dependabot/**` whose own changes, measured against its merge base with `main`, touch the same path filter ([deployment guide](../../developer-guides/deployment.md#beta-deploys-follow-the-branchs-own-changes)). `--branch=beta` is load-bearing (the project's production branch) and fails **silently** without it. Beta reads and writes **production** preset data |
 | **Development** | `pnpm --filter xivdyetools-web-app run dev` (localhost:5173) |
 
 **Build.** Vite, `root: 'src'`, output `dist/`. The app bundles no WASM — resvg and Photon live in

@@ -123,6 +123,25 @@ rule (2026-10-03 audit FINDING-023): `DISCORD_TOKEN` and `MODERATION_DISCORD_TOK
 environment secrets, with no repository-level copy left; the maintainer makes the move before the
 PR documenting it merges (tracked in `OPEN_ITEMS.md`).
 
+### Update 2026-10-13 — a beta deploy follows the branch's own changes
+
+The three beta workflows filter on `push.paths`, and a push filter sees only the pushed
+commits. Merging `main` into a branch therefore started every beta deploy whose paths `main` had
+changed, although the branch itself changed nothing there. On 2026-10-12/13 four such merges
+redeployed the shared betas from docs-only branches, among them a research PR (#303). A
+`CLAUDE.md` or `README.md` edit inside an app or package directory did the same (a CLAUDE.md
+freshness branch's two pushes each started the beta deploys, and the first deployed).
+
+Each workflow now runs a `changes` job first. It checks out with full history, diffs the pushed
+commit against `git merge-base origin/main HEAD` over the deploy paths minus `CLAUDE.md` and
+`README.md`, and the deploy job runs only when that diff is non-empty; a manual run always
+deploys. The shared `concurrency` group moved from the workflow to the deploy job, so a run that
+skips cannot cancel another branch's deploy in progress, and a per-ref workflow-level group keeps
+two quick pushes to one branch from deploying out of order. Details and the two residual cases (a
+branch stacked on another inherits its base's changes; a push that reverts the branch's own
+changes does not redeploy) are in
+[`deployment.md`](../developer-guides/deployment.md#beta-deploys-follow-the-branchs-own-changes).
+
 ---
 
 ## Problem
@@ -320,15 +339,17 @@ deliberately out of scope (see below).
 
 ## Continuous deployment of the beta bot
 
-`.github/workflows/deploy-discord-worker-beta.yml` deploys the beta bot on **any push to a
-non-main branch** that touches `apps/discord-worker/**`, one of its packages, or one of the four
-root inputs (`pnpm-lock.yaml`, `pnpm-workspace.yaml`, `turbo.json`, `tsconfig.base.json`). It runs the same
+`.github/workflows/deploy-discord-worker-beta.yml` deploys the beta bot on **a push to a
+non-main branch** whose own changes, measured against its merge base with `main`, touch
+`apps/discord-worker/**`, one of its packages, or one of the four root inputs (`pnpm-lock.yaml`,
+`pnpm-workspace.yaml`, `turbo.json`, `tsconfig.base.json`); `CLAUDE.md` and `README.md` edits do
+not count (Update 2026-10-13 above). It runs the same
 build / type-check / test gate as production, then `wrangler deploy` with **no `--env`** — which
 is the beta worker.
 
 | | Production workflow | Beta workflow |
 |---|---|---|
-| Trigger | push to `main`/`master` | push to any other branch (excluding `dependabot/**`) |
+| Trigger | push to `main`/`master` | push to any other branch (excluding `dependabot/**`) whose own changes touch the deploy paths |
 | Deploy command | `deploy --env production` | `deploy` |
 | `cancel-in-progress` | `false` | `true` — a newer commit supersedes |
 | Command registration | global, always | **guild-scoped**, only if secrets are set |
@@ -346,8 +367,9 @@ so nothing breaks before they exist.
 that overwrites the entire command set at whichever scope it targets. Guild scope confines that
 to the test server; a global run from a feature branch would overwrite the live command set.
 
-**There is one beta bot.** Concurrent branches share it and the most recent push wins — inherent
-to having a single beta Discord application, not a flaw in the workflow.
+**There is one beta bot.** Concurrent branches share it, and the deploy that starts last wins; a
+push whose own changes skip the deploy never takes it (Update 2026-10-13). That is inherent to
+having a single beta Discord application, not a flaw in the workflow.
 
 ### Correction: production registration is automatic
 
@@ -403,7 +425,7 @@ Cloudflare Pages project** rather than a preview branch of the production one.
 |---|---|---|
 | Pages project | `xivdyetools` | `xivdyetools-beta` |
 | Domain | `xivdyetools.app` | `beta.xivdyetools.app` |
-| Workflow | `deploy-web-app.yml` (push to `main`) | `deploy-web-app-beta.yml` (push to any non-`main` branch that touches its `paths:` filter — `apps/web-app/**`, `packages/core/**`, `packages/types/**`, `packages/logger/**`, `packages/svg/**`, plus the four root inputs `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `turbo.json`, `tsconfig.base.json`) |
+| Workflow | `deploy-web-app.yml` (push to `main`) | `deploy-web-app-beta.yml` (push to any non-`main` branch whose own changes, measured against its merge base with `main`, touch its `paths:` filter — `apps/web-app/**`, `packages/core/**`, `packages/types/**`, `packages/logger/**`, `packages/svg/**`, plus the four root inputs `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `turbo.json`, `tsconfig.base.json`; `CLAUDE.md` and `README.md` edits do not count — Update 2026-10-13 above) |
 | Deploy command | `pages deploy dist --project-name=xivdyetools` | `pages deploy dist --project-name=xivdyetools-beta --branch=beta` |
 | Backends | production `auth.` / `api.xivdyetools.app` | **the same production backends** |
 | Cloudflare credential | `environment: production` + `secrets.CLOUDFLARE_API_TOKEN` | `environment: beta` + `secrets.CLOUDFLARE_API_TOKEN_BETA` — separate credential since 2026-08-29 (FINDING-028) |

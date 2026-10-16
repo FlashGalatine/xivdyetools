@@ -31,6 +31,12 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.11.2] - 2026-10-16
+### 🗂️ Character files: clearer checks
+- Web app and Discord bot: only .chara files are read. A pose file, an image or anything else is turned away right away with a message saying so.
+- Web app and Discord bot: character files can be up to 8 KB, and normal exports are under 3 KB. If you attached an image to a character in Anamnesis, save the character again without the image.
+- Web app: a damaged character file gets a short error naming the broken field instead of a long or confusing one.
+
 ## [5.11.1] - 2026-10-12
 ### 👗 Glamour Reader and /glamour
 - Web app and Discord bot: 803 more pieces have an Acquisition line, each checked against the official Online Store, the quest's own rewards or a second independent source, mostly official Lodestone pages (15 follow a set-mate or were decided by hand). Seasonal gear names its event and the year it was first offered, such as "Valentione's Day (2026)".

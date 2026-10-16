@@ -1,5 +1,6 @@
-# Deploys the BETA OG worker (xivdyetools-og-worker-dev) on any push to a
-# non-main branch that touches og-worker or one of its packages.
+# Deploys the BETA OG worker (xivdyetools-og-worker-dev) on a push to a
+# non-main branch whose own changes touch og-worker or one of its packages
+# (the `changes` job below says what "own" means).
 #
 # Safe because of docs/operations/DEPLOY_ENVIRONMENTS.md: a bare `wrangler deploy`
 # targets the top-level env, which is the beta worker — its own Worker name, its
@@ -11,8 +12,11 @@
 # IS publicly routed, on real hostnames. It cannot reach production, but it is
 # not a private sandbox either.
 #
-# There is ONE beta worker. Concurrent branches share it, so the most recent push
-# wins; `cancel-in-progress: true` makes that explicit rather than a race.
+# There is ONE beta worker, shared by every branch, and two concurrency groups
+# decide who holds it. Per ref, at workflow level: a newer push cancels its own
+# branch's older run, guard included, so two quick pushes no longer race to
+# deploy. Shared, on the deploy job: the deploy that starts last cancels any other
+# branch's deploy in progress.
 name: Deploy Beta OG Worker
 
 on:
@@ -38,7 +42,19 @@ on:
       - 'pnpm-workspace.yaml'
       - 'turbo.json'
       - 'tsconfig.base.json'
+      # Never bundled, so an edit to these alone does not start a deploy. Not `*.md`
+      # wholesale: kept in step with the other beta workflows, whose builds bundle a
+      # CHANGELOG-laymans.md. Keep these two lines last: a later positive pattern
+      # would match the files again.
+      - '!**/CLAUDE.md'
+      - '!**/README.md'
   workflow_dispatch:
+
+# Per ref (see the header). Never shared across branches: a run whose `changes` job
+# skips the deploy would then cancel another branch's deploy in progress.
+concurrency:
+  group: deploy-og-worker-beta-${{ github.ref }}
+  cancel-in-progress: true
 
 # FINDING-009 (2026-08-21 security audit): least-privilege GITHUB_TOKEN —
 # the default repo token is never needed beyond checkout here. Jobs that need
@@ -46,15 +62,61 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: deploy-og-worker-beta
-  # Unlike production, a superseded beta deploy is worth cancelling: the newer
-  # commit is the one being tested.
-  cancel-in-progress: true
-
 jobs:
+  # The push filter above sees only the pushed commits, so merging main into a
+  # branch starts this workflow whenever main changed og-worker, even if the
+  # branch never did, and the deploy would take the shared beta worker from
+  # whoever is testing on it. This job compares the branch with its merge base on
+  # main instead: the deploy runs only when the branch's own changes touch a
+  # deploy path. CLAUDE.md and README.md are never bundled, so they do not count.
+  changes:
+    name: Check this branch changes og-worker
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      deploy: ${{ steps.diff.outputs.deploy }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          # The merge base needs main's history, not only the pushed commit.
+          fetch-depth: 0
+
+      - name: Compare the branch with main
+        id: diff
+        env:
+          EVENT: ${{ github.event_name }}
+          # on.push.paths as git pathspecs; scripts/check-workflows.test.ts keeps the two in step.
+          DEPLOY_PATHS: apps/og-worker packages/core packages/types packages/logger packages/svg packages/worker-kit pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.json
+        run: |
+          # A manual run is a deliberate request to deploy this ref.
+          if [ "$EVENT" = workflow_dispatch ]; then
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if ! base=$(git merge-base origin/main HEAD); then
+            echo "::warning::No merge base with main; deploying."
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # DEPLOY_PATHS is unquoted on purpose: one pathspec per word.
+          if git diff --quiet "$base" HEAD -- $DEPLOY_PATHS ':(exclude,glob)**/CLAUDE.md' ':(exclude,glob)**/README.md'; then
+            echo "::notice::This branch changes nothing og-worker bundles, relative to main (merge base ${base:0:8}); skipping the beta deploy."
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          fi
+
   deploy:
     name: Deploy Beta OG Worker
+    needs: changes
+    if: needs.changes.outputs.deploy == 'true'
+    # The shared group sits on this job, not the workflow, so a run that skips its
+    # deploy never joins it and cannot cancel another branch's deploy in progress.
+    concurrency:
+      group: deploy-og-worker-beta
+      # Unlike production, a superseded beta deploy is worth cancelling: the newer
+      # commit is the one being tested.
+      cancel-in-progress: true
     runs-on: ubuntu-latest
     timeout-minutes: 30
     # FINDING-028 (2026-08-29 security audit): beta authenticates with its own

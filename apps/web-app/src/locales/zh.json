@@ -633,7 +633,6 @@
   "errors": {
     "apiFailed": "从市场布告板获取数据失败。",
     "imageTooLarge": "图像文件太大。最大大小为 20MB。",
-    "fileTooLarge": "文件太大。最大大小为 20MB。",
     "failedToReadImage": "读取图像失败",
     "failedToReadFile": "读取文件失败",
     "copyLinkFailed": "复制链接失败",
@@ -1289,6 +1288,8 @@
     "rowColumn": "第{row}行，第{col}列",
     "exploreDye": "查看染剂",
     "parseFailed": "无法读取此角色文件：{reason}",
+    "charaNotChara": "这里只能读取 .chara 文件。",
+    "charaTooLarge": "此角色文件超过 {kb} KB。角色文件通常小于 3 KB；如果你在 Anamnesis 中附加了图片，请不带图片重新保存角色。",
     "slotError": {
       "midRangeIndex": "该颜色位于“浓艳”与“清淡”范围之间未使用的 96–127 区间",
       "indexOutOfRange": "该颜色索引超出了所属色表的范围",

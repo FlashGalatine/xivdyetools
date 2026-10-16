@@ -1,11 +1,14 @@
 /**
  * loadCharaFile — the `.chara` loader behind the file card.
  *
- * Size guard: the loader used to read `file.text()` of any size and hand it to
- * the parser; a multi-GB drop would hang the tab (self-DoS, 2026-08-21
- * security audit, WEB-13). It now refuses a file over the shared cap before
- * reading it. Telemetry: one `chara_parse` per file that reached the parser,
- * never for one refused or unreadable before it.
+ * Name and size guards: the loader used to read `file.text()` of any size and
+ * hand it to the parser; a multi-GB drop would hang the tab (self-DoS,
+ * 2026-08-21 security audit, WEB-13), and the drop zone took a `.pose` as
+ * readily as a `.chara` (FINDING-001, 2026-10-15 import review). It now
+ * refuses a file not named `*.chara`, then one over core's 8 KiB
+ * `MAX_CHARA_FILE_BYTES`, before reading either. Telemetry: one `chara_parse`
+ * per file that reached the parser, never for one refused or unreadable
+ * before it.
  *
  * Real services (LanguageService and the dye database are initialised in
  * setup.ts); nothing here reaches the network.
@@ -14,7 +17,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { loadCharaFile } from '../chara-file-loader';
 import { CharaSessionService } from '../chara-session-service';
 import { TelemetryService } from '../telemetry-service';
-import { MAX_USER_FILE_BYTES } from '@shared/constants';
+import { MAX_CHARA_FILE_BYTES } from '@xivdyetools/core';
 
 /**
  * Galatine-shaped Anamnesis fixture (same shape as glamour-block.test.ts's
@@ -53,8 +56,12 @@ afterEach(() => {
 });
 
 describe('loadCharaFile — size guard (WEB-13)', () => {
+  it('is 8 KiB', () => {
+    expect(MAX_CHARA_FILE_BYTES).toBe(8_192);
+  });
+
   it('refuses a file over the cap before reading it', async () => {
-    const file = fileOfSize(MAX_USER_FILE_BYTES + 1);
+    const file = fileOfSize(MAX_CHARA_FILE_BYTES + 1);
     const textSpy = vi.spyOn(file, 'text');
 
     const result = await loadCharaFile(file);
@@ -65,13 +72,86 @@ describe('loadCharaFile — size guard (WEB-13)', () => {
   });
 
   it('still reads a file at the cap', async () => {
-    const file = fileOfSize(MAX_USER_FILE_BYTES, JSON.stringify({ TypeName: 'x' }));
+    const file = fileOfSize(MAX_CHARA_FILE_BYTES, JSON.stringify({ TypeName: 'x' }));
     const textSpy = vi.spyOn(file, 'text');
 
     const result = await loadCharaFile(file);
 
     expect(textSpy).toHaveBeenCalledTimes(1);
     expect(result).not.toEqual({ ok: false, error: 'tooLarge' });
+  });
+
+  it('counts bytes, not characters: 3,000 kana are 9,000 bytes', async () => {
+    const text = JSON.stringify({ Nickname: 'ア'.repeat(3_000), REyeColor: 42 });
+    const file = new File([text], 'kana.chara');
+    expect(text.length).toBeLessThan(MAX_CHARA_FILE_BYTES);
+    expect(file.size).toBeGreaterThan(MAX_CHARA_FILE_BYTES);
+
+    expect(await loadCharaFile(file)).toEqual({ ok: false, error: 'tooLarge' });
+  });
+
+  it('keeps the loaded character when a refused file is dropped on top of it', async () => {
+    await loadCharaFile(fileOfSize(10, ANAMNESIS_FIXTURE, 'first.chara'));
+    const before = CharaSessionService.getSession();
+
+    await loadCharaFile(fileOfSize(MAX_CHARA_FILE_BYTES + 1));
+
+    expect(CharaSessionService.getSession()).toBe(before);
+  });
+});
+
+/**
+ * FINDING-001 (2026-10-15 import review): the drop zone forwarded any first
+ * file, so a dropped `.pose` was read and parsed before it failed. The check
+ * is on the name, case-insensitive, never on `file.type`: browsers report ''
+ * for `.chara`, which has no registered MIME type.
+ */
+describe('loadCharaFile — name guard', () => {
+  it.each([
+    'Trick & Treat Duo (L).pose',
+    'look.png',
+    'look.chara.png',
+    'look.json',
+    'look.txt',
+    'chara',
+    'look',
+  ])('refuses %s before reading it', async (name) => {
+    const file = fileOfSize(10, ANAMNESIS_FIXTURE, name);
+    const textSpy = vi.spyOn(file, 'text');
+    const track = vi.spyOn(TelemetryService, 'track').mockImplementation(() => {});
+
+    expect(await loadCharaFile(file)).toEqual({ ok: false, error: 'notChara' });
+    expect(textSpy).not.toHaveBeenCalled();
+    expect(track).not.toHaveBeenCalled();
+    expect(CharaSessionService.getSession()).toBeNull();
+  });
+
+  it.each(['look.chara', 'LOOK.CHARA', 'look.Chara', 'look.png.chara'])(
+    'reads %s',
+    async (name) => {
+      expect(await loadCharaFile(fileOfSize(10, ANAMNESIS_FIXTURE, name))).toEqual({ ok: true });
+    }
+  );
+
+  it('reads a .chara whose MIME type the browser left empty', async () => {
+    const file = new File([ANAMNESIS_FIXTURE], 'look.chara');
+    expect(file.type).toBe('');
+    expect(await loadCharaFile(file)).toEqual({ ok: true });
+  });
+
+  it('checks the name before the size', async () => {
+    expect(await loadCharaFile(fileOfSize(MAX_CHARA_FILE_BYTES + 1, '{}', 'huge.pose'))).toEqual({
+      ok: false,
+      error: 'notChara',
+    });
+  });
+
+  it('still parses a renamed pose and refuses it for its content', async () => {
+    const pose = JSON.stringify({ FileExtension: '.pose', TypeName: 'Anamnesis Pose', Bones: {} });
+    const result = await loadCharaFile(fileOfSize(10, pose, 'renamed.chara'));
+    expect(result).toMatchObject({ ok: false, error: 'failed' });
+    if (!result.ok && result.error === 'failed')
+      expect(result.reason).toMatch(/no character colour fields/);
   });
 });
 
@@ -154,7 +234,7 @@ describe('loadCharaFile — telemetry', () => {
 
   it('does not count a size-refused file as a parse', async () => {
     const track = vi.spyOn(TelemetryService, 'track').mockImplementation(() => {});
-    await loadCharaFile(fileOfSize(MAX_USER_FILE_BYTES + 1));
+    await loadCharaFile(fileOfSize(MAX_CHARA_FILE_BYTES + 1));
     expect(track).not.toHaveBeenCalled();
   });
 });
@@ -199,5 +279,19 @@ describe('loadCharaFile — overlapping loads', () => {
 
     expect(await olderLoad).toEqual({ ok: false, error: 'superseded' });
     expect(CharaSessionService.getSession()?.fileName).toBe('newer.chara');
+  });
+
+  it.each([
+    ['a file that is not a .chara', () => fileOfSize(10, '{}', 'look.pose')],
+    ['an oversized .chara', () => fileOfSize(MAX_CHARA_FILE_BYTES + 1)],
+  ])('a refused drop (%s) does not cancel a .chara still loading', async (_case, refused) => {
+    const pending = slowFile('pending.chara');
+    const pendingLoad = loadCharaFile(pending.file);
+
+    expect((await loadCharaFile(refused())).ok).toBe(false);
+    pending.read.finish!(ANAMNESIS_FIXTURE);
+
+    expect(await pendingLoad).toEqual({ ok: true });
+    expect(CharaSessionService.getSession()?.fileName).toBe('pending.chara');
   });
 });

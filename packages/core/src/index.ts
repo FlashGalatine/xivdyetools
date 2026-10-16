@@ -181,7 +181,7 @@ export { SOCIAL_LINKS, PRODUCT_LINKS } from './config/product-links.js';
 export type { /** @public */ ProductLink } from './config/product-links.js';
 
 // .chara character-file import (5.0 Swatch Matcher; parse rules live in core)
-export { parseCharaFile } from './services/chara/chara-parser.js';
+export { parseCharaFile, MAX_CHARA_FILE_BYTES } from './services/chara/chara-parser.js';
 export type {
   /** @public */
   ParsedCharaFile,
