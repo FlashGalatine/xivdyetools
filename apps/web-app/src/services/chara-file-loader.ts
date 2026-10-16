@@ -2,16 +2,20 @@
  * Read a dropped `.chara` file into the shared character session.
  *
  * Parsing is core's (`parseCharaFile` → `resolveCharaColors`). This adds the
- * size cap, the `chara_parse` telemetry event and the hand-off to
- * `CharaSessionService`. It reports what went wrong instead of showing it, so
- * the file card owns the words.
+ * file-name and size checks, the `chara_parse` telemetry event and the
+ * hand-off to `CharaSessionService`. It reports what went wrong instead of
+ * showing it, so the file card owns the words.
  *
  * @module services/chara-file-loader
  */
 
-import { CharacterColorService, parseCharaFile, resolveCharaColors } from '@xivdyetools/core';
+import {
+  CharacterColorService,
+  MAX_CHARA_FILE_BYTES,
+  parseCharaFile,
+  resolveCharaColors,
+} from '@xivdyetools/core';
 import type { ResolvedCharaCharacter } from '@xivdyetools/core';
-import { MAX_USER_FILE_BYTES } from '@shared/constants';
 import { logger } from '@shared/logger';
 import { CharaSessionService } from './chara-session-service';
 import { dyeService } from './dye-service-wrapper';
@@ -19,6 +23,9 @@ import { TelemetryService } from './telemetry-service';
 
 export type CharaLoadResult =
   | { ok: true }
+  /** Not named `*.chara` (a pose, an image, a folder): refused unread */
+  | { ok: false; error: 'notChara' }
+  /** Over `MAX_CHARA_FILE_BYTES`: refused unread */
   | { ok: false; error: 'tooLarge' }
   | { ok: false; error: 'failed'; reason: string }
   /** A newer file was chosen while this one was still loading: nothing to show */
@@ -43,12 +50,19 @@ function reasonOf(error: unknown): string {
  * subscriber has already been told by the time this resolves.
  */
 export async function loadCharaFile(file: File): Promise<CharaLoadResult> {
+  // Refuse before reading. The name, not `file.type`: `.chara` has no
+  // registered MIME type, so browsers report '' for it. The drop zone takes
+  // any first file, and the picker's `accept` is only a hint (FINDING-001,
+  // 2026-10-15 import review). A renamed pose still fails in the parser.
+  if (!file.name.toLowerCase().endsWith('.chara')) return { ok: false, error: 'notChara' };
+  // Then the size: real exports are under 3 KB, and a file with an attached
+  // image is megabytes (WEB-13; 8 KiB since the 2026-10-15 review).
+  if (file.size > MAX_CHARA_FILE_BYTES) return { ok: false, error: 'tooLarge' };
+
+  // Only a file that will be read takes a generation, so a refused drop never
+  // cancels a good file that is still loading.
   const generation = ++loadGeneration;
   const superseded = (): boolean => generation !== loadGeneration;
-
-  // Refuse before reading: a multi-GB drop would hang the tab in
-  // file.text() / JSON.parse (WEB-13). Same cap as the image inputs.
-  if (file.size > MAX_USER_FILE_BYTES) return { ok: false, error: 'tooLarge' };
 
   // Reading is not parsing: a stale handle (the picker's File outliving the
   // file on disk) fails here, before the parser ever sees it — no chara_parse.

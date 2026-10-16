@@ -15,6 +15,7 @@
  * @module components/chara-file-card
  */
 
+import { MAX_CHARA_FILE_BYTES } from '@xivdyetools/core';
 import type { ResolvedCharaCharacter } from '@xivdyetools/core';
 import { LanguageService, ToastService } from '@services/index';
 import { ThemeService } from '@services/theme-service';
@@ -140,11 +141,15 @@ export class CharaFileCard {
     // Superseded: a newer drop replaced this one, so its outcome is moot.
     if (result.ok || result.error === 'superseded') return;
     ToastService.error(
-      result.error === 'tooLarge'
-        ? LanguageService.t('errors.fileTooLarge')
-        : // Loud failure naming the field and value — core's messages do that,
-          // and they ride in as {reason} inside the localized sentence.
-          LanguageService.tInterpolate('swatch.parseFailed', { reason: result.reason })
+      result.error === 'notChara'
+        ? LanguageService.t('swatch.charaNotChara')
+        : result.error === 'tooLarge'
+          ? LanguageService.tInterpolate('swatch.charaTooLarge', {
+              kb: MAX_CHARA_FILE_BYTES / 1024,
+            })
+          : // Loud failure naming the field and value — core's messages do that,
+            // and they ride in as {reason} inside the localized sentence.
+            LanguageService.tInterpolate('swatch.parseFailed', { reason: result.reason })
     );
   }
 
