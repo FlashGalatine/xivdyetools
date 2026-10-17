@@ -113,6 +113,11 @@ export const mockCategories: {
 // ============================================
 
 export const handlers = [
+  // Market-board server lists (config-sidebar, WorldService). The URLs are
+  // relative, so under jsdom they resolve against http://localhost:3000.
+  http.get('*/json/data-centers.json', () => HttpResponse.json([])),
+  http.get('*/json/worlds.json', () => HttpResponse.json([])),
+
   // Health check
   http.get(`${API_URL}/health`, () => {
     return HttpResponse.json({ status: 'ok' });

@@ -3,7 +3,7 @@
  * and writes the chosen id to the harmony config. The option list comes from
  * COLOR_WHEEL_IDS, so a wheel added in core appears here with no edit.
  */
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { COLOR_WHEEL_IDS } from '@xivdyetools/core';
 import '@components/v4/config-sidebar';
 import { ConfigController } from '@services/config-controller';
@@ -12,6 +12,12 @@ describe('config-sidebar colour wheel select', () => {
   let el: HTMLElement & { activeTool: string; updateComplete: Promise<unknown> };
 
   beforeEach(async () => {
+    // The mount fetches the market server lists; nothing here awaits them, so
+    // answer locally rather than leave them in flight at MSW's teardown.
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => Response.json([]))
+    );
     ConfigController.resetInstance();
     ConfigController.getInstance().setConfig('harmony', { wheel: 'rgb' });
     el = document.createElement('v4-config-sidebar') as typeof el;
@@ -23,6 +29,7 @@ describe('config-sidebar colour wheel select', () => {
   afterEach(() => {
     el.remove();
     ConfigController.resetInstance();
+    vi.unstubAllGlobals();
   });
 
   const select = () =>
