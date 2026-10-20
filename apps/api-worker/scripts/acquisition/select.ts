@@ -8,6 +8,7 @@ import type { Cost, Entry, Inputs, Npc, Offer, Source, Tables } from './model.js
 
 /** ItemUICategory rows of general currencies: 63 "Other" (gil, seals, marks, tomestones, MGP) and 100 "Currency". */
 const CURRENCY_CATEGORIES = new Set([63, 100]);
+const POETICS = 28;
 
 const GRIDANIA = new Set(['New Gridania', 'Old Gridania']);
 /** The ARR city-states: favored over every later city (Mar 2026 reminders). */
@@ -167,7 +168,16 @@ export function selectEntries(sources: Source[], inputs: Inputs, tables: Tables)
     }
   }
 
+  // Older tomestone gear can be bought outright for Poetics. Omit its
+  // base-item + Poetics upgrade only when that direct purchase is reachable.
+  const hasPoeticsPurchase = [...vendors.values()].some(({ costs, npcIds }) =>
+    costs.length === 1 && costs[0]?.itemId === POETICS && chooseNpc(npcIds, inputs) !== null
+  );
   for (const group of vendors.values()) {
+    if (hasPoeticsPurchase && group.costs.length > 1 && group.costs.some((c) => c.itemId === POETICS)) {
+      dropped.push('redundantPoeticsUpgrade');
+      continue;
+    }
     const npc = chooseNpc(group.npcIds, inputs);
     if (npc) rest.push({ kind: 'vendor', npc, costs: group.costs });
     else dropped.push('vendorWithoutPosition');

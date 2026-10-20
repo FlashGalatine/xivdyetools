@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.20.1] - 2026-10-20
+
+### Fixed
+
+- **Shorter Acquisition lines for older tomestone gear**: when an item has a reachable
+  vendor selling it outright for Poetics, omit the redundant base-item-plus-Poetics
+  upgrade exchange. Regenerated 671 acquisition entries; for example, Augmented Lunar
+  Envoy's Trousers of Fending now lists only Cihanti's 510-Poetics purchase. Upgrade
+  exchanges without a reachable direct Poetics purchase remain listed.
+
 ## [0.20.0] - 2026-10-11
 
 ### Added
