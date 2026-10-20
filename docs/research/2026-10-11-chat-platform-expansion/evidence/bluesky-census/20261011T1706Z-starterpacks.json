@@ -1,0 +1,912 @@
+{
+  "asOf": "2026-10-11T17:06:00.771Z",
+  "note": "relevant = the result's own text (handle, name, description) contains an FFXIV term after NFKC folding. It misses FFXIV accounts that never say so, and keeps any that mention FFXIV once: it is not a test of FFXIV focus. members sums overlap: one account can sit in many packs. joinedWeek/joinedAllTime appear to count accounts that signed up through the pack, not follows (inferred from the app's label).",
+  "searchMatched": 111,
+  "packs": 109,
+  "perQuery": {
+    "ffxiv": {
+      "hits": 80,
+      "pages": 1,
+      "capped": false
+    },
+    "ff14": {
+      "hits": 14,
+      "pages": 1,
+      "capped": false
+    },
+    "final fantasy xiv": {
+      "hits": 18,
+      "pages": 1,
+      "capped": false
+    },
+    "gpose": {
+      "hits": 13,
+      "pages": 1,
+      "capped": false
+    },
+    "eorzea": {
+      "hits": 0,
+      "pages": 1,
+      "capped": false
+    }
+  },
+  "totalMembersListed": 6230,
+  "totalJoinedAllTime": 19,
+  "totalJoinedWeek": 0,
+  "droppedNames": 2,
+  "list": [
+    {
+      "name": "FF14 gposers",
+      "creator": null,
+      "createdAt": "2025-02",
+      "members": 1050,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-191",
+      "createdAt": "2024-11",
+      "members": 158,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-571",
+      "createdAt": "2024-10",
+      "members": 155,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-572",
+      "createdAt": "2024-09",
+      "members": 155,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-571",
+      "createdAt": "2024-09",
+      "members": 154,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-573",
+      "createdAt": "2024-10",
+      "members": 150,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-574",
+      "createdAt": "2024-12",
+      "members": 150,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-018",
+      "createdAt": "2025-06",
+      "members": 149,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-575",
+      "createdAt": "2024-11",
+      "members": 149,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-576",
+      "createdAt": "2026-05",
+      "members": 146,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-577",
+      "createdAt": "2026-03",
+      "members": 146,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-575",
+      "createdAt": "2024-11",
+      "members": 127,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-578",
+      "createdAt": "2025-02",
+      "members": 116,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-038",
+      "createdAt": "2024-11",
+      "members": 107,
+      "joinedWeek": 0,
+      "joinedAllTime": 3
+    },
+    {
+      "name": null,
+      "creator": "acct-579",
+      "createdAt": "2025-06",
+      "members": 105,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-573",
+      "createdAt": "2024-10",
+      "members": 101,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-580",
+      "createdAt": "2024-10",
+      "members": 95,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-581",
+      "createdAt": "2025-09",
+      "members": 95,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV Gposers :)",
+      "creator": null,
+      "createdAt": "2024-11",
+      "members": 91,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-582",
+      "createdAt": "2024-10",
+      "members": 90,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-583",
+      "createdAt": "2024-11",
+      "members": 85,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-584",
+      "createdAt": "2025-05",
+      "members": 85,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-585",
+      "createdAt": "2024-10",
+      "members": 85,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-586",
+      "createdAt": "2024-10",
+      "members": 84,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV NPCs",
+      "creator": null,
+      "createdAt": "2024-10",
+      "members": 78,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-587",
+      "createdAt": "2024-10",
+      "members": 74,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-588",
+      "createdAt": "2025-04",
+      "members": 65,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-588",
+      "createdAt": "2025-08",
+      "members": 63,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-589",
+      "createdAt": "2024-12",
+      "members": 60,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-590",
+      "createdAt": "2024-11",
+      "members": 57,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "top50-45",
+      "createdAt": "2025-06",
+      "members": 55,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-591",
+      "createdAt": "2025-12",
+      "members": 52,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-592",
+      "createdAt": "2024-11",
+      "members": 52,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-593",
+      "createdAt": "2024-09",
+      "members": 51,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-594",
+      "createdAt": "2024-07",
+      "members": 50,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-595",
+      "createdAt": "2024-10",
+      "members": 50,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-596",
+      "createdAt": "2024-11",
+      "members": 49,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-597",
+      "createdAt": "2024-11",
+      "members": 48,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-598",
+      "createdAt": "2024-11",
+      "members": 48,
+      "joinedWeek": 0,
+      "joinedAllTime": 2
+    },
+    {
+      "name": null,
+      "creator": "acct-599",
+      "createdAt": "2024-11",
+      "members": 41,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV DJs/Venues/Owners",
+      "creator": null,
+      "createdAt": "2024-12",
+      "members": 41,
+      "joinedWeek": 0,
+      "joinedAllTime": 1
+    },
+    {
+      "name": null,
+      "creator": "acct-600",
+      "createdAt": "2024-10",
+      "members": 40,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-601",
+      "createdAt": "2025-03",
+      "members": 40,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-602",
+      "createdAt": "2024-10",
+      "members": 40,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-603",
+      "createdAt": "2024-10",
+      "members": 39,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-048",
+      "createdAt": "2024-06",
+      "members": 38,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-604",
+      "createdAt": "2024-10",
+      "members": 36,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-605",
+      "createdAt": "2025-05",
+      "members": 36,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-606",
+      "createdAt": "2024-11",
+      "members": 34,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-607",
+      "createdAt": "2025-08",
+      "members": 33,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-608",
+      "createdAt": "2024-10",
+      "members": 32,
+      "joinedWeek": 0,
+      "joinedAllTime": 10
+    },
+    {
+      "name": null,
+      "creator": "acct-609",
+      "createdAt": "2024-11",
+      "members": 31,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-610",
+      "createdAt": "2024-11",
+      "members": 31,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-611",
+      "createdAt": "2026-06",
+      "members": 31,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-612",
+      "createdAt": "2024-11",
+      "members": 30,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-613",
+      "createdAt": "2024-11",
+      "members": 30,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-614",
+      "createdAt": "2024-11",
+      "members": 29,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-615",
+      "createdAt": "2024-11",
+      "members": 29,
+      "joinedWeek": 0,
+      "joinedAllTime": 1
+    },
+    {
+      "name": "FFXIV BSKY Starter Pack",
+      "creator": null,
+      "createdAt": "2024-11",
+      "members": 28,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-616",
+      "createdAt": "2024-10",
+      "members": 28,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-617",
+      "createdAt": "2024-12",
+      "members": 28,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-618",
+      "createdAt": "2024-10",
+      "members": 27,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-619",
+      "createdAt": "2025-02",
+      "members": 27,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-620",
+      "createdAt": "2024-11",
+      "members": 26,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "Games Industry FFXIV Writers",
+      "creator": null,
+      "createdAt": "2024-11",
+      "members": 25,
+      "joinedWeek": 0,
+      "joinedAllTime": 1
+    },
+    {
+      "name": null,
+      "creator": "acct-584",
+      "createdAt": "2026-03",
+      "members": 24,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-621",
+      "createdAt": "2025-02",
+      "members": 24,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-622",
+      "createdAt": "2024-11",
+      "members": 23,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-191",
+      "createdAt": "2026-08",
+      "members": 23,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-623",
+      "createdAt": "2024-10",
+      "members": 22,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-624",
+      "createdAt": "2026-05",
+      "members": 22,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-625",
+      "createdAt": "2024-11",
+      "members": 22,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-626",
+      "createdAt": "2024-11",
+      "members": 22,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-627",
+      "createdAt": "2024-11",
+      "members": 22,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-628",
+      "createdAt": "2024-10",
+      "members": 21,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-024",
+      "createdAt": "2024-11",
+      "members": 21,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-629",
+      "createdAt": "2024-10",
+      "members": 21,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-630",
+      "createdAt": "2026-04",
+      "members": 21,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-631",
+      "createdAt": "2024-10",
+      "members": 20,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-632",
+      "createdAt": "2025-08",
+      "members": 19,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV Creators, Communities & Collectives",
+      "creator": null,
+      "createdAt": "2024-10",
+      "members": 17,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-633",
+      "createdAt": "2024-11",
+      "members": 17,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-540",
+      "createdAt": "2024-12",
+      "members": 17,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-634",
+      "createdAt": "2025-02",
+      "members": 16,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-635",
+      "createdAt": "2024-11",
+      "members": 16,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "aetheryteradio.gamerescape.com",
+      "createdAt": "2024-11",
+      "members": 16,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-571",
+      "createdAt": "2026-01",
+      "members": 15,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-024",
+      "createdAt": "2024-11",
+      "members": 15,
+      "joinedWeek": 0,
+      "joinedAllTime": 1
+    },
+    {
+      "name": null,
+      "creator": "acct-636",
+      "createdAt": "2024-11",
+      "members": 15,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-637",
+      "createdAt": "2024-12",
+      "members": 15,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-638",
+      "createdAt": "2024-10",
+      "members": 14,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-639",
+      "createdAt": "2024-10",
+      "members": 14,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-640",
+      "createdAt": "2024-12",
+      "members": 14,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-641",
+      "createdAt": "2024-11",
+      "members": 14,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-018",
+      "createdAt": "2025-06",
+      "members": 13,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-642",
+      "createdAt": "2025-02",
+      "members": 13,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-643",
+      "createdAt": "2024-10",
+      "members": 13,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-644",
+      "createdAt": "2024-11",
+      "members": 12,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-645",
+      "createdAt": "2025-08",
+      "members": 12,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-646",
+      "createdAt": "2025-01",
+      "members": 11,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-100",
+      "createdAt": "2024-06",
+      "members": 11,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-031",
+      "createdAt": "2024-11",
+      "members": 10,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-647",
+      "createdAt": "2024-11",
+      "members": 10,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-405",
+      "createdAt": "2025-09",
+      "members": 10,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "For FFXIV players pack",
+      "creator": null,
+      "createdAt": "2025-06",
+      "members": 9,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-375",
+      "createdAt": "2024-10",
+      "members": 9,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-053",
+      "createdAt": "2024-07",
+      "members": 9,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-648",
+      "createdAt": "2025-02",
+      "members": 8,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": null,
+      "creator": "acct-649",
+      "createdAt": "2024-10",
+      "members": 8,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    }
+  ],
+  "redaction": "Creators are labels; uri removed; createdAt to the month; name kept only for generic titles the README cites, and those rows have no creator. droppedNames is a count."
+}

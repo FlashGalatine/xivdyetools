@@ -1,0 +1,35 @@
+{
+  "window": {
+    "start": "2026-10-12T16:02:42.725Z",
+    "minutes": 60,
+    "coveredMinutes": 60,
+    "reconnects": 3
+  },
+  "allPosts": 147127,
+  "ffxivPosts": 119,
+  "ffxivPerHour": 119,
+  "allPerHour": 147135,
+  "ffxivSharePct": 0.0809,
+  "byLang": {
+    "en": 87,
+    "ja": 15,
+    "es": 3,
+    "fi": 3,
+    "?": 5,
+    "it": 1,
+    "ko": 1,
+    "fr": 2,
+    "nl": 1,
+    "de": 1
+  },
+  "byTerm": {
+    "ff14": 30,
+    "ffxiv": 66,
+    "gpose": 44,
+    "파판14": 1,
+    "final fantasy xiv": 3,
+    "eorzea": 7
+  },
+  "note": "Substring match; \"gpose\"/\"eorzea\" also catch non-FFXIV uses rarely, and trending-hashtag bots that list #ff14 are counted. Rates are per hour of event time covered (coveredMinutes), not wall time. Run at several times of day; one hour is not a daily rate.",
+  "redaction": "20 sampled post texts removed."
+}
