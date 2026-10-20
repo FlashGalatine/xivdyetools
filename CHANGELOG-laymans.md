@@ -31,6 +31,10 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.11.3] - 2026-10-20
+### 👗 Shorter Acquisition lines
+- Web app and Discord bot: older tomestone gear lists its direct Poetics purchase without repeating the exchange that also requires the base item.
+
 ## [5.11.2] - 2026-10-16
 ### 🗂️ Character files: clearer checks
 - Web app and Discord bot: only .chara files are read. A pose file, an image or anything else is turned away right away with a message saying so.

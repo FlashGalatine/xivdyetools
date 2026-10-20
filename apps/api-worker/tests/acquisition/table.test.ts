@@ -107,6 +107,15 @@ describe('acquisition table invariants', () => {
     expect(lines.length).toBeGreaterThan(15000);
   });
 
+  it('lists the direct Poetics purchase without redundant base-item upgrades', () => {
+    expect((table as Record<string, string>)[38029]).toBe('Cihanti - Radz-at-Han (510 Allagan Tomestones of Poetics)');
+    expect(offending((line) => {
+      const routes = line.split(' / ');
+      return routes.some((route) => /\([\d,]+ Allagan Tomestones of Poetics\)$/.test(route)) &&
+        routes.some((route) => /\([^()]*, [\d,]+ Allagan Tomestones of Poetics\)$/.test(route));
+    })).toEqual([]);
+  });
+
   it('carries no game text markup and no doubled spaces', () => {
     expect(offending((l) => l.includes('<') || l.includes('>'))).toEqual([]);
     expect(offending((l) => l.includes('  '))).toEqual([]);
@@ -121,8 +130,8 @@ describe('acquisition table invariants', () => {
   });
 
   it('lists raid and trial encounters, never the book or totem exchange (spec D5/D6)', () => {
-    // A mixed upgrade ("Weathered Book of Spades, 100 Allagan Tomestones of
-    // Poetics") keeps its vendor line by design; a pure token exchange never does.
+    // Mixed upgrades keep their vendor when no direct Poetics purchase exists;
+    // a pure token exchange never does.
     expect(offending((l) => /AAC Illustrated|\bTotems?\b|Totem of/.test(l))).toEqual([]);
   });
 
