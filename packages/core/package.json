@@ -72,11 +72,11 @@
   "devDependencies": {
     "@types/culori": "^4.0.1",
     "@types/node": "^26.6.4",
-    "@vitest/coverage-v8": "^5.0.3",
+    "@vitest/coverage-v8": "^5.0.5",
     "csv-parse": "^7.0.3",
     "culori": "^4.0.2",
     "tsx": "^4.23.15",
-    "vitest": "^5.0.3",
+    "vitest": "^5.0.5",
     "yaml": "^2.9.1"
   },
   "engines": {
