@@ -1,0 +1,5704 @@
+{
+  "version": "0874aee069e1e7c4",
+  "schema": "exdschema@2:rev:e773c41a90aed788cf4c1c48469fa85618ef01fb",
+  "expected": 125,
+  "returned": 125,
+  "missing": [],
+  "english_name_mismatches": [
+    {
+      "stainID": 99,
+      "local": "Neon Green",
+      "upstream": "Neon Green "
+    },
+    {
+      "stainID": 122,
+      "local": "Metallic Pink",
+      "upstream": "Metallic Pink "
+    },
+    {
+      "stainID": 123,
+      "local": "Metallic Ruby Red",
+      "upstream": "Metallic Ruby Red "
+    }
+  ],
+  "color_mismatches": [
+    {
+      "stainID": 86,
+      "local": "#e2000e",
+      "upstream": "#e40011"
+    },
+    {
+      "stainID": 87,
+      "local": "#f43195",
+      "upstream": "#f5379b"
+    },
+    {
+      "stainID": 88,
+      "local": "#fef75d",
+      "upstream": "#fef864"
+    },
+    {
+      "stainID": 89,
+      "local": "#fbf0af",
+      "upstream": "#fbf1b4"
+    },
+    {
+      "stainID": 90,
+      "local": "#000b9d",
+      "upstream": "#000ea2"
+    },
+    {
+      "stainID": 91,
+      "local": "#03aaca",
+      "upstream": "#04afcd"
+    },
+    {
+      "stainID": 92,
+      "local": "#181820",
+      "upstream": "#606068"
+    },
+    {
+      "stainID": 93,
+      "local": "#bfb4a3",
+      "upstream": "#e9e3da"
+    },
+    {
+      "stainID": 94,
+      "local": "#e9c06f",
+      "upstream": "#e7d197"
+    },
+    {
+      "stainID": 95,
+      "local": "#e50b18",
+      "upstream": "#de0b16"
+    },
+    {
+      "stainID": 96,
+      "local": "#f61296",
+      "upstream": "#ed118e"
+    },
+    {
+      "stainID": 97,
+      "local": "#f95513",
+      "upstream": "#f45011"
+    },
+    {
+      "stainID": 98,
+      "local": "#e0e90b",
+      "upstream": "#dfea08"
+    },
+    {
+      "stainID": 99,
+      "local": "#baf913",
+      "upstream": "#b5f710"
+    },
+    {
+      "stainID": 100,
+      "local": "#4056a4",
+      "upstream": "#3a4c90"
+    },
+    {
+      "stainID": 118,
+      "local": "#49f8fd",
+      "upstream": "#5ed4e6"
+    },
+    {
+      "stainID": 120,
+      "local": "#d361ff",
+      "upstream": "#a366c2"
+    },
+    {
+      "stainID": 121,
+      "local": "#6f5aa2",
+      "upstream": "#62508f"
+    },
+    {
+      "stainID": 122,
+      "local": "#ffa1c2",
+      "upstream": "#a2596b"
+    },
+    {
+      "stainID": 123,
+      "local": "#470103",
+      "upstream": "#1f0000"
+    },
+    {
+      "stainID": 124,
+      "local": "#28847f",
+      "upstream": "#15423f"
+    },
+    {
+      "stainID": 125,
+      "local": "#120445",
+      "upstream": "#08021f"
+    }
+  ],
+  "metallic_mismatches": [],
+  "item_relationships": [
+    {
+      "stainID": 1,
+      "consolidationType": "A",
+      "legacyItemID": 5729,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 2,
+      "consolidationType": "A",
+      "legacyItemID": 5730,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 3,
+      "consolidationType": "A",
+      "legacyItemID": 5731,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 4,
+      "consolidationType": "A",
+      "legacyItemID": 5732,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 5,
+      "consolidationType": "A",
+      "legacyItemID": 5733,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 6,
+      "consolidationType": "A",
+      "legacyItemID": 5734,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 7,
+      "consolidationType": "A",
+      "legacyItemID": 5735,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 8,
+      "consolidationType": "A",
+      "legacyItemID": 5736,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 9,
+      "consolidationType": "A",
+      "legacyItemID": 5737,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 10,
+      "consolidationType": "A",
+      "legacyItemID": 5738,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 11,
+      "consolidationType": "A",
+      "legacyItemID": 5739,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 12,
+      "consolidationType": "A",
+      "legacyItemID": 5740,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 13,
+      "consolidationType": "A",
+      "legacyItemID": 5741,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 14,
+      "consolidationType": "A",
+      "legacyItemID": 5742,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 15,
+      "consolidationType": "A",
+      "legacyItemID": 5743,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 16,
+      "consolidationType": "A",
+      "legacyItemID": 5744,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 17,
+      "consolidationType": "A",
+      "legacyItemID": 5745,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 18,
+      "consolidationType": "A",
+      "legacyItemID": 5746,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 19,
+      "consolidationType": "A",
+      "legacyItemID": 5747,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 20,
+      "consolidationType": "A",
+      "legacyItemID": 5748,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 21,
+      "consolidationType": "A",
+      "legacyItemID": 5749,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 22,
+      "consolidationType": "A",
+      "legacyItemID": 5750,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 23,
+      "consolidationType": "A",
+      "legacyItemID": 5751,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 24,
+      "consolidationType": "A",
+      "legacyItemID": 5752,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 25,
+      "consolidationType": "A",
+      "legacyItemID": 5753,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 26,
+      "consolidationType": "A",
+      "legacyItemID": 5754,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 27,
+      "consolidationType": "A",
+      "legacyItemID": 5755,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 28,
+      "consolidationType": "A",
+      "legacyItemID": 5756,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 29,
+      "consolidationType": "A",
+      "legacyItemID": 5757,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 30,
+      "consolidationType": "A",
+      "legacyItemID": 5758,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 31,
+      "consolidationType": "A",
+      "legacyItemID": 5759,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 32,
+      "consolidationType": "A",
+      "legacyItemID": 5760,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 33,
+      "consolidationType": "A",
+      "legacyItemID": 5761,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 34,
+      "consolidationType": "A",
+      "legacyItemID": 5762,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 35,
+      "consolidationType": "A",
+      "legacyItemID": 5763,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 36,
+      "consolidationType": "A",
+      "legacyItemID": 5764,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 37,
+      "consolidationType": "A",
+      "legacyItemID": 5765,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 38,
+      "consolidationType": "A",
+      "legacyItemID": 5766,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 39,
+      "consolidationType": "A",
+      "legacyItemID": 5767,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 40,
+      "consolidationType": "A",
+      "legacyItemID": 5768,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 41,
+      "consolidationType": "A",
+      "legacyItemID": 5769,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 42,
+      "consolidationType": "A",
+      "legacyItemID": 5770,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 43,
+      "consolidationType": "A",
+      "legacyItemID": 5771,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 44,
+      "consolidationType": "A",
+      "legacyItemID": 5772,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 45,
+      "consolidationType": "A",
+      "legacyItemID": 5773,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 46,
+      "consolidationType": "A",
+      "legacyItemID": 5774,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 47,
+      "consolidationType": "A",
+      "legacyItemID": 5775,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 48,
+      "consolidationType": "A",
+      "legacyItemID": 5776,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 49,
+      "consolidationType": "A",
+      "legacyItemID": 5777,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 50,
+      "consolidationType": "A",
+      "legacyItemID": 5778,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 51,
+      "consolidationType": "A",
+      "legacyItemID": 5779,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 52,
+      "consolidationType": "A",
+      "legacyItemID": 5780,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 53,
+      "consolidationType": "A",
+      "legacyItemID": 5781,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 54,
+      "consolidationType": "A",
+      "legacyItemID": 5782,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 55,
+      "consolidationType": "A",
+      "legacyItemID": 5783,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 56,
+      "consolidationType": "A",
+      "legacyItemID": 5784,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 57,
+      "consolidationType": "A",
+      "legacyItemID": 5785,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 58,
+      "consolidationType": "A",
+      "legacyItemID": 5786,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 59,
+      "consolidationType": "A",
+      "legacyItemID": 5787,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 60,
+      "consolidationType": "A",
+      "legacyItemID": 5788,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 61,
+      "consolidationType": "A",
+      "legacyItemID": 5789,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 62,
+      "consolidationType": "A",
+      "legacyItemID": 5790,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 63,
+      "consolidationType": "A",
+      "legacyItemID": 5791,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 64,
+      "consolidationType": "A",
+      "legacyItemID": 5792,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 65,
+      "consolidationType": "A",
+      "legacyItemID": 5793,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 66,
+      "consolidationType": "A",
+      "legacyItemID": 5794,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 67,
+      "consolidationType": "A",
+      "legacyItemID": 5795,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 68,
+      "consolidationType": "A",
+      "legacyItemID": 5796,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 69,
+      "consolidationType": "A",
+      "legacyItemID": 5797,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 70,
+      "consolidationType": "A",
+      "legacyItemID": 5798,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 71,
+      "consolidationType": "A",
+      "legacyItemID": 5799,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 72,
+      "consolidationType": "A",
+      "legacyItemID": 5800,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 73,
+      "consolidationType": "A",
+      "legacyItemID": 5801,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 74,
+      "consolidationType": "A",
+      "legacyItemID": 5802,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 75,
+      "consolidationType": "A",
+      "legacyItemID": 5803,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 76,
+      "consolidationType": "A",
+      "legacyItemID": 5804,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 77,
+      "consolidationType": "A",
+      "legacyItemID": 5805,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 78,
+      "consolidationType": "A",
+      "legacyItemID": 5806,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 79,
+      "consolidationType": "A",
+      "legacyItemID": 5807,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 80,
+      "consolidationType": "A",
+      "legacyItemID": 5808,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 81,
+      "consolidationType": "A",
+      "legacyItemID": 5809,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 82,
+      "consolidationType": "A",
+      "legacyItemID": 5810,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 83,
+      "consolidationType": "A",
+      "legacyItemID": 5811,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 84,
+      "consolidationType": "A",
+      "legacyItemID": 5812,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 85,
+      "consolidationType": "A",
+      "legacyItemID": 5813,
+      "upstreamItems": [
+        {
+          "id": 52254,
+          "name": "Standard Spectrum Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 86,
+      "consolidationType": "B",
+      "legacyItemID": 30116,
+      "upstreamItems": [
+        {
+          "id": 52255,
+          "name": "Wide Spectrum #1 Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 87,
+      "consolidationType": "B",
+      "legacyItemID": 30117,
+      "upstreamItems": [
+        {
+          "id": 52255,
+          "name": "Wide Spectrum #1 Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 88,
+      "consolidationType": "B",
+      "legacyItemID": 30118,
+      "upstreamItems": [
+        {
+          "id": 52255,
+          "name": "Wide Spectrum #1 Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 89,
+      "consolidationType": "B",
+      "legacyItemID": 30119,
+      "upstreamItems": [
+        {
+          "id": 52255,
+          "name": "Wide Spectrum #1 Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 90,
+      "consolidationType": "B",
+      "legacyItemID": 30120,
+      "upstreamItems": [
+        {
+          "id": 52255,
+          "name": "Wide Spectrum #1 Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 91,
+      "consolidationType": "B",
+      "legacyItemID": 30121,
+      "upstreamItems": [
+        {
+          "id": 52255,
+          "name": "Wide Spectrum #1 Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 92,
+      "consolidationType": "B",
+      "legacyItemID": 30122,
+      "upstreamItems": [
+        {
+          "id": 52255,
+          "name": "Wide Spectrum #1 Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 93,
+      "consolidationType": "B",
+      "legacyItemID": 30123,
+      "upstreamItems": [
+        {
+          "id": 52255,
+          "name": "Wide Spectrum #1 Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 94,
+      "consolidationType": "B",
+      "legacyItemID": 30124,
+      "upstreamItems": [
+        {
+          "id": 52255,
+          "name": "Wide Spectrum #1 Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 95,
+      "consolidationType": "C",
+      "legacyItemID": 48227,
+      "upstreamItems": [
+        {
+          "id": 52256,
+          "name": "Wide Spectrum #2 Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 96,
+      "consolidationType": "C",
+      "legacyItemID": 48163,
+      "upstreamItems": [
+        {
+          "id": 52256,
+          "name": "Wide Spectrum #2 Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 97,
+      "consolidationType": "C",
+      "legacyItemID": 48164,
+      "upstreamItems": [
+        {
+          "id": 52256,
+          "name": "Wide Spectrum #2 Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 98,
+      "consolidationType": "C",
+      "legacyItemID": 48166,
+      "upstreamItems": [
+        {
+          "id": 52256,
+          "name": "Wide Spectrum #2 Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 99,
+      "consolidationType": "C",
+      "legacyItemID": 48165,
+      "upstreamItems": [
+        {
+          "id": 52256,
+          "name": "Wide Spectrum #2 Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 100,
+      "consolidationType": "C",
+      "legacyItemID": 48168,
+      "upstreamItems": [
+        {
+          "id": 52256,
+          "name": "Wide Spectrum #2 Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 101,
+      "consolidationType": null,
+      "legacyItemID": 13114,
+      "upstreamItems": [
+        {
+          "id": 13114,
+          "name": "General-purpose Pure White Dye"
+        },
+        {
+          "id": 8732,
+          "name": "Pure White Dye"
+        }
+      ]
+    },
+    {
+      "stainID": 102,
+      "consolidationType": null,
+      "legacyItemID": 13115,
+      "upstreamItems": [
+        {
+          "id": 13115,
+          "name": "General-purpose Jet Black Dye"
+        },
+        {
+          "id": 8733,
+          "name": "Jet Black Dye"
+        }
+      ]
+    },
+    {
+      "stainID": 103,
+      "consolidationType": null,
+      "legacyItemID": 13708,
+      "upstreamItems": [
+        {
+          "id": 13708,
+          "name": "General-purpose Pastel Pink Dye"
+        },
+        {
+          "id": 8734,
+          "name": "Pastel Pink Dye"
+        }
+      ]
+    },
+    {
+      "stainID": 104,
+      "consolidationType": null,
+      "legacyItemID": 13709,
+      "upstreamItems": [
+        {
+          "id": 13709,
+          "name": "General-purpose Dark Red Dye"
+        },
+        {
+          "id": 8735,
+          "name": "Dark Red Dye"
+        }
+      ]
+    },
+    {
+      "stainID": 105,
+      "consolidationType": null,
+      "legacyItemID": 13710,
+      "upstreamItems": [
+        {
+          "id": 13710,
+          "name": "General-purpose Dark Brown Dye"
+        },
+        {
+          "id": 8736,
+          "name": "Dark Brown Dye"
+        }
+      ]
+    },
+    {
+      "stainID": 106,
+      "consolidationType": null,
+      "legacyItemID": 13711,
+      "upstreamItems": [
+        {
+          "id": 13711,
+          "name": "General-purpose Pastel Green Dye"
+        },
+        {
+          "id": 8737,
+          "name": "Pastel Green Dye"
+        }
+      ]
+    },
+    {
+      "stainID": 107,
+      "consolidationType": null,
+      "legacyItemID": 13712,
+      "upstreamItems": [
+        {
+          "id": 13712,
+          "name": "General-purpose Dark Green Dye"
+        },
+        {
+          "id": 8738,
+          "name": "Dark Green Dye"
+        }
+      ]
+    },
+    {
+      "stainID": 108,
+      "consolidationType": null,
+      "legacyItemID": 13713,
+      "upstreamItems": [
+        {
+          "id": 13713,
+          "name": "General-purpose Pastel Blue Dye"
+        },
+        {
+          "id": 8739,
+          "name": "Pastel Blue Dye"
+        }
+      ]
+    },
+    {
+      "stainID": 109,
+      "consolidationType": null,
+      "legacyItemID": 13714,
+      "upstreamItems": [
+        {
+          "id": 13714,
+          "name": "General-purpose Dark Blue Dye"
+        },
+        {
+          "id": 8740,
+          "name": "Dark Blue Dye"
+        }
+      ]
+    },
+    {
+      "stainID": 110,
+      "consolidationType": null,
+      "legacyItemID": 13715,
+      "upstreamItems": [
+        {
+          "id": 13715,
+          "name": "General-purpose Pastel Purple Dye"
+        },
+        {
+          "id": 8741,
+          "name": "Pastel Purple Dye"
+        }
+      ]
+    },
+    {
+      "stainID": 111,
+      "consolidationType": null,
+      "legacyItemID": 13716,
+      "upstreamItems": [
+        {
+          "id": 13716,
+          "name": "General-purpose Dark Purple Dye"
+        },
+        {
+          "id": 8742,
+          "name": "Dark Purple Dye"
+        }
+      ]
+    },
+    {
+      "stainID": 112,
+      "consolidationType": null,
+      "legacyItemID": 13116,
+      "upstreamItems": [
+        {
+          "id": 13116,
+          "name": "General-purpose Metallic Silver Dye"
+        },
+        {
+          "id": 8743,
+          "name": "Metallic Silver Dye"
+        }
+      ]
+    },
+    {
+      "stainID": 113,
+      "consolidationType": null,
+      "legacyItemID": 13117,
+      "upstreamItems": [
+        {
+          "id": 13117,
+          "name": "General-purpose Metallic Gold Dye"
+        },
+        {
+          "id": 8744,
+          "name": "Metallic Gold Dye"
+        }
+      ]
+    },
+    {
+      "stainID": 114,
+      "consolidationType": null,
+      "legacyItemID": 13717,
+      "upstreamItems": [
+        {
+          "id": 13717,
+          "name": "General-purpose Metallic Red Dye"
+        },
+        {
+          "id": 8745,
+          "name": "Metallic Red Dye"
+        }
+      ]
+    },
+    {
+      "stainID": 115,
+      "consolidationType": null,
+      "legacyItemID": 13718,
+      "upstreamItems": [
+        {
+          "id": 13718,
+          "name": "General-purpose Metallic Orange Dye"
+        },
+        {
+          "id": 8746,
+          "name": "Metallic Orange Dye"
+        }
+      ]
+    },
+    {
+      "stainID": 116,
+      "consolidationType": null,
+      "legacyItemID": 13719,
+      "upstreamItems": [
+        {
+          "id": 13719,
+          "name": "General-purpose Metallic Yellow Dye"
+        },
+        {
+          "id": 8747,
+          "name": "Metallic Yellow Dye"
+        }
+      ]
+    },
+    {
+      "stainID": 117,
+      "consolidationType": null,
+      "legacyItemID": 13720,
+      "upstreamItems": [
+        {
+          "id": 13720,
+          "name": "General-purpose Metallic Green Dye"
+        },
+        {
+          "id": 8748,
+          "name": "Metallic Green Dye"
+        }
+      ]
+    },
+    {
+      "stainID": 118,
+      "consolidationType": null,
+      "legacyItemID": 13721,
+      "upstreamItems": [
+        {
+          "id": 13721,
+          "name": "General-purpose Metallic Sky Blue Dye"
+        },
+        {
+          "id": 8749,
+          "name": "Metallic Sky Blue Dye"
+        }
+      ]
+    },
+    {
+      "stainID": 119,
+      "consolidationType": null,
+      "legacyItemID": 13722,
+      "upstreamItems": [
+        {
+          "id": 13722,
+          "name": "General-purpose Metallic Blue Dye"
+        },
+        {
+          "id": 8750,
+          "name": "Metallic Blue Dye"
+        }
+      ]
+    },
+    {
+      "stainID": 120,
+      "consolidationType": null,
+      "legacyItemID": 13723,
+      "upstreamItems": [
+        {
+          "id": 13723,
+          "name": "General-purpose Metallic Purple Dye"
+        },
+        {
+          "id": 8751,
+          "name": "Metallic Purple Dye"
+        }
+      ]
+    },
+    {
+      "stainID": 121,
+      "consolidationType": "C",
+      "legacyItemID": 48167,
+      "upstreamItems": [
+        {
+          "id": 52256,
+          "name": "Wide Spectrum #2 Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 122,
+      "consolidationType": "C",
+      "legacyItemID": 48169,
+      "upstreamItems": [
+        {
+          "id": 52256,
+          "name": "Wide Spectrum #2 Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 123,
+      "consolidationType": "C",
+      "legacyItemID": 48170,
+      "upstreamItems": [
+        {
+          "id": 52256,
+          "name": "Wide Spectrum #2 Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 124,
+      "consolidationType": "C",
+      "legacyItemID": 48171,
+      "upstreamItems": [
+        {
+          "id": 52256,
+          "name": "Wide Spectrum #2 Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    },
+    {
+      "stainID": 125,
+      "consolidationType": "C",
+      "legacyItemID": 48172,
+      "upstreamItems": [
+        {
+          "id": 52256,
+          "name": "Wide Spectrum #2 Dye"
+        },
+        {
+          "id": 0,
+          "name": ""
+        }
+      ]
+    }
+  ],
+  "locale_missing": [],
+  "locale_exact_mismatches": [
+    {
+      "stainID": 1,
+      "locale": "en",
+      "local": "Snow White ",
+      "upstream": "Snow White"
+    },
+    {
+      "stainID": 1,
+      "locale": "de",
+      "local": "Schneeweißer ",
+      "upstream": "Schneeweiß"
+    },
+    {
+      "stainID": 1,
+      "locale": "fr",
+      "local": "blanc neige",
+      "upstream": "Blanc neige"
+    },
+    {
+      "stainID": 2,
+      "locale": "en",
+      "local": "Ash Grey ",
+      "upstream": "Ash Grey"
+    },
+    {
+      "stainID": 2,
+      "locale": "de",
+      "local": "Aschgrauer ",
+      "upstream": "Aschgrau"
+    },
+    {
+      "stainID": 2,
+      "locale": "fr",
+      "local": "gris cendre",
+      "upstream": "Gris cendre"
+    },
+    {
+      "stainID": 3,
+      "locale": "en",
+      "local": "Goobbue Grey ",
+      "upstream": "Goobbue Grey"
+    },
+    {
+      "stainID": 3,
+      "locale": "de",
+      "local": "Goobbuegrauer ",
+      "upstream": "Goobbuegrau"
+    },
+    {
+      "stainID": 3,
+      "locale": "fr",
+      "local": "gris goobbue",
+      "upstream": "Gris goobbue"
+    },
+    {
+      "stainID": 4,
+      "locale": "en",
+      "local": "Slate Grey ",
+      "upstream": "Slate Grey"
+    },
+    {
+      "stainID": 4,
+      "locale": "de",
+      "local": "Schiefergrauer ",
+      "upstream": "Schiefergrau"
+    },
+    {
+      "stainID": 4,
+      "locale": "fr",
+      "local": "gris ardoise",
+      "upstream": "Gris ardoise"
+    },
+    {
+      "stainID": 5,
+      "locale": "en",
+      "local": "Charcoal Grey ",
+      "upstream": "Charcoal Grey"
+    },
+    {
+      "stainID": 5,
+      "locale": "de",
+      "local": "Anthraziter ",
+      "upstream": "Anthrazit"
+    },
+    {
+      "stainID": 5,
+      "locale": "fr",
+      "local": "gris charbon",
+      "upstream": "Gris charbon"
+    },
+    {
+      "stainID": 6,
+      "locale": "en",
+      "local": "Soot Black ",
+      "upstream": "Soot Black"
+    },
+    {
+      "stainID": 6,
+      "locale": "de",
+      "local": "Rußschwarzer ",
+      "upstream": "Rußschwarz"
+    },
+    {
+      "stainID": 6,
+      "locale": "fr",
+      "local": "noir suie",
+      "upstream": "Noir suie"
+    },
+    {
+      "stainID": 7,
+      "locale": "en",
+      "local": "Rose Pink ",
+      "upstream": "Rose Pink"
+    },
+    {
+      "stainID": 7,
+      "locale": "de",
+      "local": "Rosaroter ",
+      "upstream": "Rosarot"
+    },
+    {
+      "stainID": 7,
+      "locale": "fr",
+      "local": "rose floral",
+      "upstream": "Rose floral"
+    },
+    {
+      "stainID": 8,
+      "locale": "en",
+      "local": "Lilac Purple ",
+      "upstream": "Lilac Purple"
+    },
+    {
+      "stainID": 8,
+      "locale": "de",
+      "local": "Altrosa ",
+      "upstream": "Altrosa"
+    },
+    {
+      "stainID": 8,
+      "locale": "fr",
+      "local": "lilas",
+      "upstream": "Lilas"
+    },
+    {
+      "stainID": 9,
+      "locale": "en",
+      "local": "Rolanberry Red ",
+      "upstream": "Rolanberry Red"
+    },
+    {
+      "stainID": 9,
+      "locale": "de",
+      "local": "Rolanbeerenroter ",
+      "upstream": "Rolanbeerenrot"
+    },
+    {
+      "stainID": 9,
+      "locale": "fr",
+      "local": "rouge rolanbaie",
+      "upstream": "Rouge rolanbaie"
+    },
+    {
+      "stainID": 10,
+      "locale": "en",
+      "local": "Dalamud Red ",
+      "upstream": "Dalamud Red"
+    },
+    {
+      "stainID": 10,
+      "locale": "de",
+      "local": "Dalamudroter ",
+      "upstream": "Dalamudrot"
+    },
+    {
+      "stainID": 10,
+      "locale": "fr",
+      "local": "rouge Dalamud",
+      "upstream": "Rouge Dalamud"
+    },
+    {
+      "stainID": 11,
+      "locale": "en",
+      "local": "Rust Red ",
+      "upstream": "Rust Red"
+    },
+    {
+      "stainID": 11,
+      "locale": "de",
+      "local": "Rostroter ",
+      "upstream": "Rostrot"
+    },
+    {
+      "stainID": 11,
+      "locale": "fr",
+      "local": "rouille",
+      "upstream": "Rouille"
+    },
+    {
+      "stainID": 12,
+      "locale": "en",
+      "local": "Wine Red ",
+      "upstream": "Wine Red"
+    },
+    {
+      "stainID": 12,
+      "locale": "de",
+      "local": "Weinroter ",
+      "upstream": "Weinrot"
+    },
+    {
+      "stainID": 12,
+      "locale": "fr",
+      "local": "lie-de-vin",
+      "upstream": "Lie-de-vin"
+    },
+    {
+      "stainID": 13,
+      "locale": "en",
+      "local": "Coral Pink ",
+      "upstream": "Coral Pink"
+    },
+    {
+      "stainID": 13,
+      "locale": "de",
+      "local": "Korallenrosa ",
+      "upstream": "Korallenrosa"
+    },
+    {
+      "stainID": 13,
+      "locale": "fr",
+      "local": "rose corail",
+      "upstream": "Rose corail"
+    },
+    {
+      "stainID": 14,
+      "locale": "en",
+      "local": "Blood Red ",
+      "upstream": "Blood Red"
+    },
+    {
+      "stainID": 14,
+      "locale": "de",
+      "local": "Blutroter ",
+      "upstream": "Blutrot"
+    },
+    {
+      "stainID": 14,
+      "locale": "fr",
+      "local": "rouge sang",
+      "upstream": "Rouge sang"
+    },
+    {
+      "stainID": 15,
+      "locale": "en",
+      "local": "Salmon Pink ",
+      "upstream": "Salmon Pink"
+    },
+    {
+      "stainID": 15,
+      "locale": "de",
+      "local": "Lachsrosa ",
+      "upstream": "Lachsrosa"
+    },
+    {
+      "stainID": 15,
+      "locale": "fr",
+      "local": "rose saumon",
+      "upstream": "Rose saumon"
+    },
+    {
+      "stainID": 16,
+      "locale": "en",
+      "local": "Sunset Orange ",
+      "upstream": "Sunset Orange"
+    },
+    {
+      "stainID": 16,
+      "locale": "de",
+      "local": "Abendroter ",
+      "upstream": "Abendrot"
+    },
+    {
+      "stainID": 16,
+      "locale": "fr",
+      "local": "orange couchant",
+      "upstream": "Orange couchant"
+    },
+    {
+      "stainID": 17,
+      "locale": "en",
+      "local": "Mesa Red ",
+      "upstream": "Mesa Red"
+    },
+    {
+      "stainID": 17,
+      "locale": "de",
+      "local": "Tafelbergroter ",
+      "upstream": "Tafelbergrot"
+    },
+    {
+      "stainID": 17,
+      "locale": "fr",
+      "local": "vermillon terne",
+      "upstream": "Vermillon terne"
+    },
+    {
+      "stainID": 18,
+      "locale": "en",
+      "local": "Bark Brown ",
+      "upstream": "Bark Brown"
+    },
+    {
+      "stainID": 18,
+      "locale": "de",
+      "local": "Borkenbrauner ",
+      "upstream": "Borkenbraun"
+    },
+    {
+      "stainID": 18,
+      "locale": "fr",
+      "local": "marron écorce",
+      "upstream": "Marron écorce"
+    },
+    {
+      "stainID": 19,
+      "locale": "en",
+      "local": "Chocolate Brown ",
+      "upstream": "Chocolate Brown"
+    },
+    {
+      "stainID": 19,
+      "locale": "de",
+      "local": "Schokoladenbrauner ",
+      "upstream": "Schokoladenbraun"
+    },
+    {
+      "stainID": 19,
+      "locale": "fr",
+      "local": "chocolat",
+      "upstream": "Chocolat"
+    },
+    {
+      "stainID": 20,
+      "locale": "en",
+      "local": "Russet Brown ",
+      "upstream": "Russet Brown"
+    },
+    {
+      "stainID": 20,
+      "locale": "de",
+      "local": "Rotbrauner ",
+      "upstream": "Rotbraun"
+    },
+    {
+      "stainID": 20,
+      "locale": "fr",
+      "local": "brun fauve",
+      "upstream": "Brun fauve"
+    },
+    {
+      "stainID": 21,
+      "locale": "en",
+      "local": "Kobold Brown ",
+      "upstream": "Kobold Brown"
+    },
+    {
+      "stainID": 21,
+      "locale": "de",
+      "local": "Koboldbrauner ",
+      "upstream": "Koboldbraun"
+    },
+    {
+      "stainID": 21,
+      "locale": "fr",
+      "local": "brun kobold",
+      "upstream": "Brun kobold"
+    },
+    {
+      "stainID": 22,
+      "locale": "en",
+      "local": "Cork Brown ",
+      "upstream": "Cork Brown"
+    },
+    {
+      "stainID": 22,
+      "locale": "de",
+      "local": "Korkbrauner ",
+      "upstream": "Korkbraun"
+    },
+    {
+      "stainID": 22,
+      "locale": "fr",
+      "local": "brun liège",
+      "upstream": "Brun liège"
+    },
+    {
+      "stainID": 23,
+      "locale": "en",
+      "local": "Qiqirn Brown ",
+      "upstream": "Qiqirn Brown"
+    },
+    {
+      "stainID": 23,
+      "locale": "de",
+      "local": "Qiqirnbrauner ",
+      "upstream": "Qiqirnbraun"
+    },
+    {
+      "stainID": 23,
+      "locale": "fr",
+      "local": "brun qiqirn",
+      "upstream": "Brun qiqirn"
+    },
+    {
+      "stainID": 24,
+      "locale": "en",
+      "local": "Opo-opo Brown ",
+      "upstream": "Opo-opo Brown"
+    },
+    {
+      "stainID": 24,
+      "locale": "de",
+      "local": "Opo-Opobrauner ",
+      "upstream": "Opo-Opobraun"
+    },
+    {
+      "stainID": 24,
+      "locale": "fr",
+      "local": "brun opo-opo",
+      "upstream": "Brun opo-opo"
+    },
+    {
+      "stainID": 25,
+      "locale": "en",
+      "local": "Aldgoat Brown ",
+      "upstream": "Aldgoat Brown"
+    },
+    {
+      "stainID": 25,
+      "locale": "de",
+      "local": "Steinbockbrauner ",
+      "upstream": "Steinbockbraun"
+    },
+    {
+      "stainID": 25,
+      "locale": "fr",
+      "local": "brun bouquetin",
+      "upstream": "Brun bouquetin"
+    },
+    {
+      "stainID": 26,
+      "locale": "en",
+      "local": "Pumpkin Orange ",
+      "upstream": "Pumpkin Orange"
+    },
+    {
+      "stainID": 26,
+      "locale": "de",
+      "local": "Kürbisoranger ",
+      "upstream": "Kürbisorange"
+    },
+    {
+      "stainID": 26,
+      "locale": "fr",
+      "local": "orange citrouille",
+      "upstream": "Orange citrouille"
+    },
+    {
+      "stainID": 27,
+      "locale": "en",
+      "local": "Acorn Brown ",
+      "upstream": "Acorn Brown"
+    },
+    {
+      "stainID": 27,
+      "locale": "de",
+      "local": "Eichelbrauner ",
+      "upstream": "Eichelbraun"
+    },
+    {
+      "stainID": 27,
+      "locale": "fr",
+      "local": "brun noisette",
+      "upstream": "Brun noisette"
+    },
+    {
+      "stainID": 28,
+      "locale": "en",
+      "local": "Orchard Brown ",
+      "upstream": "Orchard Brown"
+    },
+    {
+      "stainID": 28,
+      "locale": "de",
+      "local": "Obstbrauner ",
+      "upstream": "Obstbraun"
+    },
+    {
+      "stainID": 28,
+      "locale": "fr",
+      "local": "feuille-morte",
+      "upstream": "Feuille-morte"
+    },
+    {
+      "stainID": 29,
+      "locale": "en",
+      "local": "Chestnut Brown ",
+      "upstream": "Chestnut Brown"
+    },
+    {
+      "stainID": 29,
+      "locale": "de",
+      "local": "Kastanienbrauner ",
+      "upstream": "Kastanienbraun"
+    },
+    {
+      "stainID": 29,
+      "locale": "fr",
+      "local": "brun châtaigne",
+      "upstream": "Brun châtaigne"
+    },
+    {
+      "stainID": 30,
+      "locale": "en",
+      "local": "Gobbiebag Brown ",
+      "upstream": "Gobbiebag Brown"
+    },
+    {
+      "stainID": 30,
+      "locale": "de",
+      "local": "Kartonbrauner ",
+      "upstream": "Kartonbraun"
+    },
+    {
+      "stainID": 30,
+      "locale": "fr",
+      "local": "brun gobelin",
+      "upstream": "Brun gobelin"
+    },
+    {
+      "stainID": 31,
+      "locale": "en",
+      "local": "Shale Brown ",
+      "upstream": "Shale Brown"
+    },
+    {
+      "stainID": 31,
+      "locale": "de",
+      "local": "Schieferbrauner ",
+      "upstream": "Schieferbraun"
+    },
+    {
+      "stainID": 31,
+      "locale": "fr",
+      "local": "brun schiste",
+      "upstream": "Brun schiste"
+    },
+    {
+      "stainID": 32,
+      "locale": "en",
+      "local": "Mole Brown ",
+      "upstream": "Mole Brown"
+    },
+    {
+      "stainID": 32,
+      "locale": "de",
+      "local": "Maulwurfsbrauner ",
+      "upstream": "Maulwurfsbraun"
+    },
+    {
+      "stainID": 32,
+      "locale": "fr",
+      "local": "brun taupe",
+      "upstream": "Brun taupe"
+    },
+    {
+      "stainID": 33,
+      "locale": "en",
+      "local": "Loam Brown ",
+      "upstream": "Loam Brown"
+    },
+    {
+      "stainID": 33,
+      "locale": "de",
+      "local": "Lehmbrauner ",
+      "upstream": "Lehmbraun"
+    },
+    {
+      "stainID": 33,
+      "locale": "fr",
+      "local": "brun argile",
+      "upstream": "Brun argile"
+    },
+    {
+      "stainID": 34,
+      "locale": "en",
+      "local": "Bone White ",
+      "upstream": "Bone White"
+    },
+    {
+      "stainID": 34,
+      "locale": "de",
+      "local": "Knochenweißer ",
+      "upstream": "Knochenweiß"
+    },
+    {
+      "stainID": 34,
+      "locale": "fr",
+      "local": "ivoire",
+      "upstream": "Ivoire"
+    },
+    {
+      "stainID": 35,
+      "locale": "en",
+      "local": "Ul Brown ",
+      "upstream": "Ul Brown"
+    },
+    {
+      "stainID": 35,
+      "locale": "de",
+      "local": "Ul'dahbrauner ",
+      "upstream": "Ul'dahbraun"
+    },
+    {
+      "stainID": 35,
+      "locale": "fr",
+      "local": "ocre uldien",
+      "upstream": "Ocre uldien"
+    },
+    {
+      "stainID": 36,
+      "locale": "en",
+      "local": "Desert Yellow ",
+      "upstream": "Desert Yellow"
+    },
+    {
+      "stainID": 36,
+      "locale": "de",
+      "local": "Wüstengelber ",
+      "upstream": "Wüstengelb"
+    },
+    {
+      "stainID": 36,
+      "locale": "fr",
+      "local": "jaune désert",
+      "upstream": "Jaune désert"
+    },
+    {
+      "stainID": 37,
+      "locale": "en",
+      "local": "Honey Yellow ",
+      "upstream": "Honey Yellow"
+    },
+    {
+      "stainID": 37,
+      "locale": "de",
+      "local": "Honiggelber ",
+      "upstream": "Honiggelb"
+    },
+    {
+      "stainID": 37,
+      "locale": "fr",
+      "local": "jaune miel",
+      "upstream": "Jaune miel"
+    },
+    {
+      "stainID": 38,
+      "locale": "en",
+      "local": "Millioncorn Yellow ",
+      "upstream": "Millioncorn Yellow"
+    },
+    {
+      "stainID": 38,
+      "locale": "de",
+      "local": "Maisgelber ",
+      "upstream": "Maisgelb"
+    },
+    {
+      "stainID": 38,
+      "locale": "fr",
+      "local": "jaune milli-maïs",
+      "upstream": "Jaune milli-maïs"
+    },
+    {
+      "stainID": 39,
+      "locale": "en",
+      "local": "Coeurl Yellow ",
+      "upstream": "Coeurl Yellow"
+    },
+    {
+      "stainID": 39,
+      "locale": "de",
+      "local": "Coeurlgelber ",
+      "upstream": "Coeurlgelb"
+    },
+    {
+      "stainID": 39,
+      "locale": "fr",
+      "local": "jaune coeurl",
+      "upstream": "Jaune coeurl"
+    },
+    {
+      "stainID": 40,
+      "locale": "en",
+      "local": "Cream Yellow ",
+      "upstream": "Cream Yellow"
+    },
+    {
+      "stainID": 40,
+      "locale": "de",
+      "local": "Cremegelber ",
+      "upstream": "Cremegelb"
+    },
+    {
+      "stainID": 40,
+      "locale": "fr",
+      "local": "jaune crème",
+      "upstream": "Jaune crème"
+    },
+    {
+      "stainID": 41,
+      "locale": "en",
+      "local": "Halatali Yellow ",
+      "upstream": "Halatali Yellow"
+    },
+    {
+      "stainID": 41,
+      "locale": "de",
+      "local": "Halataligelber ",
+      "upstream": "Halataligelb"
+    },
+    {
+      "stainID": 41,
+      "locale": "fr",
+      "local": "jaune Halatali",
+      "upstream": "Jaune Halatali"
+    },
+    {
+      "stainID": 42,
+      "locale": "en",
+      "local": "Raisin Brown ",
+      "upstream": "Raisin Brown"
+    },
+    {
+      "stainID": 42,
+      "locale": "de",
+      "local": "Rosinenbrauner ",
+      "upstream": "Rosinenbraun"
+    },
+    {
+      "stainID": 42,
+      "locale": "fr",
+      "local": "raisin sec",
+      "upstream": "Raisin sec"
+    },
+    {
+      "stainID": 43,
+      "locale": "en",
+      "local": "Mud Green ",
+      "upstream": "Mud Green"
+    },
+    {
+      "stainID": 43,
+      "locale": "de",
+      "local": "Schlammgrüner ",
+      "upstream": "Schlammgrün"
+    },
+    {
+      "stainID": 43,
+      "locale": "fr",
+      "local": "kaki",
+      "upstream": "Kaki"
+    },
+    {
+      "stainID": 44,
+      "locale": "en",
+      "local": "Sylph Green ",
+      "upstream": "Sylph Green"
+    },
+    {
+      "stainID": 44,
+      "locale": "de",
+      "local": "Sylphengrüner ",
+      "upstream": "Sylphengrün"
+    },
+    {
+      "stainID": 44,
+      "locale": "fr",
+      "local": "vert sylphe",
+      "upstream": "Vert sylphe"
+    },
+    {
+      "stainID": 45,
+      "locale": "en",
+      "local": "Lime Green ",
+      "upstream": "Lime Green"
+    },
+    {
+      "stainID": 45,
+      "locale": "de",
+      "local": "Limettengrüner ",
+      "upstream": "Limettengrün"
+    },
+    {
+      "stainID": 45,
+      "locale": "fr",
+      "local": "vert citron",
+      "upstream": "Vert citron"
+    },
+    {
+      "stainID": 46,
+      "locale": "en",
+      "local": "Moss Green ",
+      "upstream": "Moss Green"
+    },
+    {
+      "stainID": 46,
+      "locale": "de",
+      "local": "Moosgrüner ",
+      "upstream": "Moosgrün"
+    },
+    {
+      "stainID": 46,
+      "locale": "fr",
+      "local": "vert mousse",
+      "upstream": "Vert mousse"
+    },
+    {
+      "stainID": 47,
+      "locale": "en",
+      "local": "Meadow Green ",
+      "upstream": "Meadow Green"
+    },
+    {
+      "stainID": 47,
+      "locale": "de",
+      "local": "Grasgrüner ",
+      "upstream": "Grasgrün"
+    },
+    {
+      "stainID": 47,
+      "locale": "fr",
+      "local": "vert prairie",
+      "upstream": "Vert prairie"
+    },
+    {
+      "stainID": 48,
+      "locale": "en",
+      "local": "Olive Green ",
+      "upstream": "Olive Green"
+    },
+    {
+      "stainID": 48,
+      "locale": "de",
+      "local": "Olivgrüner ",
+      "upstream": "Olivgrün"
+    },
+    {
+      "stainID": 48,
+      "locale": "fr",
+      "local": "vert olive",
+      "upstream": "Vert olive"
+    },
+    {
+      "stainID": 49,
+      "locale": "en",
+      "local": "Marsh Green ",
+      "upstream": "Marsh Green"
+    },
+    {
+      "stainID": 49,
+      "locale": "de",
+      "local": "Sumpfgrüner ",
+      "upstream": "Sumpfgrün"
+    },
+    {
+      "stainID": 49,
+      "locale": "fr",
+      "local": "vert viridien",
+      "upstream": "Vert viridien"
+    },
+    {
+      "stainID": 50,
+      "locale": "en",
+      "local": "Apple Green ",
+      "upstream": "Apple Green"
+    },
+    {
+      "stainID": 50,
+      "locale": "de",
+      "local": "Apfelgrüner ",
+      "upstream": "Apfelgrün"
+    },
+    {
+      "stainID": 50,
+      "locale": "fr",
+      "local": "vert pomme",
+      "upstream": "Vert pomme"
+    },
+    {
+      "stainID": 51,
+      "locale": "en",
+      "local": "Cactuar Green ",
+      "upstream": "Cactuar Green"
+    },
+    {
+      "stainID": 51,
+      "locale": "de",
+      "local": "Kaktusgrüner ",
+      "upstream": "Kaktusgrün"
+    },
+    {
+      "stainID": 51,
+      "locale": "fr",
+      "local": "vert cactuar",
+      "upstream": "Vert cactuar"
+    },
+    {
+      "stainID": 52,
+      "locale": "en",
+      "local": "Hunter Green ",
+      "upstream": "Hunter Green"
+    },
+    {
+      "stainID": 52,
+      "locale": "de",
+      "local": "Jägergrüner ",
+      "upstream": "Jägergrün"
+    },
+    {
+      "stainID": 52,
+      "locale": "fr",
+      "local": "vert chasseur",
+      "upstream": "Vert chasseur"
+    },
+    {
+      "stainID": 53,
+      "locale": "en",
+      "local": "Ochu Green ",
+      "upstream": "Ochu Green"
+    },
+    {
+      "stainID": 53,
+      "locale": "de",
+      "local": "Ochugrüner ",
+      "upstream": "Ochugrün"
+    },
+    {
+      "stainID": 53,
+      "locale": "fr",
+      "local": "vert otyugh",
+      "upstream": "Vert otyugh"
+    },
+    {
+      "stainID": 54,
+      "locale": "en",
+      "local": "Adamantoise Green ",
+      "upstream": "Adamantoise Green"
+    },
+    {
+      "stainID": 54,
+      "locale": "de",
+      "local": "Adaman-Taimaigrüner ",
+      "upstream": "Adaman-Taimaigrün"
+    },
+    {
+      "stainID": 54,
+      "locale": "fr",
+      "local": "vert adamankhélone",
+      "upstream": "Vert adamankhélone"
+    },
+    {
+      "stainID": 55,
+      "locale": "en",
+      "local": "Nophica Green ",
+      "upstream": "Nophica Green"
+    },
+    {
+      "stainID": 55,
+      "locale": "de",
+      "local": "Nophicagrüner ",
+      "upstream": "Nophicagrün"
+    },
+    {
+      "stainID": 55,
+      "locale": "fr",
+      "local": "vert Nophica",
+      "upstream": "Vert Nophica"
+    },
+    {
+      "stainID": 56,
+      "locale": "en",
+      "local": "Deepwood Green ",
+      "upstream": "Deepwood Green"
+    },
+    {
+      "stainID": 56,
+      "locale": "de",
+      "local": "Waldgrüner ",
+      "upstream": "Waldgrün"
+    },
+    {
+      "stainID": 56,
+      "locale": "fr",
+      "local": "vert sapin",
+      "upstream": "Vert sapin"
+    },
+    {
+      "stainID": 57,
+      "locale": "en",
+      "local": "Celeste Green ",
+      "upstream": "Celeste Green"
+    },
+    {
+      "stainID": 57,
+      "locale": "de",
+      "local": "Mintgrüner ",
+      "upstream": "Mintgrün"
+    },
+    {
+      "stainID": 57,
+      "locale": "fr",
+      "local": "vert céleste",
+      "upstream": "Vert céleste"
+    },
+    {
+      "stainID": 58,
+      "locale": "en",
+      "local": "Turquoise Green ",
+      "upstream": "Turquoise Green"
+    },
+    {
+      "stainID": 58,
+      "locale": "de",
+      "local": "Türkiser ",
+      "upstream": "Türkis"
+    },
+    {
+      "stainID": 58,
+      "locale": "fr",
+      "local": "turquoise",
+      "upstream": "Turquoise"
+    },
+    {
+      "stainID": 59,
+      "locale": "en",
+      "local": "Morbol Green ",
+      "upstream": "Morbol Green"
+    },
+    {
+      "stainID": 59,
+      "locale": "de",
+      "local": "Morbolgrüner ",
+      "upstream": "Morbolgrün"
+    },
+    {
+      "stainID": 59,
+      "locale": "fr",
+      "local": "vert morbol",
+      "upstream": "Vert morbol"
+    },
+    {
+      "stainID": 60,
+      "locale": "en",
+      "local": "Ice Blue ",
+      "upstream": "Ice Blue"
+    },
+    {
+      "stainID": 60,
+      "locale": "de",
+      "local": "Eisblauer ",
+      "upstream": "Eisblau"
+    },
+    {
+      "stainID": 60,
+      "locale": "fr",
+      "local": "bleu glace",
+      "upstream": "Bleu glace"
+    },
+    {
+      "stainID": 61,
+      "locale": "en",
+      "local": "Sky Blue ",
+      "upstream": "Sky Blue"
+    },
+    {
+      "stainID": 61,
+      "locale": "de",
+      "local": "Himmelblauer ",
+      "upstream": "Himmelblau"
+    },
+    {
+      "stainID": 61,
+      "locale": "fr",
+      "local": "bleu ciel",
+      "upstream": "Bleu ciel"
+    },
+    {
+      "stainID": 62,
+      "locale": "en",
+      "local": "Seafog Blue ",
+      "upstream": "Seafog Blue"
+    },
+    {
+      "stainID": 62,
+      "locale": "de",
+      "local": "Seenebelblauer ",
+      "upstream": "Seenebelblau"
+    },
+    {
+      "stainID": 62,
+      "locale": "fr",
+      "local": "bleu horizon",
+      "upstream": "Bleu horizon"
+    },
+    {
+      "stainID": 63,
+      "locale": "en",
+      "local": "Peacock Blue ",
+      "upstream": "Peacock Blue"
+    },
+    {
+      "stainID": 63,
+      "locale": "de",
+      "local": "Pfauenblauer ",
+      "upstream": "Pfauenblau"
+    },
+    {
+      "stainID": 63,
+      "locale": "fr",
+      "local": "bleu paon",
+      "upstream": "Bleu paon"
+    },
+    {
+      "stainID": 64,
+      "locale": "en",
+      "local": "Rhotano Blue ",
+      "upstream": "Rhotano Blue"
+    },
+    {
+      "stainID": 64,
+      "locale": "de",
+      "local": "Rhotanoblauer ",
+      "upstream": "Rhotanoblau"
+    },
+    {
+      "stainID": 64,
+      "locale": "fr",
+      "local": "bleu de Rhotano",
+      "upstream": "Bleu de Rhotano"
+    },
+    {
+      "stainID": 65,
+      "locale": "en",
+      "local": "Corpse Blue ",
+      "upstream": "Corpse Blue"
+    },
+    {
+      "stainID": 65,
+      "locale": "de",
+      "local": "Leichenblauer ",
+      "upstream": "Leichenblau"
+    },
+    {
+      "stainID": 65,
+      "locale": "fr",
+      "local": "bleu charron",
+      "upstream": "Bleu charron"
+    },
+    {
+      "stainID": 66,
+      "locale": "en",
+      "local": "Ceruleum Blue ",
+      "upstream": "Ceruleum Blue"
+    },
+    {
+      "stainID": 66,
+      "locale": "de",
+      "local": "Erdseimblauer ",
+      "upstream": "Erdseimblau"
+    },
+    {
+      "stainID": 66,
+      "locale": "fr",
+      "local": "bleu céruleum",
+      "upstream": "Bleu céruleum"
+    },
+    {
+      "stainID": 67,
+      "locale": "en",
+      "local": "Woad Blue ",
+      "upstream": "Woad Blue"
+    },
+    {
+      "stainID": 67,
+      "locale": "de",
+      "local": "Indigoblauer ",
+      "upstream": "Indigoblau"
+    },
+    {
+      "stainID": 67,
+      "locale": "fr",
+      "local": "bleu guède",
+      "upstream": "Bleu guède"
+    },
+    {
+      "stainID": 68,
+      "locale": "en",
+      "local": "Ink Blue ",
+      "upstream": "Ink Blue"
+    },
+    {
+      "stainID": 68,
+      "locale": "de",
+      "local": "Tintenblauer ",
+      "upstream": "Tintenblau"
+    },
+    {
+      "stainID": 68,
+      "locale": "fr",
+      "local": "bleu encre",
+      "upstream": "Bleu encre"
+    },
+    {
+      "stainID": 69,
+      "locale": "en",
+      "local": "Raptor Blue ",
+      "upstream": "Raptor Blue"
+    },
+    {
+      "stainID": 69,
+      "locale": "de",
+      "local": "Raptorenblauer ",
+      "upstream": "Raptorenblau"
+    },
+    {
+      "stainID": 69,
+      "locale": "fr",
+      "local": "bleu raptor",
+      "upstream": "Bleu raptor"
+    },
+    {
+      "stainID": 70,
+      "locale": "en",
+      "local": "Othard Blue ",
+      "upstream": "Othard Blue"
+    },
+    {
+      "stainID": 70,
+      "locale": "de",
+      "local": "Othardblauer ",
+      "upstream": "Othardblau"
+    },
+    {
+      "stainID": 70,
+      "locale": "fr",
+      "local": "bleu d'Othard",
+      "upstream": "Bleu d'Othard"
+    },
+    {
+      "stainID": 71,
+      "locale": "en",
+      "local": "Storm Blue ",
+      "upstream": "Storm Blue"
+    },
+    {
+      "stainID": 71,
+      "locale": "de",
+      "local": "Sturmblauer ",
+      "upstream": "Sturmblau"
+    },
+    {
+      "stainID": 71,
+      "locale": "fr",
+      "local": "bleu tempête",
+      "upstream": "Bleu tempête"
+    },
+    {
+      "stainID": 72,
+      "locale": "en",
+      "local": "Void Blue ",
+      "upstream": "Void Blue"
+    },
+    {
+      "stainID": 72,
+      "locale": "de",
+      "local": "Nichtsblauer ",
+      "upstream": "Nichtsblau"
+    },
+    {
+      "stainID": 72,
+      "locale": "fr",
+      "local": "bleu du néant",
+      "upstream": "Bleu du néant"
+    },
+    {
+      "stainID": 73,
+      "locale": "en",
+      "local": "Royal Blue ",
+      "upstream": "Royal Blue"
+    },
+    {
+      "stainID": 73,
+      "locale": "de",
+      "local": "Königsblauer ",
+      "upstream": "Königsblau"
+    },
+    {
+      "stainID": 73,
+      "locale": "fr",
+      "local": "bleu royal",
+      "upstream": "Bleu royal"
+    },
+    {
+      "stainID": 74,
+      "locale": "en",
+      "local": "Midnight Blue ",
+      "upstream": "Midnight Blue"
+    },
+    {
+      "stainID": 74,
+      "locale": "de",
+      "local": "Mitternachtsblauer ",
+      "upstream": "Mitternachtsblau"
+    },
+    {
+      "stainID": 74,
+      "locale": "fr",
+      "local": "bleu de minuit",
+      "upstream": "Bleu de minuit"
+    },
+    {
+      "stainID": 75,
+      "locale": "en",
+      "local": "Shadow Blue ",
+      "upstream": "Shadow Blue"
+    },
+    {
+      "stainID": 75,
+      "locale": "de",
+      "local": "Schattenblauer ",
+      "upstream": "Schattenblau"
+    },
+    {
+      "stainID": 75,
+      "locale": "fr",
+      "local": "bleu turquin",
+      "upstream": "Bleu turquin"
+    },
+    {
+      "stainID": 76,
+      "locale": "en",
+      "local": "Abyssal Blue ",
+      "upstream": "Abyssal Blue"
+    },
+    {
+      "stainID": 76,
+      "locale": "de",
+      "local": "Tiefblauer ",
+      "upstream": "Tiefblau"
+    },
+    {
+      "stainID": 76,
+      "locale": "fr",
+      "local": "bleu marine",
+      "upstream": "Bleu marine"
+    },
+    {
+      "stainID": 77,
+      "locale": "en",
+      "local": "Lavender Purple ",
+      "upstream": "Lavender Purple"
+    },
+    {
+      "stainID": 77,
+      "locale": "de",
+      "local": "Lavendelblauer ",
+      "upstream": "Lavendelblau"
+    },
+    {
+      "stainID": 77,
+      "locale": "fr",
+      "local": "lavande",
+      "upstream": "Lavande"
+    },
+    {
+      "stainID": 78,
+      "locale": "en",
+      "local": "Gloom Purple ",
+      "upstream": "Gloom Purple"
+    },
+    {
+      "stainID": 78,
+      "locale": "de",
+      "local": "Düstervioletter ",
+      "upstream": "Düsterviolett"
+    },
+    {
+      "stainID": 78,
+      "locale": "fr",
+      "local": "colombin",
+      "upstream": "Colombin"
+    },
+    {
+      "stainID": 79,
+      "locale": "en",
+      "local": "Currant Purple ",
+      "upstream": "Currant Purple"
+    },
+    {
+      "stainID": 79,
+      "locale": "de",
+      "local": "Johannisbeerenvioletter ",
+      "upstream": "Johannisbeerenviolett"
+    },
+    {
+      "stainID": 79,
+      "locale": "fr",
+      "local": "cassis",
+      "upstream": "Cassis"
+    },
+    {
+      "stainID": 80,
+      "locale": "en",
+      "local": "Iris Purple ",
+      "upstream": "Iris Purple"
+    },
+    {
+      "stainID": 80,
+      "locale": "de",
+      "local": "Irisvioletter ",
+      "upstream": "Irisviolett"
+    },
+    {
+      "stainID": 80,
+      "locale": "fr",
+      "local": "iris",
+      "upstream": "Iris"
+    },
+    {
+      "stainID": 81,
+      "locale": "en",
+      "local": "Grape Purple ",
+      "upstream": "Grape Purple"
+    },
+    {
+      "stainID": 81,
+      "locale": "de",
+      "local": "Weintraubenvioletter ",
+      "upstream": "Weintraubenviolett"
+    },
+    {
+      "stainID": 81,
+      "locale": "fr",
+      "local": "raisin",
+      "upstream": "Raisin"
+    },
+    {
+      "stainID": 82,
+      "locale": "en",
+      "local": "Lotus Pink ",
+      "upstream": "Lotus Pink"
+    },
+    {
+      "stainID": 82,
+      "locale": "de",
+      "local": "Lotusrosa ",
+      "upstream": "Lotusrosa"
+    },
+    {
+      "stainID": 82,
+      "locale": "fr",
+      "local": "mauve lotus",
+      "upstream": "Mauve lotus"
+    },
+    {
+      "stainID": 83,
+      "locale": "en",
+      "local": "Colibri Pink ",
+      "upstream": "Colibri Pink"
+    },
+    {
+      "stainID": 83,
+      "locale": "de",
+      "local": "Kolibrirosa ",
+      "upstream": "Kolibrirosa"
+    },
+    {
+      "stainID": 83,
+      "locale": "fr",
+      "local": "mauve colibri",
+      "upstream": "Mauve colibri"
+    },
+    {
+      "stainID": 84,
+      "locale": "en",
+      "local": "Plum Purple ",
+      "upstream": "Plum Purple"
+    },
+    {
+      "stainID": 84,
+      "locale": "de",
+      "local": "Pflaumenvioletter ",
+      "upstream": "Pflaumenviolett"
+    },
+    {
+      "stainID": 84,
+      "locale": "fr",
+      "local": "prune",
+      "upstream": "Prune"
+    },
+    {
+      "stainID": 85,
+      "locale": "en",
+      "local": "Regal Purple ",
+      "upstream": "Regal Purple"
+    },
+    {
+      "stainID": 85,
+      "locale": "de",
+      "local": "Königsvioletter ",
+      "upstream": "Königsviolett"
+    },
+    {
+      "stainID": 85,
+      "locale": "fr",
+      "local": "byzantium",
+      "upstream": "Byzantium"
+    },
+    {
+      "stainID": 86,
+      "locale": "en",
+      "local": "Ruby Red ",
+      "upstream": "Ruby Red"
+    },
+    {
+      "stainID": 86,
+      "locale": "de",
+      "local": "Rubinroter ",
+      "upstream": "Rubinrot"
+    },
+    {
+      "stainID": 86,
+      "locale": "fr",
+      "local": "rouge rubis",
+      "upstream": "Rouge rubis"
+    },
+    {
+      "stainID": 87,
+      "locale": "en",
+      "local": "Cherry Pink ",
+      "upstream": "Cherry Pink"
+    },
+    {
+      "stainID": 87,
+      "locale": "de",
+      "local": "Kirschpinker ",
+      "upstream": "Kirschpink"
+    },
+    {
+      "stainID": 87,
+      "locale": "fr",
+      "local": "rose cerise",
+      "upstream": "Rose cerise"
+    },
+    {
+      "stainID": 88,
+      "locale": "en",
+      "local": "Canary Yellow ",
+      "upstream": "Canary Yellow"
+    },
+    {
+      "stainID": 88,
+      "locale": "de",
+      "local": "Kanariengelber ",
+      "upstream": "Kanariengelb"
+    },
+    {
+      "stainID": 88,
+      "locale": "fr",
+      "local": "jaune serin",
+      "upstream": "Jaune serin"
+    },
+    {
+      "stainID": 89,
+      "locale": "en",
+      "local": "Vanilla Yellow ",
+      "upstream": "Vanilla Yellow"
+    },
+    {
+      "stainID": 89,
+      "locale": "de",
+      "local": "Vanillegelber ",
+      "upstream": "Vanillegelb"
+    },
+    {
+      "stainID": 89,
+      "locale": "fr",
+      "local": "jaune vanille",
+      "upstream": "Jaune vanille"
+    },
+    {
+      "stainID": 90,
+      "locale": "en",
+      "local": "Dragoon Blue ",
+      "upstream": "Dragoon Blue"
+    },
+    {
+      "stainID": 90,
+      "locale": "de",
+      "local": "Dragoonblauer ",
+      "upstream": "Dragoonblau"
+    },
+    {
+      "stainID": 90,
+      "locale": "fr",
+      "local": "bleu dragon",
+      "upstream": "Bleu dragon"
+    },
+    {
+      "stainID": 91,
+      "locale": "en",
+      "local": "Turquoise Blue ",
+      "upstream": "Turquoise Blue"
+    },
+    {
+      "stainID": 91,
+      "locale": "de",
+      "local": "Cyanblauer ",
+      "upstream": "Cyanblau"
+    },
+    {
+      "stainID": 91,
+      "locale": "fr",
+      "local": "bleu turquoise",
+      "upstream": "Bleu turquoise"
+    },
+    {
+      "stainID": 92,
+      "locale": "en",
+      "local": "Gunmetal Black ",
+      "upstream": "Gunmetal Black"
+    },
+    {
+      "stainID": 92,
+      "locale": "de",
+      "local": "Cermetgrauer ",
+      "upstream": "Cermetgrau"
+    },
+    {
+      "stainID": 92,
+      "locale": "fr",
+      "local": "bronze à canon",
+      "upstream": "Bronze à canon"
+    },
+    {
+      "stainID": 93,
+      "locale": "en",
+      "local": "Pearl White ",
+      "upstream": "Pearl White"
+    },
+    {
+      "stainID": 93,
+      "locale": "fr",
+      "local": "blanc perlé",
+      "upstream": "Blanc perlé"
+    },
+    {
+      "stainID": 94,
+      "locale": "en",
+      "local": "Metallic Brass ",
+      "upstream": "Metallic Brass"
+    },
+    {
+      "stainID": 94,
+      "locale": "de",
+      "local": "Metallic messingfarbener ",
+      "upstream": "Metallic Messing"
+    },
+    {
+      "stainID": 94,
+      "locale": "fr",
+      "local": "cuivre jaune",
+      "upstream": "Cuivre jaune"
+    },
+    {
+      "stainID": 95,
+      "locale": "en",
+      "local": "Carmine Red ",
+      "upstream": "Carmine Red"
+    },
+    {
+      "stainID": 95,
+      "locale": "de",
+      "local": "Karmesinroter ",
+      "upstream": "Karmesinrot"
+    },
+    {
+      "stainID": 95,
+      "locale": "fr",
+      "local": "rouge carmin",
+      "upstream": "Rouge carmin"
+    },
+    {
+      "stainID": 96,
+      "locale": "en",
+      "local": "Neon Pink ",
+      "upstream": "Neon Pink"
+    },
+    {
+      "stainID": 96,
+      "locale": "de",
+      "local": "Neonpinker ",
+      "upstream": "Neonpink"
+    },
+    {
+      "stainID": 96,
+      "locale": "fr",
+      "local": "rose néon",
+      "upstream": "Rose néon"
+    },
+    {
+      "stainID": 97,
+      "locale": "en",
+      "local": "Bright Orange ",
+      "upstream": "Bright Orange"
+    },
+    {
+      "stainID": 97,
+      "locale": "de",
+      "local": "Knalloranger ",
+      "upstream": "Knallorange"
+    },
+    {
+      "stainID": 97,
+      "locale": "fr",
+      "local": "orange brillant",
+      "upstream": "Orange brillant"
+    },
+    {
+      "stainID": 98,
+      "locale": "en",
+      "local": "Neon Yellow ",
+      "upstream": "Neon Yellow"
+    },
+    {
+      "stainID": 98,
+      "locale": "de",
+      "local": "Neongelber ",
+      "upstream": "Neongelb"
+    },
+    {
+      "stainID": 98,
+      "locale": "fr",
+      "local": "jaune néon",
+      "upstream": "Jaune néon"
+    },
+    {
+      "stainID": 99,
+      "locale": "de",
+      "local": "Neongrüner ",
+      "upstream": "Neongrün"
+    },
+    {
+      "stainID": 99,
+      "locale": "fr",
+      "local": "vert néon",
+      "upstream": "Vert néon"
+    },
+    {
+      "stainID": 100,
+      "locale": "en",
+      "local": "Azure Blue ",
+      "upstream": "Azure Blue"
+    },
+    {
+      "stainID": 100,
+      "locale": "de",
+      "local": "Azurblauer ",
+      "upstream": "Azurblau"
+    },
+    {
+      "stainID": 100,
+      "locale": "fr",
+      "local": "bleu azur",
+      "upstream": "Bleu azur"
+    },
+    {
+      "stainID": 101,
+      "locale": "en",
+      "local": "Pure White ",
+      "upstream": "Pure White"
+    },
+    {
+      "stainID": 101,
+      "locale": "de",
+      "local": "Wolkenweißer ",
+      "upstream": "Wolkenweiß"
+    },
+    {
+      "stainID": 101,
+      "locale": "fr",
+      "local": "blanc immaculé",
+      "upstream": "Blanc immaculé"
+    },
+    {
+      "stainID": 102,
+      "locale": "en",
+      "local": "Jet Black ",
+      "upstream": "Jet Black"
+    },
+    {
+      "stainID": 102,
+      "locale": "de",
+      "local": "Rabenschwarzer ",
+      "upstream": "Rabenschwarz"
+    },
+    {
+      "stainID": 102,
+      "locale": "fr",
+      "local": "noir de jais",
+      "upstream": "Noir de jais"
+    },
+    {
+      "stainID": 103,
+      "locale": "en",
+      "local": "Pastel Pink ",
+      "upstream": "Pastel Pink"
+    },
+    {
+      "stainID": 103,
+      "locale": "de",
+      "local": "Pastellrosa ",
+      "upstream": "Pastellrosa"
+    },
+    {
+      "stainID": 103,
+      "locale": "fr",
+      "local": "rose pastel",
+      "upstream": "Rose pastel"
+    },
+    {
+      "stainID": 104,
+      "locale": "en",
+      "local": "Dark Red ",
+      "upstream": "Dark Red"
+    },
+    {
+      "stainID": 104,
+      "locale": "de",
+      "local": "Dunkelroter ",
+      "upstream": "Dunkelrot"
+    },
+    {
+      "stainID": 104,
+      "locale": "fr",
+      "local": "rouge foncé",
+      "upstream": "Rouge foncé"
+    },
+    {
+      "stainID": 105,
+      "locale": "en",
+      "local": "Dark Brown ",
+      "upstream": "Dark Brown"
+    },
+    {
+      "stainID": 105,
+      "locale": "de",
+      "local": "Dunkelbrauner ",
+      "upstream": "Dunkelbraun"
+    },
+    {
+      "stainID": 105,
+      "locale": "fr",
+      "local": "brun foncé",
+      "upstream": "Brun foncé"
+    },
+    {
+      "stainID": 106,
+      "locale": "en",
+      "local": "Pastel Green ",
+      "upstream": "Pastel Green"
+    },
+    {
+      "stainID": 106,
+      "locale": "de",
+      "local": "Pastellgrüner ",
+      "upstream": "Pastellgrün"
+    },
+    {
+      "stainID": 106,
+      "locale": "fr",
+      "local": "vert pastel",
+      "upstream": "Vert pastel"
+    },
+    {
+      "stainID": 107,
+      "locale": "en",
+      "local": "Dark Green ",
+      "upstream": "Dark Green"
+    },
+    {
+      "stainID": 107,
+      "locale": "de",
+      "local": "Dunkelgrüner ",
+      "upstream": "Dunkelgrün"
+    },
+    {
+      "stainID": 107,
+      "locale": "fr",
+      "local": "vert foncé",
+      "upstream": "Vert foncé"
+    },
+    {
+      "stainID": 108,
+      "locale": "en",
+      "local": "Pastel Blue ",
+      "upstream": "Pastel Blue"
+    },
+    {
+      "stainID": 108,
+      "locale": "de",
+      "local": "Pastellblauer ",
+      "upstream": "Pastellblau"
+    },
+    {
+      "stainID": 108,
+      "locale": "fr",
+      "local": "bleu pastel",
+      "upstream": "Bleu pastel"
+    },
+    {
+      "stainID": 109,
+      "locale": "en",
+      "local": "Dark Blue ",
+      "upstream": "Dark Blue"
+    },
+    {
+      "stainID": 109,
+      "locale": "de",
+      "local": "Dunkelblauer ",
+      "upstream": "Dunkelblau"
+    },
+    {
+      "stainID": 109,
+      "locale": "fr",
+      "local": "bleu foncé",
+      "upstream": "Bleu foncé"
+    },
+    {
+      "stainID": 110,
+      "locale": "en",
+      "local": "Pastel Purple ",
+      "upstream": "Pastel Purple"
+    },
+    {
+      "stainID": 110,
+      "locale": "de",
+      "local": "Pastellvioletter ",
+      "upstream": "Pastellviolett"
+    },
+    {
+      "stainID": 110,
+      "locale": "fr",
+      "local": "violet pastel",
+      "upstream": "Violet pastel"
+    },
+    {
+      "stainID": 111,
+      "locale": "en",
+      "local": "Dark Purple ",
+      "upstream": "Dark Purple"
+    },
+    {
+      "stainID": 111,
+      "locale": "de",
+      "local": "Dunkelvioletter ",
+      "upstream": "Dunkelviolett"
+    },
+    {
+      "stainID": 111,
+      "locale": "fr",
+      "local": "violet foncé",
+      "upstream": "Violet foncé"
+    },
+    {
+      "stainID": 112,
+      "locale": "en",
+      "local": "Metallic Silver ",
+      "upstream": "Metallic Silver"
+    },
+    {
+      "stainID": 112,
+      "locale": "de",
+      "local": "Metallic silberner ",
+      "upstream": "Metallic Silber"
+    },
+    {
+      "stainID": 112,
+      "locale": "fr",
+      "local": "argent brillant",
+      "upstream": "Argent brillant"
+    },
+    {
+      "stainID": 113,
+      "locale": "en",
+      "local": "Metallic Gold ",
+      "upstream": "Metallic Gold"
+    },
+    {
+      "stainID": 113,
+      "locale": "de",
+      "local": "Metallic goldener ",
+      "upstream": "Metallic Gold"
+    },
+    {
+      "stainID": 113,
+      "locale": "fr",
+      "local": "or brillant",
+      "upstream": "Or brillant"
+    },
+    {
+      "stainID": 114,
+      "locale": "en",
+      "local": "Metallic Red ",
+      "upstream": "Metallic Red"
+    },
+    {
+      "stainID": 114,
+      "locale": "de",
+      "local": "Metallic roter ",
+      "upstream": "Metallic Rot"
+    },
+    {
+      "stainID": 114,
+      "locale": "fr",
+      "local": "rouge métallique",
+      "upstream": "Rouge métallique"
+    },
+    {
+      "stainID": 115,
+      "locale": "en",
+      "local": "Metallic Orange ",
+      "upstream": "Metallic Orange"
+    },
+    {
+      "stainID": 115,
+      "locale": "de",
+      "local": "Metallic orangefarbener ",
+      "upstream": "Metallic Orange"
+    },
+    {
+      "stainID": 115,
+      "locale": "fr",
+      "local": "orange métallique",
+      "upstream": "Orange métallique"
+    },
+    {
+      "stainID": 116,
+      "locale": "en",
+      "local": "Metallic Yellow ",
+      "upstream": "Metallic Yellow"
+    },
+    {
+      "stainID": 116,
+      "locale": "de",
+      "local": "Metallic gelber ",
+      "upstream": "Metallic Gelb"
+    },
+    {
+      "stainID": 116,
+      "locale": "fr",
+      "local": "jaune métallique",
+      "upstream": "Jaune métallique"
+    },
+    {
+      "stainID": 117,
+      "locale": "en",
+      "local": "Metallic Green ",
+      "upstream": "Metallic Green"
+    },
+    {
+      "stainID": 117,
+      "locale": "de",
+      "local": "Metallic grüner ",
+      "upstream": "Metallic Grün"
+    },
+    {
+      "stainID": 117,
+      "locale": "fr",
+      "local": "vert métallique",
+      "upstream": "Vert métallique"
+    },
+    {
+      "stainID": 118,
+      "locale": "en",
+      "local": "Metallic Sky Blue ",
+      "upstream": "Metallic Sky Blue"
+    },
+    {
+      "stainID": 118,
+      "locale": "de",
+      "local": "Metallic himmelblauer ",
+      "upstream": "Metallic Himmelblau"
+    },
+    {
+      "stainID": 118,
+      "locale": "fr",
+      "local": "bleu ciel métallique",
+      "upstream": "Bleu ciel métallique"
+    },
+    {
+      "stainID": 119,
+      "locale": "en",
+      "local": "Metallic Blue ",
+      "upstream": "Metallic Blue"
+    },
+    {
+      "stainID": 119,
+      "locale": "de",
+      "local": "Metallic blauer ",
+      "upstream": "Metallic Blau"
+    },
+    {
+      "stainID": 119,
+      "locale": "fr",
+      "local": "bleu métallique",
+      "upstream": "Bleu métallique"
+    },
+    {
+      "stainID": 120,
+      "locale": "en",
+      "local": "Metallic Purple ",
+      "upstream": "Metallic Purple"
+    },
+    {
+      "stainID": 120,
+      "locale": "de",
+      "local": "Metallic violetter ",
+      "upstream": "Metallic Violett"
+    },
+    {
+      "stainID": 120,
+      "locale": "fr",
+      "local": "violet métallique",
+      "upstream": "Violet métallique"
+    },
+    {
+      "stainID": 121,
+      "locale": "en",
+      "local": "Violet Purple ",
+      "upstream": "Violet Purple"
+    },
+    {
+      "stainID": 121,
+      "locale": "de",
+      "local": "Purpurvioletter ",
+      "upstream": "Purpurviolett"
+    },
+    {
+      "stainID": 121,
+      "locale": "fr",
+      "local": "violet pourpre",
+      "upstream": "Violet pourpre"
+    },
+    {
+      "stainID": 122,
+      "locale": "de",
+      "local": "Metallic pinker ",
+      "upstream": "Metallic Pink"
+    },
+    {
+      "stainID": 122,
+      "locale": "fr",
+      "local": "rose métallique",
+      "upstream": "Rose métallique"
+    },
+    {
+      "stainID": 123,
+      "locale": "de",
+      "local": "Metallic rubinroter ",
+      "upstream": "Metallic Rubinrot"
+    },
+    {
+      "stainID": 123,
+      "locale": "fr",
+      "local": "rouge rubis métallique",
+      "upstream": "Rouge rubis métallique"
+    },
+    {
+      "stainID": 124,
+      "locale": "en",
+      "local": "Metallic Cobalt Green ",
+      "upstream": "Metallic Cobalt Green"
+    },
+    {
+      "stainID": 124,
+      "locale": "de",
+      "local": "Metallic kobaltgrüner ",
+      "upstream": "Metallic Kobaltgrün"
+    },
+    {
+      "stainID": 124,
+      "locale": "fr",
+      "local": "vert de cobalt métallique",
+      "upstream": "Vert de cobalt métallique"
+    },
+    {
+      "stainID": 125,
+      "locale": "en",
+      "local": "Metallic Dark Blue ",
+      "upstream": "Metallic Dark Blue"
+    },
+    {
+      "stainID": 125,
+      "locale": "de",
+      "local": "Metallic dunkelblauer ",
+      "upstream": "Metallic Dunkelblau"
+    },
+    {
+      "stainID": 125,
+      "locale": "fr",
+      "local": "bleu foncé métallique",
+      "upstream": "Bleu foncé métallique"
+    }
+  ],
+  "locale_trimmed_mismatches": [
+    {
+      "stainID": 1,
+      "locale": "de",
+      "local": "Schneeweißer ",
+      "upstream": "Schneeweiß"
+    },
+    {
+      "stainID": 1,
+      "locale": "fr",
+      "local": "blanc neige",
+      "upstream": "Blanc neige"
+    },
+    {
+      "stainID": 2,
+      "locale": "de",
+      "local": "Aschgrauer ",
+      "upstream": "Aschgrau"
+    },
+    {
+      "stainID": 2,
+      "locale": "fr",
+      "local": "gris cendre",
+      "upstream": "Gris cendre"
+    },
+    {
+      "stainID": 3,
+      "locale": "de",
+      "local": "Goobbuegrauer ",
+      "upstream": "Goobbuegrau"
+    },
+    {
+      "stainID": 3,
+      "locale": "fr",
+      "local": "gris goobbue",
+      "upstream": "Gris goobbue"
+    },
+    {
+      "stainID": 4,
+      "locale": "de",
+      "local": "Schiefergrauer ",
+      "upstream": "Schiefergrau"
+    },
+    {
+      "stainID": 4,
+      "locale": "fr",
+      "local": "gris ardoise",
+      "upstream": "Gris ardoise"
+    },
+    {
+      "stainID": 5,
+      "locale": "de",
+      "local": "Anthraziter ",
+      "upstream": "Anthrazit"
+    },
+    {
+      "stainID": 5,
+      "locale": "fr",
+      "local": "gris charbon",
+      "upstream": "Gris charbon"
+    },
+    {
+      "stainID": 6,
+      "locale": "de",
+      "local": "Rußschwarzer ",
+      "upstream": "Rußschwarz"
+    },
+    {
+      "stainID": 6,
+      "locale": "fr",
+      "local": "noir suie",
+      "upstream": "Noir suie"
+    },
+    {
+      "stainID": 7,
+      "locale": "de",
+      "local": "Rosaroter ",
+      "upstream": "Rosarot"
+    },
+    {
+      "stainID": 7,
+      "locale": "fr",
+      "local": "rose floral",
+      "upstream": "Rose floral"
+    },
+    {
+      "stainID": 8,
+      "locale": "fr",
+      "local": "lilas",
+      "upstream": "Lilas"
+    },
+    {
+      "stainID": 9,
+      "locale": "de",
+      "local": "Rolanbeerenroter ",
+      "upstream": "Rolanbeerenrot"
+    },
+    {
+      "stainID": 9,
+      "locale": "fr",
+      "local": "rouge rolanbaie",
+      "upstream": "Rouge rolanbaie"
+    },
+    {
+      "stainID": 10,
+      "locale": "de",
+      "local": "Dalamudroter ",
+      "upstream": "Dalamudrot"
+    },
+    {
+      "stainID": 10,
+      "locale": "fr",
+      "local": "rouge Dalamud",
+      "upstream": "Rouge Dalamud"
+    },
+    {
+      "stainID": 11,
+      "locale": "de",
+      "local": "Rostroter ",
+      "upstream": "Rostrot"
+    },
+    {
+      "stainID": 11,
+      "locale": "fr",
+      "local": "rouille",
+      "upstream": "Rouille"
+    },
+    {
+      "stainID": 12,
+      "locale": "de",
+      "local": "Weinroter ",
+      "upstream": "Weinrot"
+    },
+    {
+      "stainID": 12,
+      "locale": "fr",
+      "local": "lie-de-vin",
+      "upstream": "Lie-de-vin"
+    },
+    {
+      "stainID": 13,
+      "locale": "fr",
+      "local": "rose corail",
+      "upstream": "Rose corail"
+    },
+    {
+      "stainID": 14,
+      "locale": "de",
+      "local": "Blutroter ",
+      "upstream": "Blutrot"
+    },
+    {
+      "stainID": 14,
+      "locale": "fr",
+      "local": "rouge sang",
+      "upstream": "Rouge sang"
+    },
+    {
+      "stainID": 15,
+      "locale": "fr",
+      "local": "rose saumon",
+      "upstream": "Rose saumon"
+    },
+    {
+      "stainID": 16,
+      "locale": "de",
+      "local": "Abendroter ",
+      "upstream": "Abendrot"
+    },
+    {
+      "stainID": 16,
+      "locale": "fr",
+      "local": "orange couchant",
+      "upstream": "Orange couchant"
+    },
+    {
+      "stainID": 17,
+      "locale": "de",
+      "local": "Tafelbergroter ",
+      "upstream": "Tafelbergrot"
+    },
+    {
+      "stainID": 17,
+      "locale": "fr",
+      "local": "vermillon terne",
+      "upstream": "Vermillon terne"
+    },
+    {
+      "stainID": 18,
+      "locale": "de",
+      "local": "Borkenbrauner ",
+      "upstream": "Borkenbraun"
+    },
+    {
+      "stainID": 18,
+      "locale": "fr",
+      "local": "marron écorce",
+      "upstream": "Marron écorce"
+    },
+    {
+      "stainID": 19,
+      "locale": "de",
+      "local": "Schokoladenbrauner ",
+      "upstream": "Schokoladenbraun"
+    },
+    {
+      "stainID": 19,
+      "locale": "fr",
+      "local": "chocolat",
+      "upstream": "Chocolat"
+    },
+    {
+      "stainID": 20,
+      "locale": "de",
+      "local": "Rotbrauner ",
+      "upstream": "Rotbraun"
+    },
+    {
+      "stainID": 20,
+      "locale": "fr",
+      "local": "brun fauve",
+      "upstream": "Brun fauve"
+    },
+    {
+      "stainID": 21,
+      "locale": "de",
+      "local": "Koboldbrauner ",
+      "upstream": "Koboldbraun"
+    },
+    {
+      "stainID": 21,
+      "locale": "fr",
+      "local": "brun kobold",
+      "upstream": "Brun kobold"
+    },
+    {
+      "stainID": 22,
+      "locale": "de",
+      "local": "Korkbrauner ",
+      "upstream": "Korkbraun"
+    },
+    {
+      "stainID": 22,
+      "locale": "fr",
+      "local": "brun liège",
+      "upstream": "Brun liège"
+    },
+    {
+      "stainID": 23,
+      "locale": "de",
+      "local": "Qiqirnbrauner ",
+      "upstream": "Qiqirnbraun"
+    },
+    {
+      "stainID": 23,
+      "locale": "fr",
+      "local": "brun qiqirn",
+      "upstream": "Brun qiqirn"
+    },
+    {
+      "stainID": 24,
+      "locale": "de",
+      "local": "Opo-Opobrauner ",
+      "upstream": "Opo-Opobraun"
+    },
+    {
+      "stainID": 24,
+      "locale": "fr",
+      "local": "brun opo-opo",
+      "upstream": "Brun opo-opo"
+    },
+    {
+      "stainID": 25,
+      "locale": "de",
+      "local": "Steinbockbrauner ",
+      "upstream": "Steinbockbraun"
+    },
+    {
+      "stainID": 25,
+      "locale": "fr",
+      "local": "brun bouquetin",
+      "upstream": "Brun bouquetin"
+    },
+    {
+      "stainID": 26,
+      "locale": "de",
+      "local": "Kürbisoranger ",
+      "upstream": "Kürbisorange"
+    },
+    {
+      "stainID": 26,
+      "locale": "fr",
+      "local": "orange citrouille",
+      "upstream": "Orange citrouille"
+    },
+    {
+      "stainID": 27,
+      "locale": "de",
+      "local": "Eichelbrauner ",
+      "upstream": "Eichelbraun"
+    },
+    {
+      "stainID": 27,
+      "locale": "fr",
+      "local": "brun noisette",
+      "upstream": "Brun noisette"
+    },
+    {
+      "stainID": 28,
+      "locale": "de",
+      "local": "Obstbrauner ",
+      "upstream": "Obstbraun"
+    },
+    {
+      "stainID": 28,
+      "locale": "fr",
+      "local": "feuille-morte",
+      "upstream": "Feuille-morte"
+    },
+    {
+      "stainID": 29,
+      "locale": "de",
+      "local": "Kastanienbrauner ",
+      "upstream": "Kastanienbraun"
+    },
+    {
+      "stainID": 29,
+      "locale": "fr",
+      "local": "brun châtaigne",
+      "upstream": "Brun châtaigne"
+    },
+    {
+      "stainID": 30,
+      "locale": "de",
+      "local": "Kartonbrauner ",
+      "upstream": "Kartonbraun"
+    },
+    {
+      "stainID": 30,
+      "locale": "fr",
+      "local": "brun gobelin",
+      "upstream": "Brun gobelin"
+    },
+    {
+      "stainID": 31,
+      "locale": "de",
+      "local": "Schieferbrauner ",
+      "upstream": "Schieferbraun"
+    },
+    {
+      "stainID": 31,
+      "locale": "fr",
+      "local": "brun schiste",
+      "upstream": "Brun schiste"
+    },
+    {
+      "stainID": 32,
+      "locale": "de",
+      "local": "Maulwurfsbrauner ",
+      "upstream": "Maulwurfsbraun"
+    },
+    {
+      "stainID": 32,
+      "locale": "fr",
+      "local": "brun taupe",
+      "upstream": "Brun taupe"
+    },
+    {
+      "stainID": 33,
+      "locale": "de",
+      "local": "Lehmbrauner ",
+      "upstream": "Lehmbraun"
+    },
+    {
+      "stainID": 33,
+      "locale": "fr",
+      "local": "brun argile",
+      "upstream": "Brun argile"
+    },
+    {
+      "stainID": 34,
+      "locale": "de",
+      "local": "Knochenweißer ",
+      "upstream": "Knochenweiß"
+    },
+    {
+      "stainID": 34,
+      "locale": "fr",
+      "local": "ivoire",
+      "upstream": "Ivoire"
+    },
+    {
+      "stainID": 35,
+      "locale": "de",
+      "local": "Ul'dahbrauner ",
+      "upstream": "Ul'dahbraun"
+    },
+    {
+      "stainID": 35,
+      "locale": "fr",
+      "local": "ocre uldien",
+      "upstream": "Ocre uldien"
+    },
+    {
+      "stainID": 36,
+      "locale": "de",
+      "local": "Wüstengelber ",
+      "upstream": "Wüstengelb"
+    },
+    {
+      "stainID": 36,
+      "locale": "fr",
+      "local": "jaune désert",
+      "upstream": "Jaune désert"
+    },
+    {
+      "stainID": 37,
+      "locale": "de",
+      "local": "Honiggelber ",
+      "upstream": "Honiggelb"
+    },
+    {
+      "stainID": 37,
+      "locale": "fr",
+      "local": "jaune miel",
+      "upstream": "Jaune miel"
+    },
+    {
+      "stainID": 38,
+      "locale": "de",
+      "local": "Maisgelber ",
+      "upstream": "Maisgelb"
+    },
+    {
+      "stainID": 38,
+      "locale": "fr",
+      "local": "jaune milli-maïs",
+      "upstream": "Jaune milli-maïs"
+    },
+    {
+      "stainID": 39,
+      "locale": "de",
+      "local": "Coeurlgelber ",
+      "upstream": "Coeurlgelb"
+    },
+    {
+      "stainID": 39,
+      "locale": "fr",
+      "local": "jaune coeurl",
+      "upstream": "Jaune coeurl"
+    },
+    {
+      "stainID": 40,
+      "locale": "de",
+      "local": "Cremegelber ",
+      "upstream": "Cremegelb"
+    },
+    {
+      "stainID": 40,
+      "locale": "fr",
+      "local": "jaune crème",
+      "upstream": "Jaune crème"
+    },
+    {
+      "stainID": 41,
+      "locale": "de",
+      "local": "Halataligelber ",
+      "upstream": "Halataligelb"
+    },
+    {
+      "stainID": 41,
+      "locale": "fr",
+      "local": "jaune Halatali",
+      "upstream": "Jaune Halatali"
+    },
+    {
+      "stainID": 42,
+      "locale": "de",
+      "local": "Rosinenbrauner ",
+      "upstream": "Rosinenbraun"
+    },
+    {
+      "stainID": 42,
+      "locale": "fr",
+      "local": "raisin sec",
+      "upstream": "Raisin sec"
+    },
+    {
+      "stainID": 43,
+      "locale": "de",
+      "local": "Schlammgrüner ",
+      "upstream": "Schlammgrün"
+    },
+    {
+      "stainID": 43,
+      "locale": "fr",
+      "local": "kaki",
+      "upstream": "Kaki"
+    },
+    {
+      "stainID": 44,
+      "locale": "de",
+      "local": "Sylphengrüner ",
+      "upstream": "Sylphengrün"
+    },
+    {
+      "stainID": 44,
+      "locale": "fr",
+      "local": "vert sylphe",
+      "upstream": "Vert sylphe"
+    },
+    {
+      "stainID": 45,
+      "locale": "de",
+      "local": "Limettengrüner ",
+      "upstream": "Limettengrün"
+    },
+    {
+      "stainID": 45,
+      "locale": "fr",
+      "local": "vert citron",
+      "upstream": "Vert citron"
+    },
+    {
+      "stainID": 46,
+      "locale": "de",
+      "local": "Moosgrüner ",
+      "upstream": "Moosgrün"
+    },
+    {
+      "stainID": 46,
+      "locale": "fr",
+      "local": "vert mousse",
+      "upstream": "Vert mousse"
+    },
+    {
+      "stainID": 47,
+      "locale": "de",
+      "local": "Grasgrüner ",
+      "upstream": "Grasgrün"
+    },
+    {
+      "stainID": 47,
+      "locale": "fr",
+      "local": "vert prairie",
+      "upstream": "Vert prairie"
+    },
+    {
+      "stainID": 48,
+      "locale": "de",
+      "local": "Olivgrüner ",
+      "upstream": "Olivgrün"
+    },
+    {
+      "stainID": 48,
+      "locale": "fr",
+      "local": "vert olive",
+      "upstream": "Vert olive"
+    },
+    {
+      "stainID": 49,
+      "locale": "de",
+      "local": "Sumpfgrüner ",
+      "upstream": "Sumpfgrün"
+    },
+    {
+      "stainID": 49,
+      "locale": "fr",
+      "local": "vert viridien",
+      "upstream": "Vert viridien"
+    },
+    {
+      "stainID": 50,
+      "locale": "de",
+      "local": "Apfelgrüner ",
+      "upstream": "Apfelgrün"
+    },
+    {
+      "stainID": 50,
+      "locale": "fr",
+      "local": "vert pomme",
+      "upstream": "Vert pomme"
+    },
+    {
+      "stainID": 51,
+      "locale": "de",
+      "local": "Kaktusgrüner ",
+      "upstream": "Kaktusgrün"
+    },
+    {
+      "stainID": 51,
+      "locale": "fr",
+      "local": "vert cactuar",
+      "upstream": "Vert cactuar"
+    },
+    {
+      "stainID": 52,
+      "locale": "de",
+      "local": "Jägergrüner ",
+      "upstream": "Jägergrün"
+    },
+    {
+      "stainID": 52,
+      "locale": "fr",
+      "local": "vert chasseur",
+      "upstream": "Vert chasseur"
+    },
+    {
+      "stainID": 53,
+      "locale": "de",
+      "local": "Ochugrüner ",
+      "upstream": "Ochugrün"
+    },
+    {
+      "stainID": 53,
+      "locale": "fr",
+      "local": "vert otyugh",
+      "upstream": "Vert otyugh"
+    },
+    {
+      "stainID": 54,
+      "locale": "de",
+      "local": "Adaman-Taimaigrüner ",
+      "upstream": "Adaman-Taimaigrün"
+    },
+    {
+      "stainID": 54,
+      "locale": "fr",
+      "local": "vert adamankhélone",
+      "upstream": "Vert adamankhélone"
+    },
+    {
+      "stainID": 55,
+      "locale": "de",
+      "local": "Nophicagrüner ",
+      "upstream": "Nophicagrün"
+    },
+    {
+      "stainID": 55,
+      "locale": "fr",
+      "local": "vert Nophica",
+      "upstream": "Vert Nophica"
+    },
+    {
+      "stainID": 56,
+      "locale": "de",
+      "local": "Waldgrüner ",
+      "upstream": "Waldgrün"
+    },
+    {
+      "stainID": 56,
+      "locale": "fr",
+      "local": "vert sapin",
+      "upstream": "Vert sapin"
+    },
+    {
+      "stainID": 57,
+      "locale": "de",
+      "local": "Mintgrüner ",
+      "upstream": "Mintgrün"
+    },
+    {
+      "stainID": 57,
+      "locale": "fr",
+      "local": "vert céleste",
+      "upstream": "Vert céleste"
+    },
+    {
+      "stainID": 58,
+      "locale": "de",
+      "local": "Türkiser ",
+      "upstream": "Türkis"
+    },
+    {
+      "stainID": 58,
+      "locale": "fr",
+      "local": "turquoise",
+      "upstream": "Turquoise"
+    },
+    {
+      "stainID": 59,
+      "locale": "de",
+      "local": "Morbolgrüner ",
+      "upstream": "Morbolgrün"
+    },
+    {
+      "stainID": 59,
+      "locale": "fr",
+      "local": "vert morbol",
+      "upstream": "Vert morbol"
+    },
+    {
+      "stainID": 60,
+      "locale": "de",
+      "local": "Eisblauer ",
+      "upstream": "Eisblau"
+    },
+    {
+      "stainID": 60,
+      "locale": "fr",
+      "local": "bleu glace",
+      "upstream": "Bleu glace"
+    },
+    {
+      "stainID": 61,
+      "locale": "de",
+      "local": "Himmelblauer ",
+      "upstream": "Himmelblau"
+    },
+    {
+      "stainID": 61,
+      "locale": "fr",
+      "local": "bleu ciel",
+      "upstream": "Bleu ciel"
+    },
+    {
+      "stainID": 62,
+      "locale": "de",
+      "local": "Seenebelblauer ",
+      "upstream": "Seenebelblau"
+    },
+    {
+      "stainID": 62,
+      "locale": "fr",
+      "local": "bleu horizon",
+      "upstream": "Bleu horizon"
+    },
+    {
+      "stainID": 63,
+      "locale": "de",
+      "local": "Pfauenblauer ",
+      "upstream": "Pfauenblau"
+    },
+    {
+      "stainID": 63,
+      "locale": "fr",
+      "local": "bleu paon",
+      "upstream": "Bleu paon"
+    },
+    {
+      "stainID": 64,
+      "locale": "de",
+      "local": "Rhotanoblauer ",
+      "upstream": "Rhotanoblau"
+    },
+    {
+      "stainID": 64,
+      "locale": "fr",
+      "local": "bleu de Rhotano",
+      "upstream": "Bleu de Rhotano"
+    },
+    {
+      "stainID": 65,
+      "locale": "de",
+      "local": "Leichenblauer ",
+      "upstream": "Leichenblau"
+    },
+    {
+      "stainID": 65,
+      "locale": "fr",
+      "local": "bleu charron",
+      "upstream": "Bleu charron"
+    },
+    {
+      "stainID": 66,
+      "locale": "de",
+      "local": "Erdseimblauer ",
+      "upstream": "Erdseimblau"
+    },
+    {
+      "stainID": 66,
+      "locale": "fr",
+      "local": "bleu céruleum",
+      "upstream": "Bleu céruleum"
+    },
+    {
+      "stainID": 67,
+      "locale": "de",
+      "local": "Indigoblauer ",
+      "upstream": "Indigoblau"
+    },
+    {
+      "stainID": 67,
+      "locale": "fr",
+      "local": "bleu guède",
+      "upstream": "Bleu guède"
+    },
+    {
+      "stainID": 68,
+      "locale": "de",
+      "local": "Tintenblauer ",
+      "upstream": "Tintenblau"
+    },
+    {
+      "stainID": 68,
+      "locale": "fr",
+      "local": "bleu encre",
+      "upstream": "Bleu encre"
+    },
+    {
+      "stainID": 69,
+      "locale": "de",
+      "local": "Raptorenblauer ",
+      "upstream": "Raptorenblau"
+    },
+    {
+      "stainID": 69,
+      "locale": "fr",
+      "local": "bleu raptor",
+      "upstream": "Bleu raptor"
+    },
+    {
+      "stainID": 70,
+      "locale": "de",
+      "local": "Othardblauer ",
+      "upstream": "Othardblau"
+    },
+    {
+      "stainID": 70,
+      "locale": "fr",
+      "local": "bleu d'Othard",
+      "upstream": "Bleu d'Othard"
+    },
+    {
+      "stainID": 71,
+      "locale": "de",
+      "local": "Sturmblauer ",
+      "upstream": "Sturmblau"
+    },
+    {
+      "stainID": 71,
+      "locale": "fr",
+      "local": "bleu tempête",
+      "upstream": "Bleu tempête"
+    },
+    {
+      "stainID": 72,
+      "locale": "de",
+      "local": "Nichtsblauer ",
+      "upstream": "Nichtsblau"
+    },
+    {
+      "stainID": 72,
+      "locale": "fr",
+      "local": "bleu du néant",
+      "upstream": "Bleu du néant"
+    },
+    {
+      "stainID": 73,
+      "locale": "de",
+      "local": "Königsblauer ",
+      "upstream": "Königsblau"
+    },
+    {
+      "stainID": 73,
+      "locale": "fr",
+      "local": "bleu royal",
+      "upstream": "Bleu royal"
+    },
+    {
+      "stainID": 74,
+      "locale": "de",
+      "local": "Mitternachtsblauer ",
+      "upstream": "Mitternachtsblau"
+    },
+    {
+      "stainID": 74,
+      "locale": "fr",
+      "local": "bleu de minuit",
+      "upstream": "Bleu de minuit"
+    },
+    {
+      "stainID": 75,
+      "locale": "de",
+      "local": "Schattenblauer ",
+      "upstream": "Schattenblau"
+    },
+    {
+      "stainID": 75,
+      "locale": "fr",
+      "local": "bleu turquin",
+      "upstream": "Bleu turquin"
+    },
+    {
+      "stainID": 76,
+      "locale": "de",
+      "local": "Tiefblauer ",
+      "upstream": "Tiefblau"
+    },
+    {
+      "stainID": 76,
+      "locale": "fr",
+      "local": "bleu marine",
+      "upstream": "Bleu marine"
+    },
+    {
+      "stainID": 77,
+      "locale": "de",
+      "local": "Lavendelblauer ",
+      "upstream": "Lavendelblau"
+    },
+    {
+      "stainID": 77,
+      "locale": "fr",
+      "local": "lavande",
+      "upstream": "Lavande"
+    },
+    {
+      "stainID": 78,
+      "locale": "de",
+      "local": "Düstervioletter ",
+      "upstream": "Düsterviolett"
+    },
+    {
+      "stainID": 78,
+      "locale": "fr",
+      "local": "colombin",
+      "upstream": "Colombin"
+    },
+    {
+      "stainID": 79,
+      "locale": "de",
+      "local": "Johannisbeerenvioletter ",
+      "upstream": "Johannisbeerenviolett"
+    },
+    {
+      "stainID": 79,
+      "locale": "fr",
+      "local": "cassis",
+      "upstream": "Cassis"
+    },
+    {
+      "stainID": 80,
+      "locale": "de",
+      "local": "Irisvioletter ",
+      "upstream": "Irisviolett"
+    },
+    {
+      "stainID": 80,
+      "locale": "fr",
+      "local": "iris",
+      "upstream": "Iris"
+    },
+    {
+      "stainID": 81,
+      "locale": "de",
+      "local": "Weintraubenvioletter ",
+      "upstream": "Weintraubenviolett"
+    },
+    {
+      "stainID": 81,
+      "locale": "fr",
+      "local": "raisin",
+      "upstream": "Raisin"
+    },
+    {
+      "stainID": 82,
+      "locale": "fr",
+      "local": "mauve lotus",
+      "upstream": "Mauve lotus"
+    },
+    {
+      "stainID": 83,
+      "locale": "fr",
+      "local": "mauve colibri",
+      "upstream": "Mauve colibri"
+    },
+    {
+      "stainID": 84,
+      "locale": "de",
+      "local": "Pflaumenvioletter ",
+      "upstream": "Pflaumenviolett"
+    },
+    {
+      "stainID": 84,
+      "locale": "fr",
+      "local": "prune",
+      "upstream": "Prune"
+    },
+    {
+      "stainID": 85,
+      "locale": "de",
+      "local": "Königsvioletter ",
+      "upstream": "Königsviolett"
+    },
+    {
+      "stainID": 85,
+      "locale": "fr",
+      "local": "byzantium",
+      "upstream": "Byzantium"
+    },
+    {
+      "stainID": 86,
+      "locale": "de",
+      "local": "Rubinroter ",
+      "upstream": "Rubinrot"
+    },
+    {
+      "stainID": 86,
+      "locale": "fr",
+      "local": "rouge rubis",
+      "upstream": "Rouge rubis"
+    },
+    {
+      "stainID": 87,
+      "locale": "de",
+      "local": "Kirschpinker ",
+      "upstream": "Kirschpink"
+    },
+    {
+      "stainID": 87,
+      "locale": "fr",
+      "local": "rose cerise",
+      "upstream": "Rose cerise"
+    },
+    {
+      "stainID": 88,
+      "locale": "de",
+      "local": "Kanariengelber ",
+      "upstream": "Kanariengelb"
+    },
+    {
+      "stainID": 88,
+      "locale": "fr",
+      "local": "jaune serin",
+      "upstream": "Jaune serin"
+    },
+    {
+      "stainID": 89,
+      "locale": "de",
+      "local": "Vanillegelber ",
+      "upstream": "Vanillegelb"
+    },
+    {
+      "stainID": 89,
+      "locale": "fr",
+      "local": "jaune vanille",
+      "upstream": "Jaune vanille"
+    },
+    {
+      "stainID": 90,
+      "locale": "de",
+      "local": "Dragoonblauer ",
+      "upstream": "Dragoonblau"
+    },
+    {
+      "stainID": 90,
+      "locale": "fr",
+      "local": "bleu dragon",
+      "upstream": "Bleu dragon"
+    },
+    {
+      "stainID": 91,
+      "locale": "de",
+      "local": "Cyanblauer ",
+      "upstream": "Cyanblau"
+    },
+    {
+      "stainID": 91,
+      "locale": "fr",
+      "local": "bleu turquoise",
+      "upstream": "Bleu turquoise"
+    },
+    {
+      "stainID": 92,
+      "locale": "de",
+      "local": "Cermetgrauer ",
+      "upstream": "Cermetgrau"
+    },
+    {
+      "stainID": 92,
+      "locale": "fr",
+      "local": "bronze à canon",
+      "upstream": "Bronze à canon"
+    },
+    {
+      "stainID": 93,
+      "locale": "fr",
+      "local": "blanc perlé",
+      "upstream": "Blanc perlé"
+    },
+    {
+      "stainID": 94,
+      "locale": "de",
+      "local": "Metallic messingfarbener ",
+      "upstream": "Metallic Messing"
+    },
+    {
+      "stainID": 94,
+      "locale": "fr",
+      "local": "cuivre jaune",
+      "upstream": "Cuivre jaune"
+    },
+    {
+      "stainID": 95,
+      "locale": "de",
+      "local": "Karmesinroter ",
+      "upstream": "Karmesinrot"
+    },
+    {
+      "stainID": 95,
+      "locale": "fr",
+      "local": "rouge carmin",
+      "upstream": "Rouge carmin"
+    },
+    {
+      "stainID": 96,
+      "locale": "de",
+      "local": "Neonpinker ",
+      "upstream": "Neonpink"
+    },
+    {
+      "stainID": 96,
+      "locale": "fr",
+      "local": "rose néon",
+      "upstream": "Rose néon"
+    },
+    {
+      "stainID": 97,
+      "locale": "de",
+      "local": "Knalloranger ",
+      "upstream": "Knallorange"
+    },
+    {
+      "stainID": 97,
+      "locale": "fr",
+      "local": "orange brillant",
+      "upstream": "Orange brillant"
+    },
+    {
+      "stainID": 98,
+      "locale": "de",
+      "local": "Neongelber ",
+      "upstream": "Neongelb"
+    },
+    {
+      "stainID": 98,
+      "locale": "fr",
+      "local": "jaune néon",
+      "upstream": "Jaune néon"
+    },
+    {
+      "stainID": 99,
+      "locale": "de",
+      "local": "Neongrüner ",
+      "upstream": "Neongrün"
+    },
+    {
+      "stainID": 99,
+      "locale": "fr",
+      "local": "vert néon",
+      "upstream": "Vert néon"
+    },
+    {
+      "stainID": 100,
+      "locale": "de",
+      "local": "Azurblauer ",
+      "upstream": "Azurblau"
+    },
+    {
+      "stainID": 100,
+      "locale": "fr",
+      "local": "bleu azur",
+      "upstream": "Bleu azur"
+    },
+    {
+      "stainID": 101,
+      "locale": "de",
+      "local": "Wolkenweißer ",
+      "upstream": "Wolkenweiß"
+    },
+    {
+      "stainID": 101,
+      "locale": "fr",
+      "local": "blanc immaculé",
+      "upstream": "Blanc immaculé"
+    },
+    {
+      "stainID": 102,
+      "locale": "de",
+      "local": "Rabenschwarzer ",
+      "upstream": "Rabenschwarz"
+    },
+    {
+      "stainID": 102,
+      "locale": "fr",
+      "local": "noir de jais",
+      "upstream": "Noir de jais"
+    },
+    {
+      "stainID": 103,
+      "locale": "fr",
+      "local": "rose pastel",
+      "upstream": "Rose pastel"
+    },
+    {
+      "stainID": 104,
+      "locale": "de",
+      "local": "Dunkelroter ",
+      "upstream": "Dunkelrot"
+    },
+    {
+      "stainID": 104,
+      "locale": "fr",
+      "local": "rouge foncé",
+      "upstream": "Rouge foncé"
+    },
+    {
+      "stainID": 105,
+      "locale": "de",
+      "local": "Dunkelbrauner ",
+      "upstream": "Dunkelbraun"
+    },
+    {
+      "stainID": 105,
+      "locale": "fr",
+      "local": "brun foncé",
+      "upstream": "Brun foncé"
+    },
+    {
+      "stainID": 106,
+      "locale": "de",
+      "local": "Pastellgrüner ",
+      "upstream": "Pastellgrün"
+    },
+    {
+      "stainID": 106,
+      "locale": "fr",
+      "local": "vert pastel",
+      "upstream": "Vert pastel"
+    },
+    {
+      "stainID": 107,
+      "locale": "de",
+      "local": "Dunkelgrüner ",
+      "upstream": "Dunkelgrün"
+    },
+    {
+      "stainID": 107,
+      "locale": "fr",
+      "local": "vert foncé",
+      "upstream": "Vert foncé"
+    },
+    {
+      "stainID": 108,
+      "locale": "de",
+      "local": "Pastellblauer ",
+      "upstream": "Pastellblau"
+    },
+    {
+      "stainID": 108,
+      "locale": "fr",
+      "local": "bleu pastel",
+      "upstream": "Bleu pastel"
+    },
+    {
+      "stainID": 109,
+      "locale": "de",
+      "local": "Dunkelblauer ",
+      "upstream": "Dunkelblau"
+    },
+    {
+      "stainID": 109,
+      "locale": "fr",
+      "local": "bleu foncé",
+      "upstream": "Bleu foncé"
+    },
+    {
+      "stainID": 110,
+      "locale": "de",
+      "local": "Pastellvioletter ",
+      "upstream": "Pastellviolett"
+    },
+    {
+      "stainID": 110,
+      "locale": "fr",
+      "local": "violet pastel",
+      "upstream": "Violet pastel"
+    },
+    {
+      "stainID": 111,
+      "locale": "de",
+      "local": "Dunkelvioletter ",
+      "upstream": "Dunkelviolett"
+    },
+    {
+      "stainID": 111,
+      "locale": "fr",
+      "local": "violet foncé",
+      "upstream": "Violet foncé"
+    },
+    {
+      "stainID": 112,
+      "locale": "de",
+      "local": "Metallic silberner ",
+      "upstream": "Metallic Silber"
+    },
+    {
+      "stainID": 112,
+      "locale": "fr",
+      "local": "argent brillant",
+      "upstream": "Argent brillant"
+    },
+    {
+      "stainID": 113,
+      "locale": "de",
+      "local": "Metallic goldener ",
+      "upstream": "Metallic Gold"
+    },
+    {
+      "stainID": 113,
+      "locale": "fr",
+      "local": "or brillant",
+      "upstream": "Or brillant"
+    },
+    {
+      "stainID": 114,
+      "locale": "de",
+      "local": "Metallic roter ",
+      "upstream": "Metallic Rot"
+    },
+    {
+      "stainID": 114,
+      "locale": "fr",
+      "local": "rouge métallique",
+      "upstream": "Rouge métallique"
+    },
+    {
+      "stainID": 115,
+      "locale": "de",
+      "local": "Metallic orangefarbener ",
+      "upstream": "Metallic Orange"
+    },
+    {
+      "stainID": 115,
+      "locale": "fr",
+      "local": "orange métallique",
+      "upstream": "Orange métallique"
+    },
+    {
+      "stainID": 116,
+      "locale": "de",
+      "local": "Metallic gelber ",
+      "upstream": "Metallic Gelb"
+    },
+    {
+      "stainID": 116,
+      "locale": "fr",
+      "local": "jaune métallique",
+      "upstream": "Jaune métallique"
+    },
+    {
+      "stainID": 117,
+      "locale": "de",
+      "local": "Metallic grüner ",
+      "upstream": "Metallic Grün"
+    },
+    {
+      "stainID": 117,
+      "locale": "fr",
+      "local": "vert métallique",
+      "upstream": "Vert métallique"
+    },
+    {
+      "stainID": 118,
+      "locale": "de",
+      "local": "Metallic himmelblauer ",
+      "upstream": "Metallic Himmelblau"
+    },
+    {
+      "stainID": 118,
+      "locale": "fr",
+      "local": "bleu ciel métallique",
+      "upstream": "Bleu ciel métallique"
+    },
+    {
+      "stainID": 119,
+      "locale": "de",
+      "local": "Metallic blauer ",
+      "upstream": "Metallic Blau"
+    },
+    {
+      "stainID": 119,
+      "locale": "fr",
+      "local": "bleu métallique",
+      "upstream": "Bleu métallique"
+    },
+    {
+      "stainID": 120,
+      "locale": "de",
+      "local": "Metallic violetter ",
+      "upstream": "Metallic Violett"
+    },
+    {
+      "stainID": 120,
+      "locale": "fr",
+      "local": "violet métallique",
+      "upstream": "Violet métallique"
+    },
+    {
+      "stainID": 121,
+      "locale": "de",
+      "local": "Purpurvioletter ",
+      "upstream": "Purpurviolett"
+    },
+    {
+      "stainID": 121,
+      "locale": "fr",
+      "local": "violet pourpre",
+      "upstream": "Violet pourpre"
+    },
+    {
+      "stainID": 122,
+      "locale": "de",
+      "local": "Metallic pinker ",
+      "upstream": "Metallic Pink"
+    },
+    {
+      "stainID": 122,
+      "locale": "fr",
+      "local": "rose métallique",
+      "upstream": "Rose métallique"
+    },
+    {
+      "stainID": 123,
+      "locale": "de",
+      "local": "Metallic rubinroter ",
+      "upstream": "Metallic Rubinrot"
+    },
+    {
+      "stainID": 123,
+      "locale": "fr",
+      "local": "rouge rubis métallique",
+      "upstream": "Rouge rubis métallique"
+    },
+    {
+      "stainID": 124,
+      "locale": "de",
+      "local": "Metallic kobaltgrüner ",
+      "upstream": "Metallic Kobaltgrün"
+    },
+    {
+      "stainID": 124,
+      "locale": "fr",
+      "local": "vert de cobalt métallique",
+      "upstream": "Vert de cobalt métallique"
+    },
+    {
+      "stainID": 125,
+      "locale": "de",
+      "local": "Metallic dunkelblauer ",
+      "upstream": "Metallic Dunkelblau"
+    },
+    {
+      "stainID": 125,
+      "locale": "fr",
+      "local": "bleu foncé métallique",
+      "upstream": "Bleu foncé métallique"
+    }
+  ],
+  "consolidated_item_mismatches": []
+}

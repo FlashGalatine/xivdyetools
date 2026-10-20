@@ -1,0 +1,488 @@
+[
+  {
+    "name": "openapi",
+    "url": "https://v2.xivapi.com/api/openapi.json",
+    "started_utc": "2026-10-20T22:22:57.874899+00:00",
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "content-length": "27033",
+      "access-control-allow-origin": "*",
+      "access-control-expose-headers": "*",
+      "vary": "origin, access-control-request-method, access-control-request-headers"
+    },
+    "bytes": 27033,
+    "sha256": "e4572190ce3b4477c7ff75a92a3235b73a5259e808fa8ee0fb82e86387ea4c59",
+    "body_file": "openapi.json",
+    "schema": null,
+    "version": null,
+    "rows": 0,
+    "elapsed_ms": 550
+  },
+  {
+    "name": "versions",
+    "url": "https://v2.xivapi.com/api/version",
+    "started_utc": "2026-10-20T22:22:58.676011+00:00",
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "content-length": "2127",
+      "access-control-allow-origin": "*",
+      "access-control-expose-headers": "*",
+      "vary": "origin, access-control-request-method, access-control-request-headers"
+    },
+    "bytes": 2127,
+    "sha256": "b9d65cb35b3c9c55b2f79db7939c43da875eef77aaafefd1ca3c578fc7ed07c5",
+    "body_file": "versions.json",
+    "schema": null,
+    "version": null,
+    "rows": 0,
+    "elapsed_ms": 462
+  },
+  {
+    "name": "stain-sample",
+    "url": "https://v2.xivapi.com/api/sheet/Stain?rows=1%2C40%2C131&fields=Name%2CName%40ja%2CName%40de%2CName%40fr%2CColor%2CShade%2CIsMetallic&transient=Item1.Name%2CItem2.Name",
+    "started_utc": "2026-10-20T22:22:59.390220+00:00",
+    "status": 404,
+    "headers": {
+      "content-type": "application/json",
+      "content-length": "80",
+      "access-control-allow-origin": "*",
+      "access-control-expose-headers": "*",
+      "vary": "origin, access-control-request-method, access-control-request-headers"
+    },
+    "bytes": 80,
+    "sha256": "b8938e14e0be41e6fd10af35b8f74e18f7c78a13f6ad996c7c7530407b9fbf3e",
+    "body_file": "stain-sample.json",
+    "schema": null,
+    "version": null,
+    "rows": 0,
+    "elapsed_ms": 246
+  },
+  {
+    "name": "stain-transient",
+    "url": "https://v2.xivapi.com/api/sheet/StainTransient/1",
+    "started_utc": "2026-10-20T22:22:59.887375+00:00",
+    "status": 404,
+    "headers": {
+      "content-type": "application/json",
+      "content-length": "89",
+      "access-control-allow-origin": "*",
+      "access-control-expose-headers": "*",
+      "vary": "origin, access-control-request-method, access-control-request-headers"
+    },
+    "bytes": 89,
+    "sha256": "5af602efa9b69bad1c79de762b7604b0223c177e762ea940aa313e3274997a73",
+    "body_file": "stain-transient.json",
+    "schema": null,
+    "version": null,
+    "rows": 0,
+    "elapsed_ms": 239
+  },
+  {
+    "name": "stain-ko",
+    "url": "https://v2.xivapi.com/api/sheet/Stain/1?fields=Name&language=ko",
+    "started_utc": "2026-10-20T22:23:00.377409+00:00",
+    "status": 400,
+    "headers": {
+      "content-type": "application/json",
+      "content-length": "126",
+      "access-control-allow-origin": "*",
+      "access-control-expose-headers": "*",
+      "vary": "origin, access-control-request-method, access-control-request-headers"
+    },
+    "bytes": 126,
+    "sha256": "a5e5287ba92491600f1edd72975a3f4ea579b467fc10fced9728ea8d234e09dc",
+    "body_file": "stain-ko.json",
+    "schema": null,
+    "version": null,
+    "rows": 0,
+    "elapsed_ms": 229
+  },
+  {
+    "name": "stain-zh",
+    "url": "https://v2.xivapi.com/api/sheet/Stain/1?fields=Name&language=zh",
+    "started_utc": "2026-10-20T22:23:00.858258+00:00",
+    "status": 400,
+    "headers": {
+      "content-type": "application/json",
+      "content-length": "126",
+      "access-control-allow-origin": "*",
+      "access-control-expose-headers": "*",
+      "vary": "origin, access-control-request-method, access-control-request-headers"
+    },
+    "bytes": 126,
+    "sha256": "c0b1906f93e7b706bd00abeffbc560ceb4d769c1c436824f567fd9adc17bf66a",
+    "body_file": "stain-zh.json",
+    "schema": null,
+    "version": null,
+    "rows": 0,
+    "elapsed_ms": 486
+  },
+  {
+    "name": "items",
+    "url": "https://v2.xivapi.com/api/sheet/Item?rows=5729%2C52254%2C42589&fields=Name%2CName%40ja%2CIcon%2CModelMain%2CModelSub%2CDyeCount%2CEquipSlotCategory%2CIsUntradable",
+    "started_utc": "2026-10-20T22:23:01.595179+00:00",
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "content-length": "1586",
+      "access-control-allow-origin": "*",
+      "access-control-expose-headers": "*",
+      "vary": "origin, access-control-request-method, access-control-request-headers"
+    },
+    "bytes": 1586,
+    "sha256": "6bcf08469cce2d9572d3b50c56b17d49cd3c1eb2860330e076cb7329a7c148a0",
+    "body_file": "items.json",
+    "schema": "exdschema@2:rev:e773c41a90aed788cf4c1c48469fa85618ef01fb",
+    "version": "0874aee069e1e7c4",
+    "rows": 3,
+    "elapsed_ms": 486
+  },
+  {
+    "name": "glasses",
+    "url": "https://v2.xivapi.com/api/sheet/Glasses/1?fields=Name%2CIcon%2CGlassesId",
+    "started_utc": "2026-10-20T22:23:02.332481+00:00",
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "content-length": "244",
+      "access-control-allow-origin": "*",
+      "access-control-expose-headers": "*",
+      "vary": "origin, access-control-request-method, access-control-request-headers"
+    },
+    "bytes": 244,
+    "sha256": "f645a360d30336aacd936c58c9dddd49ab2c62b4d6e09f3a88936fa7be5de98e",
+    "body_file": "glasses.json",
+    "schema": "exdschema@2:rev:e773c41a90aed788cf4c1c48469fa85618ef01fb",
+    "version": "0874aee069e1e7c4",
+    "rows": 0,
+    "elapsed_ms": 471
+  },
+  {
+    "name": "gilshop",
+    "url": "https://v2.xivapi.com/api/sheet/GilShopItem?limit=2&fields=Item.Name",
+    "started_utc": "2026-10-20T22:23:03.055639+00:00",
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "content-length": "374",
+      "access-control-allow-origin": "*",
+      "access-control-expose-headers": "*",
+      "vary": "origin, access-control-request-method, access-control-request-headers"
+    },
+    "bytes": 374,
+    "sha256": "a8a2be284f796cc07ce9df5976981c360d2c788c9413f39915d037966cd7cb31",
+    "body_file": "gilshop.json",
+    "schema": "exdschema@2:rev:e773c41a90aed788cf4c1c48469fa85618ef01fb",
+    "version": "0874aee069e1e7c4",
+    "rows": 2,
+    "elapsed_ms": 243
+  },
+  {
+    "name": "specialshop",
+    "url": "https://v2.xivapi.com/api/sheet/SpecialShop?limit=1&fields=Name%2CUseCurrencyType%2CItem%5B%5D.ReceiveItems%5B%5D.Item.Name",
+    "started_utc": "2026-10-20T22:23:03.549762+00:00",
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "content-length": "356",
+      "access-control-allow-origin": "*",
+      "access-control-expose-headers": "*",
+      "vary": "origin, access-control-request-method, access-control-request-headers"
+    },
+    "bytes": 356,
+    "sha256": "dce3e43a55ae3bfb79a6dfadc6cb94458fecbf7e12dcb0b5951bc4ef5d738c22",
+    "body_file": "specialshop.json",
+    "schema": "exdschema@2:rev:e773c41a90aed788cf4c1c48469fa85618ef01fb",
+    "version": "0874aee069e1e7c4",
+    "rows": 1,
+    "elapsed_ms": 492
+  },
+  {
+    "name": "equip-search",
+    "url": "https://v2.xivapi.com/api/search?sheets=Item&query=%2BModelMain%3D1+%2BEquipSlotCategory.Body%3D1&fields=Name%2CModelMain%2CEquipSlotCategory.Body&limit=2",
+    "started_utc": "2026-10-20T22:23:04.293103+00:00",
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "content-length": "111",
+      "access-control-allow-origin": "*",
+      "access-control-expose-headers": "*",
+      "vary": "origin, access-control-request-method, access-control-request-headers"
+    },
+    "bytes": 111,
+    "sha256": "8d9e462e9ad9db45e659994387f0fcfd35972d827624c30ad26887b5f424d6f9",
+    "body_file": "equip-search.json",
+    "schema": "exdschema@2:rev:e773c41a90aed788cf4c1c48469fa85618ef01fb",
+    "version": "0874aee069e1e7c4",
+    "rows": 0,
+    "elapsed_ms": 233
+  },
+  {
+    "name": "icon",
+    "url": "https://v2.xivapi.com/api/asset?path=ui%2Ficon%2F022000%2F022001_hr1.tex&format=png",
+    "started_utc": "2026-10-20T22:23:04.777658+00:00",
+    "status": 200,
+    "headers": {
+      "content-type": "image/png",
+      "content-length": "11808",
+      "access-control-allow-origin": "*",
+      "access-control-expose-headers": "*",
+      "cache-control": "public, max-age=604800, immutable",
+      "etag": "\"0bbcde997936a561.0874aee069e1e7c4.4\"",
+      "vary": "origin, access-control-request-method, access-control-request-headers"
+    },
+    "bytes": 11808,
+    "sha256": "ea35a8fe8170d4e021b6698d662305727f275ab67fbfa3adc68fcdaad5f6eb88",
+    "body_file": "icon.bin",
+    "elapsed_ms": 513
+  },
+  {
+    "name": "icon-conditional",
+    "url": "https://v2.xivapi.com/api/asset?path=ui%2Ficon%2F022000%2F022001_hr1.tex&format=png",
+    "started_utc": "2026-10-20T22:23:05.542200+00:00",
+    "status": 304,
+    "headers": {
+      "access-control-allow-origin": "*",
+      "access-control-expose-headers": "*",
+      "cache-control": "public, max-age=604800, immutable",
+      "etag": "\"0bbcde997936a561.0874aee069e1e7c4.4\"",
+      "vary": "origin, access-control-request-method, access-control-request-headers"
+    },
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "body_file": "icon-conditional.bin",
+    "elapsed_ms": 136
+  },
+  {
+    "name": "stain-row1-full",
+    "url": "https://v2.xivapi.com/api/sheet/Stain/1",
+    "started_utc": "2026-10-20T22:23:47.215396+00:00",
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "content-length": "34565",
+      "access-control-allow-origin": "*",
+      "access-control-expose-headers": "*",
+      "vary": "origin, access-control-request-method, access-control-request-headers"
+    },
+    "bytes": 34565,
+    "sha256": "eb0958140ff26c5522d6beeebf7b0aa20a9250b1a89531a1ccf3b952b458a00d",
+    "body_file": "stain-row1-full.json",
+    "schema": "exdschema@2:rev:e773c41a90aed788cf4c1c48469fa85618ef01fb",
+    "version": "0874aee069e1e7c4",
+    "rows": 0,
+    "elapsed_ms": 305
+  },
+  {
+    "name": "stain-transient-pinned",
+    "url": "https://v2.xivapi.com/api/sheet/StainTransient/1?version=541c0c12e07da325",
+    "started_utc": "2026-10-20T22:23:47.772073+00:00",
+    "status": 404,
+    "headers": {
+      "content-type": "application/json",
+      "content-length": "89",
+      "access-control-allow-origin": "*",
+      "access-control-expose-headers": "*",
+      "vary": "origin, access-control-request-method, access-control-request-headers"
+    },
+    "bytes": 89,
+    "sha256": "5af602efa9b69bad1c79de762b7604b0223c177e762ea940aa313e3274997a73",
+    "body_file": "stain-transient-pinned.json",
+    "schema": null,
+    "version": null,
+    "rows": 0,
+    "elapsed_ms": 485
+  },
+  {
+    "name": "stain-four-locales",
+    "url": "https://v2.xivapi.com/api/sheet/Stain?rows=1%2C40&fields=Name%2CName%40ja%2CName%40de%2CName%40fr%2CColor%2CShade%2CIsMetallic",
+    "started_utc": "2026-10-20T22:23:48.508688+00:00",
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "content-length": "456",
+      "access-control-allow-origin": "*",
+      "access-control-expose-headers": "*",
+      "vary": "origin, access-control-request-method, access-control-request-headers"
+    },
+    "bytes": 456,
+    "sha256": "a9cc7ba7a98a6b53ea9615dddddf47866862a8c7f77b249bd6a6e06d9f568934",
+    "body_file": "stain-four-locales.json",
+    "schema": "exdschema@2:rev:e773c41a90aed788cf4c1c48469fa85618ef01fb",
+    "version": "0874aee069e1e7c4",
+    "rows": 2,
+    "elapsed_ms": 234
+  },
+  {
+    "name": "stain-pinned",
+    "url": "https://v2.xivapi.com/api/sheet/Stain?rows=1%2C40&fields=Name%2CColor%2CShade%2CIsMetallic&version=0874aee069e1e7c4&schema=exdschema%402%3Arev%3Ae773c41a90aed788cf4c1c48469fa85618ef01fb",
+    "started_utc": "2026-10-20T22:23:48.994308+00:00",
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "content-length": "290",
+      "access-control-allow-origin": "*",
+      "access-control-expose-headers": "*",
+      "vary": "origin, access-control-request-method, access-control-request-headers"
+    },
+    "bytes": 290,
+    "sha256": "e7a39b78273921264303141689a5cb32bf37e3324040a962e3b66f525bb42688",
+    "body_file": "stain-pinned.json",
+    "schema": "exdschema@2:rev:e773c41a90aed788cf4c1c48469fa85618ef01fb",
+    "version": "0874aee069e1e7c4",
+    "rows": 2,
+    "elapsed_ms": 243
+  },
+  {
+    "name": "known-equipment-search",
+    "url": "https://v2.xivapi.com/api/search?sheets=Item&query=%2BModelMain%3D4295035733+%2BEquipSlotCategory.MainHand%3D1&fields=Name%2CModelMain%2CEquipSlotCategory.MainHand&limit=10",
+    "started_utc": "2026-10-20T22:23:49.489504+00:00",
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "content-length": "306",
+      "access-control-allow-origin": "*",
+      "access-control-expose-headers": "*",
+      "vary": "origin, access-control-request-method, access-control-request-headers"
+    },
+    "bytes": 306,
+    "sha256": "84ad51e4ef497c174fccd889d240c562a95e01d4fd1f3a08dfd9891220ba8142",
+    "body_file": "known-equipment-search.json",
+    "schema": "exdschema@2:rev:e773c41a90aed788cf4c1c48469fa85618ef01fb",
+    "version": "0874aee069e1e7c4",
+    "rows": 1,
+    "elapsed_ms": 477
+  },
+  {
+    "name": "specialshop-full",
+    "url": "https://v2.xivapi.com/api/sheet/SpecialShop/1769472",
+    "started_utc": "2026-10-20T22:23:50.217796+00:00",
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "content-length": "5267357",
+      "access-control-allow-origin": "*",
+      "access-control-expose-headers": "*",
+      "vary": "origin, access-control-request-method, access-control-request-headers"
+    },
+    "error": "Response exceeds 2 MB research limit",
+    "elapsed_ms": 998
+  },
+  {
+    "name": "stain-coverage-1",
+    "url": "https://v2.xivapi.com/api/sheet/Stain?version=0874aee069e1e7c4&schema=exdschema%402%3Arev%3Ae773c41a90aed788cf4c1c48469fa85618ef01fb&rows=1%2C2%2C3%2C4%2C5%2C6%2C7%2C8%2C9%2C10%2C11%2C12%2C13%2C14%2C15%2C16%2C17%2C18%2C19%2C20%2C21%2C22%2C23%2C24%2C25%2C26%2C27%2C28%2C29%2C30%2C31%2C32%2C33%2C34%2C35%2C36%2C37%2C38%2C39%2C40%2C41%2C42%2C43%2C44%2C45%2C46%2C47%2C48%2C49%2C50%2C51%2C52%2C53%2C54%2C55%2C56%2C57%2C58%2C59%2C60%2C61%2C62%2C63%2C64%2C65%2C66%2C67%2C68%2C69%2C70%2C71%2C72%2C73%2C74%2C75%2C76%2C77%2C78%2C79%2C80%2C81%2C82%2C83%2C84%2C85%2C86%2C87%2C88%2C89%2C90%2C91%2C92%2C93%2C94%2C95%2C96%2C97%2C98%2C99%2C100&limit=100&fields=Name%2CName%40ja%2CName%40de%2CName%40fr%2CColor%2CShade%2CIsMetallic%2CItem%5B%5D.Name",
+    "started_utc": "2026-10-20T22:24:47.654882+00:00",
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "content-length": "33262",
+      "access-control-allow-origin": "*",
+      "access-control-expose-headers": "*",
+      "vary": "origin, access-control-request-method, access-control-request-headers"
+    },
+    "bytes": 33262,
+    "sha256": "348db17bd95e4eaef3769588f41dc0d032d75655459d4fc1b3d93b507e87c317",
+    "body_file": "stain-coverage-1.json",
+    "schema": "exdschema@2:rev:e773c41a90aed788cf4c1c48469fa85618ef01fb",
+    "version": "0874aee069e1e7c4",
+    "rows": 100,
+    "elapsed_ms": 521
+  },
+  {
+    "name": "stain-coverage-2",
+    "url": "https://v2.xivapi.com/api/sheet/Stain?version=0874aee069e1e7c4&schema=exdschema%402%3Arev%3Ae773c41a90aed788cf4c1c48469fa85618ef01fb&rows=101%2C102%2C103%2C104%2C105%2C106%2C107%2C108%2C109%2C110%2C111%2C112%2C113%2C114%2C115%2C116%2C117%2C118%2C119%2C120%2C121%2C122%2C123%2C124%2C125&limit=100&fields=Name%2CName%40ja%2CName%40de%2CName%40fr%2CColor%2CShade%2CIsMetallic%2CItem%5B%5D.Name",
+    "started_utc": "2026-10-20T22:24:48.427286+00:00",
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "content-length": "9365",
+      "access-control-allow-origin": "*",
+      "access-control-expose-headers": "*",
+      "vary": "origin, access-control-request-method, access-control-request-headers"
+    },
+    "bytes": 9365,
+    "sha256": "9546e5832e44ec711def02f6463b55771e34d1cfd97d6e812bd44675b08fc70f",
+    "body_file": "stain-coverage-2.json",
+    "schema": "exdschema@2:rev:e773c41a90aed788cf4c1c48469fa85618ef01fb",
+    "version": "0874aee069e1e7c4",
+    "rows": 25,
+    "elapsed_ms": 245
+  },
+  {
+    "name": "stain-language-kr",
+    "url": "https://v2.xivapi.com/api/sheet/Stain/1?version=0874aee069e1e7c4&schema=exdschema%402%3Arev%3Ae773c41a90aed788cf4c1c48469fa85618ef01fb&fields=Name&language=kr",
+    "started_utc": "2026-10-20T22:24:48.923653+00:00",
+    "status": 400,
+    "headers": {
+      "content-type": "application/json",
+      "content-length": "80",
+      "access-control-allow-origin": "*",
+      "access-control-expose-headers": "*",
+      "vary": "origin, access-control-request-method, access-control-request-headers"
+    },
+    "bytes": 80,
+    "sha256": "f451edcd980aa5c965b04e6739bd798f65c1497c9d004229ed25b56743d80ee8",
+    "body_file": "stain-language-kr.json",
+    "schema": null,
+    "version": null,
+    "rows": 0,
+    "elapsed_ms": 480
+  },
+  {
+    "name": "stain-language-chs",
+    "url": "https://v2.xivapi.com/api/sheet/Stain/1?version=0874aee069e1e7c4&schema=exdschema%402%3Arev%3Ae773c41a90aed788cf4c1c48469fa85618ef01fb&fields=Name&language=chs",
+    "started_utc": "2026-10-20T22:24:49.654581+00:00",
+    "status": 400,
+    "headers": {
+      "content-type": "application/json",
+      "content-length": "81",
+      "access-control-allow-origin": "*",
+      "access-control-expose-headers": "*",
+      "vary": "origin, access-control-request-method, access-control-request-headers"
+    },
+    "bytes": 81,
+    "sha256": "759f538dd373f694e5971da326a45346d40bf69840cf474ff347c5fbb53c1099",
+    "body_file": "stain-language-chs.json",
+    "schema": null,
+    "version": null,
+    "rows": 0,
+    "elapsed_ms": 472
+  },
+  {
+    "name": "specialshop-field-shape",
+    "url": "https://v2.xivapi.com/api/sheet/SpecialShop/1769472?fields=Name%2CUseCurrencyType%2CItem%40as%28raw%29",
+    "started_utc": "2026-10-20T22:25:22.251816+00:00",
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "content-length": "5262233",
+      "access-control-allow-origin": "*",
+      "access-control-expose-headers": "*",
+      "vary": "origin, access-control-request-method, access-control-request-headers"
+    },
+    "error": "Response exceeds 2 MB research limit",
+    "elapsed_ms": 997
+  },
+  {
+    "name": "specialshop-projected",
+    "url": "https://v2.xivapi.com/api/sheet/SpecialShop/1769472?version=0874aee069e1e7c4&schema=exdschema%402%3Arev%3Ae773c41a90aed788cf4c1c48469fa85618ef01fb&fields=Name%2CUseCurrencyType%2CItem%5B%5D.Item%5B%5D.Name%2CItem%5B%5D.ReceiveCount%2CItem%5B%5D.ItemCost%5B%5D.Name%2CItem%5B%5D.CurrencyCost%2CItem%5B%5D.CostType",
+    "started_utc": "2026-10-20T22:27:12.360761+00:00",
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "content-length": "23085",
+      "access-control-allow-origin": "*",
+      "access-control-expose-headers": "*",
+      "vary": "origin, access-control-request-method, access-control-request-headers"
+    },
+    "bytes": 23085,
+    "sha256": "cfa30f952d44835197d87414653018b0f5f033d23695572cb5c9146369042cb6",
+    "body_file": "specialshop-projected.json",
+    "schema": "exdschema@2:rev:e773c41a90aed788cf4c1c48469fa85618ef01fb",
+    "version": "0874aee069e1e7c4",
+    "rows": 0,
+    "elapsed_ms": 601
+  }
+]

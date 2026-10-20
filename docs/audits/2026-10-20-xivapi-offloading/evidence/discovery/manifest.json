@@ -1,0 +1,44 @@
+[
+  {
+    "page": 1,
+    "url": "https://v2.xivapi.com/api/sheet/Stain?fields=Name%2CName%40ja%2CName%40de%2CName%40fr%2CColor%2CShade%2CSubOrder%2CIsMetallic%2CIsHousingApplicable%2CItem%5B%5D.Name&limit=100",
+    "started_utc": "2026-10-20T22:40:01.423185+00:00",
+    "status": 200,
+    "elapsed_ms": 552,
+    "content_type": "application/json",
+    "body_file": "stain-list-page-1.json",
+    "bytes": 37272,
+    "sha256": "ae8825c7132edcbdbd8f1e82c870acd6c46a88a3e26c5b83e35f9b3ceb9bab22",
+    "rows": 100,
+    "version": "0874aee069e1e7c4",
+    "schema": "exdschema@2:rev:e773c41a90aed788cf4c1c48469fa85618ef01fb"
+  },
+  {
+    "page": 2,
+    "url": "https://v2.xivapi.com/api/sheet/Stain?fields=Name%2CName%40ja%2CName%40de%2CName%40fr%2CColor%2CShade%2CSubOrder%2CIsMetallic%2CIsHousingApplicable%2CItem%5B%5D.Name&limit=100&after=99&version=0874aee069e1e7c4&schema=exdschema%402%3Arev%3Ae773c41a90aed788cf4c1c48469fa85618ef01fb",
+    "started_utc": "2026-10-20T22:40:02.228035+00:00",
+    "status": 200,
+    "elapsed_ms": 471,
+    "content_type": "application/json",
+    "body_file": "stain-list-page-2.json",
+    "bytes": 11604,
+    "sha256": "91581479bc801c7c3bd03610e75152ba0ea634dfc682f54f40ad31a50aa2bda0",
+    "rows": 29,
+    "version": "0874aee069e1e7c4",
+    "schema": "exdschema@2:rev:e773c41a90aed788cf4c1c48469fa85618ef01fb"
+  },
+  {
+    "page": 3,
+    "url": "https://v2.xivapi.com/api/sheet/Stain?fields=Name%2CName%40ja%2CName%40de%2CName%40fr%2CColor%2CShade%2CSubOrder%2CIsMetallic%2CIsHousingApplicable%2CItem%5B%5D.Name&limit=100&after=128&version=0874aee069e1e7c4&schema=exdschema%402%3Arev%3Ae773c41a90aed788cf4c1c48469fa85618ef01fb",
+    "started_utc": "2026-10-20T22:40:02.950060+00:00",
+    "status": 200,
+    "elapsed_ms": 472,
+    "content_type": "application/json",
+    "body_file": "stain-list-page-3.json",
+    "bytes": 108,
+    "sha256": "c26d079374dcd0244cd42fe0c4a4528cffa07b7fb46b6632aa69c35ddf3df833",
+    "rows": 0,
+    "version": "0874aee069e1e7c4",
+    "schema": "exdschema@2:rev:e773c41a90aed788cf4c1c48469fa85618ef01fb"
+  }
+]

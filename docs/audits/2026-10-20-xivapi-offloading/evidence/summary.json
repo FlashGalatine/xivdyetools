@@ -1,0 +1,24 @@
+{
+  "requests": 25,
+  "status_counts": {
+    "200": 17,
+    "404": 3,
+    "400": 4,
+    "304": 1
+  },
+  "rejected_oversize_bodies": 2,
+  "probe_total_body_bytes_saved": 145639,
+  "raw_csv_exact_differences": {
+    "en": 122,
+    "de": 124,
+    "fr": 125
+  },
+  "trimmed_csv_differences": {
+    "de": 118,
+    "fr": 125
+  },
+  "color_differences": 22,
+  "missing_dye_rows": [],
+  "metallic_differences": [],
+  "consolidated_item_differences": []
+}
