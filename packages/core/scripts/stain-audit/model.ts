@@ -1,3 +1,15 @@
+export const AUDIT_LIMITS = {
+  pageRows: 100,
+  maxPages: 20,
+  maxBytes: 2 * 1024 * 1024,
+  attemptMs: 15_000,
+  maxAttempts: 3,
+  gapMs: 250,
+  runMs: 300_000,
+} as const;
+export const STAIN_ENDPOINT = 'https://v2.xivapi.com/api/sheet/Stain';
+export const STAIN_FIELDS =
+  'Name,Name@ja,Name@de,Name@fr,Color,Shade,SubOrder,IsMetallic,IsHousingApplicable,Item[].Name';
 /** Private maintenance models; never exported by the runtime package. */
 export const GLOBAL_LOCALES = ['en', 'ja', 'de', 'fr'] as const;
 export type GlobalLocale = (typeof GLOBAL_LOCALES)[number];
@@ -169,4 +181,13 @@ export function completeSnapshot(pages: readonly StainPage[]): CompleteSnapshot 
 export function classifyRow(row: StainRow): 'no-color' | 'blank' | 'candidate' {
   if (row.stainID === 0) return 'no-color';
   return GLOBAL_LOCALES.some((locale) => row.names[locale].trim() !== '') ? 'candidate' : 'blank';
+}
+
+export function canonicalPins(value: unknown): Pins {
+  const pins = record(value, 'pins');
+  const version = text(pins.version, 'version');
+  const schema = text(pins.schema, 'schema');
+  if (!/^[0-9a-f]{16}$/.test(version) || !/^exdschema@2:rev:[0-9a-f]{40}$/.test(schema))
+    throw new Error('Expected canonical game version and exdschema revision pins');
+  return { version, schema };
 }
