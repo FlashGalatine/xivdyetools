@@ -121,6 +121,35 @@ describe('selectEntries', () => {
     expect(kinds(select(i).entries)).toEqual(['vendor']);
   });
 
+  it.each([false, true])('omits a base-item upgrade when a direct Poetics purchase exists (upgrade first: %s)', (upgradeFirst) => {
+    const i = emptyInputs();
+    i.items.set(28, { name: 'Allagan Tomestone of Poetics', plural: 'Allagan Tomestones of Poetics', uiCategory: 63 });
+    i.items.set(37973, { name: "Lunar Envoy's Trousers of Fending", plural: "Lunar Envoy's Trousers of Fending", uiCategory: 36 });
+    i.npcs.set(10, npc(10, 'Cihanti', 'Radz-at-Han'));
+    i.npcs.set(11, npc(11, 'Khaldeen', 'Radz-at-Han'));
+    const purchase = offer(shop(1, [10]), [{ itemId: 28, amount: 510 }]);
+    const upgrade = offer(shop(2, [11]), [{ itemId: 37973, amount: 1 }, { itemId: 28, amount: 100 }]);
+    i.offers.set(ITEM, upgradeFirst ? [upgrade, purchase] : [purchase, upgrade]);
+
+    const result = select(i);
+    expect(formatEntries(result.entries, i, emptyTables())).toBe('Cihanti - Radz-at-Han (510 Allagan Tomestones of Poetics)');
+    expect(result.dropped).toContain('redundantPoeticsUpgrade');
+  });
+
+  it('keeps a base-item Poetics upgrade when the direct purchase has no reachable vendor', () => {
+    const i = emptyInputs();
+    i.items.set(28, { name: 'Allagan Tomestone of Poetics', plural: 'Allagan Tomestones of Poetics', uiCategory: 63 });
+    i.items.set(40000, { name: 'Base Coat', plural: 'Base Coats', uiCategory: 35 });
+    i.npcs.set(10, npc(10, 'Cihanti', null));
+    i.npcs.set(11, npc(11, 'Khaldeen', 'Radz-at-Han'));
+    i.offers.set(ITEM, [
+      offer(shop(1, [10]), [{ itemId: 28, amount: 510 }]),
+      offer(shop(2, [11]), [{ itemId: 40000, amount: 1 }, { itemId: 28, amount: 100 }]),
+    ]);
+
+    expect(formatEntries(select(i).entries, i, emptyTables())).toBe('Khaldeen - Radz-at-Han (Base Coat, 100 Allagan Tomestones of Poetics)');
+  });
+
   it('a general currency is never a duty token, even when duties reward it', () => {
     const i = emptyInputs();
     i.items.set(28, { name: 'Allagan Tomestone of Poetics', plural: 'Allagan Tomestones of Poetics', uiCategory: 63 });
