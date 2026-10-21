@@ -25,8 +25,9 @@ import { successResponse } from '../lib/response.js';
 import { parseIntParam } from '../lib/validation.js';
 import { CharaIconCache } from './icon-cache.js';
 import { loadIcon } from './icons.js';
+import { CharaLookupLoader } from './lookup-loader.js';
 import { CharaRowCache } from './cache.js';
-import { indexRows, lookupsFor, resolveCharaEquipment } from './resolver.js';
+import { lookupsFor, resolveCharaEquipment } from './resolver.js';
 import { loadAcquisition } from './acquisition.js';
 import { loadRegionalNames } from './regional-names.js';
 import { UpstreamUnavailableError, XivapiClient, isCanonicalVersion } from './xivapi.js';
@@ -216,18 +217,19 @@ charaRouter.post('/resolve', async (c) => {
   const rows = cache ? await cache.getRows(lookups) : new Map<string, ItemRow[]>();
   const misses = lookups.filter((l) => !rows.has(lookupKey(l)));
 
+  const loader = new CharaLookupLoader(client, context, cache, c.executionCtx as ExecutionContext);
   let version: string | null = null;
   let upstreamCalls = 0;
   try {
     const [search, glassesCached] = await Promise.all([
-      misses.length > 0 ? client.searchItems(misses, context) : Promise.resolve(null),
+      misses.length > 0 ? loader.loadRows(misses) : Promise.resolve(null),
       request.glasses && cache ? cache.getGlasses(request.glasses) : Promise.resolve(undefined),
     ]);
 
     if (search) {
       upstreamCalls++;
       version = search.version;
-      const index = indexRows(search.rows);
+      const index = search.rows;
       // FINDING-025 / API-3: a truncated page (next cursor / 500-row cap) may
       // be missing tail groups — answer this request from what came back, but
       // never store those keys as "no item row" for a week.
@@ -235,13 +237,12 @@ charaRouter.post('/resolve', async (c) => {
         getLogger(c)?.warn("XIVAPI search page truncated — not caching this request's misses", {
           operation: 'chara.resolve',
           lookups: misses.length,
-          rows: search.rows.length,
+          families: search.rows.size,
         });
       }
       for (const lookup of misses) {
         const found: ItemRow[] = index.get(lookupKey(lookup)) ?? [];
         rows.set(lookupKey(lookup), found);
-        if (!search.truncated) cache?.storeRows(lookup, found);
       }
     }
 
@@ -251,7 +252,7 @@ charaRouter.post('/resolve', async (c) => {
         glassesRow = glassesCached;
       } else {
         upstreamCalls++;
-        const fetched = await client.getGlasses(request.glasses, context);
+        const fetched = await loader.loadGlasses(request.glasses);
         glassesRow = fetched.row;
         version ??= fetched.version;
         if (
@@ -262,7 +263,6 @@ charaRouter.post('/resolve', async (c) => {
         ) {
           throw new UpstreamUnavailableError(0, 'mixed fallback snapshots');
         }
-        cache?.storeGlasses(request.glasses, fetched.row);
       }
     }
 

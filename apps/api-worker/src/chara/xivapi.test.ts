@@ -490,7 +490,7 @@ describe('XivapiClient data requests', () => {
           version: V,
           schema: S,
           row_id: 40,
-          fields: { Name: 'Spectacles', 'Name@ja': '???', Icon: { id: 200018 } },
+          fields: { Name: 'Spectacles', 'Name@ja': 'ローズ', Icon: { id: 200018 } },
         }),
       )
       .mockResolvedValueOnce(new Response(null, { status: 404 }));
@@ -499,7 +499,7 @@ describe('XivapiClient data requests', () => {
     const context = await client.resolveContext();
     expect((await client.getGlasses(40, context)).row).toEqual({
       rowId: 40,
-      names: { en: 'Spectacles', ja: '???', de: '', fr: '' },
+      names: { en: 'Spectacles', ja: 'ローズ', de: '', fr: '' },
       iconId: 200018,
     });
     expect(await client.getGlasses(9999, context)).toEqual({

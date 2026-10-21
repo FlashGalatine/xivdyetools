@@ -33,7 +33,7 @@ const CACHE_NAME = 'chara-resolve';
  * ItemUICategory row, which decides whether the main hand takes an off-hand in
  * the GPOSERS list.
  */
-const SHAPE_VERSION = 5;
+export const CHARA_ROW_SHAPE_VERSION = 5;
 
 export class CharaRowCache {
   private readonly service: CacheService;
@@ -41,7 +41,7 @@ export class CharaRowCache {
 
   constructor(ctx: ExecutionContext, namespace: string) {
     this.service = new CacheService(ctx, CACHE_NAME);
-    this.prefix = `${CHARA_CACHE_CONFIG.keyPrefix}:${SHAPE_VERSION}:${namespace}`;
+    this.prefix = `${CHARA_CACHE_CONFIG.keyPrefix}:${CHARA_ROW_SHAPE_VERSION}:${namespace}`;
   }
 
   private rowKey(lookup: SlotLookup): string {

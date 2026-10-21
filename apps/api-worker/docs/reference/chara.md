@@ -77,8 +77,9 @@ Names are never "cleaned": Augmented / Replica / +1 prefixes stay, because the n
 ### Caching
 
 - Each (slot, key) is cached at the edge for ~7 days, partitioned by normalized upstream base, canonical game version, canonical schema and row shape. A repeat import reuses complete row families. An empty answer (no item row) is cached too.
-- `X-Cache: HIT` means all data lookups were served from cache; `MISS` means at least one data lookup needed upstream work. Snapshot discovery is excluded. (Not CORS-exposed — readable from servers, plugins and bots, not from browser code.)
+- `X-Cache: HIT` means all data lookups were served from cache; `MISS` means at least one data lookup needed upstream work or joined a pending lookup. Snapshot discovery is excluded. (Not CORS-exposed — readable from servers, plugins and bots, not from browser code.)
 - Moving game/schema selectors are discovered once per request and memoized for ten minutes. Failed discovery keeps the last complete context; a first failure permits uncached enrichment without reading or writing shared row entries.
+- Concurrent Item/Glasses misses share decoded data within one isolate. Partially overlapping requests fetch only their new keys in one batch; a 256-key pending limit falls back to ordinary fetches without dropping work. Errors and truncated pages are not persisted. Completed in-flight entries are removed; a request between completion and the asynchronous cache write can miss again. Cache contents are local to a Cloudflare data center, so this is not global deduplication. Row freshness remains seven days with the existing one-day stale-serving headroom; no background row refresh is added.
 - The POST response itself is `Cache-Control: no-store` — caching happens per key behind it, not on the envelope.
 
 ### Errors
