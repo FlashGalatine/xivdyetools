@@ -257,9 +257,10 @@ charaRouter.post('/resolve', async (c) => {
         version ??= fetched.version;
         if (
           search &&
-          search.version !== null &&
-          fetched.version !== null &&
-          (search.version !== fetched.version || search.schema !== fetched.schema)
+          ((search.version !== null &&
+            fetched.version !== null &&
+            search.version !== fetched.version) ||
+            (search.schema !== null && fetched.schema !== null && search.schema !== fetched.schema))
         ) {
           throw new UpstreamUnavailableError(0, 'mixed fallback snapshots');
         }

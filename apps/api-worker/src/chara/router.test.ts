@@ -836,6 +836,87 @@ describe('POST /v1/chara/resolve — row cache follows the game version behind "
   });
 });
 
+describe('POST /v1/chara/resolve — partial bootstrap identities', () => {
+  const otherVersion = 'bbbbbbbbbbbbbbbb';
+  const otherSchema = 'exdschema@2:rev:' + 'b'.repeat(40);
+  type Identity = { version?: string; schema?: string };
+
+  beforeEach(() => {
+    resetAllMocks();
+    vi.restoreAllMocks();
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  async function resolvePartial(name: string, item: Identity, glasses: Identity) {
+    // Do not use okJson: these fixtures must actually omit identity fields.
+    const json = (body: object) =>
+      new Response(JSON.stringify(body), { headers: { 'Content-Type': 'application/json' } });
+    const fetchMock = vi.fn(async (url: string) => {
+      const path = new URL(url).pathname;
+      if (path === '/api/sheet/Item/1') return new Response('down', { status: 503 });
+      if (path === '/api/search') return json({ ...item, results: [BEECH_MASK] });
+      if (path === '/api/sheet/Glasses/40')
+        return json({
+          ...glasses,
+          row_id: 40,
+          fields: { Name: 'Black Rose-colored Spectacles', Icon: { id: 200018 } },
+        });
+      throw new Error('Unexpected upstream path: ' + path);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const cache = await caches.open('chara-resolve');
+    const putSpy = vi.spyOn(cache, 'put');
+    const ctx = createMockExecutionContext();
+    const response = await app.request(
+      '/v1/chara/resolve',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ gear: [{ slot: 'HeadGear', base: 361, variant: 5 }], glasses: 40 }),
+      },
+      createMockEnv({
+        XIVAPI_BASE: 'https://' + name.replaceAll(' ', '-') + '.test',
+        XIVAPI_VERSION: 'latest',
+      }),
+      ctx,
+    );
+    await flush(ctx);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(putSpy).not.toHaveBeenCalled();
+    return response;
+  }
+
+  it.each<[string, Identity, Identity]>([
+    ['missing Item version', { schema: S }, { version: V, schema: otherSchema }],
+    ['missing Glasses version', { version: V, schema: S }, { schema: otherSchema }],
+    ['missing both versions', { schema: S }, { schema: otherSchema }],
+    ['missing both schemas', { version: V }, { version: otherVersion }],
+  ])('rejects conflicting known coordinates with %s', async (name, item, glasses) => {
+    const response = await resolvePartial(name, item, glasses);
+    expect(response.status).toBe(503);
+    expect(await response.json()).toMatchObject({ error: 'UPSTREAM_UNAVAILABLE' });
+  });
+
+  it.each<[string, Identity, Identity]>([
+    ['matching schema only', { schema: S }, { version: V, schema: S }],
+    ['missing Item schema', { version: V }, { version: V, schema: S }],
+    ['missing Glasses schema', { version: V, schema: S }, { version: V }],
+  ])(
+    'answers without persistence when no known coordinates conflict: %s',
+    async (name, item, glasses) => {
+      const response = await resolvePartial(name, item, glasses);
+      expect(response.status).toBe(200);
+      expect(response.headers.get('X-Cache')).toBe('MISS');
+      expect(await response.json()).toMatchObject({
+        data: {
+          items: { HeadGear: { itemId: 18085 } },
+          glasses: { id: 40, names: { en: 'Black Rose-colored Spectacles' } },
+        },
+      });
+    },
+  );
+});
+
 describe('CORS', () => {
   it('preflight allows POST for the resolve endpoint', async () => {
     const res = await app.request(
