@@ -235,6 +235,14 @@ Selection goes through `generateHarmonySlots(baseHex, type, candidates, config, 
 ### Spectral mixing (Kubelka-Munk)
 There is no `SpectralMixer` class. Spectral mixing is `blendColors(hex1, hex2, 'spectral', ratio)` in `src/blending/blending.ts`, which wraps `spectral.js` (Burns' LHTSS upsampling to a 38-band reflectance curve, 380-750nm, mixed in K/S space). `ColorService.mixColorsSpectral(hex1, hex2, ratio = 0.5)` is the façade over it, and `@xivdyetools/core/blending` exposes `blendColors` / `BLENDING_MODES` / `isValidBlendingMode` directly. Blue + Yellow = Green like real paint. The old wrapper's `mixMultiple`, `gradient` and `isAvailable` were removed as uncalled (DEAD-034, 2026-08-18 audit).
 
+### Manual Stain audit
+
+`pnpm --filter @xivdyetools/core run audit:dyes --latest --out <new-directory>` enumerates the complete Stain sheet and reports candidate additions, name/color/metallic differences and Item links. Alternatively pass both `--version <game-key>` and `--schema <canonical-revision>`, or `--snapshot <saved-bundle>` for network-free replay of saved upstream **and local** inputs. Relative paths use the repository root; the output parent must exist. No source data or generated locales are written. Exit 0 means complete even with differences, 1 failure/incomplete, 2 usage error.
+
+The command preserves row 0/blank rows as evidence and never treats a named row as proof of obtainability. Keep the six-locale manual adoption and identity workflow in [adding-dyes.md](../../docs/maintainer/adding-dyes.md). Current Item relations are on `Stain.Item[]` at the audited pins; the old `StainTransient` advice is version-dependent. The command is opt-in: normal builds/tests/runtime do not refresh from XIVAPI.
+
+`type-check:audit-dyes` uses `tsconfig.audit-dyes.json`; `lint:audit-dyes` uses its dedicated ESLint configuration because root ESLint excludes scripts. Both are wired into the normal core checks. The production build still includes only `src`; audit modules add no runtime exports. All audit tests use frozen responses or injected fetch, and real CLI subprocess tests inherit a fetch blocker through `NODE_OPTIONS`.
+
 ### Locale build pipeline
 1. `scripts/fetch_dye_names.py` (Python, run **manually**) hits XIVAPI v2 → `scripts/output/dye_names.csv`, which is merged into `dyenames.csv`. XIVAPI only serves en/ja/de/fr — **Korean and Chinese names are sourced manually** from market-board HTML and pasted into the CSV.
 2. `scripts/build-locales.ts` reads `localize.yaml` (label structure), `dyenames.csv` (per-language dye names, keyed by itemID) and `facewear-names.csv` (the 11 Facewear tints, keyed by slug — they have no itemID, I18N-008), cross-checks the two CSVs against `src/data/dyes.json` and `src/data/facewear_colors.json`, builds all six locales in memory, and only then emits `src/data/locales/{en,ja,de,fr,ko,zh}.json`. Every other section (categories, acquisitions, currencies, harmony types, color wheels, vision types, tools, sheets, races, clans) is a hardcoded table inside the script, so a new dye category needs an edit to `buildCategories`. `buildSheets` follows the glossary's *Character-Creation Color Sheets* table in [`docs/reference/ffxiv-terminology.md`](../../docs/reference/ffxiv-terminology.md) (TERM-021): change a word there first, then in the script.
@@ -247,7 +255,7 @@ There is no `SpectralMixer` class. Spectral mixing is `blendColors(hex1, hex2, '
 - a CSV's English cell differs from the data file's `name`, case included, so the en locale and `dye.name` / `FacewearColor.name` never disagree;
 - a translation cell is empty. This is the only one `--allow-missing` (`pnpm run build:locales -- --allow-missing`) waives, keeping the English fallback for work in progress.
 
-`scripts/build-locales.test.ts` runs the real script as a subprocess against fixtures for each of these, regenerates from the committed sources to check that the committed JSON matches, and pins all six locales' `sheets`. Core's `tsc` and `eslint src` do not cover `scripts/`, so that test is the gate on the script.
+`scripts/build-locales.test.ts` runs the real script as a subprocess against fixtures for each of these, regenerates from the committed sources to check that the committed JSON matches, and pins all six locales' `sheets`. The normal source `tsc` and `eslint src` do not cover `build-locales.ts`, so that test is its gate; the separate audit tooling checks cover only `audit-dyes` and `stain-audit/`.
 
 `build-locales.ts` is **idempotent**: before writing, it compares the freshly built payload against the file already on disk, ignoring `meta.generated`. If nothing else differs it keeps the existing file untouched — same bytes, same mtime. Rebuilding from unchanged sources therefore leaves a clean working tree, and `meta.generated` marks when the locale data last *changed* rather than when the build last ran.
 
@@ -275,7 +283,7 @@ External: `spectral.js` (Kubelka-Munk).
 
 ## Dead-code gate (knip)
 
-`pnpm run lint` = `eslint src && pnpm run lint:dead`, and `lint:dead` is
+`pnpm run lint` = `eslint src && pnpm run lint:audit-dyes && pnpm run lint:dead`, and `lint:dead` is
 `knip --directory ../.. --workspace packages/core --no-config-hints --no-tag-hints`. It runs against the **root**
 `knip.jsonc` (never a local one) because core's consumers live in other
 workspaces: `--workspace` filters which workspace's issues are *reported*, but

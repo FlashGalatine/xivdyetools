@@ -13,6 +13,8 @@ apps that enforce it, web-app 5.15.5 and discord-worker 5.8.15, ship in the same
 
 ### Added
 
+- **Manual Stain discovery/comparison (`audit:dyes`, issue #322).** Enumerates the complete XIVAPI sheet with canonical pins and bounded requests, then saves raw evidence and review-only JSON/Markdown reports. Verified offline replay preserves all six local locale sources and existing identity mappings. Builds and runtime dye access keep their existing offline behavior. The private scripts are covered by dedicated type/lint checks and fixture/subprocess tests. No dye values or public exports change.
+
 - **`MAX_CHARA_FILE_BYTES` (8,192): the largest `.chara` file the web app and the Discord bot accept.**
   - Over the 1,093-file corpus, exports without an attached image are 1,837–2,777 bytes. The one
     larger file carried an image the user attached in Anamnesis (3,128,021 bytes); Anamnesis stores
