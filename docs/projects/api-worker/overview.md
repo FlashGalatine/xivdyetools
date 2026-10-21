@@ -63,6 +63,14 @@ Unlike the presets-api (authenticated, restricted CORS), this API is fully anony
 | Caching | `max-age=3600, s-maxage=86400` | Deterministic data, changes only with game patches |
 | Database | Bundled JSON | No D1 — the 125-dye database is part of the bundle via `@xivdyetools/core` |
 
+### Character metadata and icons
+
+Character enrichment stays optional and sends only model/facewear identifiers upstream. Equipment rows use one captured base/game/schema context and a seven-day row cache; unresolved bootstrap contexts bypass shared caching. Concurrent Item/Glasses misses share decoded data only within one isolate, with a 256-key pending cap and ordinary fetch fallback. Row stale-serving headroom remains unchanged; no row background refresh or global deduplication is promised.
+
+Icon assets and internal keys share a game version. The existing URL follows the configured version with a five-minute browser policy; an optional canonical version query receives a 30-day immutable policy. Validated PNGs are seven days fresh internally and retained for 30 days for conditional ETag refresh. Previously delivered immutable browser entries expire on their original schedule.
+
+The endpoint contract and parameter forms are in the [character API reference](../../../apps/api-worker/docs/reference/chara.md). Run `pnpm --filter xivdyetools-api-worker run test:chara-runtime` after building dependencies for local workerd ownership checks with fixture-only upstream requests.
+
 ### Source Structure
 
 ```
