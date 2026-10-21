@@ -89,6 +89,7 @@ export interface Comparison {
   counts: { sheetRows: number; candidates: number; localDyes: number };
   candidateIds: number[];
   addedCandidateIds: number[];
+  addedCandidates: StainRow[];
   missingLocalIds: number[];
   unnamedLocalIds: number[];
   excludedRows: { stainID: number; classification: 'no-color' | 'blank' }[];

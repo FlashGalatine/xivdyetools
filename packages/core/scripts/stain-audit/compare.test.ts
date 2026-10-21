@@ -55,6 +55,13 @@ function frozenFile(file: string): string {
   return readFileSync(new URL(`./fixtures/2026-10-20/${file}`, import.meta.url), 'utf8');
 }
 
+function freezeTree(value: unknown): void {
+  if (typeof value === 'object' && value !== null) {
+    Object.values(value).forEach(freezeTree);
+    Object.freeze(value);
+  }
+}
+
 describe('report-only dye comparison', () => {
   it('discovers a lower-numbered addition without filtering black or nonhousing rows', () => {
     const result = compareStains(snapshot([1, 126, 200]), parseLocalCatalog(inputs()));
@@ -110,6 +117,8 @@ describe('report-only dye comparison', () => {
     upstream.rows[0].names.en = 'Black ';
     upstream.rows[0].names.fr = 'noir';
     upstream.rows[0].color = 1;
+    freezeTree(local);
+    freezeTree(upstream);
     const before = JSON.stringify({ local, upstream });
     const result = compareStains(upstream, local);
     expect(result.differences).toEqual(

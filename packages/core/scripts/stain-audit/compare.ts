@@ -241,6 +241,13 @@ export function compareStains(snapshot: CompleteSnapshot, catalog: LocalCatalog)
     addedCandidateIds: candidates
       .filter((row) => !localIds.has(row.stainID))
       .map((row) => row.stainID),
+    addedCandidates: candidates
+      .filter((row) => !localIds.has(row.stainID))
+      .map((row) => ({
+        ...row,
+        names: { ...row.names },
+        items: row.items.map((item) => ({ ...item })),
+      })),
     missingLocalIds: catalog.dyes.filter((dye) => !byId.has(dye.stainID)).map((dye) => dye.stainID),
     unnamedLocalIds: catalog.dyes
       .filter((dye) => byId.has(dye.stainID) && classifyRow(byId.get(dye.stainID)!) !== 'candidate')

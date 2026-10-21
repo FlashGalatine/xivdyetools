@@ -40,7 +40,8 @@
     "clean": "rimraf dist coverage",
     "prepublishOnly": "npm run build",
     "type-check:audit-dyes": "tsc -p tsconfig.audit-dyes.json --noEmit",
-    "lint:audit-dyes": "eslint --config eslint.audit-dyes.config.mjs scripts/stain-audit"
+    "lint:audit-dyes": "eslint --config eslint.audit-dyes.config.mjs scripts/stain-audit scripts/audit-dyes.ts scripts/audit-dyes.test.ts",
+    "audit:dyes": "tsx scripts/audit-dyes.ts"
   },
   "keywords": [
     "ffxiv",
