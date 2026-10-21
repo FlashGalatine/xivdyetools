@@ -96,13 +96,16 @@ The item's icon as PNG (the 80 px `_hr1` asset), proxied from XIVAPI and edge-ca
 
 <EndpointCard
   endpoint="/v1/chara/icon/:iconId"
-  summary="Item icon proxy (PNG)."
+  summary="Item icon PNG; optional game-version pin."
   :params="[
     { name: 'iconId', in: 'path', required: true, default: '41716', description: 'From items.<slot>.iconId or glasses.iconId — canonical decimal, 1–999999 (no leading zeros, sign or trailing characters)' },
+    { name: 'version', in: 'query', default: '', description: 'Optional canonical game key: exactly 16 lower-case hexadecimal characters. Omit to follow the configured game version.' },
   ]"
 />
 
-Returns `image/png` (always — the upstream content type is never reflected; a 2xx upstream body that is not a PNG is refused) with `Cache-Control: public, max-age=2592000, immutable`, `Content-Disposition: inline`, `Content-Security-Policy: sandbox` and an `X-Cache` header (`HIT` / `MISS`). `041716` and `41716abc` are `400 VALIDATION_ERROR`; `404 NOT_FOUND` when the upstream has no such asset; `503 UPSTREAM_UNAVAILABLE` when XIVAPI is down, answers with something other than a PNG, or exceeds the 1 MB ceiling. A missing icon should cost the tile, not the row.
+Returns `image/png` (always — the upstream content type is never reflected; a 2xx upstream body that is not a PNG is refused) with `Cache-Control: public, max-age=300, must-revalidate` for the unversioned URL, or `public, max-age=2592000, immutable` when an explicit canonical `version` is supplied, `Content-Disposition: inline`, `Content-Security-Policy: sandbox` and an `X-Cache` header (`HIT` / `MISS`). `041716` and `41716abc` are `400 VALIDATION_ERROR`; `404 NOT_FOUND` when the upstream has no such asset; `503 UPSTREAM_UNAVAILABLE` when XIVAPI is down, answers with something other than a PNG, or exceeds the 1 MB ceiling. A missing icon should cost the tile, not the row.
+
+Asset fetches and internal edge keys share the same game version. Internal storage is separate from browser cache headers and never exposes upstream validators or cache timestamps. Malformed or repeated version parameters are 400; unrelated query parameters are ignored. Previously delivered immutable browser responses can keep their original 30-day lifetime; changing the server policy cannot revoke those entries.
 
 ## Model key packing (for reference)
 

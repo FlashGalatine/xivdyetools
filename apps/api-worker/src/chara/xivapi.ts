@@ -114,11 +114,11 @@ export function buildResolveQuery(lookups: readonly SlotLookup[]): string {
 }
 
 /** `ui/icon/041000/041716_hr1.tex` → the PNG asset URL for an icon id. */
-export function iconAssetUrl(base: string, iconId: number): string {
+export function iconAssetUrl(base: string, iconId: number, version: string): string {
   const id6 = String(iconId).padStart(6, '0');
   const folder = `${id6.slice(0, 3)}000`;
   const path = `ui/icon/${folder}/${id6}_hr1.tex`;
-  return `${base}/api/asset?${new URLSearchParams({ path, format: 'png' }).toString()}`;
+  return `${base}/api/asset?${new URLSearchParams({ path, format: 'png', version }).toString()}`;
 }
 
 interface RawSearchRow {
@@ -131,6 +131,16 @@ interface RawSearchResponse {
   schema?: string;
   results?: RawSearchRow[];
   next?: string;
+}
+
+export interface XivapiAssetContext {
+  readonly base: string;
+  readonly version: string;
+  readonly cacheable: boolean;
+}
+
+export function isCanonicalVersion(value: string): boolean {
+  return CANONICAL_VERSION.test(value);
 }
 
 export interface XivapiContext {
@@ -281,6 +291,17 @@ export class XivapiClient {
     return entry.value;
   }
 
+  async resolveAssetContext(versionOverride?: string): Promise<XivapiAssetContext> {
+    const version = versionOverride ?? this.version;
+    if (isCanonicalVersion(version)) return { base: this.base, version, cacheable: true };
+    const context = await this.resolveContext();
+    return {
+      base: context.base,
+      version: context.version,
+      cacheable: context.cacheNamespace !== null,
+    };
+  }
+
   private fallback(): XivapiContext {
     return { base: this.base, version: this.version, schema: this.schema, cacheNamespace: null };
   }
@@ -346,12 +367,16 @@ export class XivapiClient {
     return { version, schema };
   }
 
-  private async get(url: string, timeoutMs: number = UPSTREAM_TIMEOUT_MS): Promise<Response> {
+  private async get(
+    url: string,
+    timeoutMs: number = UPSTREAM_TIMEOUT_MS,
+    headers: Record<string, string> = {},
+  ): Promise<Response> {
     let response: Response;
     try {
       response = await fetch(url, {
         method: 'GET',
-        headers: { Accept: 'application/json', 'User-Agent': USER_AGENT },
+        headers: { Accept: 'application/json', 'User-Agent': USER_AGENT, ...headers },
         signal: AbortSignal.timeout(timeoutMs),
         // FINDING-025 / API-9: never follow a redirect to a third host and
         // then cache (or proxy) whatever it serves — XIVAPI answers directly.
@@ -432,7 +457,14 @@ export class XivapiClient {
   }
 
   /** Raw icon PNG — the `/v1/chara/icon/:id` proxy's upstream. */
-  async fetchIcon(iconId: number): Promise<Response> {
-    return this.get(iconAssetUrl(this.base, iconId));
+  async fetchIcon(
+    iconId: number,
+    context: XivapiAssetContext,
+    ifNoneMatch?: string,
+  ): Promise<Response> {
+    return this.get(iconAssetUrl(context.base, iconId, context.version), UPSTREAM_TIMEOUT_MS, {
+      Accept: 'image/png',
+      ...(ifNoneMatch ? { 'If-None-Match': ifNoneMatch } : {}),
+    });
   }
 }

@@ -35,13 +35,15 @@ describe('buildResolveQuery', () => {
 
 describe('iconAssetUrl', () => {
   it('pads to six digits and derives the thousand-folder', () => {
-    const url = new URL(iconAssetUrl('https://v2.xivapi.com', 41716));
+    const url = new URL(iconAssetUrl('https://v2.xivapi.com', 41716, 'aaaaaaaaaaaaaaaa'));
     expect(url.pathname).toBe('/api/asset');
     expect(url.searchParams.get('path')).toBe('ui/icon/041000/041716_hr1.tex');
     expect(url.searchParams.get('format')).toBe('png');
-    expect(new URL(iconAssetUrl('https://v2.xivapi.com', 200018)).searchParams.get('path')).toBe(
-      'ui/icon/200000/200018_hr1.tex',
-    );
+    expect(
+      new URL(iconAssetUrl('https://v2.xivapi.com', 200018, 'aaaaaaaaaaaaaaaa')).searchParams.get(
+        'path',
+      ),
+    ).toBe('ui/icon/200000/200018_hr1.tex');
   });
 });
 

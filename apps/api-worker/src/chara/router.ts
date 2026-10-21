@@ -20,14 +20,16 @@ import { getLogger } from '@xivdyetools/worker-kit';
 import { CHARA_SLOT_SEARCH_FIELD, isCharaWeaponSlot, isWornCharaModel } from '@xivdyetools/core';
 import type { Env, Variables } from '../types.js';
 import { ApiError, ErrorCode } from '../lib/api-error.js';
-import { BodyTooLargeError, readBoundedBytes, readBoundedText } from '../lib/bounded-body.js';
+import { BodyTooLargeError, readBoundedText } from '../lib/bounded-body.js';
 import { successResponse } from '../lib/response.js';
 import { parseIntParam } from '../lib/validation.js';
+import { CharaIconCache } from './icon-cache.js';
+import { loadIcon } from './icons.js';
 import { CharaRowCache } from './cache.js';
 import { indexRows, lookupsFor, resolveCharaEquipment } from './resolver.js';
 import { loadAcquisition } from './acquisition.js';
 import { loadRegionalNames } from './regional-names.js';
-import { UpstreamUnavailableError, XivapiClient } from './xivapi.js';
+import { UpstreamUnavailableError, XivapiClient, isCanonicalVersion } from './xivapi.js';
 import type {
   CharaGearModel,
   CharaGearSlotId,
@@ -44,22 +46,12 @@ const GEAR_SLOTS = Object.keys(CHARA_SLOT_SEARCH_FIELD) as CharaGearSlotId[];
 const LANE_MAX = 0xffff;
 /** A twelve-slot body is well under 1 KB; anything bigger is not a `.chara` request. */
 const MAX_BODY_BYTES = 8 * 1024;
-/** Icon PNGs are ~10 KB at _hr1; 1 MB is a generous ceiling before we refuse to buffer. */
-const MAX_ICON_BYTES = 1024 * 1024;
-const ICON_CACHE_CONTROL = 'public, max-age=2592000, immutable';
 /**
  * FINDING-025 / API-4: the canonical decimal form only. `parseInt` accepts
  * `041716`, `41716abc`, `41716 ` as 41716 — each a distinct edge-cache key and
  * a fresh upstream fetch for the same icon.
  */
 const CANONICAL_ICON_ID = /^[1-9]\d{0,5}$/;
-/** The eight-byte PNG signature — the only body the icon proxy will serve (API-12). */
-const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
-
-function isPng(bytes: Uint8Array): boolean {
-  return bytes.byteLength >= PNG_SIGNATURE.length && PNG_SIGNATURE.every((b, i) => bytes[i] === b);
-}
-
 // ============================================================================
 // Validation
 // ============================================================================
@@ -310,74 +302,41 @@ charaRouter.get('/icon/:iconId', async (c) => {
     );
   }
   const iconId = parseIntParam(rawId, 'iconId', { min: 1, max: 999_999 });
-  // Cache under the CANONICAL public URL (path rebuilt from the parsed id,
-  // query stripped) so every viewer of the same icon shares one edge entry,
-  // and the browser gets a long immutable TTL.
-  const url = new URL(c.req.url);
-  url.pathname = `/v1/chara/icon/${iconId}`;
-  url.search = '';
-  const cacheKey = new Request(url.toString(), { method: 'GET' });
-  const edge = typeof caches !== 'undefined' ? caches.default : null;
-
-  const hit = await edge?.match(cacheKey);
-  if (hit) {
-    const headers = new Headers(hit.headers);
-    headers.set('X-Cache', 'HIT');
-    return new Response(hit.body, { status: 200, headers });
+  const versions = new URL(c.req.url).searchParams.getAll('version');
+  const version = versions[0];
+  if (versions.length > 1 || (version !== undefined && !isCanonicalVersion(version))) {
+    throw new ApiError(
+      ErrorCode.VALIDATION_ERROR,
+      'version must be one canonical 16-character lower-case hexadecimal game key',
+      400,
+    );
   }
-
   const client = new XivapiClient(c.env);
-  let upstream: Response;
+  const contextPending = client.resolveAssetContext(version);
+  c.executionCtx.waitUntil(contextPending.catch(() => undefined));
+  const context = await contextPending;
+  const cache = new CharaIconCache();
   try {
-    upstream = await client.fetchIcon(iconId);
+    const payload = await loadIcon(client, context, iconId, cache);
+    if (payload.cacheUpdate) {
+      c.executionCtx.waitUntil(cache.put(context, iconId, payload.cacheUpdate));
+    }
+    return new Response(payload.bytes, {
+      status: 200,
+      headers: {
+        'Content-Type': 'image/png',
+        'Content-Disposition': 'inline',
+        'Content-Security-Policy': 'sandbox',
+        'Cache-Control':
+          version === undefined
+            ? 'public, max-age=300, must-revalidate'
+            : 'public, max-age=2592000, immutable',
+        'X-Cache': payload.cacheStatus,
+      },
+    });
   } catch (error) {
     return upstreamDown(error);
   }
-  if (upstream.status === 404) {
-    throw new ApiError(ErrorCode.NOT_FOUND, `No icon ${iconId}`, 404);
-  }
-  if (!upstream.ok) {
-    throw new ApiError(
-      ErrorCode.UPSTREAM_UNAVAILABLE,
-      `Icon upstream answered ${upstream.status}`,
-      503,
-    );
-  }
-  const declared = Number(upstream.headers.get('Content-Length') ?? '0');
-  if (declared > MAX_ICON_BYTES) {
-    throw new ApiError(ErrorCode.UPSTREAM_UNAVAILABLE, 'Icon exceeds the size ceiling', 503);
-  }
-  // FINDING-025 / API-12: byte-budgeted read (Content-Length is advisory) …
-  let bytes: Uint8Array;
-  try {
-    bytes = await readBoundedBytes(upstream.body, MAX_ICON_BYTES);
-  } catch (error) {
-    if (error instanceof BodyTooLargeError) {
-      throw new ApiError(ErrorCode.UPSTREAM_UNAVAILABLE, 'Icon exceeds the size ceiling', 503);
-    }
-    throw error;
-  }
-  // … and the proxy serves image/png or nothing: the upstream Content-Type is
-  // never reflected, and a 2xx body that is not a PNG is refused — not stored
-  // under a 30-day immutable key.
-  if (!isPng(bytes)) {
-    throw new ApiError(ErrorCode.UPSTREAM_UNAVAILABLE, 'Icon upstream did not return a PNG', 503);
-  }
-
-  const response = new Response(bytes, {
-    status: 200,
-    headers: {
-      'Content-Type': 'image/png',
-      'Content-Disposition': 'inline',
-      'Content-Security-Policy': 'sandbox',
-      'Cache-Control': ICON_CACHE_CONTROL,
-      'X-Cache': 'MISS',
-    },
-  });
-  if (edge) {
-    c.executionCtx.waitUntil(edge.put(cacheKey, response.clone()).catch(() => {}));
-  }
-  return response;
 });
 
 export { charaRouter };

@@ -162,14 +162,12 @@ describe('POST /v1/chara/resolve', () => {
         EquipSlotCategory: { fields: { Head: 1 } },
       },
     });
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(
-        okJson({
-          version: V,
-          results: [result(372, 'Dated Hempen Coif', 1), result(10, 'Aetherial Test Coif', 50)],
-        }),
-      );
+    const fetchMock = vi.fn().mockResolvedValue(
+      okJson({
+        version: V,
+        results: [result(372, 'Dated Hempen Coif', 1), result(10, 'Aetherial Test Coif', 50)],
+      }),
+    );
     vi.stubGlobal('fetch', fetchMock);
     const body = { gear: [{ slot: 'HeadGear', base: 4, variant: 1 }] };
     const ctx = createMockExecutionContext();
@@ -324,25 +322,23 @@ describe('POST /v1/chara/resolve', () => {
   });
 
   it('resolves facewear by Glasses row alongside the gear', async () => {
-    const fetchMock = vi
-      .fn()
-      .mockImplementation((url: string) =>
-        url.includes('/api/sheet/Glasses/40')
-          ? Promise.resolve(
-              okJson({
-                row_id: 40,
-                version: V,
-                fields: {
-                  Name: 'Black Rose-colored Spectacles',
-                  'Name@ja': 'ローズ',
-                  'Name@de': 'Brille',
-                  'Name@fr': 'Lunettes',
-                  Icon: { id: 200018 },
-                },
-              }),
-            )
-          : Promise.resolve(okJson({ version: V, results: [BEECH_MASK] })),
-      );
+    const fetchMock = vi.fn().mockImplementation((url: string) =>
+      url.includes('/api/sheet/Glasses/40')
+        ? Promise.resolve(
+            okJson({
+              row_id: 40,
+              version: V,
+              fields: {
+                Name: 'Black Rose-colored Spectacles',
+                'Name@ja': 'ローズ',
+                'Name@de': 'Brille',
+                'Name@fr': 'Lunettes',
+                Icon: { id: 200018 },
+              },
+            }),
+          )
+        : Promise.resolve(okJson({ version: V, results: [BEECH_MASK] })),
+    );
     vi.stubGlobal('fetch', fetchMock);
 
     const res = await post({ gear: [{ slot: 'HeadGear', base: 361, variant: 5 }], glasses: 40 });
@@ -512,7 +508,7 @@ describe('GET /v1/chara/icon/:iconId', () => {
       headers: { 'Content-Type': contentType, 'Content-Length': String(PNG_BYTES.byteLength) },
     });
 
-  it('proxies the icon PNG with a long immutable cache header and edge-caches it', async () => {
+  it('proxies an unversioned PNG with a short browser policy and shared edge storage', async () => {
     const fetchMock = vi.fn().mockResolvedValue(png());
     vi.stubGlobal('fetch', fetchMock);
     const ctx = createMockExecutionContext();
@@ -520,7 +516,7 @@ describe('GET /v1/chara/icon/:iconId', () => {
     const res = await app.request('/v1/chara/icon/41716', { method: 'GET' }, env, ctx);
     expect(res.status).toBe(200);
     expect(res.headers.get('Content-Type')).toBe('image/png');
-    expect(res.headers.get('Cache-Control')).toBe('public, max-age=2592000, immutable');
+    expect(res.headers.get('Cache-Control')).toBe('public, max-age=300, must-revalidate');
     expect(res.headers.get('X-Cache')).toBe('MISS');
     expect(new Uint8Array(await res.arrayBuffer())).toEqual(PNG_BYTES);
     const upstream = new URL(fetchMock.mock.calls[0][0] as string);
@@ -569,14 +565,77 @@ describe('GET /v1/chara/icon/:iconId', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('keys the edge cache on the canonical id path (API-4)', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(png()));
-    const putSpy = vi.spyOn(caches.default, 'put');
+  it('shares canonical icon data across query noise and request hostnames', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(png());
+    vi.stubGlobal('fetch', fetchMock);
     const ctx = createMockExecutionContext();
-    await app.request('/v1/chara/icon/41716?cb=1&x=2', { method: 'GET' }, env, ctx);
+    await app.request('/v1/chara/icon/41716?cb=1&x=2', {}, env, ctx);
     await flush(ctx);
-    expect(putSpy).toHaveBeenCalledTimes(1);
-    expect((putSpy.mock.calls[0][0] as Request).url).toBe('http://localhost/v1/chara/icon/41716');
+    const again = await app.request(
+      'https://internal/v1/chara/icon/41716?cb=3',
+      {},
+      env,
+      createMockExecutionContext(),
+    );
+    expect(again.status).toBe(200);
+    expect(again.headers.get('X-Cache')).toBe('HIT');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(['', 'abc', 'AAAAAAAAAAAAAAAA', 'aaaa', 'aaaaaaaaaaaaaaag', V + '&version=' + V])(
+    'rejects malformed or repeated icon versions before network access: %s',
+    async (version) => {
+      const fetchMock = vi.fn().mockResolvedValue(png());
+      vi.stubGlobal('fetch', fetchMock);
+      const result = await app.request(
+        '/v1/chara/icon/41716?version=' + version,
+        {},
+        env,
+        createMockExecutionContext(),
+      );
+      expect(result.status).toBe(400);
+      expect(fetchMock).not.toHaveBeenCalled();
+    },
+  );
+
+  it('pins icon assets and partitions bytes by version/base without metadata discovery', async () => {
+    const requested: string[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (raw: string, init: RequestInit) => {
+        requested.push(raw);
+        expect(new URL(raw).pathname).toBe('/api/asset');
+        expect((init.headers as Record<string, string>).Accept).toBe('image/png');
+        const bytes = new Uint8Array(PNG_BYTES);
+        bytes[bytes.length - 1] = requested.length;
+        return new Response(bytes);
+      }),
+    );
+    const get = async (version: string, upstream = 'https://xivapi.test') => {
+      const ctx = createMockExecutionContext();
+      const response = await app.request(
+        '/v1/chara/icon/41716?version=' + version,
+        {},
+        createMockEnv({ XIVAPI_BASE: upstream }),
+        ctx,
+      );
+      expect(response.status).toBe(200);
+      expect(response.headers.get('Cache-Control')).toBe('public, max-age=2592000, immutable');
+      for (const header of ['X-Cached-At', 'X-Origin-ETag', 'ETag'])
+        expect(response.headers.get(header)).toBeNull();
+      const bytes = new Uint8Array(await response.arrayBuffer());
+      await flush(ctx);
+      return bytes[bytes.length - 1];
+    };
+    expect(await get(V)).toBe(1);
+    expect(await get('bbbbbbbbbbbbbbbb')).toBe(2);
+    expect(await get(V, 'https://other.test')).toBe(3);
+    expect(await get(V)).toBe(1);
+    expect(requested.map((url) => new URL(url).searchParams.get('version'))).toEqual([
+      V,
+      'bbbbbbbbbbbbbbbb',
+      V,
+    ]);
   });
 
   // FINDING-025 / API-12: the proxy serves image/png or nothing — the
@@ -600,7 +659,7 @@ describe('GET /v1/chara/icon/:iconId', () => {
       }),
     );
     vi.stubGlobal('fetch', fetchMock);
-    const putSpy = vi.spyOn(caches.default, 'put');
+    const putSpy = vi.spyOn(await caches.open('chara-icons'), 'put');
     const ctx = createMockExecutionContext();
     const res = await app.request('/v1/chara/icon/41718', {}, env, ctx);
     expect(res.status).toBe(503);
