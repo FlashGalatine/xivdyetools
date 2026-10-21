@@ -22,7 +22,17 @@ export async function loadIcon(
   if (retained && Date.now() - retained.cachedAt < ICON_FRESH_MS) {
     return { bytes: retained.bytes, cacheStatus: 'HIT', cacheUpdate: null };
   }
-  const upstream = await client.fetchIcon(iconId, context);
+  const upstream = await client.fetchIcon(iconId, context, retained?.etag ?? undefined);
+  if (upstream.status === 304) {
+    if (!retained || !retained.etag)
+      throw new UpstreamUnavailableError(304, 'no retained PNG for conditional response');
+    const entry = {
+      bytes: retained.bytes,
+      etag: upstream.headers.get('ETag') ?? retained.etag,
+      cachedAt: Date.now(),
+    };
+    return { bytes: entry.bytes, cacheStatus: 'MISS', cacheUpdate: entry };
+  }
   if (upstream.status === 404) throw new ApiError(ErrorCode.NOT_FOUND, 'No icon ' + iconId, 404);
   if (!upstream.ok)
     throw new ApiError(

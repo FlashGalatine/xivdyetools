@@ -641,6 +641,42 @@ describe('GET /v1/chara/icon/:iconId', () => {
   // FINDING-025 / API-12: the proxy serves image/png or nothing — the
   // upstream's Content-Type is never reflected and a non-PNG body is refused
   // (and not cached) rather than stored for 30 days.
+  it.each([false, true])(
+    'returns independent HTTP 200 PNG bodies after a conditional 304 (versioned: %s)',
+    async (versioned) => {
+      let now = Date.now();
+      vi.spyOn(Date, 'now').mockImplementation(() => now);
+      let calls = 0;
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async (_url: string, init: RequestInit) => {
+          calls++;
+          if (calls === 1) return new Response(PNG_BYTES, { headers: { ETag: '"initial"' } });
+          expect((init.headers as Record<string, string>)['If-None-Match']).toBe('"initial"');
+          return new Response(null, { status: 304 });
+        }),
+      );
+      const path = '/v1/chara/icon/41716' + (versioned ? '?version=' + V : '');
+      const firstCtx = createMockExecutionContext();
+      await app.request(path, {}, env, firstCtx);
+      await flush(firstCtx);
+      now += 7 * 86400000;
+      const refreshCtx = createMockExecutionContext();
+      const refreshed = await app.request(path, {}, env, refreshCtx);
+      await flush(refreshCtx);
+      const cached = await app.request(path, {}, env, createMockExecutionContext());
+      for (const response of [refreshed, cached]) {
+        expect(response.status).toBe(200);
+        expect(response.headers.get('Cache-Control')).toBe(
+          versioned ? 'public, max-age=2592000, immutable' : 'public, max-age=300, must-revalidate',
+        );
+        expect(response.headers.get('ETag')).toBeNull();
+        expect(new Uint8Array(await response.arrayBuffer())).toEqual(PNG_BYTES);
+      }
+      expect(calls).toBe(2);
+    },
+  );
+
   it('pins Content-Type to image/png and sandboxes the response (API-12)', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(png('application/octet-stream')));
     const res = await app.request('/v1/chara/icon/41717', {}, env, createMockExecutionContext());

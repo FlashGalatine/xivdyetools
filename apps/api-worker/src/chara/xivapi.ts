@@ -371,6 +371,7 @@ export class XivapiClient {
     url: string,
     timeoutMs: number = UPSTREAM_TIMEOUT_MS,
     headers: Record<string, string> = {},
+    allowNotModified = false,
   ): Promise<Response> {
     let response: Response;
     try {
@@ -391,6 +392,7 @@ export class XivapiClient {
         error instanceof Error ? error.message : 'fetch failed',
       );
     }
+    if (response.status === 304 && allowNotModified) return response;
     if (response.status >= 300 && response.status < 400) {
       throw new UpstreamUnavailableError(response.status, 'redirect refused');
     }
@@ -462,9 +464,11 @@ export class XivapiClient {
     context: XivapiAssetContext,
     ifNoneMatch?: string,
   ): Promise<Response> {
-    return this.get(iconAssetUrl(context.base, iconId, context.version), UPSTREAM_TIMEOUT_MS, {
-      Accept: 'image/png',
-      ...(ifNoneMatch ? { 'If-None-Match': ifNoneMatch } : {}),
-    });
+    return this.get(
+      iconAssetUrl(context.base, iconId, context.version),
+      UPSTREAM_TIMEOUT_MS,
+      { Accept: 'image/png', ...(ifNoneMatch ? { 'If-None-Match': ifNoneMatch } : {}) },
+      Boolean(ifNoneMatch),
+    );
   }
 }

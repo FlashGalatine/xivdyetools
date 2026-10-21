@@ -107,6 +107,8 @@ Returns `image/png` (always — the upstream content type is never reflected; a 
 
 Asset fetches and internal edge keys share the same game version. Internal storage is separate from browser cache headers and never exposes upstream validators or cache timestamps. Malformed or repeated version parameters are 400; unrelated query parameters are ignored. Previously delivered immutable browser responses can keep their original 30-day lifetime; changing the server policy cannot revoke those entries.
 
+Validated PNGs are fresh internally for seven days and retained for up to 30 days. A retained stale entry is revalidated with the upstream ETag; a 304 reuses its existing body and is returned as a normal 200 PNG. A changed 200 must pass validation again. Missing/corrupt/expired bodies are fetched unconditionally. Failed refreshes preserve the old timestamp and return the existing error response; they do not silently serve stale success or extend freshness.
+
 ## Model key packing (for reference)
 
 The request carries the raw lanes, but if you want to compute keys yourself (they are what the cache is keyed on):

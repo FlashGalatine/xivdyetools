@@ -439,16 +439,19 @@ describe('XivapiClient data requests', () => {
     });
     expect(fetchMock).not.toHaveBeenCalled();
   });
-  it.each([302, 429, 503])('refuses redirects and unavailable statuses: %i', async (status) => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async () => new Response(null, { status })),
-    );
-    const client = new XivapiClient(pinned);
-    await expect(
-      client.searchItems([{ field: 'Head', key: '1' }], await client.resolveContext()),
-    ).rejects.toBeInstanceOf(UpstreamUnavailableError);
-  });
+  it.each([302, 304, 429, 503])(
+    'refuses redirects and unavailable statuses: %i',
+    async (status) => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async () => new Response(null, { status })),
+      );
+      const client = new XivapiClient(pinned);
+      await expect(
+        client.searchItems([{ field: 'Head', key: '1' }], await client.resolveContext()),
+      ).rejects.toBeInstanceOf(UpstreamUnavailableError);
+    },
+  );
   it('maps a network timeout to upstream status 0', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('timeout')));
     const client = new XivapiClient(pinned);
