@@ -139,6 +139,19 @@ describe('report-only dye comparison', () => {
       expect.arrayContaining(['csv-row-missing', 'csv-row-unknown']),
     );
   });
+  it.each([{ namesCsv: '' }, { namesCsv: '\n\r\n' }])(
+    'rejects absent headers before a catalog can be compared ($namesCsv)',
+    ({ namesCsv }) => {
+      expect(() => parseLocalCatalog({ ...inputs(), namesCsv })).toThrow(/header/i);
+    },
+  );
+  it('retains a valid header-only CSV as explicit source gaps', () => {
+    const local = parseLocalCatalog({ ...inputs(), namesCsv: header + '\n' });
+    expect(local.names).toEqual([]);
+    expect(compareStains(snapshot(), local).sourceIssues).toEqual([
+      { code: 'csv-row-missing', key: 5729 },
+    ]);
+  });
   it('rejects duplicate identities, malformed sources and locale key collisions', () => {
     const one = JSON.parse(inputs().dyesJson) as Record<string, unknown>[];
     expect(() => parseLocalCatalog(inputs([...one, ...one]))).toThrow(/duplicate/i);

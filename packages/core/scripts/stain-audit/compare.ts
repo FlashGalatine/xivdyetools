@@ -99,6 +99,7 @@ export function parseLocalCatalog(inputs: LocalInputs): LocalCatalog {
       C: ids.C === null ? null : positive(ids.C, 'C item'),
     },
   };
+  let headerSeen = false;
   const parsed: unknown = parse(inputs.namesCsv, {
     bom: true,
     skip_empty_lines: true,
@@ -108,9 +109,11 @@ export function parseLocalCatalog(inputs: LocalInputs): LocalCatalog {
         header.some((name, i) => name.trim() !== CSV_COLUMNS[i])
       )
         throw new Error('Invalid CSV header columns');
+      headerSeen = true;
       return CSV_COLUMNS;
     },
   });
+  if (!headerSeen) throw new Error('Missing CSV header columns');
   if (!Array.isArray(parsed)) throw new Error('Invalid CSV rows');
   const csvKeys = new Set<number>();
   const names: LocalCatalog['names'] = parsed
