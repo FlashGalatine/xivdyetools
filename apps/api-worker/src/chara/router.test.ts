@@ -11,10 +11,19 @@ import { parseResolveBody } from './router';
 
 // A real version key is its own cache namespace, so these tests stay about
 // resolution. The moving `latest` alias has its own block at the bottom (BUG-040).
-const env = createMockEnv({ XIVAPI_BASE: 'https://xivapi.test', XIVAPI_VERSION: 'pinned-test-key' });
+const V = 'aaaaaaaaaaaaaaaa';
+const S = 'exdschema@2:rev:' + 'a'.repeat(40);
+const env = createMockEnv({
+  XIVAPI_BASE: 'https://xivapi.test',
+  XIVAPI_VERSION: V,
+  XIVAPI_SCHEMA: S,
+});
 
 const okJson = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+  new Response(JSON.stringify({ version: V, schema: S, ...(body as object) }), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
 
 const BEECH_MASK = {
   row_id: 18085,
@@ -105,20 +114,18 @@ describe('POST /v1/chara/resolve', () => {
         EquipSlotCategory: { fields: { Head: 1 } },
       },
     });
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(
-        okJson({
-          version: 'v',
-          results: [
-            result(372, 'Dated Hempen Coif', 1),
-            result(2629, 'Hempen Coif', 1),
-            result(2630, 'Hempen Coif of Gathering', 1),
-            result(10, 'Aetherial Test Coif', 50),
-            result(11, 'Deepmist Test Coif', 60),
-          ],
-        }),
-      );
+    const fetchMock = vi.fn().mockResolvedValue(
+      okJson({
+        version: V,
+        results: [
+          result(372, 'Dated Hempen Coif', 1),
+          result(2629, 'Hempen Coif', 1),
+          result(2630, 'Hempen Coif of Gathering', 1),
+          result(10, 'Aetherial Test Coif', 50),
+          result(11, 'Deepmist Test Coif', 60),
+        ],
+      }),
+    );
     vi.stubGlobal('fetch', fetchMock);
     const body = { gear: [{ slot: 'HeadGear', base: 4, variant: 1 }] };
     const ctx = createMockExecutionContext();
@@ -147,11 +154,22 @@ describe('POST /v1/chara/resolve', () => {
     // is decided at resolve time and a replay answers the same as upstream.
     const result = (row_id: number, Name: string, LevelEquip: number) => ({
       row_id,
-      fields: { Name, LevelEquip, ModelMain: 65540, ModelSub: 0, EquipSlotCategory: { fields: { Head: 1 } } },
+      fields: {
+        Name,
+        LevelEquip,
+        ModelMain: 65540,
+        ModelSub: 0,
+        EquipSlotCategory: { fields: { Head: 1 } },
+      },
     });
-    const fetchMock = vi.fn().mockResolvedValue(
-      okJson({ version: 'v', results: [result(372, 'Dated Hempen Coif', 1), result(10, 'Aetherial Test Coif', 50)] }),
-    );
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        okJson({
+          version: V,
+          results: [result(372, 'Dated Hempen Coif', 1), result(10, 'Aetherial Test Coif', 50)],
+        }),
+      );
     vi.stubGlobal('fetch', fetchMock);
     const body = { gear: [{ slot: 'HeadGear', base: 4, variant: 1 }] };
     const ctx = createMockExecutionContext();
@@ -173,7 +191,9 @@ describe('POST /v1/chara/resolve', () => {
   });
 
   it('resolves a file in one upstream search, applies the off-hand rule, nulls unknown keys', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(okJson({ version: '284bb7f44b9c0976', results: [BEECH_MASK, RUNAWAY_BOW] }));
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(okJson({ version: V, results: [BEECH_MASK, RUNAWAY_BOW] }));
     vi.stubGlobal('fetch', fetchMock);
 
     const res = await post(GALATINE_BODY);
@@ -182,10 +202,15 @@ describe('POST /v1/chara/resolve', () => {
     expect(res.headers.get('Cache-Control')).toBe('no-store');
     const body = (await res.json()) as any;
     expect(body.success).toBe(true);
-    expect(body.data.version).toBe('284bb7f44b9c0976');
+    expect(body.data.version).toBe(V);
     expect(body.data.items.HeadGear).toMatchObject({
       itemId: 18085,
-      names: { en: 'Beech Mask of Casting', de: 'Buchenmaske der Magie', ko: '너도밤나무 마술사 가면', zh: '山毛榉咏咒面具' },
+      names: {
+        en: 'Beech Mask of Casting',
+        de: 'Buchenmaske der Magie',
+        ko: '너도밤나무 마술사 가면',
+        zh: '山毛榉咏咒面具',
+      },
       iconId: 41716,
       familySize: 1,
       alternates: [],
@@ -197,16 +222,26 @@ describe('POST /v1/chara/resolve', () => {
     expect(body.data.glasses).toBeUndefined();
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const url = new URL(fetchMock.mock.calls[0][0] as string);
-    expect(url.searchParams.get('query')).toContain('(+EquipSlotCategory.OffHand=1 +ModelMain=4304732858)');
+    expect(url.searchParams.get('query')).toContain(
+      '(+EquipSlotCategory.OffHand=1 +ModelMain=4304732858)',
+    );
   });
 
   it("carries each item's acquisition line from the build-time table, fresh or cached, and omits it when the table has none", async () => {
     // Body {9903, 1} packs to ModelMain 75439; row 2 is not equippable, so the table has no line for it.
     const UNLISTED_BODY = {
       row_id: 2,
-      fields: { Name: 'Unlisted Body', Icon: { id: 1 }, ModelMain: 75439, ModelSub: 0, EquipSlotCategory: { fields: { Body: 1 } } },
+      fields: {
+        Name: 'Unlisted Body',
+        Icon: { id: 1 },
+        ModelMain: 75439,
+        ModelSub: 0,
+        EquipSlotCategory: { fields: { Body: 1 } },
+      },
     };
-    const fetchMock = vi.fn().mockResolvedValue(okJson({ version: 'v', results: [BEECH_MASK, RUNAWAY_BOW, UNLISTED_BODY] }));
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(okJson({ version: V, results: [BEECH_MASK, RUNAWAY_BOW, UNLISTED_BODY] }));
     vi.stubGlobal('fetch', fetchMock);
 
     const ctx = createMockExecutionContext();
@@ -217,7 +252,9 @@ describe('POST /v1/chara/resolve', () => {
     expect(cached.headers.get('X-Cache')).toBe('HIT');
     for (const res of [fresh, cached]) {
       const { items } = ((await res.json()) as any).data;
-      expect(items.HeadGear.acquisition).toBe('Crafted (CRP Lvl. 61) / Norlaise - Ishgard - The Pillars (19,994 Gil)');
+      expect(items.HeadGear.acquisition).toBe(
+        'Crafted (CRP Lvl. 61) / Norlaise - Ishgard - The Pillars (19,994 Gil)',
+      );
       expect(items.MainHand.acquisition).toBe('Hell on Rails (Extreme)');
       expect(items.OffHand.acquisition).toBe('Hell on Rails (Extreme)');
       expect(items.Body.itemId).toBe(2);
@@ -227,7 +264,9 @@ describe('POST /v1/chara/resolve', () => {
   });
 
   it('replays cached keys — the second identical import makes no upstream call', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(okJson({ version: 'v', results: [BEECH_MASK, RUNAWAY_BOW] }));
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(okJson({ version: V, results: [BEECH_MASK, RUNAWAY_BOW] }));
     vi.stubGlobal('fetch', fetchMock);
 
     const ctx = createMockExecutionContext();
@@ -245,16 +284,37 @@ describe('POST /v1/chara/resolve', () => {
   });
 
   it('answers the in-game rules, and a cache replay keeps them', async () => {
-    const everyone = { Hyur: true, Elezen: true, Lalafell: true, Miqote: true, Roegadyn: true, AuRa: true, Hrothgar: true, Viera: true, Male: true, Female: true };
+    const everyone = {
+      Hyur: true,
+      Elezen: true,
+      Lalafell: true,
+      Miqote: true,
+      Roegadyn: true,
+      AuRa: true,
+      Hrothgar: true,
+      Viera: true,
+      Male: true,
+      Female: true,
+    };
     const mask = {
       ...BEECH_MASK,
-      fields: { ...BEECH_MASK.fields, DyeCount: 1, IsGlamorous: true, EquipRestriction: { fields: everyone }, GrandCompany: { value: 0, row_id: 0 } },
+      fields: {
+        ...BEECH_MASK.fields,
+        DyeCount: 1,
+        IsGlamorous: true,
+        EquipRestriction: { fields: everyone },
+        GrandCompany: { value: 0, row_id: 0 },
+      },
     };
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(okJson({ version: 'v', results: [mask] })));
-    const expected = [{ itemIds: [18085], dyeCount: 1, glamourable: true, wearMask: 0xffff, grandCompany: 0 }];
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(okJson({ version: V, results: [mask] })));
+    const expected = [
+      { itemIds: [18085], dyeCount: 1, glamourable: true, wearMask: 0xffff, grandCompany: 0 },
+    ];
 
     const ctx = createMockExecutionContext();
-    const first = (await (await post({ gear: [{ slot: 'HeadGear', base: 361, variant: 5 }] }, ctx)).json()) as any;
+    const first = (await (
+      await post({ gear: [{ slot: 'HeadGear', base: 361, variant: 5 }] }, ctx)
+    ).json()) as any;
     expect(first.data.items.HeadGear.rules).toEqual(expected);
     await flush(ctx);
 
@@ -268,15 +328,32 @@ describe('POST /v1/chara/resolve', () => {
       .fn()
       .mockImplementation((url: string) =>
         url.includes('/api/sheet/Glasses/40')
-          ? Promise.resolve(okJson({ row_id: 40, version: 'v', fields: { Name: 'Black Rose-colored Spectacles', 'Name@ja': 'ローズ', 'Name@de': 'Brille', 'Name@fr': 'Lunettes', Icon: { id: 200018 } } }))
-          : Promise.resolve(okJson({ version: 'v', results: [BEECH_MASK] })),
+          ? Promise.resolve(
+              okJson({
+                row_id: 40,
+                version: V,
+                fields: {
+                  Name: 'Black Rose-colored Spectacles',
+                  'Name@ja': 'ローズ',
+                  'Name@de': 'Brille',
+                  'Name@fr': 'Lunettes',
+                  Icon: { id: 200018 },
+                },
+              }),
+            )
+          : Promise.resolve(okJson({ version: V, results: [BEECH_MASK] })),
       );
     vi.stubGlobal('fetch', fetchMock);
 
     const res = await post({ gear: [{ slot: 'HeadGear', base: 361, variant: 5 }], glasses: 40 });
     const body = (await res.json()) as any;
     expect(res.status).toBe(200);
-    expect(body.data.glasses).toEqual({ id: 40, names: { en: 'Black Rose-colored Spectacles', ja: 'ローズ', de: 'Brille', fr: 'Lunettes' }, iconId: 200018, acquisition: 'Mount Rokkon' });
+    expect(body.data.glasses).toEqual({
+      id: 40,
+      names: { en: 'Black Rose-colored Spectacles', ja: 'ローズ', de: 'Brille', fr: 'Lunettes' },
+      iconId: 200018,
+      acquisition: 'Mount Rokkon',
+    });
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
@@ -285,7 +362,7 @@ describe('POST /v1/chara/resolve', () => {
     vi.stubGlobal('fetch', fetchMock);
     const res = await post({ gear: [] });
     expect(res.status).toBe(200);
-    expect((await res.json() as any).data).toEqual({ version: null, items: {} });
+    expect(((await res.json()) as any).data).toEqual({ version: null, items: {} });
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -311,13 +388,27 @@ describe('POST /v1/chara/resolve', () => {
   it('names the offending field on a bad slot, lane, duplicate or empty piece', async () => {
     const cases: Array<[unknown, RegExp]> = [
       [{ gear: [{ slot: 'Tail', base: 1, variant: 1 }] }, /gear\[0\]\.slot must be one of/],
-      [{ gear: [{ slot: 'Body', base: 70000, variant: 1 }] }, /gear\[0\]\.base must be an integer between 0 and 65535/],
+      [
+        { gear: [{ slot: 'Body', base: 70000, variant: 1 }] },
+        /gear\[0\]\.base must be an integer between 0 and 65535/,
+      ],
       [{ gear: [{ slot: 'Body', base: 1, variant: -1 }] }, /gear\[0\]\.variant/],
       [{ gear: [{ slot: 'Body', variant: 1 }] }, /gear\[0\]\.base is required/],
-      [{ gear: [{ slot: 'Body', base: 1, variant: 1 }, { slot: 'Body', base: 2, variant: 1 }] }, /appears twice/],
+      [
+        {
+          gear: [
+            { slot: 'Body', base: 1, variant: 1 },
+            { slot: 'Body', base: 2, variant: 1 },
+          ],
+        },
+        /appears twice/,
+      ],
       [{ gear: [{ slot: 'Body', base: 0, variant: 1 }] }, /empty slot/],
       [{ gear: [], glasses: 'forty' }, /`glasses` must be a Glasses sheet row id/],
-      [{ gear: Array.from({ length: 13 }, (_, i) => ({ slot: 'Body', base: i + 1, variant: 0 })) }, /13 entries/],
+      [
+        { gear: Array.from({ length: 13 }, (_, i) => ({ slot: 'Body', base: i + 1, variant: 0 })) },
+        /13 entries/,
+      ],
     ];
     for (const [body, message] of cases) {
       const res = await post(body);
@@ -350,7 +441,11 @@ describe('POST /v1/chara/resolve', () => {
   it('still rejects an honestly-declared oversized body up front', async () => {
     const res = await app.request(
       '/v1/chara/resolve',
-      { method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': '9000' }, body: '{}' },
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Content-Length': '9000' },
+        body: '{}',
+      },
       env,
       createMockExecutionContext(),
     );
@@ -364,7 +459,9 @@ describe('POST /v1/chara/resolve', () => {
     // a fresh Response per call — the second POST must reach upstream again
     const fetchMock = vi
       .fn()
-      .mockImplementation(() => Promise.resolve(okJson({ version: 'v', results: [BEECH_MASK], next: 'cursor-page-2' })));
+      .mockImplementation(() =>
+        Promise.resolve(okJson({ version: V, results: [BEECH_MASK], next: 'cursor-page-2' })),
+      );
     vi.stubGlobal('fetch', fetchMock);
 
     const ctx = createMockExecutionContext();
@@ -382,7 +479,13 @@ describe('POST /v1/chara/resolve', () => {
 
   it('parseResolveBody normalises weapon vs gear shapes and drops glasses 0', () => {
     expect(
-      parseResolveBody({ gear: [{ slot: 'MainHand', base: 19, variant: 1 }, { slot: 'Feet', base: 376 }], glasses: 0 }),
+      parseResolveBody({
+        gear: [
+          { slot: 'MainHand', base: 19, variant: 1 },
+          { slot: 'Feet', base: 376 },
+        ],
+        glasses: 0,
+      }),
     ).toEqual({
       gear: [
         { slot: 'MainHand', set: 0, base: 19, variant: 1 },
@@ -400,7 +503,9 @@ describe('GET /v1/chara/icon/:iconId', () => {
   afterEach(() => vi.unstubAllGlobals());
 
   /** The 8-byte PNG signature plus a few bytes of "body". */
-  const PNG_BYTES = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d]);
+  const PNG_BYTES = new Uint8Array([
+    0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d,
+  ]);
   const png = (contentType = 'image/png') =>
     new Response(PNG_BYTES, {
       status: 200,
@@ -422,7 +527,12 @@ describe('GET /v1/chara/icon/:iconId', () => {
     expect(upstream.searchParams.get('path')).toBe('ui/icon/041000/041716_hr1.tex');
 
     await flush(ctx);
-    const again = await app.request('/v1/chara/icon/41716?cb=1', { method: 'GET' }, env, createMockExecutionContext());
+    const again = await app.request(
+      '/v1/chara/icon/41716?cb=1',
+      { method: 'GET' },
+      env,
+      createMockExecutionContext(),
+    );
     expect(again.status).toBe(200);
     expect(again.headers.get('X-Cache')).toBe('HIT');
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -431,8 +541,12 @@ describe('GET /v1/chara/icon/:iconId', () => {
   it('rejects a non-integer or out-of-range id before any upstream call', async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
-    expect((await app.request('/v1/chara/icon/abc', {}, env, createMockExecutionContext())).status).toBe(400);
-    expect((await app.request('/v1/chara/icon/0', {}, env, createMockExecutionContext())).status).toBe(400);
+    expect(
+      (await app.request('/v1/chara/icon/abc', {}, env, createMockExecutionContext())).status,
+    ).toBe(400);
+    expect(
+      (await app.request('/v1/chara/icon/0', {}, env, createMockExecutionContext())).status,
+    ).toBe(400);
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -443,7 +557,12 @@ describe('GET /v1/chara/icon/:iconId', () => {
     const fetchMock = vi.fn().mockResolvedValue(png());
     vi.stubGlobal('fetch', fetchMock);
     for (const alias of ['041716', '41716abc', '41716%20', '+41716', '41716.0', '0x41716']) {
-      const res = await app.request(`/v1/chara/icon/${alias}`, {}, env, createMockExecutionContext());
+      const res = await app.request(
+        `/v1/chara/icon/${alias}`,
+        {},
+        env,
+        createMockExecutionContext(),
+      );
       expect(res.status, alias).toBe(400);
       expect(((await res.json()) as any).error, alias).toBe('VALIDATION_ERROR');
     }
@@ -497,7 +616,11 @@ describe('GET /v1/chara/icon/:iconId', () => {
     const { stream, counter } = countedStream(new Uint8Array(64 * 1024).fill(0x00), 100);
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue(new Response(stream, { status: 200, headers: { 'Content-Type': 'image/png' } })),
+      vi
+        .fn()
+        .mockResolvedValue(
+          new Response(stream, { status: 200, headers: { 'Content-Type': 'image/png' } }),
+        ),
     );
     const res = await app.request('/v1/chara/icon/41719', {}, env, createMockExecutionContext());
     expect(res.status).toBe(503);
@@ -506,7 +629,12 @@ describe('GET /v1/chara/icon/:iconId', () => {
 
   it('maps an upstream 404 to NOT_FOUND and a 5xx to UPSTREAM_UNAVAILABLE', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('nope', { status: 404 })));
-    const missing = await app.request('/v1/chara/icon/999998', {}, env, createMockExecutionContext());
+    const missing = await app.request(
+      '/v1/chara/icon/999998',
+      {},
+      env,
+      createMockExecutionContext(),
+    );
     expect(missing.status).toBe(404);
     expect(((await missing.json()) as any).error).toBe('NOT_FOUND');
 
@@ -526,8 +654,7 @@ describe('GET /v1/chara/icon/:iconId', () => {
 describe('POST /v1/chara/resolve — row cache follows the game version behind "latest" (BUG-040)', () => {
   const BODY = { gear: [{ slot: 'HeadGear', base: 361, variant: 5 }] };
   const NEW_TWIN = { ...BEECH_MASK, row_id: 99999 };
-  const versions = (key: string) =>
-    okJson({ versions: [{ key: 'old0000000000000', names: ['7.5'] }, { key, names: ['7.6', 'latest'] }] });
+  const versions = (key: string) => okJson({ row_id: 1, version: key, fields: { Name: 'Gil' } });
   let now = 1_000_000;
 
   beforeEach(() => {
@@ -541,7 +668,11 @@ describe('POST /v1/chara/resolve — row cache follows the game version behind "
   const resolve = (base: string, ctx: ExecutionContext) =>
     app.request(
       '/v1/chara/resolve',
-      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(BODY) },
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(BODY),
+      },
       createMockEnv({ XIVAPI_BASE: base, XIVAPI_VERSION: 'latest' }),
       ctx,
     );
@@ -553,9 +684,12 @@ describe('POST /v1/chara/resolve — row cache follows the game version behind "
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url: string) => {
-        if (new URL(url).pathname === '/api/version') return versions(current);
+        if (new URL(url).pathname === '/api/sheet/Item/1') return versions(current);
         searches++;
-        return okJson({ version: current, results: searches === 1 ? [BEECH_MASK] : [BEECH_MASK, NEW_TWIN] });
+        return okJson({
+          version: current,
+          results: searches === 1 ? [BEECH_MASK] : [BEECH_MASK, NEW_TWIN],
+        });
       }),
     );
 
@@ -579,19 +713,31 @@ describe('POST /v1/chara/resolve — row cache follows the game version behind "
     expect(body.data.items.HeadGear.familySize).toBe(2);
   });
 
-  it('degrades to the literal "latest" namespace, and still answers, when /api/version is unavailable', async () => {
+  it('bypasses shared row storage, and still answers, when context discovery is unavailable', async () => {
     let searches = 0;
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url: string) => {
-        if (new URL(url).pathname === '/api/version') return new Response('down', { status: 502 });
+        if (new URL(url).pathname === '/api/sheet/Item/1')
+          return new Response('down', { status: 502 });
         searches++;
-        return okJson({ version: 'k', results: [BEECH_MASK] });
+        return okJson({ version: V, results: [BEECH_MASK] });
       }),
     );
-    const res = await resolve('https://xivapi-versiondown.test', createMockExecutionContext() as unknown as ExecutionContext);
+    const res = await resolve(
+      'https://xivapi-versiondown.test',
+      createMockExecutionContext() as unknown as ExecutionContext,
+    );
     expect(res.status).toBe(200);
     expect(searches).toBe(1);
+    const again = await resolve(
+      'https://xivapi-versiondown.test',
+      createMockExecutionContext() as unknown as ExecutionContext,
+    );
+    expect(again.status).toBe(200);
+    expect(again.headers.get('X-Cache')).toBe('MISS');
+    expect(searches).toBe(2);
+    expect(((await caches.open('chara-resolve')) as any).size).toBe(0);
   });
 });
 
@@ -599,7 +745,10 @@ describe('CORS', () => {
   it('preflight allows POST for the resolve endpoint', async () => {
     const res = await app.request(
       '/v1/chara/resolve',
-      { method: 'OPTIONS', headers: { Origin: 'https://xivdyetools.app', 'Access-Control-Request-Method': 'POST' } },
+      {
+        method: 'OPTIONS',
+        headers: { Origin: 'https://xivdyetools.app', 'Access-Control-Request-Method': 'POST' },
+      },
       env,
       createMockExecutionContext(),
     );

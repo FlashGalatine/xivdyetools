@@ -18,6 +18,7 @@
  * - German names carry U+00AD soft hyphens — stripped at ingest.
  */
 
+import { readBoundedText } from '../lib/bounded-body.js';
 import { CHARA_WEAR_RACE_COLUMNS, charaWearMask } from '@xivdyetools/core';
 import type { CharaItemRules, GlassesRow, ItemRow, SlotLookup } from './types.js';
 
@@ -127,38 +128,37 @@ interface RawSearchRow {
 
 interface RawSearchResponse {
   version?: string;
+  schema?: string;
   results?: RawSearchRow[];
   next?: string;
 }
 
-/** `GET /api/version`: `{ versions: [{ key, names: ['7.55x2', 'latest'] }, …] }`. */
-interface RawVersionList {
-  versions?: Array<{ key?: string; names?: string[] }>;
+export interface XivapiContext {
+  readonly base: string;
+  readonly version: string;
+  readonly schema: string | undefined;
+  /** Null means bootstrap discovery failed: never read/write shared data. */
+  readonly cacheNamespace: string | null;
 }
 
-/**
- * How long a resolved `latest` key is trusted (BUG-040). XIVAPI re-points
- * `latest` from an hourly Thaliak poll, so ten minutes of lag adds nothing
- * noticeable to a patch-day cold start and keeps the lookup to roughly one
- * extra tiny request per isolate per ten minutes.
- */
-const VERSION_KEY_TTL_MS = 10 * 60_000;
-/** After a failed lookup (literal-alias fallback) retry sooner. */
-const VERSION_KEY_FAILURE_TTL_MS = 60_000;
-/** Short: this sits in front of every cold-cache /resolve. */
-const VERSION_LOOKUP_TIMEOUT_MS = 3_000;
-/** Per isolate, keyed by `${base}|${alias}`. */
-const versionKeyMemo = new Map<string, { expires: number; key: Promise<string> }>();
-/**
- * The last key a lookup actually resolved, per the same memo key. A failed
- * refresh keeps answering with it (stale-if-error), so rows cached under it
- * stay reachable through an XIVAPI blip instead of every import going cold.
- */
-const lastResolvedKey = new Map<string, string>();
+export interface XivapiResponseIdentity {
+  version: string | null;
+  schema: string | null;
+}
+
+const CANONICAL_VERSION = /^[0-9a-f]{16}$/;
+const CANONICAL_SCHEMA = /^exdschema@2:rev:[0-9a-f]{40}$/;
+const CONTEXT_TTL_MS = 10 * 60_000;
+const CONTEXT_FAILURE_TTL_MS = 60_000;
+const CONTEXT_TIMEOUT_MS = 3_000;
+const MAX_CONTEXT_BYTES = 32 * 1024;
+const contextMemo = new Map<string, { expires: number; value: Promise<XivapiContext> }>();
+const lastResolvedContext = new Map<string, XivapiContext>();
 
 interface RawSheetRow {
   row_id: number;
   version?: string;
+  schema?: string;
   fields: Record<string, unknown>;
 }
 
@@ -251,70 +251,99 @@ export class XivapiClient {
   private readonly schema: string | undefined;
 
   constructor(env: XivapiEnv) {
-    this.base = (env.XIVAPI_BASE ?? DEFAULT_XIVAPI_BASE).replace(/\/$/, '');
+    this.base = new URL(env.XIVAPI_BASE ?? DEFAULT_XIVAPI_BASE).toString().replace(/\/$/, '');
     this.version = env.XIVAPI_VERSION ?? DEFAULT_XIVAPI_VERSION;
     this.schema = env.XIVAPI_SCHEMA;
   }
 
-  /**
-   * The key cache entries are namespaced under (BUG-040).
-   *
-   * A real key (`XIVAPI_VERSION = "284bb7f44b9c0976"`) is its own namespace.
-   * The moving alias `latest` is not: it re-points on patch day, so using the
-   * literal string kept the namespace constant across patches and a cached
-   * pre-patch row family outlived the patch by up to TTL + SWR (8 days). It is
-   * therefore resolved to the key it currently points at through
-   * `GET /api/version`, memoized per isolate for VERSION_KEY_TTL_MS — the
-   * cache is read before any search, so the answer's own `version` field
-   * arrives too late to key the read.
-   *
-   * Never throws. If the lookup fails, or `latest` is not listed, the last key
-   * this isolate resolved is kept (stale-if-error); only an isolate that has
-   * never resolved one falls back to the literal alias (the pre-fix
-   * behavior). The lookup is retried after VERSION_KEY_FAILURE_TTL_MS, so an
-   * XIVAPI hiccup cannot take /resolve down.
-   *
-   * Searches and Glasses fetches send this same key as their `version`, so the
-   * namespace a row is stored under and the game version it was read from
-   * always agree, even in the window before the memo notices a re-point.
-   */
-  cacheNamespace(): Promise<string> {
-    if (this.version !== DEFAULT_XIVAPI_VERSION) return Promise.resolve(this.version);
-    const memoKey = `${this.base}|${this.version}`;
+  /** One complete snapshot for cache access AND every data call in a request. */
+  resolveContext(): Promise<XivapiContext> {
+    if (CANONICAL_VERSION.test(this.version) && this.schema && CANONICAL_SCHEMA.test(this.schema)) {
+      return Promise.resolve(this.context(this.version, this.schema));
+    }
+    const memoKey = JSON.stringify([this.base, this.version, this.schema ?? null]);
     const now = Date.now();
-    const hit = versionKeyMemo.get(memoKey);
-    if (hit && hit.expires > now) return hit.key;
-    const entry = { expires: now + VERSION_KEY_TTL_MS, key: Promise.resolve('') };
-    entry.key = this.lookupVersionKey().then((found) => {
-      if (found !== null) {
-        lastResolvedKey.set(memoKey, found);
+    const hit = contextMemo.get(memoKey);
+    if (hit && hit.expires > now) return hit.value;
+    const entry = {
+      expires: now + CONTEXT_TTL_MS,
+      value: Promise.resolve<XivapiContext>(this.fallback()),
+    };
+    entry.value = this.discoverContext().then((found) => {
+      if (found) {
+        lastResolvedContext.set(memoKey, found);
         return found;
       }
-      // A fallback answer is trusted for a minute only, so recovery is quick.
-      entry.expires = Date.now() + VERSION_KEY_FAILURE_TTL_MS;
-      return lastResolvedKey.get(memoKey) ?? this.version;
+      entry.expires = Date.now() + CONTEXT_FAILURE_TTL_MS;
+      return lastResolvedContext.get(memoKey) ?? this.fallback();
     });
-    versionKeyMemo.set(memoKey, entry);
-    return entry.key;
+    contextMemo.set(memoKey, entry);
+    return entry.value;
   }
 
-  /** The key `latest` points at, or null when it cannot be determined. */
-  private async lookupVersionKey(): Promise<string | null> {
+  private fallback(): XivapiContext {
+    return { base: this.base, version: this.version, schema: this.schema, cacheNamespace: null };
+  }
+
+  private context(version: string, schema: string): XivapiContext {
+    return {
+      base: this.base,
+      version,
+      schema,
+      cacheNamespace: JSON.stringify([this.base, version, schema]),
+    };
+  }
+
+  private async discoverContext(): Promise<XivapiContext | null> {
     try {
-      const response = await this.get(`${this.base}/api/version`, VERSION_LOOKUP_TIMEOUT_MS);
+      const params = this.params({ fields: 'Name' }, this.fallback());
+      const response = await this.get(
+        this.base + '/api/sheet/Item/1?' + params.toString(),
+        CONTEXT_TIMEOUT_MS,
+      );
       if (!response.ok) return null;
-      const body = await response.json<RawVersionList>();
-      const match = body.versions?.find((v) => v.names?.includes(this.version));
-      return typeof match?.key === 'string' && match.key.length > 0 ? match.key : null;
+      const body = JSON.parse(
+        await readBoundedText(response.body, MAX_CONTEXT_BYTES),
+      ) as RawSheetRow;
+      if (
+        body.row_id !== 1 ||
+        typeof body.version !== 'string' ||
+        typeof body.schema !== 'string' ||
+        !CANONICAL_VERSION.test(body.version) ||
+        !CANONICAL_SCHEMA.test(body.schema)
+      )
+        return null;
+      if (CANONICAL_VERSION.test(this.version) && body.version !== this.version) return null;
+      if (this.schema && CANONICAL_SCHEMA.test(this.schema) && body.schema !== this.schema)
+        return null;
+      return this.context(body.version, body.schema);
     } catch {
       return null;
     }
   }
 
-  private async params(extra: Record<string, string>): Promise<URLSearchParams> {
-    const p = new URLSearchParams({ ...extra, version: await this.cacheNamespace() });
-    if (this.schema) p.set('schema', this.schema);
-    return p;
+  private params(extra: Record<string, string>, context: XivapiContext): URLSearchParams {
+    const params = new URLSearchParams({ ...extra, version: context.version });
+    if (context.schema) params.set('schema', context.schema);
+    return params;
+  }
+
+  private identity(
+    context: XivapiContext,
+    body: { version?: string; schema?: string },
+  ): XivapiResponseIdentity {
+    const version = typeof body.version === 'string' ? body.version : null;
+    const schema = typeof body.schema === 'string' ? body.schema : null;
+    if (
+      context.cacheNamespace !== null &&
+      (version !== context.version || schema !== context.schema)
+    ) {
+      throw new UpstreamUnavailableError(
+        0,
+        'response identity does not match the captured context',
+      );
+    }
+    return { version, schema };
   }
 
   private async get(url: string, timeoutMs: number = UPSTREAM_TIMEOUT_MS): Promise<Response> {
@@ -357,36 +386,47 @@ export class XivapiClient {
    */
   async searchItems(
     lookups: readonly SlotLookup[],
-  ): Promise<{ version: string | null; rows: ItemRow[]; truncated: boolean }> {
-    if (lookups.length === 0) return { version: null, rows: [], truncated: false };
-    const url = `${this.base}/api/search?${(await this.params({
-      sheets: 'Item',
-      query: buildResolveQuery(lookups),
-      fields: ITEM_FIELDS,
-      limit: String(SEARCH_LIMIT),
-    })).toString()}`;
+    context: XivapiContext,
+  ): Promise<XivapiResponseIdentity & { rows: ItemRow[]; truncated: boolean }> {
+    if (lookups.length === 0) return { version: null, schema: null, rows: [], truncated: false };
+    const url = `${context.base}/api/search?${this.params(
+      {
+        sheets: 'Item',
+        query: buildResolveQuery(lookups),
+        fields: ITEM_FIELDS,
+        limit: String(SEARCH_LIMIT),
+      },
+      context,
+    ).toString()}`;
     const response = await this.get(url);
     if (!response.ok) {
       throw new UpstreamUnavailableError(response.status, response.statusText || 'search failed');
     }
     const body = await response.json<RawSearchResponse>();
-    const results = body.results ?? [];
+    const identity = this.identity(context, body);
+    if (!Array.isArray(body.results))
+      throw new UpstreamUnavailableError(0, 'missing search results');
+    const results = body.results;
     const truncated =
       (typeof body.next === 'string' && body.next.length > 0) || results.length >= SEARCH_LIMIT;
-    return { version: body.version ?? null, rows: results.map(parseItemRow), truncated };
+    return { ...identity, rows: results.map(parseItemRow), truncated };
   }
 
   /** Facewear: `GlassesId` IS the Glasses sheet row_id. 404 → null (row 0 / unknown). */
-  async getGlasses(id: number): Promise<{ version: string | null; row: GlassesRow | null }> {
-    const url = `${this.base}/api/sheet/Glasses/${id}?${(await this.params({ fields: GLASSES_FIELDS })).toString()}`;
+  async getGlasses(
+    id: number,
+    context: XivapiContext,
+  ): Promise<XivapiResponseIdentity & { row: GlassesRow | null }> {
+    const url = `${context.base}/api/sheet/Glasses/${id}?${this.params({ fields: GLASSES_FIELDS }, context).toString()}`;
     const response = await this.get(url);
-    if (response.status === 404) return { version: null, row: null };
+    if (response.status === 404) return { version: null, schema: null, row: null };
     if (!response.ok) {
       throw new UpstreamUnavailableError(response.status, response.statusText || 'sheet failed');
     }
     const body = await response.json<RawSheetRow>();
+    if (body.row_id !== id) throw new UpstreamUnavailableError(0, 'incorrect Glasses row');
     return {
-      version: body.version ?? null,
+      ...this.identity(context, body),
       row: { rowId: body.row_id, names: namesOf(body.fields), iconId: iconIdOf(body.fields) },
     };
   }

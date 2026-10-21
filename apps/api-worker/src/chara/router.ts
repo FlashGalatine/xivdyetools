@@ -82,7 +82,11 @@ function lane(value: unknown, path: string, required: boolean): number {
 /** Validate the JSON body into a CharaResolveRequest — loud about which field is wrong. */
 export function parseResolveBody(body: unknown): CharaResolveRequest {
   if (typeof body !== 'object' || body === null || Array.isArray(body)) {
-    throw new ApiError(ErrorCode.INVALID_BODY, 'Body must be a JSON object with a `gear` array', 400);
+    throw new ApiError(
+      ErrorCode.INVALID_BODY,
+      'Body must be a JSON object with a `gear` array',
+      400,
+    );
   }
   const record = body as Record<string, unknown>;
   const gearRaw = record['gear'];
@@ -128,9 +132,7 @@ export function parseResolveBody(body: unknown): CharaResolveRequest {
         400,
       );
     }
-    return weapon
-      ? { slot: typedSlot, set, base, variant }
-      : { slot: typedSlot, base, variant };
+    return weapon ? { slot: typedSlot, set, base, variant } : { slot: typedSlot, base, variant };
   });
 
   const glassesRaw = record['glasses'];
@@ -209,19 +211,25 @@ charaRouter.post('/resolve', async (c) => {
   // keys from a fixed host now, so which of the worker's domains a request
   // arrived on no longer partitions the cache. `CACHE_NAME` was always the
   // real namespace.
-  // BUG-040: the namespace is the game version `latest` points at, not the alias.
-  const cache = new CharaRowCache(c.executionCtx as ExecutionContext, await client.cacheNamespace());
+  // Capture the full snapshot once; no shared cache exists for an unresolved alias.
+  const contextPending = client.resolveContext();
+  c.executionCtx.waitUntil(contextPending.catch(() => undefined));
+  const context = await contextPending;
+  const cache =
+    context.cacheNamespace === null
+      ? null
+      : new CharaRowCache(c.executionCtx as ExecutionContext, context.cacheNamespace);
 
   const lookups = lookupsFor(request.gear);
-  const rows = await cache.getRows(lookups);
+  const rows = cache ? await cache.getRows(lookups) : new Map<string, ItemRow[]>();
   const misses = lookups.filter((l) => !rows.has(lookupKey(l)));
 
   let version: string | null = null;
   let upstreamCalls = 0;
   try {
     const [search, glassesCached] = await Promise.all([
-      misses.length > 0 ? client.searchItems(misses) : Promise.resolve(null),
-      request.glasses ? cache.getGlasses(request.glasses) : Promise.resolve(undefined),
+      misses.length > 0 ? client.searchItems(misses, context) : Promise.resolve(null),
+      request.glasses && cache ? cache.getGlasses(request.glasses) : Promise.resolve(undefined),
     ]);
 
     if (search) {
@@ -232,7 +240,7 @@ charaRouter.post('/resolve', async (c) => {
       // be missing tail groups — answer this request from what came back, but
       // never store those keys as "no item row" for a week.
       if (search.truncated) {
-        getLogger(c)?.warn('XIVAPI search page truncated — not caching this request\'s misses', {
+        getLogger(c)?.warn("XIVAPI search page truncated — not caching this request's misses", {
           operation: 'chara.resolve',
           lookups: misses.length,
           rows: search.rows.length,
@@ -241,7 +249,7 @@ charaRouter.post('/resolve', async (c) => {
       for (const lookup of misses) {
         const found: ItemRow[] = index.get(lookupKey(lookup)) ?? [];
         rows.set(lookupKey(lookup), found);
-        if (!search.truncated) cache.storeRows(lookup, found);
+        if (!search.truncated) cache?.storeRows(lookup, found);
       }
     }
 
@@ -251,10 +259,18 @@ charaRouter.post('/resolve', async (c) => {
         glassesRow = glassesCached;
       } else {
         upstreamCalls++;
-        const fetched = await client.getGlasses(request.glasses);
+        const fetched = await client.getGlasses(request.glasses, context);
         glassesRow = fetched.row;
         version ??= fetched.version;
-        cache.storeGlasses(request.glasses, fetched.row);
+        if (
+          search &&
+          search.version !== null &&
+          fetched.version !== null &&
+          (search.version !== fetched.version || search.schema !== fetched.schema)
+        ) {
+          throw new UpstreamUnavailableError(0, 'mixed fallback snapshots');
+        }
+        cache?.storeGlasses(request.glasses, fetched.row);
       }
     }
 
@@ -282,11 +298,16 @@ charaRouter.post('/resolve', async (c) => {
 charaRouter.get('/icon/:iconId', async (c) => {
   const rawId = c.req.param('iconId');
   if (!CANONICAL_ICON_ID.test(rawId)) {
-    throw new ApiError(ErrorCode.VALIDATION_ERROR, 'Parameter "iconId" must be a positive integer (canonical decimal, 1–999999).', 400, {
-      parameter: 'iconId',
-      received: rawId,
-      expected: 'integer 1–999999 without leading zeros, signs or trailing characters',
-    });
+    throw new ApiError(
+      ErrorCode.VALIDATION_ERROR,
+      'Parameter "iconId" must be a positive integer (canonical decimal, 1–999999).',
+      400,
+      {
+        parameter: 'iconId',
+        received: rawId,
+        expected: 'integer 1–999999 without leading zeros, signs or trailing characters',
+      },
+    );
   }
   const iconId = parseIntParam(rawId, 'iconId', { min: 1, max: 999_999 });
   // Cache under the CANONICAL public URL (path rebuilt from the parsed id,
@@ -316,7 +337,11 @@ charaRouter.get('/icon/:iconId', async (c) => {
     throw new ApiError(ErrorCode.NOT_FOUND, `No icon ${iconId}`, 404);
   }
   if (!upstream.ok) {
-    throw new ApiError(ErrorCode.UPSTREAM_UNAVAILABLE, `Icon upstream answered ${upstream.status}`, 503);
+    throw new ApiError(
+      ErrorCode.UPSTREAM_UNAVAILABLE,
+      `Icon upstream answered ${upstream.status}`,
+      503,
+    );
   }
   const declared = Number(upstream.headers.get('Content-Length') ?? '0');
   if (declared > MAX_ICON_BYTES) {
