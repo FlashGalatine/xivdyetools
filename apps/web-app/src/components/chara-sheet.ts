@@ -208,7 +208,8 @@ export function saveCharacterColors(session: CharaSession): void {
   for (const stainId of stainIds) {
     CollectionService.addDyeToCollection(record.id, stainId);
   }
-  logger.info(`[CharaSheet] Saved character "${name}" (${stainIds.length} colours)`);
+  // FINDING-001: the name can be the imported nickname or file name; counts only.
+  logger.info(`[CharaSheet] Saved a character (${stainIds.length} colours)`);
   ToastService.success(
     stainIds.length === 1
       ? LanguageService.t('swatch.characterSavedOne')

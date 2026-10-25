@@ -71,7 +71,9 @@ export async function loadCharaFile(file: File): Promise<CharaLoadResult> {
     text = await file.text();
   } catch (error) {
     if (superseded()) return { ok: false, error: 'superseded' };
-    logger.error('[CharaFileLoader] Read failed:', error);
+    // FINDING-001: no raw exception in the log (it can quote the file); the
+    // reason still reaches the file card through the result.
+    logger.error('[CharaFileLoader] Read failed');
     return { ok: false, error: 'failed', reason: reasonOf(error) };
   }
   if (superseded()) return { ok: false, error: 'superseded' };
@@ -85,7 +87,8 @@ export async function loadCharaFile(file: File): Promise<CharaLoadResult> {
     });
   } catch (error) {
     TelemetryService.track('chara_parse', { ok: false, producer: 'none' });
-    logger.error('[CharaFileLoader] Parse failed:', error);
+    // Core's message names the field and quotes the value, so it stays out of the log.
+    logger.error('[CharaFileLoader] Parse failed');
     if (superseded()) return { ok: false, error: 'superseded' };
     // Core's messages name the field and the value; they ride into the
     // localized sentence as {reason}.
@@ -101,6 +104,10 @@ export async function loadCharaFile(file: File): Promise<CharaLoadResult> {
   // The parse above still counts; only the newest file becomes the character.
   if (superseded()) return { ok: false, error: 'superseded' };
   CharaSessionService.setSession({ resolved, fileName: file.name });
-  logger.info(`[CharaFileLoader] Parsed ${file.name} (${resolved.producer ?? 'unknown producer'})`);
+  // FINDING-001: neither the file name nor the file's own producer text; the same
+  // normalized bucket the telemetry event carries.
+  logger.info(
+    `[CharaFileLoader] Parsed a file (${TelemetryService.normalizeProducer(resolved.producer)})`
+  );
   return { ok: true };
 }
