@@ -25,7 +25,7 @@
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
 | **Web Application** | v5.15.5 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v5.8.15 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
+| **Discord Bot** | v5.9.0 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.4 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.8.2 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.3 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
@@ -46,7 +46,7 @@
 | **Logger** | v2.3.0 | `@xivdyetools/logger` | npm | Active |
 | **Worker Kit** (middleware + `/rate-limiter`) | v1.5.0 | `@xivdyetools/worker-kit` | npm | Active |
 | **SVG** | v4.4.0 | `@xivdyetools/svg` | npm | Active |
-| **Bot Logic** (incl. `/i18n`) | v4.10.0 | `@xivdyetools/bot-logic` | npm | Active |
+| **Bot Logic** (incl. `/i18n`) | v4.11.0 | `@xivdyetools/bot-logic` | npm | Active |
 | **Test Utils** | v3.0.0 | `@xivdyetools/test-utils` | workspace-private | Active (never published) |
 
 ### Deprecated
@@ -204,6 +204,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.9.0 | Oct 2026 | Core 5.15.0 + bot-logic 4.11.0: `/swatch` and `/glamour` pass the attachment's capped bytes to the `xivcharakit`-backed reader (invalid UTF-8 refused), `/glamour` opens gear-only files, unmatched or unreadable colors, gear and dyes get a fixed line; attachment guards unchanged; no command shape change; bundle 2,732.6 KiB gzip (88.9 % of the cap) |
 | v5.8.15 | Oct 2026 | Core 5.13.0 + 5.14.0, bot-logic 4.10.0 (2026-10-15 import review): `/swatch` and `/glamour` refuse an attachment not named `.chara` before deferring, and the cap is 8 KiB (was 1 MiB) on the reported size and the streamed download, with an 8 KB message; no command shape changes |
 | v5.8.14 | Oct 2026 | bot-logic 4.9.0 (no source change here): `/glamour`'s list leaves out invisible pieces and an Off Hand the main hand doesn't take; the card is unchanged; no command shape changes |
 | v5.8.13 | Oct 2026 | Documents only (2026-10-11 documentation remediation, Sprint 1): `PRIVACY_POLICY.md` and `TERMS_OF_SERVICE.md` in all six languages send deletion, appeal and contact requests to the live Discord invite (the old one had expired); the first-run notice flag is described as what it is, a marker set on your first command whether or not the notice is sent; translations link their own language's sibling documents |
@@ -565,6 +566,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v4.11.0 | Oct 2026 | `/swatch` and `/glamour` read through core 5.15.0's `xivcharakit` facade: optional `fileBytes` input (wins over `fileText`), matching on `matchHex` alone with the lip on its live blend, `SwatchCharacter` keeps its shape and carries no color for a slot `matchHex` excludes, four fixed lines in six languages (`card.swatchActivityUnknown`, `card.swatchUnusable`, `card.glamourGearSkipped`, `card.glamourDyeInvalid`); intentional differences in `docs/research/2026-10-22-xivcharakit-integration.md` |
 | v4.10.0 | Oct 2026 | `card.charaFileReason.tooLarge` takes `{kb}` (was `{mb}`) and says to re-save an Anamnesis export without its attached image; new `card.charaFileReason.notChara`; the `/manual` Character File topic states the `.chara` name and 8 KB limits, all six languages |
 | v4.9.0 | Oct 2026 | `/glamour`'s GPOSERS list applies core 5.12.0's `gposersOmittedSlots` (invisible pieces, unsupported Off Hand); `GlamourResolvedItem.uiCategory`; the card is unchanged |
 | v4.8.3 | Oct 2026 | Text only: Brio named as a `.chara` producer ×6 (`manual.swatch` / `manual.glamour` descriptions, the character-file topic, the `file` option text); the character-file topic lists every `/glamour` verdict (OK, the race name, the dash for a model with no item), says the bot picks the twin, and says the GPOSERS labels and Acquisition lines are English |

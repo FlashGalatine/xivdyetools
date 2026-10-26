@@ -5,6 +5,52 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.11.0] - 2026-10-26
+
+`/swatch` and `/glamour` read `.chara` files through core 5.15.0's `xivcharakit` facade (Task 6 of the
+2026-10-22 plan), used by discord-worker 5.9.0. MINOR: one optional input, four keys in all six
+languages, and intentional behavior changes (below). The public result shapes do not change.
+
+### Added
+
+- **`SwatchInput.fileBytes?` and `GlamourInput.fileBytes?`** (`Uint8Array`): the capped attachment
+  bytes. They win over `fileText`, so invalid UTF-8 is refused by the reader instead of being
+  re-encoded after a non-fatal decode; `fileText` stays accepted (and is now optional on both). With
+  neither, the command answers `PARSE_FAILED`.
+- **Four fixed lines, in all six languages** (no placeholders, never library text):
+  `card.swatchActivityUnknown` (a color the file does not say is switched on is not matched),
+  `card.swatchUnusable` (a color the file holds could not be used: an invalid value, or no clan or
+  gender to look it up), `card.glamourGearSkipped` (a piece with incomplete or invalid model numbers
+  is not listed) and `card.glamourDyeInvalid` (an invalid dye value is not shown, and that does not
+  mean the piece is undyed).
+
+### Changed
+
+- **Matching uses `matchHex` alone.** A slot with a null `matchHex` (unknown activation, inactive,
+  unresolved) contributes no row, no match and no export; the lip is matched and drawn on its live
+  blend (`lipComposite?.hex ?? matchHex`). An unknown-activity-only file answers the existing
+  `NO_LIVE_SLOTS` result with the activity sentence added.
+- **`SwatchCharacter` keeps its exact shape** through a documented mapping from the projection:
+  verdict from interpretation, and no `indexHex`, `floatHex`, `gridAddress` or `blendHex` for a slot
+  whose `matchHex` is null (an unknown-activation slot reads `inert`, with no `inertReason`). Its
+  verdict is not a matching gate.
+- **Intentional differences from the old reader** (full register in
+  `docs/research/2026-10-22-xivcharakit-integration.md`): `/glamour` accepts a file that holds only
+  gear; the lip-color bit is read (every committed Ktisis export shows no lip); a mirror-only face paint
+  (128) is no paint; unknown activation is not matched; a lip blend needs live extended data; a
+  one-sided eye crossing is corrected; duplicate keys, unsafe numbers, over-deep structures and invalid
+  UTF-8 are refused as `PARSE_FAILED`. A malformed color no longer refuses the whole file.
+- `/glamour` sends the resolver exactly `{ slot, base, variant, set? }` per model (and the validated
+  facewear id); incomplete or invalid models are not sent. The nickname is stripped immediately after
+  projection, and no author, description, file name or unknown field reaches any output or log.
+
+### Notes
+
+- The gear, dye and malformed-float lines read the projection's issue list, which core caps at 64
+  entries: a file with 63 or more unknown top-level keys can hide them. Nothing is misreported as valid.
+- A malformed `MouthColor` on a Hrothgar (an inactive fur-pattern slot) and a malformed float beside a
+  resolved index stay silent by design: the first slot is not live, the second color was matched.
+
 ## [4.10.0] - 2026-10-16
 
 The `.chara` refusals for the 8 KiB cap and the file-name check of the 2026-10-15 import review

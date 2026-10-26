@@ -64,7 +64,7 @@ Embeds can show a dye chip as a Discord application emoji (`getDyeEmoji` in `src
 
 ## Bundle Size Constraints
 
-Cloudflare enforces a 3,072 KiB **gzip** limit on the deployed script. Photon had pushed the bot to 3,209 KiB; after the split it sat at ~2,632 KiB; at 5.8.9 it measured 2,717.2 KiB (88.5 % of the cap).
+Cloudflare enforces a 3,072 KiB **gzip** limit on the deployed script. Photon had pushed the bot to 3,209 KiB; after the split it sat at ~2,632 KiB; at 5.8.9 it measured 2,717.2 KiB (88.5 % of the cap); at 5.9.0, with the `xivcharakit` reader, 2,732.6 KiB (88.9 %).
 
 The production deploy workflow (`deploy-discord-worker.yml`) runs `check-bundle-size` (`scripts/check-bundle-size.mjs`) before it deploys: it bundles with `wrangler deploy --dry-run`, fails past the 3,072 KiB cap and warns from 92 % of it (2,826 KiB).
 
