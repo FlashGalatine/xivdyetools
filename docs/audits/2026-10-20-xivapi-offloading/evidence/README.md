@@ -29,7 +29,7 @@ Captured on 2026-10-20 from public XIVAPI v2 with a descriptive User-Agent and `
 | specialshop.json | Guessed ReceiveItems path returned empty objects with HTTP 200 | Validate projected keys; the schema's relation grouping is not the actual JSON field path |
 | specialshop-projected.json | Actual Item[].Item[], ItemCost[], counts/cost-mode fields returned in 23,085 bytes | Field existence confirmed, not a full availability/currency semantic audit |
 | specialshop-full / specialshop-field-shape manifest entries | Advertised roughly 5.26 MB; read stopped at 2,000,001 bytes | No bodies retained. Neither unrestricted expansion nor @as(raw) on the struct provided a safe small response |
-| icon.bin, icon-conditional.bin | PNG, ETag, 304; max-age 604800; wildcard CORS | Upstream caching verified on one asset; not the existing proxy's 30-day policy |
+| icon (response body not retained), icon-conditional.bin | PNG, ETag, 304; max-age 604800; wildcard CORS; the PNG is a Square Enix game asset, so only its size and sha256 are kept in the manifest | Upstream caching verified on one asset; not the existing proxy's 30-day policy |
 | versions.json | latest=0874aee069e1e7c4 (7.57x1); acquisition pin=541c0c12e07da325 (7.56x1) | Snapshot of service labels, not an independent game-release chronology |
 
 Recorded response schemas use `exdschema@2:rev:e773c41a90aed788cf4c1c48469fa85618ef01fb`. Independent schema references: [Stain.yml](https://github.com/xivdev/EXDSchema/blob/e773c41a90aed788cf4c1c48469fa85618ef01fb/Stain.yml), [SpecialShop.yml](https://github.com/xivdev/EXDSchema/blob/e773c41a90aed788cf4c1c48469fa85618ef01fb/SpecialShop.yml).

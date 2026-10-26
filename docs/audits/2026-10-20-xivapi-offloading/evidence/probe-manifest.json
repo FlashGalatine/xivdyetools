@@ -235,7 +235,9 @@
     },
     "bytes": 11808,
     "sha256": "ea35a8fe8170d4e021b6698d662305727f275ab67fbfa3adc68fcdaad5f6eb88",
-    "body_file": "icon.bin",
+    "body_file": null,
+    "body_retained": false,
+    "body_note": "PNG of ui/icon/022000/022001_hr1.tex, a Square Enix game asset; the body is deliberately not kept in this repository. bytes and sha256 identify the response.",
     "elapsed_ms": 513
   },
   {
