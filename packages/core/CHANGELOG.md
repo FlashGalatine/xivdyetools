@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.15.0] - 2026-10-26
+
+The first half of the `xivcharakit` integration (Tasks 1-3 of the 2026-10-22 plan). MINOR: new
+exports and a new runtime dependency; the legacy `parseCharaFile` / `resolveCharaColors` contracts
+are unchanged. Nothing in the apps consumes the new entry points yet.
+
+### Added
+
+- **`xivcharakit@0.1.0-beta.4`** (exact pin) as a runtime dependency.
+- **`inspectCharaForTools(input)`**: reads a `.chara` document with the 8,192-byte cap
+  (`MAX_CHARA_FILE_BYTES`, measured in UTF-8 bytes) and inspects it.
+- **`createCharaPaletteProvider(colors)`**: bridges `CharacterColorService` and the shader tables to the
+  library's `PaletteProvider`, so no second palette corpus ships.
+- **`resolveCharaForTools(inspection, colors, dyes?)`**: interprets the appearance and projects an
+  `ImportedCharaCharacter` (eight slots, worn models, dye badges, bounded diagnostics) that carries no
+  raw document, image or unknown field. Each slot has a `matchHex` that is non-null only for a
+  confirmed-active, resolved color; unknown activation keeps its preview but never matches.
+- **`ImportedCharaCharacter`, `ImportedCharaSlot`, `CharaImportIssue`** types.
+
+### Notes
+
+- Intentional differences from the legacy parser are recorded in
+  `docs/research/2026-10-22-xivcharakit-integration.md` (partial documents accepted, the lip-color bit,
+  the mirror-only face-paint value, unknown activation excluded from matching).
+
 ## [5.14.0] - 2026-10-16
 
 The `.chara` file cap of the 2026-10-15 import review (`docs/audits/2026-10-15-web-app-security/`),

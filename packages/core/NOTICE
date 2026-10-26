@@ -24,3 +24,12 @@ These values are computed colorimetric renotations, not measurements of
 any physical Munsell Book of Color, and are not endorsed by or affiliated
 with X-Rite, Pantone or Amazys Holding GmbH. MUNSELL is a registered
 trademark (USPTO Reg. No. 1570854) of Amazys Holding GmbH.
+
+xivcharakit
+-----------
+@xivdyetools/core depends on xivcharakit (https://github.com/FlashGalatine/XIVCharaKit), MIT licence,
+for reading and interpreting .chara character-appearance files. Its licence text and third-party
+notices (including the Square Enix attribution and non-affiliation language) ship with that package as
+dist/LICENSE and dist/THIRD_PARTY_NOTICES.md and remain separate from this package's licence.
+FINAL FANTASY is a registered trademark of Square Enix Holdings Co., Ltd. This project is not
+affiliated with or endorsed by Square Enix.
