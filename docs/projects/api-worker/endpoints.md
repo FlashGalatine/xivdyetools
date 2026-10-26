@@ -368,7 +368,7 @@ Body `{ gear: [{ slot, set?, base, variant }], glasses? }` — one entry per **w
 
 ### `GET /v1/chara/icon/:iconId`
 
-The item icon PNG (80 px `_hr1`), proxied from XIVAPI and edge-cached (`Cache-Control: public, max-age=2592000, immutable`). `400 VALIDATION_ERROR` (not a canonical decimal 1–999999: leading zeros, signs or trailing characters), `404 NOT_FOUND` / `503 UPSTREAM_UNAVAILABLE`.
+The item icon PNG (80 px `_hr1`), proxied from XIVAPI and edge-cached. The optional `version` query is one canonical 16-character lower-case hexadecimal game key: without it the response is `Cache-Control: public, max-age=300, must-revalidate`, with it `public, max-age=2592000, immutable`. `400 VALIDATION_ERROR` (an `iconId` that is not a canonical decimal 1–999999: leading zeros, signs or trailing characters; or a malformed or repeated `version`), `404 NOT_FOUND` / `503 UPSTREAM_UNAVAILABLE`. The full contract is in the [character API reference](../../../apps/api-worker/docs/reference/chara.md).
 
 ---
 

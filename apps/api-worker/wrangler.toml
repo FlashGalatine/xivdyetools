@@ -40,10 +40,10 @@ UNIVERSALIS_API_BASE = "https://universalis.app/api/v2"
 RATE_LIMIT_REQUESTS = "60"
 RATE_LIMIT_WINDOW_SECONDS = "60"
 # /v1/chara/* (equipment-model resolution for the web app's .chara import).
-# XIVAPI_VERSION is the game-version key. A pinned key is used as is and is its
-# own row-cache namespace; `latest` is resolved through GET /api/version
-# (memoized 10 min, the last good key kept on failure) and requests are sent
-# under that key, so a patch cools the row cache within about 10 minutes.
+# Game/schema selectors resolve together through a bounded Item/1 metadata probe.
+# Canonical base/game/schema plus row shape partition caches. Context discovery
+# is memoized for 10 min; failures keep the last complete pair or bypass shared
+# caching on bootstrap. Fully canonical game/schema pins require no probe.
 XIVAPI_BASE = "https://v2.xivapi.com"
 XIVAPI_VERSION = "latest"
 

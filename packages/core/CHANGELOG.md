@@ -46,7 +46,7 @@ are unchanged. Nothing in the apps consumes the new entry points yet.
   `src/__tests__/chara-entry.test.ts` pins the export list, the `exports` row and an import graph that
   reaches only `xivcharakit`, `@xivdyetools/types` and the chara reader's own modules.
 - **`NOTICE`** carries the `xivcharakit` attribution (MIT, with the Square Enix non-affiliation language); the
-  package's own `dist/LICENSE` and `dist/THIRD_PARTY_NOTICES.md` ship with it, and the web app serves a copy.
+  package's own `dist/LICENSE` and `dist/THIRD_PARTY_NOTICES.md` ship with it. The web app serves a copy of its own from the stacked web-app change, not from this release.
 
 ### Notes
 

@@ -240,13 +240,15 @@ export class CollectionService {
    * Migrate an id list to stainIDs. Returns the new list when anything
    * changed (values migrated or dropped), or null when it was already clean.
    */
-  private static migrateDyeIds(ids: DyeId[], label: string): DyeId[] | null {
+  private static migrateDyeIds(ids: DyeId[], label: 'favorites' | 'collection'): DyeId[] | null {
     let changed = false;
     const out: DyeId[] = [];
     for (const stored of ids) {
       const stainId = toStainId(stored);
       if (stainId === null) {
-        logger.warn(`[CollectionService] Dropped unresolvable dye ref ${stored} in ${label}`);
+        // FINDING-001: a fixed message. The label is a kind, never a record name,
+        // and the stored value is untrusted (a hand-edited ref can be any text).
+        logger.warn(`[CollectionService] Dropped an unresolvable dye ref in ${label}`);
         changed = true;
         continue;
       }
@@ -294,7 +296,7 @@ export class CollectionService {
       for (const collection of data.collections) {
         if (collection.dyes.length > MAX_DYES_PER_COLLECTION) {
           logger.warn(
-            `Collection "${collection.name}" exceeded dye limit (${collection.dyes.length}/${MAX_DYES_PER_COLLECTION}), truncating`
+            `A collection exceeded the dye limit (${collection.dyes.length}/${MAX_DYES_PER_COLLECTION}), truncating`
           );
           collection.dyes = collection.dyes.slice(0, MAX_DYES_PER_COLLECTION);
         }
@@ -306,7 +308,7 @@ export class CollectionService {
         }
 
         // 5.0: stored refs become stainIDs
-        const migratedDyes = this.migrateDyeIds(collection.dyes, `collection "${collection.name}"`);
+        const migratedDyes = this.migrateDyeIds(collection.dyes, 'collection');
         if (migratedDyes) {
           collection.dyes = migratedDyes;
           migrated = true;
@@ -389,9 +391,7 @@ export class CollectionService {
       }
 
       if (dyes.length === 0) {
-        logger.warn(
-          `[CollectionService] Legacy palette "${palette.name}" had no resolvable dyes — dropped`
-        );
+        logger.warn('[CollectionService] A legacy palette had no resolvable dyes — dropped');
         continue;
       }
 
@@ -405,9 +405,7 @@ export class CollectionService {
 
       const created = this.createCollection(name, palette.harmonyType, { kind: 'palette' });
       if (!created) {
-        logger.warn(
-          `[CollectionService] Could not migrate legacy palette "${palette.name}" (cap reached?)`
-        );
+        logger.warn('[CollectionService] Could not migrate a legacy palette (cap reached?)');
         continue;
       }
       for (const dyeId of dyes.slice(0, MAX_DYES_PER_COLLECTION)) {
@@ -622,7 +620,19 @@ export class CollectionService {
 
     // A swap's target must be a real dye
     if (options?.target !== undefined && toStainId(options.target) !== options.target) {
-      logger.warn(`Invalid swap target ${options.target} — not a stainID`);
+      logger.warn('Invalid swap target — not a stainID');
+      return null;
+    }
+
+    // FINDING-004: a caller that is not type-checked (an imported JSON record, a
+    // direct runtime call) can hand over a non-string. Refuse it before any
+    // string operation throws; the importer relies on this as a second guard.
+    if (typeof name !== 'string') {
+      logger.warn('Invalid collection name');
+      return null;
+    }
+    if (description !== undefined && description !== null && typeof description !== 'string') {
+      logger.warn('Invalid collection description');
       return null;
     }
 
@@ -633,9 +643,9 @@ export class CollectionService {
       return null;
     }
 
-    // Check for duplicate name
+    // Check for duplicate name (FINDING-001: the name is a user label, never logged)
     if (this.getCollectionByName(trimmedName)) {
-      logger.warn(`Collection "${trimmedName}" already exists`);
+      logger.warn('A collection with that name already exists');
       return null;
     }
 
@@ -666,7 +676,7 @@ export class CollectionService {
 
     this.collectionsData.collections.push(collection);
     this.saveCollections();
-    logger.info(`📁 Created collection "${trimmedName}"`);
+    logger.info('📁 Created collection');
     return collection;
   }
 
@@ -720,7 +730,7 @@ export class CollectionService {
     const deleted = this.collectionsData.collections.splice(index, 1)[0];
     this.addTombstone(deleted.id);
     this.saveCollections();
-    logger.info(`🗑️ Deleted collection "${deleted.name}"`);
+    logger.info('🗑️ Deleted collection');
     return true;
   }
 
@@ -955,10 +965,23 @@ export class CollectionService {
             continue;
           }
 
+          // FINDING-004: a description is absent, null or a string. Anything else
+          // (a number, boolean, array or object) is refused per record, before any
+          // string operation, so it can neither throw nor stop the records after it.
+          const description: unknown = collection.description;
+          if (
+            description !== undefined &&
+            description !== null &&
+            typeof description !== 'string'
+          ) {
+            result.errors.push({ code: 'skippedInvalid', name: collection.name });
+            continue;
+          }
+
           try {
             // Tombstone check: never resurrect a record the user deleted here
             if (collection.id && this.isTombstoned(collection.id)) {
-              logger.info(`[CollectionService] Skipped tombstoned record "${collection.name}"`);
+              logger.info('[CollectionService] Skipped a tombstoned record');
               continue;
             }
 
@@ -995,12 +1018,11 @@ export class CollectionService {
             } else {
               result.errors.push({ code: 'createFailed', name });
             }
-          } catch (err) {
+          } catch {
             result.errors.push({ code: 'skippedInvalid', name: collection.name });
-            logger.error(
-              `[CollectionService] Skipped collection "${collection.name}" during import:`,
-              err
-            );
+            // FINDING-001/004: no record name and no raw exception (its message can
+            // quote the record). The record is reported to the user in `errors`.
+            logger.error('[CollectionService] Skipped a record during import');
           }
         }
       }
@@ -1009,9 +1031,10 @@ export class CollectionService {
       logger.info(
         `📥 Imported ${result.favoritesImported} favorites, ${result.collectionsImported} collections`
       );
-    } catch (error) {
+    } catch {
       result.errors.push({ code: 'parseFailed' });
-      logger.error('Import failed:', error);
+      // FINDING-001: a fixed message. V8's JSON.parse error quotes the input text.
+      logger.error('[CollectionService] Import failed');
     }
 
     return result;
