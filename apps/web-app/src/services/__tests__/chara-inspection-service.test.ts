@@ -14,23 +14,39 @@ import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vite
 import {
   CharacterColorService,
   DyeService,
+  createCharaPaletteProvider,
   dyeDatabase,
   inspectCharaForTools,
   resolveCharaForTools,
   type ImportedCharaCharacter,
 } from '@xivdyetools/core';
-import { isInspectionRequest } from '../chara-inspection-protocol';
+import {
+  isInspectionRequest,
+  parsePaletteReply,
+  type CharaPaletteRequest,
+} from '../chara-inspection-protocol';
 
 type ServiceModule = typeof import('../chara-inspection-service');
+type CoreModule = typeof import('@xivdyetools/core');
 type FailureCode = 'unreadable' | 'workerFailed' | 'timedOut' | 'superseded';
 
 const CANARY = 'RAW-WORKER-CANARY-7f3a';
 // A path, not `new URL('<literal>', import.meta.url)`: Vite's asset plugin rewrites that pattern
 // to a dev-server http:// URL under vitest, which fileURLToPath refuses.
-const FIXTURE = resolve(
+const FIXTURE_DIR = resolve(
   dirname(fileURLToPath(import.meta.url)),
-  '../../../../../packages/core/src/services/chara/__tests__/fixtures/lalafell-dunesfolk.chara'
+  '../../../../../packages/core/src/services/chara/__tests__/fixtures'
 );
+const FIXTURE = resolve(FIXTURE_DIR, 'lalafell-dunesfolk.chara');
+const FIXTURES = [
+  'duskwight-heterochromia.chara',
+  'hrothgar-helions.chara',
+  'lalafell-dunesfolk.chara',
+  'wildwood-facepaint.chara',
+  'xaela-anamnesis-header.chara',
+] as const;
+/** CHARA_PALETTE_REQUEST_CAP, as a literal so the behavior tests do not depend on the export. */
+const CAP = 64;
 
 type Handler = (this: unknown, event: unknown) => void;
 
@@ -104,10 +120,36 @@ async function settle(): Promise<void> {
 }
 
 let mod: ServiceModule;
+/** The core module the freshly imported service sees (same registry). */
+let core: CoreModule;
+/** What the worker sends for the Lalafell fixture: the projection with every badge's dye null. */
 let validResult: ImportedCharaCharacter;
+/** What the page resolves for it: the same projection with the offline database's dyes attached. */
+let attachedResult: ImportedCharaCharacter;
+/** Worker-form and attached projections of every core fixture. */
+const fixtureResults = new Map<
+  string,
+  { worker: ImportedCharaCharacter; attached: ImportedCharaCharacter }
+>();
 
 function result(): ImportedCharaCharacter {
   return structuredClone(validResult);
+}
+
+/** The projection with each badge's dye looked up in the offline database (unknown stain: null). */
+function attachDyes(projection: ImportedCharaCharacter): ImportedCharaCharacter {
+  const dyes = new DyeService(dyeDatabase);
+  const copy = structuredClone(projection);
+  for (const badge of copy.gearDyes) badge.dye = dyes.getByStainId(badge.stainId) ?? null;
+  return copy;
+}
+
+/** The worker form: what `resolveCharaForTools` projects with the host palettes and no dyes. */
+async function workerProjection(bytes: Uint8Array): Promise<ImportedCharaCharacter> {
+  return resolveCharaForTools(
+    inspectCharaForTools(bytes),
+    createCharaPaletteProvider(new CharacterColorService())
+  );
 }
 
 function success(id: number, value: unknown = result()) {
@@ -133,21 +175,19 @@ async function start(bytes: ArrayBuffer = new ArrayBuffer(16)) {
 }
 
 beforeAll(async () => {
-  const bytes = new Uint8Array(readFileSync(FIXTURE));
-  const dyes = new DyeService(dyeDatabase);
-  validResult = await resolveCharaForTools(
-    inspectCharaForTools(bytes),
-    new CharacterColorService(),
-    {
-      getByStainId: (stainId: number) => dyes.getByStainId(stainId),
-    }
-  );
+  validResult = await workerProjection(new Uint8Array(readFileSync(FIXTURE)));
+  attachedResult = attachDyes(validResult);
+  for (const name of FIXTURES) {
+    const worker = await workerProjection(new Uint8Array(readFileSync(resolve(FIXTURE_DIR, name))));
+    fixtureResults.set(name, { worker, attached: attachDyes(worker) });
+  }
 });
 
 beforeEach(async () => {
   FakeWorker.instances = [];
   vi.stubGlobal('Worker', FakeWorker);
   vi.resetModules();
+  core = (await import('@xivdyetools/core')) as CoreModule;
   mod = await import('../chara-inspection-service');
 });
 
@@ -155,6 +195,7 @@ afterEach(() => {
   mod.cancelCharaInspection();
   vi.useRealTimers();
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 describe('inspectCharaBytes: request', () => {
@@ -187,7 +228,7 @@ describe('inspectCharaBytes: answers', () => {
     worker.emit('message', success(worker.requestId));
     await settle();
     expect(call.status).toBe('resolved');
-    expect(call.value).toEqual(validResult);
+    expect(call.value).toEqual(attachedResult);
     expect(worker.terminate).toHaveBeenCalledTimes(1);
   });
 
@@ -440,7 +481,7 @@ describe('supersession and cancellation', () => {
     second.worker.emit('message', success(second.worker.requestId));
     await settle();
     expect(second.call.status).toBe('resolved');
-    expect(second.call.value).toEqual(validResult);
+    expect(second.call.value).toEqual(attachedResult);
     expect(second.worker.terminate).toHaveBeenCalledTimes(1);
     expect(first.worker.terminate).toHaveBeenCalledTimes(1);
     expect(vi.getTimerCount()).toBe(0);
@@ -617,7 +658,7 @@ describe('a failure never blocks the next import', () => {
       next.worker.emit('message', success(next.worker.requestId));
       await settle();
       expect(next.call.status).toBe('resolved');
-      expect(next.call.value).toEqual(validResult);
+      expect(next.call.value).toEqual(attachedResult);
       expect(failed.worker.terminate).toHaveBeenCalledTimes(1);
       expect(next.worker.terminate).toHaveBeenCalledTimes(1);
       expect(vi.getTimerCount()).toBe(0);
@@ -655,4 +696,447 @@ describe('a failure never blocks the next import', () => {
     await settle();
     expect(next.call.status).toBe('resolved');
   });
+});
+
+// ---------------------------------------------------------------------------------------------
+// The palette bridge, page side (2026-10-26 ruling): the worker asks the page for each palette
+// color; the page answers from ONE shared CharacterColorService through core's
+// createCharaPaletteProvider, only to the active worker, only for the active id, only while the
+// call is still the active one. The 5_000 ms deadline spans the whole exchange.
+// ---------------------------------------------------------------------------------------------
+
+const EYES: CharaPaletteRequest = {
+  table: 'creator',
+  palette: 'eyes',
+  index: 0,
+  tribe: 'Dunesfolk',
+  gender: 'Feminine',
+};
+const SHADER_EYES: CharaPaletteRequest = { ...EYES, table: 'shader' };
+const HAIR: CharaPaletteRequest = { ...EYES, palette: 'hair', index: 4 };
+
+/** The worker asks the page for one color. */
+function askPalette(
+  worker: FakeWorker,
+  seq: number,
+  request: CharaPaletteRequest = EYES,
+  id: number = worker.requestId
+): void {
+  worker.emit('message', { data: { type: 'palette', id, seq, request } });
+}
+
+/** Everything the page posted to this worker after the inspect request. */
+function replies(worker: FakeWorker): Array<Record<string, unknown>> {
+  return worker.posted.slice(1).map((p) => p.message as Record<string, unknown>);
+}
+
+/** What core's own page-side provider answers for this request. */
+async function pageColor(request: CharaPaletteRequest) {
+  return core.createCharaPaletteProvider(new core.CharacterColorService()).getColor(request);
+}
+
+/** Let real-timer work (the shader tables' first dynamic import) run. */
+async function flushReal(): Promise<void> {
+  for (let i = 0; i < 10; i++) await new Promise((r) => setTimeout(r, 0));
+  await settle();
+}
+
+/** A promise the test resolves by hand. */
+function deferred<T>() {
+  let resolveIt!: (value: T) => void;
+  let rejectIt!: (error: unknown) => void;
+  const promise = new Promise<T>((r, j) => {
+    resolveIt = r;
+    rejectIt = j;
+  });
+  return { promise, resolve: resolveIt, reject: rejectIt };
+}
+
+/** A race color table where every index holds this hex (what getHairColors would load). */
+function raceTable(hex: string) {
+  return Array.from({ length: 192 }, () => ({
+    hex,
+    rgb: { r: 1, g: 2, b: 3 },
+  })) as unknown as Awaited<ReturnType<CharacterColorService['getHairColors']>>;
+}
+
+describe('palette bridge: answers to the active worker', () => {
+  it("answers a creator eyes request with the color core's page-side provider gives", async () => {
+    // Red if the page does not answer palette messages, or answers from anything but core's bridge.
+    const { call, worker } = await start();
+    askPalette(worker, 1, EYES);
+    await vi.waitFor(() => expect(replies(worker)).toHaveLength(1));
+    const expected = await pageColor(EYES);
+    expect(expected?.hex).toBe(
+      new core.CharacterColorService().getEyeColors()[0].hex.toUpperCase()
+    );
+    const [reply] = replies(worker);
+    expect(reply).toEqual({
+      type: 'palette-result',
+      id: worker.requestId,
+      seq: 1,
+      color: expected,
+    });
+    expect(parsePaletteReply(reply)).not.toBeNull();
+    expect(call.status).toBe('pending');
+    expect(worker.terminate).not.toHaveBeenCalled();
+  });
+
+  it('answers a shader eyes request from the shader table', async () => {
+    const { worker } = await start();
+    askPalette(worker, 4, SHADER_EYES);
+    await vi.waitFor(() => expect(replies(worker)).toHaveLength(1));
+    const expected = await pageColor(SHADER_EYES);
+    expect(expected?.hex).toMatch(/^#[0-9A-F]{6}$/);
+    expect(replies(worker)[0]).toEqual({
+      type: 'palette-result',
+      id: worker.requestId,
+      seq: 4,
+      color: expected,
+    });
+  });
+
+  it('answers a race palette request with its tribe and gender', async () => {
+    const { worker } = await start();
+    askPalette(worker, 2, HAIR);
+    await vi.waitFor(() => expect(replies(worker)).toHaveLength(1));
+    const expected = await pageColor(HAIR);
+    expect(expected).toEqual(expect.objectContaining({ tribe: 'Dunesfolk', gender: 'Feminine' }));
+    expect(replies(worker)[0]).toEqual({
+      type: 'palette-result',
+      id: worker.requestId,
+      seq: 2,
+      color: expected,
+    });
+  });
+
+  it('answers a null color for an entry the host does not hold', async () => {
+    const { worker } = await start();
+    askPalette(worker, 3, { ...EYES, index: 200 });
+    await vi.waitFor(() => expect(replies(worker)).toHaveLength(1));
+    expect(replies(worker)[0]).toStrictEqual({
+      type: 'palette-result',
+      id: worker.requestId,
+      seq: 3,
+      color: null,
+    });
+  });
+
+  it('answers palette-error when the shared service fails to load a table, with no exception text', async () => {
+    // Red if a provider failure leaves the worker waiting, or leaks the exception.
+    const loader = vi
+      .spyOn(core.CharacterColorService.prototype, 'getHairColors')
+      .mockRejectedValue(new Error(CANARY));
+    const { call, worker } = await start();
+    askPalette(worker, 7, HAIR);
+    await vi.waitFor(() => expect(replies(worker)).toHaveLength(1));
+    expect(loader).toHaveBeenCalled();
+    expect(replies(worker)[0]).toStrictEqual({
+      type: 'palette-error',
+      id: worker.requestId,
+      seq: 7,
+    });
+    expect(JSON.stringify(worker.posted.map((p) => p.message))).not.toContain(CANARY);
+    expect(call.status).toBe('pending');
+  });
+
+  it('answers palette-error when a shared-table getter throws', async () => {
+    vi.spyOn(core.CharacterColorService.prototype, 'getEyeColors').mockImplementation(() => {
+      throw new Error(CANARY);
+    });
+    const { worker } = await start();
+    askPalette(worker, 1, EYES);
+    await vi.waitFor(() => expect(replies(worker)).toHaveLength(1));
+    expect(replies(worker)[0]).toStrictEqual({
+      type: 'palette-error',
+      id: worker.requestId,
+      seq: 1,
+    });
+  });
+
+  it(`answers request ${CAP + 1} of one inspection with palette-error`, async () => {
+    // Red if the page answers without bound.
+    const { worker } = await start();
+    for (let seq = 1; seq <= CAP; seq++) askPalette(worker, seq, { ...EYES, index: seq - 1 });
+    await vi.waitFor(() => expect(replies(worker)).toHaveLength(CAP));
+    for (const reply of replies(worker)) expect(reply.type).toBe('palette-result');
+    askPalette(worker, CAP + 1, EYES);
+    await vi.waitFor(() => expect(replies(worker)).toHaveLength(CAP + 1));
+    const over = replies(worker).find((r) => r.seq === CAP + 1);
+    expect(over).toStrictEqual({ type: 'palette-error', id: worker.requestId, seq: CAP + 1 });
+  });
+
+  it('shares one CharacterColorService across requests and calls', async () => {
+    // Red if each request (or each call) builds its own service: every build reloads the tables.
+    const loads = vi.spyOn(core.CharacterColorService.prototype, 'getHairColors');
+    const first = await start();
+    askPalette(first.worker, 1, HAIR);
+    askPalette(first.worker, 2, HAIR);
+    await vi.waitFor(() => expect(replies(first.worker)).toHaveLength(2));
+    first.worker.emit('message', success(first.worker.requestId));
+    await settle();
+    const second = await start();
+    askPalette(second.worker, 1, HAIR);
+    await vi.waitFor(() => expect(replies(second.worker)).toHaveLength(1));
+    const instances = new Set(loads.mock.instances);
+    expect(loads).toHaveBeenCalledTimes(3);
+    expect(instances.size).toBe(1);
+  });
+});
+
+describe('palette bridge: everything else is ignored', () => {
+  it.each<[string, (worker: FakeWorker) => unknown]>([
+    [
+      'an extra key',
+      (w) => ({ type: 'palette', id: w.requestId, seq: 1, request: EYES, raw: CANARY }),
+    ],
+    [
+      'an index of 256',
+      (w) => ({ type: 'palette', id: w.requestId, seq: 1, request: { ...EYES, index: 256 } }),
+    ],
+    ['a zero seq', (w) => ({ type: 'palette', id: w.requestId, seq: 0, request: EYES })],
+    ['a missing request', (w) => ({ type: 'palette', id: w.requestId, seq: 1 })],
+    [
+      'an unknown palette',
+      (w) => ({ type: 'palette', id: w.requestId, seq: 1, request: { ...EYES, palette: 'lips' } }),
+    ],
+    [
+      'a page-side reply type',
+      (w) => ({ type: 'palette-result', id: w.requestId, seq: 1, color: null }),
+    ],
+  ])('a palette message with %s: nothing posted, the call stays pending', async (_label, data) => {
+    // Red if an invalid request is answered, or treated as a worker failure.
+    const { call, worker } = await start();
+    worker.emit('message', { data: data(worker) });
+    await flushReal();
+    expect(replies(worker)).toHaveLength(0);
+    expect(call.status).toBe('pending');
+    expect(worker.terminate).not.toHaveBeenCalled();
+    // ...and a valid request is still answered, and the answer still lands.
+    askPalette(worker, 2, EYES);
+    await vi.waitFor(() => expect(replies(worker)).toHaveLength(1));
+    worker.emit('message', success(worker.requestId));
+    await settle();
+    expect(call.status).toBe('resolved');
+  });
+
+  it('a palette message for another id is ignored', async () => {
+    const { call, worker } = await start();
+    askPalette(worker, 1, EYES, worker.requestId + 1);
+    await flushReal();
+    expect(replies(worker)).toHaveLength(0);
+    expect(call.status).toBe('pending');
+  });
+
+  it('a superseded worker gets no answer, and nothing reaches the new one', async () => {
+    const first = await start();
+    const second = await start();
+    askPalette(first.worker, 1, EYES);
+    askPalette(second.worker, 1, EYES, first.worker.requestId);
+    await flushReal();
+    expect(replies(first.worker)).toHaveLength(0);
+    expect(replies(second.worker)).toHaveLength(0);
+  });
+
+  it('a cancelled worker gets no answer', async () => {
+    const { worker } = await start();
+    mod.cancelCharaInspection();
+    askPalette(worker, 1, EYES);
+    await flushReal();
+    expect(worker.terminate).toHaveBeenCalledTimes(1);
+    expect(replies(worker)).toHaveLength(0);
+  });
+
+  it('a timed-out worker gets no answer', async () => {
+    vi.useFakeTimers();
+    const { call, worker } = await start();
+    await vi.advanceTimersByTimeAsync(5_000);
+    await settle();
+    expectFailure(call.error, 'timedOut');
+    vi.useRealTimers();
+    askPalette(worker, 1, EYES);
+    await flushReal();
+    expect(replies(worker)).toHaveLength(0);
+  });
+
+  it('a worker whose call already resolved gets no answer', async () => {
+    const { call, worker } = await start();
+    worker.emit('message', success(worker.requestId));
+    await settle();
+    expect(call.status).toBe('resolved');
+    askPalette(worker, 1, EYES);
+    await flushReal();
+    expect(replies(worker)).toHaveLength(0);
+  });
+});
+
+describe('palette bridge: a late provider answer is never posted', () => {
+  async function pendingHairRequest() {
+    const load = deferred<Awaited<ReturnType<CharacterColorService['getHairColors']>>>();
+    vi.spyOn(core.CharacterColorService.prototype, 'getHairColors').mockReturnValue(load.promise);
+    const started = await start();
+    askPalette(started.worker, 1, HAIR);
+    await settle();
+    expect(replies(started.worker)).toHaveLength(0);
+    return { ...started, load };
+  }
+
+  it('after the call resolved', async () => {
+    // Red if the page posts without re-checking, after the await, that the call is still active.
+    const { call, worker, load } = await pendingHairRequest();
+    worker.emit('message', success(worker.requestId));
+    await settle();
+    expect(call.status).toBe('resolved');
+    load.resolve(raceTable('#112233'));
+    await flushReal();
+    expect(replies(worker)).toHaveLength(0);
+  });
+
+  it('after the call was superseded', async () => {
+    const { worker, load } = await pendingHairRequest();
+    const next = await start();
+    load.resolve(raceTable('#112233'));
+    await flushReal();
+    expect(replies(worker)).toHaveLength(0);
+    expect(replies(next.worker)).toHaveLength(0);
+  });
+
+  it('after the call was cancelled', async () => {
+    const { worker, load } = await pendingHairRequest();
+    mod.cancelCharaInspection();
+    load.resolve(raceTable('#112233'));
+    await flushReal();
+    expect(replies(worker)).toHaveLength(0);
+  });
+
+  it('a palette-error after the call settled is not posted either', async () => {
+    const load = deferred<Awaited<ReturnType<CharacterColorService['getHairColors']>>>();
+    vi.spyOn(core.CharacterColorService.prototype, 'getHairColors').mockReturnValue(load.promise);
+    const { worker } = await start();
+    askPalette(worker, 1, HAIR);
+    await settle();
+    mod.cancelCharaInspection();
+    load.reject(new Error(CANARY));
+    await flushReal();
+    expect(replies(worker)).toHaveLength(0);
+  });
+});
+
+describe('palette bridge: the deadline spans the whole exchange', () => {
+  it('times out at exactly 5_000 ms while a palette answer is pending, and never posts it', async () => {
+    // Red if a pending palette answer holds the call open, or posts to a timed-out worker.
+    const load = deferred<Awaited<ReturnType<CharacterColorService['getHairColors']>>>();
+    vi.spyOn(core.CharacterColorService.prototype, 'getHairColors').mockReturnValue(load.promise);
+    vi.useFakeTimers();
+    const { call, worker } = await start();
+    askPalette(worker, 1, HAIR);
+    await vi.advanceTimersByTimeAsync(4_999);
+    await settle();
+    expect(call.status).toBe('pending');
+    await vi.advanceTimersByTimeAsync(1);
+    await settle();
+    expectFailure(call.error, 'timedOut');
+    expect(worker.terminate).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
+    load.resolve(raceTable('#112233'));
+    await flushReal();
+    expect(replies(worker)).toHaveLength(0);
+  });
+
+  it('answered palette requests do not extend the deadline', async () => {
+    // Red if each palette answer re-arms the timer.
+    vi.useFakeTimers();
+    const { call, worker } = await start();
+    await vi.advanceTimersByTimeAsync(2_500);
+    askPalette(worker, 1, EYES);
+    // The creator eyes answer needs no data load, only microtasks.
+    for (let i = 0; i < 4; i++) await settle();
+    expect(replies(worker)).toHaveLength(1);
+    expect(replies(worker)[0].type).toBe('palette-result');
+    await vi.advanceTimersByTimeAsync(2_499);
+    await settle();
+    expect(call.status).toBe('pending');
+    await vi.advanceTimersByTimeAsync(1);
+    await settle();
+    expectFailure(call.error, 'timedOut');
+    expect(vi.getTimerCount()).toBe(0);
+  });
+});
+
+describe('dyes are attached on the page, after validation', () => {
+  it.each(FIXTURES)('%s resolves with the offline database dyes attached', async (name) => {
+    // Red if the page adopts the worker's null badges, or looks dyes up anywhere but the
+    // host's offline database.
+    const fixture = fixtureResults.get(name);
+    if (!fixture) throw new Error(`test setup: no fixture ${name}`);
+    for (const badge of fixture.worker.gearDyes) expect(badge.dye).toBeNull();
+    const { call, worker } = await start();
+    worker.emit('message', success(worker.requestId, structuredClone(fixture.worker)));
+    await settle();
+    expect(call.status).toBe('resolved');
+    expect(call.value).toEqual(fixture.attached);
+    for (const badge of call.value?.gearDyes ?? []) {
+      if (badge.dye === null) continue;
+      expect(badge.dye.stainID).toBe(badge.stainId);
+      expect(typeof badge.dye.name).toBe('string');
+    }
+  });
+
+  it('at least one fixture carries a dye the database knows', () => {
+    const known = [...fixtureResults.values()].flatMap((f) =>
+      f.attached.gearDyes.filter((badge) => badge.dye !== null)
+    );
+    expect(known.length).toBeGreaterThan(0);
+  });
+
+  it('an unknown stain resolves to a null dye', async () => {
+    const value = result();
+    value.gearDyes = [
+      { slot: 'Body', channel: 1, stainId: 86, dye: null },
+      { slot: 'Legs', channel: 2, stainId: 65_000, dye: null },
+    ];
+    const { call, worker } = await start();
+    worker.emit('message', success(worker.requestId, value));
+    await settle();
+    expect(call.status).toBe('resolved');
+    const [known, unknown] = call.value?.gearDyes ?? [];
+    expect(known.dye?.stainID).toBe(86);
+    expect(typeof known.dye?.name).toBe('string');
+    expect(unknown.dye).toBeNull();
+  });
+
+  it('a well-formed dye the worker sends is replaced by the database dye', async () => {
+    // The page never trusts the worker's dye: it looks every badge up itself.
+    const forged = { ...new DyeService(dyeDatabase).getByStainId(86), name: 'FORGED-NAME' };
+    const value = result();
+    value.gearDyes = [{ slot: 'Body', channel: 1, stainId: 86, dye: forged as never }];
+    const { call, worker } = await start();
+    worker.emit('message', success(worker.requestId, value));
+    await settle();
+    expect(call.status).toBe('resolved');
+    expect(call.value?.gearDyes[0].dye).toEqual(new DyeService(dyeDatabase).getByStainId(86));
+    expect(JSON.stringify(call.value)).not.toContain('FORGED-NAME');
+  });
+
+  it.each<[string, (dye: Record<string, unknown>) => void]>([
+    ['an extra key', (dye) => (dye.raw = CANARY)],
+    ['a stainID that differs from its badge', (dye) => (dye.stainID = 85)],
+    ['a numeric hex', (dye) => (dye.hex = 0xe2000e)],
+  ])(
+    'still rejects a worker answer whose dye has %s (validation runs before the attach)',
+    async (_label, forge) => {
+      // Red if the attach runs first: it would overwrite the forged dye and hide the defect.
+      const dye = structuredClone(
+        new DyeService(dyeDatabase).getByStainId(86)
+      ) as unknown as Record<string, unknown>;
+      forge(dye);
+      const value = result();
+      value.gearDyes = [{ slot: 'Body', channel: 1, stainId: 86, dye: dye as never }];
+      const { call, worker } = await start();
+      worker.emit('message', success(worker.requestId, value));
+      await settle();
+      expect(call.status).toBe('rejected');
+      expectFailure(call.error, 'workerFailed');
+    }
+  );
 });

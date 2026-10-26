@@ -11,6 +11,11 @@
  * symbol, no non-enumerable extra), every array must be dense and index-only, and the page adopts
  * a freshly built DTO assembled from values read exactly once, never the received object.
  *
+ * The worker holds no palette or dye data. While it inspects, it asks the page for each palette
+ * color (`palette` -> `palette-result` / `palette-error`, at most `CHARA_PALETTE_REQUEST_CAP` per
+ * inspection), and it sends every dye badge as `dye: null`; the page attaches the dyes after
+ * validating the answer. Both directions of the palette exchange are validated the same way.
+ *
  * @module services/chara-inspection-protocol
  */
 
@@ -29,6 +34,51 @@ export type CharaInspectionWorkerCode = 'unreadable' | 'workerFailed';
 export type CharaInspectionResponse =
   | { type: 'success'; id: number; result: ImportedCharaCharacter }
   | { type: 'error'; id: number; code: CharaInspectionWorkerCode };
+
+/**
+ * One palette color the worker asks the page for: the library's palette request, carried as is.
+ * The worker holds no palette data of its own (the page already bundles it; a second copy in the
+ * worker would ship the same tables twice).
+ */
+export interface CharaPaletteRequest {
+  table: 'creator' | 'shader';
+  palette:
+    | 'eyes'
+    | 'highlights'
+    | 'features'
+    | 'lipsDark'
+    | 'lipsLight'
+    | 'facePaintDark'
+    | 'facePaintLight'
+    | 'skin'
+    | 'hair';
+  index: number;
+  tribe?: string | null;
+  gender?: 'Masculine' | 'Feminine' | null;
+}
+
+/** The page's color for one request, in the library's palette-color shape. */
+export interface CharaPaletteColor extends CharaPaletteRequest {
+  hex: string;
+  rgb: readonly [number, number, number];
+  datasetVersion: string;
+}
+
+/** Worker -> page: one palette request; `seq` is unique per request within the inspection `id`. */
+export interface CharaPaletteRequestMessage {
+  type: 'palette';
+  id: number;
+  seq: number;
+  request: CharaPaletteRequest;
+}
+
+/** Page -> worker: the color (null when the host holds none), or a failure with no text. */
+export type CharaPaletteReply =
+  | { type: 'palette-result'; id: number; seq: number; color: CharaPaletteColor | null }
+  | { type: 'palette-error'; id: number; seq: number };
+
+/** How many palette requests one inspection may make; the worker and the page both enforce it. */
+export const CHARA_PALETTE_REQUEST_CAP = 64;
 
 /** How long the page waits for one inspection before terminating its worker. */
 export const CHARA_INSPECTION_TIMEOUT_MS = 5_000;
@@ -55,8 +105,9 @@ type ImportedIssue = ImportedCharaCharacter['issues'][number];
 
 /**
  * The fields `DyeDatabase.initialize()` adds to every runtime `Dye` beyond the interface: the
- * stored `legacyItemID`, the search keys and the precomputed LAB. The worker's projection carries
- * the database's own object, so they cross the boundary with it.
+ * stored `legacyItemID`, the search keys and the precomputed LAB. The worker sends `dye: null`;
+ * a non-null dye stays valid in this shape (the database's own object), and the page replaces it
+ * with its own lookup either way.
  */
 interface RuntimeDyeExtras {
   legacyItemID: number | null;
@@ -207,6 +258,7 @@ const SLOT_KEYS: ReadonlySet<string> = new Set<keyof ImportedCharaSlot>([
   'index',
   'indexState',
   'matchHex',
+  'indexGap',
 ]);
 
 const LIP_COMPOSITE_KEYS: ReadonlySet<string> = new Set(['hex', 'alpha', 'derived']);
@@ -240,6 +292,47 @@ const DYE_FIELDS: Record<keyof RuntimeDye, true> = {
   lab: true,
 };
 const DYE_KEYS: ReadonlySet<string> = new Set(Object.keys(DYE_FIELDS));
+const MAX_PALETTE_INDEX = 255;
+const MAX_TRIBE_UNITS = 32;
+const MAX_DATASET_VERSION_UNITS = 64;
+const CHANNEL_MAX = 255;
+
+const PALETTE_TABLES: Record<CharaPaletteRequest['table'], true> = { creator: true, shader: true };
+const PALETTE_NAMES: Record<CharaPaletteRequest['palette'], true> = {
+  eyes: true,
+  highlights: true,
+  features: true,
+  lipsDark: true,
+  lipsLight: true,
+  facePaintDark: true,
+  facePaintLight: true,
+  skin: true,
+  hair: true,
+};
+const PALETTE_GENDERS: Record<NonNullable<CharaPaletteRequest['gender']>, true> = {
+  Masculine: true,
+  Feminine: true,
+};
+
+const PALETTE_REQUEST_KEYS = ['table', 'palette', 'index', 'tribe', 'gender'] as const;
+const PALETTE_REQUEST_REQUIRED_KEYS = ['table', 'palette', 'index'] as const;
+const PALETTE_REQUEST_KEY_SET: ReadonlySet<string> = new Set(PALETTE_REQUEST_KEYS);
+const PALETTE_COLOR_KEYS: ReadonlySet<string> = new Set([
+  ...PALETTE_REQUEST_KEYS,
+  'hex',
+  'rgb',
+  'datasetVersion',
+]);
+const PALETTE_COLOR_REQUIRED_KEYS = [
+  ...PALETTE_REQUEST_REQUIRED_KEYS,
+  'hex',
+  'rgb',
+  'datasetVersion',
+] as const;
+const PALETTE_MESSAGE_KEYS: ReadonlySet<string> = new Set(['type', 'id', 'seq', 'request']);
+const PALETTE_RESULT_KEYS: ReadonlySet<string> = new Set(['type', 'id', 'seq', 'color']);
+const PALETTE_ERROR_KEYS: ReadonlySet<string> = new Set(['type', 'id', 'seq']);
+
 const RGB_KEYS: ReadonlySet<string> = new Set(['r', 'g', 'b']);
 const HSV_KEYS: ReadonlySet<string> = new Set(['h', 's', 'v']);
 const LAB_KEYS: ReadonlySet<string> = new Set(['L', 'a', 'b']);
@@ -400,6 +493,7 @@ function readSlot(value: unknown): ImportedCharaSlot | null {
   const index = fields.get('index');
   const indexState = fields.get('indexState');
   const matchHex = fields.get('matchHex');
+  const indexGap = fields.get('indexGap');
   if (!(
     isIn(APPEARANCE_SLOTS, slotName) &&
     isIn(SLOT_KINDS, kind) &&
@@ -422,7 +516,8 @@ function readSlot(value: unknown): ImportedCharaSlot | null {
     (correction === null || correction === 'historicalEyePairSwap') &&
     (index === null || isNonNegativeInteger(index)) &&
     isIn(INDEX_STATES, indexState) &&
-    isHexOrNull(matchHex)
+    isHexOrNull(matchHex) &&
+    typeof indexGap === 'boolean'
   )) {
     return null;
   }
@@ -449,6 +544,7 @@ function readSlot(value: unknown): ImportedCharaSlot | null {
     index,
     indexState,
     matchHex,
+    indexGap,
   };
   return isMatchConsistent(slot) ? slot : null;
 }
@@ -719,4 +815,126 @@ export function parseInspectionResponse(value: unknown): CharaInspectionResponse
     return result ? { type: 'success', id: value.id, result } : null;
   }
   return null;
+}
+
+/**
+ * The request fields shared by a palette request and a palette color, rebuilt; null when any is
+ * out of its vocabulary or range. An absent (or undefined) tribe / gender stays absent.
+ */
+function readPaletteRequestFields(fields: Map<string, unknown>): CharaPaletteRequest | null {
+  const table = fields.get('table');
+  const palette = fields.get('palette');
+  const index = fields.get('index');
+  const tribe = fields.get('tribe');
+  const gender = fields.get('gender');
+  if (!(
+    isIn(PALETTE_TABLES, table) &&
+    isIn(PALETTE_NAMES, palette) &&
+    typeof index === 'number' &&
+    Number.isInteger(index) &&
+    index >= 0 &&
+    index <= MAX_PALETTE_INDEX &&
+    (tribe === undefined ||
+      tribe === null ||
+      (typeof tribe === 'string' && tribe.length <= MAX_TRIBE_UNITS)) &&
+    (gender === undefined || gender === null || isIn(PALETTE_GENDERS, gender))
+  )) {
+    return null;
+  }
+  const request: CharaPaletteRequest = { table, palette, index };
+  if (tribe !== undefined) request.tribe = tribe;
+  if (gender !== undefined) request.gender = gender;
+  return request;
+}
+
+function readRgb(value: unknown): CharaPaletteColor['rgb'] | null {
+  const items = readArray(value, 3);
+  if (!items || items.length !== 3) return null;
+  const [r, g, b] = items;
+  const isChannel = (channel: unknown): channel is number =>
+    typeof channel === 'number' &&
+    Number.isInteger(channel) &&
+    channel >= 0 &&
+    channel <= CHANNEL_MAX;
+  return isChannel(r) && isChannel(g) && isChannel(b) ? [r, g, b] : null;
+}
+
+/** `undefined` when invalid; `null` is a valid "the host holds no such color". */
+function readPaletteColor(value: unknown): CharaPaletteColor | null | undefined {
+  if (value === null) return null;
+  const fields = readRecord(value, PALETTE_COLOR_KEYS, PALETTE_COLOR_REQUIRED_KEYS);
+  if (!fields) return undefined;
+  const request = readPaletteRequestFields(fields);
+  const hex = fields.get('hex');
+  const rgb = readRgb(fields.get('rgb'));
+  const datasetVersion = fields.get('datasetVersion');
+  if (!(
+    request &&
+    isCanonicalHex(hex) &&
+    rgb &&
+    typeof datasetVersion === 'string' &&
+    datasetVersion.length <= MAX_DATASET_VERSION_UNITS
+  )) {
+    return undefined;
+  }
+  return { ...request, hex, rgb, datasetVersion };
+}
+
+/**
+ * Parse a worker's palette request: the message rebuilt from its four fields, or null when it is
+ * malformed, carries any extra key, or holds a request out of the library's vocabulary.
+ */
+export function parsePaletteRequestMessage(value: unknown): CharaPaletteRequestMessage | null {
+  try {
+    const fields = readRecord(value, PALETTE_MESSAGE_KEYS);
+    if (!fields) return null;
+    const id = fields.get('id');
+    const seq = fields.get('seq');
+    if (fields.get('type') !== 'palette' || !isPositiveSafeId(id) || !isPositiveSafeId(seq)) {
+      return null;
+    }
+    const requestFields = readRecord(
+      fields.get('request'),
+      PALETTE_REQUEST_KEY_SET,
+      PALETTE_REQUEST_REQUIRED_KEYS
+    );
+    const request = requestFields && readPaletteRequestFields(requestFields);
+    return request ? { type: 'palette', id, seq, request } : null;
+  } catch {
+    return null;
+  }
+}
+
+/** True for a well-formed worker -> page palette request (see `parsePaletteRequestMessage`). */
+export function isPaletteRequestMessage(value: unknown): value is CharaPaletteRequestMessage {
+  return parsePaletteRequestMessage(value) !== null;
+}
+
+/**
+ * Parse the page's answer to one palette request. Returns a freshly built reply (its color and rgb
+ * included), or null when it is malformed, of another type, or carries any extra key.
+ */
+export function parsePaletteReply(value: unknown): CharaPaletteReply | null {
+  try {
+    if (!isRecord(value)) return null;
+    const type = ownDataValue(value, 'type')?.value;
+    if (type === 'palette-error') {
+      const fields = readRecord(value, PALETTE_ERROR_KEYS);
+      const id = fields?.get('id');
+      const seq = fields?.get('seq');
+      return isPositiveSafeId(id) && isPositiveSafeId(seq) ? { type, id, seq } : null;
+    }
+    if (type === 'palette-result') {
+      const fields = readRecord(value, PALETTE_RESULT_KEYS);
+      if (!fields) return null;
+      const id = fields.get('id');
+      const seq = fields.get('seq');
+      const color = readPaletteColor(fields.get('color'));
+      if (!isPositiveSafeId(id) || !isPositiveSafeId(seq) || color === undefined) return null;
+      return { type, id, seq, color };
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }

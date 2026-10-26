@@ -2,6 +2,11 @@
  * The `.chara` inspection worker: reads one transferred buffer through core's facade (8 KiB cap)
  * and answers with the projected character, never the inspection or document behind it.
  *
+ * The worker loads no palette or dye data of its own: the page already bundles the palettes, and a
+ * second copy here would ship the same tables twice. While it inspects, it asks the page for each
+ * palette color (`palette` messages, at most `CHARA_PALETTE_REQUEST_CAP` per inspection) and sends
+ * every dye badge as `dye: null`; the page attaches the dyes.
+ *
  * Core's refusal of the input answers `unreadable`; anything unexpected answers `workerFailed`.
  * No exception or message text crosses the boundary, and nothing here logs: a log line could carry
  * a label from the file.
@@ -12,21 +17,24 @@
  * @module workers/chara-inspection.worker
  */
 
+import { inspectCharaForTools, resolveCharaForTools } from '@xivdyetools/core';
 import {
-  CharacterColorService,
-  DyeService,
-  dyeDatabase,
-  inspectCharaForTools,
-  resolveCharaForTools,
-} from '@xivdyetools/core';
-import {
+  CHARA_PALETTE_REQUEST_CAP,
   isInspectionRequest,
+  isPaletteRequestMessage,
+  parsePaletteReply,
   type CharaInspectionRequest,
   type CharaInspectionResponse,
+  type CharaPaletteColor,
+  type CharaPaletteReply,
+  type CharaPaletteRequest,
+  type CharaPaletteRequestMessage,
 } from '../services/chara-inspection-protocol';
 
-let characterColors: CharacterColorService | undefined;
-let dyes: DyeService | undefined;
+/** Where the projection gets its palette colors: in a worker scope, the page. */
+interface CharaPaletteSource {
+  getColor(request: CharaPaletteRequest): Promise<CharaPaletteColor | null>;
+}
 
 /**
  * The library's `CharaInputError` codes that refuse the INPUT (xivcharakit docs/api.md, "CharaErrorCode").
@@ -46,6 +54,12 @@ const INPUT_REFUSAL_CODES: ReadonlySet<string> = new Set([
   'INVALID_NUMBER',
 ]);
 
+/**
+ * The one rejection the bridge gives the library (a fixed code, never page text). The library
+ * records it as an unavailable palette; it never reaches the page.
+ */
+const PALETTE_UNAVAILABLE = 'chara-inspection:paletteUnavailable';
+
 /** True when a thrown value carries one of the library's input-refusal codes. */
 function isInputRefusal(thrown: unknown): boolean {
   if (typeof thrown !== 'object' || thrown === null) return false;
@@ -53,9 +67,10 @@ function isInputRefusal(thrown: unknown): boolean {
   return typeof code === 'string' && INPUT_REFUSAL_CODES.has(code);
 }
 
-/** Inspect and project one request's bytes. Never rejects. */
+/** Inspect and project one request's bytes against `palettes`, with no dye lookup. Never rejects. */
 export async function handleInspectRequest(
-  request: CharaInspectionRequest
+  request: CharaInspectionRequest,
+  palettes: CharaPaletteSource
 ): Promise<CharaInspectionResponse> {
   const { id } = request;
   let inspection: ReturnType<typeof inspectCharaForTools>;
@@ -66,18 +81,101 @@ export async function handleInspectRequest(
     return { type: 'error', id, code: isInputRefusal(thrown) ? 'unreadable' : 'workerFailed' };
   }
   try {
-    characterColors ??= new CharacterColorService();
-    dyes ??= new DyeService(dyeDatabase);
-    const result = await resolveCharaForTools(inspection, characterColors, dyes);
+    const result = await resolveCharaForTools(inspection, palettes);
     return { type: 'success', id, result };
   } catch {
     return { type: 'error', id, code: 'workerFailed' };
   }
 }
 
-async function onInspectMessage(event: MessageEvent): Promise<void> {
-  if (!isInspectionRequest(event.data)) return;
-  const response = await handleInspectRequest(event.data);
+interface WaitingRequest {
+  resolve: (color: CharaPaletteColor | null) => void;
+  reject: (error: Error) => void;
+}
+
+/** The palette requests awaiting a page reply, by inspection id, then by seq. */
+const waitingByInspection = new Map<number, Map<number, WaitingRequest>>();
+
+/** The library's request, rebuilt from its allowlisted fields only. */
+function copyRequest(request: CharaPaletteRequest): CharaPaletteRequest {
+  const copy: CharaPaletteRequest = {
+    table: request.table,
+    palette: request.palette,
+    index: request.index,
+  };
+  if (request.tribe !== undefined) copy.tribe = request.tribe;
+  if (request.gender !== undefined) copy.gender = request.gender;
+  return copy;
+}
+
+/**
+ * A palette source that asks the page: each request posts one `palette` message with the next
+ * seq and settles on the reply carrying the same id AND seq. A null color resolves null; a
+ * `palette-error` rejects. Past the cap, a request rejects without posting.
+ */
+function createPageBridge(id: number): { source: CharaPaletteSource; close: () => void } {
+  const waiting = new Map<number, WaitingRequest>();
+  waitingByInspection.set(id, waiting);
+  let posted = 0;
+  let closed = false;
+
+  const source: CharaPaletteSource = {
+    getColor(request) {
+      if (closed || posted >= CHARA_PALETTE_REQUEST_CAP) {
+        return Promise.reject(new Error(PALETTE_UNAVAILABLE));
+      }
+      posted += 1;
+      const seq = posted;
+      const message: CharaPaletteRequestMessage = {
+        type: 'palette',
+        id,
+        seq,
+        request: copyRequest(request),
+      };
+      // A request the page would refuse would only wait out the deadline: fail it here instead.
+      if (!isPaletteRequestMessage(message)) {
+        return Promise.reject(new Error(PALETTE_UNAVAILABLE));
+      }
+      return new Promise<CharaPaletteColor | null>((resolve, reject) => {
+        waiting.set(seq, { resolve, reject });
+        try {
+          globalThis.postMessage(message);
+        } catch {
+          waiting.delete(seq);
+          reject(new Error(PALETTE_UNAVAILABLE));
+        }
+      });
+    },
+  };
+
+  const close = (): void => {
+    closed = true;
+    if (waitingByInspection.get(id) === waiting) waitingByInspection.delete(id);
+    for (const request of waiting.values()) request.reject(new Error(PALETTE_UNAVAILABLE));
+    waiting.clear();
+  };
+
+  return { source, close };
+}
+
+/** Settle the request a validated reply answers; a stale or unknown reply is ignored. */
+function settlePaletteReply(reply: CharaPaletteReply): void {
+  const waiting = waitingByInspection.get(reply.id);
+  const request = waiting?.get(reply.seq);
+  if (!waiting || !request) return;
+  waiting.delete(reply.seq);
+  if (reply.type === 'palette-error') request.reject(new Error(PALETTE_UNAVAILABLE));
+  else request.resolve(reply.color);
+}
+
+async function onInspectMessage(request: CharaInspectionRequest): Promise<void> {
+  const bridge = createPageBridge(request.id);
+  let response: CharaInspectionResponse;
+  try {
+    response = await handleInspectRequest(request, bridge.source);
+  } finally {
+    bridge.close();
+  }
   try {
     globalThis.postMessage(response);
   } catch {
@@ -95,10 +193,19 @@ async function onInspectMessage(event: MessageEvent): Promise<void> {
   }
 }
 
+function onMessage(data: unknown): void {
+  if (isInspectionRequest(data)) {
+    void onInspectMessage(data);
+    return;
+  }
+  const reply = parsePaletteReply(data);
+  if (reply) settlePaletteReply(reply);
+}
+
 // Registered only inside a real worker scope, so importing this module elsewhere (tests, a
 // bundler's graph walk) wires nothing.
 if (typeof (globalThis as { WorkerGlobalScope?: unknown }).WorkerGlobalScope !== 'undefined') {
   globalThis.addEventListener('message', (event: MessageEvent) => {
-    void onInspectMessage(event);
+    onMessage(event.data);
   });
 }

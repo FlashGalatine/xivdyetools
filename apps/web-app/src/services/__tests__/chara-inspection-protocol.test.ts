@@ -19,9 +19,14 @@ import {
 } from '@xivdyetools/core';
 import {
   CHARA_INSPECTION_TIMEOUT_MS,
+  CHARA_PALETTE_REQUEST_CAP,
   isInspectionRequest,
+  isPaletteRequestMessage,
   parseInspectionResponse,
+  parsePaletteReply,
   validateImportedCharacter,
+  type CharaPaletteColor,
+  type CharaPaletteRequest,
 } from '../chara-inspection-protocol';
 
 const SLOT_NAMES = [
@@ -77,6 +82,7 @@ function slot(name: (typeof SLOT_NAMES)[number]): ImportedCharaSlot {
     index: 3,
     indexState: 'valid',
     matchHex: '#985726',
+    indexGap: false,
   };
 }
 
@@ -284,6 +290,58 @@ describe('validateImportedCharacter', () => {
     ['a number', 7],
   ])('rejects %s', (_label, value) => {
     expect(validateImportedCharacter(value)).toBeNull();
+  });
+
+  describe('indexGap: a required boolean on every slot', () => {
+    it('accepts true and false and keeps each slot value in the rebuilt copy', () => {
+      // Red if the validator does not know indexGap (core projects it on every slot) or drops it.
+      const d = draft();
+      slotNamed(d, 'lip').indexGap = true;
+      const result = validateImportedCharacter(d);
+      expect(result).toEqual(d);
+      expect(result?.slots.find((s) => s.slot === 'lip')?.indexGap).toBe(true);
+      expect(result?.slots.find((s) => s.slot === 'hair')?.indexGap).toBe(false);
+    });
+
+    it.each(SLOT_NAMES)('rejects a %s slot without indexGap', (name) => {
+      const d = draft();
+      delete slotNamed(d, name).indexGap;
+      expect(validateImportedCharacter(d)).toBeNull();
+    });
+
+    it.each([
+      ['null', null],
+      ['undefined', undefined],
+      ['a string', 'true'],
+      ['one', 1],
+      ['zero', 0],
+      ['an object', {}],
+    ])('rejects %s as indexGap', (_label, value) => {
+      const d = draft();
+      slotNamed(d, 'facePaint').indexGap = value;
+      expect(validateImportedCharacter(d)).toBeNull();
+    });
+  });
+
+  describe('dye badges: null is the worker form', () => {
+    it('accepts a projection whose every badge carries dye: null', () => {
+      // The worker never looks dyes up (the page attaches them), so every badge it sends is null.
+      const d = draft();
+      d.gearDyes = [
+        { slot: 'Body', channel: 1, stainId: 86, dye: null },
+        { slot: 'Body', channel: 2, stainId: 5, dye: null },
+        { slot: 'Legs', channel: 1, stainId: 65_535, dye: null },
+      ];
+      const result = validateImportedCharacter(d);
+      expect(result).toEqual(d);
+      for (const badge of result?.gearDyes ?? []) expect(badge.dye).toBeNull();
+    });
+
+    it('still requires the dye key on a badge', () => {
+      const d = draft();
+      delete d.gearDyes[0].dye;
+      expect(validateImportedCharacter(d)).toBeNull();
+    });
   });
 
   describe('appearance slots: exactly the eight, each once', () => {
@@ -836,5 +894,408 @@ describe('validateImportedCharacter', () => {
       set(d.gearDyes[0].dye as LooseRecord);
       expect(validateImportedCharacter(d)).toEqual(d);
     });
+  });
+});
+
+// ---------------------------------------------------------------------------------------------
+// The palette bridge (2026-10-26 ruling): the worker does not load the palette JSON itself; it asks
+// the page for each color. Worker -> page: `palette`. Page -> worker: `palette-result` (a color or
+// null) or `palette-error`. Each message is its own boundary, validated on an allowlist.
+// ---------------------------------------------------------------------------------------------
+
+const PALETTE_NAMES = [
+  'eyes',
+  'highlights',
+  'features',
+  'lipsDark',
+  'lipsLight',
+  'facePaintDark',
+  'facePaintLight',
+  'skin',
+  'hair',
+] as const;
+
+const BAD_IDS = [
+  ['zero', 0],
+  ['negative', -1],
+  ['fractional', 1.5],
+  ['unsafe', Number.MAX_SAFE_INTEGER + 1],
+  ['NaN', Number.NaN],
+  ['Infinity', Number.POSITIVE_INFINITY],
+  ['numeric string', '1'],
+  ['null', null],
+  ['missing', undefined],
+] as const;
+
+const TRIBE_32 = 'T'.repeat(32);
+const VERSION_64 = 'v'.repeat(64);
+
+function paletteRequest(): CharaPaletteRequest {
+  return { table: 'creator', palette: 'eyes', index: 0, tribe: 'Dunesfolk', gender: 'Feminine' };
+}
+
+/** A worker -> page palette message, loosely typed so a test can break exactly one thing. */
+function paletteMessage(): LooseRecord & { request: LooseRecord } {
+  return { type: 'palette', id: 3, seq: 1, request: { ...paletteRequest() } };
+}
+
+function paletteColor(): CharaPaletteColor {
+  return {
+    table: 'creator',
+    palette: 'eyes',
+    index: 0,
+    hex: '#AABBCC',
+    rgb: [170, 187, 204],
+    datasetVersion: 'xivdyetools-host-palette-bridge/1',
+  };
+}
+
+function raceColor(): CharaPaletteColor {
+  return {
+    table: 'shader',
+    palette: 'hair',
+    index: 12,
+    tribe: 'Midlander',
+    gender: 'Masculine',
+    hex: '#102030',
+    rgb: [16, 32, 48],
+    datasetVersion: 'xivdyetools-host-palette-bridge/1',
+  };
+}
+
+/** A page -> worker palette-result, loosely typed. */
+function resultReply(color: unknown = paletteColor()): LooseRecord & { color: LooseRecord } {
+  return {
+    type: 'palette-result',
+    id: 3,
+    seq: 1,
+    color: structuredClone(color) as LooseRecord,
+  };
+}
+
+type RequestSetter = (request: LooseRecord, value: unknown) => void;
+/** Field rejections shared by a request and a color (a color extends the request). */
+const REQUEST_FIELD_REJECTIONS: Array<[string, RequestSetter, unknown]> = [
+  ['a capitalized table', (r, v) => (r.table = v), 'Creator'],
+  ['an unknown table', (r, v) => (r.table = v), 'ui'],
+  ['an empty table', (r, v) => (r.table = v), ''],
+  ['a numeric table', (r, v) => (r.table = v), 1],
+  ['a null table', (r, v) => (r.table = v), null],
+  ['a missing table', (r) => delete r.table, undefined],
+  ['an unknown palette', (r, v) => (r.palette = v), 'lips'],
+  ['a capitalized palette', (r, v) => (r.palette = v), 'Eyes'],
+  ['a legacy sheet name', (r, v) => (r.palette = v), 'tattoo'],
+  ['a numeric palette', (r, v) => (r.palette = v), 0],
+  ['a null palette', (r, v) => (r.palette = v), null],
+  ['a missing palette', (r) => delete r.palette, undefined],
+  ['a negative index', (r, v) => (r.index = v), -1],
+  ['an index of 256', (r, v) => (r.index = v), 256],
+  ['a fractional index', (r, v) => (r.index = v), 1.5],
+  ['a NaN index', (r, v) => (r.index = v), Number.NaN],
+  ['an infinite index', (r, v) => (r.index = v), Number.POSITIVE_INFINITY],
+  ['a numeric-string index', (r, v) => (r.index = v), '3'],
+  ['a null index', (r, v) => (r.index = v), null],
+  ['a missing index', (r) => delete r.index, undefined],
+  ['a 33-character tribe', (r, v) => (r.tribe = v), 'T'.repeat(33)],
+  ['a numeric tribe', (r, v) => (r.tribe = v), 5],
+  ['an object tribe', (r, v) => (r.tribe = v), {}],
+  ['a boolean tribe', (r, v) => (r.tribe = v), true],
+  ['a host-vocabulary gender', (r, v) => (r.gender = v), 'Male'],
+  ['a host-vocabulary female gender', (r, v) => (r.gender = v), 'Female'],
+  ['a lowercase gender', (r, v) => (r.gender = v), 'masculine'],
+  ['a numeric gender', (r, v) => (r.gender = v), 1],
+  ['an empty gender', (r, v) => (r.gender = v), ''],
+  ['an extra key', (r, v) => (r.raw = v), 'RAW-CANARY'],
+];
+
+describe('CHARA_PALETTE_REQUEST_CAP', () => {
+  it('is exactly 64 requests per inspection', () => {
+    // Red if the shared per-inspection cap changes (both the worker and the page enforce it).
+    expect(CHARA_PALETTE_REQUEST_CAP).toBe(64);
+  });
+});
+
+describe('isPaletteRequestMessage (worker -> page)', () => {
+  it('accepts a palette request with tribe and gender', () => {
+    expect(isPaletteRequestMessage(paletteMessage())).toBe(true);
+  });
+
+  it('accepts a request without tribe and gender, and one with both null', () => {
+    const bare = paletteMessage();
+    delete bare.request.tribe;
+    delete bare.request.gender;
+    expect(isPaletteRequestMessage(bare)).toBe(true);
+    const nulls = paletteMessage();
+    nulls.request.tribe = null;
+    nulls.request.gender = null;
+    expect(isPaletteRequestMessage(nulls)).toBe(true);
+  });
+
+  for (const table of ['creator', 'shader'] as const) {
+    it.each(PALETTE_NAMES)(`accepts the %s palette on the ${table} table`, (palette) => {
+      const m = paletteMessage();
+      m.request.table = table;
+      m.request.palette = palette;
+      expect(isPaletteRequestMessage(m)).toBe(true);
+    });
+  }
+
+  it('accepts indices 0 and 255, a 32-character tribe and both genders', () => {
+    for (const [field, value] of [
+      ['index', 0],
+      ['index', 255],
+      ['tribe', TRIBE_32],
+      ['gender', 'Masculine'],
+      ['gender', 'Feminine'],
+    ] as const) {
+      const m = paletteMessage();
+      m.request[field] = value;
+      expect(isPaletteRequestMessage(m)).toBe(true);
+    }
+  });
+
+  it('accepts the largest safe id and seq', () => {
+    const m = paletteMessage();
+    m.id = Number.MAX_SAFE_INTEGER;
+    m.seq = Number.MAX_SAFE_INTEGER;
+    expect(isPaletteRequestMessage(m)).toBe(true);
+  });
+
+  it.each(BAD_IDS)('rejects a %s id', (_label, id) => {
+    const m = paletteMessage();
+    m.id = id;
+    expect(isPaletteRequestMessage(m)).toBe(false);
+  });
+
+  it.each(BAD_IDS)('rejects a %s seq', (_label, seq) => {
+    // Red if seq is not held to the same positive-safe-integer rule as the id.
+    const m = paletteMessage();
+    m.seq = seq;
+    expect(isPaletteRequestMessage(m)).toBe(false);
+  });
+
+  it.each(REQUEST_FIELD_REJECTIONS)('rejects a request with %s', (_label, set, value) => {
+    const m = paletteMessage();
+    set(m.request, value);
+    expect(isPaletteRequestMessage(m)).toBe(false);
+  });
+
+  it.each([
+    ['a missing request', undefined],
+    ['a null request', null],
+    ['an array request', [paletteRequest()]],
+    ['a string request', 'eyes'],
+  ])('rejects %s', (_label, request) => {
+    const m = paletteMessage() as LooseRecord;
+    m.request = request;
+    expect(isPaletteRequestMessage(m)).toBe(false);
+  });
+
+  it.each([
+    ['a palette-result', 'palette-result'],
+    ['an inspect request', 'inspect'],
+    ['a success answer', 'success'],
+    ['a missing type', undefined],
+  ])('rejects %s type', (_label, type) => {
+    const m = paletteMessage();
+    m.type = type;
+    expect(isPaletteRequestMessage(m)).toBe(false);
+  });
+
+  it('rejects an extra key on the message', () => {
+    const m = paletteMessage();
+    m.raw = 'RAW-CANARY';
+    expect(isPaletteRequestMessage(m)).toBe(false);
+  });
+
+  it('rejects a non-enumerable extra key on the request', () => {
+    const m = paletteMessage();
+    Object.defineProperty(m.request, 'raw', { value: 'RAW-CANARY', enumerable: false });
+    expect(isPaletteRequestMessage(m)).toBe(false);
+  });
+
+  it.each([
+    ['null', null],
+    ['undefined', undefined],
+    ['a string', 'palette'],
+    ['an array', ['palette', 3, 1]],
+  ])('rejects %s', (_label, value) => {
+    expect(isPaletteRequestMessage(value)).toBe(false);
+  });
+});
+
+describe('parsePaletteReply (page -> worker)', () => {
+  it('returns a valid palette-result rebuilt, sharing no object with the input', () => {
+    // Red if the reply (or its color / rgb) is passed through by reference.
+    const reply = resultReply();
+    const parsed = parsePaletteReply(reply);
+    expect(parsed).toEqual({ type: 'palette-result', id: 3, seq: 1, color: paletteColor() });
+    expect(parsed).not.toBe(reply);
+    const color = (parsed as { color: CharaPaletteColor }).color;
+    expect(color).not.toBe(reply.color);
+    expect(color.rgb).not.toBe(reply.color.rgb);
+  });
+
+  it('keeps the tribe and gender of a race palette color', () => {
+    // Red if the rebuilt color drops tribe/gender: the library refuses a skin/hair color whose
+    // tribe or gender differs from the request.
+    const parsed = parsePaletteReply(resultReply(raceColor()));
+    expect(parsed).toEqual({ type: 'palette-result', id: 3, seq: 1, color: raceColor() });
+  });
+
+  it('accepts a color whose tribe and gender are null', () => {
+    const reply = resultReply();
+    reply.color.tribe = null;
+    reply.color.gender = null;
+    expect(parsePaletteReply(reply)).toEqual(reply);
+  });
+
+  it('returns a palette-result with a null color', () => {
+    expect(parsePaletteReply(resultReply(null))).toStrictEqual({
+      type: 'palette-result',
+      id: 3,
+      seq: 1,
+      color: null,
+    });
+  });
+
+  it('returns a palette-error with exactly type, id and seq', () => {
+    expect(parsePaletteReply({ type: 'palette-error', id: 3, seq: 9 })).toStrictEqual({
+      type: 'palette-error',
+      id: 3,
+      seq: 9,
+    });
+  });
+
+  it('accepts the bounds: index 255, rgb 0 and 255, a 64-character datasetVersion, a 32-character tribe', () => {
+    const reply = resultReply();
+    reply.color.index = 255;
+    reply.color.rgb = [0, 255, 0];
+    reply.color.hex = '#00FF00';
+    reply.color.datasetVersion = VERSION_64;
+    reply.color.tribe = TRIBE_32;
+    expect(parsePaletteReply(reply)).toEqual(reply);
+  });
+
+  for (const type of ['palette-result', 'palette-error'] as const) {
+    const make = (): LooseRecord =>
+      type === 'palette-result' ? resultReply() : { type, id: 3, seq: 1 };
+
+    it.each(BAD_IDS)(`rejects a %s id on a ${type}`, (_label, id) => {
+      const reply = make();
+      reply.id = id;
+      expect(parsePaletteReply(reply)).toBeNull();
+    });
+
+    it.each(BAD_IDS)(`rejects a %s seq on a ${type}`, (_label, seq) => {
+      const reply = make();
+      reply.seq = seq;
+      expect(parsePaletteReply(reply)).toBeNull();
+    });
+
+    it(`rejects an extra key on a ${type}`, () => {
+      // Red if the envelope is stripped rather than refused, or passed through.
+      const reply = make();
+      reply.message = 'RAW-EXCEPTION-CANARY';
+      expect(parsePaletteReply(reply)).toBeNull();
+    });
+  }
+
+  it('rejects a palette-error carrying a color', () => {
+    expect(
+      parsePaletteReply({ type: 'palette-error', id: 3, seq: 1, color: paletteColor() })
+    ).toBeNull();
+  });
+
+  it('rejects a palette-result without a color key', () => {
+    const reply = resultReply();
+    delete (reply as LooseRecord).color;
+    expect(parsePaletteReply(reply)).toBeNull();
+  });
+
+  it.each([
+    ['a worker palette request', 'palette'],
+    ['an inspection error', 'error'],
+    ['an inspection success', 'success'],
+    ['an unknown type', 'palette-progress'],
+    ['a missing type', undefined],
+  ])('rejects %s', (_label, type) => {
+    const reply = resultReply();
+    reply.type = type;
+    expect(parsePaletteReply(reply)).toBeNull();
+  });
+
+  it.each([
+    ['a string', '#AABBCC'],
+    ['an array', ['#AABBCC']],
+    ['a number', 0xaabbcc],
+    ['undefined', undefined],
+  ])('rejects a color that is %s', (_label, color) => {
+    const reply = resultReply();
+    (reply as LooseRecord).color = color;
+    expect(parsePaletteReply(reply)).toBeNull();
+  });
+
+  it.each(REQUEST_FIELD_REJECTIONS)('rejects a color with %s', (_label, set, value) => {
+    const reply = resultReply();
+    set(reply.color, value);
+    expect(parsePaletteReply(reply)).toBeNull();
+  });
+
+  type ColorSetter = (color: LooseRecord) => void;
+  it.each<[string, ColorSetter]>([
+    ['a lowercase hex', (c) => (c.hex = '#aabbcc')],
+    ['a short hex', (c) => (c.hex = '#ABC')],
+    ['a hex with alpha', (c) => (c.hex = '#AABBCCDD')],
+    ['a hex without hash', (c) => (c.hex = 'AABBCC')],
+    ['a non-hex hex', (c) => (c.hex = '#GGGGGG')],
+    ['a numeric hex', (c) => (c.hex = 0xaabbcc)],
+    ['a missing hex', (c) => delete c.hex],
+    ['two rgb channels', (c) => (c.rgb = [1, 2])],
+    ['four rgb channels', (c) => (c.rgb = [1, 2, 3, 4])],
+    ['an rgb channel of 256', (c) => (c.rgb = [256, 0, 0])],
+    ['a negative rgb channel', (c) => (c.rgb = [0, -1, 0])],
+    ['a fractional rgb channel', (c) => (c.rgb = [0, 0, 1.5])],
+    ['a NaN rgb channel', (c) => (c.rgb = [Number.NaN, 0, 0])],
+    ['a string rgb channel', (c) => (c.rgb = ['1', 0, 0])],
+    ['an rgb object', (c) => (c.rgb = { 0: 1, 1: 2, 2: 3, length: 3 })],
+    ['an rgb record', (c) => (c.rgb = { r: 1, g: 2, b: 3 })],
+    ['a missing rgb', (c) => delete c.rgb],
+    [
+      'an rgb with a non-index property',
+      (c) => ((c.rgb as unknown as LooseRecord).raw = 'RAW-CANARY'),
+    ],
+    [
+      'a sparse rgb',
+      (c) => {
+        const sparse: number[] = [];
+        sparse[0] = 1;
+        sparse[2] = 3;
+        c.rgb = sparse;
+      },
+    ],
+    ['a 65-character datasetVersion', (c) => (c.datasetVersion = 'v'.repeat(65))],
+    ['a numeric datasetVersion', (c) => (c.datasetVersion = 7)],
+    ['a null datasetVersion', (c) => (c.datasetVersion = null)],
+    ['a missing datasetVersion', (c) => delete c.datasetVersion],
+  ])('rejects a color with %s', (_label, set) => {
+    const reply = resultReply();
+    set(reply.color);
+    expect(parsePaletteReply(reply)).toBeNull();
+  });
+
+  it('rejects a non-enumerable extra key on the color', () => {
+    const reply = resultReply();
+    Object.defineProperty(reply.color, 'raw', { value: 'RAW-CANARY', enumerable: false });
+    expect(parsePaletteReply(reply)).toBeNull();
+  });
+
+  it.each([
+    ['null', null],
+    ['undefined', undefined],
+    ['a string', 'palette-result'],
+    ['an array', ['palette-result', 3, 1, null]],
+  ])('rejects %s', (_label, value) => {
+    expect(parsePaletteReply(value)).toBeNull();
   });
 });

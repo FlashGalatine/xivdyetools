@@ -10,6 +10,12 @@
  * timeout, supersession, cancellation) terminates its worker exactly once and leaves nothing that
  * blocks the next call.
  *
+ * The worker holds no palette or dye data. While a call is live, the page answers its worker's
+ * palette requests (active id only, at most `CHARA_PALETTE_REQUEST_CAP`) from one shared
+ * `CharacterColorService` through core's palette provider, and posts an answer only if the call is
+ * still live when it is ready. The deadline spans the whole exchange. After a validated success,
+ * the page attaches each badge's dye from its own offline database.
+ *
  * Errors carry one fixed message per code, never event or exception text.
  *
  * @testonly not yet wired into the .chara loader; chara-inspection-service.test.ts drives the
@@ -18,11 +24,22 @@
  * @module services/chara-inspection-service
  */
 
-import type { ImportedCharaCharacter } from '@xivdyetools/core';
+import {
+  CharacterColorService,
+  createCharaPaletteProvider,
+  type CharaPaletteProvider,
+  type ImportedCharaCharacter,
+} from '@xivdyetools/core';
+import { dyeService } from '@services/dye-service-wrapper';
 import {
   CHARA_INSPECTION_TIMEOUT_MS,
+  CHARA_PALETTE_REQUEST_CAP,
   parseInspectionResponse,
+  parsePaletteReply,
+  parsePaletteRequestMessage,
   type CharaInspectionRequest,
+  type CharaPaletteReply,
+  type CharaPaletteRequestMessage,
 } from './chara-inspection-protocol';
 
 export type CharaInspectionErrorCode = 'unreadable' | 'workerFailed' | 'timedOut' | 'superseded';
@@ -49,12 +66,24 @@ interface PendingInspection {
   id: number;
   worker: Worker | null;
   timer: ReturnType<typeof setTimeout> | null;
+  /** Palette requests received for this inspection, answered or not. */
+  paletteRequests: number;
   resolve: (result: ImportedCharaCharacter) => void;
   reject: (error: CharaInspectionError) => void;
 }
 
 let lastId = 0;
 let pending: PendingInspection | null = null;
+
+/** One host palette service for every call: each new one would reload the race tables. */
+let characterColors: CharacterColorService | undefined;
+let pagePalettes: CharaPaletteProvider | undefined;
+
+function getPagePalettes(): CharaPaletteProvider {
+  characterColors ??= new CharacterColorService();
+  pagePalettes ??= createCharaPaletteProvider(characterColors);
+  return pagePalettes;
+}
 
 function nextId(): number {
   lastId = lastId >= Number.MAX_SAFE_INTEGER ? 1 : lastId + 1;
@@ -84,7 +113,60 @@ function finish(
   else call.reject(new CharaInspectionError(outcome.code));
 }
 
-function handleMessage(call: PendingInspection, data: unknown): void {
+/** True while `call` is the active call and `worker` is still its (unterminated) worker. */
+function isLive(call: PendingInspection, worker: Worker): boolean {
+  return pending === call && call.worker === worker;
+}
+
+/**
+ * Answer one palette request from the page's palettes, to the same worker, and only if the call
+ * is still live once the answer is ready. The deadline is not touched: it spans the whole exchange.
+ */
+async function answerPalette(
+  call: PendingInspection,
+  worker: Worker,
+  message: CharaPaletteRequestMessage
+): Promise<void> {
+  const { id, seq } = message;
+  const failure: CharaPaletteReply = { type: 'palette-error', id, seq };
+  call.paletteRequests += 1;
+  let reply: CharaPaletteReply = failure;
+  if (call.paletteRequests <= CHARA_PALETTE_REQUEST_CAP) {
+    try {
+      const color = await getPagePalettes().getColor(message.request);
+      reply = parsePaletteReply({ type: 'palette-result', id, seq, color }) ?? failure;
+    } catch {
+      // The provider failed: the worker gets a palette-error, never the exception.
+    }
+  }
+  if (!isLive(call, worker)) return;
+  try {
+    worker.postMessage(reply);
+  } catch {
+    // The worker is gone or the reply could not be cloned; the deadline ends the call.
+  }
+}
+
+/** The validated projection with each badge's dye looked up in the host's offline database. */
+function attachDyes(result: ImportedCharaCharacter): ImportedCharaCharacter {
+  return {
+    ...result,
+    gearDyes: result.gearDyes.map((badge) => ({
+      ...badge,
+      dye: dyeService.getByStainId(badge.stainId) ?? null,
+    })),
+  };
+}
+
+function handleMessage(call: PendingInspection, worker: Worker, data: unknown): void {
+  const paletteRequest = parsePaletteRequestMessage(data);
+  if (paletteRequest !== null) {
+    // Only the live call's own worker, asking for the active id, is answered.
+    if (paletteRequest.id === call.id && isLive(call, worker)) {
+      void answerPalette(call, worker, paletteRequest);
+    }
+    return;
+  }
   const response = parseInspectionResponse(data);
   if (response === null) {
     // Malformed, unknown-type or another id's answer is ignored. A success for the ACTIVE id whose
@@ -99,8 +181,20 @@ function handleMessage(call: PendingInspection, data: unknown): void {
     return;
   }
   if (response.id !== call.id) return;
-  if (response.type === 'success') finish(call, { result: response.result });
-  else finish(call, { code: response.code });
+  if (response.type === 'error') {
+    finish(call, { code: response.code });
+    return;
+  }
+  if (pending !== call) return;
+  let result: ImportedCharaCharacter;
+  try {
+    // After validation, so a malformed dye from the worker still fails the call above.
+    result = attachDyes(response.result);
+  } catch {
+    finish(call, { code: 'workerFailed' });
+    return;
+  }
+  finish(call, { result });
 }
 
 /**
@@ -111,7 +205,14 @@ export function inspectCharaBytes(bytes: ArrayBuffer): Promise<ImportedCharaChar
   cancelCharaInspection();
 
   return new Promise<ImportedCharaCharacter>((resolve, reject) => {
-    const call: PendingInspection = { id: nextId(), worker: null, timer: null, resolve, reject };
+    const call: PendingInspection = {
+      id: nextId(),
+      worker: null,
+      timer: null,
+      paletteRequests: 0,
+      resolve,
+      reject,
+    };
     pending = call;
 
     try {
@@ -124,7 +225,9 @@ export function inspectCharaBytes(bytes: ArrayBuffer): Promise<ImportedCharaChar
     }
 
     const worker = call.worker;
-    worker.addEventListener('message', (event: MessageEvent) => handleMessage(call, event.data));
+    worker.addEventListener('message', (event: MessageEvent) =>
+      handleMessage(call, worker, event.data)
+    );
     worker.addEventListener('error', () => finish(call, { code: 'workerFailed' }));
     worker.addEventListener('messageerror', () => finish(call, { code: 'workerFailed' }));
     call.timer = setTimeout(() => finish(call, { code: 'timedOut' }), CHARA_INSPECTION_TIMEOUT_MS);
