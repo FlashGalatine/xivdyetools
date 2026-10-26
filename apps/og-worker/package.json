@@ -20,7 +20,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@cloudflare/workers-types": "^5.20261016.1",
+    "@cloudflare/workers-types": "^5.20261023.1",
     "@resvg/resvg-wasm": "^2.6.2",
     "@xivdyetools/core": "workspace:*",
     "@xivdyetools/svg": "workspace:*",
