@@ -1,0 +1,30 @@
+{
+  "sourceCommit": "b98c8584a85f5dc50b4b4392c508cc627ef004d6",
+  "files": [
+    {
+      "file": "stain-page-0001.json",
+      "source": "docs/audits/2026-10-20-xivapi-offloading/evidence/discovery/stain-list-page-1.json",
+      "sha256": "ae8825c7132edcbdbd8f1e82c870acd6c46a88a3e26c5b83e35f9b3ceb9bab22"
+    },
+    {
+      "file": "stain-page-0002.json",
+      "source": "docs/audits/2026-10-20-xivapi-offloading/evidence/discovery/stain-list-page-2.json",
+      "sha256": "91581479bc801c7c3bd03610e75152ba0ea634dfc682f54f40ad31a50aa2bda0"
+    },
+    {
+      "file": "stain-page-0003.json",
+      "source": "docs/audits/2026-10-20-xivapi-offloading/evidence/discovery/stain-list-page-3.json",
+      "sha256": "c26d079374dcd0244cd42fe0c4a4528cffa07b7fb46b6632aa69c35ddf3df833"
+    },
+    {
+      "file": "dyes.json",
+      "source": "packages/core/src/data/dyes.json",
+      "sha256": "2d321ca1f5cf4818379bfff70b710f00ce615d002a1ab43d12f3c6fbdfbe073a"
+    },
+    {
+      "file": "dyenames.csv",
+      "source": "packages/core/dyenames.csv",
+      "sha256": "76b65383b2ed47a66ce182a6f815e348588ebc191375315457c2c240ab17edce"
+    }
+  ]
+}

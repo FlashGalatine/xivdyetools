@@ -45,9 +45,29 @@ with IDs persisted before schema v2.
 ### Game-data sources (preferred over scraping)
 
 - **`Stain` sheet** (XIVAPI v2 `sheet/Stain`, or a Dalamud/Lumina export): new rows give stainID, name (no "Dye" prefix — no stripping needed), packed color (XIVAPI v2's integer reads as `0xRRGGBB`), and the gloss/metallic flag.
-- **`StainTransient` sheet**: stainID → purchasable item(s) — determines `itemID` and whether the dye resolves to a consolidated Spectrum item (`consolidationType`).
+- **`Stain.Item[]` relationships**: stainID → purchasable item(s) — determines `itemID` and whether the dye resolves to a consolidated Spectrum item (`consolidationType`).
 - **Item sheet fallback:** if you must fetch Item names (en/ja/de/fr), strip the localized "Dye" prefix — try `prefix + ":"`, then `prefix + "："` (full-width colon U+FF1A), then the bare prefix, longest first (this was BUG-081's fix in the old GUI).
 - ko/zh names remain manually sourced into `dyenames.csv`.
+
+### Discovering and comparing dyes with XIVAPI
+
+Run the manual maintenance command from the repository root:
+
+```powershell
+pnpm --filter @xivdyetools/core run audit:dyes --latest --out docs/audits/2026-10-20-dye-refresh
+pnpm --filter @xivdyetools/core run audit:dyes --version 0874aee069e1e7c4 --schema exdschema@2:rev:e773c41a90aed788cf4c1c48469fa85618ef01fb --out docs/audits/2026-10-20-dye-pinned
+pnpm --filter @xivdyetools/core run audit:dyes --snapshot docs/audits/2026-10-20-dye-pinned --out docs/audits/2026-10-20-dye-replay
+```
+
+Choose exactly one input mode and a new output directory whose parent exists. Relative paths are resolved against the repository root. The pins above reproduce the research version; choose explicit pins for the client revision being reviewed. `--latest` resolves canonical game/schema pins from its first response and pins every later page.
+
+The command scans the whole Stain sheet, including lower-numbered blank rows, until an empty page. It saves exact raw pages, the local JSON/CSV/rules used, provenance/hashes, `report.json` and `REPORT.md`. Review the added candidates, missing/unnamed local rows, name/color/metallic differences and expected Item links. Row 0 is No Color; named nonzero rows are candidates, including black dyes and rows without Item links. A name alone does not establish release, acquisition or obtainability.
+
+`--snapshot` verifies and replays **both saved upstream and saved local inputs** without HTTP. Its semantic JSON matches the saved report even when today's catalog has changed. Use a new live/pinned run to compare today's sources. Exit 0 means the report completed, including reports with differences; 1 means failure/incomplete input or output; 2 means invalid arguments. Existing destinations are refused. A failed write may leave an unsealed directory; only a bundle with a final complete manifest is replayable, and a retry needs a new destination.
+
+The command edits no production sources and runs no generators. Maintain all six locales and compatibility IDs through the reviewed workflow below. The [2026-10-20 audit](../audits/2026-10-20-xivapi-offloading/README.md) found 22 color discrepancies and different German/French naming conventions; these need separate decisions before adoption. The [full-sheet follow-up](../audits/2026-10-20-xivapi-offloading/DYE_DISCOVERY.md) documents `Stain.Item[]`; `StainTransient` returned 404 at the tested pins, so recheck the schema when advancing revisions.
+
+Client limits are sequential requests, 100 requested rows/page, 20 successful pages including the terminal page, 2 MiB per response/artifact, 15 seconds per attempt, three attempts/page and five minutes total. Transient failures back off and honor Retry-After. Exceeding a bound produces an incomplete error. These are local bounds, not advertised XIVAPI quotas. Normal builds, tests and runtime dye access do not run live refreshes.
 
 ### After editing the JSON
 
@@ -360,7 +380,7 @@ pnpm --filter xivdyetools-discord-worker run deploy:production
 - [ ] `stainID` taken from the game's `Stain` sheet
 - [ ] `hex` taken from the `Stain` sheet's `Color` (sampled only if the sheet has no row yet) and written lowercase — it is the single color source of truth
 - [ ] `category` and `acquisition` are members of the closed vocabularies
-- [ ] `consolidationType` set from `StainTransient` (`'A' | 'B' | 'C' | null`)
+- [ ] `consolidationType` reviewed against `Stain.Item[]` (`'A' | 'B' | 'C' | null`)
 - [ ] `legacyItemID` set, or `null` for a consolidated-only dye
 - [ ] **No** `rgb` / `hsv` / `lab` / `cost` / `currency` / `is*` fields hand-written
 - [ ] ko/zh names added to `dyenames.csv`; `build:locales` run

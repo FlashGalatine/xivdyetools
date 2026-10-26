@@ -1,0 +1,24 @@
+{
+  "url": "https://github.com/FlashGalatine/xivdyetools/issues/322",
+  "title": "TODO: Evaluate XIVAPI offloading opportunities",
+  "issue_number": 322,
+  "body": "## TODO — deferred to a future session\n\nReview which XIV Dye Tools features and game-data responsibilities could use XIVAPI instead of maintaining duplicated bundled datasets or lookup logic. This follow-up was requested during the XIVCharaKit dye-name discussion on 2026-10-20.\n\n### Investigation checklist\n\n- [ ] Inventory existing XIVAPI usage across core, api-worker, the web app and bots; distinguish existing integrations from additional opportunities.\n- [ ] Evaluate Stain/dye names, localization, color and other sheet-backed metadata, including the current data-generation/update pipeline.\n- [ ] Evaluate item names/icons, equipment-model matching, facewear and other game-data lookups where XIVAPI may supply the required fields.\n- [ ] Check whether acquisition/vendor information can come from explicit upstream evidence; preserve distinctions between documented facts, inferred availability and missing data.\n- [ ] Compare build-time refreshes, optional runtime requests, and a shared cached API-worker integration for each candidate.\n- [ ] Assess offline behavior, response time, request volume, upstream availability/limits, caching, cancellation, version/schema pinning, browser access, privacy and source/rights notices.\n- [ ] Preserve all supported locales, stable stain/item/facewear identities and migration compatibility; identify any regional or language gaps requiring another source or maintained local data.\n- [ ] Identify responsibilities best kept local, including color calculations, matching/indexing, rendering and user-owned collections/presets, rather than assuming an external data API can replace them.\n\n### Expected result of the future session\n\nProduce a short decision matrix for each candidate: current implementation/source, verified XIVAPI capability, proposed responsibility boundary (local, build-time, runtime or cached), fallback behavior, tradeoffs and migration/test requirements. Recommend a bounded first change for separate implementation approval.\n\nStarting point: [XIVAPI sheet-reading documentation](https://v2.xivapi.com/docs/guides/sheets/). The XIVCharaKit investigation verified small Stain-name requests and batched localized responses; broader XIV Dye Tools suitability remains to be investigated.\n\n**Status:** backlog research for a future session. This TODO does not schedule a run, authorize implementation, publish a package or trigger a deployment.\r\n",
+  "state": "open",
+  "user": {
+    "login": "FlashGalatine",
+    "name": "FlashGalatine",
+    "email": null,
+    "avatar_url": "https://avatars.githubusercontent.com/u/234854320?v=4",
+    "id": 234854320
+  },
+  "assignees": null,
+  "labels": null,
+  "milestone": null,
+  "state_reason": null,
+  "comments": 0,
+  "created_at": "2026-10-20T20:24:22Z",
+  "updated_at": "2026-10-20T20:24:22Z",
+  "closed_at": null,
+  "display_url": "https://github.com/FlashGalatine/xivdyetools/issues/322",
+  "display_title": "TODO: Evaluate XIVAPI offloading opportunities"
+}

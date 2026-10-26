@@ -1,0 +1,1 @@
+{"schema":"exdschema@2:rev:e773c41a90aed788cf4c1c48469fa85618ef01fb","version":"0874aee069e1e7c4","rows":[{"row_id":262144,"subrow_id":0,"fields":{"Item":{"value":4594,"sheet":"Item","row_id":4594,"fields":{"Name":"Potion of Strength"}}}},{"row_id":262144,"subrow_id":1,"fields":{"Item":{"value":4595,"sheet":"Item","row_id":4595,"fields":{"Name":"Potion of Dexterity"}}}}]}
