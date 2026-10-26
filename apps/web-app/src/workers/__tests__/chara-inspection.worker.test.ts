@@ -1,10 +1,11 @@
 /**
  * The `.chara` inspection worker (Task 4, palette bridge per the 2026-10-26 ruling), run against the
- * REAL core facade: `inspectCharaForTools` (8,192-byte cap) → `resolveCharaForTools(inspection,
- * palettes)` with NO dye lookup. The worker loads no palette or dye data of its own: in a real
+ * REAL core facade: `inspectCharaForTools` (8,192-byte cap) → `resolveCharaWithProvider(inspection,
+ * palettes)` with NO dye lookup (the palette-free entry: `resolveCharaForTools` would pull the shader
+ * tables into the worker's bundle). The worker loads no palette or dye data of its own: in a real
  * worker scope it asks the page for each color (`palette` messages) and the page attaches dyes.
  *
- * `inspectCharaForTools` and `resolveCharaForTools` are wrapped in pass-through `vi.fn`s so a test can
+ * `inspectCharaForTools` and `resolveCharaWithProvider` are wrapped in pass-through `vi.fn`s so a test can
  * force one throw, capture the provider the worker passes, or hold the projection open; every other
  * test runs the real functions.
  *
@@ -20,7 +21,7 @@ import {
   CharacterColorService,
   createCharaPaletteProvider,
   inspectCharaForTools,
-  resolveCharaForTools,
+  resolveCharaWithProvider,
   type CharaPaletteProvider,
   type ImportedCharaCharacter,
 } from '@xivdyetools/core';
@@ -38,7 +39,7 @@ vi.mock('@xivdyetools/core', async (importOriginal) => {
   return {
     ...actual,
     inspectCharaForTools: vi.fn(actual.inspectCharaForTools),
-    resolveCharaForTools: vi.fn(actual.resolveCharaForTools),
+    resolveCharaWithProvider: vi.fn(actual.resolveCharaWithProvider),
   };
 });
 
@@ -122,7 +123,7 @@ async function expectedProjection(
   palettes: CharaPaletteProvider = hostProvider()
 ): Promise<ImportedCharaCharacter> {
   const core = await actualCore();
-  return core.resolveCharaForTools(core.inspectCharaForTools(bytes), palettes);
+  return core.resolveCharaWithProvider(core.inspectCharaForTools(bytes), palettes);
 }
 
 /** A log argument as text, including an Error's message and stack. */
@@ -171,7 +172,7 @@ describe('handleInspectRequest: valid files', () => {
       // validator refuses a real projection (e.g. one carrying indexGap).
       const bytes = fixtureBytes(name);
       const palettes = hostProvider();
-      vi.mocked(resolveCharaForTools).mockClear();
+      vi.mocked(resolveCharaWithProvider).mockClear();
       const response = await handleInspectRequest(
         { type: 'inspect', id: 7, bytes: bufferOf(bytes) },
         palettes
@@ -180,8 +181,8 @@ describe('handleInspectRequest: valid files', () => {
       if (response.type !== 'success') return;
       expect(response.id).toBe(7);
       expect(Object.keys(response).sort()).toEqual(['id', 'result', 'type']);
-      expect(vi.mocked(resolveCharaForTools)).toHaveBeenCalledTimes(1);
-      const [, passed, dyes] = vi.mocked(resolveCharaForTools).mock.calls[0];
+      expect(vi.mocked(resolveCharaWithProvider)).toHaveBeenCalledTimes(1);
+      const [, passed, dyes] = vi.mocked(resolveCharaWithProvider).mock.calls[0];
       expect(passed).toBe(palettes);
       expect(dyes).toBeUndefined();
       expect(response.result).toEqual(await expectedProjection(bytes));
@@ -342,7 +343,7 @@ describe('handleInspectRequest: only a refusal code means unreadable (F5)', () =
 
 describe('handleInspectRequest: unexpected failures', () => {
   it('answers workerFailed with no exception text in the response or the logs', async () => {
-    vi.mocked(resolveCharaForTools).mockImplementationOnce(async () => {
+    vi.mocked(resolveCharaWithProvider).mockImplementationOnce(async () => {
       throw new Error(CANARY);
     });
     const consoleSpies = (['log', 'info', 'warn', 'error', 'debug'] as const).map((method) =>
@@ -386,6 +387,20 @@ describe('the worker loads no palette or dye data of its own', () => {
       expect(statement).not.toMatch(/\b(?:CharacterColorService|DyeService|dyeDatabase)\b/);
       expect(statement).not.toMatch(/dye-service-wrapper|character_colors|dyes\.json/);
     }
+  });
+
+  it('projects through resolveCharaWithProvider, never resolveCharaForTools or the palette bridge', () => {
+    // Red if the worker imports resolveCharaForTools (or createCharaPaletteProvider): either one
+    // reaches the shader tables, and a production build then emits their chunks for the worker.
+    const code = readFileSync(WORKER_SOURCE, 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/^\s*\/\/.*$/gm, '');
+    const coreImports = code.match(/^\s*import\b[^;]*?\bfrom\s*['"]@xivdyetools\/core['"]/gm) ?? [];
+    expect(coreImports).toHaveLength(1);
+    expect(coreImports[0]).toMatch(/\bresolveCharaWithProvider\b/);
+    expect(coreImports[0]).not.toMatch(/\bresolveCharaForTools\b/);
+    expect(coreImports[0]).not.toMatch(/\bcreateCharaPaletteProvider\b/);
+    expect(code).not.toMatch(/\bresolveCharaForTools\b|\bcreateCharaPaletteProvider\b/);
   });
 });
 
@@ -460,23 +475,31 @@ function answerFromHost(provider: CharaPaletteProvider = hostProvider()) {
 
 /**
  * Start an inspection in a worker scope and capture the bridge provider the worker passes to
- * `resolveCharaForTools`, holding the projection open so a test can drive the bridge directly.
+ * `resolveCharaWithProvider`, holding the projection open so a test can drive the bridge directly.
  */
 async function captureBridge(id = 9) {
   const scope = await loadWorkerScope();
   let captured: CharaPaletteProvider | undefined;
   let release: ((value: ImportedCharaCharacter) => void) | undefined;
-  vi.mocked(scope.core.resolveCharaForTools).mockImplementationOnce((_inspection, palettes) => {
+  let fail: ((error: unknown) => void) | undefined;
+  vi.mocked(scope.core.resolveCharaWithProvider).mockImplementationOnce((_inspection, palettes) => {
     captured = palettes as CharaPaletteProvider;
-    return new Promise<ImportedCharaCharacter>((resolveProjection) => {
+    return new Promise<ImportedCharaCharacter>((resolveProjection, rejectProjection) => {
       release = resolveProjection;
+      fail = rejectProjection;
     });
   });
   scope.send({ type: 'inspect', id, bytes: bufferOf(fixtureBytes('lalafell-dunesfolk.chara')) });
   await vi.waitFor(() => expect(captured).toBeDefined());
   const provider = captured as CharaPaletteProvider;
   expect(provider.getColor).toBeTypeOf('function');
-  return { ...scope, id, provider, release: (value: ImportedCharaCharacter) => release?.(value) };
+  return {
+    ...scope,
+    id,
+    provider,
+    release: (value: ImportedCharaCharacter) => release?.(value),
+    fail: (error: unknown) => fail?.(error),
+  };
 }
 
 async function hostColor(request: CharaPaletteRequest): Promise<CharaPaletteColor> {
@@ -714,6 +737,51 @@ describe('the bridge provider (worker side of the palette bridge)', () => {
     await flush();
     expect(later.status).toBe('rejected');
     expect(bridge.paletteMessages()).toHaveLength(CAP);
+  });
+
+  it.each<[string, CharaPaletteRequest]>([
+    ['an index of 256', { ...EYES, index: 256 }],
+    ['a 33-character tribe', { ...HAIR, tribe: 'T'.repeat(33) }],
+  ])('rejects a request with %s at once, without posting it', async (_label, request) => {
+    // Red if the worker posts a request the page would refuse: it would only wait out the deadline.
+    const bridge = await captureBridge(9);
+    const outside = track(bridge.provider.getColor(request));
+    await flush();
+    expect(outside.status).toBe('rejected');
+    expect(bridge.paletteMessages()).toHaveLength(0);
+    // A request inside the vocabulary is still posted.
+    track(bridge.provider.getColor(EYES));
+    await flush();
+    expect(bridge.paletteMessages()).toHaveLength(1);
+  });
+
+  it('settling the inspection closes the bridge: pending requests reject, late replies and new requests go nowhere', async () => {
+    // Red if the bridge is not closed when the projection settles: the pending request would
+    // hang, a late reply would still settle it, and a later request would still be posted.
+    const bridge = await captureBridge(9);
+    const pending = track(bridge.provider.getColor(EYES));
+    await flush();
+    const [message] = bridge.paletteMessages();
+    expect(pending.status).toBe('pending');
+
+    bridge.fail(new Error(CANARY));
+    await vi.waitFor(() => expect(bridge.finals()).toHaveLength(1));
+    expect(bridge.finals()[0]).toStrictEqual({ type: 'error', id: 9, code: 'workerFailed' });
+    await flush();
+    expect(pending.status).toBe('rejected');
+    expect(String((pending.error as Error).message)).not.toContain(CANARY);
+
+    const color = await hostColor(EYES);
+    bridge.send({ type: 'palette-result', id: 9, seq: message.seq, color });
+    await flush();
+    expect(pending.status).toBe('rejected');
+    expect(pending.value).toBeUndefined();
+
+    const after = track(bridge.provider.getColor(HAIR));
+    await flush();
+    expect(after.status).toBe('rejected');
+    expect(bridge.paletteMessages()).toHaveLength(1);
+    expect(bridge.posted()).toHaveLength(2);
   });
 
   it('posts the final answer after the projection settles', async () => {

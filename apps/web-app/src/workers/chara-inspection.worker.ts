@@ -5,7 +5,9 @@
  * The worker loads no palette or dye data of its own: the page already bundles the palettes, and a
  * second copy here would ship the same tables twice. While it inspects, it asks the page for each
  * palette color (`palette` messages, at most `CHARA_PALETTE_REQUEST_CAP` per inspection) and sends
- * every dye badge as `dye: null`; the page attaches the dyes.
+ * every dye badge as `dye: null`; the page attaches the dyes. It projects through core's
+ * `resolveCharaWithProvider`, the entry with no import path to the palette tables, so a production
+ * build emits no shader-table chunk for the worker.
  *
  * Core's refusal of the input answers `unreadable`; anything unexpected answers `workerFailed`.
  * No exception or message text crosses the boundary, and nothing here logs: a log line could carry
@@ -17,7 +19,7 @@
  * @module workers/chara-inspection.worker
  */
 
-import { inspectCharaForTools, resolveCharaForTools } from '@xivdyetools/core';
+import { inspectCharaForTools, resolveCharaWithProvider } from '@xivdyetools/core';
 import {
   CHARA_PALETTE_REQUEST_CAP,
   isInspectionRequest,
@@ -81,7 +83,7 @@ export async function handleInspectRequest(
     return { type: 'error', id, code: isInputRefusal(thrown) ? 'unreadable' : 'workerFailed' };
   }
   try {
-    const result = await resolveCharaForTools(inspection, palettes);
+    const result = await resolveCharaWithProvider(inspection, palettes);
     return { type: 'success', id, result };
   } catch {
     return { type: 'error', id, code: 'workerFailed' };

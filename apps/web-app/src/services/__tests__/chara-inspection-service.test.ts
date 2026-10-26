@@ -17,14 +17,26 @@ import {
   createCharaPaletteProvider,
   dyeDatabase,
   inspectCharaForTools,
-  resolveCharaForTools,
+  resolveCharaWithProvider,
+  type CharaPaletteProvider,
   type ImportedCharaCharacter,
 } from '@xivdyetools/core';
 import {
   isInspectionRequest,
   parsePaletteReply,
+  type CharaPaletteColor,
   type CharaPaletteRequest,
 } from '../chara-inspection-protocol';
+
+// createCharaPaletteProvider is wrapped in a pass-through vi.fn so a test can hand the page a
+// provider whose answer the page must refuse to post (it re-validates before posting).
+vi.mock('@xivdyetools/core', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@xivdyetools/core')>();
+  return {
+    ...actual,
+    createCharaPaletteProvider: vi.fn(actual.createCharaPaletteProvider),
+  };
+});
 
 type ServiceModule = typeof import('../chara-inspection-service');
 type CoreModule = typeof import('@xivdyetools/core');
@@ -144,9 +156,9 @@ function attachDyes(projection: ImportedCharaCharacter): ImportedCharaCharacter 
   return copy;
 }
 
-/** The worker form: what `resolveCharaForTools` projects with the host palettes and no dyes. */
+/** The worker form: what `resolveCharaWithProvider` projects with the host palettes and no dyes. */
 async function workerProjection(bytes: Uint8Array): Promise<ImportedCharaCharacter> {
-  return resolveCharaForTools(
+  return resolveCharaWithProvider(
     inspectCharaForTools(bytes),
     createCharaPaletteProvider(new CharacterColorService())
   );
@@ -928,23 +940,31 @@ describe('palette bridge: everything else is ignored', () => {
     expect(call.status).toBe('pending');
   });
 
+  // Each dead-call case also spies on the getter the request would read: red if a dead call's
+  // palette message reaches the page-side provider at all (only the post would be suppressed).
+  const eyeLookups = () => vi.spyOn(core.CharacterColorService.prototype, 'getEyeColors');
+
   it('a superseded worker gets no answer, and nothing reaches the new one', async () => {
     const first = await start();
     const second = await start();
+    const lookups = eyeLookups();
     askPalette(first.worker, 1, EYES);
     askPalette(second.worker, 1, EYES, first.worker.requestId);
     await flushReal();
     expect(replies(first.worker)).toHaveLength(0);
     expect(replies(second.worker)).toHaveLength(0);
+    expect(lookups).not.toHaveBeenCalled();
   });
 
   it('a cancelled worker gets no answer', async () => {
     const { worker } = await start();
     mod.cancelCharaInspection();
+    const lookups = eyeLookups();
     askPalette(worker, 1, EYES);
     await flushReal();
     expect(worker.terminate).toHaveBeenCalledTimes(1);
     expect(replies(worker)).toHaveLength(0);
+    expect(lookups).not.toHaveBeenCalled();
   });
 
   it('a timed-out worker gets no answer', async () => {
@@ -954,9 +974,11 @@ describe('palette bridge: everything else is ignored', () => {
     await settle();
     expectFailure(call.error, 'timedOut');
     vi.useRealTimers();
+    const lookups = eyeLookups();
     askPalette(worker, 1, EYES);
     await flushReal();
     expect(replies(worker)).toHaveLength(0);
+    expect(lookups).not.toHaveBeenCalled();
   });
 
   it('a worker whose call already resolved gets no answer', async () => {
@@ -964,9 +986,62 @@ describe('palette bridge: everything else is ignored', () => {
     worker.emit('message', success(worker.requestId));
     await settle();
     expect(call.status).toBe('resolved');
+    const lookups = eyeLookups();
     askPalette(worker, 1, EYES);
     await flushReal();
     expect(replies(worker)).toHaveLength(0);
+    expect(lookups).not.toHaveBeenCalled();
+  });
+});
+
+describe("palette bridge: the page re-validates its provider's answer before posting", () => {
+  /** A well-formed creator eyes color whose hex has letters, so a lowercase copy differs. */
+  const LETTERED: CharaPaletteColor = {
+    table: 'creator',
+    palette: 'eyes',
+    index: 0,
+    hex: '#ABCDEF',
+    rgb: [171, 205, 239],
+    datasetVersion: 'xivdyetools-host-palette-bridge/1',
+  };
+
+  it('posts a well-formed provider color as palette-result', async () => {
+    // The control: the stub itself is a color the protocol accepts.
+    vi.mocked(core.createCharaPaletteProvider).mockReturnValueOnce({
+      getColor: async () => ({ ...LETTERED }),
+    });
+    const { worker } = await start();
+    askPalette(worker, 1, EYES);
+    await vi.waitFor(() => expect(replies(worker)).toHaveLength(1));
+    expect(replies(worker)[0]).toStrictEqual({
+      type: 'palette-result',
+      id: worker.requestId,
+      seq: 1,
+      color: LETTERED,
+    });
+  });
+
+  it.each<[string, Record<string, unknown>]>([
+    ['a lowercase hex', { ...LETTERED, hex: '#abcdef' }],
+    ['an extra key', { ...LETTERED, raw: CANARY }],
+  ])('answers palette-error when the provider returns a color with %s', async (_label, color) => {
+    // Red if the page posts its provider's answer without parsePaletteReply: the worker would be
+    // handed a color the protocol refuses (and would only drop it and wait out the deadline).
+    const createProvider = vi.mocked(core.createCharaPaletteProvider);
+    createProvider.mockReturnValueOnce({
+      getColor: async () => color,
+    } as unknown as CharaPaletteProvider);
+    const { call, worker } = await start();
+    askPalette(worker, 5, EYES);
+    await vi.waitFor(() => expect(replies(worker)).toHaveLength(1));
+    expect(createProvider).toHaveBeenCalledTimes(1);
+    expect(replies(worker)[0]).toStrictEqual({
+      type: 'palette-error',
+      id: worker.requestId,
+      seq: 5,
+    });
+    expect(JSON.stringify(worker.posted.map((p) => p.message))).not.toContain(CANARY);
+    expect(call.status).toBe('pending');
   });
 });
 
