@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CharacterColorService } from '../../CharacterColorService.js';
@@ -14,6 +14,7 @@ import type {
 import type { CharaInspection } from 'xivcharakit';
 import type { PaletteRequest } from 'xivcharakit/palettes';
 import { MAX_CHARA_FILE_BYTES } from '../chara-parser.js';
+import { importSpecifiers, runtimeClosure } from './import-graph.js';
 import * as core from '../../../index.js';
 
 const colors = new CharacterColorService();
@@ -815,51 +816,6 @@ describe('chara-library import graph', () => {
     resolve(charaDir, 'chara-shader-colors.ts'),
     resolve(charaDir, '../CharacterColorService.ts'),
   ];
-
-  function stripComments(source: string): string {
-    return source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:\\])\/\/.*$/gm, '$1');
-  }
-
-  /** Every import / re-export specifier, flagged type-only when it is `import type` / `export type`. */
-  function importSpecifiers(source: string): { specifier: string; typeOnly: boolean }[] {
-    const code = stripComments(source);
-    const found: { specifier: string; typeOnly: boolean }[] = [];
-    const staticImport = /\b(?:import|export)\s+(type\s+)?(?:[^'";]*?\s+from\s+)?['"]([^'"]+)['"]/g;
-    for (const match of code.matchAll(staticImport)) {
-      found.push({ specifier: match[2], typeOnly: match[1] !== undefined });
-    }
-    for (const match of code.matchAll(/\bimport\s*\(\s*['"]([^'"]+)['"]\s*\)/g)) {
-      found.push({ specifier: match[1], typeOnly: false });
-    }
-    return found;
-  }
-
-  function resolveLocal(fromFile: string, specifier: string): string | null {
-    if (!specifier.startsWith('.')) return null;
-    const base = resolve(dirname(fromFile), specifier);
-    for (const candidate of [base.replace(/\.js$/, '.ts'), base, `${base}/index.ts`]) {
-      if (candidate.endsWith('.ts') && existsSync(candidate)) return candidate;
-    }
-    return null;
-  }
-
-  /** Local `.ts` modules reachable from `entry` through runtime (non-type-only) imports. */
-  function runtimeClosure(entry: string): Set<string> {
-    const seen = new Set<string>([entry]);
-    const queue = [entry];
-    while (queue.length > 0) {
-      const file = queue.pop()!;
-      for (const { specifier, typeOnly } of importSpecifiers(readFileSync(file, 'utf8'))) {
-        if (typeOnly) continue;
-        const target = resolveLocal(file, specifier);
-        if (target && !seen.has(target)) {
-          seen.add(target);
-          queue.push(target);
-        }
-      }
-    }
-    return seen;
-  }
 
   it('the specifier scan sees runtime, type-only and dynamic imports (control)', () => {
     const scanned = importSpecifiers(

@@ -37,6 +37,14 @@ are unchanged. Nothing in the apps consumes the new entry points yet.
   reachable dynamic import target). `resolveCharaForTools` now lives in its own module
   (`chara-library-resolve.ts`), bridges the service there and delegates; its signature and behavior are
   unchanged. A test in `chara-library.test.ts` walks the import graph to hold the line.
+- **`@xivdyetools/core/chara`** subpath entry (`dist/chara.js`, beside `@xivdyetools/core/blending`):
+  `inspectCharaForTools`, `resolveCharaWithProvider` and the `ImportedCharaCharacter`,
+  `ImportedCharaSlot`, `CharaImportIssue` and `CharaPaletteProvider` types, the same objects the main
+  barrel exports. The package declares no `sideEffects`, so a bundler keeps every top-level module the
+  barrel reaches; a consumer that only needs the reader and the provider-based resolve, such as a Web
+  Worker, imports this entry instead and does not pull in core's color, localization and dye modules.
+  `src/__tests__/chara-entry.test.ts` pins the export list, the `exports` row and an import graph that
+  reaches only `xivcharakit`, `@xivdyetools/types` and the chara reader's own modules.
 
 ### Notes
 
