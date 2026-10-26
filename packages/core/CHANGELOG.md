@@ -26,6 +26,10 @@ are unchanged. Nothing in the apps consumes the new entry points yet.
 
 ### Notes
 
+- The new modules keep no top-level `new Set(...)`: a bundler cannot prove one side-effect free, so it kept
+  the adapter and the library entry in every consumer's shared chunk even before anything imported them
+  (the web app's `modals` chunk ended 902 B over its 287 KB budget). The lookup tables are plain arrays or
+  built on first use, and the web-app build is within 5 bytes of the pre-integration chunk.
 - Intentional differences from the legacy parser are recorded in
   `docs/research/2026-10-22-xivcharakit-integration.md` (partial documents accepted, the lip-color bit,
   the mirror-only face-paint value, unknown activation excluded from matching).

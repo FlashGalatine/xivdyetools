@@ -25,16 +25,18 @@ const SHARED_SIZES: Record<string, number> = {
 };
 const RACE_PALETTE_SIZE = 192;
 
-const SHADER_PALETTES: ReadonlySet<string> = new Set<CharaShaderPalette>([
+// Plain arrays, not Sets: a top-level `new Set(...)` is kept by bundlers (not provably pure), which
+// would keep this module in the web app's shared chunk even when the bridge is never imported.
+const SHADER_PALETTES: readonly CharaShaderPalette[] = [
   'eyes',
   'highlights',
   'features',
   'lipsDark',
   'skin',
   'hair',
-]);
+];
 
-const TRIBES: ReadonlySet<string> = new Set<SubRace>([
+const TRIBES: readonly SubRace[] = [
   'Midlander',
   'Highlander',
   'Wildwood',
@@ -51,7 +53,7 @@ const TRIBES: ReadonlySet<string> = new Set<SubRace>([
   'TheLost',
   'Rava',
   'Veena',
-]);
+];
 
 const HOST_GENDER: Record<string, Gender> = { Masculine: 'Male', Feminine: 'Female' };
 
@@ -75,7 +77,11 @@ function colorFor(request: PaletteRequest, hex: string | null | undefined): Pale
 }
 
 /** Creator-table hex for a shared palette, or undefined for a name the host does not hold. */
-function sharedCreatorHex(colors: CharacterColorService, palette: string, index: number): string | undefined {
+function sharedCreatorHex(
+  colors: CharacterColorService,
+  palette: string,
+  index: number,
+): string | undefined {
   switch (palette) {
     case 'eyes':
       return colors.getEyeColors()[index]?.hex;
@@ -106,7 +112,8 @@ export function createCharaPaletteProvider(colors: CharacterColorService): Palet
       if (palette === 'skin' || palette === 'hair') {
         if (index >= RACE_PALETTE_SIZE) return null;
         const { tribe, gender } = request;
-        if (typeof tribe !== 'string' || !TRIBES.has(tribe)) return null;
+        if (typeof tribe !== 'string' || !(TRIBES as readonly string[]).includes(tribe))
+          return null;
         if (typeof gender !== 'string' || !Object.hasOwn(HOST_GENDER, gender)) return null;
         const hostTribe = tribe as SubRace;
         const hostGender = HOST_GENDER[gender];
@@ -123,8 +130,11 @@ export function createCharaPaletteProvider(colors: CharacterColorService): Palet
       const size = Object.hasOwn(SHARED_SIZES, palette) ? SHARED_SIZES[palette] : undefined;
       if (size === undefined || index >= size) return null;
       if (table === 'shader') {
-        if (!SHADER_PALETTES.has(palette)) return null;
-        return colorFor(request, await charaShaderHex(palette as CharaShaderPalette, index, null, null));
+        if (!(SHADER_PALETTES as readonly string[]).includes(palette)) return null;
+        return colorFor(
+          request,
+          await charaShaderHex(palette as CharaShaderPalette, index, null, null),
+        );
       }
       return colorFor(request, sharedCreatorHex(colors, palette, index));
     },

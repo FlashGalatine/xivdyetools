@@ -8,7 +8,13 @@
  * offline database, and a projection that carries no raw document, image or unknown field.
  */
 
-import { EQUIPMENT_SLOTS, inspectChara, readChara, type CharaInspection, type Issue } from 'xivcharakit';
+import {
+  EQUIPMENT_SLOTS,
+  inspectChara,
+  readChara,
+  type CharaInspection,
+  type Issue,
+} from 'xivcharakit';
 import { resolveAppearance, type AppearanceSlot } from 'xivcharakit/appearance';
 import type { Gender, Race, SubRace } from '@xivdyetools/types';
 import type { CharacterColorService } from '../CharacterColorService.js';
@@ -40,21 +46,79 @@ const MAX_ISSUES = 64;
 const MAX_PATH_SEGMENTS = 32;
 const MAX_PATH_INDEX = 1_000_000;
 
-/** Schema-field names a diagnostic path may carry; anything else becomes `unknown`. */
-const KNOWN_PATH_SEGMENTS: ReadonlySet<string> = new Set([
-  ...EQUIPMENT_SLOTS,
-  'Height', 'Head', 'Hair', 'Skintone', 'REyeColor', 'HairTone', 'Highlights', 'LimbalEyes',
-  'Eyebrows', 'LEyeColor', 'Eyes', 'Nose', 'Jaw', 'Mouth', 'LipsToneFurPattern', 'EarMuscleTailSize',
-  'TailEarsType', 'Bust', 'FacePaint', 'FacePaintColor',
-  'SkinColor', 'SkinGloss', 'LeftEyeColor', 'RightEyeColor', 'LimbalRingColor', 'HairColor',
-  'HairGloss', 'HairHighlight', 'MouthColor',
-  'Transparency', 'MuscleTone', 'HeightMultiplier',
-  'Race', 'Tribe', 'Gender', 'Age', 'ModelType', 'EnableHighlights', 'FacialFeatures', 'Glasses',
-  'BustScale', 'IsExtendedAppearanceValid',
-  'TypeName', '$type', 'FileExtension', 'FileVersion', 'Author', 'Description', 'Version', 'Nickname',
-  'SaveMode', 'ObjectKind',
-  'ModelBase', 'ModelVariant', 'ModelSet', 'DyeId', 'DyeId2', 'GlassesId',
-]);
+/**
+ * Schema-field names a diagnostic path may carry; anything else becomes `unknown`.
+ *
+ * Built on first use, not at module load: a top-level `new Set([...spread])` is something a
+ * bundler cannot prove side-effect free, so it kept this module (and the library entry it
+ * reads `EQUIPMENT_SLOTS` from) in every consumer's shared chunk even when nothing imported
+ * the facade. The web app's `modals` chunk went 902 B over its budget (PR #327 CI).
+ */
+let knownPathSegments: ReadonlySet<string> | undefined;
+function isKnownPathSegment(segment: string): boolean {
+  knownPathSegments ??= new Set([
+    ...EQUIPMENT_SLOTS,
+    'Height',
+    'Head',
+    'Hair',
+    'Skintone',
+    'REyeColor',
+    'HairTone',
+    'Highlights',
+    'LimbalEyes',
+    'Eyebrows',
+    'LEyeColor',
+    'Eyes',
+    'Nose',
+    'Jaw',
+    'Mouth',
+    'LipsToneFurPattern',
+    'EarMuscleTailSize',
+    'TailEarsType',
+    'Bust',
+    'FacePaint',
+    'FacePaintColor',
+    'SkinColor',
+    'SkinGloss',
+    'LeftEyeColor',
+    'RightEyeColor',
+    'LimbalRingColor',
+    'HairColor',
+    'HairGloss',
+    'HairHighlight',
+    'MouthColor',
+    'Transparency',
+    'MuscleTone',
+    'HeightMultiplier',
+    'Race',
+    'Tribe',
+    'Gender',
+    'Age',
+    'ModelType',
+    'EnableHighlights',
+    'FacialFeatures',
+    'Glasses',
+    'BustScale',
+    'IsExtendedAppearanceValid',
+    'TypeName',
+    '$type',
+    'FileExtension',
+    'FileVersion',
+    'Author',
+    'Description',
+    'Version',
+    'Nickname',
+    'SaveMode',
+    'ObjectKind',
+    'ModelBase',
+    'ModelVariant',
+    'ModelSet',
+    'DyeId',
+    'DyeId2',
+    'GlassesId',
+  ]);
+  return knownPathSegments.has(segment);
+}
 
 const HOST_RACE: Record<string, Race> = {
   Hyur: 'Hyur',
@@ -88,7 +152,7 @@ function safePath(path: readonly (string | number)[]): (string | number)[] {
         ? segment
         : 'unknown';
     }
-    return KNOWN_PATH_SEGMENTS.has(segment) ? segment : 'unknown';
+    return isKnownPathSegment(segment) ? segment : 'unknown';
   });
 }
 
@@ -173,13 +237,14 @@ export async function resolveCharaForTools(
 
   const { identity } = inspection;
   const tribe = identity.tribe.state === 'valid' ? (identity.tribe.value as SubRace) : null;
-  const gender = identity.gender.state === 'valid' ? HOST_GENDER[identity.gender.value] ?? null : null;
+  const gender =
+    identity.gender.state === 'valid' ? (HOST_GENDER[identity.gender.value] ?? null) : null;
   const flag = inspection.extended.IsExtendedAppearanceValid;
   const glasses = inspection.facewear;
 
   return {
     producer: boundedLabel(inspection.metadata.TypeName.value),
-    race: identity.canonicalRace ? HOST_RACE[identity.canonicalRace] ?? null : null,
+    race: identity.canonicalRace ? (HOST_RACE[identity.canonicalRace] ?? null) : null,
     tribe,
     gender,
     nickname: boundedLabel(inspection.metadata.Nickname.value),
