@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "node scripts/copy-chara-notices.mjs && tsc --noEmit && vite build",
+    "copy-chara-notices": "node scripts/copy-chara-notices.mjs",
     "preview": "vite preview",
     "type-check": "tsc --noEmit",
     "lint": "eslint src && knip",

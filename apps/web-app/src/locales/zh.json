@@ -28,7 +28,8 @@
     "apiDocsLabel": "API Worker 文档",
     "policiesLabel": "政策",
     "privacyPolicy": "隐私政策",
-    "termsOfService": "服务条款"
+    "termsOfService": "服务条款",
+    "charaReaderLicense": "角色文件读取器的开源许可证"
   },
   "footer": {
     "createdBy": "由 Flash Galatine (Midgardsormr) 为 FFXIV 社区创建",

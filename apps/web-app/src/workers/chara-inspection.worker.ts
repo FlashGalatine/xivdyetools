@@ -16,7 +16,7 @@
  * a label from the file.
  *
  * @entrypoint No importer by design — the page starts this module as a module worker through
- * new Worker(new URL(…, import.meta.url)), which the bundler follows and an import scan cannot
+ * new Worker(new URL(…, import.meta.url)), which the bundler follows and an import scan cannot see.
  *
  * @module workers/chara-inspection.worker
  */

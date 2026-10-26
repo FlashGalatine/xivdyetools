@@ -10,6 +10,7 @@
 - **Switched-off lip color now shows as off.** A file with lip color switched off, as in every Ktisis export we checked, shows none. Face paint set only to mirrored counts as no face paint.
 - **Lips are blended only when the file says its extra colors are live.** Anamnesis files no longer show a blended lip tint.
 - **Gear problems are called out.** A piece with incomplete model numbers shows a CHECK note in the Glamour Reader, and a dye slot that doesn't hold a dye reads Dye unreadable instead of Undyed.
+- **The reader's license is in About.** About XIV Dye Tools now links the open-source license of the character file reader.
 
 ### Clearer messages when a file can't be read
 - **Plain messages instead of raw errors.** An unreadable file says so, and a slow or failed read asks you to try again. Your previous character stays loaded.

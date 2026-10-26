@@ -43,6 +43,13 @@ imports behave differently on purpose (below).
 - **An idle palette prefetch** from the drop zone (`prefetchCharaPalettes`), skipped under saveData, so a
   cold import has headroom inside the 5 s deadline.
 - 19 locale keys in all six languages; `swatch.parseFailed` (it carried core's raw `{reason}`) is gone.
+- **The reader's license notice.** `scripts/copy-chara-notices.mjs` finds the `xivcharakit` package
+  through `@xivdyetools/core`, checks it is the version core pins, and writes its `dist/LICENSE` and
+  `dist/THIRD_PARTY_NOTICES.md` verbatim under a fixed header to `public/licenses/xivcharakit.txt`
+  (committed; `build` regenerates it first, and `copy-chara-notices.test.js` fails on drift). The About
+  modal's attribution block links it (`about.charaReaderLicense`, six languages), and an e2e spec plus
+  `scripts/smoke-test-pages.js` assert the served body and `text/plain` type, since `_redirects` turns a
+  missing file into a 200 carrying `index.html`.
 
 ### Changed
 

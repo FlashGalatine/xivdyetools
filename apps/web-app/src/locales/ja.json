@@ -28,7 +28,8 @@
     "apiDocsLabel": "API Worker ドキュメント",
     "policiesLabel": "ポリシー",
     "privacyPolicy": "プライバシー",
-    "termsOfService": "利用規約"
+    "termsOfService": "利用規約",
+    "charaReaderLicense": "キャラクターファイル読み込み機能のオープンソースライセンス"
   },
   "footer": {
     "createdBy": "Flash Galatine (Midgardsormr) がFFXIVコミュニティのために作成",

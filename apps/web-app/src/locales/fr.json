@@ -28,7 +28,8 @@
     "apiDocsLabel": "Docs de l'API Worker",
     "policiesLabel": "POLITIQUES",
     "privacyPolicy": "Confidentialité",
-    "termsOfService": "Conditions d'utilisation"
+    "termsOfService": "Conditions d'utilisation",
+    "charaReaderLicense": "Licence open source du lecteur de fichiers de personnage"
   },
   "footer": {
     "createdBy": "Créé par Flash Galatine (Midgardsormr) pour la communauté FFXIV",
