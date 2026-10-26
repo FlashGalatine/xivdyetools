@@ -3,9 +3,9 @@
 **Question:** can XIV Dye Tools use `xivcharakit` as the `.chara` reader and appearance interpreter
 without losing behavior it relies on, and where do the two deliberately differ?
 
-**Status (2026-10-25):** pre-install work done. The comparison test is written and its host half
-passes; its library half cannot run until the dependency installs, which `minimumReleaseAge: 1440`
-allows from about 2026-10-26T11:32Z. Nothing below is classified as *verified* until that run. The
+**Status (2026-10-26):** Task 1 gate passed. The dependency installed after the release-age window
+opened; the comparison test passes in full against the installed library (524 tests, no skips, no
+expectation changed), and the corpus aggregate is recorded below. The
 plan this register serves is
 `docs/superpowers/plans/2026-10-22-xivdyetools-integration.md` in the XIVCharaKit repository.
 
@@ -17,7 +17,7 @@ plan this register serves is
 | Units | core 5.14.0, web-app 5.15.5, bot-logic 4.10.0, discord-worker 5.8.15, api-worker 0.20.1 |
 | Tooling | pnpm 11.17.0, Node `>=22.13.0` (checked on 22.21.0) |
 | Candidate | `xivcharakit@0.1.0-beta.4`, registry time 2026-10-25T11:31:59Z, expected integrity `sha512-fIW3xEd3fHaP+C6tKbwmBOHFHb59ymoUdW+FpEAvwbR1LcQy+ZMVi2mdhtmRxP/hOJYD9cpzuhiYmpLplRg0Mw==` |
-| Install | pending: earliest 2026-10-26T11:32Z; no `minimumReleaseAge` exclusion and no `allowBuilds` entry |
+| Install | done 2026-10-26T11:41Z, `--save-exact`; no `minimumReleaseAge` exclusion and no `allowBuilds` entry. The lockfile diff is the three xivcharakit entries only (pnpm's own re-resolve also bumped esbuild and rewrote quote style, so the lockfile was restored and edited by hand; `pnpm install --frozen-lockfile` accepts it). |
 
 Other work in the target that touches files this integration edits (rebase on whichever lands first):
 Dependabot PR #323 (`pnpm-lock.yaml` only, open and clean), PR #324 `docs/xivapi-offloading-research`
@@ -48,9 +48,9 @@ not inspected, only its tag commit.
 | Question | Decision | Evidence |
 | --- | --- | --- |
 | Does any supported producer write `Gender` "Male"/"Female"? | **No.** Treat the host's acceptance of them as legacy tolerance and the library's `unsupported` result as an intentional difference. | All three serializers use `JsonStringEnumConverter` and declare `Gender` as `Masculine`/`Feminine` (Anamnesis `ActorCustomizeMemory.cs:15-19`, Ktisis `CustomizeContainer.cs:63-66`, Brio `ActorEnums.cs:5-9`); 1,093 of 1,093 files in the local corpus store a `Masculine`/`Feminine` string. Cases IDN-15 and IDN-16 pin both behaviors. |
-| Keep `historicalEyeCorrection` at its default (true)? | PENDING the post-install corpus run (recommendation: keep the default). | Current Brio exports (v0.7.2 and later) store each eye's color under the other eye's name, so disabling the correction would regress them; the host already un-crosses an exact crossing. The library adds one-sided inference with an `EYE_PAIRING_INFERRED` warning. |
+| Keep `historicalEyeCorrection` at its default (true)? | **Keep the default (true).** Corpus run over 1,093 files: the correction applied to 3 files; with it disabled the pairing is unconfirmed in those same 3 and the effective extended color differs for both eyes in them. | Current Brio exports (v0.7.2 and later) store each eye's color under the other eye's name, so disabling the correction would regress them; the host already un-crosses an exact crossing. The library adds one-sided inference with an `EYE_PAIRING_INFERRED` warning. |
 | `SwatchCharacter`: map the projection back or take a bot-logic semver decision? | Map the projection back to the existing `Omit<ResolvedCharaCharacter, 'nickname'>` shape in Task 6; no bot-logic semver decision. | `SwatchCharacter` is a public bot-logic export whose `slots` element type tests read; the library's slot `kind` adds `limbalOrTattoo`, which the mapping must fold to the old union. |
-| Does `vite.config.ts` need `worker: { format: 'es' }`? | PENDING the Task 4 production build. | `CharacterColorService` dynamically imports `hair_colors.json`; Vite's default worker format is `iife`, which rejects code splitting. |
+| Does `vite.config.ts` need `worker: { format: 'es' }`? | PENDING the Task 4 production build (Task 4 not started). | `CharacterColorService` dynamically imports `hair_colors.json`; Vite's default worker format is `iife`, which rejects code splitting. |
 
 ## How this register is built
 
@@ -143,8 +143,21 @@ IDN-01…IDN-03, IDN-06, IDN-08…IDN-11, IDN-23, IDN-42…IDN-45, GEA-01, GEA-0
 | Refresh target, producer sources, branches | Done 2026-10-25 |
 | Comparison test written; host half green | Done: 261 cases |
 | `vitest run …chara-library-parity.test.ts` before the dependency exists | Fails as the plan expects: `Cannot find package 'xivcharakit'` |
-| Install `xivcharakit@0.1.0-beta.4`; lockfile integrity; `pnpm audit signatures` in an isolated consumer | Pending, not before 2026-10-26T11:32Z |
-| Run the library half; classify every failure (wrong expectation, intentional difference, blocking) | Pending |
-| Corpus aggregate (the maintainer's local `.chara` files; aggregate counts only) and the `historicalEyeCorrection` decision | Pending |
-| Final candidate, evidence and approved differences recorded; commit with the dependency | Pending |
+| Install `xivcharakit@0.1.0-beta.4`; lockfile integrity; `pnpm audit signatures` in an isolated consumer | Done 2026-10-26T11:41Z: lockfile integrity equals the expected sha512; `npm audit signatures` in an isolated consumer: 1 verified registry signature, 1 verified attestation |
+| Run the library half; classify every failure (wrong expectation, intentional difference, blocking) | Done: 524/524 pass on the first run, so there is no failure to classify; the 12 UNPLANNED differences stay as the maintainer ruled. `core` type-check clean, lint 0 errors (knip clean) |
+| Corpus aggregate (the maintainer's local `.chara` files; aggregate counts only) and the `historicalEyeCorrection` decision | Done, see the corpus table below; decision: keep the default |
+| Final candidate, evidence and approved differences recorded; commit with the dependency | Done: candidate `xivcharakit@0.1.0-beta.4` accepted for Tasks 2-7 |
+
+### Corpus aggregate (1,093 files from the local corpus, counts only)
+
+| Measure | Files |
+| --- | --- |
+| Skin, hair, left/right eye, limbal: same color | 1,092 of 1,093 (one file refused by the library with `INPUT_TOO_LARGE`) |
+| Highlights: same color / both none | 593 / 499 |
+| Face paint: same color / both none / host color, library none (`facePaintNone`) | 918 / 166 / 8 |
+| Lip: same color / both none / host color, library none (`lipDisabled`) / host none, library shows color | 781 / 275 / 35 / 1 |
+| Eye correction applied under the default policy | 3 |
+| Library issues (files): `UNSUPPORTED_FIELD` 99, `IMAGE_OMITTED` 93, `INCOMPLETE_MODEL` 34, `AMBIGUOUS_ZERO_BLOCK` 22, `PALETTE_INDEX_OUT_OF_RANGE` 2 | |
+
+The lip and face-paint rows are the rulings already made (the library's lip-composite rule is accepted; a disabled control stays inactive). The one oversize refusal and the 34 incomplete models are inputs the host previously rendered best-effort; the adapter must surface them through the fixed parse-failure and warning codes (Task 4).
 
