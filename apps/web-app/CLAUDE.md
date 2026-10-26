@@ -130,7 +130,9 @@ src/
 │   ├── auth-service.ts              # Discord OAuth via oauth worker, JWT in localStorage
 │   ├── api-service-wrapper.ts       # Wraps core APIService (Universalis through proxy)
 │   ├── chara-session-service.ts     # The loaded .chara character, shared by every view of it — memory only (a reload clears it); tiny because ConfigController (main entry) imports it to pin the swatch tribe/gender to the file, and the sidebar's lock subscribes to it
-│   ├── chara-file-loader.ts         # Reads a dropped .chara into the session: `*.chara` names only, core's 8 KiB MAX_CHARA_FILE_BYTES (both before reading), core parse, chara_parse telemetry; returns the failure, the file card toasts it
+│   ├── chara-file-loader.ts         # Reads a dropped .chara into the session: `*.chara` names only, core's 8 KiB MAX_CHARA_FILE_BYTES (both before reading), the capped read, the inspection service, chara_parse telemetry; returns a fixed failure code (`notChara`/`tooLarge`/`unreadable`/`workerFailed`/`timedOut`), the file card toasts it; a newer load or SWAP's `cancelCharaLoad()` supersedes an older one
+│   ├── chara-inspection-service.ts  # Runs one cancellable inspection in the Web Worker: transfers the bytes, answers the worker's palette requests from the page's own CharacterColorService, 5,000 ms deadline, terminates every worker once, validates the answer through the protocol, then attaches gearDyes[].dye from the offline dye database. `prefetchCharaPalettes()` warms the palettes from the drop zone (skipped under saveData)
+│   ├── chara-inspection-protocol.ts # The worker's message shapes and validators: rebuilds a fresh DTO from validated values (eight unique slots, 24 dye channels, 64 diagnostics, 256 KiB, the matchHex rule); the page never trusts a worker answer as received
 │   ├── chara-resolve-service.ts     # POST data.xivdyetools.app/v1/chara/resolve — .chara model keys → item names/icons (Swatch 11a/11c); session cache; any failure = CharaResolveUnavailableError
 │   ├── dye-service-wrapper.ts       # Wraps core DyeService
 │   ├── harmony-generator.ts         # The harmony-type UI vocabulary only (ids, icons, names) —
@@ -149,6 +151,8 @@ src/
 │   ├── indexeddb-service.ts         # IDB wrapper — DB v3 stores: price_cache, palettes, settings
 │   │                                # (image_cache was dropped in v3; nothing persists images)
 │   └── pricing-mixin.ts             # Shared price-formatting helpers
+├── workers/
+│   └── chara-inspection.worker.ts   # The app's only Web Worker: core's inspectCharaForTools + resolveCharaWithProvider off the main thread. Imports ONLY `@xivdyetools/core/chara` (never the barrel: core declares no sideEffects), loads no palette JSON (it asks the page for each color by message, 64 per inspection) and sends no dye objects. Same-origin module worker, so `script-src 'self'` covers it; `vite.config.ts` sets `worker.format: 'es'` and minifies worker output
 ├── shared/
 │   ├── constants.ts                 # APP_VERSION, STORAGE_PREFIX, etc.
 │   ├── error-handler.ts             # Centralized error mapping + user-friendly messages
@@ -258,7 +262,7 @@ There is **no service worker** — the app has no offline cache. (The v3 `servic
 
 ## Build & Bundle Notes
 
-- `npm run build:check` runs `vite build` then `scripts/check-bundle-size.js`, which enforces per-bundle byte ceilings (e.g. CSS ≤ 105 KB, main entry ≤ 150 KB raw, layout shell ≤ 218 KB). CI fails if a chunk grows past its budget.
+- `npm run build:check` runs `vite build` then `scripts/check-bundle-size.js`, which enforces per-bundle byte ceilings (e.g. CSS ≤ 105 KB, main entry ≤ 150 KB raw, layout shell ≤ 218 KB). CI fails if a chunk grows past its budget. The `.chara` inspection worker chunk has its own named row (35 KB; it measured 30 KB, 11 KB gzipped, at 5.16.0): a new limit for a new chunk, not a raised one. If it grows, the worker has started importing something beyond `@xivdyetools/core/chara` (usually the core barrel, which drags the whole library in) or has started shipping palette JSON; fix the import, don't raise the row.
 - **Fonts are a contract, not a per-file choice.** All three faces are self-hosted woff2 in `public/fonts/` (Space Grotesk display, Onest body, Fragment Mono numeric/mono — matching `FONTS` in `packages/svg`). The `@font-face` blocks and the `--font-display` / `--font-body` / `--font-mono` / `--font-cjk` variables in `src/styles/globals.css` are the **single** declaration site; `tailwind.config.js` points its `sans`/`mono` families at the same variables; the `.number` rule (Fragment Mono + tabular figures) lives in `src/styles/tool-content.css`, which is loaded both page-side and inside the layout shell's shadow root. Nothing else should name a family — that is how four sources ended up disagreeing before `REFACTOR-002`. There is no runtime Google Fonts request, and the CSP's `font-src` is `'self'` only. `--font-cjk` names locally-installed CJK families (nothing is downloaded) so ja/ko/zh rendering is a decision rather than an OS accident. The web app renders no SVG-to-PNG of its own; the Noto Sans JP/SC/KR subsets used for card rasterization live in `apps/discord-worker/src/fonts/` and `apps/og-worker/src/fonts/` (`@xivdyetools/svg` ships no font files — it only names the stacks in `FONTS`).
 - `src/index.html` is the Vite entry; `vite.config.ts` sets `root: 'src'` and `outDir: '../dist'`.
 - Tailwind v4 is compiled inside Vite by `@tailwindcss/postcss` (`postcss.config.js`) from `src/styles/tailwind.css` (`@import "tailwindcss"` + `@config "../../tailwind.config.js"`); there is no separate CSS build step and no committed CSS output.
