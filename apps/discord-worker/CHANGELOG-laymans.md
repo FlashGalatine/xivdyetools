@@ -35,6 +35,14 @@ Rules:
   path filter.
 -->
 
+## [5.9.0] - 2026-10-26
+### 🗂️ A new character-file reader for /swatch and /glamour
+- `/glamour` now opens a character file that only holds gear and has no appearance colors.
+- `/swatch` leaves out a lip color the file has switched off, and shows the lip blended over the skin only when the file's extra colors are on.
+- When a file doesn't say whether highlights, face paint or lip color are switched on, `/swatch` says some colors weren't matched instead of guessing.
+- `/swatch` and `/glamour` now say when a color, a piece of gear or a dye value in the file couldn't be read, instead of leaving it out silently.
+- A character file with damaged text is turned away as unreadable.
+
 ## [5.8.15] - 2026-10-16
 ### 🗂️ Clearer file checks for /swatch and /glamour
 - `/swatch` and `/glamour` say right away when the attachment isn't a .chara file, instead of trying to read it.

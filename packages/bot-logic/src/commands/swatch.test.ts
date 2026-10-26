@@ -3,7 +3,12 @@
  * fixture corpus (real parse rules, real palette sheets, real dye matching).
  */
 import { describe, it, expect, vi } from 'vitest';
-import { CharacterColorService, parseCharaFile, resolveCharaColors } from '@xivdyetools/core';
+import {
+  CharacterColorService,
+  parseCharaFile,
+  resolveCharaColors,
+  resolveCharaForTools,
+} from '@xivdyetools/core';
 import { generateSwatchCard } from '@xivdyetools/svg';
 import { executeSwatch, type SwatchInput } from './swatch.js';
 import { createTranslator } from '../i18n/index.js';
@@ -18,10 +23,16 @@ vi.mock('@xivdyetools/svg', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@xivdyetools/svg')>();
   return { ...actual, generateSwatchCard: vi.fn(actual.generateSwatchCard) };
 });
-// The same for the resolver, so a test can make the bot side of the read throw.
+// The same for the resolvers, so a test can make the bot side of the read throw.
+// The read goes through core's library-backed facade (Task 6); the legacy
+// resolver stays wrapped for the tests that compute expectations with it.
 vi.mock('@xivdyetools/core', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@xivdyetools/core')>();
-  return { ...actual, resolveCharaColors: vi.fn(actual.resolveCharaColors) };
+  return {
+    ...actual,
+    resolveCharaColors: vi.fn(actual.resolveCharaColors),
+    resolveCharaForTools: vi.fn(actual.resolveCharaForTools),
+  };
 });
 
 const FIXTURES: Record<string, string> = {
@@ -93,13 +104,15 @@ describe('executeSwatch', () => {
     expect(result.svgString).toContain('SLOT');
     expect(result.svgString).toContain('NEAREST DYE');
     // Heterochromia: split eyes carry an ·L/·R suffix on the slot LABEL (this
-    // fixture has 7 live slots, so the cap drops the two safest — the left
-    // eye among them)
+    // fixture has 6 live slots, so the cap drops the safest one)
     expect(result.svgString).toMatch(/·(L|R)</);
     const height = Number(/height="(\d+)"/.exec(result.svgString)?.[1]);
     expect(height).toBeLessThanOrEqual(350);
-    // The footer counts what parsed: 5 of 7
-    expect(result.svgString).toContain('nearest by ΔE2000 · 5 of 7 slots');
+    // The footer counts what parsed: 5 of 6. The export stores Mouth 2, whose
+    // lip-colour bit (0x80) is clear, so the library reads the lip as disabled
+    // (lipDisabled) — an intentional change from the legacy parser, which
+    // never read Mouth and counted 7 (xivcharakit integration register).
+    expect(result.svgString).toContain('nearest by ΔE2000 · 5 of 6 slots');
     // …and the embed names every dropped slot
     expect(result.embed.description).toMatch(/Dropped \(safest\)/);
     expect(result.embed.description).toContain('xivdyetools.app/swatch');
@@ -362,8 +375,14 @@ describe('executeSwatch', () => {
 });
 
 describe('the lip line', () => {
+  // The export stores Mouth 2 (lip-colour bit clear), which the library reads
+  // as a disabled lip; setting the bit (130) keeps the lip live, so these
+  // tests still pin the blend line. The legacy resolver never read Mouth, so
+  // its expectations below are the same for 2 and 130.
+  const LIP_ON = { ...parsedFixture('duskwight-heterochromia.chara'), Mouth: 130 };
+
   it('names the color the blend was made from: the creator swatch for an unedited lip', async () => {
-    const text = fixture('duskwight-heterochromia.chara');
+    const text = JSON.stringify(LIP_ON);
     const resolved = await resolveCharaColors(parseCharaFile(text), new CharacterColorService());
     const lip = resolved.slots.find((s) => s.slot === 'lip');
     // The file stores the shader color, the sheet holds the creator's: they differ,
@@ -387,10 +406,7 @@ describe('the lip line', () => {
    * lip-sheet entry.
    */
   it('names the file’s own color as raw once it won the verdict', async () => {
-    const text = JSON.stringify({
-      ...parsedFixture('duskwight-heterochromia.chara'),
-      MouthColor: '0, 0, 1, 0.6',
-    });
+    const text = JSON.stringify({ ...LIP_ON, MouthColor: '0, 0, 1, 0.6' });
     const resolved = await resolveCharaColors(parseCharaFile(text), new CharacterColorService());
     const lip = resolved.slots.find((s) => s.slot === 'lip');
     expect(lip?.verdict).toBe('offGrid');
@@ -486,9 +502,12 @@ describe('executeSwatch — a generation failure is logged (BUG-125)', () => {
    * the parser's reason quotes field values from the file.
    */
   it('logs the parse failure by class and code, never the file', async () => {
+    // A malformed colour no longer refuses the whole file (the library keeps
+    // it as an unresolved slot), so this uses a structural refusal: a
+    // duplicate key whose name and values carry the canary.
     const warn = vi.fn();
     const result = await executeSwatch({
-      fileText: JSON.stringify({ IsExtendedAppearanceValid: true, LeftEyeColor: 'Real Name' }),
+      fileText: '{"HairTone":10,"Real Name":"Real Name","Real Name":"Real Name"}',
       locale: 'en',
       logger: { warn },
     });
@@ -497,12 +516,12 @@ describe('executeSwatch — a generation failure is logged (BUG-125)', () => {
     if (result.ok) return;
     expect(result.error).toBe('PARSE_FAILED');
     const lines = loggedLines(warn);
-    expect(lines).toContain('[swatch] parse failed: AppError INVALID_INPUT');
+    expect(lines).toContainEqual(expect.stringMatching(/^\[swatch\] parse failed: \S+ DUPLICATE_KEY$/));
     for (const line of lines) expect(line).not.toContain('Real Name');
   });
 
   it('logs a bot-side failure inside the read, so it is not mistaken for a bad file', async () => {
-    vi.mocked(resolveCharaColors).mockImplementationOnce(() => {
+    vi.mocked(resolveCharaForTools).mockImplementationOnce(() => {
       throw new TypeError('Real Name');
     });
     const warn = vi.fn();

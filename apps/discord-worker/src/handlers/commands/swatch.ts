@@ -3,7 +3,7 @@
  *
  * The 4.x index/grid subcommands are replaced by a required `file:`
  * attachment (.chara). This worker DOES receive the file — it downloads the
- * attachment (size-capped), passes its text to bot-logic's executeSwatch
+ * attachment (size-capped), passes its bytes to bot-logic's executeSwatch
  * (core parse rules: key presence not TypeName, gamma on the floats, flag
  * gating, never Base64Image), and posts the rendered card. A file that fails
  * to parse is embed text in the reader's language, never a frame (since
@@ -97,7 +97,7 @@ async function processSwatchCommand(
   const t = createTranslator(locale);
 
   try {
-    const file = await downloadCharaAttachment(fileUrl, t);
+    const file = await downloadCharaAttachment(fileUrl, t, true);
     if (!file.ok) {
       markCommandOutcome(interaction, 'image_input');
       await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
@@ -105,7 +105,10 @@ async function processSwatchCommand(
       });
       return;
     }
+    // The bytes are what bot-logic reads (invalid UTF-8 is refused there,
+    // not re-encoded); the text stays for callers that read it
     input.fileText = file.text;
+    input.fileBytes = file.bytes;
   } catch (error) {
     // Only the CDN fetch and the capped read live in this try: a network
     // failure or timeout here is neither our renderer nor the user's file.

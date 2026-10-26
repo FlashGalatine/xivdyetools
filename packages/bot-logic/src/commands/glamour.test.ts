@@ -10,7 +10,7 @@ import { describe, it, expect, vi } from 'vitest';
 import {
   CHARA_WEAR_RACE_COLUMNS,
   formatCharaModelLabel,
-  resolveCharaColors,
+  resolveCharaForTools,
   type CharaGearModel,
 } from '@xivdyetools/core';
 import { AppError } from '@xivdyetools/types';
@@ -20,9 +20,10 @@ import { dyeService } from '../input-resolution.js';
 
 // A passthrough — every test reads with the real resolver unless one asks it
 // to throw once, so the bot side of the read can fail (as in swatch.test.ts).
+// The read goes through core's library-backed facade (Task 6).
 vi.mock('@xivdyetools/core', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@xivdyetools/core')>();
-  return { ...actual, resolveCharaColors: vi.fn(actual.resolveCharaColors) };
+  return { ...actual, resolveCharaForTools: vi.fn(actual.resolveCharaForTools) };
 });
 
 /** Stain IDs: Snow White 1, Wine Red 12, Dalamud Red 10, Coral Pink 13, Jet Black 102, Metallic Gold 113. */
@@ -924,7 +925,7 @@ describe('executeGlamour', () => {
     const loggedLines = (warn: ReturnType<typeof vi.fn>): string[] => warn.mock.calls.flat().map(String);
 
     it('logs a bot-side failure inside the read, so it is not mistaken for a bad file', async () => {
-      vi.mocked(resolveCharaColors).mockImplementationOnce(() => {
+      vi.mocked(resolveCharaForTools).mockImplementationOnce(() => {
         throw new TypeError('Real Name');
       });
       const warn = vi.fn();
@@ -937,9 +938,12 @@ describe('executeGlamour', () => {
     });
 
     it('logs the parser refusing the file by class and code, never the file', async () => {
+      // A malformed colour no longer refuses the whole file (the library keeps
+      // valid gear beside it), so this uses a structural refusal: a duplicate
+      // key whose name and values carry the canary.
       const warn = vi.fn();
       const i = input({
-        fileText: JSON.stringify({ IsExtendedAppearanceValid: true, LeftEyeColor: 'Real Name' }),
+        fileText: '{"Body":{"ModelBase":812,"ModelVariant":2},"Real Name":"Real Name","Real Name":"Real Name"}',
         logger: { warn },
       });
       const result = await executeGlamour(i);
@@ -947,12 +951,12 @@ describe('executeGlamour', () => {
       expect(result).toMatchObject({ ok: false, error: 'PARSE_FAILED' });
       expect(i.resolve).not.toHaveBeenCalled();
       const lines = loggedLines(warn);
-      expect(lines).toContain('[glamour] parse failed: AppError INVALID_INPUT');
+      expect(lines).toContainEqual(expect.stringMatching(/^\[glamour\] parse failed: \S+ DUPLICATE_KEY$/));
       for (const line of lines) expect(line).not.toContain('Real Name');
     });
 
     it('still answers without a logger', async () => {
-      vi.mocked(resolveCharaColors).mockImplementationOnce(() => {
+      vi.mocked(resolveCharaForTools).mockImplementationOnce(() => {
         throw new TypeError('Real Name');
       });
       const result = await executeGlamour(input());

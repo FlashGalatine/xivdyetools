@@ -1,13 +1,20 @@
 /**
- * What `/swatch` and `/glamour` share about a `.chara` file: the palette-sheet
- * service its colours resolve against, and the identifier line a card prints
- * in place of a name (producer + tribe + gender — never the nickname).
+ * What `/swatch` and `/glamour` share about a `.chara` file: the read through
+ * core's library-backed facade, the palette-sheet service its colours resolve
+ * against, and the identifier line a card prints in place of a name
+ * (producer + tribe + gender — never the nickname).
  *
  * @module commands/chara-identity
  */
 
-import { CharacterColorService } from '@xivdyetools/core';
+import {
+  CharacterColorService,
+  inspectCharaForTools,
+  resolveCharaForTools,
+  type ImportedCharaCharacter,
+} from '@xivdyetools/core';
 import type { ClanKey, SubRace } from '@xivdyetools/types';
+import { dyeService } from '../input-resolution.js';
 import { getLocalizedClan, type LocaleCode } from '../localization.js';
 
 /**
@@ -20,6 +27,28 @@ let characterColors: CharacterColorService | null = null;
 export function getCharacterColors(): CharacterColorService {
   characterColors ??= new CharacterColorService();
   return characterColors;
+}
+
+/** The attachment as a command receives it: the capped bytes, its decoded text, or both. */
+export interface CharaFileSource {
+  fileText?: string;
+  fileBytes?: Uint8Array;
+}
+
+/**
+ * Read a `.chara` file through core's facade: `inspectCharaForTools` (the
+ * library reader, 8 KiB cap) → `resolveCharaForTools` (the host palettes and
+ * the bot's own dye table). The bytes win over the text, so invalid UTF-8 is
+ * refused by the reader (`INVALID_UTF8`) instead of being re-encoded after a
+ * non-fatal decode. Throws on a refusal; the caller logs `failureKind` only.
+ * With neither input it throws a `NO_INPUT` error before reading anything.
+ */
+export async function readCharaForTools(file: CharaFileSource): Promise<ImportedCharaCharacter> {
+  const source = file.fileBytes ?? file.fileText;
+  if (source === undefined) {
+    throw Object.assign(new Error('no .chara input'), { code: 'NO_INPUT' });
+  }
+  return resolveCharaForTools(inspectCharaForTools(source), getCharacterColors(), dyeService);
 }
 
 /**

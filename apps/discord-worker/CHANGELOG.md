@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.9.0] - 2026-10-26
+
+`/swatch` and `/glamour` read the attachment through core 5.15.0's `xivcharakit` facade, with
+bot-logic 4.11.0. MINOR: user-visible reader changes, no command shape change (the production
+deploy's `register-commands` run re-registers an unchanged roster).
+
+### Changed
+
+- **The handlers pass the attachment's capped bytes to bot-logic** (`fileBytes`, next to the decoded
+  `fileText`), so invalid UTF-8 is refused as a parse failure instead of reading as U+FFFD.
+  `readBytesCapped` is the existing capped read without the decode (`readTextCapped` now decodes its
+  result), and `downloadCharaAttachment(url, t, true)` returns the bytes beside the text. The
+  extension, CDN host, redirect, timeout, declared-size and streamed-byte checks are unchanged; the
+  declared `Content-Length` boundary (8,192 accepted, 8,193 refused) is now pinned by a test.
+- **What a player sees** (see bot-logic 4.11.0): `/glamour` opens a file that holds only gear;
+  `/swatch` drops a lip color the file switches off, shows the lip's live blend only when the file's
+  extra colors are on, and says when a color is not matched because the file does not say it is
+  switched on or holds a value it cannot use; `/glamour` says when a piece or a dye value was left out.
+- Bundle: 2,732.6 KiB gzip against the 3,072 KiB cap (88.9 %), 15.4 KiB above the 5.8.9 measurement. No
+  default palette provider, `xivapi.com` string or Node built-in import is in the bundle (wrangler
+  dry run; workerd itself was not run).
+
 ## [5.8.15] - 2026-10-16
 
 FINDING-003 and the 8 KiB cap of the 2026-10-15 `.chara` import review

@@ -13,7 +13,7 @@
 
 import { MAX_CHARA_FILE_BYTES } from '@xivdyetools/core';
 import type { Translator } from '@xivdyetools/bot-logic/i18n';
-import { readTextCapped } from './read-text-capped.js';
+import { readBytesCapped } from './read-text-capped.js';
 import type { DiscordInteraction } from '../types/env.js';
 
 /** The cap as the refusal states it ("larger than 8 KB"). */
@@ -89,18 +89,26 @@ export function checkCharaAttachment(
   return { ok: true, url: attachment.url };
 }
 
+/** A downloaded attachment: its decoded text, and with `withBytes` the bytes as received. */
+type DownloadedChara<B extends boolean> = B extends true
+  ? { ok: true; text: string; bytes: Uint8Array }
+  : { ok: true; text: string };
+
 /**
  * Download the attachment's text: bounded wait, no redirect following,
- * bounded read. `manual`, NOT `error`: workerd implements only follow/manual
+ * bounded read. With `withBytes` the capped bytes come back too, undecoded,
+ * so the `.chara` reader sees invalid UTF-8 instead of the U+FFFD the
+ * non-fatal decode puts in its place. `manual`, NOT `error`: workerd implements only follow/manual
  * and throws on `error` (which broke every /swatch download until
  * 2026-08-29). A redirect surfaces as a 3xx response, refused by the `!ok`
  * check. A refused download carries the localized reply; a network failure
  * or timeout throws, for the caller to report as its own error.
  */
-export async function downloadCharaAttachment(
+export async function downloadCharaAttachment<B extends boolean = false>(
   url: string,
-  t: Translator
-): Promise<{ ok: true; text: string } | { ok: false; message: string }> {
+  t: Translator,
+  withBytes?: B
+): Promise<DownloadedChara<B> | { ok: false; message: string }> {
   const response = await fetch(url, {
     redirect: 'manual',
     signal: AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS),
@@ -110,9 +118,10 @@ export async function downloadCharaAttachment(
     return refusal(t, 'card.charaFileReason.downloadFailed', { status: response.status });
   }
   // The reported size can be absent or wrong: count the bytes that arrive
-  const text = await readTextCapped(response, MAX_CHARA_FILE_BYTES);
-  if (text === null) {
+  const bytes = await readBytesCapped(response, MAX_CHARA_FILE_BYTES);
+  if (bytes === null) {
     return refusal(t, 'card.charaFileReason.tooLarge', { kb: MAX_FILE_KB });
   }
-  return { ok: true, text };
+  const text = new TextDecoder().decode(bytes);
+  return (withBytes ? { ok: true, text, bytes } : { ok: true, text }) as DownloadedChara<B>;
 }

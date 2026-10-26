@@ -609,6 +609,8 @@
     },
     "swatchTitle": "Nuancier du personnage",
     "swatchNoSlots": "Aucun emplacement de couleur actif dans ce fichier.",
+    "swatchActivityUnknown": "Certaines couleurs n’ont pas été comparées : le fichier n’indique pas si elles sont activées.",
+    "swatchUnusable": "Certaines couleurs n’ont pas été comparées : le fichier contient une valeur invalide, ou il lui manque le clan ou le genre nécessaire.",
     "swatchSlotMissing": "\"{slot}\" n’est pas un emplacement actif dans ce fichier.",
     "swatchSlotName": {
       "skin": "Peau",
@@ -656,6 +658,8 @@
     "glamourCompany": "Nécessite la bonne Grande Compagnie : {list}",
     "glamourNoItemName": "Modèle {key}",
     "glamourNoGear": "Ce fichier ne porte aucun équipement.",
+    "glamourGearSkipped": "Une partie de l’équipement de ce fichier est incomplète ou invalide et n’est pas listée.",
+    "glamourDyeInvalid": "Certaines valeurs de teinture de ce fichier sont invalides et ne sont pas affichées — cela ne veut pas dire que la pièce n’est pas teinte.",
     "glamourResolveFailed": "Impossible de consulter les objets pour le moment. Réessayez dans une minute.",
     "glamourResolveBusy": "La recherche d’objets est très sollicitée pour le moment. Réessayez dans une minute.",
     "glamourManual": "En savoir plus sur les fichiers de personnage :",
