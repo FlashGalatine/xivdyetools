@@ -6,6 +6,10 @@
  * carry core's color, localization and dye modules, which the main barrel pulls in. The same
  * functions are exported from `@xivdyetools/core`.
  *
+ * @entrypoint Reached only through the package's "./chara" exports row, which a relative-import
+ * scan cannot follow; the web app's inspection worker imports it by that package specifier, and
+ * chara-entry.test.ts pins what it may pull in.
+ *
  * @module chara
  */
 
