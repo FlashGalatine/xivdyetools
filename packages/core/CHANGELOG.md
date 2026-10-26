@@ -29,6 +29,14 @@ are unchanged. Nothing in the apps consumes the new entry points yet.
   raw value; and `resolveCharaForTools` now also takes a **`CharaPaletteProvider`** (the library's
   `PaletteProvider`, re-exported as a type) in place of the `CharacterColorService`, so a worker can ask the
   page for each color instead of loading the palette data itself.
+- **`resolveCharaWithProvider(inspection, provider, dyes?)`**: the provider-based, palette-free entry the
+  web app's inspection worker uses. It does everything `resolveCharaForTools` does after choosing a
+  provider, and its module (`chara-library.ts`) has no runtime import path to the palette bridge, the
+  shader tables or `CharacterColorService`, so a consumer that brings its own provider bundles none of
+  core's shader-table chunks (a dynamic `import()` would not have helped: bundlers emit a chunk for every
+  reachable dynamic import target). `resolveCharaForTools` now lives in its own module
+  (`chara-library-resolve.ts`), bridges the service there and delegates; its signature and behavior are
+  unchanged. A test in `chara-library.test.ts` walks the import graph to hold the line.
 
 ### Notes
 

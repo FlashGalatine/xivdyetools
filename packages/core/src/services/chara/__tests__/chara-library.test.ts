@@ -1,6 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { CharacterColorService } from '../../CharacterColorService.js';
-import { inspectCharaForTools, resolveCharaForTools } from '../chara-library.js';
+import { inspectCharaForTools, resolveCharaWithProvider } from '../chara-library.js';
+import { resolveCharaForTools } from '../chara-library-resolve.js';
+import { createCharaPaletteProvider } from '../chara-palette-provider.js';
 import type {
   CharaPaletteProvider,
   ImportedCharaCharacter,
@@ -38,6 +43,10 @@ describe('public surface', () => {
     expect(typeof core.createCharaPaletteProvider).toBe('function');
     expect(typeof core.parseCharaFile).toBe('function');
     expect(typeof core.resolveCharaColors).toBe('function');
+  });
+
+  it('exports the provider-based entry from the root barrel', () => {
+    expect(typeof core.resolveCharaWithProvider).toBe('function');
   });
 });
 
@@ -599,14 +608,23 @@ describe('indexGap (the unused lip / face-paint 96-127 gap, COL-09/10/35)', () =
   });
 });
 
-describe('resolveCharaForTools with a palette provider', () => {
+const echo = (request: PaletteRequest) => ({
+  ...request,
+  hex: '#112233',
+  rgb: [17, 34, 51] as const,
+  datasetVersion: 'test',
+});
+
+type ProviderEntry = (
+  inspection: CharaInspection,
+  provider: CharaPaletteProvider,
+) => Promise<ImportedCharaCharacter>;
+
+describe.each<[string, ProviderEntry]>([
+  ['resolveCharaForTools', resolveCharaForTools],
+  ['resolveCharaWithProvider', resolveCharaWithProvider],
+])('%s with a palette provider', (_name, resolveWith) => {
   const identity = { Tribe: 'Midlander', Gender: 'Masculine' };
-  const echo = (request: PaletteRequest) => ({
-    ...request,
-    hex: '#112233',
-    rgb: [17, 34, 51] as const,
-    datasetVersion: 'test',
-  });
 
   it('uses the provider directly and leaves the CharacterColorService path untouched', async () => {
     const getColor = vi.fn(async (request: PaletteRequest) => echo(request));
@@ -634,7 +652,7 @@ describe('resolveCharaForTools with a palette provider', () => {
           Mouth: 130,
         }),
       );
-      const c = await resolveCharaForTools(inspection, provider);
+      const c = await resolveWith(inspection, provider);
       expect(getColor).toHaveBeenCalledWith(
         expect.objectContaining({
           table: 'creator',
@@ -667,7 +685,7 @@ describe('resolveCharaForTools with a palette provider', () => {
   it('a provider that returns null yields the library unresolved states', async () => {
     const getColor = vi.fn(async () => null);
     const inspection = inspectCharaForTools(JSON.stringify({ ...identity, HairTone: 10 }));
-    const c = await resolveCharaForTools(inspection, { getColor });
+    const c = await resolveWith(inspection, { getColor });
     expect(getColor).toHaveBeenCalled();
     expect(c.issues.some((i) => i.code === 'PALETTE_UNAVAILABLE')).toBe(false);
     expect(slot(c, 'hair')).toMatchObject({
@@ -684,7 +702,7 @@ describe('resolveCharaForTools with a palette provider', () => {
       throw new Error('page went away');
     });
     const inspection = inspectCharaForTools(JSON.stringify({ ...identity, HairTone: 10 }));
-    const c = await resolveCharaForTools(inspection, { getColor });
+    const c = await resolveWith(inspection, { getColor });
     expect(getColor).toHaveBeenCalled();
     expect(c.issues.some((i) => i.code === 'PALETTE_UNAVAILABLE' && i.path[0] === 'HairTone')).toBe(
       true,
@@ -699,19 +717,192 @@ describe('resolveCharaForTools with a palette provider', () => {
       index: request.index + 1,
     }));
     const inspection = inspectCharaForTools(JSON.stringify({ ...identity, HairTone: 10 }));
-    const c = await resolveCharaForTools(inspection, { getColor });
+    const c = await resolveWith(inspection, { getColor });
     expect(getColor).toHaveBeenCalled();
     expect(
       c.issues.some((i) => i.code === 'INVALID_PALETTE_RESPONSE' && i.path[0] === 'HairTone'),
     ).toBe(true);
     expect(slot(c, 'hair')).toMatchObject({ displayHex: null, matchHex: null });
   });
+});
 
-  it('accepts only a service or a provider (compile-time)', () => {
+describe('entry-point signatures (compile-time)', () => {
+  it('resolveCharaForTools accepts only a service or a provider', () => {
     const typeOnly = (inspection: CharaInspection): void => {
       // @ts-expect-error a plain object is neither a CharacterColorService nor a palette provider
       void resolveCharaForTools(inspection, {});
     };
     expect(typeof typeOnly).toBe('function');
+  });
+
+  it('resolveCharaWithProvider accepts only a provider, never the service', () => {
+    const typeOnly = (inspection: CharaInspection): void => {
+      // @ts-expect-error the service has no getColor: only resolveCharaForTools bridges it
+      void resolveCharaWithProvider(inspection, colors);
+      // @ts-expect-error a plain object is not a palette provider
+      void resolveCharaWithProvider(inspection, {});
+    };
+    expect(typeof typeOnly).toBe('function');
+  });
+});
+
+describe('resolveCharaForTools delegates to resolveCharaWithProvider', () => {
+  const doc = {
+    Tribe: 'Midlander',
+    Gender: 'Masculine',
+    HairTone: 10,
+    LEyeColor: 4,
+    REyeColor: 4,
+    LipsToneFurPattern: 5,
+    Mouth: 130,
+    FacePaint: 129,
+    FacePaintColor: 100,
+    Body: { ModelBase: 1, ModelVariant: 1, DyeId: 5, DyeId2: 99 },
+    Bogus: 1,
+  };
+
+  it('bridges a CharacterColorService exactly as createCharaPaletteProvider does', async () => {
+    const inspection = inspectCharaForTools(JSON.stringify(doc));
+    const viaTools = await resolveCharaForTools(inspection, colors, dyes);
+    const direct = await resolveCharaWithProvider(
+      inspection,
+      createCharaPaletteProvider(colors),
+      dyes,
+    );
+    expect(viaTools).toEqual(direct);
+    // the comparison is not vacuous: the bridged service really resolved colors
+    expect(slot(viaTools, 'hair').displayHex).not.toBeNull();
+    expect(slot(viaTools, 'facePaint').indexGap).toBe(true);
+    expect(viaTools.gearDyes.map((d) => d.stainId)).toEqual([5, 99]);
+  });
+
+  it('hands a provider through unchanged: same requests, same projection', async () => {
+    const inspection = inspectCharaForTools(JSON.stringify(doc));
+    const viaToolsColor = vi.fn(async (request: PaletteRequest) => echo(request));
+    const directColor = vi.fn(async (request: PaletteRequest) => echo(request));
+    const viaTools = await resolveCharaForTools(inspection, { getColor: viaToolsColor }, dyes);
+    const direct = await resolveCharaWithProvider(inspection, { getColor: directColor }, dyes);
+    expect(viaToolsColor).toHaveBeenCalled();
+    expect(viaToolsColor.mock.calls).toEqual(directColor.mock.calls);
+    expect(viaTools).toEqual(direct);
+    expect(slot(viaTools, 'hair').displayHex).toBe('#112233');
+  });
+
+  it('defaults the dye lookup the same way when none is given', async () => {
+    const inspection = inspectCharaForTools(JSON.stringify(doc));
+    const getColor = async (request: PaletteRequest) => echo(request);
+    const viaTools = await resolveCharaForTools(inspection, { getColor });
+    const direct = await resolveCharaWithProvider(inspection, { getColor });
+    expect(viaTools).toEqual(direct);
+    expect(direct.gearDyes.every((d) => d.dye === null)).toBe(true);
+  });
+});
+
+/**
+ * The web app's inspection worker imports only `inspectCharaForTools` and `resolveCharaWithProvider`
+ * and passes its own provider. Any runtime import path from `chara-library.ts` to the host palette
+ * bridge makes a bundler emit core's shader-table chunks into that worker's build (never fetched,
+ * but shipped and counted against the bundle budget). A dynamic `import()` would not help: bundlers
+ * emit a chunk for every reachable dynamic import target. Only `import type` is erased under
+ * `verbatimModuleSyntax`; `import { type X }` keeps a side-effect import, so it counts as runtime.
+ */
+describe('chara-library import graph', () => {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const charaDir = resolve(here, '..');
+  const libraryFile = resolve(charaDir, 'chara-library.ts');
+  const forbiddenFiles = [
+    resolve(charaDir, 'chara-palette-provider.ts'),
+    resolve(charaDir, 'chara-shader-colors.ts'),
+    resolve(charaDir, '../CharacterColorService.ts'),
+  ];
+
+  function stripComments(source: string): string {
+    return source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:\\])\/\/.*$/gm, '$1');
+  }
+
+  /** Every import / re-export specifier, flagged type-only when it is `import type` / `export type`. */
+  function importSpecifiers(source: string): { specifier: string; typeOnly: boolean }[] {
+    const code = stripComments(source);
+    const found: { specifier: string; typeOnly: boolean }[] = [];
+    const staticImport = /\b(?:import|export)\s+(type\s+)?(?:[^'";]*?\s+from\s+)?['"]([^'"]+)['"]/g;
+    for (const match of code.matchAll(staticImport)) {
+      found.push({ specifier: match[2], typeOnly: match[1] !== undefined });
+    }
+    for (const match of code.matchAll(/\bimport\s*\(\s*['"]([^'"]+)['"]\s*\)/g)) {
+      found.push({ specifier: match[1], typeOnly: false });
+    }
+    return found;
+  }
+
+  function resolveLocal(fromFile: string, specifier: string): string | null {
+    if (!specifier.startsWith('.')) return null;
+    const base = resolve(dirname(fromFile), specifier);
+    for (const candidate of [base.replace(/\.js$/, '.ts'), base, `${base}/index.ts`]) {
+      if (candidate.endsWith('.ts') && existsSync(candidate)) return candidate;
+    }
+    return null;
+  }
+
+  /** Local `.ts` modules reachable from `entry` through runtime (non-type-only) imports. */
+  function runtimeClosure(entry: string): Set<string> {
+    const seen = new Set<string>([entry]);
+    const queue = [entry];
+    while (queue.length > 0) {
+      const file = queue.pop()!;
+      for (const { specifier, typeOnly } of importSpecifiers(readFileSync(file, 'utf8'))) {
+        if (typeOnly) continue;
+        const target = resolveLocal(file, specifier);
+        if (target && !seen.has(target)) {
+          seen.add(target);
+          queue.push(target);
+        }
+      }
+    }
+    return seen;
+  }
+
+  it('the specifier scan sees runtime, type-only and dynamic imports (control)', () => {
+    const scanned = importSpecifiers(
+      [
+        "import { a, type B } from './runtime-named.js';",
+        "import type { C } from './type-only.js';",
+        "import './side-effect.js';",
+        "export { d } from './re-export.js';",
+        "export type { E } from './type-re-export.js';",
+        "const f = () => import('./dynamic.js');",
+        "// import { g } from './commented-out.js';",
+        "/* import { h } from './block-comment.js'; */",
+      ].join('\n'),
+    );
+    expect(scanned).toEqual([
+      { specifier: './runtime-named.js', typeOnly: false },
+      { specifier: './type-only.js', typeOnly: true },
+      { specifier: './side-effect.js', typeOnly: false },
+      { specifier: './re-export.js', typeOnly: false },
+      { specifier: './type-re-export.js', typeOnly: true },
+      { specifier: './dynamic.js', typeOnly: false },
+    ]);
+  });
+
+  it('the closure walk follows runtime imports to the shader tables (control)', () => {
+    const closure = runtimeClosure(resolve(charaDir, 'chara-palette-provider.ts'));
+    expect(closure.has(resolve(charaDir, 'chara-shader-colors.ts'))).toBe(true);
+  });
+
+  it('chara-library.ts imports the palette bridge, shader tables and service only as types', () => {
+    const offending = importSpecifiers(readFileSync(libraryFile, 'utf8'))
+      .filter(({ typeOnly }) => !typeOnly)
+      .map(({ specifier }) => specifier.replace(/\.js$/, ''))
+      .filter((specifier) =>
+        ['./chara-palette-provider', './chara-shader-colors', '../CharacterColorService'].includes(
+          specifier,
+        ),
+      );
+    expect(offending).toEqual([]);
+  });
+
+  it('no runtime import path leads from chara-library.ts to them', () => {
+    const closure = runtimeClosure(libraryFile);
+    expect(forbiddenFiles.filter((file) => closure.has(file))).toEqual([]);
   });
 });

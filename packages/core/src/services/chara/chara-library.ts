@@ -21,11 +21,9 @@ import {
   type AppearanceSlotInspection,
 } from 'xivcharakit/appearance';
 import type { Gender, Race, SubRace } from '@xivdyetools/types';
-import type { CharacterColorService } from '../CharacterColorService.js';
 import { MAX_CHARA_FILE_BYTES } from './chara-parser.js';
 import type { CharaGearModel } from './chara-models.js';
 import type { StainIdLookup, ResolvedGearDye } from './chara-resolver.js';
-import { createCharaPaletteProvider } from './chara-palette-provider.js';
 import type {
   CharaPaletteProvider,
   CharaImportIssue,
@@ -188,12 +186,6 @@ function isIndexGap(slot: AppearanceSlotInspection): boolean {
   return typeof n === 'number' && Number.isFinite(n) && n >= 96 && n <= 127;
 }
 
-function isPaletteProvider(
-  colors: CharacterColorService | CharaPaletteProvider,
-): colors is CharaPaletteProvider {
-  return typeof (colors as Partial<CharaPaletteProvider>).getColor === 'function';
-}
-
 function matchHexFor(slot: {
   active: boolean | null;
   interpretation: string;
@@ -205,20 +197,21 @@ function matchHexFor(slot: {
 }
 
 /**
- * Interpret an inspection against the host palettes and project it for the application. Consumes
+ * Interpret an inspection against a palette provider and project it for the application. Consumes
  * only reader-produced inspections; retains no `document`, `fields`, `raw` or stored extended data.
  *
- * `colors` is either the host `CharacterColorService` (bridged by `createCharaPaletteProvider`) or a
- * ready palette provider (recognized by its `getColor` function), which is used as is.
+ * This is the palette-free entry: this module has no runtime import path to the host palette bridge
+ * (`chara-palette-provider.ts`), the shader tables or `CharacterColorService`, so a consumer that
+ * brings its own provider (the web app's inspection worker asks the page for each color) bundles
+ * none of that data. `resolveCharaForTools` (`chara-library-resolve.ts`) is the convenience entry
+ * that also accepts the service; the import-graph test in `chara-library.test.ts` holds the line.
  */
-export async function resolveCharaForTools(
+export async function resolveCharaWithProvider(
   inspection: CharaInspection,
-  colors: CharacterColorService | CharaPaletteProvider,
+  provider: CharaPaletteProvider,
   dyes?: StainIdLookup,
 ): Promise<ImportedCharaCharacter> {
-  const appearance = await resolveAppearance(inspection, {
-    palettes: isPaletteProvider(colors) ? colors : createCharaPaletteProvider(colors),
-  });
+  const appearance = await resolveAppearance(inspection, { palettes: provider });
 
   const slots: ImportedCharaSlot[] = SLOT_ORDER.map((name) => {
     const source = appearance.slots[name];

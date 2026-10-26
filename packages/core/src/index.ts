@@ -272,8 +272,9 @@ export type {
 // xivcharakit-backed import: bounded reader, host-palette interpretation, application projection
 export {
   /** @public */ inspectCharaForTools,
-  /** @public */ resolveCharaForTools,
+  /** @public */ resolveCharaWithProvider,
 } from './services/chara/chara-library.js';
+export { /** @public */ resolveCharaForTools } from './services/chara/chara-library-resolve.js';
 export { /** @public */ createCharaPaletteProvider } from './services/chara/chara-palette-provider.js';
 export type {
   /** @public */ ImportedCharaCharacter,
