@@ -7,9 +7,9 @@
 > **Versions below match each project's `package.json` in this checkout** and are checked
 > against it by `pnpm docs:check-versions` (`scripts/check-doc-versions.ts`, run in CI), so
 > this table cannot silently drift again. The 5.0 wave merged to `main` on 2026-08-28
-> (PR #123). As of 2026-10-16 (checked against the registry API), every published
-> package here is at parity with npm except `@xivdyetools/core` 5.14.0 (npm 5.12.0; 5.13.0 is
-> PR #315's, published after it merges) and `@xivdyetools/bot-logic` 4.10.0 (npm 4.9.0), each
+> (PR #123). As of 2026-10-26 (checked against the registry API), every published
+> package here is at parity with npm except `@xivdyetools/core` 5.15.0 (npm 5.12.0; 5.13.0 and
+> 5.14.0 were never published, so 5.15.0 is its next publish) and `@xivdyetools/bot-logic` 4.10.0 (npm 4.9.0), each
 > published right after the change that bumped it merges;
 > Actions → **"Publish Packages to npm"** publishes whatever differs from the registry, so check
 > there rather than trusting this sentence to stay current. Merging to
