@@ -13,9 +13,11 @@
  * per-record import catch, and the raw `JSON.parse` failure).
  *
  * Real paths only: the real logger (the global setup mock is lifted below),
- * the real CollectionService on jsdom's localStorage, the real loader and
- * core parser, and the real chara-sheet / glamour-block saves. The only mock
- * is the equipment resolve round-trip, so nothing reaches the network.
+ * the real CollectionService on jsdom's localStorage, the real loader, core's
+ * xivcharakit reader and the worker's own handler (run in-thread by setup.ts,
+ * since jsdom has no Worker), and the real chara-sheet / glamour-block saves.
+ * The equipment resolve round-trip is mocked, so nothing reaches the network,
+ * and a few loader cases force one inspection to fail.
  *
  * Capture is both channels, serialised before searching: every argument handed
  * to the app logger (whatever the mode then emits) and every console method
@@ -33,11 +35,11 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 // the real one so the dev/prod gates and the console output are the shipped ones.
 vi.unmock('@shared/logger');
 
-import { parseCharaFile } from '@xivdyetools/core';
 import { logger, __setTestEnvironment } from '@shared/logger';
 import { CollectionService, LanguageService, ToastService } from '@services/index';
 import { CharaSessionService } from '@services/chara-session-service';
 import { loadCharaFile, type CharaLoadResult } from '@services/chara-file-loader';
+import { CharaInspectionError, inspectCharaBytes } from '@services/chara-inspection-service';
 import { dyeService } from '@services/dye-service-wrapper';
 import { saveCharacterColors } from '../chara-sheet';
 import { GlamourBlock } from '../glamour-block';
@@ -162,11 +164,7 @@ const GLAMOUR_FIXTURE = {
 };
 
 function charaFile(text: string, fileName: string): File {
-  const file = new File([text], fileName, { type: 'application/json' });
-  if (typeof (file as Blob).text !== 'function') {
-    (file as unknown as { text: () => Promise<string> }).text = () => Promise.resolve(text);
-  }
-  return file;
+  return new File([text], fileName, { type: 'application/json' });
 }
 
 async function load(fixture: object, fileName: string): Promise<CharaLoadResult> {
@@ -606,27 +604,71 @@ describe.each(MODES)('imported labels stay out of logs — $mode logging', ({ en
 
     it('a read failure does not log the raw exception', async () => {
       const file = charaFile('{}', 'unreadable.chara');
-      const fail = (): Promise<never> =>
-        Promise.reject(new Error(`stale handle ${RAW_ERROR_CANARY}`));
-      Object.defineProperty(file, 'text', { value: fail });
-      Object.defineProperty(file, 'arrayBuffer', { value: fail });
+      // The loader reads through a capped slice; its read is what fails.
+      Object.defineProperty(file, 'slice', {
+        value: () => ({
+          arrayBuffer: (): Promise<never> =>
+            Promise.reject(new Error(`stale handle ${RAW_ERROR_CANARY}`)),
+        }),
+      });
 
       const result = await loadCharaFile(file);
 
-      expect(result).toMatchObject({ ok: false, error: 'failed' });
+      expect(result).toEqual({ ok: false, error: 'unreadable' });
       expect(leaksOf(RAW_ERROR_CANARY)).toEqual([]);
     });
 
-    it('a parse failure whose message quotes a field value does not log it', async () => {
-      const fixture = { ...SHEET_FIXTURE, Tribe: RAW_ERROR_CANARY };
-      // Harness check: core's error really does quote the value.
-      expect(() => parseCharaFile(JSON.stringify(fixture))).toThrow(RAW_ERROR_CANARY);
+    // The legacy parser refused a file with an unrecognized Tribe and quoted the value in its
+    // message. The library reads it as an unsupported field instead: the file loads, the identity
+    // stays unknown, and the value appears in no log and nowhere in the session.
+    it('a file with an unrecognized Tribe loads, and the value goes nowhere', async () => {
+      const result = await load({ ...SHEET_FIXTURE, Tribe: RAW_ERROR_CANARY }, 'odd-tribe.chara');
 
-      const result = await load(fixture, 'bad-tribe.chara');
-
-      expect(result).toMatchObject({ ok: false, error: 'failed' });
+      expect(result).toEqual({ ok: true });
+      const session = CharaSessionService.getSession()!;
+      expect(session.resolved.tribe).toBeNull();
+      expect(JSON.stringify(session)).not.toContain(RAW_ERROR_CANARY);
       expect(leaksOf(RAW_ERROR_CANARY)).toEqual([]);
     });
+
+    it('a structurally refused file is unreadable, and its contents go nowhere', async () => {
+      const unterminated = `{"Nickname":"${NICK_CANARY}","Tribe":"${RAW_ERROR_CANARY}"`;
+
+      const result = await loadCharaFile(charaFile(unterminated, `${FILE_CANARY}.chara`));
+
+      expect(result).toEqual({ ok: false, error: 'unreadable' });
+      expect(CharaSessionService.getSession()).toBeNull();
+      expect(leaksOf(RAW_ERROR_CANARY, NICK_CANARY, FILE_CANARY)).toEqual([]);
+    });
+
+    it('an inspection that throws a raw exception is workerFailed, and its text goes nowhere', async () => {
+      vi.mocked(inspectCharaBytes).mockRejectedValueOnce(
+        new Error(`worker exploded ${RAW_ERROR_CANARY} ${NICK_CANARY}`)
+      );
+
+      const result = await load(
+        { ...SHEET_FIXTURE, Nickname: NICK_CANARY },
+        `${FILE_CANARY}.chara`
+      );
+
+      expect(result).toEqual({ ok: false, error: 'workerFailed' });
+      expect(leaksOf(RAW_ERROR_CANARY, NICK_CANARY, FILE_CANARY)).toEqual([]);
+    });
+
+    it.each(['workerFailed', 'timedOut'] as const)(
+      'an inspection that fails %s logs no label',
+      async (code) => {
+        vi.mocked(inspectCharaBytes).mockRejectedValueOnce(new CharaInspectionError(code));
+
+        const result = await load(
+          { ...SHEET_FIXTURE, Nickname: NICK_CANARY },
+          `${FILE_CANARY}.chara`
+        );
+
+        expect(result).toEqual({ ok: false, error: code });
+        expect(leaksOf(NICK_CANARY, FILE_CANARY)).toEqual([]);
+      }
+    );
   });
 });
 

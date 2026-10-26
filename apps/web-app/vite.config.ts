@@ -50,6 +50,16 @@ export default defineConfig({
       },
     },
   },
+  worker: {
+    format: 'es',
+    // Vite passes build.minify ('esbuild') to the page bundle only; a worker bundle is emitted
+    // unminified unless its own output asks for it (the .chara inspection worker, measured).
+    rolldownOptions: {
+      output: {
+        minify: true,
+      },
+    },
+  },
   server: {
     port: 5173,
     open: true,

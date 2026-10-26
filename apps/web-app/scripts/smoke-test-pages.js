@@ -1,7 +1,7 @@
 /**
  * Smoke-test a Cloudflare Pages deployment end to end.
  *
- * Runs after `pages deploy` in both web-app workflows. Three phases, each
+ * Runs after `pages deploy` in both web-app workflows. Four phases, each
  * guarding a failure mode the others cannot see:
  *
  *   1. The deployment alias returns 2xx           -> this build serves at all
@@ -10,6 +10,10 @@
  *        - x-robots-tag matches the environment   -> beta hidden, production not
  *        - the security headers are all present   -> CSP (with frame-ancestors),
  *          X-Frame-Options, HSTS and Permissions-Policy, in both modes
+ *   4. /licenses/xivcharakit.txt on the custom domain serves the notice text as
+ *      text/plain                                 -> the .chara reader's license
+ *          shipped (checked by body: _redirects turns a missing file into a 200
+ *          carrying index.html)
  *
  * Phase 2 exists to make phase 3 trustworthy. A Pages custom domain is a mutable
  * alias that keeps serving the PREVIOUS deployment until propagation finishes, so
@@ -42,6 +46,18 @@ export const REQUIRED_SECURITY_HEADERS = [
   'strict-transport-security',
   'permissions-policy',
 ];
+
+/**
+ * The .chara reader's license notice (public/licenses/xivcharakit.txt, written by
+ * scripts/copy-chara-notices.mjs). public/_redirects answers EVERY unknown path
+ * with index.html and a 200, so a missing file still "returns 2xx": only the
+ * served body proves the notice shipped. The markers are the MIT grant and the
+ * heading of the package's THIRD_PARTY_NOTICES.md, both copied verbatim.
+ */
+export const READER_NOTICE = {
+  path: '/licenses/xivcharakit.txt',
+  markers: ['Permission is hereby granted', '# Third-party notices'],
+};
 
 // `frame-ancestors` as a directive name: at the start of the policy or right after
 // a `;`. A bare substring test would accept it inside another directive's value.
@@ -115,6 +131,9 @@ const DELAY_MS = 5000;
 // CONVERGE_ATTEMPTS attempts sleep between attempts, not after each one, so the
 // budget is (CONVERGE_ATTEMPTS - 1) sleeps, not CONVERGE_ATTEMPTS.
 const CONVERGE_BUDGET_S = ((CONVERGE_ATTEMPTS - 1) * DELAY_MS) / 1000;
+// Phase 4: the domain already serves this build by then, so this only absorbs a
+// transient edge error, not propagation lag.
+const NOTICE_ATTEMPTS = 3;
 
 // `X-Robots-Tag` is a comma-separated directive list, and four of its keys take a
 // value that is not a robots state: `max-image-preview:none` does not mean noindex.
@@ -237,11 +256,47 @@ export async function smokeTestPages({
     );
   }
 
+  // ---- Phase 4: the reader license notice ships, as a file, not the SPA ----
+  const noticeFailure = await checkReaderNotice(fetchImpl, sleep, domain, want);
+  if (noticeFailure) failures.push(noticeFailure);
+
   return {
     ok: failures.length === 0,
     failures,
-    summary: `${site} serves this deployment (sha256 ${want.slice(0, 12)}), robots as expected for --expect-robots ${expectRobots}, security headers present.`,
+    summary: `${site} serves this deployment (sha256 ${want.slice(0, 12)}), robots as expected for --expect-robots ${expectRobots}, security headers present, reader license notice served.`,
   };
+}
+
+/**
+ * Returns a failure sentence, or null when the custom domain serves the notice.
+ * `indexSha` is the converged page's hash: the SPA fallback answers with exactly
+ * those bytes, which is the failure this check exists to name.
+ */
+async function checkReaderNotice(fetchImpl, sleep, domain, indexSha) {
+  const url = new URL(READER_NOTICE.path, domain).toString();
+  let result = null;
+  for (let i = 1; i <= NOTICE_ATTEMPTS; i++) {
+    result = await attempt(fetchImpl, url);
+    if (result.ok) break;
+    if (i < NOTICE_ATTEMPTS) await sleep(DELAY_MS);
+  }
+  if (!result.ok) {
+    return `${url} never returned 2xx after ${NOTICE_ATTEMPTS} attempts (last: ${result.detail}); the .chara reader's license notice is not being served`;
+  }
+
+  const body = result.body.toString('utf8');
+  const contentType = result.headers.get('content-type') ?? '';
+  if (sha256(result.body) === indexSha || /^\s*<(?:!doctype|html)\b/i.test(body)) {
+    return `${url} answered with the SPA's index.html (the _redirects fallback), so public/licenses/xivcharakit.txt did not ship; the build's copy-chara-notices step writes it`;
+  }
+  const missing = READER_NOTICE.markers.filter((marker) => !body.includes(marker));
+  if (missing.length > 0) {
+    return `${url} is served but lacks ${missing.map((m) => `"${m}"`).join(' and ')}; it is not the xivcharakit license and third-party notice copy-chara-notices generates`;
+  }
+  if (!/^text\/plain\s*;\s*charset=utf-8$/i.test(contentType.trim())) {
+    return `${url} is served as ${contentType || '<no content-type>'}, not text/plain; charset=utf-8; check the /licenses/* rule in public/_headers`;
+  }
+  return null;
 }
 
 // Guarded so importing this module from tests does not run the CLI. Under vitest

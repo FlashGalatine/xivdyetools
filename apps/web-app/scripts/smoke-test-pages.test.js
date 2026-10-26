@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { parseArgs, REQUIRED_SECURITY_HEADERS, ROBOTS_MODES, smokeTestPages } from './smoke-test-pages.js';
+import {
+  parseArgs,
+  READER_NOTICE,
+  REQUIRED_SECURITY_HEADERS,
+  ROBOTS_MODES,
+  smokeTestPages,
+} from './smoke-test-pages.js';
 
 const ok = ['--deployment-url', 'https://abc.example.pages.dev', '--domain', 'https://site.test', '--expect-robots', 'noindex'];
 
@@ -126,13 +132,42 @@ function response(status, body, headers = {}) {
   };
 }
 
+/** The served .chara reader notice, as public/licenses/xivcharakit.txt ships it. */
+const NOTICE_BODY = [
+  'xivcharakit 0.1.0-beta.4: license and third-party notices',
+  '',
+  '======== xivcharakit 0.1.0-beta.4: dist/LICENSE ========',
+  'MIT License',
+  '',
+  'Permission is hereby granted, free of charge, to any person obtaining a copy',
+  '======== xivcharakit 0.1.0-beta.4: dist/THIRD_PARTY_NOTICES.md ========',
+  '# Third-party notices',
+  '',
+].join('\n');
+const noticeResponse = (status = 200, body = NOTICE_BODY, headers = {}) =>
+  response(status, body, { 'content-type': 'text/plain; charset=utf-8', ...headers });
+
 /** Queues responses per host. The final entry repeats once exhausted, so a test
- *  can describe "fails twice then succeeds" without listing 36 entries. */
+ *  can describe "fails twice then succeeds" without listing 36 entries.
+ *
+ *  Requests for the reader notice path are routed separately so the existing
+ *  per-host queues keep describing the page itself: a `${host}${path}` key
+ *  queues responses for that path, and without one the host answers with the
+ *  correct notice. They are recorded in `licenseCalls`, not `calls`. */
 function fakeFetch(byHost) {
   const queues = new Map(Object.entries(byHost).map(([host, list]) => [host, [...list]]));
   const calls = [];
+  const licenseCalls = [];
   const impl = async (url) => {
-    const { host } = new URL(url);
+    const { host, pathname } = new URL(url);
+    if (pathname === READER_NOTICE.path) {
+      licenseCalls.push(url);
+      const queue = queues.get(`${host}${pathname}`);
+      if (!queue) return noticeResponse();
+      const next = queue.length > 1 ? queue.shift() : queue[0];
+      if (next instanceof Error) throw next;
+      return next;
+    }
     calls.push(url);
     const queue = queues.get(host);
     if (!queue) throw new Error(`test fetch: no responses queued for host ${host}`);
@@ -141,6 +176,7 @@ function fakeFetch(byHost) {
     return next;
   };
   impl.calls = calls;
+  impl.licenseCalls = licenseCalls;
   return impl;
 }
 
@@ -496,6 +532,134 @@ describe('smokeTestPages', () => {
       });
       expect(result.failures).toEqual([]);
       expect(result.ok).toBe(true);
+    });
+  });
+
+  // public/_redirects answers every unknown path with index.html and a 200, so
+  // "the notice URL returned 2xx" proves nothing: only the served body does.
+  describe('the .chara reader license notice on the custom domain', () => {
+    const NOTICE_KEY = `site.test${'/licenses/xivcharakit.txt'}`;
+    const withNotice = (noticeQueue, siteHeaders = { 'x-robots-tag': 'noindex' }) => ({
+      'abc.example.pages.dev': [response(200, BODY)],
+      'site.test': [response(200, BODY, siteHeaders)],
+      ...(noticeQueue ? { [NOTICE_KEY]: noticeQueue } : {}),
+    });
+
+    it('names the served path and the markers it requires', () => {
+      expect(READER_NOTICE.path).toBe('/licenses/xivcharakit.txt');
+      expect(READER_NOTICE.markers).toEqual(['Permission is hereby granted', '# Third-party notices']);
+    });
+
+    it('fetches the notice from the custom domain, not the deployment alias, and passes', async () => {
+      const fetchImpl = fakeFetch(withNotice([noticeResponse()]));
+      const result = await run({ fetchImpl });
+      expect(result.failures).toEqual([]);
+      expect(result.ok).toBe(true);
+      expect(fetchImpl.licenseCalls).toEqual([`${SITE}/licenses/xivcharakit.txt`]);
+      expect(result.summary).toMatch(/license notice/);
+    });
+
+    it('fails when the path falls through to the SPA index.html with a 200', async () => {
+      const result = await run({
+        fetchImpl: fakeFetch(
+          withNotice([response(200, BODY, { 'content-type': 'text/html; charset=utf-8' })])
+        ),
+      });
+      expect(result.ok).toBe(false);
+      expect(result.failures).toHaveLength(1);
+      expect(result.failures[0]).toContain('/licenses/xivcharakit.txt');
+      expect(result.failures[0]).toMatch(/index\.html/);
+      expect(result.failures[0]).toMatch(/copy-chara-notices/);
+    });
+
+    it('fails when the body lacks the third-party notices', async () => {
+      const result = await run({
+        fetchImpl: fakeFetch(
+          withNotice([noticeResponse(200, 'MIT License\n\nPermission is hereby granted, free of charge\n')])
+        ),
+      });
+      expect(result.ok).toBe(false);
+      expect(result.failures[0]).toContain('# Third-party notices');
+      expect(result.failures[0]).not.toContain('Permission is hereby granted"');
+    });
+
+    it('fails when the body lacks the MIT license text', async () => {
+      const result = await run({
+        fetchImpl: fakeFetch(withNotice([noticeResponse(200, '# Third-party notices\n')])),
+      });
+      expect(result.ok).toBe(false);
+      expect(result.failures[0]).toContain('Permission is hereby granted');
+    });
+
+    it('fails when the notice is not served as text/plain', async () => {
+      const result = await run({
+        fetchImpl: fakeFetch(
+          withNotice([noticeResponse(200, NOTICE_BODY, { 'content-type': 'application/octet-stream' })])
+        ),
+      });
+      expect(result.ok).toBe(false);
+      expect(result.failures[0]).toMatch(/text\/plain/);
+      expect(result.failures[0]).toContain('application/octet-stream');
+    });
+
+    it('fails when the notice is text/plain but names no charset', async () => {
+      const result = await run({
+        fetchImpl: fakeFetch(
+          withNotice([noticeResponse(200, NOTICE_BODY, { 'content-type': 'text/plain' })])
+        ),
+      });
+      expect(result.ok).toBe(false);
+      expect(result.failures[0]).toMatch(/charset=utf-8/);
+      expect(result.failures[0]).toContain('/licenses/*');
+    });
+
+    it('names index.html for an HTML page whose bytes differ from the converged page', async () => {
+      const result = await run({
+        fetchImpl: fakeFetch(
+          withNotice([
+            response(200, '<!doctype html><html><body>another shell</body></html>', {
+              'content-type': 'text/html; charset=utf-8',
+            }),
+          ])
+        ),
+      });
+      expect(result.ok).toBe(false);
+      expect(result.failures[0]).toMatch(/index\.html/);
+      expect(result.failures[0]).toMatch(/copy-chara-notices/);
+    });
+
+    it('fails, after retrying, when the notice never returns 2xx', async () => {
+      const fetchImpl = fakeFetch(withNotice([noticeResponse(404, 'Not Found')]));
+      const result = await run({ fetchImpl });
+      expect(result.ok).toBe(false);
+      expect(result.failures[0]).toContain('/licenses/xivcharakit.txt');
+      expect(result.failures[0]).toMatch(/404/);
+      expect(fetchImpl.licenseCalls).toHaveLength(3);
+    });
+
+    it('retries a transient failure and then passes', async () => {
+      const fetchImpl = fakeFetch(
+        withNotice([new Error('socket hang up'), noticeResponse(522, ''), noticeResponse()])
+      );
+      const result = await run({ fetchImpl });
+      expect(result.failures).toEqual([]);
+      expect(result.ok).toBe(true);
+      expect(fetchImpl.licenseCalls).toHaveLength(3);
+    });
+
+    it('reports a missing notice alongside header failures', async () => {
+      const result = await run({
+        fetchImpl: fakeFetch(
+          withNotice([response(200, BODY, { 'content-type': 'text/html' })], {
+            'x-robots-tag': 'noindex',
+            'x-frame-options': undefined,
+          })
+        ),
+      });
+      expect(result.ok).toBe(false);
+      expect(result.failures).toHaveLength(2);
+      expect(result.failures[0]).toContain('x-frame-options');
+      expect(result.failures[1]).toContain('/licenses/xivcharakit.txt');
     });
   });
 

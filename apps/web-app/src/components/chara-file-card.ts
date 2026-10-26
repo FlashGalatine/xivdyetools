@@ -7,8 +7,9 @@
  * line. It loads files into CharaSessionService and draws whatever is loaded
  * there, so every view of the character follows the same file.
  *
- * Privacy is on the card: parsed on this device, nothing uploaded, Base64Image
- * never read. Renders inside the v4 shell's shadow DOM with inline styles.
+ * Privacy is on the card: read on this device, nothing uploaded, and no
+ * embedded image kept (the reader scans past Base64Image without retaining it).
+ * Renders inside the v4 shell's shadow DOM with inline styles.
  *
  * Spec: docs/research/monorepo-2.0/10a-sheet-port-spec.md (10A "Sheet")
  *
@@ -16,11 +17,11 @@
  */
 
 import { MAX_CHARA_FILE_BYTES } from '@xivdyetools/core';
-import type { ResolvedCharaCharacter } from '@xivdyetools/core';
 import { LanguageService, ToastService } from '@services/index';
 import { ThemeService } from '@services/theme-service';
 import { CharaSessionService, type CharaSession } from '@services/chara-session-service';
-import { loadCharaFile } from '@services/chara-file-loader';
+import { cancelCharaLoad, loadCharaFile, type CharaLoadFailure } from '@services/chara-file-loader';
+import { prefetchCharaPalettes } from '@services/chara-inspection-service';
 import { clearContainer } from '@shared/utils';
 import { SUBRACE_TO_CLAN_KEY } from '@shared/subrace-clan';
 import {
@@ -28,14 +29,14 @@ import {
   MONO,
   SANS,
   amber,
+  charaWarnings,
   el,
   green,
   joinSentences,
   monoChip,
-  slotErrorText,
-  slotLabel,
+  previewHex,
   tSwatch,
-  winningHex,
+  type CharaWarning,
 } from '@components/chara-ui';
 
 export interface CharaFileCardOptions {
@@ -73,37 +74,18 @@ export interface CharaFileCardOptions {
   dropBody?: string;
 }
 
-interface CharaWarning {
-  tag: string;
-  text: string;
-  severe: boolean;
-}
-
 /**
- * Parse warnings for the amber card: loud slot failures (96–127 gap,
- * out-of-range index, missing tribe) and extended-appearance drift
- * (OFF GRID — the file wears a colour no cell can express).
+ * The toast for each failed load. Spelled out, one literal key per code, so the
+ * orphan scanner sees every key and no file text can reach the sentence.
+ * `tooLarge` carries the cap and is interpolated where it is shown.
  */
-function charaWarnings(resolved: ResolvedCharaCharacter): CharaWarning[] {
-  const out: CharaWarning[] = [];
-  for (const slot of resolved.slots) {
-    const label = slotLabel(slot);
-    if (slot.verdict === 'error' && slot.error) {
-      out.push({
-        tag: LanguageService.t('swatch.warnErrorTag'),
-        text: `${label} · ${slotErrorText(slot.error.code)}`,
-        severe: true,
-      });
-    } else if (slot.verdict === 'offGrid' || slot.verdict === 'floatOnly') {
-      out.push({
-        tag: tSwatch('offGrid'),
-        text: `${label} · ${tSwatch('offGridNote')}`,
-        severe: false,
-      });
-    }
-  }
-  return out;
-}
+const LOAD_FAILURE_KEY: Record<CharaLoadFailure, string> = {
+  notChara: 'swatch.charaNotChara',
+  tooLarge: 'swatch.charaTooLarge',
+  unreadable: 'swatch.charaUnreadable',
+  workerFailed: 'swatch.charaWorkerFailed',
+  timedOut: 'swatch.charaTimedOut',
+};
 
 /**
  * The drop zone, or the loaded file's card. Mounted above the workspace; the
@@ -113,6 +95,8 @@ export class CharaFileCard {
   private container: HTMLElement;
   private options: CharaFileCardOptions;
   private unsubscribe: (() => void) | null = null;
+  /** The drop zone has asked for the palette warm-up (once per card). */
+  private palettesWarmed = false;
 
   constructor(container: HTMLElement, options: CharaFileCardOptions = {}) {
     this.container = container;
@@ -138,18 +122,14 @@ export class CharaFileCard {
   /** The drop and Choose-file handlers' only job; failures become one toast. */
   private async loadFile(file: File): Promise<void> {
     const result = await loadCharaFile(file);
-    // Superseded: a newer drop replaced this one, so its outcome is moot.
+    // Superseded: a newer drop or SWAP replaced this one, so its outcome is moot.
     if (result.ok || result.error === 'superseded') return;
+    const key = LOAD_FAILURE_KEY[result.error];
+    // A fixed sentence per code: nothing from the file or an exception reaches it.
     ToastService.error(
-      result.error === 'notChara'
-        ? LanguageService.t('swatch.charaNotChara')
-        : result.error === 'tooLarge'
-          ? LanguageService.tInterpolate('swatch.charaTooLarge', {
-              kb: MAX_CHARA_FILE_BYTES / 1024,
-            })
-          : // Loud failure naming the field and value — core's messages do that,
-            // and they ride in as {reason} inside the localized sentence.
-            LanguageService.tInterpolate('swatch.parseFailed', { reason: result.reason })
+      result.error === 'tooLarge'
+        ? LanguageService.tInterpolate(key, { kb: MAX_CHARA_FILE_BYTES / 1024 })
+        : LanguageService.t(key)
     );
   }
 
@@ -158,10 +138,20 @@ export class CharaFileCard {
     const session = CharaSessionService.getSession();
     if (!session) {
       this.container.appendChild(this.renderDropZone());
+      // A file may be dropped next: load the palettes in idle time so the import does not spend
+      // its deadline on them. The service shares one warm-up and never rejects.
+      if (!this.palettesWarmed) {
+        this.palettesWarmed = true;
+        void prefetchCharaPalettes();
+      }
       return;
     }
     this.container.appendChild(this.renderFileCard(session));
-    const warnings = charaWarnings(session.resolved);
+    // Unreadable and unconfirmed slots, off-grid colors, then the file's diagnostics. Gear rows
+    // only where the host shows gear (the Glamour Reader, D5).
+    const warnings = charaWarnings(session.resolved, {
+      includeGear: this.options.sendsGearIds === true,
+    });
     if (warnings.length > 0) this.container.appendChild(this.renderWarningsCard(warnings));
     // The privacy promise stays visible under the card (Extractor wording).
     const note = this.options.privacyNote;
@@ -261,13 +251,15 @@ export class CharaFileCard {
   /**
    * File loaded: 46px colour strip | producer + LOCAL ONLY chips, name,
    * mono meta | the cross-link, 44px SWAP chip and Save. The strip is the
-   * character's own thumbnail — Base64Image is never read. The buttons wrap
+   * character's own thumbnail (its color previews), never the file's embedded
+   * image. The buttons wrap
    * as one group under the name before the name drops below 140px, so a
    * phone never loses it.
    */
   private renderFileCard(session: CharaSession): HTMLElement {
     const { resolved, fileName } = session;
-    const live = resolved.slots.filter((s) => winningHex(s) !== null);
+    // Every slot with a color preview, unknown activation included (D6).
+    const live = resolved.slots.filter((s) => previewHex(s) !== null);
 
     const card = el(
       'div',
@@ -284,7 +276,7 @@ export class CharaFileCard {
       strip.appendChild(el('span', 'flex: 1; background: var(--theme-background-secondary);'));
     }
     for (const slot of stripColors) {
-      strip.appendChild(el('span', `flex: 1; background: ${winningHex(slot)!};`));
+      strip.appendChild(el('span', `flex: 1; background: ${previewHex(slot)!};`));
     }
     card.appendChild(strip);
 
@@ -362,7 +354,11 @@ export class CharaFileCard {
     );
     (swapBtn as HTMLButtonElement).type = 'button';
     swapBtn.title = tSwatch('replaceFile');
-    swapBtn.addEventListener('click', () => CharaSessionService.setSession(null));
+    // Cancel first: a load still reading or inspecting would otherwise publish after the clear.
+    swapBtn.addEventListener('click', () => {
+      cancelCharaLoad();
+      CharaSessionService.setSession(null);
+    });
     actions.appendChild(swapBtn);
 
     const onSaveCharacter = this.options.onSaveCharacter;

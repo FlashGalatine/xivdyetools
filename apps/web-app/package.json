@@ -1,12 +1,13 @@
 {
   "name": "xivdyetools-web-app",
-  "version": "5.15.6",
+  "version": "5.16.0",
   "private": true,
   "description": "A comprehensive web-based toolset for Final Fantasy XIV players",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "node scripts/copy-chara-notices.mjs && tsc --noEmit && vite build",
+    "copy-chara-notices": "node scripts/copy-chara-notices.mjs",
     "preview": "vite preview",
     "type-check": "tsc --noEmit",
     "lint": "eslint src && knip",
