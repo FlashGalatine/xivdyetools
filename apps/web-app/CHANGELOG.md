@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.15.6] - 2026-10-25
+
+Imported names and raw errors stay out of logs; a malformed collection description no longer
+throws (FINDING-001 and FINDING-004 of the xivcharakit integration review, the part that needs no new
+dependency). Nothing a player sees changes except one corner of the collection import below.
+
+### Fixed
+
+- **A collection import with a malformed `description` no longer throws.** A description that is a
+  number, boolean, array or object is refused for that record alone, before any string operation:
+  the record is reported as skipped, nothing is saved for it, and the records after it still import.
+  `CollectionService.createCollection` returns `null` for a non-string name or description instead of
+  throwing. A malformed record is now always reported as skipped; before, a taken name or a full
+  store could report it as "could not be created" instead.
+
+### Security
+
+- **Logs no longer carry names, file names or raw exceptions** (development and production). The
+  character and glamour-palette saves, the `.chara` loader (file name, the file's own producer text,
+  raw read and parse errors), the toast log and every collection-service path that named a record
+  (create, duplicate, delete, dye-limit truncation, dye-ID and legacy-palette migration, tombstoned
+  reimport, the per-record import catch, and the `JSON.parse` failure that quotes the input) now log
+  fixed messages and counts only. A saved name still follows the existing fallback order and its
+  50-character limit, and a collection backup still keeps it.
+
+### Tests
+
+- 85 new tests: `chara-collection-privacy.test.ts` (canaries for the nickname, file name, producer
+  text, stored dye refs and forced exceptions through the real saves, the real collection service,
+  the loader and the toast service, in both logging modes) and the description cases in
+  `collection-service-branches.test.ts`.
+
+---
+
 ## [5.15.5] - 2026-10-16
 
 FINDING-001 and the 8 KiB cap of the 2026-10-15 `.chara` import review

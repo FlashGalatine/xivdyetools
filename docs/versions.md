@@ -24,7 +24,7 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.15.5 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Web Application** | v5.15.6 | `xivdyetools-web-app` | Cloudflare Pages | Active |
 | **Discord Bot** | v5.8.15 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.4 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.8.2 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
@@ -122,6 +122,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.15.6 | Oct 2026 | Imported labels and raw errors stay out of logs (development and production): the saves, the `.chara` loader, the toast log and every collection-service path that named a record log fixed messages only; a collection import with a malformed description no longer throws and no longer stops the records after it (FINDING-001 and FINDING-004, 2026-10-22 xivcharakit integration review) |
 | v5.15.5 | Oct 2026 | Core 5.13.0 + 5.14.0 (2026-10-15 import review): the Glamour Reader and Swatch Matcher read only files named `.chara`, refuse one over 8 KB (was 20 MB) before reading it, and say to re-save an Anamnesis export without its attached image; a malformed file's error no longer quotes the whole value. The Palette Extractor keeps 20 MB |
 | v5.15.4 | Oct 2026 | Core 5.12.0 + api-worker 0.20.0: the GPOSERS list and its export sheet leave out invisible pieces and an Off Hand the main hand doesn't take; the reader's rows are unchanged |
 | v5.15.3 | Oct 2026 | Documents only (2026-10-11 documentation remediation, Sprint 1): `PRIVACY.md` and `TERMS_OF_SERVICE.md` in all six languages send deletion, appeal and contact requests to the live Discord invite (the old one had expired); the Privacy Guide no longer names the unreachable Manage Collections → Delete Collection route and says which saved records only the browser can clear; translations link their own language's sibling documents; American spelling in the English text |

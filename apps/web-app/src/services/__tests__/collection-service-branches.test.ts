@@ -11,6 +11,11 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { CollectionService } from '../collection-service';
 import { LanguageService } from '../language-service';
+// The global setup's inert vi.fn() logger: it records every call whatever the
+// logging mode, so a check on its arguments covers development and production
+// alike (the real logger's per-mode console output is pinned in
+// components/__tests__/chara-collection-privacy.test.ts).
+import { logger } from '@shared/logger';
 
 /** The name an imported copy takes when the original name is already used. */
 const importedName = (name: string, n: number): string =>
@@ -228,6 +233,172 @@ describe('CollectionService Branch Coverage', () => {
       } finally {
         spy.mockRestore();
       }
+    });
+  });
+
+  // ==========================================================================
+  // FINDING-004: collection descriptions are validated per record
+  // ==========================================================================
+
+  describe('importData description validation (FINDING-004)', () => {
+    /** A record name that must never reach a logger call. */
+    const BAD_NAME = 'DESC-NAME-3e9d71';
+
+    const payload = (collections: unknown[]): string =>
+      JSON.stringify({
+        version: '2.0.0',
+        exportedAt: new Date().toISOString(),
+        type: 'xivdyetools-collection',
+        data: { collections },
+      });
+
+    /** Every argument of every logger call, flattened (Errors by name + message). */
+    const loggedText = (): string =>
+      (['debug', 'info', 'warn', 'error', 'log', 'group', 'table'] as const)
+        .flatMap((method) => vi.mocked(logger[method]).mock.calls)
+        .map((args) =>
+          args
+            .map((arg) =>
+              arg instanceof Error
+                ? `${arg.name}: ${arg.message}`
+                : typeof arg === 'string'
+                  ? arg
+                  : JSON.stringify(arg)
+            )
+            .join(' ')
+        )
+        .join('\n');
+
+    beforeEach(() => {
+      // `reset()` above logs; only what the import logs counts here.
+      vi.clearAllMocks();
+    });
+
+    it('imports a record with no description key as having no description', () => {
+      const result = CollectionService.importData(payload([{ name: 'No Desc', dyes: [1] }]));
+
+      expect(result.collectionsImported).toBe(1);
+      expect(result.errors).toEqual([]);
+      expect(CollectionService.getCollectionByName('No Desc')?.description).toBeUndefined();
+    });
+
+    it('imports a record with a null description as having no description', () => {
+      const result = CollectionService.importData(
+        payload([{ name: 'Null Desc', description: null, dyes: [1] }])
+      );
+
+      expect(result.collectionsImported).toBe(1);
+      expect(result.errors).toEqual([]);
+      expect(CollectionService.getCollectionByName('Null Desc')?.description).toBeUndefined();
+    });
+
+    it('trims a string description', () => {
+      const result = CollectionService.importData(
+        payload([{ name: 'Trim Desc', description: '  kept text  ', dyes: [1] }])
+      );
+
+      expect(result.collectionsImported).toBe(1);
+      expect(CollectionService.getCollectionByName('Trim Desc')?.description).toBe('kept text');
+    });
+
+    it('accepts a 200-unit description and refuses a 201-unit one as createFailed', () => {
+      const result = CollectionService.importData(
+        payload([
+          { name: 'At Limit', description: 'd'.repeat(200), dyes: [1] },
+          { name: 'Over Limit', description: 'd'.repeat(201), dyes: [1] },
+        ])
+      );
+
+      expect(result.collectionsImported).toBe(1);
+      expect(CollectionService.getCollectionByName('At Limit')?.description).toHaveLength(200);
+      expect(result.errors).toEqual([{ code: 'createFailed', name: 'Over Limit' }]);
+      expect(CollectionService.getCollectionByName('Over Limit')).toBeUndefined();
+    });
+
+    it.each([
+      ['a number', 42],
+      ['zero', 0],
+      ['true', true],
+      ['false', false],
+      ['an empty array', []],
+      ['an array', ['text']],
+      ['an empty object', {}],
+      ['an object', { text: 'text' }],
+    ])(
+      'rejects a description that is %s as skippedInvalid, writes nothing, and imports the next record',
+      (_label, description) => {
+        const result = CollectionService.importData(
+          payload([
+            { id: 'bad-desc', name: BAD_NAME, description, dyes: [1] },
+            { id: 'next-ok', name: 'Next Valid', dyes: [2] },
+          ])
+        );
+
+        expect(result.errors).toEqual([expect.objectContaining({ code: 'skippedInvalid' })]);
+        expect(result.collectionsImported).toBe(1);
+        expect(CollectionService.getCollectionByName(BAD_NAME)).toBeUndefined();
+        expect(localStorageMock.getItem('xivdyetools_collections') ?? '').not.toContain(BAD_NAME);
+        expect(CollectionService.getCollectionByName('Next Valid')?.dyes).toEqual([2]);
+      }
+    );
+
+    it.each([
+      ['a number', 42],
+      ['a boolean', true],
+      ['an array', ['text']],
+      ['an object', { text: 'text' }],
+    ])(
+      'rejects a description that is %s before any string operation — no name and no raw TypeError in any log',
+      (_label, description) => {
+        CollectionService.importData(
+          payload([{ id: 'bad-desc', name: BAD_NAME, description, dyes: [1] }])
+        );
+
+        const logged = loggedText();
+        expect(logged).not.toContain(BAD_NAME);
+        expect(logged).not.toContain('TypeError');
+        expect(logged).not.toContain('trim');
+      }
+    );
+  });
+
+  describe('createCollection runtime misuse (FINDING-004)', () => {
+    it.each([
+      ['a number', 42],
+      ['a boolean', true],
+      ['an array', ['text']],
+      ['an object', { text: 'text' }],
+      ['an object with its own trim()', { trim: () => 'smuggled' }],
+    ])('returns null, without throwing, for a description that is %s', (_label, description) => {
+      let created: ReturnType<typeof CollectionService.createCollection> = null;
+
+      expect(() => {
+        created = CollectionService.createCollection('Misuse', description as unknown as string);
+      }).not.toThrow();
+      expect(created).toBeNull();
+      expect(CollectionService.getCollections()).toEqual([]);
+    });
+
+    it.each([
+      ['a number', 42],
+      ['null', null],
+      ['undefined', undefined],
+      ['an object', { text: 'text' }],
+      ['an object with its own trim()', { trim: () => 'Smuggled' }],
+    ])('returns null, without throwing, for a name that is %s', (_label, name) => {
+      let created: ReturnType<typeof CollectionService.createCollection> = null;
+
+      expect(() => {
+        created = CollectionService.createCollection(name as unknown as string);
+      }).not.toThrow();
+      expect(created).toBeNull();
+      expect(CollectionService.getCollections()).toEqual([]);
+    });
+
+    it('still treats a null description as no description', () => {
+      const created = CollectionService.createCollection('Null Ok', null as unknown as string);
+
+      expect(created?.description).toBeUndefined();
     });
   });
 

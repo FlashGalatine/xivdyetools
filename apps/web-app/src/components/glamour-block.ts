@@ -1751,7 +1751,8 @@ export class GlamourBlock {
     for (const entry of kept) {
       CollectionService.addDyeToCollection(record.id, entry.stainId);
     }
-    logger.info(`[GlamourBlock] Saved glamour palette "${name}" (${kept.length} dyes)`);
+    // FINDING-001: the name can be the imported nickname or file name; counts only.
+    logger.info(`[GlamourBlock] Saved a glamour palette (${kept.length} dyes)`);
     ToastService.success(LanguageService.t('palette.saveSuccess'));
   }
 }
