@@ -1,0 +1,126 @@
+
+===== HEAD https://xivdyetools.app/ (2026-10-26T21:55Z) =====
+HTTP/1.1 200 OK
+Date: Mon, 26 Oct 2026 21:55:25 GMT
+Content-Type: text/html; charset=utf-8
+Connection: keep-alive
+Access-Control-Allow-Origin: *
+Cache-Control: public, max-age=0, must-revalidate
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+content-security-policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://cdn.discordapp.com https://shots.xivdyetools.app https://data.xivdyetools.app; connect-src 'self' https://*.xivdyetools.app; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests;
+permissions-policy: geolocation=(), microphone=(), camera=()
+referrer-policy: strict-origin-when-cross-origin
+x-content-type-options: nosniff
+x-frame-options: DENY
+Server: cloudflare
+cf-cache-status: DYNAMIC
+
+
+===== HEAD https://beta.xivdyetools.app/ (2026-10-26T21:55Z) =====
+HTTP/1.1 200 OK
+Date: Mon, 26 Oct 2026 21:55:26 GMT
+Content-Type: text/html; charset=utf-8
+Connection: keep-alive
+Access-Control-Allow-Origin: *
+Cache-Control: public, max-age=0, must-revalidate
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+content-security-policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://cdn.discordapp.com https://shots.xivdyetools.app https://data.xivdyetools.app; connect-src 'self' https://*.xivdyetools.app; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests;
+permissions-policy: geolocation=(), microphone=(), camera=()
+referrer-policy: strict-origin-when-cross-origin
+x-content-type-options: nosniff
+x-frame-options: DENY
+x-robots-tag: noindex, nofollow
+Server: cloudflare
+cf-cache-status: DYNAMIC
+
+
+===== HEAD https://xiv-colorexplorer.pages.dev/ (2026-10-26T21:55Z) =====
+HTTP/1.1 200 OK
+Date: Mon, 26 Oct 2026 21:55:26 GMT
+Content-Type: text/html; charset=utf-8
+Connection: keep-alive
+Access-Control-Allow-Origin: *
+Cache-Control: public, max-age=0, must-revalidate
+ETag: "ea36c79f551ec6c7c1209a95acb5c23e"
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+content-security-policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://cdn.discordapp.com https://shots.xivdyetools.app https://data.xivdyetools.app; connect-src 'self' https://*.xivdyetools.app; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests;
+permissions-policy: geolocation=(), microphone=(), camera=()
+referrer-policy: strict-origin-when-cross-origin
+x-content-type-options: nosniff
+x-frame-options: DENY
+Server: cloudflare
+
+
+===== HEAD https://xivdyetools-beta.pages.dev/ (2026-10-26T21:55Z) =====
+HTTP/1.1 200 OK
+Date: Mon, 26 Oct 2026 21:55:26 GMT
+Content-Type: text/html; charset=utf-8
+Connection: keep-alive
+Access-Control-Allow-Origin: *
+Cache-Control: public, max-age=0, must-revalidate
+ETag: "e4b55b7e024167e304dcd54297b6483f"
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+content-security-policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://cdn.discordapp.com https://shots.xivdyetools.app https://data.xivdyetools.app; connect-src 'self' https://*.xivdyetools.app; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests;
+permissions-policy: geolocation=(), microphone=(), camera=()
+referrer-policy: strict-origin-when-cross-origin
+x-content-type-options: nosniff
+x-frame-options: DENY
+x-robots-tag: noindex, nofollow
+Server: cloudflare
+
+
+===== HEAD https://data.xivdyetools.app/ (2026-10-26T21:55Z) =====
+HTTP/1.1 200 OK
+Date: Mon, 26 Oct 2026 21:55:27 GMT
+Content-Type: application/json
+Connection: keep-alive
+Access-Control-Allow-Origin: *
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+Access-Control-Expose-Headers: X-RateLimit-Limit,X-RateLimit-Remaining,X-RateLimit-Reset,X-Request-Id,X-API-Version,Retry-After
+X-API-Version: v1
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+X-Request-ID: 6e71c212-3925-46c3-84a2-f211eb5de428
+Server: cloudflare
+
+
+===== HEAD https://developers.xivdyetools.app/ (2026-10-26T21:55Z) =====
+HTTP/1.1 200 OK
+Date: Mon, 26 Oct 2026 21:55:27 GMT
+Content-Type: text/html
+Connection: keep-alive
+CF-Cache-Status: MISS
+Cache-Control: public, max-age=0, must-revalidate
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+Referrer-Policy: strict-origin-when-cross-origin
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+Server: cloudflare
+
+
+===== HEAD https://xivdyetools.app/api/ (2026-10-26T21:55Z) =====
+HTTP/1.1 200 OK
+Date: Mon, 26 Oct 2026 21:55:28 GMT
+Content-Type: text/html; charset=utf-8
+Connection: keep-alive
+Access-Control-Allow-Origin: *
+Cache-Control: public, max-age=0, must-revalidate
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+content-security-policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://cdn.discordapp.com https://shots.xivdyetools.app https://data.xivdyetools.app; connect-src 'self' https://*.xivdyetools.app; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests;
+permissions-policy: geolocation=(), microphone=(), camera=()
+referrer-policy: strict-origin-when-cross-origin
+x-content-type-options: nosniff
+x-frame-options: DENY
+Server: cloudflare
+cf-cache-status: DYNAMIC
+
+
+===== HEAD https://beta.xivdyetools.app/assets/ (2026-10-26T21:55Z) =====
+HTTP/1.1 404 Not Found
+Date: Mon, 26 Oct 2026 21:55:28 GMT
+Content-Type: text/plain;charset=UTF-8
+Connection: keep-alive
+Cache-Control: no-store
+Server: cloudflare
+cf-cache-status: DYNAMIC
+

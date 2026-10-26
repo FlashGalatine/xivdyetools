@@ -1,0 +1,34 @@
+.github/workflows/ci.yml:39:permissions:
+.github/workflows/ci.yml:54:  group: ${{ github.event_name == 'pull_request' && format('ci-pr-{0}', github.ref) || format('ci-{0}', github.run_id) }}
+.github/workflows/ci.yml:55:  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+.github/workflows/ci.yml:383:        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+.github/workflows/ci.yml:401:        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+.github/workflows/deploy-api-worker.yml:30:permissions:
+.github/workflows/deploy-api-worker.yml:72:        uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4
+.github/workflows/deploy-discord-worker-beta.yml:58:permissions:
+.github/workflows/deploy-discord-worker-beta.yml:83:          EVENT: ${{ github.event_name }}
+.github/workflows/deploy-discord-worker-beta.yml:167:        uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4
+.github/workflows/deploy-discord-worker.yml:36:permissions:
+.github/workflows/deploy-discord-worker.yml:82:        uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4
+.github/workflows/deploy-image-worker.yml:24:permissions:
+.github/workflows/deploy-image-worker.yml:61:        uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4
+.github/workflows/deploy-moderation-worker.yml:31:permissions:
+.github/workflows/deploy-moderation-worker.yml:68:        uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4
+.github/workflows/deploy-oauth.yml:27:permissions:
+.github/workflows/deploy-oauth.yml:64:        uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4
+.github/workflows/deploy-og-worker-beta.yml:62:permissions:
+.github/workflows/deploy-og-worker-beta.yml:87:          EVENT: ${{ github.event_name }}
+.github/workflows/deploy-og-worker-beta.yml:166:        uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4
+.github/workflows/deploy-og-worker.yml:29:permissions:
+.github/workflows/deploy-og-worker.yml:66:        uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4
+.github/workflows/deploy-presets-api.yml:27:permissions:
+.github/workflows/deploy-presets-api.yml:64:        uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4
+.github/workflows/deploy-web-app-beta.yml:62:permissions:
+.github/workflows/deploy-web-app-beta.yml:87:          EVENT: ${{ github.event_name }}
+.github/workflows/deploy-web-app-beta.yml:181:        uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4
+.github/workflows/deploy-web-app.yml:26:permissions:
+.github/workflows/deploy-web-app.yml:71:        uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4
+.github/workflows/publish-packages.yml:23:permissions:
+.github/workflows/publish-packages.yml:102:    permissions:
+.github/workflows/sync-dye-emojis.yml:22:permissions:
+.github/workflows/sync-dye-emojis.yml:64:        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

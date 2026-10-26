@@ -1,0 +1,23 @@
+[
+ {
+  "RuleID": "generic-api-key",
+  "Description": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations.",
+  "StartLine": 160,
+  "EndLine": 160,
+  "StartColumn": 6,
+  "EndColumn": 27,
+  "Match": "key: 'REDACTED'",
+  "Secret": "REDACTED",
+  "File": "docs/research/2026-10-11-chat-platform-expansion/evidence/workflows/chat-platform-research.js",
+  "SymlinkFile": "",
+  "Commit": "e85cc5b9acc6bf7b0bc4a02c7e6be59b755d173b",
+  "Link": "https://github.com/FlashGalatine/xivdyetools/blob/e85cc5b9acc6bf7b0bc4a02c7e6be59b755d173b/docs/research/2026-10-11-chat-platform-expansion/evidence/workflows/chat-platform-research.js#L160",
+  "Entropy": 3.5068905,
+  "Author": "Claude",
+  "Email": "noreply@anthropic.com",
+  "Date": "2026-10-11T16:36:26Z",
+  "Message": "docs(research): chat platform expansion, cloud research phase\n\nTwelve unverified agent reports on un-parking stoat-worker and on other\nplatforms where FFXIV players gather, with a closer look at Bluesky.\nBuilds on discord-alternatives/07-2026-10-refresh.md.\n\nThe research container reached only GitHub and npm, so web facts are\nsearch-snippet grade. The README lists what was read directly, the\ninterim leads (Discord user-install, a Bluesky mention bot, the\nTraditional Chinese service), the contradictions to settle, and the\nlocal next steps. A dependency-free Bluesky census script measures\nFFXIV presence once run from an open network.\n\nCo-Authored-By: Claude Opus 5.5 \u003cnoreply@anthropic.com\u003e\nClaude-Session: https://claude.ai/code/session_01E2sUFJAPGjUg1ymWA6tmxR",
+  "Tags": [],
+  "Fingerprint": "e85cc5b9acc6bf7b0bc4a02c7e6be59b755d173b:docs/research/2026-10-11-chat-platform-expansion/evidence/workflows/chat-platform-research.js:generic-api-key:160"
+ }
+]

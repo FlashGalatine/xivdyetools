@@ -1,0 +1,679 @@
+{
+ "results": [
+  {
+   "key": "r2-discord-handlers",
+   "unit": "discord-worker",
+   "candidates": [
+    {
+     "id": "r2-discord-handlers-01",
+     "title": "/preset favorite list fans out 50 userless presets-api reads that skip both presets-api limiters",
+     "severity": "LOW",
+     "exposure": "INTERNET-AUTH",
+     "deploy_unit": "discord-worker",
+     "file": "apps/discord-worker/src/handlers/commands/preset.ts",
+     "line": 1310,
+     "cwe": "CWE-770",
+     "policy": "NONE",
+     "claim": "/preset favorite list fans one command out to up to 50 parallel presets-api reads that carry no user id, so presets-api's per-IP and per-user limiters both skip them. One account with 50 favorites therefore drives about 500 D1 reads/min through the shared service binding. The only bound is discord-worker's own /preset limit of 10/min.",
+     "evidence": "preset.ts:1310-1312 `Promise.all(ids.map((id) => presetApi.getPreset(env, id).catch(() => null)))` over up to MAX_PRESET_FAVORITES = 50 (preset-favorites.ts:34); getPreset passes no userDiscordId (preset-api.ts:237-239); apps/presets-api/src/middleware/rate-limit.ts:138-140 `if (!c.req.raw.headers.get('CF-Connecting-IP')) return next();` and :158-160 `if (!actingUserId(c)) return next();`; preset limit 10/60s at packages/worker-kit/src/rate-limiter/presets/configs.ts:83. Not filed by the presets-api reviewers (review-presets-api-routes.md:7,46 records the skip as design). Hardening only."
+    }
+   ],
+   "positives": [
+    "presets-api error text is never relayed: non-2xx throws PresetAPIError (preset-api.ts:162-167) and the catches render t.t(getSafeMessageKey()) (preset.ts:588-593, 951-956; types/preset.ts:160-179)",
+    "UniversalisError text is never shown (budget.ts:509-514). The budget log cannot carry the typed world: it is canonicalized first (budget.ts:350-351, universalis-client.ts:356-390), and api-worker aggregated errors are fixed strings (api-worker universalis/router.ts:215-335)",
+    "image-worker rejection text is mapped through the marker table and never shown or recorded (image-input-errors.ts:21-55, extractor.ts:643-653); image-worker messages do not interpolate the URL",
+    "Typed option echoes are sanitized and capped everywhere: dye.ts:139,207; extractor.ts:274; budget.ts:187,296,576,621; preset.ts:844,1246; changelog.ts:88. sanitizeEmbedText strips invisibles, then defuses mentions, then escapes markdown and masked links (bot-logic discord-markdown.ts:46-71)",
+    "Budget refusals that echo the typed or stored world are sent privately (budget.ts:189-194, 207-228)",
+    "Preview-image buttons: the custom_id is bound to a UUID or an exact 78-char key (types/preset.ts:205-210); the moderator gate runs before any API call (preview-image.ts:161-163); the moderator name is sanitized and never a mention (:279); the refreshed key is re-validated against the preset id (preset-api.ts:433-437); a stale 409 retires the buttons (:336-361)",
+    "Moderation-channel builder sanitizes name, description and author unconditionally, with no author mention (preset-notifications.ts:154-156,182-183)",
+    "Numeric option bounds are enforced by the signed schema (schemas.ts:210-215,340-345,375-380,429-434,1338-1343) and re-clamped in code (extractor.ts:254-257,477; budget-calculator.ts:159). Budget loops are bounded by the 125-dye DB and 100-item batches (budget-calculator.ts:182-198,273-300; universalis-client.ts:82,279-288)",
+    "KV and cache keys use only the user id or the canonical world plus a numeric item id (index.ts:877-883; preset-favorites.ts:64-68; price-cache.ts:40-42); presets-api path segments are encodeURIComponent-ed (preset-api.ts:239,346,367,380,398,461)",
+    "A userless bot GET sees only approved presets (presets-api handlers/presets.ts:969-972); name lookup filters status=approved (preset-api.ts:257-261)",
+    "The harmony wheel warn line cannot echo free text: wheel is a choices option (schemas.ts:203-207) parsed by parseColorWheelId (harmony.ts:53). Dynamic translator keys use enum or schema values only",
+    "Log calls with user-derived fields are limited to the two user-id lines the policy discloses (index.ts:922,967; PRIVACY_POLICY.md:129) and bot-issued custom_ids"
+   ],
+   "rejected": [
+    {
+     "claim": "Button/component interactions are not rate limited (index.ts:1471-1490)",
+     "reason": "Copy buttons only answer an ephemeral reply built from a bot-issued custom_id, at the cost of one KV read and one AE point. Discord throttles interactions itself. Preview buttons are moderator-gated before any work."
+    },
+    {
+     "claim": "/budget logs the raw error message (budget.ts:503-506)",
+     "reason": "No path puts the world or other user text into those messages: the world is canonicalized and api-worker errors are fixed strings. Logs are also off in production."
+    },
+    {
+     "claim": "Render error log could quote SVG text (svg/renderer.ts:139-146)",
+     "reason": "resvg errors report positions, card text is XML-escaped, and logs are off in production. No reachable leak was shown."
+    },
+    {
+     "claim": "/stats admin list split on commas only (stats.ts:76)",
+     "reason": "A malformed secret fails closed (denies access); it never grants it."
+    },
+    {
+     "claim": "/preferences failure field prints the raw reason code (preferences.ts:572)",
+     "reason": "This is an i18n/UX defect. The value is an internal enum, not user text."
+    },
+    {
+     "claim": "/preset edit by typed name can match a different preset (preset-api.ts:264-265)",
+     "reason": "The owner check at preset.ts:782 runs on whatever matched, and presets-api re-authorizes. This is a correctness issue, not authz."
+    },
+    {
+     "claim": "extractor colors Number() NaN path (extractor.ts:477)",
+     "reason": "Unreachable: the option is an INTEGER with min/max in the signed schema."
+    },
+    {
+     "claim": "Changelog version-header regex backtracking (changelog-parser.ts:65)",
+     "reason": "The `.+$` always completes on a single line, and the input is a maintainer-authored file."
+    },
+    {
+     "claim": "Verbatim response.error on 2xx success:false (preset.ts:549,666,905)",
+     "reason": "Already rejected in round 1: it is embed-only text from the internal service and cannot ping."
+    }
+   ],
+   "files_covered": 33,
+   "evidence_file": "docs/audits/2026-10-26-security/evidence/review-r2-discord-handlers.md",
+   "confidence": "high",
+   "not_covered": [
+    "accessibility.ts, mixer-v4.ts, harmony.ts, gradient.ts bodies beyond grep",
+    "utils/discord-api.ts, response.ts, sanitize.ts (relied on round-1 positive controls)",
+    "buttons/copy.ts, about.ts, manual.ts not re-read (read in full by round-1 gap reviewer)",
+    "handlers/modals/ does not exist (removed 2026-08-18); MODAL_SUBMIT returns a fixed refusal"
+   ]
+  },
+  {
+   "key": "r2-presets-api-moderation-auth",
+   "unit": "presets-api",
+   "candidates": [
+    {
+     "id": "r2-presets-api-moderation-auth-01",
+     "title": "presets-api never enforces the author ban on moderator approve/revert; the only guard is moderation-worker's non-atomic pre-check",
+     "severity": "LOW",
+     "exposure": "INTERNET-AUTH",
+     "deploy_unit": "presets-api",
+     "file": "apps/presets-api/src/handlers/moderation.ts",
+     "line": 224,
+     "claim": "PATCH /moderation/:id/status and /revert write status='approved' with no lookup of the author in banned_users, and requireNotBanned checks only the caller on the presets/votes routers. A ban hides only approved presets, so a banned author's pending/flagged rows stay in the queue. The only guard is moderation-worker's separate isPresetAuthorBanned pre-read, which does not run atomically with the write, so a ban that lands between the check and the PATCH (or any client that skips the pre-check) publishes the preset. This is the server-side half of moderation-worker-01.",
+     "evidence": "git grep -n -i banned apps/presets-api/src/handlers/moderation.ts -> no hits; requireNotBanned mounted only at presets.ts:131 and votes.ts:30; prepareStatusUpdate WHERE id/status/content_revision only (preset-service.ts:458-464); prepareRevert WHERE id/revision/status/previous_values (:481-486); ban hides `WHERE author_discord_id = ? AND status = 'approved'` (moderation-worker ban-service.ts:686-688); pre-checks at moderation-worker preset-moderation.ts:186, commands/preset.ts:284, preset-rejection.ts:268.",
+     "regression_of": "",
+     "policy": ""
+    },
+    {
+     "id": "r2-presets-api-moderation-auth-02",
+     "title": "Owner can keep moderator reject/revert permanently STALE_REVIEW with uncapped tag/category/link edits",
+     "severity": "LOW",
+     "exposure": "INTERNET-AUTH",
+     "deploy_unit": "presets-api",
+     "file": "apps/presets-api/src/handlers/presets.ts",
+     "line": 653,
+     "claim": "The content_revision trigger also fires on tags, category_id, secondary_categories, example_link and author_name. An owner edit that changes only those charges no daily slot (the text_edit reservation sits inside if(textChanged)) and leaves an approved preset approved, so it is capped only by the 100/min per-user limiter. Moderator /status and /revert are bound to the reviewed revision, and the reject flow is a human confirm, modal and typed-reason loop. An author looping tag edits about once a second therefore makes every reject return 409 STALE_REVIEW and keeps an offensive approved preset public. Ban (a direct D1 hide that is not revision-bound) and moderator DELETE still work, which bounds the impact.",
+     "evidence": "schema.sql:64-78 and migrations/0014:5-19 trigger on `tags, ... example_link, secondary_categories`; presets.ts:653-655 textChanged = name/description only; :665-700 reserveDailyEvent('text_edit') only inside if(textChanged); :533-536 approved + !flagged -> no status write, no notify; :798-805 owner UPDATE binds presetRow.content_revision (server's own read); preset-service.ts:461 status WHERE content_revision = ? (moderator-supplied); moderation-worker commands/preset.ts:235-244 confirm-then-modal reject flow.",
+     "regression_of": "",
+     "policy": ""
+    },
+    {
+     "id": "r2-presets-api-moderation-auth-03",
+     "title": "Stale Perspective-sunset comment says no key means the local list decides; code queues everything (FINDING-019)",
+     "severity": "INFO",
+     "exposure": "LOCAL",
+     "deploy_unit": "presets-api",
+     "file": "apps/presets-api/src/services/moderation-service.ts",
+     "line": 212,
+     "claim": "The operator-facing sunset comment says that without a key 'this whole tier is skipped and the local word list decides'. In fact moderateContent returns method 'unscored', passed:false, and queues every local pass. The effect is fail-closed, so there is no exposure, but an operator who reads only the code before 2026-12-31 gets the wrong expectation.",
+     "evidence": "moderation-service.ts:212-214 comment vs :373-384 `if (!perspectiveResult) return { passed: false, ... method: 'unscored' }`; apps/presets-api/CLAUDE.md Optional Secrets row states the correct behaviour.",
+     "regression_of": "",
+     "policy": ""
+    }
+   ],
+   "positives": [
+    "Every moderation handler calls requireModerator first (moderation.ts:150,163,260,370,473,495,524,540,566); moderator status is computed server-side from MODERATOR_IDS on both auth paths (auth.ts:125-133,341,365)",
+    "FINDING-017 holds: status/revert fail closed without expected_revision+expected_status, a stale review returns 409 with a fresh current read, and a deleted preset returns 404 'Preset not found', the body moderation-worker matches (moderation.ts:129-142,197-200,292-295,92-113)",
+    "Status+log and revert+log are single D1 batches gated by changes()>0; a dye collision returns 409 (moderation.ts:224-243,329-351)",
+    "Revert re-validates snapshot dyes and binds the exact raw previous_values (moderation.ts:310-316; preset-service.ts:485)",
+    "Votes are approved-only on POST and DELETE, ON CONFLICT DO NOTHING on PK, the count is recomputed in the same batch, and votes never bump content_revision (votes.ts:39,64-77,120-131,181,218)",
+    "Bot auth is v2 HMAC only, with a single-use, format-checked nonce that is never logged; an unsigned bot path is impossible in production (auth.ts:168-236,273-346)",
+    "The oauth state HMAC covers a dot-free string (state-signing.ts:35-40), so it cannot be confused with a JWT signature despite the shared JWT_SECRET",
+    "Ban check matches the acting id, JWT sub and discord_id against both ban columns and fails closed with 503 outside development (ban-check.ts:48-64,89-111,147)",
+    "The dead-letter listing is LIMIT 50 and returns a projection; legacy fat payloads are never re-served (notification-service.ts:463-519)",
+    "Schema and migrations agree with code: trigger parity between schema.sql:64-78 and 0014:5-19, the partial unique dye index matches the duplicate queries, the 0012 CHECK includes text_edit, and 0013 adds a nullable preset_id plus target_discord_id",
+    "The local profanity regex is fully escaped into one flat alternation; the Perspective key is sent in a header with doNotStore, and every failure queues for review (moderation-service.ts:30-90,243-333)"
+   ],
+   "rejected": [
+    {
+     "claim": "Revert keeps the flagged edit's example_link/category/secondary_categories while approving",
+     "reason": "Owners can already change those fields on an approved preset without review (first-round presets-api-routes-01), so a revert adds no reach"
+    },
+    {
+     "claim": "No-op status transition (approved->approved) logs an 'approve' row",
+     "reason": "Moderator-only audit noise; no state change"
+    },
+    {
+     "claim": "GET /moderation/pending and /presets/mine unbounded; page=Infinity",
+     "reason": "pending is moderator-only and bounded by daily caps; /mine returns only the caller's own rows; page is clamped >=1 and limit 1-50 (presets.ts:249-250)"
+    },
+    {
+     "claim": "Vote sybils via an unlinked XIVAuth account plus a Discord identity",
+     "reason": "Inherent to account-based voting; linking merges and dedupes votes (identity-rekey-service.ts:48-68)"
+    },
+    {
+     "claim": "GET /votes/:id/check has no approved gate",
+     "reason": "Answers only about the caller's own vote; reveals nothing about a non-public preset"
+    },
+    {
+     "claim": "JWT discord_id claim attacker-influenced for XIVAuth-linked accounts",
+     "reason": "Covered end to end by review-gap-xivauth-identity-claim.md; both ids come from one HS256-verified, issuer-pinned token"
+    },
+    {
+     "claim": "migrate-presets.ts interpolates category/tags unescaped",
+     "reason": "Input is the repo's own presets.json (no quotes in any category or tag, checked); the script only prints SQL"
+    },
+    {
+     "claim": "hidden->approved via /status, unvalidated reason, 404 path echo, dev-worker preview URLs",
+     "reason": "Already filed or rejected by the first round or the 2026-10-03 audit"
+    }
+   ],
+   "files_covered": 21,
+   "evidence_file": "docs/audits/2026-10-26-security/evidence/review-r2-presets-api-moderation-auth.md",
+   "confidence": "high",
+   "not_covered": [
+    "presets.ts POST /presets body (lines 830-1180) and preview-image upload/delete (1178-1420): first-round scope, read only in part",
+    "rate-limit-service.ts, validation-service.ts, preview-image-service.ts, retention-job.ts, env-validation.ts: first-round services scope, not re-read",
+    "No runtime probe: candidate 02 rests on the trigger text plus handler flow, not a SQLite reproduction"
+   ]
+  },
+  {
+   "key": "r2-moderation-worker-deep",
+   "unit": "moderation-worker",
+   "candidates": [
+    {
+     "id": "r2-moderation-worker-deep-01",
+     "title": "Ban keyed on one identity leaves the author's other-identity presets public and approvable",
+     "severity": "LOW",
+     "exposure": "INTERNET-AUTH",
+     "deploy_unit": "moderation-worker",
+     "file": "apps/moderation-worker/src/services/ban-service.ts",
+     "line": 686,
+     "claim": "banUser hides only presets whose author_discord_id equals the single target id and fills xivauth_id only when the target is itself a UUID, and isPresetAuthorBanned joins on p.author_discord_id only. If a user owns presets under both their XIVAuth sub UUID and their Discord snowflake (submitted on the web before linking, then through the bot before the next web login runs refresh-author), a ban on the snowflake leaves the UUID-keyed presets approved in the gallery and their pending ones approvable, and NOT_BANNED then blocks the re-key that would merge them for good. Precondition not confirmed: how often a split identity exists in production. The workaround is to also ban the UUID, but the confirmation embed shows only the target id's presets.",
+     "evidence": "ban-service.ts:686-691 `UPDATE presets SET status='hidden' ... WHERE author_discord_id = ? AND status = 'approved'` (.bind(now, discordId)); :489 `const xivAuthId = isXivAuthUuid(discordId) ? discordId : null;`; :42 `ON (b.discord_id = p.author_discord_id OR b.xivauth_id = p.author_discord_id)`; presets-api/src/middleware/auth.ts:71-77 resolveJWTUserId returns discord_id else sub; presets-api/src/handlers/presets.ts:371-379 re-key only on web refresh-author and only if not banned; identity-rekey-service.ts:22-25,50 NOT_BANNED guard; web-app/src/services/auth-service.ts:531 refresh on login.",
+     "policy": "Ban hides the banned author's presets (discord-worker/PRIVACY_POLICY.md:57 ban records; MOD-4 approval refusal)"
+    }
+   ],
+   "positives": [
+    "ban-service.ts has no template SQL with user input: only constant fragments (MODERATION_LOG_COLUMNS :338, SQL_UUID_V4 :347) and restoreGuard(alias), called only with the literals 'p' (:452) and 'presets' (:716); git grep shows no other caller",
+    "Unban restore can only re-publish rows a ban hid: nothing in presets-api sets status 'hidden' (moderation.ts:127 refuses it as a target status)",
+    "Review custom_id parser: <=100 chars, longest prefix first, UUIDv4, revision regex plus safe integer, status allowlist, exactly 1 or 3 parts (review-custom-id.ts:139-157); a legacy or 409 click refreshes and never acts",
+    "Every button and modal path runs the strict parse, then the kind match, then isModerator before any refresh, D1 read, modal open or presets-api call (preset-moderation.ts:107-113, preset-rejection.ts:73-81, ban-confirmation.ts:68-85, ban-reason.ts:53-73)",
+    "Forging an uppercase-UUID custom_id cannot bypass the MOD-4 ban check: presets-api compares ids with no lowercasing, so the approve 404s; ban target UUIDs are lowercase-only (response.ts:270)",
+    "Every outbound Discord body defaults allowed_mentions to NONE (discord-api.ts:27-29); all rendered user text goes through sanitizeEmbedText, with budgets set in embed-text.ts",
+    "No link the author supplied is ever rendered: the only URLs are the own-domain share URL with a D1 UUID (preset.ts:516) and the server-built preview URL",
+    "Persistent people data matches both privacy policies: the ban post carries no id (ban-reason.ts:188-207), unban blanks the D1 username and reason (ban-service.ts:605), and the retention of reasons in moderation_log and channel posts is disclosed",
+    "safeParseJSON freezes even when it only warns (safe-json.ts:135-155); sanitizeUrl redacts webhook tokens, secret query params and Bearer tokens"
+   ],
+   "rejected": [
+    {
+     "claim": "hasPrototypePollution recurses with no depth cap before the depth check (safe-json.ts:120,214)",
+     "reason": "Only reachable after Ed25519 verification, i.e. from Discord, with a 100 KB body; a throw ends in the generic 500"
+    },
+    {
+     "claim": "processApproval copies interaction.message.embeds[0] into the persistent edit (preset-moderation.ts:209-224)",
+     "reason": "The message is part of the Discord-signed payload: it is Discord's copy of the bot's own message"
+    },
+    {
+     "claim": "Modal reasons have no server-side maximum length (ban-reason.ts:95, preset-rejection.ts:120)",
+     "reason": "Moderator-only; Discord enforces the modal max_length; rendering is capped by sanitizeReason at 1024"
+    },
+    {
+     "claim": "Malformed custom_ids are logged (preset-rejection.ts:75, ban-confirmation.ts:86, index.ts:538,571)",
+     "reason": "Ids only: a re-file of the 2026-10-03 rejected suspicion that moderation-worker logs ids; Workers Logs are off"
+    },
+    {
+     "claim": "Ban and rejection channel posts persist after the D1 copies are blanked",
+     "reason": "Retention is disclosed (discord-worker/PRIVACY_POLICY.md:192, web-app/PRIVACY.md:147-159)"
+    },
+    {
+     "claim": "Ban confirm/cancel buttons and the ban modal have no moderation-channel gate",
+     "reason": "Reachable only from the ephemeral, channel-gated /preset ban_user reply; the moderator gate applies regardless"
+    },
+    {
+     "claim": "A moderator can forge a revision-bound id for a preset they never opened",
+     "reason": "Moderators are the trust boundary; presets-api still enforces the revision and status match"
+    }
+   ],
+   "files_covered": 16,
+   "evidence_file": "docs/audits/2026-10-26-security/evidence/review-r2-moderation-worker-deep.md",
+   "confidence": "medium",
+   "not_covered": [
+    "apps/moderation-worker/src/types/{ban,env,preset}.ts bodies (grepped only)",
+    "apps/moderation-worker/src/utils/{response,discord-api,env-validation,sql-helpers}.ts beyond the cited spans",
+    "Production frequency of split XIVAuth/Discord preset identities (precondition of candidate 01)",
+    "The relayed user request asked to install gitleaks; that is outside this read-only review step and was not done"
+   ]
+  },
+  {
+   "key": "r2-xivcharakit-source",
+   "unit": "core (xivcharakit dependency)",
+   "candidates": [
+    {
+     "id": "r2-xivcharakit-source-01",
+     "title": ".chara Nickname/TypeName projection can be ill-formed UTF-16 (lone or split surrogates)",
+     "severity": "INFO",
+     "exposure": "INTERNET-AUTH",
+     "deploy_unit": "core (xivcharakit dependency)",
+     "file": "packages/core/src/services/chara/chara-library.ts",
+     "line": 148,
+     "claim": "boundedLabel cuts nickname/producer at 256 UTF-16 units with String.slice, which can leave half of a surrogate pair. The library also accepts lone surrogates from a \\ud800 escape or raw string input, so the projected label can be ill-formed. The only effect found is a U+FFFD where the name is displayed (web card, bot reply); no security impact found.",
+     "evidence": "chara-library.ts:148 `return value.length > MAX_LABEL_UNITS ? value.slice(0, MAX_LABEL_UNITS) : value;` Probe scratchpad/probe/xck-probe.mjs: `nickname-split-pair` (255 x 'a' + U+1F600) -> nicklen=256 wellFormed=false; `lone-surrogate-escaped` '{\"Race\":1,\"Nickname\":\"\\ud800abc\"}' -> OK wellFormed=false. Output in scratchpad/probe/xck-probe.out.txt."
+    },
+    {
+     "id": "r2-xivcharakit-source-02",
+     "title": "xivcharakit releases have no git tags; source traceability relies only on npm provenance",
+     "severity": "INFO",
+     "exposure": "LOCAL",
+     "deploy_unit": "core (xivcharakit dependency)",
+     "file": "packages/core/package.json",
+     "line": 78,
+     "claim": "Core exact-pins xivcharakit 0.1.0-beta.4, but the upstream repository FlashGalatine/XIVCharaKit has no tags, and the package.json repository field names no ref. The published tarball can only be tied to source through its SLSA provenance (publish.yml on main, commit 18a91afe). That provenance is present and consistent: 43 files, 414,848 B, and every dist module maps to a source file there. This is a release-traceability gap only.",
+     "evidence": "`gh api repos/FlashGalatine/XIVCharaKit/tags` -> []; registry attestation: workflow .github/workflows/publish.yml @ refs/heads/main, gitCommit 18a91afee6d29ea89d456c33a145e5a2ee4c3710; `npm view xivcharakit@0.1.0-beta.4 --json` fileCount 43, unpackedSize 414848 = local `find -type f | wc -l` 43 and wc -c total 414848; pnpm-lock.yaml:4049 integrity matches dist.integrity."
+    }
+   ],
+   "positives": [
+    "No install hooks (scripts: test/type-check/build only), zero runtime dependencies, exact pin packages/core/package.json:78, lockfile integrity equals registry, SLSA provenance from the owner's GitHub workflow",
+    "No eval/new Function/fs/process/require/importScripts in any dist file; the only dynamic import() calls are the 4 fixed palette data chunks (palettes.js:256-266), which are pure JSON; fetch appears only in the XIVAPI client (chunk-E6OKMXQN.js:513), which no workspace imports",
+    "Tokenizer builds null-prototype objects (chunk-I7NJZCWD.js:255), the inspector reads fields with Object.hasOwn (index.js:93); __proto__/constructor/prototype probes at every level leave Object.prototype untouched",
+    "Depth is checked before recursing (chunk-I7NJZCWD.js:203); node, key, string and byte caps all fail closed with fixed-code errors that carry no input text (:13-27); the host passes maxBytes 8 KiB measured in UTF-8 bytes (chara-library.ts:143, :125-136)",
+    "Numbers are grammar-checked, then Number(); non-finite and unsafe integers are refused (:244-246): 8,100-digit, 1e999 and 2^53+1 all give INVALID_NUMBER",
+    "Duplicate keys are refused, including ones written with escapes (:270), so two parsers cannot see different values",
+    "Base64Image values are scanned and discarded; the discard path is still depth-bounded (:275-290)",
+    "The only regex applied to file content (vector numericToken, index.js:69-77) is linear and runs on parts of at most 64 chars; worst probe 8.51 ms at the 8 KiB cap",
+    "The core projection drops document/raw/storedExtended/Author/Description and maps unknown diagnostic path keys to 'unknown' (chara-library.ts:151-160, 216-228); the web worker posts only the projection (chara-inspection.worker.ts:88-89)",
+    "Both sides validate palette requests: the host provider checks table/palette/index/tribe/gender (chara-palette-provider.ts:105-140), and the library checks each reply's association and hex (appearance.js:132-153)",
+    "Built web worker chunk is 30,486 B with no import()/fetch/eval; the web-app ships the MIT license + THIRD_PARTY_NOTICES verbatim at public/licenses/xivcharakit.txt, gated by copy-chara-notices.test.js and an e2e spec"
+   ],
+   "rejected": [
+    {
+     "claim": "Unbounded string length for base64image values (chunk-I7NJZCWD.js:209)",
+     "reason": "The scan is linear, the value is discarded, and the host's 8 KiB maxBytes bounds it"
+    },
+    {
+     "claim": "Library default maxBytes 16 MiB / maxNodes 100k allow DoS",
+     "reason": "The host always passes 8 KiB (chara-library.ts:143); fewer than 4,100 nodes are reachable; worst probe took 8.5 ms"
+    },
+    {
+     "claim": "Dynamic RegExp in missingRowIn (chunk-E6OKMXQN.js:382)",
+     "reason": "sheet is an internal constant, the message is capped at 256 chars, and the XIVAPI client is never imported by any workspace"
+    },
+    {
+     "claim": "npm latest dist-tag (beta.1) lags next (beta.4) and risks a downgrade",
+     "reason": "The exact pin plus lockfile integrity means an install cannot drift"
+    },
+    {
+     "claim": "Prototype pollution / duplicate key / NaN-Infinity / array-for-object confusion",
+     "reason": "Each was refused or neutralized in the probes (see the evidence table)"
+    },
+    {
+     "claim": "MIT notice missing from the Cloudflare Worker bundles",
+     "reason": "The workers run the code server-side and do not distribute it; the web-app, which does distribute it, ships the notice"
+    }
+   ],
+   "files_covered": 38,
+   "evidence_file": "docs/audits/2026-10-26-security/evidence/review-r2-xivcharakit-source.md",
+   "confidence": "high",
+   "not_covered": [
+    "Byte-for-byte rebuild of dist from upstream commit 18a91afe (only the file map plus read.ts and build.ts were compared)",
+    "chunk-E6OKMXQN.js beyond line 560 (rest of the XIVAPI client; no workspace reaches it)",
+    "discord-worker wrangler bundle contents and size (not built in this checkout)",
+    "Downstream sinks for nickname/producer (web-app, bot-logic): other reviewers' scope",
+    "Packages checklist rows for auth/logger/worker-kit: outside this key's focus"
+   ]
+  },
+  {
+   "key": "r2-web-chara-second-look",
+   "unit": "web-app",
+   "candidates": [
+    {
+     "id": "r2-web-chara-second-look-01",
+     "title": "Resolve-API response adopted without shape validation before reaching CSS url(), link builders and Intl.ListFormat",
+     "severity": "INFO",
+     "exposure": "INTERNAL",
+     "deploy_unit": "web-app",
+     "file": "apps/web-app/src/services/chara-resolve-service.ts",
+     "line": 226,
+     "cwe": "CWE-20",
+     "claim": "The page validates the inspection worker's answer field by field, but adopts api-worker's /v1/chara/resolve body after checking only success===true and that data.items is an object, so iconId/itemId/names reach style.backgroundImage url(\"...\"), unencoded URL paths and Intl.ListFormat/String.replace unchecked. Precondition not confirmed: api-worker (or its cache) would have to emit a non-number iconId/itemId, and xivapi.ts:175-181 already admits only finite positive numbers; CSSOM property assignment and CSP img-src bound the effect, so this is hardening only.",
+     "evidence": "chara-resolve-service.ts:216-230 `if (!envelope || envelope.success !== true || !envelope.data || typeof envelope.data.items !== 'object' ...) throw ...; const result = { items: { ...outOfRange, ...envelope.data.items }, glasses: envelope.data.glasses ?? null, ...}`; glamour-block.ts:1001 `tile.style.backgroundImage = `url(\"${charaIconUrl(item.iconId)}\")``; item-links.ts:72 `https://www.garlandtools.org/db/#item/${itemId}`; api-worker xivapi.ts:179 `if (typeof id === 'number' && Number.isFinite(id) && id > 0) return id;`"
+    },
+    {
+     "id": "r2-web-chara-second-look-02",
+     "title": "Page-side protocol accepts any tribe label; consumers use it unvalidated as SubRace and persist it",
+     "severity": "INFO",
+     "exposure": "LOCAL",
+     "deploy_unit": "web-app",
+     "file": "apps/web-app/src/services/chara-inspection-protocol.ts",
+     "line": 739,
+     "cwe": "CWE-20",
+     "claim": "validateImportedCharacter checks race, gender and every slot enum against a vocabulary but accepts tribe as any label of 256 units or fewer. swatch-tool.ts:414-417 and config-controller.ts:218-222 then take it as SubRace, skipping the toSubRace check at swatch-tool.ts:402; the controller persists it into the swatch config, and chara-file-card.ts:317 indexes SUBRACE_TO_CLAN_KEY[tribe]. It is reachable only through a defective first-party worker: xivcharakit enumerates the tribe (dist/index.js:190) and core projects only state==='valid' (chara-library.ts:258), so this is a defense-in-depth gap.",
+     "evidence": "protocol l.739 `isLabelOrNull(tribe) &&` and l.756-757 `// A bounded label, as before: the page treats an unknown tribe like any other local label. tribe: tribe as ImportedCharaCharacter['tribe'],`; swatch-tool.ts:414-417 `const file = CharaSessionService.getTribeAndGender(); if (file) { this.subrace = file.tribe;`; config-controller.ts:222 `return { ...config, race: file.tribe, gender: file.gender };`"
+    }
+   ],
+   "positives": [
+    "Inspection worker is a same-origin module worker (chara-inspection-service.ts:291). The live CSP script-src 'self' covers it on production, beta and both pages.dev hosts (evidence/live-headers.txt l.10,27,46,63).",
+    "Worker->page protocol rejects (never strips) extra keys, accessors, symbols, holes and non-index array properties. It reads each value once, rebuilds a fresh DTO and enforces vocab enums, canonical hex, 256-unit labels, 8 unique slots, <=12 models, <=24 channels, <=64 issues and a 256 KiB bound (chara-inspection-protocol.ts:344-790).",
+    "Both directions of the palette bridge are validated and rebuilt. The cap of 64 is enforced in the worker and on the page. The page answers only the live call's own worker for the active id (worker l.128-151; service l.206, 237; protocol l.887-940).",
+    "Every terminal path terminates the worker exactly once. A superseded or late answer cannot publish, and the loader generation counter plus SWAP cancel-first stop an older file from replacing a newer one (service l.169-191,255,260,317; loader l.49-60,79-120; chara-file-card.ts:358-361).",
+    "Only fixed codes cross the worker boundary, with no exception text. Core caps input at 8 KiB via readChara maxBytes and projects issue paths to known segments only (worker l.81-92; chara-library.ts:142-160).",
+    "File-derived strings (nickname, producer, file name, item names, acquisition lines) render via textContent or element properties (chara-ui.ts:211-215). The only innerHTML in scope is static SVG (glamour-block.ts:588, item-links-menu.ts:343).",
+    "Resolve request carries only the protocol-rebuilt {slot,set?,base,variant} models and the glasses row, matching charaHintGlamour. Only the Glamour Reader resolves (glamour-tool.ts:90), so Swatch's LOCAL ONLY chip is accurate.",
+    "Community preset submission takes only the typed draft name, never the nickname or file name (glamour-block.ts:1781-1806). The export filename carries no character name (glamour-markdown.ts:69). The clipboard HTML flavour escapes every value (glamour-markdown.ts:112-136).",
+    "External item links use fixed https hosts and encodeURIComponent on names; Lodestone encodes before converting %20 to + so names cannot add parameters; window.open uses noopener,noreferrer (item-links.ts:71-122; item-links-menu.ts:130-131).",
+    "chara logs are fixed strings or counts. Telemetry is chara_parse {ok, producer-bucket} only (chara-file-loader.ts:92-129; telemetry-service.ts:177-184)."
+   ],
+   "rejected": [
+    {
+     "claim": "Nickname / file name persisted as a local collection record name on save (chara-sheet.ts:209-214, glamour-block.ts:1818-1825)",
+     "reason": "Explicit user save to this device only; it is never logged (pinned by chara-collection-privacy.test.ts) and never sent to the community."
+    },
+    {
+     "claim": "The loaded file's tribe/gender persist in the swatch config after reload (config-controller.ts:199-222)",
+     "reason": "Re-files the 2026-10-03 rejected suspicion 'tribe-gender lock missing from the storage list'."
+    },
+    {
+     "claim": "Acquisition edits stored as unbounded free text in localStorage (acquisition-edits.ts:28-73)",
+     "reason": "The player's own typed text on their own device, covered by 'your own saved work'; a quota failure falls back to page-only."
+    },
+    {
+     "claim": "Opening the Glamour Reader on a file loaded in Swatch sends model numbers without a new drop (glamour-block.ts:297-298,377-394)",
+     "reason": "The reader's card discloses it (charaHintGlamour), the Swatch 'nothing is uploaded' text is true for Swatch, and model numbers are not personal data."
+    },
+    {
+     "claim": "item-links-menu.ts:188 logs a raw error object, unlike the fixed-text log policy elsewhere",
+     "reason": "The object is a CharaResolveUnavailableError ('api-worker answered N' or a browser network message) and holds nothing from the file or the user."
+    },
+    {
+     "claim": "GPOSERS Markdown export is unescaped (glamour-markdown.ts:103-105)",
+     "reason": "It is the user's own document built from XIVAPI names and their own typed lines; the HTML clipboard flavour, the only interpreted one, is escaped."
+    },
+    {
+     "claim": "Issue `code` has no length cap in the protocol (chara-inspection-protocol.ts:716)",
+     "reason": "Only the first-party worker produces it, the 256 KiB bound still applies, and the code is used as a lookup key only (chara-ui.ts:369), never rendered."
+    }
+   ],
+   "files_covered": 28,
+   "evidence_file": "docs/audits/2026-10-26-security/evidence/review-r2-web-chara-second-look.md",
+   "confidence": "medium",
+   "not_covered": [
+    "glamour-block.ts l.480-985 and l.1250-1640 (dye lens, verdict panel): sink grep only, not line-read",
+    "chara-sheet.ts l.240-598: sink grep only",
+    "swatch-tool.ts outside the chara mount/pin/share sections",
+    "The user's gitleaks install request: outside this read-only review step"
+   ]
+  },
+  {
+   "key": "r2-bot-chara-second-look",
+   "unit": "bot-logic + discord-worker",
+   "candidates": [
+    {
+     "id": "r2-bot-chara-second-look-01",
+     "title": "/glamour embed truncation math fails when the notes tail exceeds the budget; the failed edit is silent",
+     "severity": "LOW",
+     "exposure": "INTERNET-AUTH",
+     "deploy_unit": "bot-logic + discord-worker",
+     "file": "packages/bot-logic/src/commands/glamour.ts",
+     "line": 607,
+     "claim": "If tail.length > ~3996, body.lastIndexOf('\\n', EMBED_BUDGET - tail.length - 4) gets a negative position and returns -1, so body.slice(0,-1) keeps almost the whole body. The description then exceeds 4096 and Discord rejects the edit. The success-path safeEditOriginalResponse return value is ignored (apps/discord-worker/src/handlers/commands/glamour.ts:185), so the user stays on 'thinking' and the trace records ok. Precondition: the tail is built from upstream item names (no length cap in api-worker cleanName, xivapi.ts:96). Realistic game names keep it near 2.6k, so this needs abnormal upstream data.",
+     "evidence": "glamour.ts:606-607: if (body.length + tail.length + 2 > EMBED_BUDGET) { body = `${body.slice(0, body.lastIndexOf('\\n', EMBED_BUDGET - tail.length - 4))}\\n…`; } -- node probe (12-line body, 4100-char tail) -> description length 4968 > 4096. handlers/commands/glamour.ts:185 `await safeEditOriginalResponse(...)` result unchecked.",
+     "cwe": "CWE-1284"
+    },
+    {
+     "id": "r2-bot-chara-second-look-02",
+     "title": "plain() leaves masked links and mention/timestamp tokens in upstream item names unescaped in the public /glamour embed",
+     "severity": "LOW",
+     "exposure": "INTERNET-AUTH",
+     "deploy_unit": "bot-logic + discord-worker",
+     "file": "packages/bot-logic/src/commands/glamour.ts",
+     "line": 385,
+     "claim": "Item names, acquisition lines and glasses names from api-worker (XIVAPI plus bundled tables) go into the embed description through plain(), which escapes only * _ ~ ` | \\. Masked links [x](https://..), <@id>/<#id>/<t:..> tokens and @everyone text render as markup. allowed_mentions parse [] stops pings, so the remaining risk is a phishing masked link. Precondition: XIVAPI (a third party) or the build-time acquisition table is poisoned; no file-controlled string reaches these sinks.",
+     "evidence": "glamour.ts:384-386 `return text.replace(/([*_~`|\\\\])/g, '\\\\$1');` used at :412 (GPOSERS values), :581, :591, :598 (notes). bot-logic discord-markdown.ts escapeDiscordMarkdown also covers > # [ ] ( ) and defuseMentions, but neither is applied here.",
+     "cwe": "CWE-74"
+    },
+    {
+     "id": "r2-bot-chara-second-look-03",
+     "title": "Published SwatchResult.character carries the raw TypeName (producer) free text",
+     "severity": "INFO",
+     "exposure": "LOCAL",
+     "deploy_unit": "bot-logic",
+     "file": "packages/bot-logic/src/commands/swatch.ts",
+     "line": 102,
+     "claim": "SwatchCharacter = Omit<ResolvedCharaCharacter,'nickname'> still includes producer, which is the uploader-controlled TypeName (bounded to 256 UTF-16 units). No in-repo consumer prints it today. A future npm consumer of the published result could echo free text that the cards deliberately reduce to a fixed token.",
+     "evidence": "swatch.ts:102 `export type SwatchCharacter = Omit<ResolvedCharaCharacter, 'nickname'>;` core chara-library.ts:265 `producer: boundedLabel(inspection.metadata.TypeName.value)`; git grep of '.character'/'producer' in apps/discord-worker/src and apps/stoat-worker/src finds no consumer."
+    }
+   ],
+   "positives": [
+    "Attachment guard: the name must end in .chara, declared size <= 8 KiB, https only on cdn.discordapp.com/media.discordapp.net, redirect 'manual' (a 3xx is refused by the !ok check), 10 s timeout, streamed byte cap that ignores Content-Length (chara-attachment.ts:42-124, read-text-capped.ts:48-80)",
+    "The reader gets the bytes, not the decoded text, so invalid UTF-8 is refused (chara-identity.ts:47); core caps the input at MAX_CHARA_FILE_BYTES (chara-library.ts:143)",
+    "The nickname never leaves: glamour destructures only the gear, dye and identity members (glamour.ts:444); swatch strips it at projection, and the type is Omit (swatch.ts:102,264)",
+    "The producer prints only as a fixed-token allowlist (chara-identity.ts:75-85); tribe, gender and race come only from valid enum states (chara-library.ts:258)",
+    "Only the 4 validated integer lanes and the glasses id are sent to api-worker (glamour.ts:271-273, handler :56), matching PRIVACY_POLICY.md:92",
+    "Failure logs give only the class and code, never the message (failure-kind.ts:14-18); the handlers log fixed result codes; api-worker's 4xx reason is never logged or shown (glamour.ts:479-488)",
+    "Error embeds pass through sanitizeEmbedText (handlers glamour.ts:179, swatch.ts:138); outbound edits carry allowed_mentions (discord-api.ts:196)",
+    "SVG text is escaped with escapeXml (svg frame.ts:171); a name the fonts can't draw falls back to English (glamour.ts:539)",
+    "The /swatch order and slot options are allowlisted (handlers swatch.ts:79-82); analytics blob6 records the subcommand only and is type-gated (command-trace.ts:329-340)",
+    "An api-worker 429 is answered as busy and never retried (glamour.ts:469-471)"
+   ],
+   "rejected": [
+    {
+     "claim": "Unbounded response.json() on the resolve response and its 4xx body (handlers/commands/glamour.ts:82-92)",
+     "reason": "Internal service binding to our own api-worker; the response is bounded by 12 slots"
+    },
+    {
+     "claim": "Many users can exhaust the shared api-worker service key (1300/min against 15/min/user)",
+     "reason": "It needs about 87 accounts, affects only /glamour, and is the documented BUG-048 design (an accepted rate-limit trade-off)"
+    },
+    {
+     "claim": "Fetch error logged by logger.error('Glamour download error', error) could leak the CDN URL (channel id, filename)",
+     "reason": "workerd network and timeout errors carry no URL; no reachable leak found"
+    },
+    {
+     "claim": "sanitizeEmbedText collapses the NO_GEAR newline and escapes localized text",
+     "reason": "Cosmetic only"
+    },
+    {
+     "claim": "failureKind could echo data through error.name or code",
+     "reason": "Names and codes are library and runtime constants"
+    },
+    {
+     "claim": "glamour has no explicit DISCORD_COMMAND_LIMITS entry",
+     "reason": "It falls to the default 15/min, the same as swatch; not exploitable"
+    }
+   ],
+   "files_covered": 19,
+   "evidence_file": "docs/audits/2026-10-26-security/evidence/review-r2-bot-chara-second-look.md",
+   "confidence": "medium",
+   "not_covered": [
+    "Ed25519, timestamp and webhook verification in discord-worker index.ts (other reviewers' scope)",
+    "The xivcharakit library internals and core chara-parser depth/prototype-key handling (review-pkg-core-chara)",
+    "api-worker /v1/chara/resolve cache and XIVAPI client beyond the name-cleaning grep (review-api-worker-chara)",
+    "The full glamour-card.ts layout and fitText behaviour with long strings (only escaping was checked)",
+    "Translator placeholder re-interpolation when a value contains {placeholder} text",
+    "The stoat-worker adapter (parked)"
+   ]
+  },
+  {
+   "key": "r2-policy-claims-second-pass", "_note": "gitleaks:allow (assignment label)",
+   "unit": "web-app + discord-worker (policy)",
+   "candidates": [
+    {
+     "id": "r2-policy-claims-second-pass-01",
+     "title": "v5_saved_presets store (other authors' names, survives author deletion) missing from the web privacy policy's device-storage inventory and deletion section",
+     "severity": "LOW",
+     "exposure": "INTERNET-UNAUTH",
+     "deploy_unit": "web-app + discord-worker (policy)",
+     "file": "apps/web-app/PRIVACY.md",
+     "line": 50,
+     "claim": "PRIVACY.md:50-62 lists what localStorage holds and how each part clears, but never names the saved-presets store, which holds up to 200 snapshots of community presets with the author name, description and example link. Those copies survive the author's deletion by design (tombstoned, keepDeleted defaults true), and no bulk control clears them; PRIVACY.md:252-255 is also silent that an author's deletion does not reach copies on other viewers' devices (or the preset name kept in bot favorites).",
+     "evidence": "saved-presets-service.ts:22 `const STORAGE_KEY = 'v5_saved_presets'`; :36 `author?: string`, :38 `exampleLink?`, :49 `deletedByAuthor?`; :129-144 snapshotOf copies author/description/exampleLink; advanced-options-panel.ts:255-271 Clear Favorites / Clear Saved Palettes only (`deleteCollectionsByKind('palette')`); preset-tool.ts:927 `.filter((s) => this.config.keepDeleted || !s.deletedByAuthor)` (view filter only); preset-favorites.ts:160 stores id+name.",
+     "policy": "AMEND: add a 'saved community presets' inventory bullet (unsave per preset; site-data clears all) and one sentence under Deleting your data that copies others saved on their own devices are not reachable. Edit apps/web-app/PRIVACY.md, PRIVACY.ja.md, PRIVACY.de.md, PRIVACY.fr.md (also see policy-fr-01 wording), PRIVACY.ko.md, PRIVACY.zh.md."
+    },
+    {
+     "id": "r2-policy-claims-second-pass-02",
+     "title": "Previous-version snapshot wording broader than code (snapshot taken only from approved presets)",
+     "severity": "INFO",
+     "exposure": "INTERNET-AUTH",
+     "deploy_unit": "web-app + discord-worker (policy)",
+     "file": "apps/presets-api/src/handlers/presets.ts",
+     "line": 737,
+     "claim": "PRIVACY.md:95-98 and bot PRIVACY_POLICY.md:31 say any edit the automatic check holds keeps the pre-edit version until a moderator restores it or the preset is deleted. Code takes the write-once snapshot only when the stored status is approved (pending/rejected/flagged edits store none), so the policy over-discloses; 'kept until restore or delete' holds (only revert clears it).",
+     "evidence": "presets.ts:737 `if (preset.status === 'approved' && !preset.previous_values) {` previousValues = { name, description, tags, dyes }; presets.ts:746-749 passing moderation never clears it; moderation.ts:290-345 revert is the clearing path.",
+     "policy": "CORRECT: 'if our automatic check holds an edit of a published preset ...'. Edit apps/web-app/PRIVACY.md/.ja/.de/.fr/.ko/.zh and apps/discord-worker/PRIVACY_POLICY.md/.ja/.de/.fr/.ko/.zh."
+    },
+    {
+     "id": "r2-policy-claims-second-pass-03",
+     "title": "30-day deletion and 'full data export' promises have no runbook enumerating the stores to purge",
+     "severity": "INFO",
+     "exposure": "LOCAL",
+     "deploy_unit": "web-app + discord-worker (policy)",
+     "file": "apps/discord-worker/PRIVACY_POLICY.md",
+     "line": 154,
+     "claim": "Both policies promise deletion within 30 days (PRIVACY.md:270, PRIVACY_POLICY.md:172) and the bot policy offers a full data export (PRIVACY_POLICY.md:154), but no doc or script in the repo lists the stores a request must touch across two D1 databases, KV and Discord posts. The text is not false; the promise depends on an undocumented manual procedure, so stores such as favorites v1+v2 keys or submission_events are easy to miss.",
+     "evidence": "git grep -l -iE 'deletion request|data export' -- docs/operations docs/maintainer docs/developer-guides docs/architecture apps/*/README.md -> no procedure (only unrelated hits); stores: apps/oauth/schema/users.sql:15; apps/presets-api/schema.sql:32,120,138,161,215; discord-worker preferences.ts:56, preset-favorites.ts:23,31, index.ts:881, analytics.ts:140.",
+     "policy": "NONE (fix the process: add a deletion/export runbook under docs/operations)."
+    },
+    {
+     "id": "r2-policy-claims-second-pass-04",
+     "title": "Bot ToS 'published immediately' goes stale at Perspective key deletion and is missing from the DEPRECATIONS checklist",
+     "severity": "INFO",
+     "exposure": "INTERNET-AUTH",
+     "deploy_unit": "web-app + discord-worker (policy)",
+     "file": "apps/discord-worker/TERMS_OF_SERVICE.md",
+     "line": 57,
+     "claim": "Extension of policy-web-en-09 (web ToS only): bot ToS section 5 says submissions that clear the automated check are published immediately. Once the PERSPECTIVE_API_KEY is deleted (on or before 2026-12-31), every new or text-edited preset is unscored and pending, and the DEPRECATIONS.md checklist names only the two privacy policies.",
+     "evidence": "TERMS_OF_SERVICE.md:57 'Those that clear it are published immediately'; DEPRECATIONS.md:32-41 'with the key gone ... every new or text-edited preset goes to the moderator queue'; DEPRECATIONS.md:57-63 checklist edits only bot PRIVACY_POLICY.md section 6 and web PRIVACY.md item 3.",
+     "policy": "CORRECT on key-deletion day: add apps/discord-worker/TERMS_OF_SERVICE.md/.ja/.de/.fr/.ko/.zh (and web TERMS_OF_SERVICE x6 per policy-web-en-09) to the DEPRECATIONS.md checklist."
+    }
+   ],
+   "positives": [
+    "No moderation-channel or submission-log post carries a user ID; ban-confirm (shows target id) and unban reply are ephemeral (moderation-worker preset.ts:571,609; ban-reason.ts:194-202)",
+    "Preset DELETE removes votes, failed_notifications, moderation_log rows and the preset in one D1 batch, then the R2 object and edge cache (presets-api presets.ts:457-484)",
+    "Dead-letter rows hold preset id, status and revision only (notification-service.ts:182-191)",
+    "Sign-out clears token/expiry/provider and sends a bounded /auth/revoke; revocation stores only revoked:<jti> with TTL (auth-service.ts:604-608,775-808; packages/auth revocation.ts:92)",
+    "Bot nonce replay cache key holds only the nonce (presets-api middleware/auth.ts:222-228)",
+    "Unban blanks username and reason in the same UPDATE (ban-service.ts:605); every published retention constant matches code (rate-limit-service.ts:146, notification-service.ts:198,205, moderation-retention-service.ts:22,31) and the prod cron covers the beta site (same D1)",
+    "Perspective request carries only the text and doNotStore (moderation-service.ts:255-274)",
+    "Bot ToS service list names only registered commands (registry.ts:27-57)"
+   ],
+   "rejected": [
+    {
+     "claim": "Moderation posts show the moderator's display name, which the policy does not list",
+     "reason": "Staff data about the moderator's own action, not the user's personal data"
+    },
+    {
+     "claim": "Moderation embed carries unlisted fields (source web/discord, tags, preset ID footer)",
+     "reason": "Covered by 'such as'; none is personal"
+    },
+    {
+     "claim": "moderation_log retention compares mixed timestamp formats",
+     "reason": "moderation-worker writes ISO (ban-service.ts:483,579), so the comparison is consistent"
+    },
+    {
+     "claim": "Over-limit rollback delete leaves moderation_log, dead letters or R2 objects",
+     "reason": "None exist yet at presets.ts:1097-1100; submission_events kept by design and disclosed"
+    },
+    {
+     "claim": "Beta web app retention not enforced (cron is production-only)",
+     "reason": "Beta uses api.xivdyetools.app and the same D1 database id"
+    },
+    {
+     "claim": "Web ToS still advertises 'collections'",
+     "reason": "Already filed as policy-web-en-02 (unreachable collection manager)"
+    },
+    {
+     "claim": "Last Updated 2026-10-12 stale",
+     "reason": "No commits since then to presets-api, moderation-worker, oauth src, preset-notifications, discord-worker services or saved-presets-service"
+    }
+   ],
+   "files_covered": 31,
+   "evidence_file": "docs/audits/2026-10-26-security/evidence/review-r2-policy-claims-second-pass.md",
+   "confidence": "medium",
+   "not_covered": [
+    "Translated variants read only to list edit targets, not checked line by line",
+    "Bot /stats rendering of usertrack keys (relied on the first bot reviewer)",
+    "failed_notifications.error column contents",
+    "XIVAuth-only account deletion path through the bot policy"
+   ]
+  },
+  {
+   "key": "r2-build-time-and-docs-sinks",
+   "unit": "api-worker + core + web-app (build time)",
+   "candidates": [
+    {
+     "id": "r2-build-time-and-docs-sinks-01",
+     "title": "ko/zh item-name tables built from an unpinned Teamcraft staging branch with no recorded commit or checksum",
+     "severity": "LOW",
+     "exposure": "LOCAL",
+     "deploy_unit": "api-worker + core + web-app (build time)",
+     "file": "apps/api-worker/scripts/build-item-names.mjs",
+     "line": 62,
+     "claim": "The ko/zh tables that ship in the api-worker bundle are fetched from Teamcraft's moving `staging` branch with no commit pin, and the meta file records only the branch URL, so the shipped data cannot be reproduced or audited. The sibling script build-acquisition.ts does pin a SHA and records it; and the Item.csv ref silently falls back to the literal `master` if the GitHub API call fails (line 138).",
+     "evidence": "build-item-names.mjs:62-67 `TEAMCRAFT_BASE = '.../ffxiv-teamcraft/staging/libs/data/src/lib/json'`; :246 `meta.sources[lang] = SOURCES[lang]`; item-names.meta.json lists the staging URL with no sha and `itemCsv: \"local ffxiv-datamining clone\"`. Compare build-acquisition.ts:104-115 (pinTeamcraft resolves a SHA) and :538 (`teamcraftCommit`). Output is data only: tag-stripped by cleanName (:182) and written with JSON.stringify, so the effect is provenance, not injection. Reachability needs a compromised upstream plus a maintainer running the script and committing the result unreviewed."
+    },
+    {
+     "id": "r2-build-time-and-docs-sinks-02",
+     "title": "Third-party Teamcraft/XIVAPI strings enter acquisition.en.json without markup stripping",
+     "severity": "INFO",
+     "exposure": "LOCAL",
+     "deploy_unit": "api-worker + core + web-app (build time)",
+     "file": "apps/api-worker/scripts/build-acquisition.ts",
+     "line": 552,
+     "claim": "Unlike build-item-names.mjs, which has cleanName(), the acquisition builder writes NPC, quest, place and instance names from Teamcraft straight into the shipped JSON with only structural shape checks. Safety therefore depends entirely on every consumer escaping the text, which I did not verify end to end.",
+     "evidence": "build-acquisition.ts:552-553 writes `json = JSON.stringify(table)`. The grep for replace/sanitize/clean in scripts/acquisition/format.ts and inputs.ts found no markup stripping. assertShapes (:121+) checks types only. packages/svg has escapeXml (base.ts), and the 2026-10-03 audit lists SVG/embed sanitization as positive controls, so I have no reachable sink to report."
+    }
+   ],
+   "positives": [
+    "No build script embeds third-party strings into code: build-locales.ts:212, build-character-colors.ts:132, build-acquisition.ts:552-555 and build-item-names.mjs:211 all write via JSON.stringify.",
+    "Changelog pipeline is safe by construction: vite-plugin-changelog-parser.ts:365 emits JSON.stringify and changelog-modal.ts renders with textContent only (lines 273-421).",
+    "Docs site: v-html only in Glyph.vue:23 (first-party SVG glyph) and static sidebar counts in config.ts; JsonView.vue renders live API text via interpolation.",
+    "stain-audit/fetch.ts is hardened: redirect manual, 200 only, JSON content-type check, 2 MiB streamed cap, fatal UTF-8 decode, timeout.",
+    "build-acquisition.ts pins Teamcraft to a SHA, records teamcraftCommit, shape-asserts inputs, and pins the XIVAPI game version after the first response.",
+    "CI: all uses: SHA-pinned; contents: read at workflow level; no pull_request_target/workflow_run; publish input is a choice type; pnpm audit --prod and a nightly schedule; gitleaks job with scanner pinned to 8.30.1, persist-credentials false, comments/artifact upload off; sync-dye-emojis gated by the production environment; dependabot covers npm and actions.",
+    "auth createHmacKey enforces a 32-byte floor (packages/auth/src/hmac.ts:100)."
+   ],
+   "rejected": [
+    {
+     "claim": "${{ inputs.package }} shell injection in publish-packages.yml:45-48",
+     "reason": "input is type: choice with a fixed option list, so no free text can reach the shell"
+    },
+    {
+     "claim": "v-html XSS in the docs site",
+     "reason": "only first-party SVG glyphs and static counts are bound; API output goes through {{ }} interpolation"
+    },
+    {
+     "claim": "Changelog markdown to HTML XSS",
+     "reason": "JSON module plus textContent, no HTML parsing"
+    },
+    {
+     "claim": "sync-dye-emojis workflow leaks DISCORD_TOKEN",
+     "reason": "workflow_dispatch only, production environment limited to main, token scoped to one step running repo-controlled code"
+    },
+    {
+     "claim": "gitleaks __tests__ path exemption and logger not redacting personal fields",
+     "reason": "both already listed as rejected suspicions in the 2026-10-03 report"
+    },
+    {
+     "claim": "web-app innerHTML sites",
+     "reason": "static icon constants by documented convention; per-site review belongs to the web-app reviewers"
+    }
+   ],
+   "files_covered": 45,
+   "evidence_file": "C:\\\\dev\\\\XIVProjects\\\\xivdyetools\\\\.claude\\\\worktrees\\\\xivdyetools-chara-integration-b6c47b\\\\docs\\\\audits\\\\2026-10-26-security\\\\evidence\\\\review-r2-build-time-and-docs-sinks.md",
+   "confidence": "medium",
+   "not_covered": [
+    "packages/core/scripts/fetch_dye_names.py body, build-munsell-hues.ts, audit-dyes.ts",
+    "apps/*/scripts other than upload-emojis.ts and the two api-worker build scripts",
+    "repo-root scripts/*.ts",
+    "deploy-*.yml bodies (grep only; no line-by-line read)",
+    "GitHub repo settings via gh api (branch protection, secret scanning, environments)",
+    "web-app/vite-plugin-async-css.ts and vite-plugin-beta-branding.ts (only grep-level read)",
+    "packages/worker-kit limiter defaults and packages/logger redaction (spot check only)",
+    "core .chara parser bounds (assumed covered by another reviewer)"
+   ]
+  }
+ ]
+}
