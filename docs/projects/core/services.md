@@ -309,6 +309,16 @@ Barrel exports the sections above do not cover:
 - `.chara` import: `parseCharaFile(text)`, the async
   `resolveCharaColors(parsed, characterColors, dyeLookup?)`, and
   `CHARA_DYEABLE_SLOTS` (the seven gear slots that carry dye channels).
+- `.chara` import on `xivcharakit` (core 5.15.0; the legacy pair above is unchanged):
+  `inspectCharaForTools(bytesOrText)` reads a document under the 8,192-byte cap;
+  `resolveCharaForTools(inspection, characterColors, dyeLookup?)` projects it to an
+  `ImportedCharaCharacter` (eight slots, worn models, dye badges, bounded diagnostics, no raw document);
+  `resolveCharaWithProvider(inspection, provider, dyeLookup?)` is the same projection for a caller that
+  brings its own palette provider, and `createCharaPaletteProvider(characterColors)` builds one. A slot's
+  `matchHex` is non-null only for a confirmed-active, resolved color; unknown activation keeps its
+  preview and never matches. `@xivdyetools/core/chara` exports only the reader, the provider-based
+  resolve and four types, for a bundle (a Web Worker) that must not carry the rest of core.
+  Differences from the legacy parser: `docs/research/2026-10-22-xivcharakit-integration.md`.
 - Facewear colors: `facewearColors`, `getFacewearColor(slug)` and
   `getFacewearColorByLegacyItemID(legacyId)`.
 

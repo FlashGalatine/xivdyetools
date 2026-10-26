@@ -45,6 +45,8 @@ are unchanged. Nothing in the apps consumes the new entry points yet.
   Worker, imports this entry instead and does not pull in core's color, localization and dye modules.
   `src/__tests__/chara-entry.test.ts` pins the export list, the `exports` row and an import graph that
   reaches only `xivcharakit`, `@xivdyetools/types` and the chara reader's own modules.
+- **`NOTICE`** carries the `xivcharakit` attribution (MIT, with the Square Enix non-affiliation language); the
+  package's own `dist/LICENSE` and `dist/THIRD_PARTY_NOTICES.md` ship with it, and the web app serves a copy.
 
 ### Notes
 
@@ -55,6 +57,12 @@ are unchanged. Nothing in the apps consumes the new entry points yet.
 - Intentional differences from the legacy parser are recorded in
   `docs/research/2026-10-22-xivcharakit-integration.md` (partial documents accepted, the lip-color bit,
   the mirror-only face-paint value, unknown activation excluded from matching).
+- Checked from the packed tarball installed into an empty project (2026-10-26): the install resolves
+  `xivcharakit@0.1.0-beta.4` from the registry (integrity `sha512-fIW3xE...`) with no workspace links; the
+  `@xivdyetools/core/chara` entry loads and resolves a document in plain Node 18.20.8 and 22.21.0, and the
+  barrel does the same once bundled for `node18`. The barrel still cannot be imported in plain Node ESM,
+  because its JSON imports carry no import attributes; that is unchanged from 5.12.0 and every other
+  consumer bundles core. The `engines.node >=18.0.0` floor stands.
 
 ## [5.14.0] - 2026-10-16
 
