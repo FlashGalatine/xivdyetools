@@ -1,0 +1,51 @@
+pnpm-audit-json exit=0
+pnpm-audit-high exit=0
+pnpm-audit-full exit=1
+gitleaks exit=BLOCKED
+gh-secret-scanning exit=0
+gh-ci-runs exit=0
+potential-secrets exit=123
+wrangler-surface exit=0
+dev-vars-ignored exit=0
+delta exit=0
+delta-commits exit=0
+pii-sinks exit=0
+pii-sources exit=0
+policy-claims exit=0
+policy-variants exit=0
+policy-locale-parity exit=0
+policy-claims-i18n exit=0
+workflows exit=0
+outbound-fetch exit=0
+html-sinks exit=123
+messaging-workers exit=0
+chara-files exit=0
+parse-sinks exit=0
+workflow-uses exit=0
+   114 docs/audits/2026-10-26-security/evidence/chara-files.txt
+    25 docs/audits/2026-10-26-security/evidence/collect-status.txt
+   293 docs/audits/2026-10-26-security/evidence/delta-commits.txt
+   766 docs/audits/2026-10-26-security/evidence/delta-since-last-audit.txt
+     0 docs/audits/2026-10-26-security/evidence/github-secret-scanning-alerts.error.txt
+     1 docs/audits/2026-10-26-security/evidence/gitleaks-BLOCKED.txt
+   205 docs/audits/2026-10-26-security/evidence/html-sinks.txt
+    13 docs/audits/2026-10-26-security/evidence/messaging-workers.txt
+    84 docs/audits/2026-10-26-security/evidence/outbound-fetch.txt
+   224 docs/audits/2026-10-26-security/evidence/parse-sinks.txt
+   938 docs/audits/2026-10-26-security/evidence/pii-sinks.txt
+  1871 docs/audits/2026-10-26-security/evidence/pii-sources.txt
+     1 docs/audits/2026-10-26-security/evidence/pnpm-audit-summary.txt
+    25 docs/audits/2026-10-26-security/evidence/policy-claims-i18n.txt
+   251 docs/audits/2026-10-26-security/evidence/policy-claims.txt
+    26 docs/audits/2026-10-26-security/evidence/policy-locale-parity.txt
+    24 docs/audits/2026-10-26-security/evidence/policy-variants.txt
+    76 docs/audits/2026-10-26-security/evidence/potential-secrets.txt
+    17 docs/audits/2026-10-26-security/evidence/versions.txt
+    34 docs/audits/2026-10-26-security/evidence/workflow-uses.txt
+    14 docs/audits/2026-10-26-security/evidence/workflows.txt
+   111 docs/audits/2026-10-26-security/evidence/wrangler-surface.txt
+     1 docs/audits/2026-10-26-security/evidence/ci-main-runs.json
+     0 docs/audits/2026-10-26-security/evidence/github-secret-scanning-alerts.json
+   132 docs/audits/2026-10-26-security/evidence/pnpm-audit-full.json
+    16 docs/audits/2026-10-26-security/evidence/pnpm-audit.json
+  5262 total

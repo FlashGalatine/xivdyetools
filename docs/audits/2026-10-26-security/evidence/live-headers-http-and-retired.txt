@@ -1,0 +1,39 @@
+
+===== HEAD http://api.xivdyetools.app/ (2026-10-26T22:59Z) =====
+HTTP/1.1 200 OK
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+X-Frame-Options: DENY
+Server: cloudflare
+
+===== HEAD http://data.xivdyetools.app/ (2026-10-26T22:59Z) =====
+HTTP/1.1 200 OK
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+X-Frame-Options: DENY
+Server: cloudflare
+
+===== HEAD http://auth.xivdyetools.app/ (2026-10-26T22:59Z) =====
+HTTP/1.1 200 OK
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+X-Frame-Options: DENY
+Server: cloudflare
+
+===== HEAD https://xivdyetools-api-docs.pages.dev/ (2026-10-26T22:59Z) =====
+HTTP/1.1 200 OK
+Server: cloudflare
+
+===== HEAD https://xivdyetools-api-worker-dev.<account>.workers.dev/ (2026-10-26T23:00Z) =====
+HTTP/1.1 200 OK
+Content-Type: application/json
+X-API-Version: v1
+X-Frame-Options: DENY
+
+===== HEAD https://xivdyetools-presets-api-dev.<account>.workers.dev/ (2026-10-26T23:00Z) =====
+HTTP/1.1 404 Not Found
+Content-Type: text/plain; charset=UTF-8
+X-Frame-Options: SAMEORIGIN
+
+===== HEAD https://xivdyetools-discord-worker-dev.<account>.workers.dev/ (2026-10-26T23:00Z) =====
+HTTP/1.1 404 Not Found
+Content-Type: text/plain; charset=UTF-8
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+X-Frame-Options: DENY
