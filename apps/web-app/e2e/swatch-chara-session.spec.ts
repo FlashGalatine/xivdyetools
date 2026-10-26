@@ -181,6 +181,10 @@ test('a colour whose switch the file does not state is shown UNCONFIRMED and is 
     await expect(card).toHaveJSProperty('tagName', 'DIV');
     // No best-dye row: the only text is the label, the address, the tag and the note
     await expect(card).toContainText("The file doesn't say whether this is switched on");
+    // The best-dye row's 13px dye chip (chara-sheet renderSlotCard; on a non-lip card nothing
+    // else draws one) and the "→ dye" title it sets are both absent.
+    await expect(card.locator('span[style*="width: 13px"]')).toHaveCount(0);
+    await expect(card).not.toHaveAttribute('title', /→/);
   }
   // Both are counted as slots with a colour (D6)
   await expect(page.getByText('2 / 8', { exact: true })).toBeVisible();

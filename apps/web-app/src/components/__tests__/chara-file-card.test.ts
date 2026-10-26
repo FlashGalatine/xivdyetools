@@ -26,6 +26,7 @@ import {
   CharaInspectionError,
   cancelCharaInspection,
   inspectCharaBytes,
+  prefetchCharaPalettes,
 } from '@services/chara-inspection-service';
 import { MAX_CHARA_FILE_BYTES, type ImportedCharaCharacter } from '@xivdyetools/core';
 import { createTestContainer, cleanupTestContainer } from '../../__tests__/component-utils';
@@ -365,6 +366,43 @@ describe('CharaFileCard — the loaded file', () => {
     expect(container.textContent).toContain('2/8');
   });
 
+  it('an inactive lip with a stray composite adds nothing to the strip or the count', async () => {
+    // Red if previewHex falls back to the lip composite when displayHex is null.
+    const absent = {
+      interpretation: 'unresolved',
+      reason: 'missingColor',
+      displayHex: null,
+    } as const;
+    vi.mocked(inspectCharaBytes).mockResolvedValueOnce(
+      makeImportedCharacter({
+        slots: {
+          leftEye: { displayHex: '#112233' },
+          rightEye: absent,
+          hair: absent,
+          highlights: absent,
+          skin: absent,
+          limbal: absent,
+          lip: {
+            active: false,
+            interpretation: 'inactive',
+            reason: 'lipDisabled',
+            displayHex: null,
+            lipComposite: { hex: '#CC8877', alpha: 0.4, derived: true },
+          },
+          facePaint: absent,
+        },
+      })
+    );
+    const { container } = await mount(FIXTURE);
+    const strip = container.querySelector<HTMLElement>('span[style*="width: 46px"]');
+
+    expect(strip?.children).toHaveLength(1);
+    expect(container.textContent).toContain('1/8');
+    // jsdom serializes an inline background as rgb()
+    expect(container.innerHTML.toLowerCase()).not.toContain('#cc8877');
+    expect(container.innerHTML).not.toContain('rgb(204, 136, 119)');
+  });
+
   it('SWAP during a pending load cancels the load first, so the late result never publishes', async () => {
     const errorToast = vi.spyOn(ToastService, 'error').mockImplementation(() => '');
     const { card, container } = await mount(FIXTURE, 'first.chara');
@@ -572,6 +610,54 @@ describe('CharaFileCard — the loaded file', () => {
     await loadCharaFile(charaFile(FIXTURE));
 
     expect(container.childElementCount).toBe(0);
+  });
+
+  it('warms the palettes when it shows the drop zone, once per card', async () => {
+    // Red if the drop zone does not start the idle-time warm-up (a cold import then spends its
+    // deadline loading the palettes), or if every re-render starts another one.
+    vi.mocked(prefetchCharaPalettes).mockClear();
+    const { card, container } = mountCard();
+    expect(container.querySelector('input[type="file"]')).not.toBeNull();
+    expect(prefetchCharaPalettes).toHaveBeenCalledTimes(1);
+
+    await (card as unknown as LoadFile).loadFile(charaFile(FIXTURE));
+    buttonByText(container, LanguageService.t('swatch.swap'))!.click();
+    expect(container.querySelector('input[type="file"]')).not.toBeNull();
+    expect(prefetchCharaPalettes).toHaveBeenCalledTimes(1);
+
+    // A second card is its own mount.
+    mountCard();
+    expect(prefetchCharaPalettes).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not warm the palettes when it mounts on a loaded file', async () => {
+    // Red if the warm-up runs on mount whatever the card shows: the palettes the file already
+    // used are loaded, so there is nothing to warm.
+    await loadCharaFile(charaFile(FIXTURE));
+    vi.mocked(prefetchCharaPalettes).mockClear();
+    const { container } = mountCard();
+    expect(container.textContent).toContain('Test Subject');
+    expect(prefetchCharaPalettes).not.toHaveBeenCalled();
+  });
+
+  it('destroy() does not cancel a pending load: the import still publishes after a route or language switch', async () => {
+    // Red if destroy() calls cancelCharaLoad(): unmounting the card (navigating away, switching
+    // language) would silently drop an import the player started.
+    const { card } = mountCard();
+    const held = deferred<ImportedCharaCharacter>();
+    vi.mocked(inspectCharaBytes).mockClear();
+    vi.mocked(cancelCharaInspection).mockClear();
+    vi.mocked(inspectCharaBytes).mockImplementationOnce(() => held.promise);
+    const pending = (card as unknown as LoadFile).loadFile(charaFile(FIXTURE, 'kept.chara'));
+    await vi.waitFor(() => expect(inspectCharaBytes).toHaveBeenCalledTimes(1));
+
+    card.destroy();
+    held.resolve(makeImportedCharacter({ nickname: 'Still Arrives' }));
+    await pending;
+
+    expect(cancelCharaInspection).not.toHaveBeenCalled();
+    expect(CharaSessionService.getSession()?.fileName).toBe('kept.chara');
+    expect(CharaSessionService.getSession()?.resolved.nickname).toBe('Still Arrives');
   });
 });
 

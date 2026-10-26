@@ -7,7 +7,9 @@
  * palette color (`palette` messages, at most `CHARA_PALETTE_REQUEST_CAP` per inspection) and sends
  * every dye badge as `dye: null`; the page attaches the dyes. It projects through core's
  * `resolveCharaWithProvider`, the entry with no import path to the palette tables, so a production
- * build emits no shader-table chunk for the worker.
+ * build emits no shader-table chunk for the worker. Core is imported through its narrow
+ * `@xivdyetools/core/chara` entry, never the barrel: the barrel would bundle core's color engine,
+ * localization and locale data into this chunk.
  *
  * Core's refusal of the input answers `unreadable`; anything unexpected answers `workerFailed`.
  * No exception or message text crosses the boundary, and nothing here logs: a log line could carry
@@ -19,7 +21,7 @@
  * @module workers/chara-inspection.worker
  */
 
-import { inspectCharaForTools, resolveCharaWithProvider } from '@xivdyetools/core';
+import { inspectCharaForTools, resolveCharaWithProvider } from '@xivdyetools/core/chara';
 import {
   CHARA_PALETTE_REQUEST_CAP,
   isInspectionRequest,

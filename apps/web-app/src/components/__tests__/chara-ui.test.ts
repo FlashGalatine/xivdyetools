@@ -226,6 +226,15 @@ describe('previewHex / matchTargetHex / hasValidGridCoordinate', () => {
     }
   });
 
+  it('never previews a stray lip composite on an inactive lip (no display color)', () => {
+    // Red if previewHex reads the composite before checking displayHex: a switched-off lip that
+    // still carries a composite would then draw in the strip and count as a color.
+    const slot = inactiveSlot('lipDisabled', { slot: 'lip', lipComposite: composite });
+    expect(slot.displayHex).toBeNull();
+    expect(previewHex(slot)).toBeNull();
+    expect(matchTargetHex(slot)).toBeNull();
+  });
+
   it('matches the lip composite when the lip is confirmed (D1), its own color otherwise', () => {
     const blended = makeImportedSlot({
       slot: 'lip',

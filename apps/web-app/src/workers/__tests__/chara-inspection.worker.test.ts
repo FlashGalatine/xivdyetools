@@ -5,7 +5,8 @@
  * tables into the worker's bundle). The worker loads no palette or dye data of its own: in a real
  * worker scope it asks the page for each color (`palette` messages) and the page attaches dyes.
  *
- * `inspectCharaForTools` and `resolveCharaWithProvider` are wrapped in pass-through `vi.fn`s so a test can
+ * `inspectCharaForTools` and `resolveCharaWithProvider` (from core's `/chara` entry, the one the
+ * worker imports) are wrapped in pass-through `vi.fn`s so a test can
  * force one throw, capture the provider the worker passes, or hold the projection open; every other
  * test runs the real functions.
  *
@@ -20,11 +21,10 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import {
   CharacterColorService,
   createCharaPaletteProvider,
-  inspectCharaForTools,
-  resolveCharaWithProvider,
   type CharaPaletteProvider,
   type ImportedCharaCharacter,
 } from '@xivdyetools/core';
+import { inspectCharaForTools, resolveCharaWithProvider } from '@xivdyetools/core/chara';
 import { logger } from '@shared/logger';
 import { handleInspectRequest } from '../chara-inspection.worker';
 import {
@@ -34,8 +34,9 @@ import {
   type CharaPaletteRequest,
 } from '../../services/chara-inspection-protocol';
 
-vi.mock('@xivdyetools/core', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@xivdyetools/core')>();
+// The worker imports core's narrow `/chara` entry, never the barrel, so that is the module wrapped.
+vi.mock('@xivdyetools/core/chara', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@xivdyetools/core/chara')>();
   return {
     ...actual,
     inspectCharaForTools: vi.fn(actual.inspectCharaForTools),
@@ -44,6 +45,7 @@ vi.mock('@xivdyetools/core', async (importOriginal) => {
 });
 
 type CoreModule = typeof import('@xivdyetools/core');
+type CharaModule = typeof import('@xivdyetools/core/chara');
 
 // A path, not `new URL('<literal>', import.meta.url)`: Vite's asset plugin rewrites that pattern
 // to a dev-server http:// URL under vitest, which fileURLToPath refuses.
@@ -53,6 +55,7 @@ const FIXTURE_DIR = resolve(
   '../../../../../packages/core/src/services/chara/__tests__/fixtures'
 );
 const WORKER_SOURCE = resolve(HERE, '../chara-inspection.worker.ts');
+const PROTOCOL_SOURCE = resolve(HERE, '../../services/chara-inspection-protocol.ts');
 const FIXTURES = [
   'duskwight-heterochromia.chara',
   'hrothgar-helions.chara',
@@ -395,12 +398,50 @@ describe('the worker loads no palette or dye data of its own', () => {
     const code = readFileSync(WORKER_SOURCE, 'utf8')
       .replace(/\/\*[\s\S]*?\*\//g, '')
       .replace(/^\s*\/\/.*$/gm, '');
-    const coreImports = code.match(/^\s*import\b[^;]*?\bfrom\s*['"]@xivdyetools\/core['"]/gm) ?? [];
+    const coreImports =
+      code.match(/^\s*import\b[^;]*?\bfrom\s*['"]@xivdyetools\/core\/chara['"]/gm) ?? [];
     expect(coreImports).toHaveLength(1);
     expect(coreImports[0]).toMatch(/\bresolveCharaWithProvider\b/);
     expect(coreImports[0]).not.toMatch(/\bresolveCharaForTools\b/);
     expect(coreImports[0]).not.toMatch(/\bcreateCharaPaletteProvider\b/);
     expect(code).not.toMatch(/\bresolveCharaForTools\b|\bcreateCharaPaletteProvider\b/);
+  });
+});
+
+describe("the worker's import graph stays off core's barrel (bundle size)", () => {
+  /** Every static import / export-from statement in `file`, comments stripped. */
+  function importStatements(file: string): string[] {
+    const code = readFileSync(file, 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/^\s*\/\/.*$/gm, '');
+    return code.match(/^\s*(?:import|export)\b[^;]*?\bfrom\s*['"][^'"]+['"]/gm) ?? [];
+  }
+
+  /** The module specifier a static import statement names. */
+  function specifierOf(statement: string): string {
+    return /from\s*['"]([^'"]+)['"]/.exec(statement)?.[1] ?? '';
+  }
+
+  /** True for `import type { … }` / `export type { … }`, which the compiler erases. */
+  function isTypeOnly(statement: string): boolean {
+    return /^\s*(?:import|export)\s+type\b/.test(statement);
+  }
+
+  it("imports core only through '@xivdyetools/core/chara', never the barrel at runtime", () => {
+    // Red if the worker imports anything at runtime from '@xivdyetools/core': the bundler then
+    // pulls core's whole barrel (color engine, localization, six locale JSONs) into the worker chunk.
+    const statements = importStatements(WORKER_SOURCE);
+    const runtimeCore = statements
+      .filter((s) => specifierOf(s).startsWith('@xivdyetools/core') && !isTypeOnly(s))
+      .map(specifierOf);
+    expect(runtimeCore).toEqual(['@xivdyetools/core/chara']);
+  });
+
+  it('the protocol module in its graph has no runtime import at all, so it cannot reach the barrel', () => {
+    // Red if the protocol gains a runtime import: it is in the worker's graph, so core's barrel
+    // (or a service that imports it) would come back through it.
+    const runtime = importStatements(PROTOCOL_SOURCE).filter((s) => !isTypeOnly(s));
+    expect(runtime).toEqual([]);
   });
 });
 
@@ -415,7 +456,7 @@ type Posted = { type?: unknown; id?: unknown; seq?: unknown; request?: unknown }
 
 /**
  * Import the worker with `WorkerGlobalScope` stubbed, so it registers its listener. Returns the
- * core module the worker sees (the fresh registry's), a `send` that delivers a message to the
+ * core `/chara` module the worker sees (the fresh registry's), a `send` that delivers a message to the
  * worker, and what it posted.
  */
 async function loadWorkerScope() {
@@ -423,7 +464,7 @@ async function loadWorkerScope() {
   const add = vi.spyOn(globalThis, 'addEventListener').mockImplementation(() => undefined);
   const post = vi.spyOn(globalThis, 'postMessage').mockImplementation(() => undefined);
   vi.resetModules();
-  const core = (await import('@xivdyetools/core')) as CoreModule;
+  const core = (await import('@xivdyetools/core/chara')) as CharaModule;
   await import('../chara-inspection.worker');
   const registered = add.mock.calls.find(([type]) => type === 'message')?.[1] as
     ((event: MessageEvent) => unknown) | undefined;

@@ -14,7 +14,9 @@
  * palette requests (active id only, at most `CHARA_PALETTE_REQUEST_CAP`) from one shared
  * `CharacterColorService` through core's palette provider, and posts an answer only if the call is
  * still live when it is ready. The deadline spans the whole exchange. After a validated success,
- * the page attaches each badge's dye from its own offline database.
+ * the page attaches each badge's dye from its own offline database. `prefetchCharaPalettes()`
+ * loads those shared palettes in idle time (the file card calls it when its drop zone shows), so
+ * a cold import does not spend its deadline on the palette download.
  *
  * Errors carry one fixed message per code, never event or exception text.
  *
@@ -36,6 +38,7 @@ import {
   parsePaletteRequestMessage,
   type CharaInspectionRequest,
   type CharaPaletteReply,
+  type CharaPaletteRequest,
   type CharaPaletteRequestMessage,
 } from './chara-inspection-protocol';
 
@@ -80,6 +83,78 @@ function getPagePalettes(): CharaPaletteProvider {
   characterColors ??= new CharacterColorService();
   pagePalettes ??= createCharaPaletteProvider(characterColors);
   return pagePalettes;
+}
+
+/**
+ * One lookup per lazily loaded table the page answers from: the creator hair and skin tables
+ * (`CharacterColorService`'s race JSON) and the race and shared shader tables. Any fixed tribe
+ * and gender will do; the tables load whole.
+ */
+const WARM_UP_REQUESTS: readonly CharaPaletteRequest[] = [
+  { table: 'creator', palette: 'hair', index: 0, tribe: 'Midlander', gender: 'Feminine' },
+  { table: 'creator', palette: 'skin', index: 0, tribe: 'Midlander', gender: 'Feminine' },
+  { table: 'shader', palette: 'hair', index: 0, tribe: 'Midlander', gender: 'Feminine' },
+  { table: 'shader', palette: 'eyes', index: 0 },
+];
+
+/** How long an idle-time warm-up may wait for the browser to go idle. */
+const WARM_UP_IDLE_TIMEOUT_MS = 2_000;
+
+/** The warm-up in flight or done; null before the first call and after a failed one. */
+let warmUp: Promise<void> | null = null;
+
+/** True when the visitor asked the browser to save data (`navigator.connection.saveData`). */
+function saveDataRequested(): boolean {
+  try {
+    const connection = (globalThis.navigator as { connection?: { saveData?: unknown } } | undefined)
+      ?.connection;
+    return connection?.saveData === true;
+  } catch {
+    return false;
+  }
+}
+
+/** Resolves once the browser is idle (or, without requestIdleCallback, on the next task). */
+function whenIdle(): Promise<void> {
+  return new Promise<void>((resolve) => {
+    const requestIdle = (
+      globalThis as {
+        requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
+      }
+    ).requestIdleCallback;
+    if (typeof requestIdle === 'function') {
+      try {
+        requestIdle.call(globalThis, () => resolve(), { timeout: WARM_UP_IDLE_TIMEOUT_MS });
+        return;
+      } catch {
+        // Fall through to a timer.
+      }
+    }
+    setTimeout(resolve, 0);
+  });
+}
+
+/**
+ * Load the page's palette tables in idle time, before the first import needs them, so a cold
+ * import does not spend its deadline downloading the palette chunk. Warms the same shared
+ * `CharacterColorService` and provider the inspection answers from. Idempotent (a second call
+ * shares the first warm-up), a no-op under `saveData`, and it never throws or rejects: a failed
+ * warm-up resolves and lets a later call retry. It changes nothing about an inspection.
+ */
+export function prefetchCharaPalettes(): Promise<void> {
+  if (warmUp) return warmUp;
+  if (saveDataRequested()) return Promise.resolve();
+  const attempt: Promise<void> = whenIdle()
+    .then(async () => {
+      const palettes = getPagePalettes();
+      await Promise.all(WARM_UP_REQUESTS.map((request) => palettes.getColor(request)));
+    })
+    .catch(() => {
+      // Nothing to report: the first import loads the tables itself. Allow a later retry.
+      if (warmUp === attempt) warmUp = null;
+    });
+  warmUp = attempt;
+  return attempt;
 }
 
 function nextId(): number {

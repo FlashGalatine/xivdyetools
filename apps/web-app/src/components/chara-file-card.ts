@@ -21,6 +21,7 @@ import { LanguageService, ToastService } from '@services/index';
 import { ThemeService } from '@services/theme-service';
 import { CharaSessionService, type CharaSession } from '@services/chara-session-service';
 import { cancelCharaLoad, loadCharaFile, type CharaLoadFailure } from '@services/chara-file-loader';
+import { prefetchCharaPalettes } from '@services/chara-inspection-service';
 import { clearContainer } from '@shared/utils';
 import { SUBRACE_TO_CLAN_KEY } from '@shared/subrace-clan';
 import {
@@ -94,6 +95,8 @@ export class CharaFileCard {
   private container: HTMLElement;
   private options: CharaFileCardOptions;
   private unsubscribe: (() => void) | null = null;
+  /** The drop zone has asked for the palette warm-up (once per card). */
+  private palettesWarmed = false;
 
   constructor(container: HTMLElement, options: CharaFileCardOptions = {}) {
     this.container = container;
@@ -135,6 +138,12 @@ export class CharaFileCard {
     const session = CharaSessionService.getSession();
     if (!session) {
       this.container.appendChild(this.renderDropZone());
+      // A file may be dropped next: load the palettes in idle time so the import does not spend
+      // its deadline on them. The service shares one warm-up and never rejects.
+      if (!this.palettesWarmed) {
+        this.palettesWarmed = true;
+        void prefetchCharaPalettes();
+      }
       return;
     }
     this.container.appendChild(this.renderFileCard(session));

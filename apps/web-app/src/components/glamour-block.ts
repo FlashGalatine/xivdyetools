@@ -860,12 +860,6 @@ export class GlamourBlock {
   }
 
   /**
-   * A dyeable piece's chips, always both channels in `DyeId` / `DyeId2` order,
-   * so chip POSITION is readable as the channel. Before this, a piece dyed
-   * only on its second channel drew a single chip in the first chip's place —
-   * the picture said channel 1 and the file said channel 2.
-   */
-  /**
    * The stand-in for a channel the file stores a non-dye value in. Neither the
    * solid undyed fill (it may well be dyed in game) nor the dashed unknown-stain
    * chip (there is no stain ID to be unknown): an amber outline, empty inside.
@@ -881,6 +875,12 @@ export class GlamourBlock {
     return chip;
   }
 
+  /**
+   * A dyeable piece's chips, always both channels in `DyeId` / `DyeId2` order,
+   * so chip POSITION is readable as the channel. Before this, a piece dyed
+   * only on its second channel drew a single chip in the first chip's place —
+   * the picture said channel 1 and the file said channel 2.
+   */
   private channelChips(slot: CharaGearSlotId, dyes: ResolvedGearDye[]): HTMLElement[] {
     const unreadable = this.wornDyeProblems().get(slot);
     if (!CHARA_DYEABLE_SLOTS.has(slot)) {

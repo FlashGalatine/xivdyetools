@@ -32,6 +32,7 @@ import {
   type SwatchConfig,
 } from '@shared/tool-config-types';
 import { METHOD_TAGS } from '@shared/method-tags';
+import { logger } from '@shared/logger';
 import { createTestContainer, cleanupTestContainer } from '../../__tests__/component-utils';
 import { mockDyes } from '../../__tests__/mocks/services';
 
@@ -2052,6 +2053,30 @@ describe('SwatchTool', () => {
       tool = mount();
 
       expect(service().fetchPricesForDyes).toHaveBeenCalledWith([mockDyes[0]]);
+    });
+
+    it('logs a failed price fetch with a fixed message, never the error', async () => {
+      // Red if the catch hands the rejection's error object to the logger.
+      const CANARY = 'RAW-PRICE-CANARY-4c21';
+      vi.mocked(service().getShowPrices).mockReturnValue(true);
+      vi.mocked(service().fetchPricesForDyes).mockRejectedValueOnce(new Error(CANARY));
+      vi.mocked(logger.warn).mockClear();
+      window.history.replaceState(null, '', '/swatch/?slot=eyeColors&i=2&v=1');
+      mockCharaFindClosestDyes.mockReturnValue([{ dye: mockDyes[0], distance: 2 }]);
+
+      tool = mount();
+      await flush();
+
+      expect(logger.warn).toHaveBeenCalledWith('[CharacterTool] Error fetching prices');
+      const calls = [logger.warn, logger.error, logger.info, logger.debug].flatMap(
+        (method) => vi.mocked(method).mock.calls as unknown[][]
+      );
+      for (const args of calls) {
+        for (const arg of args) {
+          const text = arg instanceof Error ? `${arg.message} ${arg.stack ?? ''}` : String(arg);
+          expect(text).not.toContain(CANARY);
+        }
+      }
     });
 
     // The left panel's MarketBoard was the fetch path, and destroy() dropped it.

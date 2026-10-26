@@ -57,9 +57,9 @@ const TIER_RAMP_LIGHT = ['#137A33', '#1C7D3A', '#B45309', '#B91C1C'] as const;
 
 /** Responsive slot grid — injected once per render (shadow-DOM scoped). */
 const SHEET_CSS = `
-.chara-slots-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+.chara-slots-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
 @media (max-width: 768px) {
-  .chara-slots-grid { grid-template-columns: repeat(2, 1fr); }
+  .chara-slots-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 `;
 

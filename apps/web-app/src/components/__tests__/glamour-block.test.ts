@@ -1646,6 +1646,46 @@ describe('GlamourBlock — malformed gear evidence (xivcharakit import)', () => 
     );
   });
 
+  it('draws the row of a fine, unflagged piece whose only issue is an unreadable channel', async () => {
+    // HeadGear resolves to a ruleless item (not flagged by the verdict) and has no readable dye;
+    // its first channel is fractional. Red if the default lens only lists dyed or flagged pieces:
+    // the unreadable channel would then be shown nowhere.
+    const fixture = JSON.stringify({
+      TypeName: 'Anamnesis Character File',
+      HeadGear: { ModelBase: 361, ModelVariant: 5, DyeId: 1.5, DyeId2: 0 },
+      Feet: { ModelBase: 376, ModelVariant: 1, DyeId: 0, DyeId2: 0 },
+    });
+    const { container, glamour } = await mount(Promise.resolve(RESOLVED), fixture);
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(resolveMock).toHaveBeenCalledTimes(1));
+
+    expect(block(glamour).querySelector('[data-role="show-all-switch"]')).not.toBeNull();
+    expect(block(glamour).querySelector('[data-role="no-dyed-pieces"]')).toBeNull();
+    const head = rowOf(glamour, 'HeadGear');
+    expect(head).not.toBeNull();
+    expect(head!.querySelector<HTMLElement>('[data-role="unreadable-chip"]')?.dataset.channel).toBe(
+      '1'
+    );
+    // The worn-undyed piece still waits for Show all
+    expect(rowOf(glamour, 'Feet')).toBeNull();
+  });
+
+  it('an unreadable channel on a piece the file does not wear keeps the no-dyed-pieces line', async () => {
+    // Hands has a fractional variant (an incomplete model, so nothing is worn there) AND a
+    // fractional first channel; Body is worn and undyed. Red if an unworn slot's unreadable
+    // channel counts as a dye problem: the quiet line would give way to an empty Pieces lens.
+    const fixture = JSON.stringify({
+      TypeName: 'Anamnesis Character File',
+      Body: { ModelBase: 200, ModelVariant: 1, DyeId: 0, DyeId2: 0 },
+      Hands: { ModelBase: 300, ModelVariant: 1.5, DyeId: 1.5, DyeId2: 0 },
+    });
+    const { container, glamour } = await mount(Promise.resolve(RESOLVED), fixture);
+    hosts = [container, glamour];
+
+    expect(block(glamour).querySelector('[data-role="no-dyed-pieces"]')).not.toBeNull();
+    expect(rowOf(glamour, 'Hands')).toBeNull();
+  });
+
   it('logs an unavailable resolve with a fixed message, never the raw error', async () => {
     const warn = vi.spyOn(logger, 'warn').mockImplementation(() => {});
     const pending = deferred<CharaResolveResult>();

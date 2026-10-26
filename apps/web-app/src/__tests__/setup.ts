@@ -62,6 +62,9 @@ vi.mock('@services/chara-inspection-service', async (importOriginal) => {
     ...actual,
     inspectCharaBytes: vi.fn(inline.inspectCharaBytes),
     cancelCharaInspection: vi.fn(inline.cancelCharaInspection),
+    // The idle-time palette warm-up is a no-op here (the inline stand-in loads palettes on
+    // demand); a suite asserts on the vi.fn that the file card calls it.
+    prefetchCharaPalettes: vi.fn(async () => undefined),
   };
 });
 

@@ -1219,3 +1219,182 @@ describe('dyes are attached on the page, after validation', () => {
     }
   );
 });
+
+// ---------------------------------------------------------------------------------------------
+// prefetchCharaPalettes: warm the page's shared palettes before the first import, so a cold
+// import does not spend its 5_000 ms deadline loading the palette chunk.
+// ---------------------------------------------------------------------------------------------
+
+describe('prefetchCharaPalettes', () => {
+  type IdleCallback = () => void;
+
+  /** Spy the shared service's two race tables (no real JSON load needed for these tests). */
+  function spyRaceTables() {
+    const hair = vi
+      .spyOn(core.CharacterColorService.prototype, 'getHairColors')
+      .mockResolvedValue(raceTable('#112233'));
+    const skin = vi
+      .spyOn(core.CharacterColorService.prototype, 'getSkinColors')
+      .mockResolvedValue(raceTable('#445566'));
+    return { hair, skin };
+  }
+
+  function setSaveData(value: boolean | undefined): void {
+    Object.defineProperty(navigator, 'connection', {
+      configurable: true,
+      value: value === undefined ? undefined : { saveData: value },
+    });
+  }
+
+  afterEach(() => {
+    Reflect.deleteProperty(navigator, 'connection');
+  });
+
+  it('waits for idle time, then loads the hair and skin tables once', async () => {
+    // Red if the warm-up runs synchronously on mount (competing with first paint) or never runs.
+    const { hair, skin } = spyRaceTables();
+    let idle: IdleCallback | undefined;
+    const requestIdle = vi.fn((callback: IdleCallback) => {
+      idle = callback;
+      return 1;
+    });
+    vi.stubGlobal('requestIdleCallback', requestIdle);
+
+    const warm = mod.prefetchCharaPalettes();
+    await flushReal();
+    expect(requestIdle).toHaveBeenCalledTimes(1);
+    expect(hair).not.toHaveBeenCalled();
+    expect(skin).not.toHaveBeenCalled();
+
+    idle?.();
+    await expect(warm).resolves.toBeUndefined();
+    expect(hair).toHaveBeenCalledTimes(1);
+    expect(skin).toHaveBeenCalledTimes(1);
+  });
+
+  it('falls back to a timer where requestIdleCallback does not exist', async () => {
+    const { hair } = spyRaceTables();
+    vi.stubGlobal('requestIdleCallback', undefined);
+    await mod.prefetchCharaPalettes();
+    expect(hair).toHaveBeenCalledTimes(1);
+  });
+
+  it('is idempotent: a second call shares the first warm-up', async () => {
+    // Red if every file card mount starts its own load.
+    const { hair } = spyRaceTables();
+    const first = mod.prefetchCharaPalettes();
+    const second = mod.prefetchCharaPalettes();
+    expect(second).toBe(first);
+    await first;
+    expect(mod.prefetchCharaPalettes()).toBe(first);
+    expect(hair).toHaveBeenCalledTimes(1);
+  });
+
+  it('warms the SAME palettes the inspection answers from (one service, one provider)', async () => {
+    // Red if the warm-up builds its own CharacterColorService or provider: the inspection would
+    // then load the tables again inside its deadline.
+    const { hair } = spyRaceTables();
+    const createProvider = vi.mocked(core.createCharaPaletteProvider);
+    createProvider.mockClear();
+    await mod.prefetchCharaPalettes();
+    expect(createProvider).toHaveBeenCalledTimes(1);
+    const warmedService = createProvider.mock.calls[0][0];
+    expect(warmedService).toBeInstanceOf(core.CharacterColorService);
+    expect(hair.mock.contexts[0]).toBe(warmedService);
+
+    const { worker } = await start();
+    askPalette(worker, 1, HAIR);
+    await vi.waitFor(() => expect(replies(worker)).toHaveLength(1));
+    expect(replies(worker)[0]).toEqual(expect.objectContaining({ type: 'palette-result' }));
+    expect(createProvider).toHaveBeenCalledTimes(1);
+    expect(hair).toHaveBeenCalledTimes(2);
+    expect(hair.mock.contexts[1]).toBe(warmedService);
+  });
+
+  it('does nothing when the visitor asked to save data', async () => {
+    // Red if the warm-up ignores navigator.connection.saveData: the chunk would download for a
+    // visitor who may never import a file.
+    const { hair, skin } = spyRaceTables();
+    const createProvider = vi.mocked(core.createCharaPaletteProvider);
+    createProvider.mockClear();
+    setSaveData(true);
+    await expect(mod.prefetchCharaPalettes()).resolves.toBeUndefined();
+    await flushReal();
+    expect(hair).not.toHaveBeenCalled();
+    expect(skin).not.toHaveBeenCalled();
+    expect(createProvider).not.toHaveBeenCalled();
+  });
+
+  it('runs when saveData is off', async () => {
+    const { hair } = spyRaceTables();
+    setSaveData(false);
+    await mod.prefetchCharaPalettes();
+    expect(hair).toHaveBeenCalledTimes(1);
+  });
+
+  it('a failed warm-up resolves (never rejects), logs nothing raw, and a later call retries', async () => {
+    // Red if a failure rejects (an unhandled rejection from a fire-and-forget call) or is cached
+    // forever (the next mount could never warm the tables).
+    const unhandled: unknown[] = [];
+    const onUnhandled = (reason: unknown): void => {
+      unhandled.push(reason);
+    };
+    process.on('unhandledRejection', onUnhandled);
+    try {
+      const { hair } = spyRaceTables();
+      // The logger the freshly imported service sees (same module registry).
+      const { logger } = await import('@shared/logger');
+      const logSpies = (['error', 'warn', 'info', 'debug'] as const).map((method) =>
+        vi.spyOn(logger, method).mockImplementation(() => {})
+      );
+      hair.mockRejectedValueOnce(new Error(CANARY));
+      const first = mod.prefetchCharaPalettes();
+      await expect(first).resolves.toBeUndefined();
+      await flushReal();
+      expect(unhandled).toEqual([]);
+      for (const spy of logSpies) {
+        expect(JSON.stringify(spy.mock.calls.map((args) => args.map(String)))).not.toContain(
+          CANARY
+        );
+      }
+
+      const second = mod.prefetchCharaPalettes();
+      expect(second).not.toBe(first);
+      await expect(second).resolves.toBeUndefined();
+      expect(hair).toHaveBeenCalledTimes(2);
+      // Succeeded now: shared from here on.
+      expect(mod.prefetchCharaPalettes()).toBe(second);
+    } finally {
+      process.off('unhandledRejection', onUnhandled);
+    }
+  });
+
+  it('never throws, even when requestIdleCallback itself throws', async () => {
+    const { hair } = spyRaceTables();
+    vi.stubGlobal('requestIdleCallback', () => {
+      throw new Error(CANARY);
+    });
+    let warm: Promise<void> | undefined;
+    expect(() => {
+      warm = mod.prefetchCharaPalettes();
+    }).not.toThrow();
+    await expect(warm).resolves.toBeUndefined();
+    expect(hair).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not touch a pending inspection: its deadline and answer are unchanged', async () => {
+    // Red if the warm-up arms, clears or resets the inspection's timer, or settles the call.
+    spyRaceTables();
+    vi.useFakeTimers();
+    const { call, worker } = await start();
+    await vi.advanceTimersByTimeAsync(2_000);
+    void mod.prefetchCharaPalettes();
+    await vi.advanceTimersByTimeAsync(2_999);
+    await settle();
+    expect(call.status).toBe('pending');
+    await vi.advanceTimersByTimeAsync(1);
+    await settle();
+    expectFailure(call.error, 'timedOut');
+    expect(worker.terminate).toHaveBeenCalledTimes(1);
+  });
+});

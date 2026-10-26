@@ -146,6 +146,14 @@ const BUNDLE_LIMITS = [
   { label: 'glamour: block', pattern: /^glamour-block-/, limit: 45 * KB },
   { label: 'glamour: export sheet', pattern: /^glamour-sheet-/, limit: 16 * KB },
 
+  // The .chara inspection worker, the app's first Web Worker (both .chara tools
+  // read a file through it). It holds no palette or dye tables: the page answers
+  // its palette requests and attaches the dyes, and it imports core only through
+  // the narrow '@xivdyetools/core/chara' entry. Measured at 29.8 KB minified
+  // (30,486 B; 11.2 KB gzip); the limit is that plus ~15%. When core's barrel
+  // leaked into it the chunk was 179 KB, so a jump here means the barrel is back.
+  { label: 'chara inspection worker', pattern: /^chara-inspection\.worker-/, limit: 35 * KB },
+
   // Shared components
   { label: 'dye selector', pattern: /^dye-selector-/, limit: 50 * KB },
   { label: 'result card', pattern: /^result-card-/, limit: 50 * KB },

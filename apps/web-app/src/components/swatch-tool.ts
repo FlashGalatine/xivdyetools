@@ -2480,8 +2480,9 @@ export class SwatchTool extends BaseComponent {
         this.priceData.set(itemId, data);
       });
       this.updateMatchResults();
-    } catch (error) {
-      logger.warn('[CharacterTool] Error fetching prices:', error);
+    } catch {
+      // A fixed message: the error's text (a URL, a server reply) never reaches the log.
+      logger.warn('[CharacterTool] Error fetching prices');
     }
   }
 

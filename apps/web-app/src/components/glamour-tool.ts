@@ -149,8 +149,9 @@ export class GlamourTool extends BaseComponent {
         });
         this.block.init();
       })
-      .catch((error: unknown) => {
-        logger.error('[GlamourTool] Failed to load the glamour block', error);
+      .catch(() => {
+        // A fixed message: the error's text (a URL, a stack) never reaches the log.
+        logger.error('[GlamourTool] Failed to load the glamour block');
         ToastService.error(LanguageService.t('errors.toolLoadFailed'));
       });
   }
@@ -161,8 +162,8 @@ export class GlamourTool extends BaseComponent {
       .then(({ showPresetSubmissionForm }) => {
         showPresetSubmissionForm(undefined, { dyes, name });
       })
-      .catch((error: unknown) => {
-        logger.error('[GlamourTool] Failed to load the preset submission form', error);
+      .catch(() => {
+        logger.error('[GlamourTool] Failed to load the preset submission form');
         ToastService.error(LanguageService.t('errors.toolLoadFailed'));
       });
   }
