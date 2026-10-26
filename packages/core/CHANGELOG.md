@@ -23,6 +23,12 @@ are unchanged. Nothing in the apps consumes the new entry points yet.
   raw document, image or unknown field. Each slot has a `matchHex` that is non-null only for a
   confirmed-active, resolved color; unknown activation keeps its preview but never matches.
 - **`ImportedCharaCharacter`, `ImportedCharaSlot`, `CharaImportIssue`** types.
+- **`ImportedCharaSlot.indexGap`** and a **palette-provider argument** for `resolveCharaForTools`:
+  `indexGap` is true only for a lip / face-paint index the library reads as a color index (not a Hrothgar fur pattern, not a lip of unknown race) stored as a number
+  from 96 to 127, integer or fraction, so the host keeps its "unused 96-127" message without carrying the
+  raw value; and `resolveCharaForTools` now also takes a **`CharaPaletteProvider`** (the library's
+  `PaletteProvider`, re-exported as a type) in place of the `CharacterColorService`, so a worker can ask the
+  page for each color instead of loading the palette data itself.
 
 ### Notes
 

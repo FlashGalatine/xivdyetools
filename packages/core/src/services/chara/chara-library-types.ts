@@ -14,12 +14,24 @@ import type { ResolvedCharaCharacter } from './chara-resolver.js';
  * `matchHex` is the host matching policy, computed once: it equals `displayHex` only for a
  * confirmed-active, resolved slot, and is null otherwise (including unknown activation, which keeps
  * its `displayHex` as preview evidence).
+ *
+ * `indexGap` is true only for a `lip` / `facePaint` index the library reads as a color index (not a
+ * Hrothgar fur pattern, and not a lip of unknown race) whose stored number lies in the unused 96-127 gap, whether the library read it as a valid integer
+ * (`indexOutOfRange`) or as an invalid fraction such as 96.5 (`invalidIndex`). It lets the host keep
+ * its specific gap message without carrying the raw number.
  */
 export type ImportedCharaSlot = Omit<AppearanceSlotInspection, 'storedIndex' | 'storedExtended'> & {
   index: number | null;
   indexState: Field<number>['state'];
   matchHex: string | null;
+  indexGap: boolean;
 };
+
+/**
+ * The library's palette contract: `resolveCharaForTools` accepts one in place of a
+ * `CharacterColorService` (e.g. a worker that asks the page for each color).
+ */
+export type { PaletteProvider as CharaPaletteProvider } from 'xivcharakit/palettes';
 
 /** A bounded diagnostic: a fixed code and a sanitized path, never the library's English message. */
 export interface CharaImportIssue {

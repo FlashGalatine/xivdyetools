@@ -15,7 +15,11 @@ import {
   type CharaInspection,
   type Issue,
 } from 'xivcharakit';
-import { resolveAppearance, type AppearanceSlot } from 'xivcharakit/appearance';
+import {
+  resolveAppearance,
+  type AppearanceSlot,
+  type AppearanceSlotInspection,
+} from 'xivcharakit/appearance';
 import type { Gender, Race, SubRace } from '@xivdyetools/types';
 import type { CharacterColorService } from '../CharacterColorService.js';
 import { MAX_CHARA_FILE_BYTES } from './chara-parser.js';
@@ -23,6 +27,7 @@ import type { CharaGearModel } from './chara-models.js';
 import type { StainIdLookup, ResolvedGearDye } from './chara-resolver.js';
 import { createCharaPaletteProvider } from './chara-palette-provider.js';
 import type {
+  CharaPaletteProvider,
   CharaImportIssue,
   ImportedCharaCharacter,
   ImportedCharaSlot,
@@ -173,6 +178,22 @@ function projectIssues(sources: readonly Issue[]): CharaImportIssue[] {
   ];
 }
 
+/** The unused 96-127 gap between the dark and light lip / face-paint sheets (COL-09/10/35). */
+function isIndexGap(slot: AppearanceSlotInspection): boolean {
+  if (slot.slot !== 'lip' && slot.slot !== 'facePaint') return false;
+  if (slot.indexMeaning !== 'color') return false;
+  const stored = slot.storedIndex;
+  if (stored.state === 'absent' || stored.state === 'null') return false;
+  const n = stored.raw;
+  return typeof n === 'number' && Number.isFinite(n) && n >= 96 && n <= 127;
+}
+
+function isPaletteProvider(
+  colors: CharacterColorService | CharaPaletteProvider,
+): colors is CharaPaletteProvider {
+  return typeof (colors as Partial<CharaPaletteProvider>).getColor === 'function';
+}
+
 function matchHexFor(slot: {
   active: boolean | null;
   interpretation: string;
@@ -186,25 +207,30 @@ function matchHexFor(slot: {
 /**
  * Interpret an inspection against the host palettes and project it for the application. Consumes
  * only reader-produced inspections; retains no `document`, `fields`, `raw` or stored extended data.
+ *
+ * `colors` is either the host `CharacterColorService` (bridged by `createCharaPaletteProvider`) or a
+ * ready palette provider (recognized by its `getColor` function), which is used as is.
  */
 export async function resolveCharaForTools(
   inspection: CharaInspection,
-  colors: CharacterColorService,
+  colors: CharacterColorService | CharaPaletteProvider,
   dyes?: StainIdLookup,
 ): Promise<ImportedCharaCharacter> {
   const appearance = await resolveAppearance(inspection, {
-    palettes: createCharaPaletteProvider(colors),
+    palettes: isPaletteProvider(colors) ? colors : createCharaPaletteProvider(colors),
   });
 
   const slots: ImportedCharaSlot[] = SLOT_ORDER.map((name) => {
+    const source = appearance.slots[name];
     // storedExtended is dropped on purpose: no stored document value travels with the projection
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { storedIndex, storedExtended: _storedExtended, ...rest } = appearance.slots[name];
+    const { storedIndex, storedExtended: _storedExtended, ...rest } = source;
     return {
       ...rest,
       index: storedIndex.state === 'valid' ? storedIndex.value : null,
       indexState: storedIndex.state,
       matchHex: matchHexFor(rest),
+      indexGap: isIndexGap(source),
     };
   });
 

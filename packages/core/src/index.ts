@@ -279,6 +279,7 @@ export type {
   /** @public */ ImportedCharaCharacter,
   /** @public */ ImportedCharaSlot,
   /** @public */ CharaImportIssue,
+  /** @public */ CharaPaletteProvider,
 } from './services/chara/chara-library-types.js';
 
 // /manual topics + learn-more links (shared data for web, bot, og-worker)

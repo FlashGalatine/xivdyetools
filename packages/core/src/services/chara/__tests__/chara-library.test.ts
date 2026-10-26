@@ -1,13 +1,20 @@
 import { describe, it, expect, vi } from 'vitest';
 import { CharacterColorService } from '../../CharacterColorService.js';
 import { inspectCharaForTools, resolveCharaForTools } from '../chara-library.js';
-import type { ImportedCharaCharacter, ImportedCharaSlot } from '../chara-library-types.js';
+import type {
+  CharaPaletteProvider,
+  ImportedCharaCharacter,
+  ImportedCharaSlot,
+} from '../chara-library-types.js';
+import type { CharaInspection } from 'xivcharakit';
+import type { PaletteRequest } from 'xivcharakit/palettes';
 import { MAX_CHARA_FILE_BYTES } from '../chara-parser.js';
 import * as core from '../../../index.js';
 
 const colors = new CharacterColorService();
 const dyes = {
-  getByStainId: (id: number) => (id === 5 ? ({ name: 'Snow White', stainID: 5 } as never) : undefined),
+  getByStainId: (id: number) =>
+    id === 5 ? ({ name: 'Snow White', stainID: 5 } as never) : undefined,
 };
 
 async function importChara(
@@ -86,7 +93,9 @@ describe('inspectCharaForTools byte admission', () => {
   });
 
   it('survives prototype-shaped keys without polluting anything', async () => {
-    const c = await importChara('{"Tribe":"Midlander","Gender":"Masculine","__proto__":{"x":1},"constructor":2}');
+    const c = await importChara(
+      '{"Tribe":"Midlander","Gender":"Masculine","__proto__":{"x":1},"constructor":2}',
+    );
     expect(c.tribe).toBe('Midlander');
     expect(({} as Record<string, unknown>).x).toBeUndefined();
     // the unknown key is reported as a path-free-of-raw-names diagnostic
@@ -106,7 +115,14 @@ describe('projection shape', () => {
       Glasses: { GlassesId: 3 },
     });
     expect(c.slots.map((s) => s.slot)).toEqual([
-      'leftEye', 'rightEye', 'hair', 'highlights', 'skin', 'limbal', 'lip', 'facePaint',
+      'leftEye',
+      'rightEye',
+      'hair',
+      'highlights',
+      'skin',
+      'limbal',
+      'lip',
+      'facePaint',
     ]);
     expect(c).toMatchObject({
       producer: 'Anamnesis',
@@ -152,16 +168,29 @@ describe('projection shape', () => {
       extendedDeclared: false,
     });
     expect(
-      await importChara({ Tribe: 'Midlander', Gender: 'Masculine', IsExtendedAppearanceValid: null }),
+      await importChara({
+        Tribe: 'Midlander',
+        Gender: 'Masculine',
+        IsExtendedAppearanceValid: null,
+      }),
     ).toMatchObject({ extendedValid: false, extendedDeclared: true });
     expect(
-      await importChara({ Tribe: 'Midlander', Gender: 'Masculine', IsExtendedAppearanceValid: false }),
+      await importChara({
+        Tribe: 'Midlander',
+        Gender: 'Masculine',
+        IsExtendedAppearanceValid: false,
+      }),
     ).toMatchObject({ extendedValid: false, extendedDeclared: true });
   });
 
   it('bounds nickname and producer to 256 UTF-16 code units', async () => {
     const long = 'n'.repeat(400);
-    const c = await importChara({ Tribe: 'Midlander', Gender: 'Masculine', Nickname: long, TypeName: long });
+    const c = await importChara({
+      Tribe: 'Midlander',
+      Gender: 'Masculine',
+      Nickname: long,
+      TypeName: long,
+    });
     expect(c.nickname).toHaveLength(256);
     expect(c.producer).toHaveLength(256);
   });
@@ -178,7 +207,13 @@ describe('projection shape', () => {
       Body: { ModelBase: 1, ModelVariant: 1, CANARY_LANE: 4 },
     });
     const json = JSON.stringify(c);
-    for (const canary of ['CANARY_IMAGE', 'CANARY_AUTHOR', 'CANARY_DESCRIPTION', 'CANARY_UNKNOWN', 'CANARY_LANE']) {
+    for (const canary of [
+      'CANARY_IMAGE',
+      'CANARY_AUTHOR',
+      'CANARY_DESCRIPTION',
+      'CANARY_UNKNOWN',
+      'CANARY_LANE',
+    ]) {
       expect(json).not.toContain(canary);
     }
     for (const forbidden of ['document', 'fields', 'raw', 'storedExtended', 'storedIndex']) {
@@ -219,7 +254,9 @@ describe('equipment projection', () => {
     });
     expect(c.gearModels.map((m) => m.slot)).toEqual(['Hands']);
     expect(c.gearDyes.map((d) => d.slot)).toEqual(['Hands']);
-    expect(c.issues.some((i) => i.code === 'INCOMPLETE_MODEL' && i.path[0] === 'HeadGear')).toBe(true);
+    expect(c.issues.some((i) => i.code === 'INCOMPLETE_MODEL' && i.path[0] === 'HeadGear')).toBe(
+      true,
+    );
   });
 
   it('drops empty slots and keeps a weapon triple with its set', async () => {
@@ -242,7 +279,9 @@ describe('equipment projection', () => {
       { slot: 'Body', channel: 2, stainId: 5, dye: { name: 'Snow White', stainID: 5 } },
     ]);
     // invalid channels stay as diagnostics rather than becoming "undyed"
-    expect(c.issues.filter((i) => i.path[0] === 'Feet' && i.path[1] === 'DyeId').length).toBeGreaterThan(0);
+    expect(
+      c.issues.filter((i) => i.path[0] === 'Feet' && i.path[1] === 'DyeId').length,
+    ).toBeGreaterThan(0);
   });
 
   it('gives an unknown stain a null dye and no lookup a null dye', async () => {
@@ -280,9 +319,16 @@ describe('equipment projection', () => {
   });
 
   it('reads both Glasses shapes and maps 0 and absent to null', async () => {
-    expect((await importChara({ Tribe: 'Midlander', Gender: 'Masculine', Glasses: { GlassesId: 4 } })).glassesId).toBe(4);
-    expect((await importChara({ Tribe: 'Midlander', Gender: 'Masculine', Glasses: 4 })).glassesId).toBe(4);
-    expect((await importChara({ Tribe: 'Midlander', Gender: 'Masculine', Glasses: 0 })).glassesId).toBeNull();
+    expect(
+      (await importChara({ Tribe: 'Midlander', Gender: 'Masculine', Glasses: { GlassesId: 4 } }))
+        .glassesId,
+    ).toBe(4);
+    expect(
+      (await importChara({ Tribe: 'Midlander', Gender: 'Masculine', Glasses: 4 })).glassesId,
+    ).toBe(4);
+    expect(
+      (await importChara({ Tribe: 'Midlander', Gender: 'Masculine', Glasses: 0 })).glassesId,
+    ).toBeNull();
     expect((await importChara({ Tribe: 'Midlander', Gender: 'Masculine' })).glassesId).toBeNull();
   });
 });
@@ -319,7 +365,14 @@ describe('appearance semantics', () => {
     const c = await importChara({ ...identity, HairTone: 10 });
     const hair = slot(c, 'hair');
     const expected = (await colors.getHairColors('Midlander', 'Male'))[10].hex;
-    expect(hair).toMatchObject({ interpretation: 'palette', active: true, displayHex: expected, matchHex: expected, index: 10, indexState: 'valid' });
+    expect(hair).toMatchObject({
+      interpretation: 'palette',
+      active: true,
+      displayHex: expected,
+      matchHex: expected,
+      index: 10,
+      indexState: 'valid',
+    });
   });
 
   it('reports unresolved slots with a null display and match', async () => {
@@ -333,8 +386,16 @@ describe('appearance semantics', () => {
 
   it('unknown race leaves hair and skin unresolved, not guessed', async () => {
     const c = await importChara({ HairTone: 10, Skintone: 10 });
-    expect(slot(c, 'hair')).toMatchObject({ interpretation: 'unresolved', displayHex: null, matchHex: null });
-    expect(slot(c, 'skin')).toMatchObject({ interpretation: 'unresolved', displayHex: null, matchHex: null });
+    expect(slot(c, 'hair')).toMatchObject({
+      interpretation: 'unresolved',
+      displayHex: null,
+      matchHex: null,
+    });
+    expect(slot(c, 'skin')).toMatchObject({
+      interpretation: 'unresolved',
+      displayHex: null,
+      matchHex: null,
+    });
   });
 
   it('pins unknown activation: preview kept, no match', async () => {
@@ -355,14 +416,34 @@ describe('appearance semantics', () => {
   });
 
   it('keeps explicitly disabled controls inactive with no match, unlike unknown', async () => {
-    const c = await importChara({ ...identity, EnableHighlights: false, Highlights: 5, FacePaint: 0, FacePaintColor: 5 });
-    expect(slot(c, 'highlights')).toMatchObject({ active: false, interpretation: 'inactive', reason: 'highlightsDisabled', matchHex: null });
-    expect(slot(c, 'facePaint')).toMatchObject({ active: false, interpretation: 'inactive', reason: 'facePaintNone', matchHex: null });
+    const c = await importChara({
+      ...identity,
+      EnableHighlights: false,
+      Highlights: 5,
+      FacePaint: 0,
+      FacePaintColor: 5,
+    });
+    expect(slot(c, 'highlights')).toMatchObject({
+      active: false,
+      interpretation: 'inactive',
+      reason: 'highlightsDisabled',
+      matchHex: null,
+    });
+    expect(slot(c, 'facePaint')).toMatchObject({
+      active: false,
+      interpretation: 'inactive',
+      reason: 'facePaintNone',
+      matchHex: null,
+    });
   });
 
   it('treats the mirror-only FacePaint 128 as none and 129 as active', async () => {
     const mirror = await importChara({ ...identity, FacePaint: 128, FacePaintColor: 5 });
-    expect(slot(mirror, 'facePaint')).toMatchObject({ active: false, reason: 'facePaintNone', matchHex: null });
+    expect(slot(mirror, 'facePaint')).toMatchObject({
+      active: false,
+      reason: 'facePaintNone',
+      matchHex: null,
+    });
     const painted = await importChara({ ...identity, FacePaint: 129, FacePaintColor: 5 });
     expect(slot(painted, 'facePaint')).toMatchObject({ active: true });
     expect(slot(painted, 'facePaint').matchHex).not.toBeNull();
@@ -384,7 +465,11 @@ describe('appearance semantics', () => {
 
   it('applies the lip-color bit: a clear bit disables the lip', async () => {
     const disabled = await importChara({ ...identity, LipsToneFurPattern: 5, Mouth: 2 });
-    expect(slot(disabled, 'lip')).toMatchObject({ active: false, reason: 'lipDisabled', matchHex: null });
+    expect(slot(disabled, 'lip')).toMatchObject({
+      active: false,
+      reason: 'lipDisabled',
+      matchHex: null,
+    });
     const enabled = await importChara({ ...identity, LipsToneFurPattern: 5, Mouth: 130 });
     const lip = slot(enabled, 'lip');
     expect(lip.active).toBe(true);
@@ -435,5 +520,198 @@ describe('appearance semantics', () => {
     const l = slot(c, 'leftEye');
     expect(l.correction).toBe('historicalEyePairSwap');
     expect(l.extendedHex).not.toBe(l.effectiveExtendedHex);
+  });
+});
+
+describe('indexGap (the unused lip / face-paint 96-127 gap, COL-09/10/35)', () => {
+  const identity = { Tribe: 'Midlander', Gender: 'Masculine' };
+  const lipDoc = (value: unknown) => ({ ...identity, LipsToneFurPattern: value, Mouth: 130 });
+  const facePaintDoc = (value: unknown) => ({ ...identity, FacePaint: 129, FacePaintColor: value });
+  const cases: readonly [unknown, boolean][] = [
+    [95, false],
+    [96, true],
+    [100, true],
+    [127, true],
+    [128, false],
+    [96.5, true],
+    [127.5, false],
+    [-1, false],
+    [3, false],
+    ['100', false],
+  ];
+
+  for (const [value, expected] of cases) {
+    it(`lip ${JSON.stringify(value)} -> ${expected}`, async () => {
+      expect(slot(await importChara(lipDoc(value)), 'lip').indexGap).toBe(expected);
+    });
+    it(`facePaint ${JSON.stringify(value)} -> ${expected}`, async () => {
+      expect(slot(await importChara(facePaintDoc(value)), 'facePaint').indexGap).toBe(expected);
+    });
+  }
+
+  it('reports the gap whichever way the library classifies it', async () => {
+    const valid = slot(await importChara(lipDoc(100)), 'lip');
+    expect(valid).toMatchObject({ indexState: 'valid', reason: 'indexOutOfRange', indexGap: true });
+    const fraction = slot(await importChara(facePaintDoc(96.5)), 'facePaint');
+    expect(fraction).toMatchObject({
+      indexState: 'invalid',
+      reason: 'invalidIndex',
+      index: null,
+      indexGap: true,
+    });
+  });
+
+  it('is false on every other slot, even with an index in the gap range', async () => {
+    const c = await importChara({
+      ...identity,
+      LEyeColor: 100,
+      REyeColor: 100,
+      HairTone: 100,
+      Highlights: 100,
+      Skintone: 100,
+      LimbalEyes: 100,
+      LipsToneFurPattern: 3,
+      FacePaint: 129,
+      FacePaintColor: 3,
+    });
+    for (const s of c.slots) expect(s.indexGap, s.slot).toBe(false);
+    expect(slot(c, 'hair').index).toBe(100);
+  });
+
+  it('is false for a Hrothgar fur pattern and for a lip of unknown race', async () => {
+    const fur = await importChara({
+      Tribe: 'Helions',
+      Gender: 'Masculine',
+      LipsToneFurPattern: 100,
+    });
+    expect(slot(fur, 'lip')).toMatchObject({ indexMeaning: 'furPattern', indexGap: false });
+    const unknown = await importChara({ LipsToneFurPattern: 100 });
+    expect(slot(unknown, 'lip')).toMatchObject({ indexMeaning: 'unknown', indexGap: false });
+  });
+
+  it('never serializes the raw fractional index', async () => {
+    const lip = await importChara(lipDoc(96.5));
+    const paint = await importChara(facePaintDoc(96.5));
+    expect(slot(lip, 'lip').indexGap).toBe(true);
+    expect(slot(paint, 'facePaint').indexGap).toBe(true);
+    expect(JSON.stringify(lip)).not.toContain('96.5');
+    expect(JSON.stringify(paint)).not.toContain('96.5');
+  });
+});
+
+describe('resolveCharaForTools with a palette provider', () => {
+  const identity = { Tribe: 'Midlander', Gender: 'Masculine' };
+  const echo = (request: PaletteRequest) => ({
+    ...request,
+    hex: '#112233',
+    rgb: [17, 34, 51] as const,
+    datasetVersion: 'test',
+  });
+
+  it('uses the provider directly and leaves the CharacterColorService path untouched', async () => {
+    const getColor = vi.fn(async (request: PaletteRequest) => echo(request));
+    const provider: CharaPaletteProvider = { getColor };
+    const serviceSpies = (
+      [
+        'getHairColors',
+        'getSkinColors',
+        'getEyeColors',
+        'getHighlightColors',
+        'getTattooColors',
+        'getLipColorsDark',
+        'getLipColorsLight',
+        'getFacePaintColorsDark',
+        'getFacePaintColorsLight',
+      ] as const
+    ).map((name) => vi.spyOn(CharacterColorService.prototype, name));
+    try {
+      const inspection = inspectCharaForTools(
+        JSON.stringify({
+          ...identity,
+          HairTone: 10,
+          LEyeColor: 4,
+          LipsToneFurPattern: 5,
+          Mouth: 130,
+        }),
+      );
+      const c = await resolveCharaForTools(inspection, provider);
+      expect(getColor).toHaveBeenCalledWith(
+        expect.objectContaining({
+          table: 'creator',
+          palette: 'hair',
+          index: 10,
+          tribe: 'Midlander',
+          gender: 'Masculine',
+        }),
+      );
+      expect(getColor).toHaveBeenCalledWith(
+        expect.objectContaining({ table: 'shader', palette: 'hair', index: 10 }),
+      );
+      expect(getColor).toHaveBeenCalledWith(
+        expect.objectContaining({ table: 'creator', palette: 'eyes', index: 4 }),
+      );
+      expect(getColor).toHaveBeenCalledWith(
+        expect.objectContaining({ table: 'creator', palette: 'lipsDark', index: 5 }),
+      );
+      expect(slot(c, 'hair')).toMatchObject({
+        creatorHex: '#112233',
+        displayHex: '#112233',
+        matchHex: '#112233',
+      });
+      for (const spy of serviceSpies) expect(spy).not.toHaveBeenCalled();
+    } finally {
+      for (const spy of serviceSpies) spy.mockRestore();
+    }
+  });
+
+  it('a provider that returns null yields the library unresolved states', async () => {
+    const getColor = vi.fn(async () => null);
+    const inspection = inspectCharaForTools(JSON.stringify({ ...identity, HairTone: 10 }));
+    const c = await resolveCharaForTools(inspection, { getColor });
+    expect(getColor).toHaveBeenCalled();
+    expect(c.issues.some((i) => i.code === 'PALETTE_UNAVAILABLE')).toBe(false);
+    expect(slot(c, 'hair')).toMatchObject({
+      interpretation: 'unresolved',
+      reason: 'missingPaletteEntry',
+      creatorHex: null,
+      displayHex: null,
+      matchHex: null,
+    });
+  });
+
+  it('a provider that throws yields PALETTE_UNAVAILABLE and no throw', async () => {
+    const getColor = vi.fn(async () => {
+      throw new Error('page went away');
+    });
+    const inspection = inspectCharaForTools(JSON.stringify({ ...identity, HairTone: 10 }));
+    const c = await resolveCharaForTools(inspection, { getColor });
+    expect(getColor).toHaveBeenCalled();
+    expect(c.issues.some((i) => i.code === 'PALETTE_UNAVAILABLE' && i.path[0] === 'HairTone')).toBe(
+      true,
+    );
+    expect(slot(c, 'hair')).toMatchObject({ displayHex: null, matchHex: null });
+    expect(JSON.stringify(c)).not.toContain('page went away');
+  });
+
+  it('a provider answering a different coordinate is rejected as an invalid association', async () => {
+    const getColor = vi.fn(async (request: PaletteRequest) => ({
+      ...echo(request),
+      index: request.index + 1,
+    }));
+    const inspection = inspectCharaForTools(JSON.stringify({ ...identity, HairTone: 10 }));
+    const c = await resolveCharaForTools(inspection, { getColor });
+    expect(getColor).toHaveBeenCalled();
+    expect(
+      c.issues.some((i) => i.code === 'INVALID_PALETTE_RESPONSE' && i.path[0] === 'HairTone'),
+    ).toBe(true);
+    expect(slot(c, 'hair')).toMatchObject({ displayHex: null, matchHex: null });
+  });
+
+  it('accepts only a service or a provider (compile-time)', () => {
+    const typeOnly = (inspection: CharaInspection): void => {
+      // @ts-expect-error a plain object is neither a CharacterColorService nor a palette provider
+      void resolveCharaForTools(inspection, {});
+    };
+    expect(typeof typeOnly).toBe('function');
   });
 });
