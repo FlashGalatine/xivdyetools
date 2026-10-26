@@ -29,10 +29,9 @@ import {
   GPOSERS_HEADER,
   gposersGroups,
   gposersOmittedSlots,
-  parseCharaFile,
-  resolveCharaColors,
   type CharaGearModel,
   type CharaGearSlotId,
+  type CharaImportIssue,
   type CharaPieceProblem,
   type CharaPieceTone,
   type CharaTwin,
@@ -44,9 +43,8 @@ import {
 import type { Race, RaceKey } from '@xivdyetools/types';
 import { generateGlamourCard, type GlamourCardRow } from '@xivdyetools/svg';
 import { createTranslator, type LocaleCode, type Translator, type TranslatorLogger } from '../i18n/index.js';
-import { dyeService } from '../input-resolution.js';
 import { getLocalizedDyeName, getLocalizedRace, initializeLocale } from '../localization.js';
-import { genderSymbol, getCharacterColors, producerToken, tribeDisplay } from './chara-identity.js';
+import { genderSymbol, producerToken, readCharaForTools, tribeDisplay } from './chara-identity.js';
 import { failureKind } from './failure-kind.js';
 import type { EmbedData } from './types.js';
 
@@ -96,8 +94,16 @@ export interface GlamourResolveAnswer {
 export type GlamourResolver = (gear: CharaGearModel[], glassesId: number | null) => Promise<GlamourResolveAnswer>;
 
 export interface GlamourInput {
-  /** Raw text of the .chara attachment */
-  fileText: string;
+  /**
+   * Raw text of the .chara attachment. Optional since `fileBytes` exists;
+   * with neither, the result is PARSE_FAILED.
+   */
+  fileText?: string;
+  /**
+   * The capped attachment bytes as received. Preferred over `fileText`, so
+   * invalid UTF-8 is refused by the reader instead of being re-encoded.
+   */
+  fileBytes?: Uint8Array;
   locale: LocaleCode;
   resolve: GlamourResolver;
   theme?: 'dark' | 'light';
@@ -221,6 +227,49 @@ interface Piece {
   /** Nothing fixes this */
   blocked: CharaPieceProblem | null;
   company: boolean;
+}
+
+/** The reader's codes for a stored field it refused: wrong type, malformed or unknown value. */
+const REFUSED_FIELD_CODES: ReadonlySet<string> = new Set(['INVALID_FIELD', 'UNSUPPORTED_VALUE']);
+
+const GEAR_SLOTS: ReadonlySet<string> = new Set(SLOT_ORDER);
+
+/**
+ * Whether the reader left out a gear model the file stores: `INCOMPLETE_MODEL`
+ * (a lane missing, null, fractional, negative or past uint16 — never floored
+ * or defaulted) or a refused value at a gear slot itself (a slot that is no
+ * object). A null slot is no gear, not a dropped one. Keyed on the
+ * projection's fixed issue codes and slot paths, never the library's text.
+ */
+function droppedGear(issues: readonly CharaImportIssue[]): boolean {
+  return issues.some(
+    (i) =>
+      i.path.length === 1 &&
+      GEAR_SLOTS.has(String(i.path[0])) &&
+      (i.code === 'INCOMPLETE_MODEL' || REFUSED_FIELD_CODES.has(i.code))
+  );
+}
+
+/**
+ * Whether a listed piece stores a dye channel the reader refused (not a
+ * uint16: negative, fractional, a string…). The projection keeps only valid
+ * nonzero stains as dyes, so such a channel would otherwise read as undyed.
+ * Zero and a missing or null channel are undyed and stay silent; so does a
+ * channel on an empty or dropped slot, which is no listed piece.
+ */
+function invalidDyeOnListed(issues: readonly CharaImportIssue[], listed: ReadonlySet<string>): boolean {
+  return issues.some(
+    (i) =>
+      REFUSED_FIELD_CODES.has(i.code) &&
+      i.path.length === 2 &&
+      listed.has(String(i.path[0])) &&
+      (i.path[1] === 'DyeId' || i.path[1] === 'DyeId2')
+  );
+}
+
+/** A worn model as the resolver request carries it: the four validated lanes, nothing else. */
+function wireModel({ slot, base, variant, set }: CharaGearModel): CharaGearModel {
+  return set === undefined ? { slot, base, variant } : { slot, base, variant, set };
 }
 
 function localName(names: GlamourItemNames, locale: LocaleCode): string {
@@ -380,38 +429,53 @@ export async function executeGlamour(input: GlamourInput): Promise<GlamourResult
   // file gets one localized reason instead of either message
   const unreadable = t.t('card.swatchParseError', { message: t.t('card.charaFileReason.unreadable') });
 
-  let character: ResolvedCharaCharacter;
+  // Only these members leave the read: the nickname (PRIVACY_POLICY §3) and
+  // the appearance are never taken out of the projection. `issues` are fixed
+  // codes and sanitized paths, read only to choose the fixed warning lines.
+  let gearModels: CharaGearModel[];
+  let gearDyes: ResolvedCharaCharacter['gearDyes'];
+  let glassesId: number | null;
+  let race: ResolvedCharaCharacter['race'];
+  let gender: ResolvedCharaCharacter['gender'];
+  let tribe: ResolvedCharaCharacter['tribe'];
+  let producer: string | null;
+  let issues: CharaImportIssue[];
   try {
-    character = await resolveCharaColors(parseCharaFile(input.fileText), getCharacterColors(), dyeService);
+    ({ gearModels, gearDyes, glassesId, race, gender, tribe, producer, issues } = await readCharaForTools(input));
   } catch (error) {
-    // The try runs the resolver too, so a bot-side bug lands here as well:
-    // log the class and code (never the message — the parser's reason quotes
-    // the file's field values), as /swatch's read does.
+    // The try runs the projection too, so a bot-side bug lands here as well:
+    // log the class and code (a reader refusal's fixed code, e.g.
+    // DUPLICATE_KEY or INVALID_UTF8), never the message, as /swatch's read does.
     input.logger?.warn(`[glamour] parse failed: ${failureKind(error)}`);
     return { ok: false, error: 'PARSE_FAILED', errorMessage: unreadable };
   }
-  // The nickname never leaves this function (PRIVACY_POLICY §3)
-  const { gearModels, gearDyes, glassesId, race, gender, tribe, producer } = character;
+
+  // Gear the file stores that the reader left out, said in one fixed line
+  const gearSkipped = droppedGear(issues) ? t.t('card.glamourGearSkipped') : null;
 
   if (gearModels.length === 0) {
-    return { ok: false, error: 'NO_GEAR', errorMessage: t.t('card.glamourNoGear') };
+    const noGear = t.t('card.glamourNoGear');
+    return { ok: false, error: 'NO_GEAR', errorMessage: gearSkipped ? `${noGear}\n${gearSkipped}` : noGear };
   }
 
   let answer: GlamourResolveAnswer;
   try {
-    answer = await input.resolve(gearModels, glassesId);
+    // Each model copied to exactly { slot, base, variant, set? }: only the
+    // validated lanes the projection kept (complete uint16 models) leave
+    answer = await input.resolve(gearModels.map(wireModel), glassesId);
   } catch (error) {
     const status = (error as { status?: unknown } | null)?.status;
     // A 429 is api-worker's service bucket, full for a minute — busy, not broken
     if (status === 429) {
       return { ok: false, error: 'RESOLVE_BUSY', errorMessage: t.t('card.glamourResolveBusy') };
     }
-    // A refused body is api-worker refusing what the file describes (the parser
-    // takes any positive model lane; api-worker stops at 0xFFFF), so a hand
-    // edit or a damaged file fails every time — the file's problem, not an
-    // outage to retry. The error carries api-worker's own reason, but that is
-    // English, so the reply says it in the reader's language (HC-002). A missing
-    // route or a refused caller (404, 401, 403) is our deploy, so it stays below.
+    // A refused body is api-worker refusing what the file describes (the
+    // reader already keeps only complete uint16 lanes, so this is api-worker's
+    // own validation going further), so a hand edit or a damaged file fails
+    // every time — the file's problem, not an outage to retry. The error
+    // carries api-worker's own reason, but that is English, so the reply says
+    // it in the reader's language (HC-002). A missing route or a refused
+    // caller (404, 401, 403) is our deploy, so it stays below.
     if (typeof status === 'number' && REFUSED_BODY_STATUSES.has(status)) {
       return { ok: false, error: 'PARSE_FAILED', errorMessage: unreadable };
     }
@@ -533,6 +597,8 @@ export async function executeGlamour(input: GlamourInput): Promise<GlamourResult
     if (company.length > 0) {
       notes.push(t.t('card.glamourCompany', { list: company.map((p) => plain(p.name)).join(' · ') }));
     }
+    if (gearSkipped) notes.push(gearSkipped);
+    if (invalidDyeOnListed(issues, new Set(pieces.map((p) => p.slot)))) notes.push(t.t('card.glamourDyeInvalid'));
     notes.push(`${t.t('card.glamourManual')} \`/manual topic:👤\``, SHARE_URL);
 
     const tail = notes.join('\n');

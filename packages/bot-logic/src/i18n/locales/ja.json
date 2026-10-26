@@ -609,6 +609,8 @@
     },
     "swatchTitle": "キャラクターの色見本",
     "swatchNoSlots": "このファイルに有効なカラー部位がありません。",
+    "swatchActivityUnknown": "一部のカラーは照合していません：このファイルには、それが有効かどうかの情報がありません。",
+    "swatchUnusable": "一部のカラーは照合していません：このファイルに無効な値があるか、必要な部族または性別の情報がありません。",
     "swatchSlotMissing": "{slot}はこのファイルでは有効な部位ではありません。",
     "swatchSlotName": {
       "skin": "肌",
@@ -656,6 +658,8 @@
     "glamourCompany": "対応するグランドカンパニーへの所属が必要：{list}",
     "glamourNoItemName": "モデル {key}",
     "glamourNoGear": "このファイルには装備がありません。",
+    "glamourGearSkipped": "このファイルの一部の装備は不完全または無効なため、表示していません。",
+    "glamourDyeInvalid": "このファイルの一部の染色の値は無効なため、表示していません。染色なしとは限りません。",
     "glamourResolveFailed": "アイテム情報を取得できませんでした。1分後にもう一度お試しください。",
     "glamourResolveBusy": "アイテム検索が混み合っています。1分後にもう一度お試しください。",
     "glamourManual": "キャラクターファイルについて：",

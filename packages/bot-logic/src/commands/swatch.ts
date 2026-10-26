@@ -1,12 +1,19 @@
 /**
  * /swatch Command — Business Logic (5.0 character-file frame)
  *
- * Parses a `.chara` file with core's decided rules (key presence not
- * TypeName, gamma on the floats, flag gating, the Helions guard, never
- * Base64Image) and renders the confirmed character sheet: live slots only,
- * each on the suite's measured row with a shaped lead (slot short over grid
- * address, OFF GRID in amber). Past five live slots the SAFEST match drops
+ * Reads a `.chara` file through core's library-backed facade
+ * (`inspectCharaForTools` → `resolveCharaForTools`: field states, gamma on
+ * the floats, activation, the lip composite and the eye-pair correction are
+ * the library's) and renders the confirmed character sheet: matched slots
+ * only, each on the suite's measured row with a shaped lead (slot short over
+ * grid address, OFF GRID in amber). Past five rows the SAFEST match drops
  * (/contrast's tail rule) — both orders show the same five rows.
+ *
+ * A slot is matched only through the projection's `matchHex` (confirmed
+ * active and resolved), never a fallback to `displayHex` or a preview colour:
+ * unknown activation, an inactive control and an unresolved colour give no
+ * row, no `slot:` target and no strip colour. A live lip matches its
+ * composite (`lipComposite?.hex ?? matchHex`), still gated on `matchHex`.
  *
  * `slot:` routes to the other confirmed shape: 14J·2 with the slot's winning
  * colour as target. The chip stays /SWATCH for every route.
@@ -20,9 +27,9 @@
 
 import {
   ColorService,
-  parseCharaFile,
-  resolveCharaColors,
   type CharaSlotId,
+  type ImportedCharaCharacter,
+  type ImportedCharaSlot,
   type ResolvedCharaCharacter,
   type ResolvedCharaSlot,
 } from '@xivdyetools/core';
@@ -41,7 +48,7 @@ import { dyeService } from '../input-resolution.js';
 import { initializeLocale, getLocalizedDyeName } from '../localization.js';
 import { failureKind } from './failure-kind.js';
 import type { EmbedData } from './types.js';
-import { genderSymbol, getCharacterColors, producerToken, tribeDisplay } from './chara-identity.js';
+import { genderSymbol, producerToken, readCharaForTools, tribeDisplay } from './chara-identity.js';
 
 // ============================================================================
 // Types
@@ -62,8 +69,16 @@ export interface SwatchInput {
    * otherwise silent (2026-08-20 i18n audit, F-13). Any `{ warn(msg) }`.
    */
   logger?: TranslatorLogger;
-  /** Raw text of the .chara attachment */
-  fileText: string;
+  /**
+   * Raw text of the .chara attachment. Optional since `fileBytes` exists;
+   * with neither, the result is PARSE_FAILED.
+   */
+  fileText?: string;
+  /**
+   * The capped attachment bytes as received. Preferred over `fileText`, so
+   * invalid UTF-8 is refused by the reader instead of being re-encoded.
+   */
+  fileBytes?: Uint8Array;
   /** slots (file order, default) | hardest (worst-first) — same five rows */
   order?: 'slots' | 'hardest';
   /** Routes to 14J·2 with this slot's winning colour as target */
@@ -77,6 +92,12 @@ export interface SwatchInput {
  * gone from the TYPE, not just the runtime object, so no branch of
  * `executeSwatch` can read it into a card or an embed (PRIVACY_POLICY §3 —
  * players use their real name there).
+ *
+ * Each slot's `verdict` describes the colour; it is not a matching gate. The
+ * card matches only confirmed-active, resolved colours, and a slot outside
+ * that rule (unknown activation included, which reads `inert` with no
+ * `inertReason`) carries no `indexHex`, `floatHex`, `gridAddress` or
+ * `blendHex`, so no colour the card excludes can be matched from here.
  */
 export type SwatchCharacter = Omit<ResolvedCharaCharacter, 'nickname'>;
 
@@ -110,6 +131,8 @@ const SLOT_KEYS: Record<string, string> = {
   lip: 'card.slotLip',
   facePaint: 'card.slotPaint',
   tattoo: 'card.slotTattoo',
+  // the race is unknown: a limbal ring only on Au Ra, so it reads as a tattoo
+  limbalOrTattoo: 'card.slotTattoo',
   limbal: 'card.slotLimbal',
 };
 
@@ -138,19 +161,85 @@ const SLOT_OPTION_NAME_KEYS: Record<SwatchSlotOption, string> = {
   limbal: 'card.swatchSlotName.limbal',
 };
 
-/** The winning colour: float when off grid, the composited blend for lip. */
-function winningHex(slot: ResolvedCharaSlot): string | null {
-  if (slot.slot === 'lip' && slot.blendHex) return slot.blendHex;
-  if (slot.verdict === 'offGrid' || slot.verdict === 'floatOnly') {
-    return slot.floatHex ?? slot.indexHex;
-  }
-  return slot.indexHex ?? slot.floatHex;
+/**
+ * The colour a slot is matched against, or null when it takes no part in
+ * matching. The gate is the projection's `matchHex` alone (confirmed active,
+ * resolved) — never `displayHex` or a preview. A lip matches its live blend:
+ * the library composites only over live extended data, so a lip without one
+ * matches its own colour.
+ */
+function winningHex(slot: ImportedCharaSlot): string | null {
+  if (slot.matchHex === null) return null;
+  if (slot.slot === 'lip') return slot.lipComposite?.hex ?? slot.matchHex;
+  return slot.matchHex;
 }
 
-function isLive(slot: ResolvedCharaSlot): boolean {
+/** The float won the slot: OFF GRID, or a colour with no palette index. */
+function floatWon(slot: ImportedCharaSlot): boolean {
+  return slot.interpretation === 'offGrid' || slot.interpretation === 'extendedOnly';
+}
+
+/**
+ * A colour the file stores whose activation it does not state (a missing,
+ * null or invalid `EnableHighlights` / `FacePaint` / `Mouth`). Keyed on
+ * `active === null`, never on the library's reason: an all-zero extended
+ * block reads `ambiguousZeroBlock`, not `activityUnknown`. A slot with no
+ * colour at all is nothing to explain.
+ */
+function isActivityUnknown(slot: ImportedCharaSlot): boolean {
+  return slot.active === null && slot.displayHex !== null;
+}
+
+/**
+ * The unresolved reasons that mean the file stored a colour the reader could
+ * not use: an invalid or out-of-range index (the 96-127 lip / face-paint gap
+ * included), a palette index with no clan / gender (or, for a lip, no race)
+ * to pick its sheet, and an index or live float the palettes have no entry
+ * for. `missingColor` is not here — it is a slot the file leaves empty, unless
+ * the colour it stores is malformed (below) — and neither is any inactive
+ * reason: an explicitly disabled control, a lip of opacity zero and a
+ * Hrothgar fur pattern are not failures.
+ */
+const UNUSABLE_REASONS: ReadonlySet<ImportedCharaSlot['reason']> = new Set<ImportedCharaSlot['reason']>([
+  'invalidIndex',
+  'indexOutOfRange',
+  'missingTribeGender',
+  'missingRace',
+  'missingPaletteEntry',
+  'missingShaderReference',
+]);
+
+/** Each slot's extended colour field (face paint has none), as a diagnostic path names it. */
+const COLOUR_FIELDS: Record<CharaSlotId, string | null> = {
+  leftEye: 'LeftEyeColor',
+  rightEye: 'RightEyeColor',
+  hair: 'HairColor',
+  highlights: 'HairHighlight',
+  skin: 'SkinColor',
+  limbal: 'LimbalRingColor',
+  lip: 'MouthColor',
+  facePaint: null,
+};
+
+/** The reader's codes for a stored field it refused: wrong type, malformed or unknown value. */
+const REFUSED_FIELD_CODES: ReadonlySet<string> = new Set(['INVALID_FIELD', 'UNSUPPORTED_VALUE']);
+
+/**
+ * A colour the file holds but that could not be used, so it gives no row:
+ * an unresolved slot for one of `UNUSABLE_REASONS`, or an unresolved
+ * `missingColor` slot whose only colour, its extended float, was refused as
+ * malformed. Keyed on the projection's reason and fixed issue codes, never on
+ * the library's message. A slot that still matched (a malformed float beside
+ * a valid index) is not reported: its colour was matched.
+ */
+function isUnusable(slot: ImportedCharaSlot, issues: NamelessCharacter['issues']): boolean {
+  if (slot.interpretation !== 'unresolved') return false;
+  if (UNUSABLE_REASONS.has(slot.reason)) return true;
+  const field = COLOUR_FIELDS[slot.slot];
   return (
-    (slot.verdict === 'index' || slot.verdict === 'offGrid' || slot.verdict === 'floatOnly') &&
-    winningHex(slot) !== null
+    slot.reason === 'missingColor' &&
+    field !== null &&
+    issues.some((i) => REFUSED_FIELD_CODES.has(i.code) && i.path.length === 1 && i.path[0] === field)
   );
 }
 
@@ -164,18 +253,127 @@ function nearestDye(hex: string): { dye: Dye; deltaE: number } {
   return best!;
 }
 
+/** The projection without its nickname — see `withoutNickname`. */
+type NamelessCharacter = Omit<ImportedCharaCharacter, 'nickname'>;
+
 /**
- * Strips the Ktisis nickname before a character record leaves this module —
- * `SwatchResult.character` must never carry the character's name (PRIVACY_POLICY §3).
+ * Strips the Ktisis nickname the moment the file is projected — nothing in
+ * this module reads a record that still has one, and `SwatchResult.character`
+ * must never carry the character's name (PRIVACY_POLICY §3).
  */
-function withoutNickname(character: ResolvedCharaCharacter): SwatchCharacter {
+function withoutNickname(character: ImportedCharaCharacter): NamelessCharacter {
   const { nickname, ...safeCharacter } = character;
   void nickname;
   return safeCharacter;
 }
 
+type LegacyVerdict = ResolvedCharaSlot['verdict'];
+type LegacyInertReason = NonNullable<ResolvedCharaSlot['inertReason']>;
+type LegacyError = NonNullable<ResolvedCharaSlot['error']>;
+
+const LEGACY_VERDICTS: Record<ImportedCharaSlot['interpretation'], LegacyVerdict> = {
+  palette: 'index',
+  offGrid: 'offGrid',
+  extendedOnly: 'floatOnly',
+  inactive: 'inert',
+  unresolved: 'error',
+};
+
+/** The library's inactive reasons the legacy union can name (`lipDisabled` is a lip turned off: `noLip`). */
+const LEGACY_INERT_REASONS: Partial<Record<ImportedCharaSlot['reason'], LegacyInertReason>> = {
+  highlightsDisabled: 'highlightsDisabled',
+  facePaintNone: 'facePaintNone',
+  furPattern: 'furPattern',
+  noLip: 'noLip',
+  lipDisabled: 'noLip',
+};
+
+/**
+ * The legacy error of an unresolved slot. Fixed text, never a stored value:
+ * the 96-127 gap keys on the adapter's `indexGap` (which covers a fraction
+ * such as 96.5), never on the index itself.
+ */
+function legacyError(slot: ImportedCharaSlot): LegacyError | undefined {
+  if (slot.indexGap) {
+    return {
+      code: 'midRangeIndex',
+      message: 'index falls in the 96-127 gap between the dark (0-95) and light (128-223) ranges',
+    };
+  }
+  switch (slot.reason) {
+    case 'invalidIndex':
+    case 'indexOutOfRange':
+    case 'missingPaletteEntry':
+      return { code: 'indexOutOfRange', message: 'index has no entry in its colour sheet' };
+    case 'missingTribeGender':
+    case 'missingRace':
+      return { code: 'noTribe', message: 'needs Tribe and Gender to resolve its race-specific sheet' };
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * One projected slot in the legacy `ResolvedCharaSlot` shape, as the old
+ * resolver's readers read it:
+ * - `verdict` from the interpretation (palette → index, offGrid, extendedOnly
+ *   → floatOnly, inactive → inert, unresolved → error), except that a slot
+ *   with no usable colour (`missingColor`: no palette index and no live
+ *   float) stays `inert`, as the legacy resolver answered an absent key — it
+ *   is not a failure — and a slot of unknown activation (`active === null`)
+ *   is `inert` with no `inertReason`, since nothing says it is switched off;
+ * - with a `matchHex`: `indexHex` = the creator swatch, `floatHex` = the
+ *   effective (eye-pair corrected) extended colour, `blendHex` = the live lip
+ *   composite. Without one, those three and `gridAddress` are null, as the
+ *   old resolver's inert slots were: the legacy shape carries no colour the
+ *   matching rule excludes;
+ * - `kind` `limbalOrTattoo` (race unknown) → `tattoo`, the legacy non-Au Ra kind.
+ * This module never matches by verdict, only by `matchHex`.
+ */
+function toLegacySlot(slot: ImportedCharaSlot): ResolvedCharaSlot {
+  const verdict: LegacyVerdict =
+    slot.active === null || (slot.interpretation === 'unresolved' && slot.reason === 'missingColor')
+      ? 'inert'
+      : LEGACY_VERDICTS[slot.interpretation];
+  const matched = slot.matchHex !== null;
+  const legacy: ResolvedCharaSlot = {
+    slot: slot.slot,
+    kind: slot.kind === 'limbalOrTattoo' ? 'tattoo' : slot.kind,
+    verdict,
+    index: slot.index,
+    sheetIndex: slot.sheetIndex,
+    sheetVariant: slot.variant,
+    gridAddress: matched ? slot.gridAddress : null,
+    indexHex: matched ? slot.creatorHex : null,
+    floatHex: matched ? (slot.effectiveExtendedHex ?? slot.extendedHex) : null,
+    deltaE: slot.deltaE,
+    alpha: slot.alpha,
+    blendHex: matched ? (slot.lipComposite?.hex ?? null) : null,
+  };
+  const inertReason = verdict === 'inert' && slot.active !== null ? LEGACY_INERT_REASONS[slot.reason] : undefined;
+  if (inertReason) legacy.inertReason = inertReason;
+  const error = verdict === 'error' ? legacyError(slot) : undefined;
+  if (error) legacy.error = error;
+  // A float the file stores that is not live: the index wins, and says so
+  if (verdict === 'index' && slot.extendedHex !== null && !slot.extendedActive) {
+    legacy.indexWinNote = 'extendedMissing';
+  }
+  return legacy;
+}
+
+/**
+ * `SwatchResult.character` keeps its published shape
+ * (`Omit<ResolvedCharaCharacter, 'nickname'>`): the projection mapped back
+ * slot by slot, its diagnostics (`issues`) left behind.
+ */
+function toSwatchCharacter(character: NamelessCharacter): SwatchCharacter {
+  const { issues, slots, ...rest } = character;
+  void issues;
+  return { ...rest, slots: slots.map(toLegacySlot) };
+}
+
 interface LiveRow {
-  slot: ResolvedCharaSlot;
+  slot: ImportedCharaSlot;
   label: string;
   addr: string;
   addrWarn: boolean;
@@ -198,18 +396,19 @@ export async function executeSwatch(input: SwatchInput): Promise<SwatchResult> {
   // character's name or the attachment filename (PRIVACY_POLICY §3).
   const title = t.t('card.swatchTitle');
 
-  // The nickname is stripped the moment the record is resolved: `character`
-  // has no `nickname` member, so nothing below can print one.
+  // The nickname is stripped the moment the file is projected: neither
+  // `projected` nor `character` has a `nickname` member, so nothing below can
+  // print one.
+  let projected: NamelessCharacter;
   let character: SwatchCharacter;
   try {
-    const parsed = parseCharaFile(input.fileText);
-    character = withoutNickname(
-      await resolveCharaColors(parsed, getCharacterColors(), dyeService)
-    );
+    projected = withoutNickname(await readCharaForTools(input));
+    character = toSwatchCharacter(projected);
   } catch (error) {
-    // The try runs the resolver and the nickname strip too, so a bot-side bug
-    // lands here as well: log the class and code (never the message — the
-    // parser's reason quotes the file's field values).
+    // The try runs the projection, the nickname strip and the legacy mapping
+    // too, so a bot-side bug lands here as well: log the class and code (a
+    // reader refusal's fixed code, e.g. DUPLICATE_KEY or INVALID_UTF8), never
+    // the message.
     input.logger?.warn(`[swatch] parse failed: ${failureKind(error)}`);
     // HC-002: the parser's reason is English, so the reply gives a localized one
     return {
@@ -220,15 +419,17 @@ export async function executeSwatch(input: SwatchInput): Promise<SwatchResult> {
   }
 
   try {
-    // Live rows in file order; merged eyes are one row, heterochromia two.
+    // Matched rows in file order; merged eyes are one row, heterochromia two.
     const rows: LiveRow[] = [];
-    for (const slot of character.slots) {
-      if (!isLive(slot)) continue;
-      if (slot.slot === 'rightEye' && character.eyesShareIndex) continue;
+    for (const slot of projected.slots) {
+      const hex = winningHex(slot);
+      if (hex === null) continue;
+      if (slot.slot === 'rightEye' && projected.eyesShareIndex && rows.some((r) => r.slot.slot === 'leftEye')) {
+        continue;
+      }
 
-      const hex = winningHex(slot)!;
       const match = nearestDye(hex);
-      const offGrid = slot.verdict === 'offGrid' || slot.verdict === 'floatOnly';
+      const offGrid = floatWon(slot);
       const addr = offGrid ? t.t('card.offGridShort') : (slot.gridAddress ?? '—');
       // The L/R/LR eye marker rides the LABEL line, not the address line: the
       // address line's OFF-GRID token already fills its 56px budget (I18N-011
@@ -244,7 +445,7 @@ export async function executeSwatch(input: SwatchInput): Promise<SwatchResult> {
       // ellipsis, which is what makes the marker survive.
       let label = t.t(SLOT_KEYS[slot.kind] ?? 'card.slotSkin');
       if (slot.slot === 'leftEye' || slot.slot === 'rightEye') {
-        if (character.eyesShareIndex) label += '·LR';
+        if (projected.eyesShareIndex) label += '·LR';
         else label += slot.slot === 'leftEye' ? '·L' : '·R';
       }
       rows.push({
@@ -258,13 +459,24 @@ export async function executeSwatch(input: SwatchInput): Promise<SwatchResult> {
       });
     }
 
+    // Colours the file stores without saying whether they are switched on, and
+    // colours it stores that could not be used: kept out of matching, each
+    // explained in one fixed localized sentence
+    const explanations: string[] = [];
+    if (projected.slots.some(isActivityUnknown)) explanations.push(t.t('card.swatchActivityUnknown'));
+    if (projected.slots.some((s) => isUnusable(s, projected.issues))) explanations.push(t.t('card.swatchUnusable'));
+
     if (rows.length === 0) {
-      return { ok: false, error: 'NO_LIVE_SLOTS', errorMessage: t.t('card.swatchNoSlots') };
+      return {
+        ok: false,
+        error: 'NO_LIVE_SLOTS',
+        errorMessage: [t.t('card.swatchNoSlots'), ...explanations].join('\n'),
+      };
     }
 
     const charSub = [
-      [tribeDisplay(character.tribe, locale), genderSymbol(character.gender)].filter(Boolean).join(' '),
-      producerToken(character.producer),
+      [tribeDisplay(projected.tribe, locale), genderSymbol(projected.gender)].filter(Boolean).join(' '),
+      producerToken(projected.producer),
     ]
       .filter(Boolean)
       .join(' · ');
@@ -374,29 +586,30 @@ export async function executeSwatch(input: SwatchInput): Promise<SwatchResult> {
         lines.push(
           t.t('card.swatchOffGrid', {
             slot: r.label,
-            index: r.slot.indexHex ?? '—',
-            float: r.slot.floatHex ?? r.sourceHex,
+            index: r.slot.creatorHex ?? '—',
+            float: r.slot.effectiveExtendedHex ?? r.sourceHex,
           })
         );
       }
     }
     const lip = rows.find((r) => r.slot.slot === 'lip');
-    if (lip && lip.slot.alpha !== null && lip.slot.alpha < 1 && lip.slot.blendHex) {
+    const composite = lip?.slot.lipComposite;
+    if (lip && composite && composite.alpha < 1) {
       // The color the blend was made from: the file's own only when it won the verdict.
       // An unedited file stores the shader color, which is not the swatch the blend used
-      const floatWon = lip.slot.verdict === 'offGrid' || lip.slot.verdict === 'floatOnly';
-      const raw = floatWon ? lip.slot.floatHex : lip.slot.indexHex;
+      const raw = floatWon(lip.slot) ? lip.slot.effectiveExtendedHex : lip.slot.creatorHex;
       lines.push(
         t.t('card.swatchLip', {
-          alpha: num(lip.slot.alpha, locale, 2),
+          alpha: num(composite.alpha, locale, 2),
           raw: raw ?? '—',
-          blend: lip.slot.blendHex,
+          blend: composite.hex,
         })
       );
     }
+    lines.push(...explanations);
     const gearNames = Array.from(
       new Set(
-        character.gearDyes
+        projected.gearDyes
           .filter((g) => g.dye !== null)
           .map((g) => getLocalizedDyeName(g.dye!.itemID, g.dye!.name, locale))
       )
