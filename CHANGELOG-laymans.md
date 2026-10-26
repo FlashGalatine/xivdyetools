@@ -37,7 +37,8 @@ Rules:
 - Web app and Discord bot: a lip color the file has switched off no longer shows, and the lip is blended over the skin only when the file's extra colors are on.
 - Web app and Discord bot: when a file doesn't say whether highlights, face paint or lip color are switched on, the color is shown or noted but never matched to a dye or saved.
 - Web app and Discord bot: a color, a piece of gear or a dye value the file holds but the reader can't use is flagged, and a dye value that isn't a dye is no longer shown as undyed.
-- Web app: a character file that can't be read gets a plain message, and your previous character stays loaded.
+- Web app and Discord bot: a damaged character file (a repeated field, an unusually large number or a very deeply nested one) is now turned away as unreadable.
+- Web app: a character file that can't be read now gets a plain message.
 - Web app: About now links the open-source license of the character file reader.
 
 ## [5.11.3] - 2026-10-20
