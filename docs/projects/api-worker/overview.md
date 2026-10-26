@@ -63,6 +63,14 @@ Unlike the presets-api (authenticated, restricted CORS), this API is fully anony
 | Caching | `max-age=3600, s-maxage=86400` | Deterministic data, changes only with game patches |
 | Database | Bundled JSON | No D1 — the 125-dye database is part of the bundle via `@xivdyetools/core` |
 
+### Character metadata and icons
+
+Character enrichment stays optional and sends only model/facewear identifiers upstream. Equipment rows use one captured base/game/schema context and a seven-day row cache; unresolved bootstrap contexts bypass shared caching. Concurrent Item/Glasses misses share decoded data only within one isolate, with a 256-key pending cap and ordinary fetch fallback. Row stale-serving headroom remains unchanged; no row background refresh or global deduplication is promised.
+
+Icon assets and internal keys share a game version. The existing URL follows the configured version with a five-minute browser policy; an optional canonical version query receives a 30-day immutable policy. Validated PNGs are seven days fresh internally and retained for 30 days for conditional ETag refresh. Previously delivered immutable browser entries expire on their original schedule.
+
+The endpoint contract and parameter forms are in the [character API reference](../../../apps/api-worker/docs/reference/chara.md). Run `pnpm --filter xivdyetools-api-worker run test:chara-runtime` after building dependencies for local workerd ownership checks with fixture-only upstream requests.
+
 ### Source Structure
 
 ```
@@ -122,7 +130,7 @@ docs/                      # VitePress developer docs → developers.xivdyetools
 | `API_VERSION` | Variable | Currently `v1` |
 | `UNIVERSALIS_API_BASE` | Variable | `https://universalis.app/api/v2` |
 | `RATE_LIMIT_REQUESTS` / `RATE_LIMIT_WINDOW_SECONDS` | Variable | Proxy limiter — `30`/`60` production, `60`/`60` dev |
-| `XIVAPI_BASE` / `XIVAPI_VERSION` | Variable | `/v1/chara/*` upstream and the game-version pin (the row cache is namespaced by the real key: a pinned key as is, `latest` resolved through `GET /api/version` and memoized for 10 min) |
+| `XIVAPI_BASE` / `XIVAPI_VERSION` | Variable | `/v1/chara/*` upstream and the game-version pin (the row cache is namespaced by the real key: a canonical pinned key plus a canonical `XIVAPI_SCHEMA` is used as is; anything else is resolved by one bounded `Item/1` metadata probe that returns the game version and schema together, memoized for 10 min on success and 1 min on failure, and an unresolved context bypasses shared caching) |
 | `XIVAPI_SCHEMA` | Variable (optional) | `exdschema@2:rev:<sha>` pin against upstream field renames |
 
 No secrets required. No D1 database. api-worker calls no other worker; discord-worker's `UNIVERSALIS_PROXY` service binding targets it (`/api/v2/aggregated/...` for `/budget`, and `POST /v1/chara/resolve` for `/glamour`).

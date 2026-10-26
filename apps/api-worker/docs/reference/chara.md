@@ -76,8 +76,10 @@ Names are never "cleaned": Augmented / Replica / +1 prefixes stay, because the n
 
 ### Caching
 
-- Each (slot, key) is cached at the edge for ~7 days, namespaced by the game-version pin, so twenty people importing the same glamour is one upstream XIVAPI search. An empty answer (no item row) is cached too.
-- `X-Cache: HIT` means no upstream call was made for this request; `MISS` means at least one key was fetched. (Not CORS-exposed — readable from servers, plugins and bots, not from browser code.)
+- Each (slot, key) is cached at the edge for ~7 days, partitioned by normalized upstream base, canonical game version, canonical schema and row shape. A repeat import reuses complete row families. An empty answer (no item row) is cached too.
+- `X-Cache: HIT` means all data lookups were served from cache; `MISS` means at least one data lookup needed upstream work or joined a pending lookup. Snapshot discovery is excluded. (Not CORS-exposed — readable from servers, plugins and bots, not from browser code.)
+- Moving game/schema selectors are discovered once per request and memoized for ten minutes. Failed discovery keeps the last complete context; a first failure permits uncached enrichment without reading or writing shared row entries.
+- Concurrent Item/Glasses misses share decoded data within one isolate. Partially overlapping requests fetch only their new keys in one batch; a 256-key pending limit falls back to ordinary fetches without dropping work. Errors and truncated pages are not persisted. Completed in-flight entries are removed; a request between completion and the asynchronous cache write can miss again. Cache contents are local to a Cloudflare data center, so this is not global deduplication. Row freshness remains seven days with the existing one-day stale-serving headroom; no background row refresh is added.
 - The POST response itself is `Cache-Control: no-store` — caching happens per key behind it, not on the envelope.
 
 ### Errors
@@ -95,13 +97,18 @@ The item's icon as PNG (the 80 px `_hr1` asset), proxied from XIVAPI and edge-ca
 
 <EndpointCard
   endpoint="/v1/chara/icon/:iconId"
-  summary="Item icon proxy (PNG)."
+  summary="Item icon PNG; optional game-version pin."
   :params="[
     { name: 'iconId', in: 'path', required: true, default: '41716', description: 'From items.<slot>.iconId or glasses.iconId — canonical decimal, 1–999999 (no leading zeros, sign or trailing characters)' },
+    { name: 'version', in: 'query', default: '', description: 'Optional canonical game key: exactly 16 lower-case hexadecimal characters. Omit to follow the configured game version.' },
   ]"
 />
 
-Returns `image/png` (always — the upstream content type is never reflected; a 2xx upstream body that is not a PNG is refused) with `Cache-Control: public, max-age=2592000, immutable`, `Content-Disposition: inline`, `Content-Security-Policy: sandbox` and an `X-Cache` header (`HIT` / `MISS`). `041716` and `41716abc` are `400 VALIDATION_ERROR`; `404 NOT_FOUND` when the upstream has no such asset; `503 UPSTREAM_UNAVAILABLE` when XIVAPI is down, answers with something other than a PNG, or exceeds the 1 MB ceiling. A missing icon should cost the tile, not the row.
+Returns `image/png` (always — the upstream content type is never reflected; a 2xx upstream body that is not a PNG is refused) with `Cache-Control: public, max-age=300, must-revalidate` for the unversioned URL, or `public, max-age=2592000, immutable` when an explicit canonical `version` is supplied, `Content-Disposition: inline`, `Content-Security-Policy: sandbox` and an `X-Cache` header (`HIT` / `MISS`). `041716` and `41716abc` are `400 VALIDATION_ERROR`; `404 NOT_FOUND` when the upstream has no such asset; `503 UPSTREAM_UNAVAILABLE` when XIVAPI is down, answers with something other than a PNG, or exceeds the 1 MB ceiling. A missing icon should cost the tile, not the row.
+
+Asset fetches and internal edge keys share the same game version. Internal storage is separate from browser cache headers and never exposes upstream validators or cache timestamps. Malformed or repeated version parameters are 400; unrelated query parameters are ignored. Previously delivered immutable browser responses can keep their original 30-day lifetime; changing the server policy cannot revoke those entries.
+
+Validated PNGs are fresh internally for seven days and retained for up to 30 days. A retained stale entry is revalidated with the upstream ETag; a 304 reuses its existing body and is returned as a normal 200 PNG. A changed 200 must pass validation again. Missing/corrupt/expired bodies are fetched unconditionally. Failed refreshes preserve the old timestamp and return the existing error response; they do not silently serve stale success or extend freshness.
 
 ## Model key packing (for reference)
 
