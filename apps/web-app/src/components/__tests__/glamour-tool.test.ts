@@ -154,6 +154,23 @@ describe('GlamourTool', () => {
     expect(empty()?.hidden).toBe(true);
   });
 
+  it('mounts the glamour block for a gear-only file (no appearance keys at all)', async () => {
+    // The legacy parser refused a file with none of the fifteen color keys; the
+    // library-backed import accepts it, and its gear is the whole point here.
+    const gearOnly = JSON.stringify({
+      TypeName: 'Anamnesis Character File',
+      Body: { ModelBase: 200, ModelVariant: 1, DyeId: 56, DyeId2: 0 },
+    });
+    expect(await loadCharaFile(charaFile(gearOnly))).toEqual({ ok: true });
+    mount();
+
+    await vi.waitFor(() =>
+      expect(container.querySelector('[data-role="glamour-block"]')).not.toBeNull()
+    );
+    expect(container.querySelector<HTMLElement>('[data-role="glamour-empty"]')?.hidden).toBe(true);
+    expect(container.querySelector('[data-slot="Body"]')).not.toBeNull();
+  });
+
   it('says on the file card that edited acquisition notes are kept on this device', async () => {
     await loadCharaFile(charaFile(FIXTURE));
     mount();

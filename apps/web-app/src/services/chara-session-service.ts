@@ -9,21 +9,22 @@
  *
  * Memory only, by design: nothing here touches localStorage, sessionStorage or
  * IndexedDB, so a reload clears it. That is the LOCAL ONLY promise on the file
- * card. Parsing lives in `chara-file-loader` so this module stays small:
+ * card. Loading lives in `chara-file-loader` so this module stays small:
  * ConfigController imports it into the main entry, where it pins the swatch
  * tribe and gender to the file, and the config sidebar's lock subscribes to it.
  *
  * @module services/chara-session-service
  */
 
-import type { ResolvedCharaCharacter } from '@xivdyetools/core';
+import type { ImportedCharaCharacter } from '@xivdyetools/core';
 import type { Gender, SubRace } from '@xivdyetools/types';
 import { logger } from '@shared/logger';
 
-/** One parsed character file. */
+/** One inspected character file. */
 export interface CharaSession {
-  readonly resolved: ResolvedCharaCharacter;
-  /** The dropped file's name: shown on the file card, never sent anywhere */
+  /** The worker's projected character, validated on the page, with its dyes attached */
+  readonly resolved: ImportedCharaCharacter;
+  /** The dropped file's name, at most 256 UTF-16 units: shown on the file card, never sent anywhere */
   readonly fileName: string;
 }
 
@@ -56,9 +57,10 @@ export class CharaSessionService {
     for (const listener of [...this.listeners]) {
       try {
         listener(session);
-      } catch (error) {
-        // One broken consumer must not keep the file from the others.
-        logger.error('[CharaSession] Subscriber failed:', error);
+      } catch {
+        // One broken consumer must not keep the file from the others. A fixed message only:
+        // the exception could quote what the subscriber was drawing (a nickname, a file name).
+        logger.error('[CharaSession] Subscriber failed');
       }
     }
   }

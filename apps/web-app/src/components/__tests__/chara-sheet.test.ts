@@ -6,13 +6,21 @@
  * ones a player's file would produce.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import type { CharaSlotId } from '@xivdyetools/core';
+import type { CharaSlotId, ImportedCharaCharacter } from '@xivdyetools/core';
 import { CharaSheet, saveCharacterColors, type CharaSheetOptions } from '../chara-sheet';
-import { CollectionService, LanguageService, ToastService } from '@services/index';
+import {
+  CollectionService,
+  ColorService,
+  dyeService,
+  LanguageService,
+  ToastService,
+} from '@services/index';
 import { CharaSessionService } from '@services/chara-session-service';
 import { ThemeService } from '@services/theme-service';
 import { loadCharaFile } from '@services/chara-file-loader';
+import { inspectCharaBytes } from '@services/chara-inspection-service';
 import { createTestContainer, cleanupTestContainer } from '../../__tests__/component-utils';
+import { makeImportedCharacter, makeImportedSlot } from '../../__tests__/mocks/imported-chara';
 
 /** Miqo'te female, both eyes on cell 42; the lip index sits in the unused 96–127 gap. */
 const FIXTURE = JSON.stringify({
@@ -372,4 +380,356 @@ describe('saveCharacterColors', () => {
       expect(characterRecords().map((c) => c.name)).toEqual(['blank.chara']);
     }
   );
+});
+
+// ---------------------------------------------------------------------------
+// Task 5 (assignment B): the evidence states of the xivcharakit-backed projection. Real files
+// through the loader where a short document produces the state (the plan's tuples among them);
+// the shared factory for live extended floats, the eye correction and the lip composite.
+// ---------------------------------------------------------------------------
+
+const BASE = {
+  TypeName: 'Anamnesis Character File',
+  Nickname: 'Test Subject',
+  Race: 'Miqote',
+  Tribe: 'SeekerOfTheSun',
+  Gender: 'Feminine',
+};
+const t = (key: string): string => LanguageService.t(key);
+
+/** Every slot card, button or not, by slot. */
+const cardFor = (container: HTMLElement, slot: CharaSlotId): HTMLElement | null =>
+  container.querySelector<HTMLElement>(`.chara-slots-grid > [data-slot="${slot}"]`);
+const allCards = (container: HTMLElement): HTMLElement[] =>
+  Array.from(container.querySelectorAll<HTMLElement>('.chara-slots-grid > *'));
+/** The header's `x / 8`. */
+const headerCount = (container: HTMLElement): string | null | undefined =>
+  container.querySelector('div > div > span:last-child')?.textContent;
+/** The ΔE number a matched card ends with (mono, 11px). */
+const hasBestDyeRow = (card: HTMLElement): boolean =>
+  Array.from(card.querySelectorAll<HTMLElement>('span')).some((s) => s.style.fontSize === '11px');
+
+async function loadDoc(doc: object, fileName = 'test.chara'): Promise<void> {
+  const result = await loadCharaFile(
+    new File([JSON.stringify(doc)], fileName, { type: 'application/json' })
+  );
+  expect(result).toEqual({ ok: true });
+}
+
+/** Load a hand-built projection through the real loader (the inspection answers it once). */
+async function loadImported(resolved: ImportedCharaCharacter): Promise<void> {
+  vi.mocked(inspectCharaBytes).mockResolvedValueOnce(resolved);
+  await loadDoc(BASE);
+}
+
+const absent = {
+  interpretation: 'unresolved',
+  reason: 'missingColor',
+  displayHex: null,
+  creatorHex: null,
+  shaderHex: null,
+  sheetIndex: null,
+  gridAddress: null,
+} as const;
+
+describe('CharaSheet — evidence states (Task 5)', () => {
+  describe('unknown activation: a preview, never a match (D4, D6)', () => {
+    it('draws the plan tuple {Highlights:0, FacePaintColor:0} as unconfirmed previews', async () => {
+      const { container, onSlotPick } = mountSheet();
+      await loadDoc({ ...BASE, Highlights: 0, FacePaintColor: 0 });
+      const resolved = CharaSessionService.getSession()!.resolved;
+
+      for (const slot of ['highlights', 'facePaint'] as const) {
+        const data = resolved.slots.find((s) => s.slot === slot)!;
+        expect([data.active, data.interpretation, data.matchHex]).toEqual([null, 'palette', null]);
+        const card = cardFor(container, slot)!;
+        expect(card.tagName).toBe('DIV');
+        expect(card.textContent).toContain(t('swatch.activityUnknownTag'));
+        expect(card.textContent).toContain(t('swatch.activityUnknownNote'));
+        // The address is evidence too: shown, but nothing links to it.
+        expect(card.textContent).toContain(data.gridAddress!);
+        expect(card.innerHTML.toUpperCase()).toContain(`BACKGROUND: ${data.displayHex!}`);
+        expect(hasBestDyeRow(card)).toBe(false);
+        card.click();
+      }
+      expect(onSlotPick).not.toHaveBeenCalled();
+      expect(headerCount(container)).toBe('2 / 8');
+    });
+
+    it('draws the plan tuple {Tribe:Wildwood, LipsToneFurPattern:53} as an unconfirmed lip', async () => {
+      const { container } = mountSheet();
+      await loadDoc({ Tribe: 'Wildwood', LipsToneFurPattern: 53 });
+      const lip = CharaSessionService.getSession()!.resolved.slots.find((s) => s.slot === 'lip')!;
+
+      expect([lip.active, lip.interpretation, lip.reason, lip.matchHex]).toEqual([
+        null,
+        'palette',
+        'activityUnknown',
+        null,
+      ]);
+      const card = cardFor(container, 'lip')!;
+      expect(card.tagName).toBe('DIV');
+      expect(card.textContent).toContain(t('swatch.activityUnknownTag'));
+    });
+
+    it('saves nothing from unconfirmed slots', async () => {
+      const error = vi.spyOn(ToastService, 'error').mockImplementation(() => '');
+      await loadDoc({ ...BASE, Highlights: 0, FacePaintColor: 0 });
+
+      saveCharacterColors(CharaSessionService.getSession()!);
+
+      expect(CollectionService.getCollections().filter((c) => c.kind === 'character')).toEqual([]);
+      expect(error).toHaveBeenCalledWith(t('errors.saveChangesFailed'));
+    });
+
+    it('never matches or saves a lip composite of unknown activation', async () => {
+      const error = vi.spyOn(ToastService, 'error').mockImplementation(() => '');
+      const { container } = mountSheet();
+      await loadImported(
+        makeImportedCharacter({
+          slots: [
+            makeImportedSlot({
+              slot: 'lip',
+              active: null,
+              reason: 'activityUnknown',
+              displayHex: '#AA0000',
+              lipComposite: { hex: '#CC8877', alpha: 0.4, derived: true },
+            }),
+          ],
+        })
+      );
+
+      expect(cardFor(container, 'lip')!.tagName).toBe('DIV');
+      saveCharacterColors(CharaSessionService.getSession()!);
+      expect(error).toHaveBeenCalledWith(t('errors.saveChangesFailed'));
+    });
+  });
+
+  describe('switched off in the file: dashed, with the reason', () => {
+    it.each([
+      ['highlights', { EnableHighlights: false, Highlights: 5 }, 'swatch.absentHighlightsOff'],
+      ['facePaint', { FacePaint: 128, FacePaintColor: 5 }, 'swatch.absentFacePaintOff'],
+      ['lip', { Mouth: 2, LipsToneFurPattern: 10 }, 'swatch.absentLipOff'],
+      [
+        'lip',
+        { Race: 'Hrothgar', Tribe: 'Helions', Gender: 'Masculine', LipsToneFurPattern: 3 },
+        'swatch.absentFurPattern',
+      ],
+    ] as const)('%s with %j says %s', async (slot, fields, key) => {
+      const { container } = mountSheet();
+      await loadDoc({ ...BASE, ...fields });
+      const card = cardFor(container, slot)!;
+
+      expect(t(key)).not.toBe(key);
+      expect(card.tagName).toBe('DIV');
+      expect(card.textContent).toContain(t(key));
+      expect(card.getAttribute('style')).not.toContain('244, 100, 90');
+    });
+
+    it('says the lip is off when its alpha is zero (noLip)', async () => {
+      const { container } = mountSheet();
+      await loadImported(
+        makeImportedCharacter({
+          slots: {
+            lip: { active: false, interpretation: 'inactive', reason: 'noLip', displayHex: null },
+          },
+        })
+      );
+      expect(cardFor(container, 'lip')!.textContent).toContain(t('swatch.absentNoLips'));
+    });
+  });
+
+  describe('unresolved: dashed red, with the keyed sentence', () => {
+    it.each([
+      ['hair', { Tribe: undefined, Gender: undefined, HairTone: 5 }, 'swatch.slotError.noTribe'],
+      ['lip', { LipsToneFurPattern: 100 }, 'swatch.slotError.midRangeIndex'],
+      ['hair', { HairTone: 200 }, 'swatch.slotError.indexOutOfRange'],
+      [
+        'lip',
+        { Race: undefined, Tribe: undefined, LipsToneFurPattern: 10 },
+        'swatch.slotError.noRace',
+      ],
+      ['hair', { HairTone: 'brown' }, 'swatch.slotError.unknown'],
+    ] as const)('%s with %j says %s', async (slot, fields, key) => {
+      const { container, onSlotPick } = mountSheet();
+      await loadDoc({ ...BASE, ...fields });
+      const card = cardFor(container, slot)!;
+
+      expect(t(key)).not.toBe(key);
+      expect(card.tagName).toBe('DIV');
+      expect(card.textContent).toContain(t(key));
+      expect(card.getAttribute('style')).toContain('244, 100, 90');
+      card.click();
+      expect(onSlotPick).not.toHaveBeenCalled();
+    });
+  });
+
+  it('draws a gear-only file as eight quiet "not in file" cards', async () => {
+    const { container } = mountSheet();
+    await loadDoc({
+      TypeName: 'Anamnesis Character File',
+      Body: { ModelBase: 1, ModelVariant: 1, DyeId: 1, DyeId2: 0 },
+    });
+
+    const cards = allCards(container);
+    expect(cards).toHaveLength(8);
+    for (const card of cards) {
+      expect(card.tagName).toBe('DIV');
+      expect(card.textContent).toContain(t('swatch.absentNotInFile'));
+      expect(card.getAttribute('style')).not.toContain('244, 100, 90');
+    }
+    expect(headerCount(container)).toBe('0 / 8');
+  });
+
+  describe('confirmed colors: matched and pickable', () => {
+    it('hands an off-grid pick no grid address, and its own color', async () => {
+      const { container, onSlotPick } = mountSheet();
+      await loadImported(
+        makeImportedCharacter({
+          slots: {
+            hair: { interpretation: 'offGrid', reason: 'offGrid', displayHex: '#335577' },
+            skin: {
+              interpretation: 'extendedOnly',
+              reason: 'floatOnly',
+              index: null,
+              indexState: 'absent',
+              sheetIndex: null,
+              gridAddress: null,
+              creatorHex: null,
+              displayHex: '#775533',
+            },
+          },
+        })
+      );
+
+      for (const [slot, hex] of [
+        ['hair', '#335577'],
+        ['skin', '#775533'],
+      ] as const) {
+        const card = cardFor(container, slot)!;
+        expect(card.tagName).toBe('BUTTON');
+        expect(card.textContent).toContain(t('swatch.offGrid'));
+        expect(hasBestDyeRow(card)).toBe(true);
+        card.click();
+        expect(onSlotPick).toHaveBeenLastCalledWith(hex, expect.any(String), null, slot);
+      }
+    });
+
+    it('links a grid pick only for a valid creator coordinate', async () => {
+      const { container, onSlotPick } = mountSheet();
+      await loadDoc({ ...BASE, LEyeColor: 42, HairTone: 5, LipsToneFurPattern: 130, Mouth: 130 });
+
+      cardFor(container, 'leftEye')!.click();
+      cardFor(container, 'lip')!.click();
+
+      expect(onSlotPick.mock.calls.map((c) => c[2])).toEqual([
+        { paletteBase: 'eyeColors', variant: null, sheetIndex: 42 },
+        { paletteBase: 'lipColors', variant: 'light', sheetIndex: 2 },
+      ]);
+      // Hair has no creator entry without its clan: no link, and not pickable at all.
+      await loadDoc({ ...BASE, Tribe: undefined, HairTone: 5 }, 'no-clan.chara');
+      expect(cardFor(container, 'hair')!.tagName).toBe('DIV');
+    });
+
+    it('marks an index the stored float disagrees with (extendedInactive), but not an ambiguous zero block (D7)', async () => {
+      const { container } = mountSheet();
+      await loadImported(
+        makeImportedCharacter({
+          slots: {
+            hair: { reason: 'extendedInactive', gridAddress: 'R1·C6' },
+            skin: { reason: 'ambiguousZeroBlock', gridAddress: 'R1·C7' },
+          },
+        })
+      );
+      const address = (slot: CharaSlotId) =>
+        Array.from(cardFor(container, slot)!.querySelectorAll<HTMLElement>('span')).find((s) =>
+          s.textContent?.startsWith('R1·')
+        )!;
+
+      expect(address('hair').textContent).toBe('R1·C6 *');
+      expect(address('hair').title).toBe(t('swatch.indexWinsNote'));
+      expect(address('skin').textContent).toBe('R1·C7');
+      expect(address('skin').title).toBe('');
+    });
+
+    it('shows the corrected eye colors with the eye-swap note', async () => {
+      const { container } = mountSheet();
+      await loadImported(
+        makeImportedCharacter({
+          slots: {
+            leftEye: {
+              correction: 'historicalEyePairSwap',
+              extendedHex: '#0000FF',
+              effectiveExtendedHex: '#FF0000',
+              displayHex: '#FF0000',
+            },
+            rightEye: {
+              correction: 'historicalEyePairSwap',
+              extendedHex: '#FF0000',
+              effectiveExtendedHex: '#0000FF',
+              displayHex: '#0000FF',
+            },
+          },
+        })
+      );
+
+      for (const [slot, rgb] of [
+        ['leftEye', 'rgb(255, 0, 0)'],
+        ['rightEye', 'rgb(0, 0, 255)'],
+      ] as const) {
+        const card = cardFor(container, slot)!;
+        const noted = card.querySelector<HTMLElement>(`[title="${t('swatch.eyeSwapNote')}"]`);
+        expect(noted).not.toBeNull();
+        expect(noted!.style.background).toBe(rgb);
+      }
+      expect(
+        cardFor(container, 'hair')!.querySelector(`[title="${t('swatch.eyeSwapNote')}"]`)
+      ).toBeNull();
+    });
+
+    it('matches, picks and saves a confirmed lip by its composite over the skin (D1)', async () => {
+      vi.spyOn(ToastService, 'success').mockImplementation(() => '');
+      const { container, onSlotPick } = mountSheet();
+      await loadImported(
+        makeImportedCharacter({
+          slots: [
+            makeImportedSlot({
+              slot: 'lip',
+              displayHex: '#000000',
+              lipComposite: { hex: '#FFFFFF', alpha: 0.4, derived: true },
+            }),
+          ],
+        })
+      );
+      const card = cardFor(container, 'lip')!;
+
+      expect(card.textContent).toContain(
+        LanguageService.tInterpolate('swatch.blendTag', { alpha: '0.40' })
+      );
+      card.click();
+      expect(onSlotPick.mock.calls[0]![0]).toBe('#FFFFFF');
+
+      saveCharacterColors(CharaSessionService.getSession()!);
+      const saved = CollectionService.getCollections().find((c) => c.kind === 'character')!;
+      expect(saved.dyes).toHaveLength(1);
+      const dyeHex = dyeService.getByStainId(saved.dyes[0]!)!.hex;
+      expect(ColorService.getDistanceForMethod(dyeHex, '#FFFFFF', 'ciede2000')).toBeLessThan(
+        ColorService.getDistanceForMethod(dyeHex, '#000000', 'ciede2000')
+      );
+    });
+
+    it('counts every slot with a preview in the header', async () => {
+      const { container } = mountSheet();
+      await loadImported(
+        makeImportedCharacter({
+          slots: {
+            hair: absent,
+            skin: absent,
+            highlights: { active: null, reason: 'activityUnknown', displayHex: '#808080' },
+          },
+        })
+      );
+      expect(headerCount(container)).toBe('6 / 8');
+    });
+  });
 });

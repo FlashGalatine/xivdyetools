@@ -13,10 +13,11 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import type { Dye } from '@xivdyetools/types';
 import {
   CharacterColorService,
-  type ResolvedCharaCharacter,
-  type ResolvedCharaSlot,
+  type ImportedCharaCharacter,
+  type ImportedCharaSlot,
 } from '@xivdyetools/core';
 import { SwatchTool } from '../swatch-tool';
+import { makeImportedCharacter, makeImportedSlot } from '../../__tests__/mocks/imported-chara';
 import { CharaSessionService, type CharaSession } from '@services/chara-session-service';
 import {
   ConfigController,
@@ -303,39 +304,41 @@ vi.mock('@services/chara-resolve-service', async (importOriginal) => ({
   resolveCharaEquipment: vi.fn(() => new Promise(() => {})),
 }));
 
-/** A loaded character as core resolves it: both eyes on eye-sheet cell 3. */
-function charaSession(overrides: Partial<ResolvedCharaCharacter> = {}): CharaSession {
-  const eye = (slot: 'leftEye' | 'rightEye'): ResolvedCharaSlot => ({
+/**
+ * A confirmed palette slot at `index` with creator color `hex` (the shared factory's projection:
+ * active, `matchHex` set).
+ */
+function paletteSlot(
+  slot: ImportedCharaSlot['slot'],
+  index: number,
+  hex: string,
+  extra: Partial<ImportedCharaSlot> = {}
+): ImportedCharaSlot {
+  return makeImportedSlot({
     slot,
-    kind: slot,
-    verdict: 'index',
-    index: 3,
-    sheetIndex: 3,
-    sheetVariant: null,
-    gridAddress: 'R1·C4',
-    indexHex: '#AA3344',
-    floatHex: null,
-    deltaE: null,
-    alpha: null,
-    blendHex: null,
+    index,
+    sheetIndex: index,
+    gridAddress: `R${Math.floor(index / 8) + 1}·C${(index % 8) + 1}`,
+    creatorHex: hex,
+    shaderHex: hex,
+    displayHex: hex,
+    ...extra,
   });
+}
+
+/** A loaded character as the inspection projects it: both eyes on eye-sheet cell 3. */
+function charaSession(overrides: Partial<ImportedCharaCharacter> = {}): CharaSession {
   return {
     fileName: 'test.chara',
-    resolved: {
-      producer: 'Anamnesis Character File',
+    resolved: makeImportedCharacter({
       race: null,
       tribe: 'Highlander',
       gender: 'Female',
       nickname: 'Test Subject',
-      extendedValid: false,
-      extendedDeclared: false,
-      slots: [eye('leftEye'), eye('rightEye')],
+      slots: [paletteSlot('leftEye', 3, '#AA3344'), paletteSlot('rightEye', 3, '#AA3344')],
       eyesShareIndex: true,
-      gearDyes: [],
-      gearModels: [],
-      glassesId: null,
       ...overrides,
-    },
+    }),
   };
 }
 
@@ -1190,6 +1193,106 @@ describe('SwatchTool', () => {
       expect(cells[3]?.textContent).toBe('1·2');
     });
 
+    // Task 5 (D3): a pin marks a creator cell the file really resolves to. Switched-off slots and
+    // a hair slot with no clan keep a sheetIndex in the new projection; neither is pinned, and
+    // the numbering counts only pinned slots. Unknown activation is index evidence: pinned.
+    describe('pins (Task 5, D3)', () => {
+      const gridCells = () =>
+        Array.from(rightPanel.querySelectorAll<HTMLElement>('button[data-index]'));
+
+      it('pins an unconfirmed slot beside a confirmed one', async () => {
+        CharaSessionService.setSession(
+          charaSession({
+            slots: [
+              paletteSlot('leftEye', 3, '#AA3344'),
+              paletteSlot('rightEye', 5, '#AA3355', { active: null, reason: 'activityUnknown' }),
+            ],
+          })
+        );
+        tool = mount();
+        await flush();
+
+        expect(gridCells()[3]?.textContent).toBe('1');
+        expect(gridCells()[5]?.textContent).toBe('2');
+      });
+
+      it('never pins a switched-off slot or one with no creator entry', async () => {
+        CharaSessionService.setSession(
+          charaSession({
+            slots: [
+              paletteSlot('leftEye', 3, '#AA3344', {
+                interpretation: 'unresolved',
+                reason: 'missingPaletteEntry',
+                creatorHex: null,
+                displayHex: null,
+              }),
+              paletteSlot('rightEye', 5, '#AA3355', {
+                active: false,
+                interpretation: 'inactive',
+                reason: 'highlightsDisabled',
+                displayHex: null,
+              }),
+              paletteSlot('limbal', 6, '#AA3366'),
+            ],
+          })
+        );
+        tool = mount();
+        await flush();
+
+        expect(gridCells()[3]?.textContent).not.toMatch(/\d/);
+        expect(gridCells()[5]?.textContent).not.toMatch(/\d/);
+
+        tool.setConfig({ colorSheet: 'tattooColors' });
+        await flush();
+        // The limbal slot is the first pinned slot, so it is pin 1.
+        expect(gridCells()[6]?.textContent).toBe('1');
+      });
+
+      it('pins a lip only on its own range (variant)', async () => {
+        CharaSessionService.setSession(
+          charaSession({ slots: [paletteSlot('lip', 3, '#AA3344', { variant: 'light' })] })
+        );
+        tool = mount();
+        tool.setConfig({ colorSheet: 'lipColorsDark' });
+        await flush();
+        expect(gridCells()[3]?.textContent).not.toMatch(/\d/);
+
+        tool.setConfig({ colorSheet: 'lipColorsLight' });
+        await flush();
+        expect(gridCells()[3]?.textContent).toBe('1');
+      });
+    });
+
+    it('names a race-unknown limbal pick "Tattoo / Limbal"', () => {
+      CharaSessionService.setSession(
+        charaSession({ slots: [paletteSlot('limbal', 3, '#AA3344', { kind: 'limbalOrTattoo' })] })
+      );
+      tool = mount();
+      rightPanel.querySelector<HTMLButtonElement>('.chara-slots-grid > button')!.click();
+
+      expect(
+        (tool as unknown as { selectionCardContainer: HTMLElement }).selectionCardContainer
+          .textContent
+      ).toContain('SWATCH.PALTATTOO');
+    });
+
+    it('picks nothing from an unconfirmed slot card (D4)', () => {
+      CharaSessionService.setSession(
+        charaSession({
+          slots: [paletteSlot('highlights', 3, '#AA3344', { active: null })],
+        })
+      );
+      tool = mount();
+      const card = rightPanel.querySelector<HTMLElement>(
+        '.chara-slots-grid > [data-slot="highlights"]'
+      )!;
+
+      card.click();
+
+      expect(card.tagName).toBe('DIV');
+      expect(selection()).toBeNull();
+    });
+
     it('retires a slot pick when the file is cleared', () => {
       CharaSessionService.setSession(charaSession());
       tool = mount();
@@ -1346,21 +1449,8 @@ describe('SwatchTool', () => {
           hex: i === 2 ? hexAt2 : `#${prefix}${i}${prefix}${i}${prefix}${i}`,
           name: `${prefix} ${i}`,
         }));
-      const slotOf = (slot: 'hair' | 'skin', indexHex: string): ResolvedCharaSlot =>
-        ({
-          slot,
-          kind: slot,
-          verdict: 'index',
-          index: 2,
-          sheetIndex: 2,
-          sheetVariant: null,
-          gridAddress: 'R1·C3',
-          indexHex,
-          floatHex: null,
-          deltaE: null,
-          alpha: null,
-          blendHex: null,
-        }) as ResolvedCharaSlot;
+      const slotOf = (slot: 'hair' | 'skin', indexHex: string): ImportedCharaSlot =>
+        paletteSlot(slot, 2, indexHex);
       const reverseHexes = () =>
         (
           tool as unknown as { reverseMatchedSwatches: Array<{ color: { hex: string } }> }
@@ -1471,24 +1561,7 @@ describe('SwatchTool', () => {
     describe('the sheet stops showing a slot pick the workspace dropped', () => {
       /** A lip on the dark lip sheet: its pick opens a palette with the range toggle. */
       const lipSession = (): CharaSession =>
-        charaSession({
-          slots: [
-            {
-              slot: 'lip',
-              kind: 'lip',
-              verdict: 'index',
-              index: 3,
-              sheetIndex: 3,
-              sheetVariant: 'dark',
-              gridAddress: 'R1·C4',
-              indexHex: '#AA3344',
-              floatHex: null,
-              deltaE: null,
-              alpha: null,
-              blendHex: null,
-            } as ResolvedCharaSlot,
-          ],
-        });
+        charaSession({ slots: [paletteSlot('lip', 3, '#AA3344', { variant: 'dark' })] });
 
       const pickFirstSlot = async (): Promise<void> => {
         sheetCards()[0]!.click();

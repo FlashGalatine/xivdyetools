@@ -7,6 +7,10 @@
  * Before 5.12.7 the lock was persisted config and the file lived in a
  * component the tool destroyed on the way out, so the file vanished while
  * the lock stayed on, across reloads too.
+ *
+ * Since the xivcharakit switch the file is read in a module worker
+ * (`chara-inspection.worker.ts`), so every load here also runs the real worker
+ * in the dev server, and a refused file gets one of the fixed toasts.
  */
 import type { Page } from '@playwright/test';
 import { test, expect } from './fixtures/coverage';
@@ -128,6 +132,91 @@ test('locks for a file that names no tribe or gender', async ({ page }) => {
 
   await expect(page.getByRole('button', { name: 'SWAP', exact: true })).toBeVisible();
   await expectSelectors(page, 'locked');
+});
+
+/** THIS CHARACTER's card for one appearance slot (the library's slot key). */
+const slotCard = (page: Page, slot: string) =>
+  page.locator(`.chara-slots-grid [data-slot="${slot}"]`);
+
+test('reads the file in the inspection worker and draws a confirmed eye as a pickable card', async ({
+  page,
+}) => {
+  // The fixture names no Mouth, EnableHighlights or FacePaint, and none of those slots is in
+  // it, so the eye is the only colour. It needs no control flag, so it stays a match.
+  await loadFixture(page);
+
+  const eye = slotCard(page, 'rightEye');
+  await expect(eye).toHaveCount(1);
+  await expect(eye).toHaveJSProperty('tagName', 'BUTTON');
+  await expect(slotCard(page, 'hair')).not.toHaveJSProperty('tagName', 'BUTTON');
+  // Eight cards, whatever the file holds
+  await expect(page.locator('.chara-slots-grid [data-slot]')).toHaveCount(8);
+});
+
+test('a colour whose switch the file does not state is shown UNCONFIRMED and is not matched', async ({
+  page,
+}) => {
+  // The plan's own tuple: a highlights and a face-paint index with neither EnableHighlights nor
+  // FacePaint. The colours are evidence, so they are drawn; activation is unknown, so they are
+  // never matched, picked or saved.
+  await fileInput(page).setInputFiles({
+    name: 'unconfirmed.chara',
+    mimeType: 'application/json',
+    buffer: Buffer.from(
+      JSON.stringify({
+        TypeName: 'Anamnesis Character File',
+        Nickname: 'Unconfirmed Test',
+        Highlights: 0,
+        FacePaintColor: 0,
+      })
+    ),
+  });
+  await expect(page.getByText('Unconfirmed Test', { exact: true }).first()).toBeVisible();
+
+  for (const slot of ['highlights', 'facePaint']) {
+    const card = slotCard(page, slot);
+    await expect(card).toHaveCount(1);
+    await expect(card).toContainText('UNCONFIRMED');
+    // Not a button: no pick, so nothing reaches matching, the share link or SEND TO
+    await expect(card).toHaveJSProperty('tagName', 'DIV');
+    // No best-dye row: the only text is the label, the address, the tag and the note
+    await expect(card).toContainText("The file doesn't say whether this is switched on");
+  }
+  // Both are counted as slots with a colour (D6)
+  await expect(page.getByText('2 / 8', { exact: true })).toBeVisible();
+  // The file card says it once per slot too
+  await expect(page.getByText('UNCONFIRMED', { exact: true })).toHaveCount(4);
+});
+
+test('a file the inspector refuses gets its own toast, and the next file still loads', async ({
+  page,
+}) => {
+  await fileInput(page).setInputFiles({
+    name: 'broken.chara',
+    mimeType: 'application/json',
+    buffer: Buffer.from('{'),
+  });
+  await expect(
+    page.getByText("Couldn't read this character file.", { exact: false })
+  ).toBeVisible();
+  // Nothing was published: the drop zone is still there and the selectors are free
+  await expect(fileInput(page)).toBeAttached();
+  await expectSelectors(page, 'unlocked');
+
+  // A refusal leaves nothing behind: the inspection can run again
+  await loadFixture(page);
+  await expectSelectors(page, 'locked');
+});
+
+test('an oversize file is refused by size, before it is read', async ({ page }) => {
+  await fileInput(page).setInputFiles({
+    name: 'huge.chara',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify({ Nickname: 'Huge', Pad: 'x'.repeat(9000) })),
+  });
+  await expect(page.getByText(/over 8 KB/)).toBeVisible();
+  await expect(page.getByText('Huge', { exact: true })).toHaveCount(0);
+  await expect(fileInput(page)).toBeAttached();
 });
 
 test('ignores a lock that a build before 5.12.7 left in storage', async ({ page }) => {

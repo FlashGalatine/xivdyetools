@@ -7,7 +7,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { ConfigController } from '../config-controller';
 import { StorageService } from '../storage-service';
 import { CharaSessionService, type CharaSession } from '../chara-session-service';
-import type { ResolvedCharaCharacter } from '@xivdyetools/core';
+import type { ImportedCharaCharacter } from '@xivdyetools/core';
 import {
   getDefaultConfig,
   DEFAULT_DISPLAY_OPTIONS,
@@ -661,7 +661,7 @@ describe('ConfigController', () => {
     const SWATCH_KEY = 'xivdyetools_v4_config_swatch';
     const file: CharaSession = {
       fileName: 'a.chara',
-      resolved: { tribe: 'Highlander', gender: 'Male' } as unknown as ResolvedCharaCharacter,
+      resolved: { tribe: 'Highlander', gender: 'Male' } as unknown as ImportedCharaCharacter,
     };
 
     afterEach(() => {

@@ -18,6 +18,7 @@ import {
 } from '@shared/glamour-markdown';
 import { createTestContainer, cleanupTestContainer } from '../../__tests__/component-utils';
 import type { CharaResolveResult } from '@services/chara-resolve-service';
+import { logger } from '@shared/logger';
 
 const { resolveMock } = vi.hoisted(() => ({ resolveMock: vi.fn() }));
 vi.mock('@services/chara-resolve-service', async (importOriginal) => {
@@ -1523,5 +1524,143 @@ describe('GlamourBlock — IN THE GAME (the reader verdict) and twins', () => {
       b as unknown as { listSource(): import('../glamour-list-actions').GlamourListSource }
     ).listSource();
     expect(glamourMarkdownInput(source).HeadGear?.name).toBe('Hempen Coif');
+  });
+});
+
+/**
+ * Task 5: the reader on the library-backed import. A malformed lane or dye
+ * channel is a diagnostic, never a fabricated empty slot or undyed channel
+ * (plan "Review focus" 1; scout §3.1 Glamour Reader table).
+ */
+describe('GlamourBlock — malformed gear evidence (xivcharakit import)', () => {
+  let hosts: HTMLElement[] = [];
+
+  beforeEach(() => {
+    resolveMock.mockReset();
+    localStorage.clear();
+  });
+  afterEach(() => {
+    hosts.forEach(cleanupTestContainer);
+    hosts = [];
+    vi.restoreAllMocks();
+  });
+
+  const foot = (glamour: HTMLElement) =>
+    block(glamour).querySelector('[data-role="glamour-foot"]')?.textContent;
+  const rowOf = (glamour: HTMLElement, slot: string) =>
+    block(glamour).querySelector<HTMLElement>(`[data-role="piece-rows"] > [data-slot="${slot}"]`);
+
+  it('does not count a slot with an incomplete model, or a slot that is not a record, as empty', async () => {
+    // Body worn and dyed; Hands has a fractional variant and Legs a lane past
+    // uint16 (both INCOMPLETE_MODEL); Feet is a string (INVALID_FIELD [Feet]).
+    // Eight slots are absent, so 12 − 1 worn − 3 unreadable = 8 empty.
+    const fixture = JSON.stringify({
+      TypeName: 'Anamnesis Character File',
+      Body: { ModelBase: 200, ModelVariant: 1, DyeId: 56, DyeId2: 0 },
+      Hands: { ModelBase: 300, ModelVariant: 1.5, DyeId: 0, DyeId2: 0 },
+      Legs: { ModelBase: 70000, ModelVariant: 1, DyeId: 0, DyeId2: 0 },
+      Feet: 'boots',
+    });
+    const { container, glamour } = await mount(Promise.resolve(RESOLVED), fixture);
+    hosts = [container, glamour];
+
+    expect(foot(glamour)).toBe('0 worn pieces are undyed (DyeId 0) · 8 slots are empty.');
+    // No row for a piece with no model to look up, even with Show all on
+    expect(rowOf(glamour, 'Hands')).toBeNull();
+    block(glamour).querySelector<HTMLElement>('[data-role="show-all-switch"]')!.click();
+    expect(rowOf(glamour, 'Hands')).toBeNull();
+    expect(rowOf(glamour, 'Legs')).toBeNull();
+    expect(rowOf(glamour, 'Feet')).toBeNull();
+    expect(rowOf(glamour, 'Body')).not.toBeNull();
+  });
+
+  it('hands the resolve exactly the complete models, each with only its lane keys', async () => {
+    const fixture = JSON.stringify({
+      TypeName: 'Anamnesis Character File',
+      Nickname: 'NICKNAME-CANARY',
+      MainHand: { ModelSet: 634, ModelBase: 19, ModelVariant: 1, DyeId: 6, DyeId2: 0 },
+      Body: { ModelBase: 200, ModelVariant: 1, DyeId: 56, DyeId2: 33 },
+      Hands: { ModelBase: 300, ModelVariant: 1.5, DyeId: 0, DyeId2: 0 },
+      Legs: { ModelBase: 70000, ModelVariant: 1, DyeId: 0, DyeId2: 0 },
+      Glasses: { GlassesId: 5 },
+    });
+    const { container, glamour } = await mount(Promise.resolve(RESOLVED), fixture);
+    hosts = [container, glamour];
+
+    expect(resolveMock).toHaveBeenCalledTimes(1);
+    const [gear, glassesId] = resolveMock.mock.calls[0] as [Array<Record<string, unknown>>, number];
+    expect(gear.map((m) => m.slot)).toEqual(['MainHand', 'Body']);
+    expect(Object.keys(gear[0]).sort()).toEqual(['base', 'set', 'slot', 'variant']);
+    expect(Object.keys(gear[1]).sort()).toEqual(['base', 'slot', 'variant']);
+    expect(glassesId).toBe(5);
+    expect(JSON.stringify(gear)).not.toContain('CANARY');
+  });
+
+  it('shows an unreadable dye channel as such, and does not count its piece undyed', async () => {
+    // Body has a fractional first channel and nothing else dyed; Feet is
+    // worn-undyed. Before, Body read "Undyed" and the block said nothing is dyed.
+    const fixture = JSON.stringify({
+      TypeName: 'Anamnesis Character File',
+      Body: { ModelBase: 200, ModelVariant: 1, DyeId: 1.5, DyeId2: 0 },
+      Feet: { ModelBase: 376, ModelVariant: 1, DyeId: 0, DyeId2: 0 },
+    });
+    const { container, glamour } = await mount(Promise.resolve(RESOLVED), fixture);
+    hosts = [container, glamour];
+
+    expect(block(glamour).querySelector('[data-role="no-dyed-pieces"]')).toBeNull();
+    const body = rowOf(glamour, 'Body')!;
+    expect(body).not.toBeNull();
+    expect(body.querySelector('[data-role="dye-line"]')?.textContent).toBe(
+      `${LanguageService.t('swatch.dyeUnreadable')} + ${LanguageService.t('swatch.undyed')}`
+    );
+    const unreadable = body.querySelector<HTMLElement>('[data-role="unreadable-chip"]')!;
+    expect(unreadable).not.toBeNull();
+    expect(unreadable.dataset.channel).toBe('1');
+    expect(unreadable.title).toBe(LanguageService.t('swatch.dyeUnreadable'));
+    expect(body.querySelectorAll('[data-role="undyed-chip"]')).toHaveLength(1);
+    // A worn-undyed piece stays out of the default lens
+    expect(rowOf(glamour, 'Feet')).toBeNull();
+    // Feet is the one worn-undyed piece; Body is neither undyed nor empty
+    expect(foot(glamour)).toBe('1 worn piece is undyed (DyeId 0) · 10 slots are empty.');
+  });
+
+  it('keeps a valid channel beside an unreadable one on the same piece', async () => {
+    const fixture = JSON.stringify({
+      TypeName: 'Anamnesis Character File',
+      Body: { ModelBase: 200, ModelVariant: 1, DyeId: 56, DyeId2: 70000 },
+    });
+    const { container, glamour } = await mount(Promise.resolve(RESOLVED), fixture);
+    hosts = [container, glamour];
+
+    const body = rowOf(glamour, 'Body')!;
+    const line = body.querySelector('[data-role="dye-line"]')?.textContent ?? '';
+    expect(line.endsWith(` + ${LanguageService.t('swatch.dyeUnreadable')}`)).toBe(true);
+    expect(line).not.toContain(LanguageService.t('swatch.undyed'));
+    expect(body.querySelectorAll('[data-role="dye-chip"]')).toHaveLength(1);
+    expect(body.querySelector<HTMLElement>('[data-role="unreadable-chip"]')?.dataset.channel).toBe(
+      '2'
+    );
+    // One channel, one dye: the unreadable channel is not counted as a dye
+    expect(block(glamour).querySelector('[data-role="equip-count"]')?.textContent).toBe(
+      '1 channel · 1 dye'
+    );
+  });
+
+  it('logs an unavailable resolve with a fixed message, never the raw error', async () => {
+    const warn = vi.spyOn(logger, 'warn').mockImplementation(() => {});
+    const pending = deferred<CharaResolveResult>();
+    const { container, glamour } = await mount(pending.promise, FIXTURE_ONE_DYE);
+    hosts = [container, glamour];
+    pending.reject(new Error('RAW-ERROR-CANARY'));
+    await vi.waitFor(() =>
+      expect(block(glamour).querySelector('[data-role="names-unavailable"]')).not.toBeNull()
+    );
+
+    expect(warn).toHaveBeenCalledWith('[GlamourBlock] Equipment names unavailable');
+    for (const call of warn.mock.calls) {
+      for (const arg of call) {
+        expect(arg instanceof Error ? arg.message : String(arg)).not.toContain('CANARY');
+      }
+    }
   });
 });

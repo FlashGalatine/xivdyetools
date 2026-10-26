@@ -28,6 +28,10 @@ import {
   type CharaPaletteRequest,
 } from '../chara-inspection-protocol';
 
+// setup.ts replaces this service with an in-thread stand-in for every other suite; this one drives
+// the real service against a fake Worker.
+vi.unmock('@services/chara-inspection-service');
+
 // createCharaPaletteProvider is wrapped in a pass-through vi.fn so a test can hand the page a
 // provider whose answer the page must refuse to post (it re-validates before posting).
 vi.mock('@xivdyetools/core', async (importOriginal) => {

@@ -18,9 +18,6 @@
  *
  * Errors carry one fixed message per code, never event or exception text.
  *
- * @testonly not yet wired into the .chara loader; chara-inspection-service.test.ts drives the
- * worker lifecycle (transfer, active-id answers, timeout, supersession) until the import flow uses it.
- *
  * @module services/chara-inspection-service
  */
 

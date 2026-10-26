@@ -14,7 +14,7 @@ import {
   gposersOmittedSlots,
   gposersSameRings,
   type GposersSlotFacts,
-  type ResolvedCharaCharacter,
+  type ImportedCharaCharacter,
   type CharaGearSlotId,
 } from '@xivdyetools/core';
 import { LanguageService } from '@services/index';
@@ -35,7 +35,12 @@ import { gearHash } from '@shared/acquisition-edits';
 
 /** What the component knows when a button is clicked. */
 export interface GlamourListSource {
-  resolved: ResolvedCharaCharacter;
+  /**
+   * Only the gear the list is built from, plus the gender the in-game slot
+   * rules need. Nothing else of the file (labels, appearance, diagnostics)
+   * can reach a glamour list.
+   */
+  resolved: Pick<ImportedCharaCharacter, 'gearDyes' | 'gearModels' | 'glassesId' | 'gender'>;
   /** api-worker's answer, or null before it lands / when it never did. */
   equipment: CharaResolveResult | null;
   /**
