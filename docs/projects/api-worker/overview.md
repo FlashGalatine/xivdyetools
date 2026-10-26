@@ -130,7 +130,7 @@ docs/                      # VitePress developer docs → developers.xivdyetools
 | `API_VERSION` | Variable | Currently `v1` |
 | `UNIVERSALIS_API_BASE` | Variable | `https://universalis.app/api/v2` |
 | `RATE_LIMIT_REQUESTS` / `RATE_LIMIT_WINDOW_SECONDS` | Variable | Proxy limiter — `30`/`60` production, `60`/`60` dev |
-| `XIVAPI_BASE` / `XIVAPI_VERSION` | Variable | `/v1/chara/*` upstream and the game-version pin (the row cache is namespaced by the real key: a pinned key as is, `latest` resolved through `GET /api/version` and memoized for 10 min) |
+| `XIVAPI_BASE` / `XIVAPI_VERSION` | Variable | `/v1/chara/*` upstream and the game-version pin (the row cache is namespaced by the real key: a canonical pinned key plus a canonical `XIVAPI_SCHEMA` is used as is; anything else is resolved by one bounded `Item/1` metadata probe that returns the game version and schema together, memoized for 10 min on success and 1 min on failure, and an unresolved context bypasses shared caching) |
 | `XIVAPI_SCHEMA` | Variable (optional) | `exdschema@2:rev:<sha>` pin against upstream field renames |
 
 No secrets required. No D1 database. api-worker calls no other worker; discord-worker's `UNIVERSALIS_PROXY` service binding targets it (`/api/v2/aggregated/...` for `/budget`, and `POST /v1/chara/resolve` for `/glamour`).
