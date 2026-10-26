@@ -1,0 +1,518 @@
+[
+ {
+  "members": [
+   "core-legacy-03",
+   "core-facade-01",
+   "supply-harness-01"
+  ],
+  "title": "Remove parseCharaFile + resolveCharaColors and their test suites (test-only reachable)",
+  "rec": "REMOVE WITH CAUTION",
+  "unit": "core",
+  "lines": 1997,
+  "gid": "D01"
+ },
+ {
+  "members": [
+   "core-legacy-05",
+   "supply-harness-02"
+  ],
+  "title": "Strip the legacy [host] half of the 8,186-line parity harness; keep the [library] half",
+  "rec": "REFACTOR FIRST",
+  "unit": "core",
+  "lines": 1650,
+  "gid": "D02"
+ },
+ {
+  "members": [
+   "bot-discord-01"
+  ],
+  "title": "SwatchResult.character and its legacy ResolvedCharaSlot back-mapping are read by no adapter",
+  "rec": "REFACTOR FIRST",
+  "unit": "bot-logic",
+  "lines": 324,
+  "gid": "D03"
+ },
+ {
+  "members": [
+   "web-app-01"
+  ],
+  "title": "Protocol validates non-null dye objects that the worker can never send",
+  "rec": "REMOVE WITH CAUTION",
+  "unit": "web-app",
+  "lines": 245,
+  "gid": "D04"
+ },
+ {
+  "members": [
+   "core-legacy-04"
+  ],
+  "title": "Remove legacy-only public symbols ParsedCharaFile, CharaColorSlotRaw, CharaGearDye, OFF_GRID_DELTA_E2000",
+  "rec": "REMOVE WITH CAUTION",
+  "unit": "core",
+  "lines": 60,
+  "gid": "D05"
+ },
+ {
+  "members": [
+   "bot-discord-03"
+  ],
+  "title": "downloadCharaAttachment text-only shape and adapters' fileText pass-through are dead in production",
+  "rec": "REMOVE",
+  "unit": "discord-worker",
+  "lines": 15,
+  "gid": "D06"
+ },
+ {
+  "members": [
+   "web-app-05"
+  ],
+  "title": "CharaResolveResult.version is stored but never read",
+  "rec": "REMOVE WITH CAUTION",
+  "unit": "web-app",
+  "lines": 12,
+  "gid": "D07"
+ },
+ {
+  "members": [
+   "web-app-07"
+  ],
+  "title": "Comments and docs describing behavior that no longer exists",
+  "rec": "REMOVE",
+  "unit": "web-app",
+  "lines": 10,
+  "gid": "D08"
+ },
+ {
+  "members": [
+   "web-app-02"
+  ],
+  "title": "GlamourBlock code paths for a missing host (no actionsHost or onSubmitPalette)",
+  "rec": "REFACTOR FIRST",
+  "unit": "web-app",
+  "lines": 8,
+  "gid": "D09"
+ },
+ {
+  "members": [
+   "supply-harness-07"
+  ],
+  "title": "Bundle-budget rows match no emitted chunk (vendor-spectral, other vendor, dye selector)",
+  "rec": "REMOVE WITH CAUTION",
+  "unit": "web-app + CI",
+  "lines": 7,
+  "gid": "D10"
+ },
+ {
+  "members": [
+   "core-legacy-06",
+   "core-legacy-07",
+   "bot-discord-04",
+   "bot-discord-05",
+   "supply-harness-03"
+  ],
+  "title": "bot-logic swatch.test.ts uses the legacy pipeline as an oracle for facade output",
+  "rec": "REFACTOR FIRST",
+  "unit": "bot-logic",
+  "lines": 6,
+  "gid": "D11"
+ },
+ {
+  "members": [
+   "core-legacy-08",
+   "core-legacy-09",
+   "core-facade-05",
+   "supply-harness-08",
+   "supply-harness-09",
+   "supply-harness-10"
+  ],
+  "title": "Stale claim: shader tables read only by the .chara resolver",
+  "rec": "REMOVE",
+  "unit": "core",
+  "lines": 6,
+  "gid": "D12"
+ },
+ {
+  "members": [
+   "api-og-01",
+   "api-og-02",
+   "api-og-03",
+   "api-og-06"
+  ],
+  "title": "Stale icon caching claims: unversioned icon URL documented as 30 d immutable",
+  "rec": "REMOVE",
+  "unit": "api-worker",
+  "lines": 5,
+  "gid": "D13"
+ },
+ {
+  "members": [
+   "web-app-06"
+  ],
+  "title": "CharaResolveUnavailableError.status is never read and no caller checks the error type",
+  "rec": "REMOVE WITH CAUTION",
+  "unit": "web-app",
+  "lines": 4,
+  "gid": "D14"
+ },
+ {
+  "members": [
+   "web-app-08"
+  ],
+  "title": "swatch-tool redefines MONO and SANS, which chara-ui already exports",
+  "rec": "REFACTOR FIRST",
+  "unit": "web-app",
+  "lines": 3,
+  "gid": "D15"
+ },
+ {
+  "members": [
+   "web-app-04"
+  ],
+  "title": "The ISSUE_KEY entry for EYE_PAIRING_UNCONFIRMED cannot be reached and duplicates the default",
+  "rec": "REMOVE",
+  "unit": "web-app",
+  "lines": 2,
+  "gid": "D16"
+ },
+ {
+  "members": [
+   "api-og-05"
+  ],
+  "title": "Chara row cache's stale-while-revalidate window never revalidates",
+  "rec": "REFACTOR FIRST",
+  "unit": "api-worker",
+  "lines": 2,
+  "gid": "D17"
+ },
+ {
+  "members": [
+   "web-app-03"
+  ],
+  "title": "The facewear-era `dye.itemID <= 0` guard in the swatch matching loops is always false",
+  "rec": "REMOVE",
+  "unit": "web-app",
+  "lines": 1,
+  "gid": "D18"
+ },
+ {
+  "members": [
+   "bot-discord-06"
+  ],
+  "title": "Unreachable ?? 'card.slotSkin' fallback for the slot label",
+  "rec": "REMOVE",
+  "unit": "bot-logic",
+  "lines": 1,
+  "gid": "D19"
+ },
+ {
+  "members": [
+   "core-legacy-01"
+  ],
+  "title": "Move MAX_CHARA_FILE_BYTES out of the legacy parser (only runtime edge from the live facade into chara-parser.ts)",
+  "rec": "REFACTOR FIRST",
+  "unit": "core",
+  "lines": 0,
+  "gid": "D20"
+ },
+ {
+  "members": [
+   "core-legacy-02"
+  ],
+  "title": "Relocate live type contracts declared in chara-parser.ts / chara-resolver.ts",
+  "rec": "REFACTOR FIRST",
+  "unit": "core",
+  "lines": 0,
+  "gid": "D21"
+ },
+ {
+  "members": [
+   "bot-discord-02"
+  ],
+  "title": "Test fixture module __fixtures__/chara-fixtures ships in the published bot-logic tarball",
+  "rec": "REMOVE",
+  "unit": "bot-logic",
+  "lines": 0,
+  "gid": "D22"
+ },
+ {
+  "members": [
+   "bot-discord-07"
+  ],
+  "title": "Redundant export on module-internal getCharacterColors and CharaFileSource",
+  "rec": "REMOVE",
+  "unit": "bot-logic",
+  "lines": 0,
+  "gid": "D23"
+ },
+ {
+  "members": [
+   "bot-discord-11"
+  ],
+  "title": "Comments and README describe the legacy parser's errors and value echoes",
+  "rec": "REMOVE WITH CAUTION",
+  "unit": "bot-logic + discord-worker",
+  "lines": 0,
+  "gid": "D24"
+ },
+ {
+  "members": [
+   "api-og-04"
+  ],
+  "title": "Eight exports used only inside their own file",
+  "rec": "REMOVE",
+  "unit": "api-worker",
+  "lines": 0,
+  "gid": "D25"
+ },
+ {
+  "members": [
+   "api-og-07"
+  ],
+  "title": "Redundant status === 503 test in XivapiClient.get",
+  "rec": "REMOVE",
+  "unit": "api-worker",
+  "lines": 0,
+  "gid": "D26"
+ },
+ {
+  "members": [
+   "api-og-08"
+  ],
+  "title": "types.ts re-exports CharaTwinRules, which nothing imports through it",
+  "rec": "REMOVE",
+  "unit": "api-worker",
+  "lines": 0,
+  "gid": "D27"
+ },
+ {
+  "members": [
+   "supply-harness-04"
+  ],
+  "title": "Seven stale @public tags on facade exports that now have in-repo consumers",
+  "rec": "REMOVE",
+  "unit": "core",
+  "lines": 0,
+  "gid": "D28"
+ },
+ {
+  "members": [
+   "supply-harness-06"
+  ],
+  "title": "Stale/inert @entrypoint tags on chara.ts and copy-chara-notices.mjs",
+  "rec": "REFACTOR FIRST",
+  "unit": "core + web-app",
+  "lines": 0,
+  "gid": "D29"
+ },
+ {
+  "members": [
+   "core-facade-04"
+  ],
+  "title": "ImportedCharaCharacter.extendedValid / extendedDeclared are filled but no production code reads them",
+  "rec": "KEEP",
+  "unit": "core",
+  "lines": 52,
+  "gid": "D30"
+ },
+ {
+  "members": [
+   "core-facade-02"
+  ],
+  "title": "Provider arm of resolveCharaForTools (isPaletteProvider) is test-only; resolveCharaWithProvider covers it",
+  "rec": "KEEP",
+  "unit": "core",
+  "lines": 32,
+  "gid": "D31"
+ },
+ {
+  "members": [
+   "core-facade-03",
+   "supply-harness-05"
+  ],
+  "title": "Barrel re-export of resolveCharaWithProvider duplicates the ./chara subpath; in-repo barrel use is test-only",
+  "rec": "KEEP",
+  "unit": "core",
+  "lines": 1,
+  "gid": "D32"
+ },
+ {
+  "members": [
+   "core-facade-06"
+  ],
+  "title": "CHARA_WEAPON_SLOTS exported @public with no consumer outside its own module",
+  "rec": "KEEP",
+  "unit": "core",
+  "lines": 1,
+  "gid": "D33"
+ },
+ {
+  "members": [
+   "bot-discord-10"
+  ],
+  "title": "FIXED_KEYS.noItem entry cannot be reached",
+  "rec": "KEEP",
+  "unit": "bot-logic",
+  "lines": 1,
+  "gid": "D34"
+ },
+ {
+  "members": [
+   "core-legacy-10"
+  ],
+  "title": "KEEP shader tables + chara-shader-colors.ts (live via palette bridge; deliberate duplicate of xivcharakit corpus)",
+  "rec": "KEEP",
+  "unit": "core",
+  "lines": 0,
+  "gid": "D35"
+ },
+ {
+  "members": [
+   "core-legacy-11"
+  ],
+  "title": "KEEP CharacterColorService, interface sheets, build-character-colors script, .chara fixtures, chara-models helpers",
+  "rec": "KEEP",
+  "unit": "core",
+  "lines": 0,
+  "gid": "D36"
+ },
+ {
+  "members": [
+   "core-facade-07"
+  ],
+  "title": "matchHexFor's interpretation==='inactive' arm is unreachable under xivcharakit 0.1.0-beta.4",
+  "rec": "KEEP",
+  "unit": "core",
+  "lines": 0,
+  "gid": "D37"
+ },
+ {
+  "members": [
+   "core-facade-08"
+  ],
+  "title": "Palette provider guards (table, palette type, shader lipsLight/facePaint) the library never trips",
+  "rec": "KEEP",
+  "unit": "core",
+  "lines": 0,
+  "gid": "D38"
+ },
+ {
+  "members": [
+   "web-app-09"
+  ],
+  "title": "Exports used in their own file that exist only as test seams",
+  "rec": "KEEP",
+  "unit": "web-app",
+  "lines": 0,
+  "gid": "D39"
+ },
+ {
+  "members": [
+   "web-app-10"
+  ],
+  "title": "config-controller scrub of the retired swatch.fileProvided key",
+  "rec": "KEEP",
+  "unit": "web-app",
+  "lines": 0,
+  "gid": "D40"
+ },
+ {
+  "members": [
+   "bot-discord-08"
+  ],
+  "title": "Published SwatchInput/GlamourInput.fileText and the NO_INPUT branch are test-only in-repo",
+  "rec": "KEEP",
+  "unit": "bot-logic",
+  "lines": 0,
+  "gid": "D41"
+ },
+ {
+  "members": [
+   "bot-discord-09"
+  ],
+  "title": "familySize ?? twins.length fallback is dead for this repo's api-worker",
+  "rec": "KEEP",
+  "unit": "bot-logic",
+  "lines": 0,
+  "gid": "D42"
+ },
+ {
+  "members": [
+   "api-og-09"
+  ],
+  "title": "Unreachable guard for a 304 with no retained ETag in loadIcon",
+  "rec": "KEEP",
+  "unit": "api-worker",
+  "lines": 0,
+  "gid": "D43"
+ },
+ {
+  "members": [
+   "api-og-10"
+  ],
+  "title": "Empty-lookup guards in searchItems and loadRows are reached only by tests",
+  "rec": "KEEP",
+  "unit": "api-worker",
+  "lines": 0,
+  "gid": "D44"
+ },
+ {
+  "members": [
+   "api-og-11"
+  ],
+  "title": "Resolve response field 'version' is read by no in-repo client",
+  "rec": "KEEP",
+  "unit": "api-worker",
+  "lines": 0,
+  "gid": "D45"
+ },
+ {
+  "members": [
+   "api-og-12"
+  ],
+  "title": "Icon ?version= branch has no in-repo caller",
+  "rec": "KEEP",
+  "unit": "api-worker",
+  "lines": 0,
+  "gid": "D46"
+ },
+ {
+  "members": [
+   "api-og-13"
+  ],
+  "title": "Exported unit-test seams in the chara resolver",
+  "rec": "KEEP",
+  "unit": "api-worker",
+  "lines": 0,
+  "gid": "D47"
+ },
+ {
+  "members": [
+   "api-og-14"
+  ],
+  "title": "chara-concurrency.test.mjs is run by no CI job or turbo task",
+  "rec": "KEEP",
+  "unit": "api-worker",
+  "lines": 0,
+  "gid": "D48"
+ },
+ {
+  "members": [
+   "api-og-15"
+  ],
+  "title": "facewear-unlocks.json maps 12 Glasses rows to an unlock item with no acquisition line",
+  "rec": "KEEP",
+  "unit": "api-worker",
+  "lines": 0,
+  "gid": "D49"
+ },
+ {
+  "members": [
+   "api-og-16"
+  ],
+  "title": "acquisition.meta.json provenance keys read by no code",
+  "rec": "KEEP",
+  "unit": "api-worker",
+  "lines": 0,
+  "gid": "D50"
+ }
+]
