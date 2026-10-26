@@ -124,7 +124,9 @@ export class ToastService {
     }
 
     this.notifyListeners();
-    logger.info(`🍞 Toast shown: [${type}] ${message}`);
+    // FINDING-001: the text can carry an import record name or a parse reason that
+    // quotes the file, so the log keeps the kind only.
+    logger.info(`🍞 Toast shown: [${type}]`);
 
     return id;
   }

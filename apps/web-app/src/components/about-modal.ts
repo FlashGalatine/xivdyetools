@@ -73,6 +73,13 @@ const SOCIAL_LINKS: SocialLink[] = CORE_SOCIAL_LINKS.map(({ label, url }) => ({
 const POLICY_DOCS_BASE = 'https://github.com/FlashGalatine/xivdyetools/blob/main/apps/web-app';
 
 /**
+ * The .chara reader's license notice. Unlike the policies, this one is served
+ * by the app itself from `public/licenses/` (generated at build time by
+ * `scripts/copy-chara-notices.mjs` from the xivcharakit package core depends on).
+ */
+const CHARA_READER_LICENSE_PATH = '/licenses/xivcharakit.txt';
+
+/**
  * I18N-010: the maintainer decision was to translate the policy docs, not
  * merely label the (English-only) link. Every variant is a sibling file named
  * `<STEM>.<locale>.md` (`policy-locale-parity.py` gates that these five exist
@@ -490,7 +497,33 @@ export class AboutModal {
     notAffiliated.textContent = LanguageService.t('footer.notAffiliated');
     block.appendChild(notAffiliated);
 
+    block.appendChild(this.createReaderLicenseLine());
+
     return block;
+  }
+
+  /**
+   * The .chara reader (xivcharakit, bundled through @xivdyetools/core) ships
+   * under MIT with third-party notices that must travel with it. This is the
+   * modal's only link to a file the app serves itself:
+   * `public/licenses/xivcharakit.txt`, generated at build time by
+   * `scripts/copy-chara-notices.mjs`. Same new-tab, no-opener pattern as the
+   * off-site links above.
+   */
+  private createReaderLicenseLine(): HTMLElement {
+    const line = document.createElement('p');
+    line.className = 'text-xs mt-1.5';
+
+    const a = document.createElement('a');
+    a.href = CHARA_READER_LICENSE_PATH;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.className = 'hover:underline';
+    a.style.color = 'var(--theme-primary)';
+    a.textContent = LanguageService.t('about.charaReaderLicense');
+    line.appendChild(a);
+
+    return line;
   }
 }
 

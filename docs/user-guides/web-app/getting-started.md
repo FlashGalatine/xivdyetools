@@ -31,7 +31,7 @@ Everything hangs off one bar and one drawer:
 
 - **Tool switcher.** On a desktop-sized window the ten tools sit in the bar as a row of small icon chips — the **tool rail**. The active tool's chip is filled in and shows its short name (**Harmony**, **Extractor**, **Vision**, **Compare**, **Gradient**, **Mixer**, **Presets**, **Budget**, **Swatch**, **Glamour**); hover any other chip and its name unrolls. On a phone or narrow window the rail folds into a **title menu**: the bar shows the current tool's name with a small ▾, and tapping it opens a two-column list of all ten tools with a one-line description of each.
 - **What's New** (the scroll icon) — the release history, newest release open, earlier ones collapsed. It also pops up on its own the first time you open the app after an update.
-- **About XIV Dye Tools** (the ⓘ icon) — version, build date, dye count, links, and attribution. A **POLICIES** row links to **Privacy** and **Terms of Service**, opened in your language when a translation exists (English otherwise).
+- **About XIV Dye Tools** (the ⓘ icon) — version, build date, dye count, links, and attribution. A **POLICIES** row links to **Privacy** and **Terms of Service**, opened in your language when a translation exists (English otherwise). The attribution box ends with a link to the open-source license of the character file reader, which opens as a plain text page.
 - **Language** — a globe plus a two-letter code (**EN**, **JA**, **DE**, **FR**, **KO**, **ZH**); on phones the code alone. Opens the language picker.
 - **Theme** — a sun or moon icon; opens the theme picker (see below).
 - **Advanced Settings** (the gear) — a slide-over panel from the right (see below).

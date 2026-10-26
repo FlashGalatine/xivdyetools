@@ -7,6 +7,109 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.16.0] - 2026-10-26
+
+The web half of the `xivcharakit` integration (Tasks 4-5 of the 2026-10-22 plan), on core 5.15.0.
+MINOR: the Swatch Matcher and Glamour Reader read `.chara` files through a new reader, and several
+imports behave differently on purpose (below).
+
+### Added
+
+- **The web app's first Web Worker.** `workers/chara-inspection.worker.ts` runs core's
+  `inspectCharaForTools` and `resolveCharaWithProvider` off the main thread; `chara-inspection-service.ts`
+  starts it, transfers the file's bytes, enforces a 5,000 ms deadline, terminates every completed,
+  failed, superseded, cancelled or overdue worker once, and accepts only an answer that
+  `chara-inspection-protocol.ts` validates (eight unique slots, at most 12 models and 24 dye channels,
+  64 diagnostics, canonical hex, uint16 ids, 256-unit labels, 256 KiB, the matchHex rule; every value is
+  read once into a rebuilt object, arrays must be dense, extra and accessor keys are rejected).
+  `vite.config.ts` sets `worker.format` to `es` and minifies worker bundles.
+- **A palette bridge.** The worker never loads the palette JSON; it asks the page for each color by
+  message (at most 64 requests per import, id and seq must match) and the page answers from its own
+  `CharacterColorService`. Dye badges are attached on the page from the offline dye database after the
+  answer validates. This keeps the reference data from shipping twice. The worker chunk is 30 KB (11 KB
+  gzipped) and `scripts/check-bundle-size.js` gains a named 35 KB row for it; no existing limit moved.
+- **`cancelCharaLoad()`**, called by the file card's SWAP before the session clears. A load checks its
+  generation before and after the worker, so a stale read never cancels or overwrites a newer file, and
+  a refused drop never disturbs an import in flight.
+- **Evidence states for every slot.** Active palette, off grid, extended-only, inactive (highlights off,
+  face paint none, lip off or zero opacity, fur pattern) and unresolved (no clan, no creator entry, bad or
+  out-of-range index, the 96-127 gap through core's `indexGap`) each say why. A highlight, face-paint or
+  lip color whose switch the file does not state is shown as UNCONFIRMED: previewed, never matched, saved,
+  picked or exported. A corrected eye pair shows the corrected colors with a note. The lip matches on its
+  live blend.
+- **Gear diagnostics in the Glamour Reader:** a piece with incomplete model numbers is not looked up and
+  gets a CHECK row; a dye channel that holds a non-dye reads "Dye unreadable". Routine producer output
+  (omitted image, unknown keys) stays silent.
+- **An idle palette prefetch** from the drop zone (`prefetchCharaPalettes`), skipped under saveData, so a
+  cold import has headroom inside the 5 s deadline.
+- 19 locale keys in all six languages; `swatch.parseFailed` (it carried core's raw `{reason}`) is gone.
+- **The reader's license notice.** `scripts/copy-chara-notices.mjs` finds the `xivcharakit` package
+  through `@xivdyetools/core`, checks it is the version core pins, and writes its `dist/LICENSE` and
+  `dist/THIRD_PARTY_NOTICES.md` verbatim under a fixed header to `public/licenses/xivcharakit.txt`
+  (committed; `build` regenerates it first, and `copy-chara-notices.test.js` fails on drift). The About
+  modal's attribution block links it (`about.charaReaderLicense`, six languages), and an e2e spec plus
+  `scripts/smoke-test-pages.js` assert the served body and `text/plain` type, since `_redirects` turns a
+  missing file into a 200 carrying `index.html`.
+
+### Changed
+
+- A `.chara` file is read as capped bytes (8,192) and refused before any read when it is not named
+  `*.chara` or is over the cap; failures are fixed codes (`notChara`, `tooLarge`, `unreadable`,
+  `workerFailed`, `timedOut`) shown as localized toasts, never exception text. The previous character
+  stays loaded after any failure. File names are capped at 256 units; `chara_parse` telemetry fires
+  `ok:false` only for `unreadable`.
+- Intentional differences from the old importer (full register in
+  `docs/research/2026-10-22-xivcharakit-integration.md`): files that hold only gear load; the lip-color bit
+  is read (every committed Ktisis export shows no lip); a mirror-only face paint value (128) is no paint;
+  unknown activation is no longer matched or saved; a lip blend needs live extended data (Anamnesis
+  files lose the non-live tint); duplicate keys, unsafe numbers and over-deep structures are refused as
+  unreadable.
+
+### Fixed
+
+- Raw error objects no longer reach the logger in the Glamour Reader, its export sheet and the Swatch
+  Matcher price fetch. The French slot grid no longer widens past 375 px.
+
+### Tests
+
+- Protocol, service and worker suites for the inspection pipeline; loader, session, file card, sheet,
+  swatch, glamour and privacy suites rewritten against the real worker handler through an inline mock;
+  two Playwright specs extended (30 runs across chromium and mobile-chrome).
+
+## [5.15.6] - 2026-10-25
+
+Imported names and raw errors stay out of logs; a malformed collection description no longer
+throws (FINDING-001 and FINDING-004 of the xivcharakit integration review, the part that needs no new
+dependency). Nothing a player sees changes except one corner of the collection import below.
+
+### Fixed
+
+- **A collection import with a malformed `description` no longer throws.** A description that is a
+  number, boolean, array or object is refused for that record alone, before any string operation:
+  the record is reported as skipped, nothing is saved for it, and the records after it still import.
+  `CollectionService.createCollection` returns `null` for a non-string name or description instead of
+  throwing. A malformed record is now always reported as skipped; before, a taken name or a full
+  store could report it as "could not be created" instead.
+
+### Security
+
+- **Logs no longer carry names, file names or raw exceptions** (development and production). The
+  character and glamour-palette saves, the `.chara` loader (file name, the file's own producer text,
+  raw read and parse errors), the toast log and every collection-service path that named a record
+  (create, duplicate, delete, dye-limit truncation, dye-ID and legacy-palette migration, tombstoned
+  reimport, the per-record import catch, and the `JSON.parse` failure that quotes the input) now log
+  fixed messages and counts only. A saved name still follows the existing fallback order and its
+  50-character limit, and a collection backup still keeps it.
+
+### Tests
+
+- 85 new tests: `chara-collection-privacy.test.ts` (canaries for the nickname, file name, producer
+  text, stored dye refs and forced exceptions through the real saves, the real collection service,
+  the loader and the toast service, in both logging modes) and the description cases in
+  `collection-service-branches.test.ts`.
+
+---
+
 ## [5.15.5] - 2026-10-16
 
 FINDING-001 and the 8 KiB cap of the 2026-10-15 `.chara` import review

@@ -145,7 +145,7 @@ export const ENDPOINTS: readonly EndpointEntry[] = [
     group: 'Character Equipment',
     method: 'GET',
     path: '/v1/chara/icon/:iconId',
-    summary: 'Item icon proxy (PNG).',
+    summary: 'Item icon PNG; optional game-version pin.',
     link: '/reference/chara#get-v1-chara-icon-iconid',
     preview: null,
     previewNote: 'image · no preview',

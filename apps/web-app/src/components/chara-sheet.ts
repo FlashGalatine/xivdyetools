@@ -19,9 +19,10 @@
 import {
   classifyBandTier,
   roundToBandDisplay,
+  type CharaImportIssue,
   type CharaSlotId,
-  type ResolvedCharaCharacter,
-  type ResolvedCharaSlot,
+  type ImportedCharaCharacter,
+  type ImportedCharaSlot,
 } from '@xivdyetools/core';
 import type { Dye } from '@xivdyetools/types';
 import {
@@ -41,10 +42,14 @@ import {
   amber,
   dyeName,
   el,
-  slotErrorText,
+  hasValidGridCoordinate,
+  matchTargetHex,
+  monoChip,
+  previewHex,
   slotLabel,
+  slotProblemText,
+  slotViewState,
   tSwatch,
-  winningHex,
 } from '@components/chara-ui';
 
 const TIER_RAMP_DARK = ['#5bbd68', '#8bc34a', '#ffc107', '#f4645a'] as const;
@@ -52,9 +57,9 @@ const TIER_RAMP_LIGHT = ['#137A33', '#1C7D3A', '#B45309', '#B91C1C'] as const;
 
 /** Responsive slot grid — injected once per render (shadow-DOM scoped). */
 const SHEET_CSS = `
-.chara-slots-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+.chara-slots-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
 @media (max-width: 768px) {
-  .chara-slots-grid { grid-template-columns: repeat(2, 1fr); }
+  .chara-slots-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 `;
 
@@ -100,14 +105,18 @@ function slotCardStyle(selected: boolean): string {
   };`;
 }
 
-function absentReason(slot: ResolvedCharaSlot): string {
-  switch (slot.inertReason) {
+/** Why a slot with no color shows none: switched off in the file, or not stored in it. */
+function absentReason(slot: ImportedCharaSlot): string {
+  if (slot.interpretation !== 'inactive') return tSwatch('absentNotInFile');
+  switch (slot.reason) {
     case 'highlightsDisabled':
       return tSwatch('absentHighlightsOff');
     case 'facePaintNone':
       return tSwatch('absentFacePaintOff');
     case 'noLip':
       return tSwatch('absentNoLips');
+    case 'lipDisabled':
+      return tSwatch('absentLipOff');
     case 'furPattern':
       return tSwatch('absentFurPattern');
     default:
@@ -115,9 +124,19 @@ function absentReason(slot: ResolvedCharaSlot): string {
   }
 }
 
-/** Palette base a slot indexes into (for pins + the grid excerpt). */
-function gridRefOf(slot: ResolvedCharaSlot): CharaSlotGridRef | null {
-  if (slot.sheetIndex === null) return null;
+/** The R·C address text, with the light range named where the slot is on it. */
+function addressText(slot: ImportedCharaSlot): string {
+  const address = slot.gridAddress ?? '';
+  return slot.variant === 'light' ? `${address} · ${tSwatch('rangeLight')}` : address;
+}
+
+/**
+ * Palette base a slot indexes into (for pins + the grid excerpt). Only a creator cell the slot
+ * really resolved to: a switched-off slot or one missing its clan keeps a `sheetIndex` but has no
+ * resolved entry, so it links nowhere (D3).
+ */
+function gridRefOf(slot: ImportedCharaSlot): CharaSlotGridRef | null {
+  if (!hasValidGridCoordinate(slot) || slot.sheetIndex === null) return null;
   const base: CharaSlotGridRef['paletteBase'] | null =
     slot.slot === 'leftEye' || slot.slot === 'rightEye'
       ? 'eyeColors'
@@ -135,7 +154,7 @@ function gridRefOf(slot: ResolvedCharaSlot): CharaSlotGridRef | null {
                   ? 'facePaintColors'
                   : null;
   if (!base) return null;
-  return { paletteBase: base, variant: slot.sheetVariant, sheetIndex: slot.sheetIndex };
+  return { paletteBase: base, variant: slot.variant, sheetIndex: slot.sheetIndex };
 }
 
 function bestDye(hex: string): { dye: Dye; deltaE: number } | null {
@@ -166,14 +185,15 @@ function uniqueCollectionName(base: string): string {
 /**
  * Save the character's resolved slot colours as a `kind: 'character'`
  * CollectionService record — each slot contributes the dye closest to the
- * colour it actually wears (the lip contributes its blend).
+ * colour it actually wears (the lip contributes its blend). Only confirmed
+ * colours count: a slot whose control the file does not state is never saved.
  */
 export function saveCharacterColors(session: CharaSession): void {
   const { resolved, fileName } = session;
 
   const stainIds: number[] = [];
   for (const slot of resolved.slots) {
-    const hex = slot.blendHex ?? winningHex(slot);
+    const hex = matchTargetHex(slot);
     if (!hex) continue;
     const best = bestDye(hex);
     if (best?.dye.stainID != null && !stainIds.includes(best.dye.stainID)) {
@@ -208,7 +228,8 @@ export function saveCharacterColors(session: CharaSession): void {
   for (const stainId of stainIds) {
     CollectionService.addDyeToCollection(record.id, stainId);
   }
-  logger.info(`[CharaSheet] Saved character "${name}" (${stainIds.length} colours)`);
+  // FINDING-001: the name can be the imported nickname or file name; counts only.
+  logger.info(`[CharaSheet] Saved a character (${stainIds.length} colours)`);
   ToastService.success(
     stainIds.length === 1
       ? LanguageService.t('swatch.characterSavedOne')
@@ -301,8 +322,9 @@ export class CharaSheet {
   }
 
   /** THIS CHARACTER — one card per slot, best dye already on it. */
-  private renderSheet(resolved: ResolvedCharaCharacter): HTMLElement {
-    const live = resolved.slots.filter((s) => winningHex(s) !== null);
+  private renderSheet(resolved: ImportedCharaCharacter): HTMLElement {
+    // Every slot with a color preview, unknown activation included (D6).
+    const live = resolved.slots.filter((s) => previewHex(s) !== null);
     const section = el('div', '');
 
     const header = el(
@@ -328,24 +350,37 @@ export class CharaSheet {
     const grid = el('div', 'margin-bottom: 13px;');
     grid.className = 'chara-slots-grid';
     for (const slot of resolved.slots) {
-      grid.appendChild(this.renderSlotCard(slot));
+      grid.appendChild(this.renderSlotCard(slot, resolved.issues));
     }
     section.appendChild(grid);
     return section;
   }
 
-  private renderSlotCard(slot: ResolvedCharaSlot): HTMLElement {
+  private renderSlotCard(
+    slot: ImportedCharaSlot,
+    issues: readonly CharaImportIssue[]
+  ): HTMLElement {
     const label = slotLabel(slot);
-    const hex = winningHex(slot);
+    const view = slotViewState(slot, issues);
     const tierRamp = ramp();
 
-    if (!hex) {
-      // Absent, inert or error — dashed, with the reason. A fact, not a failure.
-      const isError = slot.verdict === 'error';
+    if (view.kind === 'activityUnknown') return this.renderUnconfirmedCard(slot, label);
+
+    // The colour the slot is matched, picked and saved as: set only for a confirmed colour.
+    const effective = matchTargetHex(slot);
+    if (
+      view.kind === 'absent' ||
+      view.kind === 'inactive' ||
+      view.kind === 'unresolved' ||
+      !effective
+    ) {
+      // Absent, switched off or unreadable — dashed, with the reason. A fact, not a failure.
+      const isError = view.kind === 'unresolved';
       const card = el(
         'div',
         `border: 1px dashed ${isError ? 'rgba(244, 100, 90, 0.5)' : 'var(--theme-border)'}; border-radius: 11px; padding: 8px; display: flex; flex-direction: column; gap: 6px; min-height: 64px; box-sizing: border-box;`
       );
+      card.dataset.slot = slot.slot;
       const head = el('div', 'display: flex; align-items: center; gap: 6px; min-width: 0;');
       // Hatched chip — visibly not a colour.
       head.appendChild(
@@ -366,13 +401,15 @@ export class CharaSheet {
         el(
           'span',
           `font-size: 10px; line-height: 1.4; color: ${isError ? (ThemeService.isDarkMode() ? '#f4645a' : '#B91C1C') : 'var(--theme-text-muted)'};`,
-          isError ? slotErrorText(slot.error?.code) : absentReason(slot)
+          isError ? slotProblemText(slot, issues) : absentReason(slot)
         )
       );
       return card;
     }
 
-    const offGrid = slot.verdict === 'offGrid' || slot.verdict === 'floatOnly';
+    const offGrid = view.kind === 'offGrid';
+    // The card's own swatch: the cell (or float) the file stores; a lip's blend has its own row.
+    const hex = slot.displayHex ?? effective;
     const selected = this.selectedSlotKey === slot.slot;
     const card = el('button', slotCardStyle(selected));
     (card as HTMLButtonElement).type = 'button';
@@ -381,12 +418,7 @@ export class CharaSheet {
 
     // Top row: 26px swatch + label over address.
     const head = el('span', 'display: flex; align-items: center; gap: 6px; min-width: 0;');
-    head.appendChild(
-      el(
-        'span',
-        `width: 26px; height: 26px; border-radius: 7px; flex: 0 0 auto; background: ${hex}; ${INSET_RING}`
-      )
-    );
+    head.appendChild(slotSwatch(slot, hex));
     const headText = el(
       'span',
       'flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;'
@@ -405,12 +437,11 @@ export class CharaSheet {
       addr.title = tSwatch('offGridNote');
       headText.appendChild(addr);
     } else {
-      const addrText =
-        slot.sheetVariant === 'light'
-          ? `${slot.gridAddress ?? ''} · ${tSwatch('rangeLight')}`
-          : (slot.gridAddress ?? '');
+      const addrText = addressText(slot);
       const addr = el('span', `${addrStyle} color: var(--theme-text-muted);`, addrText);
-      if (slot.indexWinNote) {
+      // The file stores a float its flag says is not applied, so the index is shown. An
+      // all-zero block (`ambiguousZeroBlock`) is not a disagreement and gets no mark (D7).
+      if (slot.reason === 'extendedInactive') {
         addr.title = tSwatch('indexWinsNote');
         addr.textContent = `${addrText} *`;
       }
@@ -422,32 +453,9 @@ export class CharaSheet {
     // Lip only: the raw cell overstates a 0.25-alpha lip, so the card shows
     // both — the cell the R·C address points at (above) and the colour the
     // character actually wears, composited over skin. Matching follows the
-    // blend, because that is the colour you are trying to hit.
-    const blend = slot.blendHex;
-    const effective = blend ?? hex;
-    if (blend) {
-      const blendRow = el(
-        'span',
-        'display: flex; align-items: center; gap: 5px; min-width: 0; width: 100%;'
-      );
-      blendRow.appendChild(
-        el(
-          'span',
-          `width: 13px; height: 13px; border-radius: 4px; flex: 0 0 auto; background: ${blend}; ${INSET_RING}`
-        )
-      );
-      blendRow.appendChild(
-        el(
-          'span',
-          `font-family: ${MONO}; font-size: 8.5px; letter-spacing: 0.5px; color: var(--theme-text-muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;`,
-          slot.alpha !== null
-            ? LanguageService.tInterpolate('swatch.blendTag', { alpha: slot.alpha.toFixed(2) })
-            : LanguageService.t('swatch.blendPlain')
-        )
-      );
-      blendRow.title = LanguageService.t('swatch.blendNote');
-      card.appendChild(blendRow);
-    }
+    // blend, because that is the colour you are trying to hit (D1).
+    const blend = blendRow(slot);
+    if (blend) card.appendChild(blend);
 
     // Bottom row: best dye already on the card — the sheet answers first.
     const best = bestDye(effective);
@@ -494,4 +502,97 @@ export class CharaSheet {
 
     return card;
   }
+
+  /**
+   * A resolved colour whose control the file does not state (no `EnableHighlights`, `FacePaint`
+   * or `Mouth`): the colour is evidence, so it is shown, with its address where it has one, but it
+   * is not a button — no best dye, no pick, so nothing reaches matching, the share link or
+   * SEND TO, and the save skips it (D4).
+   */
+  private renderUnconfirmedCard(slot: ImportedCharaSlot, label: string): HTMLElement {
+    const card = el(
+      'div',
+      'display: flex; flex-direction: column; gap: 6px; padding: 8px; border-radius: 11px; box-sizing: border-box; width: 100%; background: var(--theme-card-background); border: 1px dashed var(--theme-border);'
+    );
+    card.dataset.slot = slot.slot;
+
+    const head = el('span', 'display: flex; align-items: center; gap: 6px; min-width: 0;');
+    head.appendChild(slotSwatch(slot, slot.displayHex ?? ''));
+    const headText = el(
+      'span',
+      'flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;'
+    );
+    headText.appendChild(
+      el(
+        'span',
+        'font-size: 11.5px; font-weight: 600; color: var(--theme-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;',
+        label
+      )
+    );
+    if (hasValidGridCoordinate(slot)) {
+      headText.appendChild(
+        el(
+          'span',
+          `font-family: ${MONO}; font-size: 8.5px; letter-spacing: 0.5px; color: var(--theme-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;`,
+          addressText(slot)
+        )
+      );
+    }
+    head.appendChild(headText);
+    card.appendChild(head);
+
+    const blend = blendRow(slot);
+    if (blend) card.appendChild(blend);
+
+    const chipRow = el('span', 'display: flex; min-width: 0;');
+    chipRow.appendChild(
+      monoChip(tSwatch('activityUnknownTag'), amber(), 'rgba(244, 191, 79, 0.18)')
+    );
+    card.appendChild(chipRow);
+    card.appendChild(
+      el(
+        'span',
+        'font-size: 10px; line-height: 1.4; color: var(--theme-text-muted);',
+        tSwatch('activityUnknownNote')
+      )
+    );
+    return card;
+  }
+}
+
+/** The card's 26px swatch. A corrected eye says why its colour is the other eye's float. */
+function slotSwatch(slot: ImportedCharaSlot, hex: string): HTMLElement {
+  const swatch = el(
+    'span',
+    `width: 26px; height: 26px; border-radius: 7px; flex: 0 0 auto; background: ${hex}; ${INSET_RING}`
+  );
+  if (slot.correction === 'historicalEyePairSwap') swatch.title = tSwatch('eyeSwapNote');
+  return swatch;
+}
+
+/** The lip's composite over the skin, with its opacity: null for every other slot. */
+function blendRow(slot: ImportedCharaSlot): HTMLElement | null {
+  const composite = slot.lipComposite;
+  if (!composite) return null;
+  const row = el(
+    'span',
+    'display: flex; align-items: center; gap: 5px; min-width: 0; width: 100%;'
+  );
+  row.appendChild(
+    el(
+      'span',
+      `width: 13px; height: 13px; border-radius: 4px; flex: 0 0 auto; background: ${composite.hex}; ${INSET_RING}`
+    )
+  );
+  row.appendChild(
+    el(
+      'span',
+      `font-family: ${MONO}; font-size: 8.5px; letter-spacing: 0.5px; color: var(--theme-text-muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;`,
+      Number.isFinite(composite.alpha)
+        ? LanguageService.tInterpolate('swatch.blendTag', { alpha: composite.alpha.toFixed(2) })
+        : LanguageService.t('swatch.blendPlain')
+    )
+  );
+  row.title = LanguageService.t('swatch.blendNote');
+  return row;
 }

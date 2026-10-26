@@ -5,13 +5,13 @@
  * the character to browser storage.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import type { ResolvedCharaCharacter } from '@xivdyetools/core';
+import type { ImportedCharaCharacter } from '@xivdyetools/core';
 import { CharaSessionService, type CharaSession } from '../chara-session-service';
 import { logger } from '@shared/logger';
 
 /** Only the session's identity matters here, not a parsed character's contents. */
 const session = (fileName: string): CharaSession => ({
-  resolved: { nickname: 'Real Name' } as unknown as ResolvedCharaCharacter,
+  resolved: { nickname: 'Real Name' } as unknown as ImportedCharaCharacter,
   fileName,
 });
 
@@ -60,10 +60,11 @@ describe('CharaSessionService', () => {
     expect(listener).not.toHaveBeenCalled();
   });
 
-  it('keeps notifying the others when one subscriber throws, and logs it', () => {
+  it('keeps notifying the others when one subscriber throws, and logs it without the exception', () => {
     const error = vi.spyOn(logger, 'error').mockImplementation(() => {});
     const unsubscribeBroken = CharaSessionService.subscribe(() => {
-      throw new Error('consumer bug');
+      // A subscriber's exception can quote the character it was drawing (a nickname, a file name).
+      throw new Error('consumer bug NICK-CANARY-31f0');
     });
     const healthy = vi.fn();
     const unsubscribeHealthy = CharaSessionService.subscribe(healthy);
@@ -71,7 +72,9 @@ describe('CharaSessionService', () => {
 
     expect(() => CharaSessionService.setSession(loaded)).not.toThrow();
     expect(healthy).toHaveBeenCalledWith(loaded);
-    expect(error).toHaveBeenCalledWith('[CharaSession] Subscriber failed:', expect.any(Error));
+    expect(error).toHaveBeenCalledWith('[CharaSession] Subscriber failed');
+    expect(JSON.stringify(error.mock.calls)).not.toContain('NICK-CANARY-31f0');
+    expect(error.mock.calls.flat().some((arg) => arg instanceof Error)).toBe(false);
 
     unsubscribeBroken();
     unsubscribeHealthy();

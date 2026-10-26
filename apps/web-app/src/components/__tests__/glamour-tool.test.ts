@@ -23,8 +23,27 @@ vi.mock('@services/chara-resolve-service', async (importOriginal) => {
 
 /** A stale deploy: the preset form's chunk 404s (BUG-003). */
 vi.mock('@components/preset-submission-form', () => {
-  throw new Error('chunk missing');
+  throw new Error('chunk missing RAW-CHUNK-CANARY-5e1d');
 });
+
+const CANARY = 'CANARY';
+
+/** A log argument as text: an Error's message, stack and cause included. */
+function describeArg(arg: unknown): string {
+  if (arg instanceof Error) {
+    return `${arg.message} ${arg.stack ?? ''} ${describeArg((arg as { cause?: unknown }).cause)}`;
+  }
+  try {
+    return JSON.stringify(arg) ?? String(arg);
+  } catch {
+    return String(arg);
+  }
+}
+
+/** Every argument passed to any logger method, as text. */
+function loggedText(spies: Array<{ mock: { calls: unknown[][] } }>): string[] {
+  return spies.flatMap((spy) => spy.mock.calls.flatMap((args) => args.map(describeArg)));
+}
 
 const FIXTURE = JSON.stringify({
   TypeName: 'Anamnesis Character File',
@@ -154,6 +173,23 @@ describe('GlamourTool', () => {
     expect(empty()?.hidden).toBe(true);
   });
 
+  it('mounts the glamour block for a gear-only file (no appearance keys at all)', async () => {
+    // The legacy parser refused a file with none of the fifteen color keys; the
+    // library-backed import accepts it, and its gear is the whole point here.
+    const gearOnly = JSON.stringify({
+      TypeName: 'Anamnesis Character File',
+      Body: { ModelBase: 200, ModelVariant: 1, DyeId: 56, DyeId2: 0 },
+    });
+    expect(await loadCharaFile(charaFile(gearOnly))).toEqual({ ok: true });
+    mount();
+
+    await vi.waitFor(() =>
+      expect(container.querySelector('[data-role="glamour-block"]')).not.toBeNull()
+    );
+    expect(container.querySelector<HTMLElement>('[data-role="glamour-empty"]')?.hidden).toBe(true);
+    expect(container.querySelector('[data-slot="Body"]')).not.toBeNull();
+  });
+
   it('says on the file card that edited acquisition notes are kept on this device', async () => {
     await loadCharaFile(charaFile(FIXTURE));
     mount();
@@ -183,9 +219,46 @@ describe('GlamourTool', () => {
     expect(() => internal.submitPalette([], 'My Palette')).not.toThrow();
 
     await vi.waitFor(() => expect(toast).toHaveBeenCalled());
-    expect(error).toHaveBeenCalledWith(
-      '[GlamourTool] Failed to load the preset submission form',
-      expect.anything()
-    );
+    // A fixed message and nothing else: the raw error never reaches the log.
+    expect(error).toHaveBeenCalledWith('[GlamourTool] Failed to load the preset submission form');
+    expect(error.mock.calls.every((args) => args.length === 1)).toBe(true);
+    for (const text of loggedText([error])) expect(text).not.toContain(CANARY);
+  });
+
+  it('logs a failed glamour-block load with a fixed message, never the error', async () => {
+    // Red if the catch passes the import error to the logger: its message (and stack) can carry
+    // anything, so only a fixed string may be logged.
+    vi.resetModules();
+    vi.doMock('@components/glamour-block', () => {
+      throw new Error('block chunk missing RAW-BLOCK-CANARY-77aa');
+    });
+    try {
+      const fresh = {
+        tool: await import('../glamour-tool'),
+        logger: await import('@shared/logger'),
+        services: await import('@services/index'),
+        session: await import('@services/chara-session-service'),
+        loader: await import('@services/chara-file-loader'),
+      };
+      const spies = (['error', 'warn', 'info', 'debug'] as const).map((method) =>
+        vi.spyOn(fresh.logger.logger, method).mockImplementation(() => {})
+      );
+      const toast = vi.spyOn(fresh.services.ToastService, 'error').mockImplementation(() => '');
+      await fresh.loader.loadCharaFile(charaFile(FIXTURE));
+      const freshTool = new fresh.tool.GlamourTool(container);
+      freshTool.init();
+      try {
+        await vi.waitFor(() => expect(toast).toHaveBeenCalled());
+        expect(spies[0]).toHaveBeenCalledWith('[GlamourTool] Failed to load the glamour block');
+        expect(spies[0].mock.calls.every((args) => args.length === 1)).toBe(true);
+        for (const text of loggedText(spies)) expect(text).not.toContain(CANARY);
+      } finally {
+        freshTool.destroy();
+        fresh.session.CharaSessionService.setSession(null);
+      }
+    } finally {
+      vi.doUnmock('@components/glamour-block');
+      vi.resetModules();
+    }
   });
 });

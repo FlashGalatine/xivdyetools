@@ -2,6 +2,20 @@
 
 ---
 
+## Web-App Version 5.16.0 — October 26, 2026
+
+### Swatch Matcher and Glamour Reader: a new character-file reader
+- **Files that only hold gear now open.** A character file with no appearance colors used to be refused. The Glamour Reader reads it, and the Swatch Matcher marks each color as not in the file.
+- **Colors the file can't confirm are marked UNCONFIRMED.** If a file doesn't say whether highlights, face paint or lip color are switched on, the color is shown but never matched to a dye or saved.
+- **Switched-off lip color now shows as off.** A file with lip color switched off, as in every Ktisis export we checked, shows none. Face paint set only to mirrored counts as no face paint.
+- **Lips are blended only when the file says its extra colors are live.** Anamnesis files no longer show a blended lip tint.
+- **Gear problems are called out.** A piece with incomplete model numbers shows a CHECK note in the Glamour Reader, and a dye slot that doesn't hold a dye reads Dye unreadable instead of Undyed.
+- **The reader's license is in About.** About XIV Dye Tools now links the open-source license of the character file reader.
+
+### Clearer messages when a file can't be read
+- **Plain messages instead of raw errors.** An unreadable file says so, and a slow or failed read asks you to try again. Your previous character stays loaded.
+- **A few damaged files that used to open are now refused.** Files with repeated fields, numbers too large to be exact or very deep structures show the unreadable message.
+
 ## Web-App Version 5.15.5 — October 16, 2026
 
 ### Glamour Reader and Swatch Matcher: clearer file checks

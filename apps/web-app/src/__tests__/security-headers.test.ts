@@ -183,6 +183,11 @@ describe('public/_headers security contract', () => {
     expect(findDuplicatePathPatterns(HEADERS)).toEqual([]);
   });
 
+  it('serves the generated license notice as UTF-8 text', () => {
+    // Pages sends no charset for .txt, and the notice holds non-ASCII text
+    expect(BLOCKS.get('/licenses/*')?.get('content-type')).toBe('text/plain; charset=utf-8');
+  });
+
   it('does not ship the beta X-Robots-Tag header in production', () => {
     // vite-plugin-beta-branding adds it to the /* rule at build time;
     // public/_headers must never carry it (the beta plugin's idempotency guard

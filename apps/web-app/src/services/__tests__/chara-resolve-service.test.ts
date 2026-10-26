@@ -12,6 +12,8 @@ import {
   CharaResolveUnavailableError,
 } from '../chara-resolve-service';
 import { getApiWorkerBase } from '../api-worker-origin';
+import { loadCharaFile } from '../chara-file-loader';
+import { CharaSessionService } from '../chara-session-service';
 
 const GEAR = [
   { slot: 'HeadGear' as const, base: 361, variant: 5 },
@@ -190,6 +192,88 @@ describe('chara-resolve-service', () => {
       expect(sent).toEqual({ gear: [], glasses: 0xffff });
       expect(result.items.Body).toBeNull();
       expect(result.glasses).toMatchObject({ id: 0xffff });
+    });
+  });
+
+  /**
+   * Task 5 (plan "Global constraints": test the exact body keys). The models
+   * come from a real import — the library read, the projection and the page's
+   * validator, run in-thread by the inline inspection mock — so this pins what
+   * actually leaves the browser for a file, not a hand-built model list.
+   */
+  describe('the request body for an imported file', () => {
+    afterEach(() => CharaSessionService.setSession(null));
+
+    const IMPORTED = JSON.stringify({
+      TypeName: 'Anamnesis Character File',
+      Nickname: 'NICKNAME-CANARY',
+      Author: 'AUTHOR-CANARY',
+      Tribe: 'Midlander',
+      Gender: 'Feminine',
+      MainHand: { ModelSet: 634, ModelBase: 19, ModelVariant: 1, DyeId: 6, DyeId2: 0 },
+      OffHand: { ModelSet: 0, ModelBase: 0, ModelVariant: 0, DyeId: 0, DyeId2: 0 },
+      HeadGear: { ModelBase: 361, ModelVariant: 5, DyeId: 1, DyeId2: 33 },
+      Body: { ModelBase: 200, ModelVariant: 1.5, DyeId: 56, DyeId2: 0 },
+      Hands: { ModelBase: 70000, ModelVariant: 1, DyeId: 0, DyeId2: 0 },
+      Legs: { ModelBase: '300', ModelVariant: 1, DyeId: 0, DyeId2: 0 },
+      Feet: { ModelBase: 376, ModelVariant: 1, DyeId: 1.5, DyeId2: 0, Extra: 'FIELD-CANARY' },
+      Glasses: { GlassesId: 40 },
+    });
+
+    async function importedSession() {
+      const file = new File([IMPORTED], 'FILENAME-CANARY.chara', { type: 'application/json' });
+      expect(await loadCharaFile(file)).toEqual({ ok: true });
+      return CharaSessionService.getSession()!.resolved;
+    }
+
+    it('is exactly {gear, glasses}, each model only slot / base / variant (and set on a weapon)', async () => {
+      const fetchMock = vi
+        .fn()
+        .mockImplementation(() =>
+          Promise.resolve(envelope({ items: {}, glasses: null, version: 'v' }))
+        );
+      vi.stubGlobal('fetch', fetchMock);
+      const resolved = await importedSession();
+
+      await resolveCharaEquipment(resolved.gearModels, resolved.glassesId);
+
+      const raw = (fetchMock.mock.calls[0] as [string, RequestInit])[1].body as string;
+      const body = JSON.parse(raw) as { gear: Array<Record<string, unknown>>; glasses?: number };
+      expect(Object.keys(body).sort()).toEqual(['gear', 'glasses']);
+      expect(body.glasses).toBe(40);
+      // Fractional (Body), past-uint16 (Hands) and string (Legs) lanes never
+      // become a model; an all-zero weapon (OffHand) is empty, not worn
+      expect(body.gear.map((m) => m.slot)).toEqual(['MainHand', 'HeadGear', 'Feet']);
+      expect(body.gear[0]).toEqual({ slot: 'MainHand', set: 634, base: 19, variant: 1 });
+      expect(Object.keys(body.gear[1]).sort()).toEqual(['base', 'slot', 'variant']);
+      expect(Object.keys(body.gear[2]).sort()).toEqual(['base', 'slot', 'variant']);
+      // No dye channel, label or unknown field travels
+      expect(raw).not.toMatch(/Dye|CANARY|Nickname|Extra/);
+    });
+
+    it('omits glasses when the file wears none', async () => {
+      const fetchMock = vi
+        .fn()
+        .mockImplementation(() =>
+          Promise.resolve(envelope({ items: {}, glasses: null, version: 'v' }))
+        );
+      vi.stubGlobal('fetch', fetchMock);
+      const file = new File(
+        [
+          JSON.stringify({
+            HeadGear: { ModelBase: 361, ModelVariant: 5 },
+            Glasses: { GlassesId: 0 },
+          }),
+        ],
+        'plain.chara'
+      );
+      expect(await loadCharaFile(file)).toEqual({ ok: true });
+      const resolved = CharaSessionService.getSession()!.resolved;
+
+      await resolveCharaEquipment(resolved.gearModels, resolved.glassesId);
+
+      const body = JSON.parse((fetchMock.mock.calls[0] as [string, RequestInit])[1].body as string);
+      expect(body).toEqual({ gear: [{ slot: 'HeadGear', base: 361, variant: 5 }] });
     });
   });
 
