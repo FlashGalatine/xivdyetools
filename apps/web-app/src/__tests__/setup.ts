@@ -48,6 +48,26 @@ vi.mock('@shared/logger', () => {
   };
 });
 
+// jsdom has no Worker, so the `.chara` inspection service runs in-thread for every suite: the
+// worker's own handler, the page's validation and dye attachment, the service's supersession
+// (see mocks/chara-inspection-inline.ts). Both exports are vi.fn wrappers around that behavior,
+// so a suite can hold or fail one call (mockImplementationOnce) and mockReset restores it.
+// chara-inspection-service.test.ts unmocks it to drive the real service with a fake Worker.
+// The helper is imported inside the factory, never at the top of this file (see its header).
+vi.mock('@services/chara-inspection-service', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@services/chara-inspection-service')>();
+  const { createInlineCharaInspection } = await import('./mocks/chara-inspection-inline');
+  const inline = createInlineCharaInspection(actual.CharaInspectionError);
+  return {
+    ...actual,
+    inspectCharaBytes: vi.fn(inline.inspectCharaBytes),
+    cancelCharaInspection: vi.fn(inline.cancelCharaInspection),
+    // The idle-time palette warm-up is a no-op here (the inline stand-in loads palettes on
+    // demand); a suite asserts on the vi.fn that the file card calls it.
+    prefetchCharaPalettes: vi.fn(async () => undefined),
+  };
+});
+
 // Initialize services and MSW server before all tests
 beforeAll(async () => {
   // Start MSW server for API mocking

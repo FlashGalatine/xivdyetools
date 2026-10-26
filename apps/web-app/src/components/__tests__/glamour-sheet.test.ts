@@ -19,6 +19,7 @@ import {
   buildGlamourPlainText,
 } from '@shared/glamour-markdown';
 import { closeGlamourSheet, openGlamourSheet } from '../glamour-sheet';
+import { logger } from '@shared/logger';
 
 const { downloadMock, copyMock } = vi.hoisted(() => ({
   downloadMock: vi.fn(),
@@ -564,5 +565,55 @@ describe('glamour list omissions', () => {
   it('omits nothing before the equipment answer lands', () => {
     const source = wearing({ Wrists: entry(8693, 'Promise of Innocence') }, 'Female', false);
     for (const text of everyRendering(source)) expect(text).toContain('Bracelets:');
+  });
+});
+
+describe('glamour export sheet — failure logs carry no raw error', () => {
+  const CANARY = 'RAW-SHEET-CANARY-3b9e';
+
+  /** Every argument any logger method was given, as text (an Error's message and stack too). */
+  function logged(spies: Array<{ mock: { calls: unknown[][] } }>): string[] {
+    return spies.flatMap((spy) =>
+      spy.mock.calls.flatMap((args) =>
+        args.map((arg) =>
+          arg instanceof Error ? `${arg.message} ${arg.stack ?? ''}` : (JSON.stringify(arg) ?? '')
+        )
+      )
+    );
+  }
+
+  const spyLogger = () =>
+    (['error', 'warn', 'info', 'debug'] as const).map((method) =>
+      vi.spyOn(logger, method).mockImplementation(() => {})
+    );
+
+  it('a failed Save .md logs a fixed message and toasts, quoting nothing from the error', () => {
+    // Red if the catch passes the thrown error to the logger.
+    const spies = spyLogger();
+    downloadMock.mockImplementation(() => {
+      throw new Error(CANARY);
+    });
+    openGlamourSheet(source());
+    sheet()!.querySelector<HTMLButtonElement>('[data-role="sheet-save"]')!.click();
+
+    expect(ToastService.error).toHaveBeenCalledWith(LanguageService.t('swatch.listExportFailed'));
+    expect(spies[0]).toHaveBeenCalledWith('[GlamourSheet] Export failed');
+    expect(spies[0].mock.calls.every((args) => args.length === 1)).toBe(true);
+    for (const text of logged(spies)) expect(text).not.toContain(CANARY);
+  });
+
+  it('a failed Copy list logs a fixed message and toasts, quoting nothing from the error', async () => {
+    // Red if the rejection's error object reaches the logger.
+    const spies = spyLogger();
+    copyMock.mockRejectedValue(new Error(CANARY));
+    openGlamourSheet(source());
+    sheet()!.querySelector<HTMLButtonElement>('[data-role="sheet-copy"]')!.click();
+
+    await vi.waitFor(() =>
+      expect(ToastService.error).toHaveBeenCalledWith(LanguageService.t('swatch.listCopyFailed'))
+    );
+    expect(spies[0]).toHaveBeenCalledWith('[GlamourSheet] Copy failed');
+    expect(spies[0].mock.calls.every((args) => args.length === 1)).toBe(true);
+    for (const text of logged(spies)) expect(text).not.toContain(CANARY);
   });
 });

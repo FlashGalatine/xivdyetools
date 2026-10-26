@@ -9,7 +9,7 @@
 > this table cannot silently drift again. The 5.0 wave merged to `main` on 2026-08-28
 > (PR #123). As of 2026-10-26 (checked against the registry API), every published
 > package here is at parity with npm except `@xivdyetools/core` 5.15.0 (npm 5.12.0; 5.13.0 and
-> 5.14.0 were never published, so 5.15.0 is its next publish) and `@xivdyetools/bot-logic` 4.10.0 (npm 4.9.0), each
+> 5.14.0 were never published, so 5.15.0 is its next publish) and `@xivdyetools/bot-logic` 4.11.0 (npm 4.9.0), each
 > published right after the change that bumped it merges;
 > Actions → **"Publish Packages to npm"** publishes whatever differs from the registry, so check
 > there rather than trusting this sentence to stay current. Merging to
@@ -24,7 +24,7 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.15.6 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Web Application** | v5.16.0 | `xivdyetools-web-app` | Cloudflare Pages | Active |
 | **Discord Bot** | v5.9.0 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.4 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.8.2 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
@@ -123,6 +123,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.16.0 | Oct 2026 | The Swatch Matcher and Glamour Reader read `.chara` files through core 5.15.0's `xivcharakit` adapter in a cancellable Web Worker (the web app's first), with a palette bridge so no reference data ships twice: files that hold only gear load, the lip-color bit and a mirror-only face paint are read, an unconfirmed highlight, face-paint or lip color is shown but never matched or saved, failures are fixed localized messages, and incomplete gear is flagged. Intentional differences are recorded in `docs/research/2026-10-22-xivcharakit-integration.md` |
 | v5.15.6 | Oct 2026 | Imported labels and raw errors stay out of logs (development and production): the saves, the `.chara` loader, the toast log and every collection-service path that named a record log fixed messages only; a collection import with a malformed description no longer throws and no longer stops the records after it (FINDING-001 and FINDING-004, 2026-10-22 xivcharakit integration review) |
 | v5.15.5 | Oct 2026 | Core 5.13.0 + 5.14.0 (2026-10-15 import review): the Glamour Reader and Swatch Matcher read only files named `.chara`, refuse one over 8 KB (was 20 MB) before reading it, and say to re-save an Anamnesis export without its attached image; a malformed file's error no longer quotes the whole value. The Palette Extractor keeps 20 MB |
 | v5.15.4 | Oct 2026 | Core 5.12.0 + api-worker 0.20.0: the GPOSERS list and its export sheet leave out invisible pieces and an Off Hand the main hand doesn't take; the reader's rows are unchanged |
@@ -701,6 +702,7 @@ and the [rollout runbook](operations/security-remediation-2026-09-15.md) for the
 
 | Consumer | Minimum Core Version | Notes |
 |----------|---------------------|-------|
+| Web App v5.16.0+ | @xivdyetools/core v5.15.0+ | `@xivdyetools/core/chara` (`inspectCharaForTools`, `resolveCharaWithProvider`) — the `.chara` inspection Web Worker imports it, and the xivcharakit-backed reader replaces the in-page parse |
 | Web App v5.15.5+ | @xivdyetools/core v5.14.0+ | `MAX_CHARA_FILE_BYTES` — the `.chara` cap, and core 5.13.0's bounded parse errors |
 | Web App v5.15.4 | @xivdyetools/core v5.12.0+ | `gposersOmittedSlots` — the GPOSERS list leaves out invisible pieces and an Off Hand the main hand doesn't take |
 | Web App v5.15.2–5.15.3 | @xivdyetools/core v5.11.0+ | `defaultCharaTwin` prefers a twin with a known acquisition line |
@@ -712,6 +714,7 @@ and the [rollout runbook](operations/security-remediation-2026-09-15.md) for the
 | Web App v5.12.2–5.12.4 | @xivdyetools/core v5.5.0+ | Tribe-derived `.chara` race — below this the Swatch Matcher refuses every Lalafell file |
 | Web App v5.7–5.12.1 | @xivdyetools/core v5.2.0+ | Color-wheel selector (`getColorWheel`, `HarmonySelectionConfig.wheel`); `@xivdyetools/types` v3.2.0+ (`ColorWheelId`) |
 | Web App v5.1–5.6 | @xivdyetools/core v4.2.0+ | `generateHarmonySlots` + `HARMONY_OFFSETS` (harmony convergence); 5.4+ needs core v5.0.0+ (one RYB mixer), 5.5+ core v5.1.0+ (ΔEOK2 labels) |
+| Discord Worker v5.9.0+ | @xivdyetools/core v5.15.0+ | `@xivdyetools/core/chara` — `/swatch` and `/glamour` read `.chara` files through the xivcharakit-backed reader; `@xivdyetools/bot-logic` v4.11.0+ |
 | Discord Worker v5.8.15+ | @xivdyetools/core v5.14.0+ | `MAX_CHARA_FILE_BYTES`; `@xivdyetools/bot-logic` v4.10.0+ — the `{kb}` size reason and `notChara` |
 | Discord Worker v5.8.14 | @xivdyetools/core v5.12.0+ | `@xivdyetools/bot-logic` v4.9.0+ — `/glamour`'s list applies `gposersOmittedSlots` |
 | Discord Worker v5.8.12–5.8.13 | @xivdyetools/core v5.11.0+ | `/glamour` names pieces through core's `defaultCharaTwin`, which prefers a twin with a known acquisition line |
