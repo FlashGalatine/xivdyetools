@@ -146,6 +146,33 @@ describe('downloadCharaAttachment', () => {
     expect(await downloadCharaAttachment(CDN_URL, de)).toEqual({ ok: true, text });
   });
 
+  /**
+   * The declared length is checked before any byte is read. The body here is
+   * a short valid file, so only the header can refuse it: a `Content-Length`
+   * one past the cap is too large, one at the cap is not.
+   */
+  describe('the declared Content-Length, before the body is read', () => {
+    const SHORT = '{"REyeColor":42}';
+    const declaring = (length: number) =>
+      vi.fn(async () => new Response(SHORT, { headers: { 'content-length': String(length) } }));
+
+    it('refuses 8,193 declared bytes as too large', async () => {
+      const fetchMock = declaring(MAX_FILE_BYTES + 1);
+      vi.stubGlobal('fetch', fetchMock);
+      const response = await fetchMock();
+      expect(response.headers.get('content-length')).toBe('8193');
+
+      const result = await downloadCharaAttachment(CDN_URL, de);
+      if (result.ok) throw new Error('expected a refusal');
+      expect(result.message).toBe(refusal(de, 'tooLarge', { kb: 8 }));
+    });
+
+    it('accepts 8,192 declared bytes', async () => {
+      vi.stubGlobal('fetch', declaring(MAX_FILE_BYTES));
+      expect(await downloadCharaAttachment(CDN_URL, de)).toEqual({ ok: true, text: SHORT });
+    });
+  });
+
   it('says a body past the cap is too large in the reader’s language', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response('x'.repeat(MAX_FILE_BYTES + 1))));
     const result = await downloadCharaAttachment(CDN_URL, de);

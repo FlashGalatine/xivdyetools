@@ -31,13 +31,31 @@ export async function readTextCapped(
   source: CappedTextSource,
   maxBytes: number,
 ): Promise<string | null> {
+  const bytes = await readBytesCapped(source, maxBytes);
+  // Decoded text, unlike `/webhooks/github`'s own capped reader in
+  // `index.ts`: that route keeps the raw bytes because its HMAC must verify
+  // the undecoded payload — don't unify the two.
+  return bytes === null ? null : new TextDecoder().decode(bytes);
+}
+
+/**
+ * The same capped read, answering the bytes as received (no decode), for a
+ * consumer that must see invalid UTF-8 rather than the U+FFFD a non-fatal
+ * decode puts in its place (the `.chara` reader refuses it).
+ *
+ * @returns the bytes, or null when the body exceeds the cap
+ */
+export async function readBytesCapped(
+  source: CappedTextSource,
+  maxBytes: number,
+): Promise<Uint8Array | null> {
   const declared = Number(source.headers.get('content-length'));
   if (Number.isFinite(declared) && declared > maxBytes) return null;
 
   if (!source.body) {
     // Bodiless sources (test doubles, HEAD-like answers): text() then measure
-    const text = await source.text();
-    return new TextEncoder().encode(text).byteLength > maxBytes ? null : text;
+    const encoded = new TextEncoder().encode(await source.text());
+    return encoded.byteLength > maxBytes ? null : encoded;
   }
 
   const reader = source.body.getReader();
@@ -60,8 +78,5 @@ export async function readTextCapped(
     merged.set(chunk, offset);
     offset += chunk.byteLength;
   }
-  // Decoded text, unlike `/webhooks/github`'s own capped reader in
-  // `index.ts`: that route keeps the raw bytes because its HMAC must verify
-  // the undecoded payload — don't unify the two.
-  return new TextDecoder().decode(merged);
+  return merged;
 }
