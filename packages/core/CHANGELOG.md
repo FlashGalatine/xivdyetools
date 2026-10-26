@@ -5,6 +5,71 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Manual Stain discovery/comparison (`audit:dyes`, issue #322).** Enumerates the complete XIVAPI sheet with canonical pins and bounded requests, then saves raw evidence and review-only JSON/Markdown reports. Verified offline replay preserves all six local locale sources and existing identity mappings. Builds and runtime dye access keep their existing offline behavior. The private scripts are covered by dedicated type/lint checks and fixture/subprocess tests. No dye values or public exports change.
+
+## [5.15.0] - 2026-10-26
+
+The first half of the `xivcharakit` integration (Tasks 1-3 of the 2026-10-22 plan). MINOR: new
+exports and a new runtime dependency; the legacy `parseCharaFile` / `resolveCharaColors` contracts
+are unchanged. Nothing in the apps consumes the new entry points yet.
+
+### Added
+
+- **`xivcharakit@0.1.0-beta.4`** (exact pin) as a runtime dependency.
+- **`inspectCharaForTools(input)`**: reads a `.chara` document with the 8,192-byte cap
+  (`MAX_CHARA_FILE_BYTES`, measured in UTF-8 bytes) and inspects it.
+- **`createCharaPaletteProvider(colors)`**: bridges `CharacterColorService` and the shader tables to the
+  library's `PaletteProvider`, so no second palette corpus ships.
+- **`resolveCharaForTools(inspection, colors, dyes?)`**: interprets the appearance and projects an
+  `ImportedCharaCharacter` (eight slots, worn models, dye badges, bounded diagnostics) that carries no
+  raw document, image or unknown field. Each slot has a `matchHex` that is non-null only for a
+  confirmed-active, resolved color; unknown activation keeps its preview but never matches.
+- **`ImportedCharaCharacter`, `ImportedCharaSlot`, `CharaImportIssue`** types.
+- **`ImportedCharaSlot.indexGap`** and a **palette-provider argument** for `resolveCharaForTools`:
+  `indexGap` is true only for a lip / face-paint index the library reads as a color index (not a Hrothgar fur pattern, not a lip of unknown race) stored as a number
+  from 96 to 127, integer or fraction, so the host keeps its "unused 96-127" message without carrying the
+  raw value; and `resolveCharaForTools` now also takes a **`CharaPaletteProvider`** (the library's
+  `PaletteProvider`, re-exported as a type) in place of the `CharacterColorService`, so a worker can ask the
+  page for each color instead of loading the palette data itself.
+- **`resolveCharaWithProvider(inspection, provider, dyes?)`**: the provider-based, palette-free entry the
+  web app's inspection worker uses. It does everything `resolveCharaForTools` does after choosing a
+  provider, and its module (`chara-library.ts`) has no runtime import path to the palette bridge, the
+  shader tables or `CharacterColorService`, so a consumer that brings its own provider bundles none of
+  core's shader-table chunks (a dynamic `import()` would not have helped: bundlers emit a chunk for every
+  reachable dynamic import target). `resolveCharaForTools` now lives in its own module
+  (`chara-library-resolve.ts`), bridges the service there and delegates; its signature and behavior are
+  unchanged. A test in `chara-library.test.ts` walks the import graph to hold the line.
+- **`@xivdyetools/core/chara`** subpath entry (`dist/chara.js`, beside `@xivdyetools/core/blending`):
+  `inspectCharaForTools`, `resolveCharaWithProvider` and the `ImportedCharaCharacter`,
+  `ImportedCharaSlot`, `CharaImportIssue` and `CharaPaletteProvider` types, the same objects the main
+  barrel exports. The package declares no `sideEffects`, so a bundler keeps every top-level module the
+  barrel reaches; a consumer that only needs the reader and the provider-based resolve, such as a Web
+  Worker, imports this entry instead and does not pull in core's color, localization and dye modules.
+  `src/__tests__/chara-entry.test.ts` pins the export list, the `exports` row and an import graph that
+  reaches only `xivcharakit`, `@xivdyetools/types` and the chara reader's own modules.
+- **`NOTICE`** carries the `xivcharakit` attribution (MIT, with the Square Enix non-affiliation language); the
+  package's own `dist/LICENSE` and `dist/THIRD_PARTY_NOTICES.md` ship with it. The web app serves a copy of its own from the stacked web-app change, not from this release.
+
+### Notes
+
+- The new modules keep no top-level `new Set(...)`: a bundler cannot prove one side-effect free, so it kept
+  the adapter and the library entry in every consumer's shared chunk even before anything imported them
+  (the web app's `modals` chunk ended 902 B over its 287 KB budget). The lookup tables are plain arrays or
+  built on first use, and the web-app build is within 5 bytes of the pre-integration chunk.
+- Intentional differences from the legacy parser are recorded in
+  `docs/research/2026-10-22-xivcharakit-integration.md` (partial documents accepted, the lip-color bit,
+  the mirror-only face-paint value, unknown activation excluded from matching).
+- Checked from the packed tarball installed into an empty project (2026-10-26): the install resolves
+  `xivcharakit@0.1.0-beta.4` from the registry (integrity `sha512-fIW3xE...`) with no workspace links; the
+  `@xivdyetools/core/chara` entry loads and resolves a document in plain Node 18.20.8 and 22.21.0, and the
+  barrel does the same once bundled for `node18`. The barrel still cannot be imported in plain Node ESM,
+  because its JSON imports carry no import attributes; that is unchanged from 5.12.0 and every other
+  consumer bundles core. The `engines.node >=18.0.0` floor stands.
+
 ## [5.14.0] - 2026-10-16
 
 The `.chara` file cap of the 2026-10-15 import review (`docs/audits/2026-10-15-web-app-security/`),

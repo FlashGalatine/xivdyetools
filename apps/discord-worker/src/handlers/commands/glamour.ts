@@ -135,14 +135,16 @@ async function processGlamourCommand(
     });
 
   let fileText: string;
+  let fileBytes: Uint8Array;
   try {
-    const file = await downloadCharaAttachment(fileUrl, t);
+    const file = await downloadCharaAttachment(fileUrl, t, true);
     if (!file.ok) {
       markCommandOutcome(interaction, 'image_input');
       await fail(file.message);
       return;
     }
     fileText = file.text;
+    fileBytes = file.bytes;
   } catch (error) {
     // Only the CDN fetch and the capped read live in this try.
     markCommandOutcome(interaction, classifyError(error, 'unknown'));
@@ -153,6 +155,8 @@ async function processGlamourCommand(
 
   const input: GlamourInput = {
     fileText,
+    // What bot-logic reads: invalid UTF-8 is refused there, not re-encoded
+    fileBytes,
     locale,
     resolve: resolveThroughApiWorker(env),
     // Item names arrive at run time; the CJK fonts are subsets (BUG-030)

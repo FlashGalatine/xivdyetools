@@ -1,6 +1,6 @@
 {
   "name": "@xivdyetools/core",
-  "version": "5.14.0",
+  "version": "5.15.0",
   "description": "Core color algorithms and dye database for XIV Dye Tools",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -13,6 +13,10 @@
     "./blending": {
       "types": "./dist/blending/index.d.ts",
       "import": "./dist/blending/index.js"
+    },
+    "./chara": {
+      "types": "./dist/chara.d.ts",
+      "import": "./dist/chara.js"
     },
     "./package.json": "./package.json"
   },
@@ -33,12 +37,15 @@
     "test:watch": "vitest",
     "test:integration": "vitest run src/__tests__/integration",
     "test:coverage": "vitest run --coverage",
-    "lint": "eslint src && pnpm run lint:dead",
+    "lint": "eslint src && pnpm run lint:audit-dyes && pnpm run lint:dead",
     "lint:dead": "knip --directory ../.. --workspace packages/core --no-config-hints --no-tag-hints",
     "lint:fix": "eslint src --fix",
-    "type-check": "tsc --noEmit",
+    "type-check": "tsc --noEmit && pnpm run type-check:audit-dyes",
     "clean": "rimraf dist coverage",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "type-check:audit-dyes": "tsc -p tsconfig.audit-dyes.json --noEmit",
+    "lint:audit-dyes": "eslint --config eslint.audit-dyes.config.mjs scripts/stain-audit scripts/audit-dyes.ts scripts/audit-dyes.test.ts",
+    "audit:dyes": "tsx scripts/audit-dyes.ts"
   },
   "keywords": [
     "ffxiv",
@@ -67,7 +74,8 @@
   "dependencies": {
     "@xivdyetools/logger": "workspace:*",
     "@xivdyetools/types": "workspace:*",
-    "spectral.js": "^3.0.0"
+    "spectral.js": "^3.0.0",
+    "xivcharakit": "0.1.0-beta.4"
   },
   "devDependencies": {
     "@types/culori": "^4.0.1",

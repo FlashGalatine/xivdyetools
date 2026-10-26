@@ -131,6 +131,50 @@ test('SWAP in the reader clears the file for the Swatch Matcher too', async ({ p
   await expect(page.getByText('Reader Test', { exact: true })).toHaveCount(0);
 });
 
+test('a piece with incomplete model numbers gets a CHECK row and never reaches the resolver', async ({
+  page,
+}) => {
+  // Body's variant is a fraction: the library refuses to floor it, so the piece has no model
+  // (INCOMPLETE_MODEL). Only the complete head may leave the browser, with exactly its lanes.
+  const bodies: unknown[] = [];
+  await page.route('**/v1/chara/resolve', (route) => {
+    bodies.push(route.request().postDataJSON());
+    return route.fulfill({ json: RESOLVE });
+  });
+  await gotoTool(page, 'glamour');
+  await fileInput(page).setInputFiles({
+    name: 'incomplete.chara',
+    mimeType: 'application/json',
+    buffer: Buffer.from(
+      JSON.stringify({
+        ...JSON.parse(FIXTURE),
+        Body: { ModelBase: 6016, ModelVariant: 1.5, DyeId: 1, DyeId2: 0 },
+      })
+    ),
+  });
+  await expect(page.getByText('Reader Test', { exact: true })).toBeVisible();
+
+  // The file card's gear row (shown only in the reader, which sends gear ids)
+  const row = page
+    .locator('div')
+    .filter({ has: page.getByText('CHECK', { exact: true }) })
+    .filter({ hasText: "Body · Model numbers are incomplete, so this piece can't be looked up" })
+    .last();
+  await expect(row).toBeVisible();
+
+  await expect(headRow(page).locator('[data-role="item-name"]')).toHaveText('Hempen Coif');
+  await expect(block(page).locator('[data-slot="Body"]')).toHaveCount(0);
+
+  expect(bodies.length).toBeGreaterThan(0);
+  for (const body of bodies) {
+    const { gear, ...rest } = body as { gear: Record<string, unknown>[] };
+    // No glasses in the file, so the body is the gear list alone
+    expect(Object.keys(rest)).toEqual([]);
+    expect(gear).toEqual([{ slot: 'HeadGear', base: 361, variant: 5 }]);
+    expect(gear.map((m) => Object.keys(m).sort())).toEqual([['base', 'slot', 'variant']]);
+  }
+});
+
 test('narrow desktop: ten chips and a hovered label stay inside the rail', async ({ page }) => {
   // 769 px is the narrowest desktop width, where the rail is tightest
   await page.setViewportSize({ width: 769, height: 800 });

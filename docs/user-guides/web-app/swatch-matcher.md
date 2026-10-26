@@ -21,6 +21,7 @@ Above the grid is a **Drop a .chara file** zone (or press **Choose file**). It a
 - A **CHARACTER FILE** card shows which tool made it, your character's name, a **LOCAL ONLY** chip, and the clan and gender it found. **SWAP** loads a different file.
 - The **CLAN & GENDER** selectors in the settings column become a read-only readout, so hair and skin are looked up on the right sheet automatically.
 - Any problems reading the file are listed on an amber warnings card rather than hidden.
+- A file that can't be read gets a plain message ("Couldn't read this character file..."), and a slow or failed read asks you to try again. The character you had loaded stays loaded.
 
 ---
 
@@ -80,7 +81,9 @@ At the bottom of the flow a row of buttons sends the matched dyes on to **Harmon
 
 One card per color slot: **Left eye, Right eye, Hair, Highlights, Skin, Tattoo, Limbal ring, Lips, Face paint**. Each card shows the color, its grid address (or an amber **OFF GRID** tag when the file holds an arbitrary color that has no cell), and the closest dye with its distance. Slots the file doesn't set stay as dashed placeholders with the reason — for example *"Highlights are switched off in this file"* or *"On Hrothgar this field is a fur pattern, not a color."*
 
-Lips get special handling: the game draws the lip color over the skin, so the card shows the **BLEND** you actually see and matches dyes to that, not to the raw cell.
+Lips get special handling: the game draws the lip color over the skin, so the card shows the **BLEND** you actually see and matches dyes to that, not to the raw cell. A lip color the file switches off shows as off, and the blend needs the file's extra colors to be live (Anamnesis files don't have them, so they show no blended tint).
+
+When a file doesn't say whether highlights, face paint or lip color are switched on, the card is marked **UNCONFIRMED**: the color is shown, but it is never matched to a dye, saved, picked or exported. If a file stores the two eyes' colors under the wrong eye, the corrected colors are shown with a note.
 
 Click a slot card to make it the selection: the sentence and excerpt follow it, and the grid switches to that slot's sheet with numbered **pins** marking where each of your character's colors sits (two colors on one cell share a pin, e.g. **1·2**).
 

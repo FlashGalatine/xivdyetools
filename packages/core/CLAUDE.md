@@ -188,7 +188,7 @@ type RYB
 
 `clamp`, `round`, `isValidHexColor`, `isValidRGB`, `isValidHSV`, `sleep`, `retry`, `isAbortError`, `generateChecksum`, `abbreviateDyeName`, `foldForSearch`.
 
-**`.chara` appearance files** (`services/chara/`): `parseCharaFile`, `MAX_CHARA_FILE_BYTES` (8 KiB; the web app and the bot enforce it on the original bytes, the parser does not), `resolveCharaColors` (`OFF_GRID_DELTA_E2000`), `charaTwinsOf` / `defaultCharaTwin` / `charaPieceTone` / `charaTwinFacts`, the model and game-rule helpers (`charaModelKey`, `formatCharaModelLabel`, `isWornCharaModel`, `charaWearMask`, `groupCharaTwinRules`, …) and the GPOSERS export helpers (`GPOSERS_SLOTS`, `GPOSERS_HEADER`, `gposersSlotLabel`, `gposersGroups`, `gposersOmittedSlots` (the slots the list leaves out: invisible pieces, and an Off Hand under a main hand outside `CHARA_OFF_HAND_MAIN_CATEGORIES`), …).
+**`.chara` appearance files** (`services/chara/`): `parseCharaFile`, `MAX_CHARA_FILE_BYTES` (8 KiB; the web app and the bot enforce it on the original bytes, the parser does not), `resolveCharaColors` (`OFF_GRID_DELTA_E2000`), `charaTwinsOf` / `defaultCharaTwin` / `charaPieceTone` / `charaTwinFacts`, the model and game-rule helpers (`charaModelKey`, `formatCharaModelLabel`, `isWornCharaModel`, `charaWearMask`, `groupCharaTwinRules`, …) and, on `xivcharakit@0.1.0-beta.4` (exact pin), the library-backed import `inspectCharaForTools` → `resolveCharaForTools` (+ `resolveCharaWithProvider`, which takes a palette provider and has no path to the palette tables, `createCharaPaletteProvider`, `ImportedCharaCharacter`; a consumer that must not bundle the clan tables, such as the web app's inspection worker, imports only `inspectCharaForTools`, `resolveCharaWithProvider` and four types from the `@xivdyetools/core/chara` subpath, because core declares no `sideEffects` and the barrel would pull the whole library in; the legacy parser/resolver stay for now; differences in `docs/research/2026-10-22-xivcharakit-integration.md`), and the GPOSERS export helpers (`GPOSERS_SLOTS`, `GPOSERS_HEADER`, `gposersSlotLabel`, `gposersGroups`, `gposersOmittedSlots` (the slots the list leaves out: invisible pieces, and an Off Hand under a main hand outside `CHARA_OFF_HAND_MAIN_CATEGORIES`), …).
 
 **Vocabulary and links:** `DYE_CATEGORIES`, `DYE_ACQUISITIONS`, `ACQUISITION_META`, `METALLIC_STAIN_IDS` (`config/dye-vocabulary.ts`); `BAND_VOCABULARY`, `classifyBandTier`, `roundToBandDisplay` (`config/band-vocabulary.ts`); `SOCIAL_LINKS`, `PRODUCT_LINKS`; `MANUAL_TOPICS`, `getLearnLink`, `getLodestoneLink` (`config/learn-links.ts`); `facewearColors`, `getFacewearColor`, `getFacewearColorByLegacyItemID` (`config/facewear.ts`).
 
@@ -227,13 +227,21 @@ Selection goes through `generateHarmonySlots(baseHex, type, candidates, config, 
 `HarmonyGenerator`'s per-type `find*Dyes()` methods still support `'hue'` and `'deltaE'` matching with an `options.colorSpace` of `'hsv'` / `'oklch'` / `'lch'` / `'hsl'`, but **`colorSpace` is deprecated since 5.2.0** — it rotates hue without carrying the base's saturation and value, which is a different answer from the one every surface shows. `'oklch'` gamut-maps (CSS Color 4) since the 5.2.0 fix wave; `'lch'` and `'hsl'` still clip per channel and can therefore change hue. DeltaE tolerance defaults differ per formula (`cie76: 40`, `ciede2000`/`cie2000`: 25, `oklab`: 0.21).
 
 ### Character color sheets (generated)
-`src/data/character_colors/` is generated from the game's `human.cmp` (`pnpm run build:character-colors <human.cmp>`, not part of `build`; the game file is not vendored). The file keeps every palette twice: the **interface** half is what the character creator shows (the sheets `CharacterColorService` serves) and the **shader** half is what the game renders from and a `.chara` float stores squared (`shader/`, read only by the chara resolver to judge OFF GRID). Never hand-edit either; regenerate.
+`src/data/character_colors/` is generated from the game's `human.cmp` (`pnpm run build:character-colors <human.cmp>`, not part of `build`; the game file is not vendored). The file keeps every palette twice: the **interface** half is what the character creator shows (the sheets `CharacterColorService` serves) and the **shader** half is what the game renders from and a `.chara` float stores squared (`shader/`, read only by the chara resolver and the palette provider built from it, to judge OFF GRID). Never hand-edit either; regenerate.
 
 ### Generated wheel data
 `src/data/oklch-hue-table.json` and `src/data/munsell-hues.json` are **generated and committed**, not derived at import time (`pnpm run build:oklch-hue`, `pnpm run build:munsell <real.dat>`; neither runs as part of `build`). `src/data/munsell-anchors.json` holds the 40 raw renotation anchors and is imported by `munsell.test.ts` only — nothing at runtime reads it, so it stays out of every bundle. `scripts/lib/oklch-hue-table.test.ts` re-runs the OKLCH derivation and compares it to the committed JSON, which is the gate against the two drifting apart. A regenerated table is a deliberate re-baseline of `HarmonySelector.golden.test.ts` — put the before/after digests in the commit body.
 
 ### Spectral mixing (Kubelka-Munk)
 There is no `SpectralMixer` class. Spectral mixing is `blendColors(hex1, hex2, 'spectral', ratio)` in `src/blending/blending.ts`, which wraps `spectral.js` (Burns' LHTSS upsampling to a 38-band reflectance curve, 380-750nm, mixed in K/S space). `ColorService.mixColorsSpectral(hex1, hex2, ratio = 0.5)` is the façade over it, and `@xivdyetools/core/blending` exposes `blendColors` / `BLENDING_MODES` / `isValidBlendingMode` directly. Blue + Yellow = Green like real paint. The old wrapper's `mixMultiple`, `gradient` and `isAvailable` were removed as uncalled (DEAD-034, 2026-08-18 audit).
+
+### Manual Stain audit
+
+`pnpm --filter @xivdyetools/core run audit:dyes --latest --out <new-directory>` enumerates the complete Stain sheet and reports candidate additions, name/color/metallic differences and Item links. Alternatively pass both `--version <game-key>` and `--schema <canonical-revision>`, or `--snapshot <saved-bundle>` for network-free replay of saved upstream **and local** inputs. Relative paths use the repository root; the output parent must exist. No source data or generated locales are written. Exit 0 means complete even with differences, 1 failure/incomplete, 2 usage error.
+
+The command preserves row 0/blank rows as evidence and never treats a named row as proof of obtainability. Keep the six-locale manual adoption and identity workflow in [adding-dyes.md](../../docs/maintainer/adding-dyes.md). Current Item relations are on `Stain.Item[]` at the audited pins; the old `StainTransient` advice is version-dependent. The command is opt-in: normal builds/tests/runtime do not refresh from XIVAPI.
+
+`type-check:audit-dyes` uses `tsconfig.audit-dyes.json`; `lint:audit-dyes` uses its dedicated ESLint configuration because root ESLint excludes scripts. Both are wired into the normal core checks. The production build still includes only `src`; audit modules add no runtime exports. All audit tests use frozen responses or injected fetch, and real CLI subprocess tests inherit a fetch blocker through `NODE_OPTIONS`.
 
 ### Locale build pipeline
 1. `scripts/fetch_dye_names.py` (Python, run **manually**) hits XIVAPI v2 → `scripts/output/dye_names.csv`, which is merged into `dyenames.csv`. XIVAPI only serves en/ja/de/fr — **Korean and Chinese names are sourced manually** from market-board HTML and pasted into the CSV.
@@ -247,7 +255,7 @@ There is no `SpectralMixer` class. Spectral mixing is `blendColors(hex1, hex2, '
 - a CSV's English cell differs from the data file's `name`, case included, so the en locale and `dye.name` / `FacewearColor.name` never disagree;
 - a translation cell is empty. This is the only one `--allow-missing` (`pnpm run build:locales -- --allow-missing`) waives, keeping the English fallback for work in progress.
 
-`scripts/build-locales.test.ts` runs the real script as a subprocess against fixtures for each of these, regenerates from the committed sources to check that the committed JSON matches, and pins all six locales' `sheets`. Core's `tsc` and `eslint src` do not cover `scripts/`, so that test is the gate on the script.
+`scripts/build-locales.test.ts` runs the real script as a subprocess against fixtures for each of these, regenerates from the committed sources to check that the committed JSON matches, and pins all six locales' `sheets`. The normal source `tsc` and `eslint src` do not cover `build-locales.ts`, so that test is its gate; the separate audit tooling checks cover only `audit-dyes` and `stain-audit/`.
 
 `build-locales.ts` is **idempotent**: before writing, it compares the freshly built payload against the file already on disk, ignoring `meta.generated`. If nothing else differs it keeps the existing file untouched — same bytes, same mtime. Rebuilding from unchanged sources therefore leaves a clean working tree, and `meta.generated` marks when the locale data last *changed* rather than when the build last ran.
 
@@ -275,7 +283,7 @@ External: `spectral.js` (Kubelka-Munk).
 
 ## Dead-code gate (knip)
 
-`pnpm run lint` = `eslint src && pnpm run lint:dead`, and `lint:dead` is
+`pnpm run lint` = `eslint src && pnpm run lint:audit-dyes && pnpm run lint:dead`, and `lint:dead` is
 `knip --directory ../.. --workspace packages/core --no-config-hints --no-tag-hints`. It runs against the **root**
 `knip.jsonc` (never a local one) because core's consumers live in other
 workspaces: `--workspace` filters which workspace's issues are *reported*, but

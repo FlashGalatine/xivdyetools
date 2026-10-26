@@ -256,11 +256,11 @@ The `.chara` equipment-resolution routes (web-app Swatch Matcher 11a/11c) talk t
 
 ```toml
 XIVAPI_BASE = "https://v2.xivapi.com"   # upstream origin
-XIVAPI_VERSION = "latest"               # game-version key: `latest` or a key from /api/version.
-                                        # A pinned key is used as is and namespaces the row cache;
-                                        # `latest` is resolved through GET /api/version (memoized
-                                        # 10 min, last good key kept on failure), so a patch cools
-                                        # the row cache within about 10 minutes.
+XIVAPI_VERSION = "latest"               # game-version selector; resolved together with schema.
+# Canonical pair discovered from a bounded Item/1 metadata request, memoized
+# for 10 min (retry after 60 s on failure), with a 3 s timeout and 32 KiB cap.
+# Last complete context survives failed refresh; bootstrap failure bypasses
+# shared data caching. Fully canonical game/schema pins skip discovery.
 # XIVAPI_SCHEMA = "exdschema@2:rev:<sha>"  # optional schema pin (field renames land unannounced)
 ```
 

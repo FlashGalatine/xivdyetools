@@ -609,6 +609,8 @@
     },
     "swatchTitle": "캐릭터 색상 견본",
     "swatchNoSlots": "이 파일에 활성 색상 부위가 없습니다.",
+    "swatchActivityUnknown": "일부 색상은 비교하지 않았습니다: 파일에 활성 여부가 나와 있지 않습니다.",
+    "swatchUnusable": "일부 색상은 비교하지 않았습니다: 파일에 잘못된 값이 있거나, 필요한 부족 또는 성별 정보가 없습니다.",
     "swatchSlotMissing": "{slot}은(는) 이 파일에서 활성 부위가 아닙니다.",
     "swatchSlotName": {
       "skin": "피부",
@@ -656,6 +658,8 @@
     "glamourCompany": "맞는 총사령부 소속 필요: {list}",
     "glamourNoItemName": "모델 {key}",
     "glamourNoGear": "이 파일에는 장비가 없습니다.",
+    "glamourGearSkipped": "이 파일의 일부 장비는 불완전하거나 잘못되어 목록에 표시하지 않습니다.",
+    "glamourDyeInvalid": "이 파일의 일부 염료 값은 잘못되어 표시하지 않습니다. 염색 없음이라는 뜻은 아닙니다.",
     "glamourResolveFailed": "지금은 아이템을 조회할 수 없습니다. 1분 후에 다시 시도해 주세요.",
     "glamourResolveBusy": "지금은 아이템 조회가 붐빕니다. 1분 후에 다시 시도해 주세요.",
     "glamourManual": "캐릭터 파일 안내:",

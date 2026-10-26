@@ -375,8 +375,9 @@ export function openGlamourSheet(
   const save = button('sheet-save', LanguageService.t('glamour.sheet.save'), false, () => {
     try {
       downloadTextFile(buildGlamourMarkdown(input()), GLAMOUR_MARKDOWN_FILENAME, 'text/markdown');
-    } catch (error) {
-      logger.error('[GlamourSheet] Export failed', error);
+    } catch {
+      // A fixed message: the error's text never reaches the log.
+      logger.error('[GlamourSheet] Export failed');
       ToastService.error(LanguageService.t('swatch.listExportFailed'));
     }
   });
@@ -393,8 +394,8 @@ export function openGlamourSheet(
         if (ok) ToastService.success(LanguageService.t('swatch.listCopied'));
         else ToastService.error(LanguageService.t('swatch.listCopyFailed'));
       })
-      .catch((error: unknown) => {
-        logger.error('[GlamourSheet] Copy failed', error);
+      .catch(() => {
+        logger.error('[GlamourSheet] Copy failed');
         ToastService.error(LanguageService.t('swatch.listCopyFailed'));
       });
   });

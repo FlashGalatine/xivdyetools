@@ -1,6 +1,6 @@
 {
   "name": "xivdyetools-api-worker",
-  "version": "0.20.1",
+  "version": "0.21.0",
   "private": true,
   "description": "Public API for XIV Dye Tools - Dye database and color matching",
   "license": "MIT",
@@ -18,7 +18,8 @@
     "lint:dead": "knip --directory ../.. --workspace apps/api-worker --no-config-hints --no-tag-hints",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "test:chara-runtime": "node --test tests/chara-concurrency.test.mjs"
   },
   "dependencies": {
     "@xivdyetools/core": "workspace:*",
@@ -27,7 +28,7 @@
     "hono": "^4.13.13"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20261016.1",
+    "@cloudflare/workers-types": "^5.20261023.1",
     "vitepress": "^1.6.4",
     "vue": "^3.5.44",
     "@xivdyetools/svg": "workspace:*",
@@ -35,7 +36,7 @@
     "@vitest/coverage-v8": "^5.0.5",
     "@xivdyetools/test-utils": "workspace:*",
     "vitest": "^5.0.5",
-    "wrangler": "^4.151.1"
+    "wrangler": "^4.152.0"
   },
   "engines": {
     "node": ">=18.0.0"

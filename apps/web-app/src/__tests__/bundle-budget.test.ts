@@ -53,6 +53,7 @@ const EMITTED = [
   'glamour-sheet-By9x4vGP.js',
   'dye-selector-B6HfW2Vr.js',
   'result-card-BbI3D-js.js',
+  'chara-inspection.worker-KKr8djVW.js',
   'index-xwH458Lu.css',
 ];
 
@@ -70,6 +71,15 @@ describe('bundle budget', () => {
       const { named, label } = limitFor(`${code}-AbCdEf12.js`);
       expect(named).toBe(true);
       expect(label).toBe('locale');
+    });
+
+    it('gates the .chara inspection worker at its own 35 KB budget, not the 60 KB default', () => {
+      // The first Web Worker chunk. Red if it falls through to the default, which would let core's
+      // barrel (179 KB unminified when it last leaked in) creep back in unnoticed.
+      const { named, label, limit } = limitFor('chara-inspection.worker-KKr8djVW.js');
+      expect(named).toBe(true);
+      expect(label).toBe('chara inspection worker');
+      expect(limit).toBe(35 * KB);
     });
 
     it('gates an unrecognised chunk rather than skipping it', () => {

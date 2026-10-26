@@ -609,6 +609,8 @@
     },
     "swatchTitle": "Character swatch",
     "swatchNoSlots": "No live color slots in this file.",
+    "swatchActivityUnknown": "Some colors were not matched: the file does not say whether they are switched on.",
+    "swatchUnusable": "Some colors were not matched: the file stores an invalid value, or lacks the clan or gender they need.",
     "swatchSlotMissing": "{slot} is not a live slot in this file.",
     "swatchSlotName": {
       "skin": "Skin",
@@ -656,6 +658,8 @@
     "glamourCompany": "Needs the right Grand Company: {list}",
     "glamourNoItemName": "Model {key}",
     "glamourNoGear": "This file wears no gear.",
+    "glamourGearSkipped": "Some gear in this file is incomplete or invalid and is not listed.",
+    "glamourDyeInvalid": "Some dye values in this file are invalid and are not shown — that does not mean the piece is undyed.",
     "glamourResolveFailed": "Couldn't look up the items right now. Try again in a minute.",
     "glamourResolveBusy": "The item lookup is busy right now. Try again in a minute.",
     "glamourManual": "More on character files:",

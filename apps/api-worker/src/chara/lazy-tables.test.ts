@@ -56,11 +56,22 @@ describe('chara tables load lazily (OPT-002)', () => {
         // out has had time to finish evaluating by the time it "answers".
         await new Promise((resolve) => setTimeout(resolve, 20));
         atSearch.push({ ...evaluated });
-        return new Response(JSON.stringify({ version: 'k', results: [row] }), { status: 200 });
+        return new Response(
+          JSON.stringify({
+            version: 'aaaaaaaaaaaaaaaa',
+            schema: 'exdschema@2:rev:' + 'a'.repeat(40),
+            results: [row],
+          }),
+          { status: 200 },
+        );
       }),
     );
     const { default: app } = await import('../index');
-    const env = createMockEnv({ XIVAPI_BASE: 'https://lazy.test', XIVAPI_VERSION: 'pinned' });
+    const env = createMockEnv({
+      XIVAPI_BASE: 'https://lazy.test',
+      XIVAPI_VERSION: 'aaaaaaaaaaaaaaaa',
+      XIVAPI_SCHEMA: 'exdschema@2:rev:' + 'a'.repeat(40),
+    });
     const post = () =>
       app.request(
         '/v1/chara/resolve',

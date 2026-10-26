@@ -9,6 +9,9 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import type { LocaleCode } from '@shared/i18n-types';
+import { readFileSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const mockShow = vi.fn().mockReturnValue('modal-id-123');
 const mockDismiss = vi.fn();
@@ -279,6 +282,75 @@ describe('AboutModal', () => {
 
       expect(content.querySelector(`a[href="${BASE}/PRIVACY.md"]`)).not.toBeNull();
       expect(content.querySelector(`a[href="${BASE}/TERMS_OF_SERVICE.md"]`)).not.toBeNull();
+    });
+  });
+
+  // ============================================================================
+  // The .chara reader's license notice
+  // ============================================================================
+
+  // xivcharakit ships inside the bundle, so its MIT license and third-party
+  // notices must be reachable from the product. This is the modal's first link
+  // to a file the app itself serves (public/licenses/xivcharakit.txt, generated
+  // by scripts/copy-chara-notices.mjs); every other link points off-site.
+  describe('Character-file reader license link', () => {
+    const HREF = '/licenses/xivcharakit.txt';
+    const KEY = 'about.charaReaderLicense';
+    const APP_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
+    const localeValue = (lc: string): string => {
+      const json = JSON.parse(
+        readFileSync(resolve(APP_ROOT, `src/locales/${lc}.json`), 'utf-8')
+      ) as { about: Record<string, string> };
+      return json.about.charaReaderLicense;
+    };
+
+    afterEach(() => {
+      for (const key of Object.keys(mockTranslations)) delete mockTranslations[key];
+    });
+
+    const showContent = async (): Promise<HTMLElement> => {
+      const { AboutModal } = await import('../about-modal');
+      new AboutModal().show();
+      return mockShow.mock.calls[0][0].content as HTMLElement;
+    };
+
+    it('links the served notice, in a new tab, without leaking the opener or referrer', async () => {
+      const content = await showContent();
+      const anchors = content.querySelectorAll<HTMLAnchorElement>(`a[href="${HREF}"]`);
+      expect(anchors).toHaveLength(1);
+      const anchor = anchors[0];
+      expect(anchor.getAttribute('href')).toBe(HREF);
+      expect(anchor.target).toBe('_blank');
+      expect(anchor.rel).toContain('noopener');
+      expect(anchor.rel).toContain('noreferrer');
+    });
+
+    it('sits in the attribution block, after the Square Enix lines it belongs with', async () => {
+      const content = await showContent();
+      const anchor = content.querySelector(`a[href="${HREF}"]`);
+      const block = anchor?.closest('div.rounded-lg.border');
+      expect(block?.textContent).toContain('about.legalLabel');
+      expect(block?.textContent).toContain('footer.notAffiliated');
+      expect(block?.lastElementChild?.contains(anchor ?? null)).toBe(true);
+    });
+
+    it('takes its label from the locale key, not hardcoded English', async () => {
+      const content = await showContent();
+      expect(content.querySelector(`a[href="${HREF}"]`)?.textContent).toBe(KEY);
+    });
+
+    it.each(['en', 'de', 'ja'])('renders the %s translation as the label', async (lc) => {
+      const value = localeValue(lc);
+      expect(value).toMatch(/\S/);
+      mockTranslations[KEY] = value;
+      const content = await showContent();
+      expect(content.querySelector(`a[href="${HREF}"]`)?.textContent).toBe(value);
+    });
+
+    it('carries a distinct, non-empty translation in all six locales', () => {
+      const values = ['en', 'de', 'fr', 'ja', 'ko', 'zh'].map(localeValue);
+      for (const v of values) expect(v).toMatch(/\S/);
+      expect(new Set(values).size).toBe(6);
     });
   });
 

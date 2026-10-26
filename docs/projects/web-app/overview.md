@@ -147,6 +147,7 @@ src/
 │   ├── preset-submission-service.ts  auth-service.ts
 │   ├── share-service.ts  harmony-generator.ts  mixer-blending-engine.ts
 │   ├── chara-session-service.ts  chara-file-loader.ts  chara-resolve-service.ts
+│   ├── chara-inspection-service.ts  chara-inspection-protocol.ts   (+ workers/chara-inspection.worker.ts)
 │   ├── telemetry-service.ts
 │   └── display-options-helper.ts
 ├── shared/                     # Pure helpers, types, icon constants

@@ -21,6 +21,7 @@
 
 import {
   CHARA_DYEABLE_SLOTS,
+  CHARA_SLOT_SEARCH_FIELD,
   charaPieceTone,
   charaTwinsOf,
   defaultCharaTwin,
@@ -29,7 +30,8 @@ import {
   type CharaPieceProblem,
   type CharaPieceTone,
   type CharaTwin,
-  type ResolvedCharaCharacter,
+  type CharaImportIssue,
+  type ImportedCharaCharacter,
   type ResolvedGearDye,
   type CharaGearSlotId,
 } from '@xivdyetools/core';
@@ -80,6 +82,53 @@ interface TwinState {
 
 /** The twelve gear slots — the footnote's "N slots are empty" denominator. */
 const GEAR_SLOT_COUNT = 12;
+
+/** A diagnostic path segment that names one of the twelve gear slots. */
+function isGearSlot(segment: string | number | undefined): segment is CharaGearSlotId {
+  return typeof segment === 'string' && Object.hasOwn(CHARA_SLOT_SEARCH_FIELD, segment);
+}
+
+/** A stored value with no valid interpretation (the library's two field-level codes). */
+function isFieldProblem(issue: CharaImportIssue): boolean {
+  return issue.code === 'INVALID_FIELD' || issue.code === 'UNSUPPORTED_VALUE';
+}
+
+/**
+ * Gear slots the file holds something unreadable in: a model with a missing,
+ * null or invalid lane (`INCOMPLETE_MODEL` at `[slot]`) or a slot value that is
+ * not a record at all (a field problem at `[slot]`). Neither is a model the
+ * reader can look up, and neither is an empty slot: the file put something
+ * there. The file card's warning row says what.
+ */
+function unreadableGearSlots(issues: readonly CharaImportIssue[]): Set<CharaGearSlotId> {
+  const slots = new Set<CharaGearSlotId>();
+  for (const issue of issues) {
+    if (issue.path.length !== 1 || !isGearSlot(issue.path[0])) continue;
+    if (issue.code === 'INCOMPLETE_MODEL' || isFieldProblem(issue)) slots.add(issue.path[0]);
+  }
+  return slots;
+}
+
+/**
+ * Dye channels the file stores a non-dye value in (`[slot, 'DyeId' | 'DyeId2']`):
+ * a fraction, a negative, a string, or a value past uint16. The projection
+ * leaves them out of `gearDyes`, which is right, but they are not undyed either.
+ */
+function unreadableDyeChannels(
+  issues: readonly CharaImportIssue[]
+): Map<CharaGearSlotId, Set<1 | 2>> {
+  const channels = new Map<CharaGearSlotId, Set<1 | 2>>();
+  for (const issue of issues) {
+    const [slot, field] = issue.path;
+    if (issue.path.length !== 2 || !isGearSlot(slot) || !isFieldProblem(issue)) continue;
+    const channel = field === 'DyeId' ? 1 : field === 'DyeId2' ? 2 : null;
+    if (channel === null) continue;
+    const set = channels.get(slot) ?? new Set<1 | 2>();
+    set.add(channel);
+    channels.set(slot, set);
+  }
+  return channels;
+}
 
 /**
  * DYES ON THIS GLAMOUR lens (Turn 11, confirmed): Pieces (11a, default) puts
@@ -216,7 +265,7 @@ export class GlamourBlock {
   private container: HTMLElement;
   private callbacks: GlamourBlockCallbacks;
   /** The loaded character this block is drawing (from the session) */
-  private resolved: ResolvedCharaCharacter | null = null;
+  private resolved: ImportedCharaCharacter | null = null;
   private fileName: string | null = null;
   /** Deduped worn dyes; entries toggled off before palette actions */
   private droppedStainIds = new Set<number>();
@@ -349,9 +398,10 @@ export class GlamourBlock {
         this.resolveState = 'ready';
         this.rerenderGlamour();
       },
-      (error: unknown) => {
+      () => {
         if (controller.signal.aborted || this.resolved !== resolved) return;
-        logger.warn('[GlamourBlock] Equipment names unavailable:', error);
+        // Fixed text only: no raw exception reaches a log (Task 5 log policy)
+        logger.warn('[GlamourBlock] Equipment names unavailable');
         this.resolveState = 'unavailable';
         this.rerenderGlamour();
       }
@@ -413,7 +463,7 @@ export class GlamourBlock {
           if (token !== itemLinksOpenToken || !node.isConnected) return;
           module.showItemLinksMenu({ target, anchorElement: node, title });
         })
-        .catch((error: unknown) => logger.warn('[ItemLinks] menu unavailable', error));
+        .catch(() => logger.warn('[ItemLinks] menu unavailable'));
     };
     node.addEventListener('click', open);
     node.addEventListener('keydown', (event) => {
@@ -549,8 +599,13 @@ export class GlamourBlock {
     const bySlot = this.dyesBySlot();
     // With nothing dyed there is no row to draw in either lens — one quiet
     // line stands in, so the block (and the switch above it) stays reachable.
+    // A worn piece with an unreadable channel is not "nothing dyed": the
+    // Pieces lens draws its row, since no count would show it otherwise.
+    const nothingDyed =
+      resolved.gearDyes.length === 0 &&
+      (this.glamourView === 'dyes' || this.wornDyeProblems().size === 0);
     box.appendChild(
-      resolved.gearDyes.length === 0 && !this.showAllActive()
+      nothingDyed && !this.showAllActive()
         ? this.renderNoDyedPieces()
         : this.glamourView === 'dyes'
           ? this.renderDyeRows()
@@ -574,6 +629,16 @@ export class GlamourBlock {
       bySlot.set(gear.slot, list);
     }
     return bySlot;
+  }
+
+  /** Unreadable dye channels on WORN pieces, by slot (an empty slot has no row to show them on). */
+  private wornDyeProblems(): Map<CharaGearSlotId, Set<1 | 2>> {
+    const resolved = this.resolved!;
+    const channels = unreadableDyeChannels(resolved.issues);
+    for (const slot of channels.keys()) {
+      if (!resolved.gearModels.some((m) => m.slot === slot)) channels.delete(slot);
+    }
+    return channels;
   }
 
   /** Localised slot label (the design's GEAR_LABELS) — the mono overline uppercases it. */
@@ -746,8 +811,8 @@ export class GlamourBlock {
         if (token !== sheetOpenToken) return;
         m.openGlamourSheet(source, focus, opener);
       })
-      .catch((error: unknown) => {
-        logger.error('[GlamourBlock] Glamour list sheet failed to load', error);
+      .catch(() => {
+        logger.error('[GlamourBlock] Glamour list sheet failed to load');
         ToastService.error(tSwatch(focus === 'copy' ? 'listCopyFailed' : 'listExportFailed'));
       });
   }
@@ -795,38 +860,63 @@ export class GlamourBlock {
   }
 
   /**
+   * The stand-in for a channel the file stores a non-dye value in. Neither the
+   * solid undyed fill (it may well be dyed in game) nor the dashed unknown-stain
+   * chip (there is no stain ID to be unknown): an amber outline, empty inside.
+   */
+  private unreadableChip(channel: 1 | 2): HTMLElement {
+    const chip = el(
+      'span',
+      `display: block; width: 20px; height: 26px; border-radius: 5px; background: transparent; border: 1px solid ${amber()}; box-sizing: border-box;`
+    );
+    chip.title = tSwatch('dyeUnreadable');
+    chip.dataset.role = 'unreadable-chip';
+    chip.dataset.channel = String(channel);
+    return chip;
+  }
+
+  /**
    * A dyeable piece's chips, always both channels in `DyeId` / `DyeId2` order,
    * so chip POSITION is readable as the channel. Before this, a piece dyed
    * only on its second channel drew a single chip in the first chip's place —
    * the picture said channel 1 and the file said channel 2.
    */
   private channelChips(slot: CharaGearSlotId, dyes: ResolvedGearDye[]): HTMLElement[] {
+    const unreadable = this.wornDyeProblems().get(slot);
     if (!CHARA_DYEABLE_SLOTS.has(slot)) {
       // An accessory carrying a dye is not a thing FFXIV can produce, but if a
       // file says so, show what it says rather than dropping the data.
-      return dyes.map((gear) => this.dyeChip(gear));
+      return [
+        ...dyes.map((gear) => this.dyeChip(gear)),
+        ...DYE_CHANNELS.filter((c) => unreadable?.has(c)).map((c) => this.unreadableChip(c)),
+      ];
     }
     return DYE_CHANNELS.map((channel) => {
       const gear = dyes.find((g) => g.channel === channel);
-      return gear ? this.dyeChip(gear) : this.undyedChip(channel);
+      if (gear) return this.dyeChip(gear);
+      return unreadable?.has(channel) ? this.unreadableChip(channel) : this.undyedChip(channel);
     });
   }
 
   /**
    * The row's dye line. A piece with no dye at all reads "Undyed" once, not
    * twice — the doubled form only earns its place when it is telling you
-   * WHICH channel is empty.
+   * WHICH channel is empty. An unreadable channel says so in its place.
    */
   private dyeLineText(slot: CharaGearSlotId, dyes: ResolvedGearDye[]): string {
     const undyed = tSwatch('undyed');
-    if (dyes.length === 0) return undyed;
+    const unreadable = this.wornDyeProblems().get(slot);
+    if (dyes.length === 0 && !unreadable) return undyed;
     if (!CHARA_DYEABLE_SLOTS.has(slot)) {
-      return dyes.map((g) => (g.dye ? dyeName(g.dye) : `#${g.stainId}`)).join(' + ');
+      return [
+        ...dyes.map((g) => (g.dye ? dyeName(g.dye) : `#${g.stainId}`)),
+        ...DYE_CHANNELS.filter((c) => unreadable?.has(c)).map(() => tSwatch('dyeUnreadable')),
+      ].join(' + ');
     }
     return DYE_CHANNELS.map((channel) => {
       const gear = dyes.find((g) => g.channel === channel);
-      if (!gear) return undyed;
-      return gear.dye ? dyeName(gear.dye) : `#${gear.stainId}`;
+      if (gear) return gear.dye ? dyeName(gear.dye) : `#${gear.stainId}`;
+      return unreadable?.has(channel) ? tSwatch('dyeUnreadable') : undyed;
     }).join(' + ');
   }
 
@@ -855,10 +945,14 @@ export class GlamourBlock {
   private pieceRowSlots(bySlot: Map<CharaGearSlotId, ResolvedGearDye[]>): CharaGearSlotId[] {
     if (!this.showAllActive()) {
       // The verdict counts every worn piece, so one it flags gets a row even
-      // undyed — the rows explain the verdict. Fine undyed pieces wait for Show all.
+      // undyed — the rows explain the verdict. So does a piece with an
+      // unreadable channel, which the footnote does not count as undyed.
+      // Fine undyed pieces wait for Show all.
       const slots = [...bySlot.keys()];
+      const unreadable = this.wornDyeProblems();
       for (const model of this.resolved!.gearModels) {
-        if (!slots.includes(model.slot) && this.flagged(model.slot)) slots.push(model.slot);
+        if (slots.includes(model.slot)) continue;
+        if (this.flagged(model.slot) || unreadable.has(model.slot)) slots.push(model.slot);
       }
       return slots;
     }
@@ -1481,13 +1575,21 @@ export class GlamourBlock {
    * Footnote: worn-undyed pieces vs empty slots — the two things the shipped
    * `12 − dyed` line conflated. Plus, when the resolve failed, one quiet line
    * saying names are off and dyes are not. DyeId 0 is undyed, not black
-   * (`gearHint`, on hover).
+   * (`gearHint`, on hover). A piece with an unreadable channel is not undyed,
+   * and a slot holding an unreadable model is not empty: the file card's
+   * warning rows explain both, so neither count claims them.
    */
   private renderGlamourFoot(bySlot: Map<CharaGearSlotId, ResolvedGearDye[]>): HTMLElement {
     const resolved = this.resolved!;
     const worn = resolved.gearModels.length;
-    const undyedWorn = resolved.gearModels.filter((m) => !bySlot.has(m.slot)).length;
-    const empty = Math.max(0, GEAR_SLOT_COUNT - worn);
+    const dyeProblems = this.wornDyeProblems();
+    const undyedWorn = resolved.gearModels.filter(
+      (m) => !bySlot.has(m.slot) && !dyeProblems.has(m.slot)
+    ).length;
+    const unreadable = [...unreadableGearSlots(resolved.issues)].filter(
+      (slot) => !resolved.gearModels.some((m) => m.slot === slot)
+    ).length;
+    const empty = Math.max(0, GEAR_SLOT_COUNT - worn - unreadable);
 
     const foot = el('div', 'display: flex; flex-direction: column; gap: 3px;');
     const split = el(
@@ -1751,7 +1853,8 @@ export class GlamourBlock {
     for (const entry of kept) {
       CollectionService.addDyeToCollection(record.id, entry.stainId);
     }
-    logger.info(`[GlamourBlock] Saved glamour palette "${name}" (${kept.length} dyes)`);
+    // FINDING-001: the name can be the imported nickname or file name; counts only.
+    logger.info(`[GlamourBlock] Saved a glamour palette (${kept.length} dyes)`);
     ToastService.success(LanguageService.t('palette.saveSuccess'));
   }
 }

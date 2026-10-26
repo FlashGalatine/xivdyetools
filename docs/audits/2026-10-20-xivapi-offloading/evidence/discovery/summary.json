@@ -1,0 +1,156 @@
+{
+  "complete": true,
+  "version": "0874aee069e1e7c4",
+  "schema": "exdschema@2:rev:e773c41a90aed788cf4c1c48469fa85618ef01fb",
+  "requests": 3,
+  "page_counts": [
+    100,
+    29,
+    0
+  ],
+  "rows": 129,
+  "unique_rows": 129,
+  "min_id": 0,
+  "max_id": 128,
+  "local_dyes": 125,
+  "named_nonzero_candidates": 125,
+  "new_candidate_ids": [],
+  "local_ids_missing_from_named_candidates": [],
+  "excluded_rows": [
+    {
+      "row_id": 0,
+      "fields": {
+        "Color": 0,
+        "IsHousingApplicable": true,
+        "IsMetallic": false,
+        "Item": [
+          {
+            "value": 5728,
+            "sheet": "Item",
+            "row_id": 5728,
+            "fields": {
+              "Name": "Terebinth"
+            }
+          },
+          {
+            "value": 0,
+            "sheet": "Item",
+            "row_id": 0,
+            "fields": {
+              "Name": ""
+            }
+          }
+        ],
+        "Name": "No Color",
+        "Name@de": "Keine Farbe",
+        "Name@fr": "Aucune",
+        "Name@ja": "染色無し",
+        "Shade": 2,
+        "SubOrder": 1
+      }
+    },
+    {
+      "row_id": 126,
+      "fields": {
+        "Color": 0,
+        "IsHousingApplicable": false,
+        "IsMetallic": false,
+        "Item": [
+          {
+            "value": 0,
+            "sheet": "Item",
+            "row_id": 0,
+            "fields": {
+              "Name": ""
+            }
+          },
+          {
+            "value": 0,
+            "sheet": "Item",
+            "row_id": 0,
+            "fields": {
+              "Name": ""
+            }
+          }
+        ],
+        "Name": "",
+        "Name@de": "",
+        "Name@fr": "",
+        "Name@ja": "",
+        "Shade": 0,
+        "SubOrder": 0
+      }
+    },
+    {
+      "row_id": 127,
+      "fields": {
+        "Color": 0,
+        "IsHousingApplicable": false,
+        "IsMetallic": false,
+        "Item": [
+          {
+            "value": 0,
+            "sheet": "Item",
+            "row_id": 0,
+            "fields": {
+              "Name": ""
+            }
+          },
+          {
+            "value": 0,
+            "sheet": "Item",
+            "row_id": 0,
+            "fields": {
+              "Name": ""
+            }
+          }
+        ],
+        "Name": "",
+        "Name@de": "",
+        "Name@fr": "",
+        "Name@ja": "",
+        "Shade": 0,
+        "SubOrder": 0
+      }
+    },
+    {
+      "row_id": 128,
+      "fields": {
+        "Color": 0,
+        "IsHousingApplicable": false,
+        "IsMetallic": false,
+        "Item": [
+          {
+            "value": 0,
+            "sheet": "Item",
+            "row_id": 0,
+            "fields": {
+              "Name": ""
+            }
+          },
+          {
+            "value": 0,
+            "sheet": "Item",
+            "row_id": 0,
+            "fields": {
+              "Name": ""
+            }
+          }
+        ],
+        "Name": "",
+        "Name@de": "",
+        "Name@fr": "",
+        "Name@ja": "",
+        "Shade": 0,
+        "SubOrder": 0
+      }
+    }
+  ],
+  "nonzero_blank_name_ids": [
+    126,
+    127,
+    128
+  ],
+  "candidate_ids_without_item_link": [],
+  "total_response_bytes": 48984
+}

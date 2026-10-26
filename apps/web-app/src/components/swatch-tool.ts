@@ -61,7 +61,7 @@ import type { ShareButton } from '@components/v4/share-button';
 import { ShareService } from '@services/share-service';
 import { CharaFileCard } from '@components/chara-file-card';
 import { CharaSheet, saveCharacterColors, type CharaSlotGridRef } from '@components/chara-sheet';
-import { slotLabel as charaSlotLabel } from '@components/chara-ui';
+import { hasValidGridCoordinate, slotLabel as charaSlotLabel } from '@components/chara-ui';
 import { CharaSessionService } from '@services/chara-session-service';
 
 // ============================================================================
@@ -1730,10 +1730,16 @@ export class SwatchTool extends BaseComponent {
 
     let pinNumber = 0;
     for (const slot of resolved.slots) {
-      if (slot.sheetIndex === null) continue;
+      // A pin marks a creator cell the file resolves to (D3): a palette or off-grid slot with a
+      // creator entry that the file does not switch off. Unknown activation is still index
+      // evidence, so it pins (it never links: its sheet card is not pickable). A switched-off
+      // slot, or hair with no clan, keeps a sheetIndex in the projection but is never pinned.
+      if (slot.sheetIndex === null || !hasValidGridCoordinate(slot)) continue;
+      if (slot.interpretation !== 'palette' && slot.interpretation !== 'offGrid') continue;
+      if (slot.active === false) continue;
       pinNumber++;
       if (baseOf(slot.slot) !== currentBase) continue;
-      if (currentVariant && slot.sheetVariant && slot.sheetVariant !== currentVariant) continue;
+      if (currentVariant && slot.variant && slot.variant !== currentVariant) continue;
       const existing = pins.get(slot.sheetIndex);
       pins.set(slot.sheetIndex, existing ? `${existing}·${pinNumber}` : String(pinNumber));
     }
@@ -2474,8 +2480,9 @@ export class SwatchTool extends BaseComponent {
         this.priceData.set(itemId, data);
       });
       this.updateMatchResults();
-    } catch (error) {
-      logger.warn('[CharacterTool] Error fetching prices:', error);
+    } catch {
+      // A fixed message: the error's text (a URL, a server reply) never reaches the log.
+      logger.warn('[CharacterTool] Error fetching prices');
     }
   }
 

@@ -318,3 +318,103 @@ describe('/swatch attachment handling', () => {
     });
   });
 });
+
+/**
+ * Byte input (xivcharakit integration, Task 6). The capped read decodes
+ * non-fatally, so invalid UTF-8 used to become U+FFFD and parse; the handler
+ * now hands bot-logic the capped bytes themselves, which the library reader
+ * refuses as INVALID_UTF8. Every attachment guard above is unchanged.
+ */
+describe('/swatch attachment bytes', () => {
+  let env: Env;
+  let ctx: ExecutionContext;
+  let pending: Promise<unknown>[];
+
+  const settle = () => Promise.all(pending);
+  const lastEditEmbed = (): { description?: string } => {
+    const call = mockSafeEdit.mock.calls.at(-1) as unknown[];
+    return (call[2] as { embeds: Array<{ description?: string }> }).embeds[0];
+  };
+
+  /** A valid character document whose Nickname value is one lone 0xFF byte. */
+  const invalidUtf8 = (): Uint8Array => {
+    const head = new TextEncoder().encode('{"Tribe":"Midlander","Gender":"Feminine","HairTone":10,"Nickname":"');
+    const tail = new TextEncoder().encode('"}');
+    const out = new Uint8Array(head.byteLength + 1 + tail.byteLength);
+    out.set(head, 0);
+    out[head.byteLength] = 0xff;
+    out.set(tail, head.byteLength + 1);
+    return out;
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    pending = [];
+    env = {
+      DISCORD_PUBLIC_KEY: 'k',
+      DISCORD_TOKEN: 't',
+      DISCORD_CLIENT_ID: 'app-1',
+      KV: {} as KVNamespace,
+    } as unknown as Env;
+    ctx = {
+      waitUntil: vi.fn((p: Promise<unknown>) => {
+        pending.push(p);
+      }),
+      passThroughOnException: vi.fn(),
+    } as unknown as ExecutionContext;
+    mockExecuteSwatch.mockResolvedValue({
+      ok: true,
+      svgString: '<svg/>',
+      embed: { title: 't', description: 'd', color: 0 },
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('hands executeSwatch the attachment bytes as received, not a re-encoded string', async () => {
+    const bytes = invalidUtf8();
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(bytes.slice())));
+
+    await handleSwatchCommand(makeInteraction(CDN_URL), env, ctx);
+    await settle();
+
+    expect(mockExecuteSwatch).toHaveBeenCalledTimes(1);
+    const input = mockExecuteSwatch.mock.calls[0][0] as { fileBytes?: unknown };
+    expect(input.fileBytes).toBeInstanceOf(Uint8Array);
+    expect(Array.from(input.fileBytes as Uint8Array)).toEqual(Array.from(bytes));
+    expect(input).not.toHaveProperty('fileName');
+  });
+
+  it('hands over an attachment of exactly 8,192 bytes whole', async () => {
+    const text = '{"Tribe":"Midlander","Gender":"Feminine","HairTone":10}'.padEnd(CAP);
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(text)));
+
+    await handleSwatchCommand(makeInteraction(CDN_URL, CAP), env, ctx);
+    await settle();
+
+    const input = mockExecuteSwatch.mock.calls[0][0] as { fileBytes?: Uint8Array };
+    expect(input.fileBytes?.byteLength).toBe(CAP);
+  });
+
+  it('answers an invalid UTF-8 attachment with the localized parse-failure reply', async () => {
+    const actual = await vi.importActual<typeof import('@xivdyetools/bot-logic')>('@xivdyetools/bot-logic');
+    mockExecuteSwatch.mockImplementationOnce(actual.executeSwatch);
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(invalidUtf8())));
+    const interaction = makeInteraction(CDN_URL);
+    const trace = startCommandTrace(interaction, {
+      command: 'swatch', subcommand: '', userId: 'user-1', locale: 'en',
+    });
+
+    await handleSwatchCommand(interaction, env, ctx);
+    await settle();
+
+    expect(lastEditEmbed().description).toBe(
+      'Could not read the file — it is not a .chara file the bot can read',
+    );
+    expect(renderSvgToPng).not.toHaveBeenCalled();
+    // an unreadable file is the user's input, not our renderer
+    expect(trace.outcome).toBe('image_input');
+  });
+});

@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.21.0] - 2026-10-20
+
+### Added
+
+- Optional canonical game-version query on character icon URLs. Versioned URLs retain a
+  30-day immutable browser policy; moving unversioned URLs use a five-minute policy.
+- Hermetic local workerd checks cover pending lookup and discovery ownership when the
+  first client disconnects.
+
+### Fixed
+
+- Equipment and facewear caches now include upstream base, canonical game version,
+  canonical schema and row shape. Every request captures that context once and sends
+  the same pins to Item and Glasses. Discovery keeps the last complete context after
+  failed refresh; a first failure permits uncached enrichment without alias-keyed entries.
+- Icon fetches and internal cache keys now share a game version and do not partition
+  by the worker request hostname. Previously delivered immutable browser entries keep
+  their original lifetime; old internal unversioned entries are ignored.
+
+### Changed
+
+- Retained validated PNGs refresh conditionally after seven days using upstream ETag.
+  A 304 reuses existing bytes as a normal 200 PNG; replacement bytes must pass the
+  existing streamed one-MiB limit and PNG checks. Failed refreshes do not advance
+  freshness or silently serve stale success.
+- Concurrent Item/Glasses misses share decoded data within an isolate. Overlapping
+  requests batch only their newly owned keys; the 256-key registry falls back to
+  ordinary fetches when full. Truncated/error results remain uncached, completed
+  results are not retained as a second cache, and joined data lookups report MISS.
+  No cross-isolate deduplication or new total latency guarantee is implied.
+
 ## [0.20.1] - 2026-10-20
 
 ### Fixed

@@ -609,6 +609,8 @@
     },
     "swatchTitle": "Charakter-Farbmuster",
     "swatchNoSlots": "Keine aktiven Farb-Slots in dieser Datei.",
+    "swatchActivityUnknown": "Einige Farben wurden nicht abgeglichen: Die Datei gibt nicht an, ob sie aktiviert sind.",
+    "swatchUnusable": "Einige Farben wurden nicht abgeglichen: Die Datei enthält einen ungültigen Wert, oder ihr fehlen Stamm oder Geschlecht.",
     "swatchSlotMissing": "\"{slot}\" ist in dieser Datei kein aktiver Slot.",
     "swatchSlotName": {
       "skin": "Haut",
@@ -656,6 +658,8 @@
     "glamourCompany": "Braucht die richtige Staatliche Gesellschaft: {list}",
     "glamourNoItemName": "Modell {key}",
     "glamourNoGear": "Diese Datei trägt keine Ausrüstung.",
+    "glamourGearSkipped": "Ein Teil der Ausrüstung in dieser Datei ist unvollständig oder ungültig und wird nicht aufgeführt.",
+    "glamourDyeInvalid": "Einige Farbstoffwerte in dieser Datei sind ungültig und werden nicht angezeigt — das heißt nicht, dass das Teil ungefärbt ist.",
     "glamourResolveFailed": "Die Gegenstände lassen sich gerade nicht abrufen. Versuche es in einer Minute erneut.",
     "glamourResolveBusy": "Die Gegenstandssuche ist gerade ausgelastet. Versuche es in einer Minute erneut.",
     "glamourManual": "Mehr zu Charakterdateien:",

@@ -609,6 +609,8 @@
     },
     "swatchTitle": "角色色板",
     "swatchNoSlots": "此文件中没有有效的颜色部位。",
+    "swatchActivityUnknown": "部分颜色未进行匹配：此文件未说明这些颜色是否有效。",
+    "swatchUnusable": "部分颜色未进行匹配：此文件含有无效的值，或没有所需的部族或性别。",
     "swatchSlotMissing": "{slot}在此文件中不是有效部位。",
     "swatchSlotName": {
       "skin": "皮肤",
@@ -656,6 +658,8 @@
     "glamourCompany": "需要所属对应的大国防联军：{list}",
     "glamourNoItemName": "模型 {key}",
     "glamourNoGear": "这个文件没有穿戴装备。",
+    "glamourGearSkipped": "此文件中的部分装备不完整或无效，未列出。",
+    "glamourDyeInvalid": "此文件中的部分染剂值无效，未显示——这并不表示该装备未染色。",
     "glamourResolveFailed": "暂时无法查询物品，请一分钟后再试。",
     "glamourResolveBusy": "物品查询当前繁忙，请一分钟后再试。",
     "glamourManual": "关于角色文件：",

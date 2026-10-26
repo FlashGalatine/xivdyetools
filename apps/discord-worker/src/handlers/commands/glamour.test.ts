@@ -281,14 +281,16 @@ describe('/glamour', () => {
   it('answers a file api-worker refuses as a problem with the file, traced as input, not as an outage', async () => {
     const { executeGlamour } = await vi.importActual<typeof import('@xivdyetools/bot-logic')>('@xivdyetools/bot-logic');
     mockExecuteGlamour.mockImplementation(executeGlamour);
-    // A hand edit past the game's uint16 model lane: the parser takes it, api-worker does not
+    // A model the reader keeps (complete uint16 lanes) that api-worker still
+    // refuses. A lane past 0xFFFF no longer reaches api-worker at all: the
+    // library-backed reader drops the incomplete model first (Task 6).
     vi.mocked(fetch).mockResolvedValueOnce(
       new Response(
         JSON.stringify({
           Tribe: 'Midlander',
           Gender: 'Feminine',
           REyeColor: 42,
-          Body: { ModelBase: 70000, ModelVariant: 1, DyeId: 0, DyeId2: 0 },
+          Body: { ModelBase: 812, ModelVariant: 2, DyeId: 0, DyeId2: 0 },
         })
       )
     );
@@ -420,5 +422,97 @@ describe('/glamour', () => {
     const call = mockExecuteGlamour.mock.calls[0][0] as GlamourInput;
     expect(call.locale).toBe('en');
     expect(call.theme).toBeUndefined();
+  });
+});
+
+/**
+ * Byte input (xivcharakit integration, Task 6): the handler hands bot-logic
+ * the capped attachment bytes, so invalid UTF-8 is refused by the library
+ * reader as INVALID_UTF8 instead of being re-encoded after a non-fatal decode.
+ * Every attachment guard above is unchanged.
+ */
+describe('/glamour attachment bytes', () => {
+  let env: Env;
+  let ctx: ExecutionContext;
+  let pending: Promise<unknown>[];
+  let binding: { fetch: ReturnType<typeof vi.fn> };
+
+  const settle = () => Promise.all(pending);
+  const lastEdit = () => (mockSafeEdit.mock.calls.at(-1) as unknown[])[2] as {
+    embeds: Array<{ description?: string }>;
+    file?: unknown;
+  };
+
+  /** A worn piece and a Nickname value that is one lone 0xFF byte. */
+  const invalidUtf8 = (): Uint8Array => {
+    const head = new TextEncoder().encode(
+      '{"Tribe":"Midlander","Gender":"Feminine","HairTone":10,"Body":{"ModelBase":812,"ModelVariant":2,"DyeId":12},"Nickname":"',
+    );
+    const tail = new TextEncoder().encode('"}');
+    const out = new Uint8Array(head.byteLength + 1 + tail.byteLength);
+    out.set(head, 0);
+    out[head.byteLength] = 0xff;
+    out.set(tail, head.byteLength + 1);
+    return out;
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    pending = [];
+    binding = {
+      fetch: vi.fn(async () => Response.json({ success: true, data: { items: { Body: null }, glasses: null } })),
+    };
+    env = {
+      DISCORD_PUBLIC_KEY: 'k',
+      DISCORD_TOKEN: 't',
+      DISCORD_CLIENT_ID: 'app-1',
+      KV: {} as KVNamespace,
+      UNIVERSALIS_PROXY: binding as unknown as Fetcher,
+    } as unknown as Env;
+    ctx = {
+      waitUntil: vi.fn((p: Promise<unknown>) => {
+        pending.push(p);
+      }),
+      passThroughOnException: vi.fn(),
+    } as unknown as ExecutionContext;
+    mockExecuteGlamour.mockResolvedValue({
+      ok: true,
+      svgString: '<svg/>',
+      embed: { title: 'Glamour · 1 dyed piece', description: '**Glamour Items:**', color: 0 },
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('hands executeGlamour the attachment bytes as received, not a re-encoded string', async () => {
+    const bytes = invalidUtf8();
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(bytes.slice())));
+
+    await handleGlamourCommand(makeInteraction(CDN_URL), env, ctx);
+    await settle();
+
+    expect(mockExecuteGlamour).toHaveBeenCalledTimes(1);
+    const input = mockExecuteGlamour.mock.calls[0][0] as GlamourInput & { fileBytes?: unknown };
+    expect(input.fileBytes).toBeInstanceOf(Uint8Array);
+    expect(Array.from(input.fileBytes as Uint8Array)).toEqual(Array.from(bytes));
+    expect(input).not.toHaveProperty('fileName');
+  });
+
+  it('answers an invalid UTF-8 attachment with the localized parse-failure reply, before any lookup', async () => {
+    const actual = await vi.importActual<typeof import('@xivdyetools/bot-logic')>('@xivdyetools/bot-logic');
+    mockExecuteGlamour.mockImplementationOnce(actual.executeGlamour);
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(invalidUtf8())));
+
+    await handleGlamourCommand(makeInteraction(CDN_URL), env, ctx);
+    await settle();
+
+    expect(lastEdit().embeds[0].description).toBe(
+      'Could not read the file — it is not a .chara file the bot can read',
+    );
+    expect(lastEdit().file).toBeUndefined();
+    expect(binding.fetch).not.toHaveBeenCalled();
+    expect(markMock).toHaveBeenCalledWith(expect.anything(), 'image_input');
   });
 });
