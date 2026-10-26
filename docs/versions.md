@@ -24,7 +24,7 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.15.6 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Web Application** | v5.16.0 | `xivdyetools-web-app` | Cloudflare Pages | Active |
 | **Discord Bot** | v5.8.15 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.4 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.8.2 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
@@ -123,6 +123,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.16.0 | Oct 2026 | The Swatch Matcher and Glamour Reader read `.chara` files through core 5.15.0's `xivcharakit` adapter in a cancellable Web Worker (the web app's first), with a palette bridge so no reference data ships twice: files that hold only gear load, the lip-color bit and a mirror-only face paint are read, an unconfirmed highlight, face-paint or lip color is shown but never matched or saved, failures are fixed localized messages, and incomplete gear is flagged. Intentional differences are recorded in `docs/research/2026-10-22-xivcharakit-integration.md` |
 | v5.15.6 | Oct 2026 | Imported labels and raw errors stay out of logs (development and production): the saves, the `.chara` loader, the toast log and every collection-service path that named a record log fixed messages only; a collection import with a malformed description no longer throws and no longer stops the records after it (FINDING-001 and FINDING-004, 2026-10-22 xivcharakit integration review) |
 | v5.15.5 | Oct 2026 | Core 5.13.0 + 5.14.0 (2026-10-15 import review): the Glamour Reader and Swatch Matcher read only files named `.chara`, refuse one over 8 KB (was 20 MB) before reading it, and say to re-save an Anamnesis export without its attached image; a malformed file's error no longer quotes the whole value. The Palette Extractor keeps 20 MB |
 | v5.15.4 | Oct 2026 | Core 5.12.0 + api-worker 0.20.0: the GPOSERS list and its export sheet leave out invisible pieces and an Off Hand the main hand doesn't take; the reader's rows are unchanged |
