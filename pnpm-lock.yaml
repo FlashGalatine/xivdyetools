@@ -478,6 +478,9 @@ importers:
       spectral.js:
         specifier: ^3.0.0
         version: 3.0.0
+      xivcharakit:
+        specifier: 0.1.0-beta.4
+        version: 0.1.0-beta.4
     devDependencies:
       '@types/culori':
         specifier: ^4.0.1
@@ -4042,6 +4045,9 @@ packages:
       utf-8-validate:
         optional: true
 
+  xivcharakit@0.1.0-beta.4:
+    resolution: {integrity: sha512-fIW3xEd3fHaP+C6tKbwmBOHFHb59ymoUdW+FpEAvwbR1LcQy+ZMVi2mdhtmRxP/hOJYD9cpzuhiYmpLplRg0Mw==}
+
   xml-name-validator@5.0.0:
     resolution: {integrity: sha512-EvGK8EJ3DhaHfbRlETOWAS5pO9MZITeauHKJyb8wyajUfQUenkIg2MvLDTZ4T/TgIcm3HU0TFBgWWboAZ30UHg==}
     engines: {node: '>=18'}
@@ -7139,6 +7145,8 @@ snapshots:
       strip-ansi: 7.2.0
 
   ws@8.21.0: {}
+
+  xivcharakit@0.1.0-beta.4: {}
 
   xml-name-validator@5.0.0: {}
 

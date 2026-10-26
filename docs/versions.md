@@ -7,9 +7,9 @@
 > **Versions below match each project's `package.json` in this checkout** and are checked
 > against it by `pnpm docs:check-versions` (`scripts/check-doc-versions.ts`, run in CI), so
 > this table cannot silently drift again. The 5.0 wave merged to `main` on 2026-08-28
-> (PR #123). As of 2026-10-16 (checked against the registry API), every published
-> package here is at parity with npm except `@xivdyetools/core` 5.14.0 (npm 5.12.0; 5.13.0 is
-> PR #315's, published after it merges) and `@xivdyetools/bot-logic` 4.10.0 (npm 4.9.0), each
+> (PR #123). As of 2026-10-26 (checked against the registry API), every published
+> package here is at parity with npm except `@xivdyetools/core` 5.15.0 (npm 5.12.0; 5.13.0 and
+> 5.14.0 were never published, so 5.15.0 is its next publish) and `@xivdyetools/bot-logic` 4.10.0 (npm 4.9.0), each
 > published right after the change that bumped it merges;
 > Actions → **"Publish Packages to npm"** publishes whatever differs from the registry, so check
 > there rather than trusting this sentence to stay current. Merging to
@@ -40,7 +40,7 @@
 
 | Package | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Core** (incl. `/blending` + schema-v2 data) | v5.14.0 | `@xivdyetools/core` | npm | Active |
+| **Core** (incl. `/blending` + schema-v2 data) | v5.15.0 | `@xivdyetools/core` | npm | Active |
 | **Types** | v3.3.0 | `@xivdyetools/types` | npm | Active |
 | **Auth** (incl. `/encoding`) | v2.0.2 | `@xivdyetools/auth` | npm | Active |
 | **Logger** | v2.3.0 | `@xivdyetools/logger` | npm | Active |
@@ -70,6 +70,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.15.0 | Oct 2026 | `.chara` import on `xivcharakit@0.1.0-beta.4` (exact pin): `inspectCharaForTools` / `resolveCharaForTools` / `resolveCharaWithProvider` / `createCharaPaletteProvider` and the `ImportedCharaCharacter` projection (with `indexGap`; `resolveCharaWithProvider` takes a palette provider and never reaches the palette tables), additive beside the legacy parser and resolver. Nothing consumes it yet |
 | v5.14.0 | Oct 2026 | `MAX_CHARA_FILE_BYTES` (8,192): the largest `.chara` file the web app and the bot accept, enforced by them on the original bytes (2026-10-15 import review). Exports without an attached image measured 1,837–2,777 bytes; the corpus's one larger file carried an image attached in Anamnesis (3,128,021 bytes) |
 | v5.13.0 | Oct 2026 | `.chara` error messages are bounded (2026-10-15 import audit, FINDING-002): a value is quoted only up to 64 characters, otherwise described by kind and size, and nothing walks it, so a nested palette index that fits in 8 KiB no longer overflows the stack and a 1 MiB Tribe value no longer becomes a 1 MiB message. A float color string over 128 characters is refused before it is split |
 | v5.12.0 | Oct 2026 | `gposersOmittedSlots` + `CHARA_OFF_HAND_MAIN_CATEGORIES`: the GPOSERS list leaves out invisible pieces (an Emperor's New twin in the family; the Gloves and, unless the character is known female, the Robe are kept) and an Off Hand under a main hand outside ItemUICategory 2/6/8/12–32 even/113; unknown keeps the slot. Corpus, with the callers' `viaMainHand` skip: 2,765 invisible slots and 357 more off-hands (354 by this rule, 3 a crafting tool's own model) leave the list across 913 of 1,093 files |

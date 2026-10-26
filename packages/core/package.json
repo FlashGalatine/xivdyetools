@@ -1,6 +1,6 @@
 {
   "name": "@xivdyetools/core",
-  "version": "5.14.0",
+  "version": "5.15.0",
   "description": "Core color algorithms and dye database for XIV Dye Tools",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -13,6 +13,10 @@
     "./blending": {
       "types": "./dist/blending/index.d.ts",
       "import": "./dist/blending/index.js"
+    },
+    "./chara": {
+      "types": "./dist/chara.d.ts",
+      "import": "./dist/chara.js"
     },
     "./package.json": "./package.json"
   },
@@ -67,7 +71,8 @@
   "dependencies": {
     "@xivdyetools/logger": "workspace:*",
     "@xivdyetools/types": "workspace:*",
-    "spectral.js": "^3.0.0"
+    "spectral.js": "^3.0.0",
+    "xivcharakit": "0.1.0-beta.4"
   },
   "devDependencies": {
     "@types/culori": "^4.0.1",
