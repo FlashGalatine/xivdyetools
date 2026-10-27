@@ -167,7 +167,7 @@ changes nothing. A button that cannot name a revision (a message posted before t
 that draws a `409` never acts: the message is refreshed to show the preset's current text with
 new buttons, and the moderator reviews it and clicks again. A preset that is no longer pending
 has nothing left to review: a channel message keeps its embed (so a concurrent moderator's
-"Approved by" or rejection reason stays), loses its buttons, and states the new status in the
+decision or rejection reason stays), loses its buttons, and states the new status in the
 message content, while the private `/preset moderate` confirmation is rebuilt from the current
 preset. If presets-api cannot load the preset, the message and its buttons are left as they are.
 

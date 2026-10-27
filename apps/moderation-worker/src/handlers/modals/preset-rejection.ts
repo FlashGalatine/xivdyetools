@@ -18,7 +18,7 @@
 import type { Env } from '../../types/env.js';
 import { InteractionResponseType } from '../../types/env.js';
 import { errorEmbed, ephemeralResponse, sanitizeErrorMessage } from '../../utils/response.js';
-import { sanitizeName, sanitizeUserName, sanitizeReason } from '../../utils/embed-text.js';
+import { sanitizeName, sanitizeReason } from '../../utils/embed-text.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { safeSendMessage } from '../../utils/discord-api.js';
 import * as presetApi from '../../services/preset-api.js';
@@ -30,7 +30,7 @@ import type { ParsedReviewId, ReviewBinding } from '@xivdyetools/types';
 import { editReviewMessage, refreshReview, withoutTransientFields, isReviewedPublishAction } from '../review-message.js';
 // MOD-REF-002 FIX: Use shared modal types and helpers
 import type { ModalInteraction } from '../../types/modal.js';
-import { extractTextInputValue, getModalUserId, getModalUsername } from '../../types/modal.js';
+import { extractTextInputValue, getModalUserId } from '../../types/modal.js';
 
 // ============================================================================
 // Shared submit preamble
@@ -45,7 +45,7 @@ type ModalKind = keyof typeof MODAL_PREFIXES;
 
 type Submit =
   | { response: Response }
-  | { parsed: ParsedReviewId; userId: string; userName: string };
+  | { parsed: ParsedReviewId; userId: string };
 
 /**
  * Identify the submitter, validate the modal's custom_id and check the
@@ -87,7 +87,7 @@ function resolveSubmit(
     };
   }
 
-  return { parsed, userId, userName: getModalUsername(interaction) };
+  return { parsed, userId };
 }
 
 const DEFERRED_UPDATE = (): Response =>
@@ -109,7 +109,7 @@ export async function handlePresetRejectionModal(
 ): Promise<Response> {
   const submit = resolveSubmit(interaction, env, 'reject_modal', logger);
   if ('response' in submit) return submit.response;
-  const { parsed, userId, userName } = submit;
+  const { parsed, userId } = submit;
 
   // FINDING-017: a legacy modal names no reviewed revision — refresh, never act
   if (!parsed.binding) {
@@ -124,7 +124,7 @@ export async function handlePresetRejectionModal(
   }
 
   ctx.waitUntil(
-    processRejection(interaction, env, parsed.presetId, parsed.binding, userId, userName, reason, logger)
+    processRejection(interaction, env, parsed.presetId, parsed.binding, userId, reason, logger)
   );
 
   return DEFERRED_UPDATE();
@@ -136,15 +136,12 @@ async function processRejection(
   presetId: string,
   binding: ReviewBinding,
   userId: string,
-  userName: string,
   reason: string,
   logger?: ExtendedLogger
 ): Promise<void> {
   try {
     const preset = await presetApi.rejectPreset(env, presetId, userId, reason, binding);
-    // FINDING-019: moderator name (Discord-controlled), reason (typed) and
-    // preset name (author-controlled) are all rendered — sanitise each
-    const safeModerator = sanitizeUserName(userName);
+    // FINDING-019: sanitise the typed reason and author-controlled preset name
     const safeReason = sanitizeReason(reason);
     const safeName = sanitizeName(preset.name);
 
@@ -159,7 +156,7 @@ async function processRejection(
           // belongs under "Preset Rejected"
           fields: [
             ...withoutTransientFields(originalEmbed.fields),
-            { name: 'Action', value: `Rejected by ${safeModerator}`, inline: true },
+            { name: 'Action', value: 'Rejected', inline: true },
             { name: 'Reason', value: safeReason, inline: false },
           ],
           footer: originalEmbed.footer?.text ? { text: originalEmbed.footer.text } : undefined,
@@ -174,7 +171,7 @@ async function processRejection(
         embeds: [
           {
             title: `❌ ${safeName} - Rejected`,
-            description: `Preset rejected by ${safeModerator}`,
+            description: 'Preset rejected',
             color: STATUS_DISPLAY.rejected.color,
             fields: [{ name: 'Reason', value: safeReason }],
             footer: { text: `ID: ${preset.id}` },
@@ -231,7 +228,7 @@ export async function handlePresetRevertModal(
 ): Promise<Response> {
   const submit = resolveSubmit(interaction, env, 'revert_modal', logger);
   if ('response' in submit) return submit.response;
-  const { parsed, userId, userName } = submit;
+  const { parsed, userId } = submit;
 
   // FINDING-017: a legacy modal names no reviewed revision — refresh, never act
   if (!parsed.binding) {
@@ -246,7 +243,7 @@ export async function handlePresetRevertModal(
   }
 
   ctx.waitUntil(
-    processRevert(interaction, env, parsed.presetId, parsed.binding, userId, userName, reason, logger)
+    processRevert(interaction, env, parsed.presetId, parsed.binding, userId, reason, logger)
   );
 
   return DEFERRED_UPDATE();
@@ -258,7 +255,6 @@ async function processRevert(
   presetId: string,
   binding: ReviewBinding,
   userId: string,
-  userName: string,
   reason: string,
   logger?: ExtendedLogger
 ): Promise<void> {
@@ -296,7 +292,6 @@ async function processRevert(
     }
     const preset = await presetApi.revertPreset(env, presetId, reason, userId, binding);
     // FINDING-019
-    const safeModerator = sanitizeUserName(userName);
     const safeReason = sanitizeReason(reason);
     const safeName = sanitizeName(preset.name);
 
@@ -308,7 +303,7 @@ async function processRevert(
           color: 0x5865f2,
           fields: [
             { name: 'Preset', value: safeName, inline: true },
-            { name: 'Action', value: `Reverted by ${safeModerator}`, inline: true },
+            { name: 'Action', value: 'Reverted', inline: true },
             { name: 'Reason', value: safeReason, inline: false },
           ],
           footer: { text: `ID: ${preset.id}` },
@@ -323,7 +318,7 @@ async function processRevert(
         embeds: [
           {
             title: `↩️ ${safeName} - Edit Reverted`,
-            description: `Preset edit reverted by ${safeModerator}`,
+            description: 'Preset edit reverted',
             color: 0x5865f2,
             fields: [{ name: 'Reason', value: safeReason }],
             footer: { text: `ID: ${preset.id}` },

@@ -24,7 +24,7 @@ import * as banService from '../../services/ban-service.js';
 import { MIN_REJECTION_REASON_LENGTH } from '../commands/preset.js';
 // MOD-REF-002 FIX: Use shared modal types and helpers
 import type { ModalInteraction } from '../../types/modal.js';
-import { extractTextInputValue, getModalUserId, getModalUsername } from '../../types/modal.js';
+import { extractTextInputValue, getModalUserId } from '../../types/modal.js';
 
 // ============================================================================
 // Handlers
@@ -44,7 +44,6 @@ export async function handleBanReasonModal(
 ): Promise<Response> {
   const customId = interaction.data?.custom_id || '';
   const moderatorId = getModalUserId(interaction);
-  const moderatorName = getModalUsername(interaction);
 
   if (!moderatorId) {
     return ephemeralResponse({ embeds: [errorEmbed('Error', 'Invalid modal submission.')] });
@@ -106,7 +105,6 @@ export async function handleBanReasonModal(
       targetUsername,
       postedName,
       moderatorId,
-      moderatorName,
       reason,
       logger
     )
@@ -132,7 +130,6 @@ async function processBan(
   targetUsername: string,
   postedName: string,
   moderatorId: string,
-  moderatorName: string,
   reason: string,
   logger?: ExtendedLogger
 ): Promise<void> {
@@ -155,10 +152,8 @@ async function processBan(
       components: [],
     });
   };
-  // FINDING-019: everything rendered below is user-sourced — D1 username,
-  // the moderator's Discord name, the typed reason
+  // FINDING-019: sanitise the D1 username and typed reason before rendering
   const safeTarget = sanitizeUserName(postedName);
-  const safeModerator = sanitizeUserName(moderatorName);
   const safeReason = sanitizeReason(reason);
 
   try {
@@ -197,7 +192,6 @@ async function processBan(
             // through the username picker, so moderators never need it here.
             fields: [
               { name: 'Presets Hidden', value: String(result.presetsHidden), inline: true },
-              { name: 'Banned By', value: safeModerator, inline: true },
               { name: 'Reason', value: safeReason, inline: false },
             ],
             footer: { text: 'Use /preset unban_user to restore access' },

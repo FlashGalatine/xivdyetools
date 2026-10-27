@@ -356,7 +356,7 @@ describe('handlePresetRejectionModal', () => {
           expect.objectContaining({
             title: expect.stringContaining('Rejected'),
             fields: expect.arrayContaining([
-              expect.objectContaining({ name: 'Action', value: 'Rejected by Moderator' }),
+              expect.objectContaining({ name: 'Action', value: 'Rejected' }),
               expect.objectContaining({ name: 'Reason', value: 'Contains inappropriate imagery' }),
             ]),
           }),
@@ -426,7 +426,7 @@ describe('handlePresetRejectionModal', () => {
       embeds: [
         {
           color: 15548997,
-          description: 'Preset rejected by ModUser',
+          description: 'Preset rejected',
           fields: [
             {
               name: 'Reason',
@@ -630,7 +630,7 @@ describe('handlePresetRejectionModal', () => {
           expect.objectContaining({
             fields: expect.arrayContaining([
               expect.objectContaining({
-                value: 'Rejected by Moderator',
+                value: 'Rejected',
               }),
             ]),
           }),
@@ -838,7 +838,7 @@ describe('handlePresetRevertModal', () => {
             title: expect.stringContaining('Reverted'),
             fields: expect.arrayContaining([
               expect.objectContaining({ name: 'Preset', value: 'Reverted Preset' }),
-              expect.objectContaining({ name: 'Action', value: 'Reverted by Moderator' }),
+              expect.objectContaining({ name: 'Action', value: 'Reverted' }),
               expect.objectContaining({
                 name: 'Reason',
                 value: 'The edit introduced errors in dye names',
@@ -911,7 +911,7 @@ describe('handlePresetRevertModal', () => {
       embeds: [
         {
           color: 5793266,
-          description: 'Preset edit reverted by ModUser',
+          description: 'Preset edit reverted',
           fields: [
             {
               name: 'Reason',
@@ -1114,7 +1114,7 @@ describe('rejection / revert modals — security audit remediations', () => {
     });
   });
 
-  describe('FINDING-019 — moderator name, reason and preset name are sanitised', () => {
+  describe('FINDING-019 — reason and preset name are sanitised', () => {
     it('rejection: escapes markdown / mentions in the edited embed and the log message', async () => {
       vi.mocked(presetApi.rejectPreset).mockResolvedValueOnce({
         id: PRESET_ID,
@@ -1140,7 +1140,7 @@ describe('rejection / revert modals — security audit remediations', () => {
       expect(log.embeds[0].description).not.toContain('@here');
     });
 
-    it('revert: escapes the preset name and moderator name in the edited embed', async () => {
+    it('revert: escapes the preset name and uses a neutral action', async () => {
       vi.mocked(presetApi.revertPreset).mockResolvedValueOnce({
         id: PRESET_ID,
         name: '||spoiler|| `code`',
@@ -1156,7 +1156,112 @@ describe('rejection / revert modals — security audit remediations', () => {
       const edit = vi.mocked(discordApi.editMessage).mock.calls[0][3] as any;
       const fields: Array<{ name: string; value: string }> = edit.embeds[0].fields;
       expect(fields.find((f) => f.name === 'Preset')!.value).toBe('\\|\\|spoiler\\|\\| \\`code\\`');
-      expect(fields.find((f) => f.name === 'Action')!.value).toBe('Reverted by \\_Mod\\_');
+      expect(fields.find((f) => f.name === 'Action')!.value).toBe('Reverted');
     });
+  });
+});
+
+// F001: inspect actual generated payloads, while retaining actor IDs on writes.
+describe('F001 neutral attribution', () => {
+  const actorId = '987654321098765432';
+  const actorName = '_AttributionSentinel_ @here';
+  const presetId = 'a0000000-0000-4000-8000-000000000001';
+  const binding = { revision: 5, status: 'pending' } as const;
+  const cases = ['guild', 'dm'].flatMap(source => [true, false].map(log => ({ source, log })));
+  beforeEach(() => { vi.clearAllMocks(); vi.mocked(presetApi.isModerator).mockReturnValue(true); });
+  it.each(cases)('reject: $source, log=$log', async ({ source, log }) => {
+
+    const env = { DISCORD_TOKEN: 'token', DISCORD_CLIENT_ID: 'app', MODERATION_CHANNEL_ID: 'moderation', SUBMISSION_LOG_CHANNEL_ID: log ? 'log' : undefined } as Env;
+    const pending: Promise<unknown>[] = [];
+    const ctx = { waitUntil: (p: Promise<unknown>) => { pending.push(p); } } as ExecutionContext;
+    const actor = { id: actorId, username: actorName };
+    const identity = source === 'guild' ? { member: { user: actor } } : { user: actor };
+
+    const reason = '**Unsafe** @everyone reason';
+    vi.mocked(presetApi.getModerationPreset).mockResolvedValue({ preset: {
+      id: presetId, name: 'Safe Preset', description: 'Reviewed description', author_name: 'Author', status: 'pending', dyes: [], moderation_status: 'unknown',
+      previous_values: { name: 'Before', description: 'old', tags: [], dyes: [] },
+    }, revision: 5 } as any);
+    vi.mocked(presetApi.rejectPreset).mockResolvedValue({ id: presetId, name: 'Safe Preset' } as any);
+    await handlePresetRejectionModal({
+      id: 'interaction', token: 'token', application_id: 'app', channel_id: 'moderation', ...identity,
+      data: { custom_id: `preset_reject_modal_${presetId}:5:pending`, components: [{ type: 1, components: [{ type: 4, custom_id: 'rejection_reason', value: reason }] }], },
+      message: { id: 'message', embeds: [{ description: 'Reviewed description', fields: [{ name: 'Author', value: 'Author' }], footer: { text: `ID: ${presetId}` }, timestamp: '2026-10-27T00:00:00Z' }] },
+    }, env, ctx);
+    await Promise.all(pending);
+    expect(presetApi.isModerator).toHaveBeenCalledWith(env, actorId);
+    expect(presetApi.rejectPreset).toHaveBeenCalledWith(env, presetId, actorId, reason, binding);
+
+    const edit = vi.mocked(discordApi.editMessage).mock.calls.at(-1)![3] as any;
+    const post = vi.mocked(discordApi.sendMessage).mock.calls.at(-1)?.[2] as any;
+    const payloads = [edit, post];
+
+    for (const payload of payloads.filter(Boolean)) {
+      const text = JSON.stringify(payload);
+      expect.soft(text).not.toContain(actorName);
+      expect.soft(text).not.toContain(JSON.stringify(String.raw`\_AttributionSentinel\_ @‍here`).slice(1, -1));
+      expect.soft(text).not.toContain('AttributionSentinel');
+      expect.soft(text).not.toContain(actorId);
+    }
+    expect.soft(edit.embeds[0].fields).toContainEqual(expect.objectContaining({ name: 'Action', value: 'Rejected' }));
+
+    expect(edit.components).toEqual([]);
+    expect(discordApi.sendMessage).toHaveBeenCalledTimes(log ? 1 : 0);
+    if (log) {
+      expect.soft(post.embeds[0].description).toBe('Preset rejected');
+      expect(post.embeds[0].title).toContain('Safe Preset');
+      expect(post.embeds[0].footer.text).toBe(`ID: ${presetId}`);
+    }
+    expect(edit.embeds[0].fields).toContainEqual(expect.objectContaining({ name: 'Reason', value: '\\*\\*Unsafe\\*\\* @‍everyone reason' }));
+    if (log) expect(post.embeds[0].fields).toEqual([{ name: 'Reason', value: '\\*\\*Unsafe\\*\\* @‍everyone reason' }]);
+    expect(edit.embeds[0]).toMatchObject({ description: 'Reviewed description', footer: { text: `ID: ${presetId}` }, timestamp: '2026-10-27T00:00:00Z' });
+    expect(edit.embeds[0].fields).toContainEqual({ name: 'Author', value: 'Author' });
+  });
+  it.each(cases)('revert: $source, log=$log', async ({ source, log }) => {
+
+    const env = { DISCORD_TOKEN: 'token', DISCORD_CLIENT_ID: 'app', MODERATION_CHANNEL_ID: 'moderation', SUBMISSION_LOG_CHANNEL_ID: log ? 'log' : undefined } as Env;
+    const pending: Promise<unknown>[] = [];
+    const ctx = { waitUntil: (p: Promise<unknown>) => { pending.push(p); } } as ExecutionContext;
+    const actor = { id: actorId, username: actorName };
+    const identity = source === 'guild' ? { member: { user: actor } } : { user: actor };
+
+    const reason = '**Unsafe** @everyone reason';
+    vi.mocked(presetApi.getModerationPreset).mockResolvedValue({ preset: {
+      id: presetId, name: 'Safe Preset', description: 'Reviewed description', author_name: 'Author', status: 'pending', dyes: [], moderation_status: 'unknown',
+      previous_values: { name: 'Before', description: 'old', tags: [], dyes: [] },
+    }, revision: 5 } as any);
+    vi.mocked(presetApi.revertPreset).mockResolvedValue({ id: presetId, name: 'Safe Preset' } as any);
+    await handlePresetRevertModal({
+      id: 'interaction', token: 'token', application_id: 'app', channel_id: 'moderation', ...identity,
+      data: { custom_id: `preset_revert_modal_${presetId}:5:pending`, components: [{ type: 1, components: [{ type: 4, custom_id: 'revert_reason', value: reason }] }], },
+      message: { id: 'message', embeds: [{ description: 'Reviewed description', fields: [{ name: 'Author', value: 'Author' }], footer: { text: `ID: ${presetId}` }, timestamp: '2026-10-27T00:00:00Z' }] },
+    }, env, ctx);
+    await Promise.all(pending);
+    expect(presetApi.isModerator).toHaveBeenCalledWith(env, actorId);
+    expect(presetApi.revertPreset).toHaveBeenCalledWith(env, presetId, reason, actorId, binding);
+
+    const edit = vi.mocked(discordApi.editMessage).mock.calls.at(-1)![3] as any;
+    const post = vi.mocked(discordApi.sendMessage).mock.calls.at(-1)?.[2] as any;
+    const payloads = [edit, post];
+
+    for (const payload of payloads.filter(Boolean)) {
+      const text = JSON.stringify(payload);
+      expect.soft(text).not.toContain(actorName);
+      expect.soft(text).not.toContain(JSON.stringify(String.raw`\_AttributionSentinel\_ @‍here`).slice(1, -1));
+      expect.soft(text).not.toContain('AttributionSentinel');
+      expect.soft(text).not.toContain(actorId);
+    }
+    expect.soft(edit.embeds[0].fields).toContainEqual(expect.objectContaining({ name: 'Action', value: 'Reverted' }));
+
+    expect(edit.components).toEqual([]);
+    expect(discordApi.sendMessage).toHaveBeenCalledTimes(log ? 1 : 0);
+    if (log) {
+      expect.soft(post.embeds[0].description).toBe('Preset edit reverted');
+      expect(post.embeds[0].title).toContain('Safe Preset');
+      expect(post.embeds[0].footer.text).toBe(`ID: ${presetId}`);
+    }
+    expect(edit.embeds[0].fields).toContainEqual(expect.objectContaining({ name: 'Reason', value: '\\*\\*Unsafe\\*\\* @‍everyone reason' }));
+    if (log) expect(post.embeds[0].fields).toEqual([{ name: 'Reason', value: '\\*\\*Unsafe\\*\\* @‍everyone reason' }]);
+    expect(edit.embeds[0].fields).toContainEqual(expect.objectContaining({ name: 'Preset', value: 'Safe Preset' }));
   });
 });

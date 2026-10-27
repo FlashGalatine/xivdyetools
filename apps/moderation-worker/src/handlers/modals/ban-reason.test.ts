@@ -475,7 +475,7 @@ describe('handleBanReasonModal', () => {
             color: 0xed4245,
             fields: expect.arrayContaining([
               expect.objectContaining({ name: 'Presets Hidden', value: '7' }),
-              expect.objectContaining({ name: 'Banned By', value: 'ModUser' }),
+              expect.objectContaining({ name: 'Presets Hidden' }),
               expect.objectContaining({ name: 'Reason', value: 'Spamming inappropriate presets' }),
             ]),
           }),
@@ -663,7 +663,7 @@ describe('handleBanReasonModal', () => {
     expect(ctx.waitUntil).not.toHaveBeenCalled();
   });
 
-  it('should use fallback moderator name when username is missing', async () => {
+  it('should complete a DM ban without a Banned By field', async () => {
     vi.mocked(presetApi.isModerator).mockReturnValue(true);
     vi.mocked(banService.banUser).mockResolvedValue({
       success: true,
@@ -706,7 +706,7 @@ describe('handleBanReasonModal', () => {
         embeds: expect.arrayContaining([
           expect.objectContaining({
             fields: expect.arrayContaining([
-              expect.objectContaining({ name: 'Banned By', value: 'Moderator' }),
+              expect.objectContaining({ name: 'Presets Hidden' }),
             ]),
           }),
         ]),
@@ -888,7 +888,7 @@ describe('ban reason modal — security audit remediations', () => {
     } as unknown as ExecutionContext;
   });
 
-  it('FINDING-019: the D1-sourced username, moderator name and reason are sanitised everywhere they render', async () => {
+  it('FINDING-019: the D1-sourced username and reason are sanitised everywhere they render', async () => {
     vi.mocked(banService.getPresetAuthorName).mockResolvedValueOnce('[Bad](https://evil.example) @everyone');
     vi.mocked(banService.banUser).mockResolvedValueOnce({ success: true, presetsHidden: 2 });
 
@@ -913,7 +913,7 @@ describe('ban reason modal — security audit remediations', () => {
     expect(embed.description).not.toMatch(/\[Bad\]\(https:\/\/evil\.example\)/);
     expect(embed.description).not.toContain('@everyone');
     const fields: Array<{ name: string; value: string }> = embed.fields;
-    expect(fields.find((f) => f.name === 'Banned By')!.value).not.toContain('@here');
+    expect(fields.some((f) => f.name === 'Banned By')).toBe(false);
     expect(fields.find((f) => f.name === 'Reason')!.value).toBe(
       '\\*\\*spam\\*\\* @123456789012345678\nline two',
     );
@@ -1024,5 +1024,52 @@ describe('ban reason modal — security audit remediations', () => {
       'User banned',
       expect.objectContaining({ reasonLength: 'Repeated spam submissions'.length }),
     );
+  });
+});
+
+// F001: inspect actual generated payloads, while retaining actor IDs on writes.
+describe('F001 neutral attribution', () => {
+  const actorId = '987654321098765432';
+  const actorName = '_AttributionSentinel_ @here';
+  const cases = ['guild', 'dm'].flatMap(source => [true, false].map(log => ({ source, log })));
+  beforeEach(() => { vi.clearAllMocks(); vi.mocked(presetApi.isModerator).mockReturnValue(true); });
+  it.each(cases)('ban: $source, log=$log', async ({ source, log }) => {
+
+    const env = { DISCORD_TOKEN: 'token', DISCORD_CLIENT_ID: 'app', MODERATION_CHANNEL_ID: 'moderation', SUBMISSION_LOG_CHANNEL_ID: log ? 'log' : undefined } as Env;
+    const pending: Promise<unknown>[] = [];
+    const ctx = { waitUntil: (p: Promise<unknown>) => { pending.push(p); } } as ExecutionContext;
+    const actor = { id: actorId, username: actorName };
+    const identity = source === 'guild' ? { member: { user: actor } } : { user: actor };
+
+    const targetId = '123456789012345678';
+    const reason = '**Repeated** @everyone spam';
+    vi.mocked(banService.getPresetAuthorName).mockResolvedValue('_Target_ @everyone');
+    vi.mocked(banService.banUser).mockResolvedValue({ success: true, presetsHidden: 7 });
+    const response = await handleBanReasonModal({ id: 'interaction', token: 'token', application_id: 'app', ...identity,
+      data: { custom_id: `ban_reason_modal_${targetId}`, components: [{ type: 1, components: [{ type: 4, custom_id: 'ban_reason', value: reason }] }] },
+    }, env, ctx);
+    expect((await response.json() as any).data.allowed_mentions).toEqual({ parse: [] });
+    await Promise.all(pending);
+    expect(presetApi.isModerator).toHaveBeenCalledWith(env, actorId);
+    expect(banService.banUser).toHaveBeenCalledWith(env.DB, targetId, '_Target_ @everyone', actorId, reason);
+    const post = vi.mocked(discordApi.sendMessage).mock.calls.at(-1)![2] as any;
+    const completion = vi.mocked(discordApi.safeEditOriginalResponse).mock.calls.at(-1)![2] as any;
+    const payloads = [post, completion];
+
+    for (const payload of payloads.filter(Boolean)) {
+      const text = JSON.stringify(payload);
+      expect.soft(text).not.toContain(actorName);
+      expect.soft(text).not.toContain(JSON.stringify(String.raw`\_AttributionSentinel\_ @‍here`).slice(1, -1));
+      expect.soft(text).not.toContain('AttributionSentinel');
+      expect.soft(text).not.toContain(actorId);
+    }
+
+    for (const payload of payloads) {
+      expect.soft(payload.embeds[0].fields.some((field: any) => field.name === 'Banned By')).toBe(false);
+      expect(payload.embeds[0].description).toBe('**\\_Target\\_ @‍everyone** has been banned from Preset Palettes.');
+      expect(payload.embeds[0].fields).toContainEqual({ name: 'Presets Hidden', value: '7', inline: true });
+    }
+    expect(completion.components).toEqual([]);
+    expect(post.embeds[0].fields).toContainEqual({ name: 'Reason', value: '\\*\\*Repeated\\*\\* @‍everyone spam', inline: false });
   });
 });
