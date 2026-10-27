@@ -17,4 +17,4 @@
 - Published: bot-logic 4.11.0 publishes dist only (tsconfig.build.json excludes **/*.test.ts), so the test edit is semver NONE. core's parseCharaFile/resolveCharaColors are untagged root exports of published core 5.15.0, so removing them later is MAJOR.
 
 ## Status
-OPEN
+OPEN — source prepared; release pending. [A-BOT-LOGIC evidence](../../2026-10-26-security/evidence/remediation-bot-logic-2026-10-27.md).

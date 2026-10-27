@@ -19,4 +19,4 @@
 - **Maintainer decision:** Cut bot-logic 5.0.0 to drop SwatchResult.character (cancel the removal if an npm consumer of result.character turns up).
 
 ## Status
-OPEN
+OPEN — 4.12.0 deprecation phase prepared; publication and 5.0.0 removal pending. [A-BOT-LOGIC evidence](../../2026-10-26-security/evidence/remediation-bot-logic-2026-10-27.md).

@@ -174,8 +174,8 @@ async function processGlamourCommand(
     if (result.error === 'RESOLVE_BUSY') markCommandOutcome(interaction, 'rate_limited');
     if (result.error === 'GENERATION_FAILED') markCommandOutcome(interaction, 'render');
     if (logger) logger.warn('Glamour command failed', { error: result.error });
-    // FINDING-019: the parser can echo .chara field VALUES; this edit is public.
-    // bot-logic stopped relaying parser text in HC-002 — kept as defense in depth
+    // FINDING-019: the facade returns fixed refusals; this edit is public.
+    // Keep sanitisation as defense in depth at the adapter boundary.
     await fail(sanitizeEmbedText(result.errorMessage, MAX_ERROR_TEXT));
     return;
   }

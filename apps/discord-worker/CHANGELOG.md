@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.9.4] - 2026-10-27
+
+### Fixed
+
+- Adopt bot-logic 4.12.0: harmony displays the selected distance metric consistently; swatch
+  retains distinct active eye colors and accurate L/R labels; glamour bounds oversized notes
+  while preserving help/share links. Existing command choices and selection order remain.
+
+### Security
+
+- Adopt hardened shared and glamour text sanitization for angle tokens, masked links, mentions
+  and additional invisible/bidi controls. Character-file adapter comments describe the current
+  facade's fixed refusals; the public-error sanitizer remains defense in depth.
+
+The six-language order/sort labels are prepared in bot-logic for the later A-DISCORD metadata
+adoption; this patch does not register translated choices early.
+
 ## [5.9.3] - 2026-10-27
 
 ### Security

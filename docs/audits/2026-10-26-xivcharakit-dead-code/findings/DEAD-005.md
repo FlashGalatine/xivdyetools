@@ -15,4 +15,4 @@
 - Cascade: None. The sanitizeEmbedText calls and the failureKind behavior stay. The CHANGELOG entries are historical (apps/discord-worker/CHANGELOG.md:1136,1171; packages/bot-logic/CHANGELOG.md:726) and the docs/audits pii-sources snapshots are frozen, so neither should be edited.
 
 ## Status
-OPEN
+OPEN — source prepared; release pending. [A-BOT-LOGIC evidence](../../2026-10-26-security/evidence/remediation-bot-logic-2026-10-27.md).

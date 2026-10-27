@@ -17,4 +17,4 @@
 - Add '<' to MARKDOWN_SPECIALS (Discord shows a literal \< and kills every <...> form), keeping defuseMentions first. Add tests for <#id>, </cmd:id>, <:e:id>, <t:0> and <id:customize>. Then bump bot-logic, publish it, and redeploy both bots.
 
 ## Status
-OPEN
+OPEN — source prepared; release pending. [A-BOT-LOGIC evidence](../evidence/remediation-bot-logic-2026-10-27.md).

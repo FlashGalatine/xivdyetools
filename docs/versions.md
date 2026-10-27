@@ -8,7 +8,7 @@
 > against it by `pnpm docs:check-versions` (`scripts/check-doc-versions.ts`, run in CI), so
 > this table cannot silently drift again. The 5.0 wave merged to `main` on 2026-08-28
 > (PR #123). Registry checks on 2026-10-27 returned core 5.15.0, SVG 4.4.0, bot-logic 4.11.0 and
-> worker-kit 1.5.0. This checkout prepares core 5.16.0, SVG 4.4.1 and worker-kit 1.6.0; their publication
+> worker-kit 1.5.0. This checkout prepares core 5.16.0, SVG 4.4.1, bot-logic 4.12.0 and worker-kit 1.6.0; their publication
 > remains pending. Other package registry versions were not refreshed in this sprint.
 > Actions → **"Publish Packages to npm"** publishes whatever differs from the registry, so check
 > there rather than trusting this sentence to stay current. Merging to
@@ -28,14 +28,14 @@
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
 | **Web Application** | v5.16.1 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v5.9.3 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
+| **Discord Bot** | v5.9.4 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.4 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
-| **Moderation Bot** | v1.8.2 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
+| **Moderation Bot** | v1.8.3 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.3 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.6.1 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
 | **Public REST API** | v0.21.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
 | **OpenGraph Worker** | v2.12.1 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
-| **Stoat Bot** | v0.3.3 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
+| **Stoat Bot** | v0.3.4 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
 | **API Documentation** | — | merged into `xivdyetools-api-worker` (`docs/`, Workers Static Assets) | Cloudflare Workers | Merged 2026-07-31 |
 
@@ -49,7 +49,7 @@
 | **Logger** | v2.3.0 | `@xivdyetools/logger` | npm | Active |
 | **Worker Kit** (middleware + `/rate-limiter`) | v1.6.0 | `@xivdyetools/worker-kit` | npm | Active |
 | **SVG** | v4.4.1 | `@xivdyetools/svg` | npm | Active |
-| **Bot Logic** (incl. `/i18n`) | v4.11.0 | `@xivdyetools/bot-logic` | npm | Active |
+| **Bot Logic** (incl. `/i18n`) | v4.12.0 | `@xivdyetools/bot-logic` | npm | Active |
 | **Test Utils** | v3.0.0 | `@xivdyetools/test-utils` | workspace-private | Active (never published) |
 
 ### Deprecated
@@ -211,6 +211,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.9.4 | Oct 2026 | Bot-logic 4.12.0: harmony distances use the selected metric, eyes merge only for equal eligible colors, bounded and sanitized glamour descriptions; command-choice localization remains in A-DISCORD |
 | v5.9.3 | Oct 2026 | SVG 4.4.1: shared card text fitting is linear while preserving existing card content, widths and truncation; security-only patch after the separate core deployment |
 | v5.9.2 | Oct 2026 | Core 5.16.0: `/glamour` GPOSERS text joins newlines in linear time while retaining prior output; command schema unchanged; imported nicknames remain excluded from bot output |
 | v5.9.1 | Oct 2026 | Worker-kit 1.6.0's shared `/glamour` preset selects the existing RL_5 binding at 5/minute instead of the inherited 15/minute; native lookup regression coverage; command shape unchanged |
@@ -405,6 +406,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v1.8.3 | Oct 2026 | Bot-logic 4.12.0: shared embed sanitizer escapes Discord angle tokens and strips additional invisible controls; review routing and decisions unchanged |
 | v1.8.2 | Oct 2026 | Review custom_id grammar from `@xivdyetools/types` (2026-10-04 remediation, Sprint 26, REFACTOR-001); a parity test pins the routing prefixes. No visible change |
 | v1.8.1 | Oct 2026 | 2026-10-04 remediation, Sprint 17 — a losing concurrent click no longer overwrites the winner (BUG-052); a stale-deploy 404 keeps the buttons (BUG-054); success embeds drop stale Error / Review fields (BUG-050); trimmed ban reasons (BUG-051); a refreshed review says what Revert restores; dead middleware, helpers, parameter, ban suffix and strings removed (DEAD-025 to DEAD-030) |
 | v1.8.0 | Oct 2026 | 2026-10-03 security audit, Sprint 4 — approve / reject / revert are bound to the revision the moderator reviewed (new `preset_<action>_<uuid>:<rev>:<status>` buttons; a legacy button or a stale one refreshes the embed and asks for a second click; `/preset moderate approve|reject` answers with a revision-bound confirm button); bans written and matched by `xivauth_id` too; a lifted ban's username and reason are blanked; unban restore skips presets whose dyes collide; revert refuses a banned author; Workers Logs pinned off. Deploy with presets-api 2.4.0 in one window |
@@ -579,6 +581,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v4.12.0 | Oct 2026 | A-BOT-LOGIC: metric-correct harmony distances, effective-color eye pairing, bounded glamour descriptions and shared sanitizer hardening; deprecated but retained legacy swatch result, legacy-oracle/fixture cleanup and five preparatory choice keys in six locales; publication follows core 5.16.0 and SVG 4.4.1 |
 | v4.11.0 | Oct 2026 | `/swatch` and `/glamour` read through core 5.15.0's `xivcharakit` facade: optional `fileBytes` input (wins over `fileText`), matching on `matchHex` alone with the lip on its live blend, `SwatchCharacter` keeps its shape and carries no color for a slot `matchHex` excludes, four fixed lines in six languages (`card.swatchActivityUnknown`, `card.swatchUnusable`, `card.glamourGearSkipped`, `card.glamourDyeInvalid`); intentional differences in `docs/research/2026-10-22-xivcharakit-integration.md` |
 | v4.10.0 | Oct 2026 | `card.charaFileReason.tooLarge` takes `{kb}` (was `{mb}`) and says to re-save an Anamnesis export without its attached image; new `card.charaFileReason.notChara`; the `/manual` Character File topic states the `.chara` name and 8 KB limits, all six languages |
 | v4.9.0 | Oct 2026 | `/glamour`'s GPOSERS list applies core 5.12.0's `gposersOmittedSlots` (invisible pieces, unsupported Off Hand); `GlamourResolvedItem.uiCategory`; the card is unchanged |
@@ -631,6 +634,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v0.3.4 | Oct 2026 | Bot-logic 4.12.0: mirrored invisible-control stripping and shared sanitizer hardening; parked, no deployment |
 | v0.3.3 | Oct 2026 | 2026-10-04 remediation Sprint 24 (parked, no deploy) — `!xd about` no longer advertises `!xd random`, a ❓ reaction or capabilities the bot lacks (BUG-070); `!xd info` resolves a broad name (`white`, `Blue`) to each matching dye or a capped list instead of one arbitrary dye (BUG-073); the resolver honors `locale` and help no longer promises localized names (BUG-072); resolver tests rewritten against the real database (BUG-071) |
 | v0.3.2 | Oct 2026 | 2026-10-03 security audit Sprint 12 (parked, no deploy) — echoed text no longer carries Stoat's `@online` mass mention (`<%…>` tokens now rewritten explicitly) (FINDING-026) |
 | v0.3.1 | Sep 2026 | 2026-09-16 deep-dive Sprint 12 (parked, no deploy) — `!xd ping` measures the round-trip after the send and edits it in (BUG-031); the dye-info test asserts embed title/color/description (BUG-042) |
@@ -726,6 +730,7 @@ and the [rollout runbook](operations/security-remediation-2026-09-15.md) for the
 | Web App v5.12.2–5.12.4 | @xivdyetools/core v5.5.0+ | Tribe-derived `.chara` race — below this the Swatch Matcher refuses every Lalafell file |
 | Web App v5.7–5.12.1 | @xivdyetools/core v5.2.0+ | Color-wheel selector (`getColorWheel`, `HarmonySelectionConfig.wheel`); `@xivdyetools/types` v3.2.0+ (`ColorWheelId`) |
 | Web App v5.1–5.6 | @xivdyetools/core v4.2.0+ | `generateHarmonySlots` + `HARMONY_OFFSETS` (harmony convergence); 5.4+ needs core v5.0.0+ (one RYB mixer), 5.5+ core v5.1.0+ (ΔEOK2 labels) |
+| Discord Worker v5.9.4+; Moderation v1.8.3+; parked Stoat v0.3.4+ | @xivdyetools/bot-logic v4.12.0+ | Shared sanitizer hardening; Discord also adopts harmony/swatch/glamour fixes. Package publication follows core v5.16.0 then SVG v4.4.1; workspace apps bundle local source. Choice registration follows in A-DISCORD |
 | Discord Worker v5.9.3+; OG Worker v2.12.1+ | @xivdyetools/svg v4.4.1+ | Linear card text fitting with unchanged output; package publication requires core v5.16.0 availability, while workspace app deploys bundle local source |
 | Discord Worker v5.9.2+ | @xivdyetools/core v5.16.0+ | Linear GPOSERS newline joining; nicknames remain excluded; workspace deployment does not wait for npm |
 | Discord Worker v5.9.0+ | @xivdyetools/core v5.15.0+ | `@xivdyetools/core/chara` — `/swatch` and `/glamour` read `.chara` files through the xivcharakit-backed reader; `@xivdyetools/bot-logic` v4.11.0+ |

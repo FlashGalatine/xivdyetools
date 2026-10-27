@@ -846,6 +846,12 @@
         "slot": {
           "description": "Show the five nearest dyes for one slot instead"
         }
+      },
+      "choices": {
+        "order": {
+          "slots": "Slots — file order (default)",
+          "hardest": "Hardest — worst match first"
+        }
       }
     },
     "glamour": {
@@ -1133,6 +1139,13 @@
               "description": "List your favorited presets"
             }
           }
+        }
+      },
+      "choices": {
+        "sort": {
+          "popular": "Most Popular",
+          "recent": "Most Recent",
+          "name": "Alphabetical"
         }
       }
     },

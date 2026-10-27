@@ -16,4 +16,4 @@
 - Published: bot-logic 4.11.0 is published, but its exports map exposes only . and ./i18n, and src/index.ts does not re-export chara-identity. The change is not part of the public API (semver NONE).
 
 ## Status
-OPEN
+OPEN — source prepared; release pending. [A-BOT-LOGIC evidence](../../2026-10-26-security/evidence/remediation-bot-logic-2026-10-27.md).

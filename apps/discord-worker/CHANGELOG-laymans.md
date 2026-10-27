@@ -35,6 +35,12 @@ Rules:
   path filter.
 -->
 
+## [5.9.4] - 2026-10-27
+### 🎨 Clearer character and harmony results
+- `/harmony` shows every result's distance using your selected matching method, including hue-first searches.
+- `/swatch` keeps left and right eyes separate when the colors being matched differ, even if the file gives them the same palette index.
+- `/glamour` keeps unusually long item notes within Discord's message limit while preserving help and share links.
+
 ## [5.9.0] - 2026-10-26
 ### 🗂️ A new character-file reader for /swatch and /glamour
 - `/glamour` now opens a character file that only holds gear and has no appearance colors.

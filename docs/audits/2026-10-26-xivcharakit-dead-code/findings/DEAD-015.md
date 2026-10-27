@@ -16,4 +16,4 @@
 - Cascade: None. 'card.slotSkin' stays referenced by SLOT_KEYS.skin, so the locale key is not orphaned, and no tests need to change.
 
 ## Status
-OPEN
+OPEN — source prepared; release pending. [A-BOT-LOGIC evidence](../../2026-10-26-security/evidence/remediation-bot-logic-2026-10-27.md).

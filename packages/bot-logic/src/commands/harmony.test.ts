@@ -4,11 +4,18 @@
  * Tests for executeHarmony, getHarmonyTypeChoices, and HARMONY_TYPES.
  */
 
-import { HARMONY_OFFSETS } from '@xivdyetools/core';
+import { ColorService, generateHarmonySlots, HARMONY_OFFSETS } from '@xivdyetools/core';
 import { describe, it, expect, vi } from 'vitest';
 import { executeHarmony, getHarmonyTypeChoices, HARMONY_TYPES } from './harmony.js';
 import type { HarmonyType } from './harmony.js';
 import { dyeService } from '../input-resolution.js';
+
+import { generateHarmonyCard } from '@xivdyetools/svg';
+
+vi.mock('@xivdyetools/svg', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@xivdyetools/svg')>();
+  return { ...actual, generateHarmonyCard: vi.fn(actual.generateHarmonyCard) };
+});
 
 const BASE_HEX = '#D69C6D'; // A warm brown (Rust Red-ish)
 
@@ -665,5 +672,37 @@ describe('executeHarmony — a generation failure is logged (BUG-125)', () => {
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.error).toBe('GENERATION_FAILED');
+  });
+});
+
+describe('hue selection with metric display distances (BUG-001)', () => {
+  it('measures primary and companion rows in OKLAB on the non-strict RGB wheel', async () => {
+    const selected = generateHarmonySlots(BASE_HEX, 'triadic', dyeService.getAllDyes(), {
+      usePerceptualMatching: false, matchingMethod: 'oklab', companionCount: 1,
+      preventDuplicates: true, wheel: 'rgb',
+    }, { excludeItemIDs: [] });
+    const result = await executeHarmony({
+      baseHex: BASE_HEX, harmonyType: 'triadic', locale: 'en', wheel: 'rgb',
+      strictMatching: false, matchingMethod: 'oklab', companionCount: 2,
+    });
+    if (!result.ok) throw new Error(result.errorMessage);
+    const card = vi.mocked(generateHarmonyCard).mock.calls.at(-1)![0];
+
+    expect(card.method).toBe('oklab');
+    expect(result.harmonyDyes.map((d) => d.id)).toEqual([13720, 5784, 5806, 5807]);
+    expect(card.slots.map((row) => row.idealHex)).toEqual(['#6DD69C', '#6DD69C', '#9C6DD6', '#9C6DD6']);
+    expect(result.harmonyDyes.map((d) => d.id)).toEqual(selected.flatMap((s) => [s.dye!.id, ...s.companions.map((d) => d.id)]));
+    expect(selected.some((s) => s.deviance !== null && s.deviance > 0 &&
+      Math.abs(s.deviance - ColorService.getDistanceForMethod(s.targetHex, s.dye!.hex, 'oklab')) > 1)).toBe(true);
+    // Independently calculated from the sRGB-to-OKLab matrices and DeltaEOK2
+    // (L difference, chroma differences scaled by 2), in primary/companion order.
+    const expectedDistances = [0.1710891590, 0.5681668058, 0.3090490018, 0.4139944811];
+    card.slots.forEach((row, i) => expect(row.deltaE).toBeCloseTo(expectedDistances[i], 6));
+    for (const row of card.slots) {
+      if (row.idealHex === null) throw new Error('expected an ideal colour');
+      expect(row.deltaE).toBeCloseTo(ColorService.getDistanceForMethod(row.idealHex, row.hex, 'oklab'), 10);
+    }
+    const worst = card.slots.reduce((a, b) => a.deltaE! >= b.deltaE! ? a : b);
+    expect(card.verdict).toBe(`${worst.angleLabel} · ${worst.localizedName} · ${worst.deltaE!.toFixed(1)}`);
   });
 });

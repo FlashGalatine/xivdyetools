@@ -162,7 +162,7 @@ Source / configuration audit; read-only. No build, bundle measurement or workerd
 | DEAD-002 | OPEN — source prepared; release pending | [A-CORE evidence](evidence/remediation-core-2026-10-27.md) |
 | DEAD-003 | OPEN — source prepared; release pending | [A-CORE evidence](evidence/remediation-core-2026-10-27.md) |
 | DEAD-004 | OPEN | — |
-| DEAD-005 | OPEN | — |
+| DEAD-005 | OPEN — source prepared; release pending | [A-BOT-LOGIC evidence](../2026-10-26-security/evidence/remediation-bot-logic-2026-10-27.md) |
 | DEAD-006 | OPEN | — |
 | DEAD-007 | OPEN | — |
 | DEAD-008 | OPEN | — |
@@ -172,15 +172,15 @@ Source / configuration audit; read-only. No build, bundle measurement or workerd
 | DEAD-012 | OPEN | — |
 | DEAD-013 | OPEN | — |
 | DEAD-014 | OPEN | — |
-| DEAD-015 | OPEN | — |
-| DEAD-016 | OPEN | — |
-| DEAD-017 | OPEN | — |
+| DEAD-015 | OPEN — source prepared; release pending | [A-BOT-LOGIC evidence](../2026-10-26-security/evidence/remediation-bot-logic-2026-10-27.md) |
+| DEAD-016 | OPEN — source prepared; release pending | [A-BOT-LOGIC evidence](../2026-10-26-security/evidence/remediation-bot-logic-2026-10-27.md) |
+| DEAD-017 | OPEN — source prepared; release pending | [A-BOT-LOGIC evidence](../2026-10-26-security/evidence/remediation-bot-logic-2026-10-27.md) |
 | DEAD-018 | OPEN | — |
 | DEAD-019 | OPEN | — |
 | DEAD-020 | OPEN — source prepared; release pending | [A-CORE evidence](evidence/remediation-core-2026-10-27.md) |
 | DEAD-021 | OPEN — source prepared; release pending | [A-CORE evidence](evidence/remediation-core-2026-10-27.md) |
-| DEAD-022 | OPEN | — |
-| DEAD-023 | OPEN | — |
+| DEAD-022 | OPEN — source prepared; release pending | [A-BOT-LOGIC evidence](../2026-10-26-security/evidence/remediation-bot-logic-2026-10-27.md) |
+| DEAD-023 | OPEN — 4.12.0 deprecation phase prepared; publication and 5.0.0 removal pending | [A-BOT-LOGIC evidence](../2026-10-26-security/evidence/remediation-bot-logic-2026-10-27.md) |
 | DEAD-024 | OPEN — phase 1 prepared; core 6 removal gated | [A-CORE evidence](evidence/remediation-core-2026-10-27.md) |
 | DEAD-025 | KEEP (no action) | — |
 | DEAD-026 | KEEP (no action) | — |

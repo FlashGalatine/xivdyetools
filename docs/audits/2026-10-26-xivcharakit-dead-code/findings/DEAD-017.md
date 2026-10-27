@@ -17,4 +17,4 @@
 - Published: The files are present in npm 4.11.0, but no exports-map path reaches them, so dropping them from the next tarball changes no public API (semver NONE, can ride a patch).
 
 ## Status
-OPEN
+OPEN — source prepared; release pending. [A-BOT-LOGIC evidence](../../2026-10-26-security/evidence/remediation-bot-logic-2026-10-27.md).

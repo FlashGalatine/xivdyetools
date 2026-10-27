@@ -846,6 +846,12 @@
         "slot": {
           "description": "대신 슬롯 하나에 대한 가장 가까운 염료 5개 표시"
         }
+      },
+      "choices": {
+        "order": {
+          "slots": "슬롯 — 파일 순서(기본값)",
+          "hardest": "어려운 순 — 일치도가 낮은 순"
+        }
       }
     },
     "glamour": {
@@ -1133,6 +1139,13 @@
               "description": "즐겨찾기한 프리셋 목록"
             }
           }
+        }
+      },
+      "choices": {
+        "sort": {
+          "popular": "인기순",
+          "recent": "최신순",
+          "name": "가나다순"
         }
       }
     },

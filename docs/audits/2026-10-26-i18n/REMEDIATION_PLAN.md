@@ -232,6 +232,22 @@ and registry verification → later bot-logic/adoption sprint. Keep FINDING-002 
 
 After A-CORE and A-SVG. Publish one 4.x deprecation MINOR with correctness/sanitizer fixes, the legacy-oracle rewrite, and new six-language order/sort keys for A-DISCORD. Reuse existing slot labels. Deprecate the approved redundant result field without removing it yet.
 
+**Execution status (2026-10-27):** source preparation targets bot-logic 4.12.0, Discord
+5.9.4, moderation 1.8.3 and parked Stoat 0.3.4, stacked on A-SVG PR #339. The ten
+primary fixes and DEAD-023's deprecation phase preserve the published result shape and
+exports; major removal remains pending. I18N-001 prepares five labels in all six locales
+under `commands.swatch.choices.order.*` and `commands.preset.choices.sort.*`, outside the
+regenerated option-description subtree. A-DISCORD must consume explicit literal full keys,
+reuse the seven existing slot labels and remove the exact five-key preparatory orphan
+exception when those references land. No choice registration changes here.
+[Implementation evidence](../2026-10-26-security/evidence/remediation-bot-logic-2026-10-27.md).
+
+**Rollout:** verify published core 5.16.0 → SVG 4.4.1 → bot-logic 4.12.0. Workspace apps
+bundle local source; bot-logic-path merges deploy production Discord and moderation,
+while feature pushes update only the existing Discord beta. Discord 5.9.4 follows the
+separate SVG/5.9.3 release. Stoat stays parked. Merge, npm publication and production
+acceptance remain pending; source preparation does not increase the fixed-ID count.
+
 | ID | Source | Sev/Pri | Action |
 |---|---|---|---|
 | [2026-10-26-security/FINDING-014](../2026-10-26-security/findings/FINDING-014.md) | 2026-10-26-security | LOW / INTERNET-AUTH · P2 | `/glamour` `plain()`: escape `[` `]`, defuse mention/timestamp tokens, collapse CR/LF (or route through `sanitizeEmbedText`). |

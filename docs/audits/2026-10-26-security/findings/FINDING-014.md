@@ -15,4 +15,4 @@
 - In plain(), also escape [ and ] (enough to break masked links without the paren backslashes the comment wants to avoid), defuse <@…>/<#…>/<t:…>/@everyone, and collapse \r\n to a space. Alternatively, have api-worker's cleanName reject or strip those tokens at the source. Add a test with a "[x](https://e)" name.
 
 ## Status
-OPEN
+OPEN — source prepared; release pending. [A-BOT-LOGIC evidence](../evidence/remediation-bot-logic-2026-10-27.md).

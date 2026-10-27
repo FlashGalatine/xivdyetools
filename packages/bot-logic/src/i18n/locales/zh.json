@@ -846,6 +846,12 @@
         "slot": {
           "description": "改为显示单个部位的五个最接近染剂"
         }
+      },
+      "choices": {
+        "order": {
+          "slots": "部位——文件顺序（默认）",
+          "hardest": "最难匹配——匹配度最差的优先"
+        }
       }
     },
     "glamour": {
@@ -1133,6 +1139,13 @@
               "description": "列出您收藏的预设"
             }
           }
+        }
+      },
+      "choices": {
+        "sort": {
+          "popular": "最受欢迎",
+          "recent": "最新优先",
+          "name": "按字母排序"
         }
       }
     },

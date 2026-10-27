@@ -846,6 +846,12 @@
         "slot": {
           "description": "Afficher les cinq teintures proches d'un seul emplacement"
         }
+      },
+      "choices": {
+        "order": {
+          "slots": "Emplacements — ordre du fichier (par défaut)",
+          "hardest": "Plus difficiles — correspondance la moins bonne en premier"
+        }
       }
     },
     "glamour": {
@@ -1133,6 +1139,13 @@
               "description": "Lister vos préréglages favoris"
             }
           }
+        }
+      },
+      "choices": {
+        "sort": {
+          "popular": "Les plus populaires",
+          "recent": "Les plus récents",
+          "name": "Ordre alphabétique"
         }
       }
     },

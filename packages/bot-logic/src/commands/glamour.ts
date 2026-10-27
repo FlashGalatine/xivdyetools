@@ -27,6 +27,7 @@ import {
   defaultCharaTwin,
   formatCharaModelLabel,
   GPOSERS_HEADER,
+  GPOSERS_ACQUISITION_LABEL,
   gposersGroups,
   gposersOmittedSlots,
   type CharaGearModel,
@@ -46,6 +47,7 @@ import { createTranslator, type LocaleCode, type Translator, type TranslatorLogg
 import { getLocalizedDyeName, getLocalizedRace, initializeLocale } from '../localization.js';
 import { genderSymbol, producerToken, readCharaForTools, tribeDisplay } from './chara-identity.js';
 import { failureKind } from './failure-kind.js';
+import { sanitizeEmbedText } from '../discord-markdown.js';
 import type { EmbedData } from './types.js';
 
 // ============================================================================
@@ -189,7 +191,7 @@ const SLOT_KEYS: Record<CharaGearSlotId, string> = {
   LeftRing: 'card.glamourSlot.LeftRing',
 };
 
-/** Discord's embed description limit, with room for the closing lines. */
+/** Whole embed description budget in UTF-16 units, including notes and closing lines. */
 const EMBED_BUDGET = 4000;
 
 const SHARE_URL = 'https://xivdyetools.app/glamour';
@@ -375,14 +377,25 @@ const BLOCKED_KEYS: Record<CharaPieceProblem, string> = {
 };
 
 /**
- * Keep an item name or acquisition line from turning into Discord formatting.
- * Both come from api-worker, never the file, so this escapes the formatting
- * characters only — not the parentheses and brackets `escapeDiscordMarkdown`
- * guards against masked links, which would reach a copied list as backslashes
- * ("Crafted \(WVR Lvl. 1\)").
+ * Resolver values are untrusted embed text: collapse controls/whitespace,
+ * defuse mentions, escape markup and bound escape growth. Trusted form labels,
+ * dye names and localized advisory wording are assembled separately.
  */
 function plain(text: string): string {
-  return text.replace(/([*_~`|\\])/g, '\\$1');
+  return sanitizeEmbedText(text, 256);
+}
+
+/** Shorten already escaped literal text by UTF-16 units without splitting emoji or escapes. */
+function truncateLiteral(text: string, maxUnits: number): string {
+  if (text.length <= maxUnits) return text;
+  let cut = '';
+  for (const char of text) {
+    if (cut.length + char.length > maxUnits - 1) break;
+    cut += char;
+  }
+  const trailing = cut.match(/\\+$/)?.[0].length ?? 0;
+  if (trailing % 2 === 1) cut = cut.slice(0, -1);
+  return `${cut}…`;
 }
 
 /**
@@ -409,7 +422,8 @@ function gposersList(
   for (const group of gposersGroups(input)) {
     for (const line of group) {
       const label = line.bold ? `**${line.label}**` : line.label;
-      lines.push(line.value ? `${label} ${plain(line.value)}` : label);
+      const value = line.bold || line.label === GPOSERS_ACQUISITION_LABEL ? plain(line.value) : line.value;
+      lines.push(value ? `${label} ${value}` : label);
     }
   }
   return lines;
@@ -573,38 +587,51 @@ export async function executeGlamour(input: GlamourInput): Promise<GlamourResult
       mainHandUiCategory: answer.items.MainHand?.uiCategory ?? null,
     });
     const list = gposersList(pieces, facewear, omitted);
-    const notes: string[] = [];
-    const fixed = pieces.filter((p) => p.fixed);
-    if (fixed.length > 0) {
-      notes.push(
-        `${t.t('card.glamourNamedLead')} ${fixed
-          .map((p) => t.t(FIXED_KEYS[p.fixed!.problem], { name: plain(p.name), other: plain(p.fixed!.other) }))
-          .join(' · ')}`
-      );
+    // Compact resolver names only when the full advisory tail would overflow;
+    // retain every localized reason and the trusted manual/share suffix.
+    const advisoryNotes = (nameBudget: number): string[] => {
+      const noteName = (text: string): string => truncateLiteral(plain(text), nameBudget);
+      const notes: string[] = [];
+      const fixed = pieces.filter((p) => p.fixed);
+      if (fixed.length > 0) {
+        notes.push(
+          `${t.t('card.glamourNamedLead')} ${fixed
+            .map((p) => t.t(FIXED_KEYS[p.fixed!.problem], { name: noteName(p.name), other: noteName(p.fixed!.other) }))
+            .join(' · ')}`
+        );
+      }
+      const blocked = pieces.filter((p) => p.blocked);
+      if (blocked.length > 0) {
+        // A model label carries no slot, and the list writes a no-item piece as
+        // its bare slot, so the note names the slot: for an undyed piece (no card
+        // row) or one past row five, nothing else ties the model to its slot.
+        const blockedName = (p: Piece): string =>
+          p.blocked === 'noItem' ? `${t.t(SLOT_KEYS[p.slot])} ${p.name}` : noteName(p.name);
+        notes.push(
+          `${t.t('card.glamourBlockedLead')} ${blocked.map((p) => t.t(BLOCKED_KEYS[p.blocked!], { name: blockedName(p) })).join(' · ')}`
+        );
+      }
+      const company = pieces.filter((p) => p.company);
+      if (company.length > 0) {
+        notes.push(t.t('card.glamourCompany', { list: company.map((p) => noteName(p.name)).join(' · ') }));
+      }
+      if (gearSkipped) notes.push(gearSkipped);
+      if (invalidDyeOnListed(issues, new Set(pieces.map((p) => p.slot)))) notes.push(t.t('card.glamourDyeInvalid'));
+      return notes;
+    };
+    const closing = `${t.t('card.glamourManual')} \`/manual topic:👤\`\n${SHARE_URL}`;
+    let nameBudget = 512; // sanitizeEmbedText's 256 code points can occupy 512 UTF-16 units.
+    let tail = [...advisoryNotes(nameBudget), closing].join('\n');
+    // Leave one ellipsis and the blank line even if no complete body line fits.
+    while (tail.length > EMBED_BUDGET - 3) {
+      nameBudget = Math.floor(nameBudget / 2);
+      tail = [...advisoryNotes(nameBudget), closing].join('\n');
     }
-    const blocked = pieces.filter((p) => p.blocked);
-    if (blocked.length > 0) {
-      // A model label carries no slot, and the list writes a no-item piece as
-      // its bare slot, so the note names the slot: for an undyed piece (no card
-      // row) or one past row five, nothing else ties the model to its slot.
-      const blockedName = (p: Piece): string =>
-        plain(p.blocked === 'noItem' ? `${t.t(SLOT_KEYS[p.slot])} ${p.name}` : p.name);
-      notes.push(
-        `${t.t('card.glamourBlockedLead')} ${blocked.map((p) => t.t(BLOCKED_KEYS[p.blocked!], { name: blockedName(p) })).join(' · ')}`
-      );
-    }
-    const company = pieces.filter((p) => p.company);
-    if (company.length > 0) {
-      notes.push(t.t('card.glamourCompany', { list: company.map((p) => plain(p.name)).join(' · ') }));
-    }
-    if (gearSkipped) notes.push(gearSkipped);
-    if (invalidDyeOnListed(issues, new Set(pieces.map((p) => p.slot)))) notes.push(t.t('card.glamourDyeInvalid'));
-    notes.push(`${t.t('card.glamourManual')} \`/manual topic:👤\``, SHARE_URL);
-
-    const tail = notes.join('\n');
     let body = list.join('\n');
-    if (body.length + tail.length + 2 > EMBED_BUDGET) {
-      body = `${body.slice(0, body.lastIndexOf('\n', EMBED_BUDGET - tail.length - 4))}\n…`;
+    const bodyBudget = Math.max(0, EMBED_BUDGET - tail.length - 2);
+    if (body.length > bodyBudget) {
+      const end = body.lastIndexOf('\n', Math.max(0, bodyBudget - 2));
+      body = end >= 0 ? `${body.slice(0, end)}\n…` : '…';
     }
 
     const first = stripHexes[0];

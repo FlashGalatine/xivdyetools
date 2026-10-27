@@ -222,14 +222,14 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 | FINDING-011 | OPEN | — |
 | FINDING-012 | OPEN | — |
 | FINDING-013 | OPEN | — |
-| FINDING-014 | OPEN | — |
+| FINDING-014 | OPEN — source prepared; release pending | [A-BOT-LOGIC evidence](evidence/remediation-bot-logic-2026-10-27.md) |
 | FINDING-015 | OPEN | — |
 | FINDING-016 | OPEN | — |
 | FINDING-017 | OPEN — shared preset and Discord RL_5 regression prepared; deployed verification pending | [Implementation evidence](evidence/remediation-worker-kit-2026-10-27.md) |
 | FINDING-018 | OPEN | — |
 | FINDING-019 | OPEN | — |
 | FINDING-020 | OPEN | — |
-| FINDING-021 | OPEN | — |
+| FINDING-021 | OPEN — source prepared; release pending | [A-BOT-LOGIC evidence](evidence/remediation-bot-logic-2026-10-27.md) |
 | FINDING-022 | OPEN | — |
 | FINDING-023 | OPEN | — |
 | FINDING-024 | OPEN | — |

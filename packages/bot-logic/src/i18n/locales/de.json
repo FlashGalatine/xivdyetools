@@ -846,6 +846,12 @@
         "slot": {
           "description": "Zeigt stattdessen die fünf nächsten Farbstoffe für einen Slot"
         }
+      },
+      "choices": {
+        "order": {
+          "slots": "Slots — Dateireihenfolge (Standard)",
+          "hardest": "Schwierigste — schlechteste Übereinstimmung zuerst"
+        }
       }
     },
     "glamour": {
@@ -1133,6 +1139,13 @@
               "description": "Deine favorisierten Vorlagen auflisten"
             }
           }
+        }
+      },
+      "choices": {
+        "sort": {
+          "popular": "Am beliebtesten",
+          "recent": "Neueste zuerst",
+          "name": "Alphabetisch"
         }
       }
     },
