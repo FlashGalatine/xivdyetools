@@ -97,8 +97,8 @@ an exact deletion time.
 | Discord checks | 28 integration tests pass; bundle budget 2,736.8 KiB gzip / 3,072 KiB, with 335.2 KiB remaining |
 | Combined final gates | 45/45 build/type/lint tasks; dead-code scan 640 production / 635 test files; full graph 25/25 tasks, **17,231 tests across 600 files and 17 workspaces**. No gate weakened; source stayed frozen through the run |
 | Critical whole-branch review | PASS for source preparation across all 104 owned paths. No remaining Critical/Important/Minor correction; per-group continuity/schema/retention/session/membership/moderator/privacy/release checks confirmed. Final graph and remote CI remain separate gates |
-| Secret scanning | Redacted staged scan passes; full stacked-history scan is required before push |
-| Remote receipts | Branch publication, actual CI and automatic beta receipts follow source verification |
+| Secret scanning | Redacted staged and full stacked-history scans pass; remote gitleaks also passes |
+| Remote receipts | Source `71bd291f`: CI and both selected automatic betas pass; exact receipts below |
 
 Windows Vitest temporary SSR/import failures are classified as infrastructure, never RED or
 mutation proof. Focused commands use the normal fork pool, disabled filesystem module cache
@@ -150,3 +150,22 @@ also select the existing web/Discord beta workflows because their policy/changel
 included; no presets/moderation beta or manual deployment is selected here.
 
 See [the complete contract](../../../architecture/identity-moderation.md).
+
+## Published branch and actual receipts
+
+Draft [PR #344](https://github.com/FlashGalatine/xivdyetools/pull/344) is stacked on #343.
+Source `71bd291fe3bb7742226315e9b42e4afe2a9ebc72` has:
+
+- [CI run 40597497058](https://github.com/FlashGalatine/xivdyetools/actions/runs/40597497058):
+  all four jobs succeed, including **167/167 Chromium Playwright tests**.
+- [Web beta run 40597456102](https://github.com/FlashGalatine/xivdyetools/actions/runs/40597456102):
+  deployment succeeds at [the immutable deployment](https://e874b035.xivdyetools-beta.pages.dev).
+  The smoke check verifies `beta.xivdyetools.app` serves matching content, fingerprint
+  `sha256 a2897fbfac21`, expected `noindex`, security headers and reader-license notice.
+- [Discord beta run 40597456111](https://github.com/FlashGalatine/xivdyetools/actions/runs/40597456111):
+  deployment succeeds and the registration response contains **18 commands**.
+
+These are source-branch and selected beta receipts. Both sprint PRs remain draft/unmerged;
+no production release, live migration, manual deployment/registration, package publication or
+feature activation is performed. The following receipt-only commit changes this evidence and
+the merged plan, with no runtime source change; final-head CI is checked separately.

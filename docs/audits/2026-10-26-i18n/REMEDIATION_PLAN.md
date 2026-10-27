@@ -378,6 +378,8 @@ Prepared versions are presets 2.8.0 and moderation 1.9.0 MINOR, Discord 5.9.6 an
 
 Final local preparation: **45/45 build/type/lint tasks**, **25/25 test tasks**, **17,231 tests across 600 files**. Presets 1,394 and moderation 846 pass configured coverage; script/docs/logging/policy/budget/integration/dry-run gates pass. Independent ordinary/scoped and final critical reviews pass, including per-identity audit, full recorded-scope unban comparison and informational preview corrections. Source publication and actual CI/beta receipts follow in the evidence.
 
+Published draft [PR #344](https://github.com/FlashGalatine/xivdyetools/pull/344), stacked on #343. Source `71bd291f` passes [CI](https://github.com/FlashGalatine/xivdyetools/actions/runs/40597497058), including **167/167 Playwright tests**; [web beta](https://github.com/FlashGalatine/xivdyetools/actions/runs/40597456102) verifies matching live content/noindex/headers, and [Discord beta](https://github.com/FlashGalatine/xivdyetools/actions/runs/40597456111) deploys and registers **18 commands**. The receipt-only update changes evidence/plan, with no runtime change. No main merge or production activation is selected; all three findings retain their pending release/companion/activation gates.
+
 After A-PRESETS, A-BOT-LOGIC and the selected identity provider. Preserve the accepted decision to remove moderator names, with no policy AMEND for those removed names.
 
 | ID | Source | Sev/Pri | Action |
