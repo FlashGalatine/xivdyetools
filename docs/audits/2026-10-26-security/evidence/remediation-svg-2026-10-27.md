@@ -90,6 +90,29 @@ All commands passed without retries. Whitespace and working-diff secret scanning
 Final Astra/high review approved code semantics and release preparation, with no Critical or
 Important issue; its minor historical-evidence wording correction is applied here.
 
+## Automatic beta verification after feature push
+
+The unchanged feature workflows deployed source commit
+`ac8c9892e794ac78964f35b8be8f3cb0e2fac7d9`:
+
+- [Beta Discord run 40501338239](https://github.com/FlashGalatine/xivdyetools/actions/runs/40501338239)
+  succeeded, including the actual worker deployment and guild-scoped command registration.
+- [Beta OpenGraph run 40501338038](https://github.com/FlashGalatine/xivdyetools/actions/runs/40501338038)
+  succeeded, including actual deployment, health smoke and emitted-card-URL resolution.
+- [Beta web run 40501338022](https://github.com/FlashGalatine/xivdyetools/actions/runs/40501338022)
+  succeeded, including bundle budget, beta-build identity check, Pages beta deployment and
+  fresh-deployment/domain smoke test.
+
+Job/step readbacks distinguish successful deployments from skipped missing-token guards.
+PR [CI run 40501426325](https://github.com/FlashGalatine/xivdyetools/actions/runs/40501426325)
+succeeded, including lint, types, scripts, package tests/build, bundle/logging checks,
+secret scanning, production-dependency audit and Playwright Chromium E2E. Top-level run
+readbacks confirm success for CI and all three beta workflows. The report-only full-tree
+audit still lists five development-tool advisories (one high, three moderate, one low);
+its exit-1 annotation is nonblocking under the existing `continue-on-error` configuration.
+Dependency remediation remains outside A-SVG. The subsequent receipt-only documentation
+commit leaves the verified package/app source unchanged.
+
 ## Versions and rollout
 
 Fresh npm checks returned SVG 4.4.0, core 5.15.0 and bot-logic 4.11.0. The local stack prepares
@@ -104,7 +127,9 @@ calls a generator before discarding its SVG, without an automatic deployment in 
 
 Discord 5.9.3 follows the separate core/Discord 5.9.2 deployment in the release sequence;
 OpenGraph 2.12.1 identifies the runtime hardening. Security-only changes stay out of all
-player-facing changelogs. Automatic-beta receipts will be recorded after the feature push.
+player-facing changelogs. The [draft PR #339](https://github.com/FlashGalatine/xivdyetools/pull/339)
+is stacked on #338. These receipts are automatic beta actions; registry publication and
+production acceptance remain separate release work.
 
 FINDING-002 stays OPEN: API response/name bounds and production release verification remain
 separate work. No fixed-ID count is increased by this source preparation.

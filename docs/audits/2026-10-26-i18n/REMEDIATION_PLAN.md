@@ -197,7 +197,7 @@ After A-CORE: harden quadratic fitText and adopt the new core release. This is a
 
 Companion task only; its primary finding is assigned to A-API.
 
-**Execution status (2026-10-27): implementation and local gates verified; feature PR/release pending, stacked on A-CORE / #338.**
+**Execution status (2026-10-27): [draft PR #339](https://github.com/FlashGalatine/xivdyetools/pull/339) open on #338; implementation/local gates and automatic betas verified; production release pending.**
 Fresh npm checks returned SVG 4.4.0, core 5.15.0 and bot-logic 4.11.0. Prepare SVG
 **4.4.1 PATCH**, Discord **5.9.3 PATCH** and OpenGraph **2.12.1 PATCH**. Discord 5.9.2
 identifies the earlier core deployment; the sequential release needs its own patch identity.
@@ -206,7 +206,9 @@ numeric edge behavior. Replace repeated prefix joins/measurements with a linear 
 the existing width helper. [Evidence](../2026-10-26-security/evidence/remediation-svg-2026-10-27.md).
 All 62 graph tasks, 167 script tests, five affected app bundle checks and independent code
 reviews pass. Source, packed-package and declaration parity checks preserve the public API.
-Feature PR/beta receipts, merge, npm publication and production acceptance remain pending.
+Source `ac8c9892` passed all three automatic beta deployment/smoke/registration workflows.
+Source PR CI passed, including Playwright. The receipt-only documentation follow-up changes
+no package/app source. Merge, npm publication and production acceptance remain pending.
 
 **Actual rollout:** SVG paths trigger production web, Discord, API, OpenGraph and moderation
 workflows; feature pushes can update their existing three shared web/Discord/OpenGraph betas.
