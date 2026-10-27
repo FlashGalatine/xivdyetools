@@ -15,4 +15,4 @@
 - **Maintainer decision:** The BUG-015 refund is deliberate. Choose whether a failed decode keeps its daily slot, or record the refund as an accepted trade-off in security-trade-offs.md.
 
 ## Status
-OPEN
+OPEN — source prepared in A-PRESETS: stage-aware preview-attempt accounting with conservative unknown-write reconciliation; [presets evidence](../evidence/remediation-presets-2026-10-27.md). Merge and production acceptance remain pending.

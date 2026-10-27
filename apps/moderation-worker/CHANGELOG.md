@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.4] - 2026-10-27
+
+### Security
+
+- Render complete example-link paths and effective Revert targets in refreshed and typed-ID
+  reviews. Approval and Revert re-check fresh revision-bound link details, refreshing stale or
+  pre-upgrade messages before a decision. Unsafe or oversized required content withholds the
+  relevant action; Reject stays available. No command-registration change is required.
+- Companion for presets-api 2.7.0's default-off metadata moderation. Production verification of
+  both review consumers is required before a later activation-only API change.
+
 ## [1.8.3] - 2026-10-27
 
 ### Security

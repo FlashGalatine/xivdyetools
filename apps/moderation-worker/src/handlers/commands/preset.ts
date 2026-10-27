@@ -28,7 +28,7 @@ import { sanitizeName, sanitizeUserName } from '../../utils/embed-text.js';
 import { safeEditOriginalResponse } from '../../utils/discord-api.js';
 import * as presetApi from '../../services/preset-api.js';
 import * as banService from '../../services/ban-service.js';
-import { buildReviewButtons, buildReviewEmbed } from '../review-message.js';
+import { buildReviewButtons, buildReviewEmbed, safeReviewActions } from '../review-message.js';
 
 // ============================================================================
 // Constants
@@ -261,7 +261,8 @@ async function sendConfirmation(
           'The decision applies to this exact version.'
       ),
     ],
-    components: buildReviewButtons(presetId, { revision, status: preset.status }, [action]),
+    components: buildReviewButtons(presetId, { revision, status: preset.status },
+      safeReviewActions(preset, revision, [action]).length ? [action] : ['reject']),
   });
 }
 

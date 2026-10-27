@@ -2,7 +2,7 @@
 
 > Also available in: [日本語](PRIVACY_POLICY.ja.md) · [Deutsch](PRIVACY_POLICY.de.md) · [Français](PRIVACY_POLICY.fr.md) · [한국어](PRIVACY_POLICY.ko.md) · [中文](PRIVACY_POLICY.zh.md). This English version is the authoritative text.
 
-**Last Updated**: October 12, 2026
+**Last Updated**: October 27, 2026
 
 ## 1. Introduction
 
@@ -28,7 +28,7 @@ We are committed to protecting your privacy and being transparent about our data
 | Preferences | Language, blending mode, matching algorithm, result count, clan, gender, default world / data center, whether to show Market Board prices by default, color-display toggles, theme, and which dye categories to exclude from search results (metallic, pastel, dark, cosmic, Ishgardian, expensive, vendor-sold, crafted), plus the time you last changed them | Until you reset them or request deletion |
 | Preset favorites | Up to 50 community presets you mark with `/preset favorite add` — the preset's id and the name it had when you saved it | Until you remove them or request deletion |
 | First-run notice flag | A per-user marker that the Bot has made its one-time check for the 5.0 welcome notice. It is set the first time you run a command, whether or not the notice is sent (it is not sent if you already have stored preferences); carries no content | Expires automatically after 180 days |
-| Preset Submissions | Name, description, dyes, tags, category — and, if our automatic check holds an edit's new name or description for review, the version from before the first such edit, kept until a moderator restores it or the preset is deleted | Until you delete it (in the web app's My Submissions, signed in with the same Discord account) or request deletion |
+| Preset Submissions | Name, description, dyes, tags, category, example link — and, if our automatic check holds an edit's new name, description, tags or example link for review, the version from before the first such edit, kept until a moderator restores it or the preset is deleted | Until you delete it (in the web app's My Submissions, signed in with the same Discord account) or request deletion |
 | Votes | Your votes on community presets. Submitting a preset counts as your vote for it; if a published preset already has the same dyes, your submission becomes a vote for that preset instead | Until you remove vote or request deletion |
 
 ### Rate Limiting Data
@@ -140,7 +140,7 @@ The Bot integrates with these third-party services:
 | Cloudflare | Hosting, data storage (KV, D1), rate limiting, analytics | [Cloudflare Privacy Policy](https://www.cloudflare.com/privacypolicy/) |
 | Universalis | FFXIV market board data | [Universalis](https://universalis.app/) |
 | XIVAPI | FFXIV item names for `/glamour` | [XIVAPI](https://xivapi.com/) |
-| Perspective API | Content moderation (optional) | [Google Privacy Policy](https://policies.google.com/privacy) |
+| Perspective API | Optional moderation of preset names, descriptions, tags and example-link path text. URL query strings, fragments, credentials and hostnames are excluded from the derived link text; no account identifiers are attached, and supplied links are never fetched. The request uses `doNotStore`. | [Google Privacy Policy](https://policies.google.com/privacy) |
 
 We do not sell, trade, or share your personal data with third parties for marketing purposes.
 
@@ -172,6 +172,8 @@ To request deletion of all your data:
 We will process deletion requests within 30 days. A deletion request also removes the posts about you and your presets from our Discord server, except the post about a ban that is still active. An active ban record is not deleted on request; once the ban is lifted, the record follows the retention under *Data Retention*.
 
 ## 8. Data Retention
+
+Daily limits count submission attempts that reach moderation, changes to a preset's name or description, and preview-image processing attempts. Changes to tags or the example link count as edits, and tags/link-path text may be sent for moderation, only while extended checks are enabled. Unchanged text fields do not use an edit slot. Failed image decoding and timeouts remain counted. For preview-image attempts only, cheap validation rejections and image-storage/database failures are refunded. If the result of a database write cannot be confirmed, the attempt remains counted. A submission attempt remains counted once moderation starts, even if no preset is created.
 
 | Data Type | Retention Period |
 |-----------|-----------------|

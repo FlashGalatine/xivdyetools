@@ -15,4 +15,4 @@
 - **Maintainer decision:** Product call: whether tags (and example_link edits) on approved presets go through text moderation and the daily text_edit slot, or the unmoderated-tags design is recorded in security-trade-offs.md.
 
 ## Status
-OPEN
+OPEN — source prepared in A-PRESETS: extended tag/path moderation and safe link snapshots behind an explicit default-off flag; production consumer verification and a later activation-only PR remain required; [presets evidence](../evidence/remediation-presets-2026-10-27.md). Merge and production acceptance remain pending.

@@ -51,6 +51,13 @@ vi.mock('../../services/ban-service.js', () => ({
   isPresetAuthorBanned: vi.fn(async () => false),
 }));
 
+beforeEach(() => {
+  vi.mocked(presetApi.getModerationPreset).mockResolvedValue({ preset: {
+    id: VALID_PRESET_ID, name: 'Test Preset', description: 'Description', author_name: 'Author', status: 'pending', dyes: [],
+    previous_values: { name: 'Before', description: 'old', tags: [], dyes: [] }, moderation_status: 'unknown',
+  }, revision: 4 } as any);
+});
+
 describe('handlePresetApproveButton', () => {
   let env: Env;
   let ctx: ExecutionContext;

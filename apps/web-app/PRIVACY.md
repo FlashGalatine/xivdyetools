@@ -2,7 +2,7 @@
 
 > Also available in: [日本語](PRIVACY.ja.md) · [Deutsch](PRIVACY.de.md) · [Français](PRIVACY.fr.md) · [한국어](PRIVACY.ko.md) · [中文](PRIVACY.zh.md). This English version is the authoritative text.
 
-**Last updated:** 2026-10-12 · Covers **xivdyetools.app** and **beta.xivdyetools.app**. The Discord
+**Last updated:** 2026-10-27 · Covers **xivdyetools.app** and **beta.xivdyetools.app**. The Discord
 bot has its own policy: [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.md).
 
 XIV Dye Tools runs in your browser. The color tools — the Palette Extractor, Harmony Explorer,
@@ -93,14 +93,14 @@ else) plus the third parties named below:
    submit are stored under that account. Submitting a preset counts as your vote for it; if a
    published preset already has the same dyes, your submission becomes a vote for that preset
    instead. A preset holds what you enter in the form — and, if our automatic check holds an edit's
-   new name or description for review, the version from before the first such edit, kept until a
+   new name, description, tags or example link for review, the version from before the first such edit, kept until a
    moderator restores it or the preset is deleted — plus the optional preview image described under
    Images above. To remove a
    preview image, use the preset's edit form; deleting a preset from **My Submissions** deletes its
-   preview image too. When you submit or edit a preset, its name and description may also be sent to
+   preview image too. When you submit or edit a preset, its name, description, tags and example-link path text may also be sent to
    Google's [Perspective API](https://perspectiveapi.com/) for a moderation score (optional —
    content moderation only); the request tells Google not to store them (`doNotStore`), and
-   nothing else — no account identity — is sent there. What else is kept about your presets, and
+   URL query strings, fragments, credentials and hostnames are excluded from that link text. We send no account identifiers with the text and never fetch the supplied example link. What else is kept about your presets, and
    for how long, is under *Community presets: what we keep* below; how to delete it is under
    *Deleting your data*. Preset preview images are served from `shots.xivdyetools.app`; avatars
    load from Discord's CDN.
@@ -140,8 +140,7 @@ presets service (`api.xivdyetools.app`) — except the posts in our Discord serv
 
 - **Your account record, presets and votes** (item 3 above) are kept until you delete them or ask
   us to delete them (see *Deleting your data*).
-- **Daily limits.** Each preset you submit, each edit to a preset's name or description that you
-  send, and each preview image you upload is counted so the daily limits can be enforced. The count
+- **Daily limits.** Daily limits count submission attempts that reach moderation, changes to a preset's name or description, and preview-image processing attempts. Changes to tags or the example link count as edits, and tags/link-path text may be sent for moderation, only while extended checks are enabled. Unchanged text fields do not use an edit slot. Failed image decoding and timeouts remain counted. For preview-image attempts only, cheap validation rejections and image-storage/database failures are refunded. If the result of a database write cannot be confirmed, the attempt remains counted. A submission attempt remains counted once moderation starts, even if no preset is created. The count
   records your account ID, the kind of action, the preset and the time, and is deleted after
   **30 days**; deleting the preset does not delete it sooner.
 - **Posts in our Discord server.** Our moderators work in two private channels of our Discord

@@ -26,7 +26,7 @@ import { STATUS_DISPLAY, PresetReviewConflictError } from '../../types/preset.js
 import { sanitizeName, sanitizeUserName } from '../../utils/embed-text.js';
 import { buildReviewCustomId, parseReviewCustomId } from '@xivdyetools/types';
 import type { ParsedReviewId, ReviewBinding, ReviewKind } from '@xivdyetools/types';
-import { editReviewMessage, refreshReview, withoutTransientFields } from '../review-message.js';
+import { editReviewMessage, refreshReview, withoutTransientFields, isReviewedPublishAction } from '../review-message.js';
 
 /** MOD-4: shown when the approve button targets a banned author's preset. */
 const AUTHOR_BANNED_MESSAGE =
@@ -203,6 +203,10 @@ async function processApproval(
       return;
     }
 
+    if (!(await isReviewedPublishAction(interaction, env, presetId, userId, binding, 'approve'))) {
+      await refreshReview(interaction, env, presetId, userId, logger);
+      return;
+    }
     const preset = await presetApi.approvePreset(env, presetId, userId, binding);
     const safeName = sanitizeName(preset.name); // FINDING-019 (author-controlled)
 
@@ -348,7 +352,6 @@ export async function handlePresetRejectButton(
 /**
  * Handle the Revert button click - shows modal for reason
  */
-// eslint-disable-next-line @typescript-eslint/require-await
 export async function handlePresetRevertButton(
   interaction: ButtonInteraction,
   env: Env,
@@ -363,5 +366,12 @@ export async function handlePresetRevertButton(
     return refreshInstead(interaction, env, ctx, parsed.presetId, userId, logger);
   }
 
-  return reasonModal('revert_modal', parsed.presetId, parsed.binding);
+  try {
+    if (!(await isReviewedPublishAction(interaction, env, parsed.presetId, userId, parsed.binding, 'revert'))) {
+      return refreshInstead(interaction, env, ctx, parsed.presetId, userId, logger);
+    }
+    return reasonModal('revert_modal', parsed.presetId, parsed.binding);
+  } catch {
+    return ephemeralResponse('Could not load the preset to confirm this review. Nothing was changed — try again.');
+  }
 }

@@ -12,7 +12,8 @@ All routes are mounted under `/api/v1`.
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/` | List approved presets — filtering, sorting, pagination |
+| `GET` | `/` | List approved presets — filtering, sorting, pages 1–10,000 |
+| `POST` | `/batch` | Signed bot-only approved lookup, 1–50 IDs; unique request order and separate missing IDs |
 | `GET` | `/featured` | Curated featured presets |
 | `GET` | `/mine` | The authenticated user's own presets (any status) |
 | `GET` | `/rate-limit` | Remaining submissions today for the caller |
@@ -71,6 +72,22 @@ Two callers, two mechanisms:
 ## Notifications
 
 When a preset is submitted, this Worker calls back into `discord-worker` over the `DISCORD_WORKER` Service Binding to post an embed in the moderation channel. Delivery failures are recorded and surfaced through `/api/v1/moderation/failed-notifications` rather than silently dropped.
+
+## Quotas and metadata rollout
+
+Submission attempts reserve one of ten daily slots atomically before moderation. Attempts remain
+counted once moderation starts, even when creation fails. Known duplicate-to-vote conversions stay
+free. Preview decode/processing failures remain counted; cheap validation and proven storage or
+database failures refund, while unconfirmed database outcomes retain the slot and return 503.
+The other daily reservation kinds retain their existing fail-open backend policy.
+
+`PRESET_METADATA_MODERATION_ENABLED` remains explicitly `false` in both environments. Only exact
+`true` extends scoring, changed-field quota accounting and new snapshots to tags/example links.
+Derived link text is the decoded path only; hostnames, credentials, queries and fragments are
+excluded and supplied links are never fetched. Keep the flag off until Discord and moderation
+consumer production deployments are verified; use a later activation-only PR. Recorded link
+targets remain validated/restored after disabling the flag. Missing legacy targets preserve the
+current link while disabled and clear it when enabled, with truthful privileged review views.
 
 ## Development
 

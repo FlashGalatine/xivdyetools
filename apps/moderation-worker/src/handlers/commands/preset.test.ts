@@ -98,6 +98,22 @@ describe('handlePresetCommand', () => {
   });
 
   describe('main handler', () => {
+    it.each([
+      ['https://private.example/a%20b?secret=hidden', true, '`/a b`'],
+      [`https://private.example/${'x'.repeat(1200)}`, false, 'Link details do not fit safely in this review. Ask the author to shorten the link before approval.'],
+    ])('typed approval shows complete link review and withholds unsafe confirmation (%s)', async (link, allowed, value) => {
+      vi.mocked(presetApi.isModerator).mockReturnValue(true);
+      vi.mocked(presetApi.getModerationPreset).mockResolvedValue({ preset: { ...CURRENT_PRESET, example_link: link }, revision: 7 } as any);
+      const request: DiscordInteraction = { id: 'int-1', token: 'token-1', application_id: 'app-123', type: 2, channel_id: 'channel-moderation', member: { user: { id: 'mod-1', username: 'Moderator' } }, data: { name: 'preset', options: [{ name: 'moderate', type: 1, options: [{ name: 'action', type: 3, value: 'approve' }, { name: 'preset_id', type: 3, value: CURRENT_PRESET.id }] }] } };
+      await handlePresetCommand(request, env, ctx, t);
+      await vi.mocked(ctx.waitUntil).mock.calls.at(-1)?.[0];
+      const sent = vi.mocked(discordApi.safeEditOriginalResponse).mock.calls.at(-1)?.[2] as any;
+      expect(sent.embeds[0].fields).toContainEqual({ name: 'Links', value, inline: false });
+      const ids = sent.components.flatMap((row: any) => row.components.map((item: any) => item.custom_id));
+      expect(ids).toEqual(allowed ? [`preset_approve_${CURRENT_PRESET.id}:7:pending`] : [`preset_reject_${CURRENT_PRESET.id}:7:pending`]);
+      expect(JSON.stringify(sent)).not.toContain('secret=hidden');
+      expect(presetApi.approvePreset).not.toHaveBeenCalled();
+    });
     it('should return error when user ID is not found', async () => {
       const interaction: DiscordInteraction = {
         id: 'int-1',

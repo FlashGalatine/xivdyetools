@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.0] - 2026-10-27
+
+### Added
+
+- A signed bot-only batch lookup returns approved presets in request order, with separate missing
+  IDs and request failures. It accepts up to 50 IDs and retains acting-user rate limits.
+
+### Security
+
+- Enforce active-author bans inside approval/revert SQL while preserving revision guards and
+  atomic moderation audit rows. Adopt IPv6 /64 grouping without changing service exemptions.
+- Reserve submission attempts atomically before moderation, preserving historical row accounting
+  and charging spent moderation even when creation fails. Denied admission makes no scorer call.
+- Prepare tag and example-link path moderation behind `PRESET_METADATA_MODERATION_ENABLED`.
+  The flag remains explicitly `false` until both review consumers are deployed and verified;
+  enabling it requires a later activation-only change. URL queries, fragments,
+  credentials and hostnames stay outside derived link text; supplied URLs are never fetched.
+  When enabled, changed metadata uses the text-edit quota and new snapshots include example links.
+  Explicitly recorded snapshot links remain validated and restored even after disabling the flag.
+- Retain daily preview slots on decoding/processing failures and timeouts; refund cheap validation
+  rejections and proven image-storage/database failures. Unconfirmed database writes retain their
+  slot and return a retryable error. Storage/database refunds can permit extra decode work.
+
+### Fixed
+
+- Bound pagination before offset arithmetic, validate effective primary/secondary categories,
+  and return the committed auto-vote count after creation.
+- Compare image state before attaching/removing previews and clean only objects owned by the
+  winning operation. Cleanup remains best-effort across D1/R2 failures.
+
 ## [2.6.1] - 2026-10-06
 
 Sprint 26 of the 2026-10-04 remediation plan: deep-dive REFACTOR-001. Internal refactor.

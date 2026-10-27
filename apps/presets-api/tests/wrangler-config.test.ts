@@ -36,6 +36,11 @@ const oauthToml = readFileSync(join(__dirname, '..', '..', 'oauth', 'wrangler.to
 );
 
 describe('wrangler.toml', () => {
+  it('prepares metadata moderation disabled explicitly in both environments', () => {
+    const devVars = topLevel.match(/^\[vars\]\n([\s\S]*?)(?=^\[|$(?![\s\S]))/m)?.[1] ?? '';
+    expect(devVars).toMatch(/^PRESET_METADATA_MODERATION_ENABLED = "false"$/m);
+    expect(production).toMatch(/^vars\s*=\s*\{[^\n]*PRESET_METADATA_MODERATION_ENABLED\s*=\s*"false"/m);
+  });
   it('keeps the top-level worker a routeless dev worker', () => {
     expect(productionStart).toBeGreaterThan(-1);
     const name = topLevel.match(/^name = "([^"]+)"$/m)?.[1];

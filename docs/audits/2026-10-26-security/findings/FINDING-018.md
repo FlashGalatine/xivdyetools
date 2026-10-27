@@ -15,4 +15,4 @@
 - **Maintainer decision:** Choose whether to fix the reserve-before-Perspective ordering now or let it lapse when PERSPECTIVE_API_KEY is removed for the 2026-12-31 sunset (and correct security-trade-offs.md:309 either way).
 
 ## Status
-OPEN
+OPEN — source prepared in A-PRESETS: atomic pre-moderation submission-attempt admission and shared reporting; [presets evidence](../evidence/remediation-presets-2026-10-27.md). Merge and production acceptance remain pending.

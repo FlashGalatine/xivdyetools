@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.16.2] - 2026-10-27
+
+### Changed
+
+- Align all six privacy-policy variants with preset tag/link-path moderation, link snapshots,
+  submission-attempt accounting and preview-processing failure/refund boundaries.
+
 ## [5.16.1] - 2026-10-27
 
 ### Fixed

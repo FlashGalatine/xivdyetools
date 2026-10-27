@@ -1,11 +1,11 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { Hono } from 'hono';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { presetsRouter, resetCategoryCache } from '../../src/handlers/presets';
 import { authMiddleware } from '../../src/middleware/auth';
 import type { AuthContext, Env } from '../../src/types';
-import { createMockEnv } from '../test-utils';
+import { createMockEnv, useCleanPerspective } from '../test-utils';
 import { SqliteD1 } from '../sqlite-d1';
 
 type Variables = { auth: AuthContext };
@@ -27,13 +27,14 @@ describe('owner preset edit revision contract', () => {
   beforeEach(() => {
     resetCategoryCache();
     d1 = new SqliteD1(schema);
-    env = createMockEnv({ DB: d1 as unknown as D1Database });
+    env = createMockEnv({ DB: d1 as unknown as D1Database, PRESET_METADATA_MODERATION_ENABLED: 'true' });
     app = new Hono<{ Bindings: Env; Variables: Variables }>();
     app.use('*', authMiddleware);
     app.route('/api/v1/presets', presetsRouter);
   });
 
   afterEach(() => {
+    vi.unstubAllGlobals();
     d1.close();
   });
 
@@ -166,6 +167,7 @@ describe('owner preset edit revision contract', () => {
   });
 
   it('persists a fresh owner edit', async () => {
+    useCleanPerspective(env);
     await seedPreset();
 
     const response = await ownerPatch({ tags: ['fresh-owner-edit'] });

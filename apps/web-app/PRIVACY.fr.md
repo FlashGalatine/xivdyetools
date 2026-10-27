@@ -2,7 +2,7 @@
 
 > Ceci est une traduction fournie à titre pratique. La version anglaise fait foi ; en cas de divergence, c'est elle qui prévaut. [Anglais](PRIVACY.md)
 
-**Dernière mise à jour :** 2026-10-12 · Couvre **xivdyetools.app** et **beta.xivdyetools.app**. Le bot
+**Dernière mise à jour :** 2026-10-27 · Couvre **xivdyetools.app** et **beta.xivdyetools.app**. Le bot
 Discord a sa propre politique : [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.fr.md).
 
 XIV Dye Tools fonctionne dans votre navigateur. Les outils de couleur — l'Extracteur de palette,
@@ -114,15 +114,12 @@ n'autorise rien d'autre) ainsi qu'avec les tiers nommés ci-dessous :
    comme votre vote pour lui ; si un préréglage publié a déjà les mêmes teintures, votre
    soumission devient un vote pour ce préréglage à la place. Un préréglage contient ce que
    vous saisissez dans le formulaire — et, si notre vérification automatique retient pour examen le
-   nouveau nom ou la nouvelle description d'une modification, la version antérieure à la première
+   nouveau nom, la description, les étiquettes ou le lien d'exemple d'une modification, la version antérieure à la première
    modification de ce type, conservée jusqu'à ce qu'un modérateur la restaure ou que le
    préréglage soit supprimé — plus l'image d'aperçu facultative décrite sous Images ci-dessus. Pour
    supprimer une image d'aperçu, utilisez le formulaire de modification du préréglage ;
    supprimer un préréglage depuis **Mes soumissions** supprime aussi son image d'aperçu.
-   Lorsque vous soumettez ou modifiez un préréglage, son nom et sa description peuvent
-   aussi être envoyés à la [Perspective API](https://perspectiveapi.com/) de Google pour un score de
-   modération (facultatif — modération de contenu uniquement) ; la requête indique à Google de ne
-   pas les stocker (`doNotStore`), et rien d'autre — aucune identité de compte — n'y est envoyé. Ce
+   Lorsque vous soumettez ou modifiez un préréglage, son nom, sa description, ses étiquettes et le texte du chemin du lien d'exemple peuvent être envoyés à la [Perspective API](https://perspectiveapi.com/) de Google pour un score de modération (facultatif — modération de contenu uniquement). La requête indique à Google de ne pas stocker ces textes (`doNotStore`). Les paramètres de requête, fragments, identifiants de connexion et noms d'hôte de l'URL sont exclus du texte du lien. Nous ne joignons aucun identifiant de compte au texte et n'accédons jamais au lien d'exemple fourni. Ce
    que nous conservons d'autre sur vos préréglages, et pour combien de temps, figure sous
    *Préréglages communautaires : ce que nous conservons* ci-dessous ; la façon de le
    supprimer figure sous *Supprimer vos données*. Les images d'aperçu des préréglages sont
@@ -169,11 +166,7 @@ connexion (`auth.xivdyetools.app`), le reste par notre service de préréglages
 - **Votre enregistrement de compte, vos préréglages et vos votes** (élément 3 ci-dessus)
   sont conservés jusqu'à ce que vous les supprimiez ou nous demandiez de les supprimer (voir
   *Supprimer vos données*).
-- **Limites quotidiennes.** Chaque préréglage que vous soumettez, chaque modification du nom
-  ou de la description d'un préréglage que vous envoyez, et chaque image d'aperçu que vous
-  téléversez est compté afin que les limites quotidiennes puissent être appliquées. Le compteur
-  consigne l'identifiant de votre compte, le type d'action, le préréglage et l'heure, et il
-  est supprimé après **30 jours** ; supprimer le préréglage ne supprime pas le compteur plus tôt.
+- **Limites quotidiennes.** Les limites quotidiennes comptent les tentatives de soumission qui atteignent la modération, les changements du nom ou de la description d'un préréglage, et les tentatives de traitement des images d'aperçu. Les changements d'étiquettes ou de lien d'exemple ne comptent comme modifications que lorsque les vérifications étendues sont activées ; les étiquettes et le texte du chemin du lien ne peuvent être envoyés pour modération que dans ce cas. Les champs textuels inchangés ne consomment pas de place de modification. Les échecs de décodage d'image et les délais dépassés restent comptés. Pour les tentatives de traitement d'image d'aperçu uniquement, les rejets de validation précoce et les erreurs de stockage d'image ou de base de données ne sont pas décomptés du quota. Si le résultat d'une écriture en base de données ne peut pas être confirmé, la tentative reste comptée. Une tentative de soumission reste comptée dès le début de la modération, même si aucun préréglage n'est créé. Le compteur consigne l'identifiant de votre compte, le type d'action, le préréglage et l'heure, et il est supprimé après **30 jours** ; supprimer le préréglage ne supprime pas ce compteur plus tôt.
 - **Messages sur notre serveur Discord.** Nos modérateurs travaillent dans deux salons privés de
   notre serveur Discord. Le salon de modération reçoit chaque préréglage, modification ou
   image d'aperçu qui nécessite une vérification : le message montre le préréglage (par

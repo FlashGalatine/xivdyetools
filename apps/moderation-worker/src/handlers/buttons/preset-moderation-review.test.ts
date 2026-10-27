@@ -91,6 +91,7 @@ describe('FINDING-017 — moderation buttons are bound to a reviewed revision', 
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(presetApi.getModerationPreset).mockResolvedValue({ preset: preset(), revision: 4 } as any);
     vi.mocked(presetApi.isModerator).mockReturnValue(true);
     vi.mocked(banService.isPresetAuthorBanned).mockResolvedValue(false);
     vi.mocked(discordApi.safeEditMessage).mockResolvedValue(true);
@@ -107,6 +108,73 @@ describe('FINDING-017 — moderation buttons are bound to a reviewed revision', 
       waitUntil: vi.fn((promise: Promise<unknown>) => promise),
       passThroughOnException: vi.fn(),
     } as unknown as ExecutionContext;
+  });
+
+  it.each(['approve', 'revert'] as const)('%s refreshes a pre-upgrade message before publishing link-bearing content', async (action) => {
+    vi.mocked(presetApi.getModerationPreset).mockResolvedValue({ preset: preset({ example_link: 'https://private.example/current', previous_values: { name: 'Before', description: 'x', tags: [], dyes: [1], example_link: null } }), revision: 4 } as any);
+    vi.mocked(presetApi.approvePreset).mockResolvedValue({ id: ID, name: 'N' } as any);
+    const response = await (action === 'approve' ? handlePresetApproveButton : handlePresetRevertButton)(click(`preset_${action}_${ID}:4:pending`), env, ctx);
+    await flush();
+    expect((await response.json() as any).type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
+    expect(presetApi.approvePreset).not.toHaveBeenCalled();
+    expect(discordApi.safeSendMessage).not.toHaveBeenCalled();
+    expect(lastEdit().embeds[0].fields).toContainEqual({ name: 'Links', value: '`/current`', inline: false });
+  });
+
+  it('does not approve when a current marker matches but fetched revision changed', async () => {
+    vi.mocked(presetApi.getModerationPreset).mockResolvedValue({ preset: preset({ example_link: 'https://private.example/current' }), revision: 5 } as any);
+    vi.mocked(presetApi.approvePreset).mockResolvedValue({ id: ID, name: 'N' } as any);
+    await handlePresetApproveButton(click(`preset_approve_${ID}:4:pending`, { message: { id: 'msg-1', embeds: [{ fields: [{ name: 'Links', value: '`/current`' }] }] } }), env, ctx);
+    await flush();
+    expect(presetApi.approvePreset).not.toHaveBeenCalled();
+    expect(discordApi.safeSendMessage).not.toHaveBeenCalled();
+  });
+
+  it.each([null, 'https://example.com/before'])('approval refreshes unknown current metadata with a known snapshot link %s', async (example_link) => {
+    vi.mocked(presetApi.getModerationPreset).mockResolvedValue({ preset: preset({ previous_values: { name: 'Before', description: 'old', tags: [], dyes: [1], example_link } }), revision: 4 } as any);
+    vi.mocked(presetApi.approvePreset).mockResolvedValue({ id: ID, name: 'N' } as any);
+    const response = await handlePresetApproveButton(click(`preset_approve_${ID}:4:pending`), env, ctx);
+    await flush();
+    expect((await response.json() as any).type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
+    expect(presetApi.approvePreset).not.toHaveBeenCalled();
+    expect(discordApi.safeSendMessage).not.toHaveBeenCalled();
+    expect(lastEdit().embeds[0].fields).toContainEqual({ name: 'Links', value: 'Link details unavailable.', inline: false });
+    expect(discordApi.safeSendFollowUp).toHaveBeenCalledWith('app-123', 'token-1', expect.objectContaining({ content: expect.stringContaining('click again') }));
+  });
+
+  it.each([null, 'https://example.com/before', 7])('approval accepts the fresh unknown-current marker without requiring Revert target details %s', async (example_link) => {
+    vi.mocked(presetApi.getModerationPreset).mockResolvedValue({ preset: preset({ previous_values: { name: 'Before', description: 'old', tags: [], dyes: [1], example_link } }), revision: 4 } as any);
+    vi.mocked(presetApi.approvePreset).mockResolvedValue({ id: ID, name: 'N' } as any);
+    await handlePresetApproveButton(click(`preset_approve_${ID}:4:pending`, { message: { id: 'msg-1', embeds: [{ fields: [{ name: 'Links', value: 'Link details unavailable.', inline: false }] }] } }), env, ctx);
+    await flush();
+    expect(presetApi.approvePreset).toHaveBeenCalledExactlyOnceWith(env, ID, 'mod-1', { revision: 4, status: 'pending' });
+    expect(lastEdit().components).toEqual([]);
+  });
+
+  it.each([
+    ['current mismatch', 'https://example.com/current', 'pending', '`/stale`'],
+    ['unsafe current', 7, 'pending', '`/current`'],
+    ['status changed', 'https://example.com/current', 'approved', '`/current`'],
+    ['duplicate marker', 'https://example.com/current', 'pending', '`/current`'],
+  ])('approval refuses %s before write/audit', async (scenario, example_link, status, value) => {
+    vi.mocked(presetApi.getModerationPreset).mockResolvedValue({ preset: preset({ example_link, status }), revision: 4 } as any);
+    vi.mocked(presetApi.approvePreset).mockResolvedValue({ id: ID, name: 'N' } as any);
+    const field = { name: 'Links', value };
+    await handlePresetApproveButton(click(`preset_approve_${ID}:4:pending`, { message: { id: 'msg-1', embeds: [{ fields: scenario === 'duplicate marker' ? [field, field] : [field] }] } }), env, ctx);
+    await flush();
+    expect(presetApi.approvePreset).not.toHaveBeenCalled();
+    expect(discordApi.safeSendMessage).not.toHaveBeenCalled();
+  });
+
+  it('approval publishes only after the fresh current path marker matches', async () => {
+    vi.mocked(presetApi.getModerationPreset).mockResolvedValue({ preset: preset({ example_link: 'https://example.com/current?private=hidden' }), revision: 4 } as any);
+    vi.mocked(presetApi.approvePreset).mockResolvedValue({ id: ID, name: 'N' } as any);
+    await handlePresetApproveButton(click(`preset_approve_${ID}:4:pending`, { message: { id: 'msg-1', embeds: [{ fields: [{ name: 'Links', value: '`/current`', inline: false }] }] } }), env, ctx);
+    await flush();
+    expect(presetApi.approvePreset).toHaveBeenCalledTimes(1);
+    expect(presetApi.approvePreset).toHaveBeenCalledWith(env, ID, 'mod-1', { revision: 4, status: 'pending' });
+    expect(lastEdit().components).toEqual([]);
+    expect(JSON.stringify(lastEdit())).not.toContain('private=hidden');
   });
 
   describe('a LEGACY button never acts', () => {
@@ -300,6 +368,7 @@ describe('FINDING-017 — moderation buttons are bound to a reviewed revision', 
 
   describe('a revision-bound button acts on exactly the reviewed revision', () => {
     it('approve sends the expected revision and status', async () => {
+      vi.mocked(presetApi.getModerationPreset).mockResolvedValue({ preset: preset({ status: 'flagged' }), revision: 12 } as any);
       vi.mocked(presetApi.approvePreset).mockResolvedValue({ id: ID, name: 'Approved name' } as any);
 
       const response = await handlePresetApproveButton(
@@ -347,6 +416,7 @@ describe('FINDING-017 — moderation buttons are bound to a reviewed revision', 
     });
 
     it('opens the modal bound to the same revision and status as the revert click', async () => {
+      vi.mocked(presetApi.getModerationPreset).mockResolvedValue({ preset: preset({ previous_values: { name: 'Before', description: 'old', tags: [], dyes: [] } }), revision: 21 } as any);
       const response = await handlePresetRevertButton(
         click(`preset_revert_${ID}:21:pending`),
         env,
@@ -380,7 +450,7 @@ describe('FINDING-017 — moderation buttons are bound to a reviewed revision', 
             content_revision: 6,
           }),
         );
-        vi.mocked(presetApi.getModerationPreset).mockResolvedValue({
+        vi.mocked(presetApi.getModerationPreset).mockResolvedValueOnce({ preset: preset(), revision: 5 } as any).mockResolvedValue({
           preset: preset({ name: 'Edited since' }),
           revision: 6,
         } as any);
@@ -432,7 +502,7 @@ describe('FINDING-017 — moderation buttons are bound to a reviewed revision', 
       await handlePresetApproveButton(click(`preset_approve_${ID}:4:pending`), env, ctx);
       await flush();
 
-      expect(presetApi.getModerationPreset).not.toHaveBeenCalled();
+      expect(presetApi.getModerationPreset).toHaveBeenCalledTimes(1);
       const errorField = lastEdit().embeds[0].fields.find((f: { name: string }) => f.name === 'Error');
       expect(errorField.value).toBe(
         'Failed to approve: Another visible preset already uses this dye combination',

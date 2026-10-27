@@ -2,7 +2,7 @@
 
 > Ceci est une traduction fournie à titre pratique. La version anglaise fait foi ; en cas de divergence, c'est elle qui prévaut. [Anglais](PRIVACY_POLICY.md)
 
-**Dernière mise à jour** : 2026-10-12
+**Dernière mise à jour** : 2026-10-27
 
 ## 1. Introduction
 
@@ -28,7 +28,7 @@ Nous nous engageons à protéger votre vie privée et à être transparents sur 
 | Préférences | Langue, mode de mélange, méthode de correspondance, nombre de résultats, clan, genre, Monde / centre de données par défaut, si les prix du tableau des ventes doivent être affichés par défaut, bascules d'affichage des couleurs, thème, et quelles catégories de teintures exclure des résultats de recherche (teintures métalliques, pastel, sombres, cosmiques, ishgardaises, coûteuses, vendues par un marchand, artisanales), ainsi que le moment où vous les avez modifiées pour la dernière fois | Jusqu'à réinitialisation ou demande de suppression |
 | Préréglages favoris | Jusqu'à 50 préréglages communautaires que vous marquez avec `/preset favorite add` — l'id du préréglage et le nom qu'il portait quand vous l'avez enregistré | Jusqu'à leur retrait ou demande de suppression |
 | Repère de premier lancement | Un repère par utilisateur indiquant que le Bot a effectué sa vérification unique de l'avis de bienvenue 5.0. Il est posé la première fois que vous exécutez une commande, que l'avis soit envoyé ou non (il n'est pas envoyé si vous avez déjà des préférences enregistrées) ; ne porte aucun contenu | Expire automatiquement après 180 jours |
-| Soumissions de préréglages | Nom, description, teintures, étiquettes, catégorie — et, si notre vérification automatique retient pour examen le nouveau nom ou la nouvelle description d'une modification, la version antérieure à la première modification de ce type, conservée jusqu'à ce qu'un modérateur la restaure ou que le préréglage soit supprimé | Jusqu'à ce que vous le supprimiez (dans Mes soumissions de l'application web, connecté avec le même compte Discord) ou demandiez la suppression |
+| Soumissions de préréglages | Nom, description, teintures, étiquettes, catégorie, lien d'exemple — et, si notre vérification automatique retient pour examen le nouveau nom, la description, les étiquettes ou le lien d'exemple d'une modification, la version antérieure à la première modification de ce type, conservée jusqu'à ce qu'un modérateur la restaure ou que le préréglage soit supprimé | Jusqu'à ce que vous le supprimiez (dans Mes soumissions de l'application web, connecté avec le même compte Discord) ou demandiez la suppression |
 | Votes | Vos votes sur les préréglages communautaires. Soumettre un préréglage compte comme votre vote pour lui ; si un préréglage publié a déjà les mêmes teintures, votre soumission devient un vote pour ce préréglage à la place | Jusqu'à leur retrait ou demande de suppression |
 
 ### Données de limitation de débit
@@ -140,7 +140,7 @@ Le Bot s'intègre à ces services tiers :
 | Cloudflare | Hébergement, stockage des données (KV, D1), limitation de débit, analytique | [Politique de confidentialité de Cloudflare](https://www.cloudflare.com/privacypolicy/) |
 | Universalis | Données du tableau des ventes FFXIV | [Universalis](https://universalis.app/) |
 | XIVAPI | Noms d'objets FFXIV pour `/glamour` | [XIVAPI](https://xivapi.com/) |
-| Perspective API | Modération de contenu (facultatif) | [Politique de confidentialité de Google](https://policies.google.com/privacy) |
+| Perspective API | Modération facultative des noms, descriptions, étiquettes et textes du chemin des liens d'exemple des préréglages. Les paramètres de requête, fragments, identifiants de connexion et noms d'hôte de l'URL sont exclus du texte du lien ; aucun identifiant de compte n'est joint et les liens fournis ne sont jamais consultés. La requête utilise `doNotStore`. | [Politique de confidentialité de Google](https://policies.google.com/privacy) |
 
 Nous ne vendons, n'échangeons, ni ne partageons vos données personnelles avec des tiers à des fins de marketing.
 
@@ -172,6 +172,8 @@ Pour demander la suppression de toutes vos données :
 Nous traiterons les demandes de suppression sous 30 jours. Une demande de suppression supprime aussi de notre serveur Discord les messages vous concernant et concernant vos préréglages, à l'exception du message sur un bannissement toujours actif. Un enregistrement de bannissement actif n'est pas supprimé sur demande ; une fois le bannissement levé, l'enregistrement suit la durée de conservation indiquée à la section *Conservation des données*.
 
 ## 8. Conservation des données
+
+Les limites quotidiennes comptent les tentatives de soumission qui atteignent la modération, les changements du nom ou de la description d'un préréglage, et les tentatives de traitement des images d'aperçu. Les changements d'étiquettes ou de lien d'exemple ne comptent comme modifications que lorsque les vérifications étendues sont activées ; les étiquettes et le texte du chemin du lien ne peuvent être envoyés pour modération que dans ce cas. Les champs textuels inchangés ne consomment pas de place de modification. Les échecs de décodage d'image et les délais dépassés restent comptés. Pour les tentatives de traitement d'image d'aperçu uniquement, les rejets de validation précoce et les erreurs de stockage d'image ou de base de données ne sont pas décomptés du quota. Si le résultat d'une écriture en base de données ne peut pas être confirmé, la tentative reste comptée. Une tentative de soumission reste comptée dès le début de la modération, même si aucun préréglage n'est créé.
 
 | Type de donnée | Durée de conservation |
 |-----------|-----------------|

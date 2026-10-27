@@ -109,10 +109,10 @@ These percentages apply to each configured coverage include/exclude set. They do
 | [BUG-002](findings/BUG-002.md) | OPEN — source prepared; release pending | [A-BOT-LOGIC evidence](../2026-10-26-security/evidence/remediation-bot-logic-2026-10-27.md) |
 | [BUG-003](findings/BUG-003.md) | OPEN — source prepared; release pending | [A-CORE evidence](../2026-10-26-xivcharakit-dead-code/evidence/remediation-core-2026-10-27.md) |
 | [BUG-004](findings/BUG-004.md) | OPEN — source prepared; release pending | [A-BOT-LOGIC evidence](../2026-10-26-security/evidence/remediation-bot-logic-2026-10-27.md) |
-| [BUG-005](findings/BUG-005.md) | OPEN | — |
-| [BUG-006](findings/BUG-006.md) | OPEN | — |
-| [BUG-007](findings/BUG-007.md) | OPEN | — |
-| [BUG-008](findings/BUG-008.md) | OPEN | — |
+| [BUG-005](findings/BUG-005.md) | OPEN — source prepared; release pending | [A-PRESETS evidence](../2026-10-26-security/evidence/remediation-presets-2026-10-27.md) |
+| [BUG-006](findings/BUG-006.md) | OPEN — source prepared; release pending | [A-PRESETS evidence](../2026-10-26-security/evidence/remediation-presets-2026-10-27.md) |
+| [BUG-007](findings/BUG-007.md) | OPEN — source prepared; release pending | [A-PRESETS evidence](../2026-10-26-security/evidence/remediation-presets-2026-10-27.md) |
+| [BUG-008](findings/BUG-008.md) | OPEN — source prepared; release pending | [A-PRESETS evidence](../2026-10-26-security/evidence/remediation-presets-2026-10-27.md) |
 | [BUG-009](findings/BUG-009.md) | OPEN | — |
 | [OPT-001](findings/OPT-001.md) | OPEN | — |
 | [BUG-010](findings/BUG-010.md) | OPEN | — |

@@ -154,7 +154,8 @@ function hasOnlySupportedCharacters(value: string, allowLineBreaks: boolean): bo
  * one), with letters / digits / marks / spaces / hyphens / underscores /
  * apostrophes (both ' and ’) in between. Unicode-aware, so CJK tags work.
  * Markdown, brackets, URLs, hashes and every other punctuation are out — a
- * tag is rendered verbatim in Discord embeds and is never moderated.
+ * tag is rendered verbatim in Discord embeds. This grammar supplements the
+ * content moderation applied to effective tags when metadata moderation is enabled.
  */
 const TAG_PATTERN = /^[\p{L}\p{N}](?:[\p{L}\p{M}\p{N} _'’-]*[\p{L}\p{M}\p{N}])?$/u;
 
@@ -292,7 +293,7 @@ export function validatePresetTags(tags: unknown): string | null {
   }
 
   // FINDING-019 (PAPI-6): tags are rendered verbatim in Discord embeds and the
-  // gallery and never pass content moderation, so their charset is narrow.
+  // gallery. Their narrow charset also applies while metadata moderation is disabled.
   // TAG_PATTERN already excludes control and invisible characters (none of
   // them are letters, marks, digits or the four allowed separators) — the
   // explicit check just keeps the ZWJ-between-emoji nuance out of tags too.

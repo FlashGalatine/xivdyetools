@@ -594,12 +594,13 @@ describe('index.ts', () => {
         expect(token).toBe('mod-token');
         expect(channel).toBe('test-moderation-channel');
         const sent = message as {
-          embeds: Array<{ title?: string; description?: string }>;
+          embeds: Array<{ title?: string; description?: string; fields?: Array<{ name: string; value: string }> }>;
           components: Array<{ components: Array<{ custom_id: string }> }>;
         };
         return {
           title: sent.embeds[0].title ?? '',
           description: sent.embeds[0].description ?? '',
+          fields: sent.embeds[0].fields ?? [],
           ids: sent.components[0].components.map((c) => c.custom_id),
         };
       }
@@ -608,6 +609,54 @@ describe('index.ts', () => {
         `preset_approve_${EDIT_ID}:9:pending`,
         `preset_reject_${EDIT_ID}:9:pending`,
       ];
+
+      it('preserves current, edited_from and effective snapshot links in the outgoing review', async () => {
+        const sent = await post({
+          is_edit: true, edited_from_status: 'approved',
+          edited_from: { ...snapshot, example_link: 'https://private.example/previous?secret=old' },
+          preset: editedPreset({
+            ...snapshot, example_link: 'https://private.example/current?secret=new',
+            previous_values: { ...snapshot, example_link: 'https://private.example/saved%20look?secret=saved' },
+          }),
+        });
+        expect(sent.fields).toContainEqual({ name: 'Links', value: '`/current`', inline: false });
+        expect(sent.fields).toContainEqual({ name: 'Revert link', value: '`/saved look`', inline: false });
+        expect(sent.description).toContain('Link changed; only path text is shown.');
+        expect(sent.description).toContain('they differ in: example_link');
+        expect(JSON.stringify(sent)).not.toContain('private.example');
+        expect(JSON.stringify(sent)).not.toContain('secret=');
+      });
+
+      it('preserves explicit null target and does not inherit current metadata into a missing diff link', async () => {
+        const sent = await post({
+          is_edit: true, edited_from_status: 'approved', edited_from: snapshot,
+          preset: editedPreset({ ...snapshot, example_link: 'https://private.example/current', previous_values: { ...snapshot, example_link: null } }),
+        });
+        expect(sent.fields).toContainEqual({ name: 'Revert link', value: 'No example link.', inline: false });
+        expect(sent.description).toContain('Link details unavailable.');
+        expect(sent.description).not.toContain('No visible changes');
+        expect(sent.description).toContain('may be older');
+      });
+
+      it('keeps old snapshot links unavailable rather than reporting removal', async () => {
+        const sent = await post({
+          is_edit: true, edited_from_status: 'approved',
+          preset: editedPreset({ example_link: null }),
+        });
+        expect(sent.fields).toContainEqual({ name: 'Links', value: 'No example link.', inline: false });
+        expect(sent.fields).toContainEqual({ name: 'Revert link', value: 'Link details unavailable for this older snapshot.', inline: false });
+        expect(sent.ids).toEqual([...approveReject, `preset_revert_${EDIT_ID}:9:pending`]);
+      });
+
+      it('retains malformed explicit optional snapshot fields as incomplete review, never trustworthy null', async () => {
+        const sent = await post({
+          is_edit: true, edited_from_status: 'approved',
+          edited_from: { ...snapshot, example_link: 'https://e.test/prior' },
+          preset: editedPreset({ example_link: null, previous_values: { ...snapshot, example_link: false } }),
+        });
+        expect(sent.fields).toContainEqual({ name: 'Revert link', value: 'Link details do not fit safely in this review. Ask the author to shorten the link before approval.', inline: false });
+        expect(sent.ids).toEqual(approveReject);
+      });
 
       it('posts a new submission as new, with Approve and Reject only', async () => {
         const sent = await post({ is_edit: false, preset: editedPreset({ previous_values: null }) });
@@ -642,7 +691,7 @@ describe('index.ts', () => {
       // Names chosen so none is a substring of another.
       describe('the diff base is edited_from (Sprint 9)', () => {
         const dawn = { name: 'Dawn', description: 'First words', tags: ['warm'], dyes: [1, 2, 3] };
-        const noon = { name: 'Noon', description: 'Second words', tags: ['warm'], dyes: [1, 2] };
+        const noon = { name: 'Noon', description: 'Second words', tags: ['warm'], dyes: [1, 2], example_link: null };
         const dusk = { name: 'Dusk', description: 'Third words', tags: ['warm'], dyes: [1, 2, 3] };
 
         it('diffs a rejected preset resubmission against edited_from, with no Revert', async () => {

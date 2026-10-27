@@ -122,6 +122,14 @@ export function sniffImageType(bytes: Uint8Array): 'png' | 'jpeg' | 'webp' | nul
   return sniffAcceptedImageType(bytes, ['png', 'jpeg', 'webp']);
 }
 
+/** Internal stage marker; provider messages never enter the public envelope. */
+export class PreviewImageStoreError extends Error {
+  constructor(readonly stage: 'processing' | 'storage', readonly key?: string) {
+    super('Image could not be processed');
+    this.name = 'PreviewImageStoreError';
+  }
+}
+
 /**
  * Crop + encode via image-worker, then store in R2.
  *
@@ -140,30 +148,38 @@ export async function storePreviewImage(
   // "Image could not be processed" the surrounding try/catch was written for.
   // Perspective and the cache purge both use 5 s; the decode gets 10, since it
   // is doing real work rather than waiting on a third party.
-  const response = await env.IMAGE_WORKER.fetch(
-    new Request('https://image-worker/thumbnail', {
-      method: 'POST',
-      body: bytes,
-      signal: AbortSignal.timeout(IMAGE_WORKER_TIMEOUT_MS),
-    })
-  );
-
-  if (!response.ok) {
-    throw new Error('Image could not be processed');
+  let webp: ArrayBuffer;
+  try {
+    const response = await env.IMAGE_WORKER.fetch(
+      new Request('https://image-worker/thumbnail', {
+        method: 'POST',
+        body: bytes,
+        signal: AbortSignal.timeout(IMAGE_WORKER_TIMEOUT_MS),
+      })
+    );
+    if (!response.ok) throw new PreviewImageStoreError('processing');
+    webp = await response.arrayBuffer();
+  } catch {
+    // A fetch rejection, timeout or failed response read may follow real decode
+    // work. All retain the attempt; none are mistaken for R2 failures.
+    throw new PreviewImageStoreError('processing');
   }
-
-  const webp = await response.arrayBuffer();
   const key = `${presetId}/${crypto.randomUUID()}.webp`;
-
-  await env.THUMBNAILS.put(key, webp, {
-    httpMetadata: {
-      contentType: 'image/webp',
-      // Safe to mark immutable for browsers: the UUID makes every key
-      // single-use, so this URL can never come to mean something else. The
-      // edge TTL is short — see PREVIEW_IMAGE_CACHE_CONTROL.
-      cacheControl: PREVIEW_IMAGE_CACHE_CONTROL,
-    },
-  });
+  try {
+    await env.THUMBNAILS.put(key, webp, {
+      httpMetadata: {
+        contentType: 'image/webp',
+        // Safe to mark immutable for browsers: the UUID makes every key
+        // single-use, so this URL can never come to mean something else. The
+        // edge TTL is short — see PREVIEW_IMAGE_CACHE_CONTROL.
+        cacheControl: PREVIEW_IMAGE_CACHE_CONTROL,
+      },
+    });
+  } catch {
+    // A failed put may have stored bytes. The route can safely clean this
+    // unique key because no DB attachment has yet been attempted.
+    throw new PreviewImageStoreError('storage', key);
+  }
 
   return key;
 }
@@ -193,6 +209,7 @@ export async function deletePreviewImage(
 export interface PresetImageState {
   author_discord_id: string | null;
   preview_image_key: string | null;
+  preview_image_status: string;
   name: string;
   /** FINDING-016: needed for the same 404-for-the-unprivileged rule GET applies */
   status: string;
@@ -212,7 +229,7 @@ export async function getPresetImageState(
   id: string
 ): Promise<PresetImageState | null> {
   const row = await db
-    .prepare('SELECT author_discord_id, preview_image_key, name, status FROM presets WHERE id = ?')
+    .prepare('SELECT author_discord_id, preview_image_key, preview_image_status, name, status FROM presets WHERE id = ?')
     .bind(id)
     .first<PresetImageState>();
   return row ?? null;

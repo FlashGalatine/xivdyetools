@@ -14,4 +14,4 @@
 - Cap page with an upper bound (e.g. Math.min(..., MAX_PAGE=1000)) as api-worker does with parseIntParam/MAX_PAGE (routes/dyes.ts:47,289), or reject non-finite/huge values with a 400 validation error; add a test for ?page=<400 nines>.
 
 ## Status
-OPEN
+OPEN — source prepared in A-PRESETS: bounded pagination before offset arithmetic; [presets evidence](../evidence/remediation-presets-2026-10-27.md). Merge and production acceptance remain pending.

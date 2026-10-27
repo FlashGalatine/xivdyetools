@@ -137,6 +137,8 @@ export interface Env {
   BOT_SIGNING_SECRET?: string; // HMAC signing key for bot request verification
   MODERATOR_IDS: string;
   PERSPECTIVE_API_KEY?: string;
+  /** Temporary default-off release control; only exact "true" enables metadata moderation. */
+  PRESET_METADATA_MODERATION_ENABLED?: string;
 
   // Web OAuth (shared with xivdyetools-oauth-worker)
   JWT_SECRET?: string;

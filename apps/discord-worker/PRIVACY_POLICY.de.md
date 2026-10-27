@@ -2,7 +2,7 @@
 
 > Dies ist eine zur Verständlichkeit bereitgestellte Übersetzung. Maßgeblich ist die englische Fassung; weichen beide voneinander ab, gilt die englische Fassung. [Englisch](PRIVACY_POLICY.md)
 
-**Zuletzt aktualisiert**: 2026-10-12
+**Zuletzt aktualisiert**: 2026-10-27
 
 ## 1. Einführung
 
@@ -31,7 +31,7 @@ Verbindung zu Square Enix.
 | Einstellungen | Sprache, Mischmodus, Matching-Algorithmus, Ergebnisanzahl, Stamm, Geschlecht, Standard-Welt / -Datenzentrum, ob Marktbrett-Preise standardmäßig angezeigt werden, Farbanzeige-Umschalter und Design sowie welche Farbstoffkategorien von den Suchergebnissen ausgeschlossen werden sollen (metallisch, pastellfarben, dunkel, kosmisch, ishgardisch, teuer, vom Händler verkauft, hergestellt), dazu der Zeitpunkt, zu dem du sie zuletzt geändert hast | Bis du sie zurücksetzt oder eine Löschung beantragst |
 | Favorisierte Vorlagen | Bis zu 50 Community-Vorlagen, die du mit `/preset favorite add` markierst — die ID der Vorlage und der Name, den sie bei der Speicherung hatte | Bis du sie entfernst oder eine Löschung beantragst |
 | Erstlauf-Hinweis-Markierung | Eine Markierung pro Nutzer, dass der Bot seine einmalige Prüfung auf den 5.0-Willkommenshinweis durchgeführt hat. Sie wird gesetzt, wenn du zum ersten Mal einen Befehl ausführst, unabhängig davon, ob der Hinweis gesendet wird (er wird nicht gesendet, wenn du bereits gespeicherte Einstellungen hast); enthält keinen Inhalt | Läuft automatisch nach 180 Tagen ab |
-| Vorlagen-Einreichungen | Name, Beschreibung, Farbstoffe, Tags, Kategorie — und, falls unsere automatische Prüfung den neuen Namen oder die neue Beschreibung einer Bearbeitung zur Prüfung zurückhält, die Fassung vor der ersten solchen Bearbeitung, aufbewahrt, bis ein Moderator diese Fassung wiederherstellt oder die Vorlage gelöscht wird | Bis du sie löschst (unter "Meine Einreichungen" in der Web-App, angemeldet mit demselben Discord-Konto) oder eine Löschung beantragst |
+| Vorlagen-Einreichungen | Name, Beschreibung, Farbstoffe, Tags, Kategorie, Beispiellink — und, falls unsere automatische Prüfung den neuen Namen, die neue Beschreibung, die Tags oder den Beispiellink einer Bearbeitung zur Prüfung zurückhält, die Fassung vor der ersten solchen Bearbeitung, aufbewahrt, bis ein Moderator diese Fassung wiederherstellt oder die Vorlage gelöscht wird | Bis du sie löschst (unter "Meine Einreichungen" in der Web-App, angemeldet mit demselben Discord-Konto) oder eine Löschung beantragst |
 | Stimmen | Deine Stimmen zu Community-Vorlagen. Das Einreichen einer Vorlage zählt als deine Stimme dafür; hat eine veröffentlichte Vorlage bereits dieselben Farbstoffe, wird deine Einreichung stattdessen zu einer Stimme für diese Vorlage | Bis du die Stimme entfernst oder eine Löschung beantragst |
 
 ### Ratenbegrenzungsdaten
@@ -176,7 +176,7 @@ Der Bot ist mit diesen Drittanbieter-Diensten verbunden:
 | Cloudflare | Hosting, Datenspeicherung (KV, D1), Ratenbegrenzung, Analyse | [Cloudflare-Datenschutzrichtlinie](https://www.cloudflare.com/privacypolicy/) |
 | Universalis | FFXIV-Marktbrett-Daten | [Universalis](https://universalis.app/) |
 | XIVAPI | FFXIV-Gegenstandsnamen für `/glamour` | [XIVAPI](https://xivapi.com/) |
-| Perspective API | Inhaltsmoderation (optional) | [Google-Datenschutzrichtlinie](https://policies.google.com/privacy) |
+| Perspective API | Optionale Moderation von Vorlagennamen, Beschreibungen, Tags und dem Pfadtext von Beispiellinks. URL-Abfrageparameter, Fragmente, Zugangsdaten und Hostnamen werden aus dem Linktext ausgeschlossen; es werden keine Konto-IDs angehängt und angegebene Links werden niemals abgerufen. Die Anfrage verwendet `doNotStore`. | [Google-Datenschutzrichtlinie](https://policies.google.com/privacy) |
 
 Wir verkaufen, tauschen oder teilen deine personenbezogenen Daten nicht mit Drittanbietern zu
 Marketingzwecken.
@@ -211,6 +211,8 @@ Um die Löschung aller deiner Daten zu beantragen:
 Wir bearbeiten Löschanfragen innerhalb von 30 Tagen. Eine Löschanfrage entfernt außerdem die Beiträge über dich und deine Vorlagen von unserem Discord-Server, außer dem Beitrag zu einer noch aktiven Sperre. Ein aktiver Sperrdatensatz wird auf Anfrage nicht gelöscht; sobald die Sperre aufgehoben ist, richtet sich der Datensatz nach der Aufbewahrung unter *Datenaufbewahrung*.
 
 ## 8. Datenaufbewahrung
+
+Die Tageslimits zählen Einreichungsversuche, die die Moderation erreichen, Änderungen an Name oder Beschreibung einer Vorlage und Verarbeitungsversuche von Vorschaubildern. Änderungen an Tags oder Beispiellinks zählen nur bei aktivierten erweiterten Prüfungen als Bearbeitungen; nur dann können Tags und Linkpfadtexte zur Moderation gesendet werden. Unveränderte Textfelder verbrauchen keinen Bearbeitungsplatz. Fehlgeschlagene Bilddekodierungen und Zeitüberschreitungen bleiben gezählt. Nur bei Vorschaubildversuchen werden frühe Validierungsablehnungen sowie Fehler bei der Bildspeicherung oder Datenbankoperation nicht angerechnet. Kann das Ergebnis eines Datenbankschreibvorgangs nicht bestätigt werden, bleibt der Versuch gezählt. Ein Einreichungsversuch bleibt ab Beginn der Moderation gezählt, auch wenn keine Vorlage erstellt wird.
 
 | Datentyp | Aufbewahrungszeitraum |
 |-----------|-----------------|

@@ -40,6 +40,13 @@ vi.mock('../../services/preset-api.js', async () => {
   };
 });
 
+beforeEach(() => {
+  vi.mocked(presetApi.getModerationPreset).mockResolvedValue({ preset: {
+    id: 'a0000000-0000-4000-8000-000000000001', name: 'Test Preset', description: 'Description', author_name: 'Author', status: 'pending', dyes: [],
+    previous_values: { name: 'Before', description: 'old', tags: [], dyes: [] }, moderation_status: 'unknown',
+  }, revision: 5 } as any);
+});
+
 describe('handlePresetRejectionModal', () => {
   let env: Env;
   let ctx: ExecutionContext;

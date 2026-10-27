@@ -88,8 +88,8 @@ function mockSubmissionEventsTable(
     db._setupMock((query: string, bindings: unknown[]) => {
         if (/^\s*INSERT INTO submission_events/i.test(query)) {
             const id = nextId++;
-            rows.set(id, { user: String(bindings[0]), kind: String(bindings[1]) });
-            return { success: true, meta: { changes: 1, last_row_id: id } };
+            rows.set(id, { user: String(bindings[0]), kind: query.includes("'submission'") ? 'submission' : String(bindings[1]) });
+            return { id, success: true, meta: { changes: 1, last_row_id: id } };
         }
         if (/^\s*DELETE FROM submission_events\s+WHERE id\s*=/i.test(query)) {
             rows.delete(Number(bindings[0]));
@@ -329,6 +329,7 @@ describe('daily quotas (FINDING-008)', () => {
                 author_discord_id: '123',
                 name,
                 description: STORED_DESCRIPTION,
+                tags: '["stored"]',
                 status,
             });
             let written = false;
@@ -376,10 +377,10 @@ describe('daily quotas (FINDING-008)', () => {
             );
         };
 
-        it('a tag-only edit of a pending preset notifies nobody and costs no quota', async () => {
+        it('resending identical tags on a pending preset notifies nobody and costs no quota', async () => {
             ownPreset('pending');
 
-            const res = await patch({ tags: ['a'] });
+            const res = await patch({ tags: ['stored'] });
 
             expect(res.status).toBe(200);
             expect(await notifications()).toEqual([]);
@@ -393,7 +394,7 @@ describe('daily quotas (FINDING-008)', () => {
         it('resending a pending preset\'s existing name is not new text, so nobody is notified', async () => {
             ownPreset('pending');
 
-            const res = await patch({ name: STORED_NAME, tags: ['a'] });
+            const res = await patch({ name: STORED_NAME, tags: ['stored'] });
 
             expect(res.status).toBe(200);
             expect(await notifications()).toEqual([]);
@@ -439,11 +440,11 @@ describe('daily quotas (FINDING-008)', () => {
         });
 
         it.each(['rejected', 'flagged'])(
-            'leaves a %s preset in its status and notifies nobody',
+            'leaves a %s preset in its status when tags are re-sent unchanged',
             async (status) => {
                 ownPreset(status);
 
-                const res = await patch({ tags: ['a'] });
+                const res = await patch({ tags: ['stored'] });
 
                 expect(res.status).toBe(200);
                 expect(appliedUpdate().query).not.toMatch(/status\s*=\s*\?/);
@@ -523,7 +524,7 @@ describe('daily quotas (FINDING-008)', () => {
             // to judge, so nothing is queued and nobody is pinged.
             ownPreset('rejected');
 
-            const res = await patch({ name: STORED_NAME, tags: ['a'] });
+            const res = await patch({ name: STORED_NAME, tags: ['stored'] });
 
             expect(res.status).toBe(200);
             expect(appliedUpdate().query).not.toMatch(/status\s*=\s*\?/);
@@ -549,7 +550,7 @@ describe('daily quotas (FINDING-008)', () => {
                 async (status) => {
                     ownPreset(status, 0, FLAGGED_STORED_NAME);
 
-                    const res = await patch({ name: FLAGGED_STORED_NAME, tags: ['a'] });
+                    const res = await patch({ name: FLAGGED_STORED_NAME, tags: ['stored'] });
 
                     expect(res.status).toBe(200);
                     expect(appliedUpdate().query).not.toMatch(/status\s*=\s*\?/);
@@ -572,7 +573,7 @@ describe('daily quotas (FINDING-008)', () => {
                     const res = await patch({
                         name: STORED_NAME,
                         description: STORED_DESCRIPTION,
-                        tags: ['a'],
+                        tags: ['stored'],
                     });
 
                     expect(res.status).toBe(200);
@@ -797,6 +798,7 @@ describe('daily quotas (FINDING-008)', () => {
                 author_discord_id: '123',
                 name: 'Stored Name',
                 description: 'The stored description, long enough.',
+                tags: '["stored"]',
                 status,
             });
             table = mockSubmissionEventsTable(mockDb, () => row);
@@ -852,7 +854,7 @@ describe('daily quotas (FINDING-008)', () => {
             }
         );
 
-        it('charges one slot per name/description edit and none for other edits', async () => {
+        it('charges a changed field but leaves identical stored metadata free', async () => {
             ownPreset('approved');
             fetchMock.mockResolvedValueOnce({
                 ok: true,
@@ -867,8 +869,8 @@ describe('daily quotas (FINDING-008)', () => {
                 }),
             });
 
-            // Tags, dyes, category and example link are never moderated.
-            expect((await patch({ tags: ['a'] })).status).toBe(200);
+            // The tags are identical to stored values, so no moderation is needed.
+            expect((await patch({ tags: ['stored'] })).status).toBe(200);
             expect(fetchMock).not.toHaveBeenCalled();
             expect(table.events()).toHaveLength(0);
 
@@ -1131,9 +1133,9 @@ describe('daily quotas (FINDING-008)', () => {
             expect(table.events()).toHaveLength(0);
         });
 
-        // Important 2 (fix round 1): the release sites at the storePreviewImage
-        // catch and the DB UPDATE catch had no dedicated coverage.
-        it('releases the reservation when storePreviewImage rejects (image-worker returns non-ok)', async () => {
+        // Processing is charged even when it fails; an unconfirmed DB write is
+        // also charged because latest state cannot establish it never committed.
+        it('retains the reservation when image processing returns non-ok', async () => {
             const table = mockSubmissionEventsTable(mockDb, () =>
                 createMockPresetRow({ id: 'preset-123', author_discord_id: '123' })
             );
@@ -1154,10 +1156,10 @@ describe('daily quotas (FINDING-008)', () => {
             expect(res.status).toBe(400);
             const body = (await res.json()) as { message: string };
             expect(body.message).toBe('Image could not be processed');
-            expect(table.events()).toHaveLength(0);
+            expect(table.events()).toHaveLength(1);
         });
 
-        it('releases the reservation when the DB UPDATE itself throws', async () => {
+        it('retains the reservation when a DB transport error cannot prove rollback', async () => {
             const table = mockSubmissionEventsTable(mockDb, (query: string) => {
                 if (/^\s*UPDATE\s+presets\s+SET\s+preview_image_key/i.test(query)) {
                     throw new Error('D1_ERROR: database is locked');
@@ -1172,12 +1174,9 @@ describe('daily quotas (FINDING-008)', () => {
                 ctx
             );
 
-            // Hono's default error handling turns the rethrown error into a
-            // 500 (no app.onError() is registered in this test harness); what
-            // this test actually verifies is that the reservation was released
-            // before that error left the handler.
-            expect(res.status).toBe(500);
-            expect(table.events()).toHaveLength(0);
+            // A transport exception is not an authoritative rollback receipt.
+            expect(res.status).toBe(503);
+            expect(table.events()).toHaveLength(1);
         });
     });
 });

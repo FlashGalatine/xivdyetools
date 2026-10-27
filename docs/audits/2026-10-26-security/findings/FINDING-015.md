@@ -15,4 +15,4 @@
 - Enforce the author ban inside the presets-api write itself by adding `AND NOT EXISTS (SELECT 1 FROM banned_users b WHERE (b.discord_id = presets.author_discord_id OR b.xivauth_id = presets.author_discord_id) AND b.unbanned_at IS NULL)` to the WHERE clause of prepareStatusUpdate (when the target status is approved) and of prepareRevert. Map the zero-row case to a distinct 409 or 403 AUTHOR_BANNED, and keep moderation…
 
 ## Status
-OPEN
+OPEN — source prepared in A-PRESETS: SQL active-author ban guards for approval/Revert; [presets evidence](../evidence/remediation-presets-2026-10-27.md). Merge and production acceptance remain pending.

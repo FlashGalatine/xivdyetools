@@ -9,6 +9,7 @@ import type { Env, AuthContext } from './types.js';
 
 // Import route handlers
 import { presetsRouter } from './handlers/presets.js';
+import { presetBatchRouter } from './handlers/preset-batch.js';
 import { votesRouter } from './handlers/votes.js';
 import { categoriesRouter } from './handlers/categories.js';
 import { moderationRouter } from './handlers/moderation.js';
@@ -253,6 +254,7 @@ app.get('/__force-error', (c) => {
 // ============================================
 
 // Mount route handlers under /api/v1
+app.route('/api/v1/presets', presetBatchRouter);
 app.route('/api/v1/presets', presetsRouter);
 app.route('/api/v1/votes', votesRouter);
 app.route('/api/v1/categories', categoriesRouter);

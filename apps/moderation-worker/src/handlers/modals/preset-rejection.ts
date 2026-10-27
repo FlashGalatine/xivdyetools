@@ -27,7 +27,7 @@ import { STATUS_DISPLAY, PresetReviewConflictError } from '../../types/preset.js
 import { MIN_REJECTION_REASON_LENGTH } from '../commands/preset.js';
 import { parseReviewCustomId } from '@xivdyetools/types';
 import type { ParsedReviewId, ReviewBinding } from '@xivdyetools/types';
-import { editReviewMessage, refreshReview, withoutTransientFields } from '../review-message.js';
+import { editReviewMessage, refreshReview, withoutTransientFields, isReviewedPublishAction } from '../review-message.js';
 // MOD-REF-002 FIX: Use shared modal types and helpers
 import type { ModalInteraction } from '../../types/modal.js';
 import { extractTextInputValue, getModalUserId, getModalUsername } from '../../types/modal.js';
@@ -290,6 +290,10 @@ async function processRevert(
       return;
     }
 
+    if (!(await isReviewedPublishAction(interaction, env, presetId, userId, binding, 'revert'))) {
+      await refreshReview(interaction, env, presetId, userId, logger);
+      return;
+    }
     const preset = await presetApi.revertPreset(env, presetId, reason, userId, binding);
     // FINDING-019
     const safeModerator = sanitizeUserName(userName);

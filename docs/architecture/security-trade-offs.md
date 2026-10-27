@@ -282,7 +282,7 @@ if (input[1] !== secret[1]) return false; // Slightly slower
 
 ### The Trade-Off
 
-`presets-api` moderates a preset's name and description with a local word list plus Google Perspective. When Perspective is *configured* but cannot produce a verdict — non-OK status (429 included), the 5 s timeout, a thrown fetch, an unparsable body — the content is **not published**. It is persisted with status `pending` and a moderator is notified, exactly as if the text had been flagged.
+`presets-api` moderates a preset's name and description with a local word list plus Google Perspective. Extended tag/decoded-link-path checks are implemented behind a default-off flag; activation requires both review consumers' verified production deployments and a later activation-only PR. URL hostnames, credentials, queries and fragments are excluded from derived link text and links are never fetched. When Perspective is *configured* but cannot produce a verdict — non-OK status (429 included), the 5 s timeout, a thrown fetch, an unparsable body — the content is **not published**. It is persisted with status `pending` and a moderator is notified, exactly as if the text had been flagged.
 
 ```
 PERSPECTIVE_API_KEY set ─► verdict          ─► pass / flag as scored
@@ -306,7 +306,7 @@ Perspective's default quota is about **1 QPS**. Before this, a failed call retur
 ### Mitigations
 
 1. **A distinct outcome, not a silent one**: `method: 'perspective_unavailable'` (with `passed: false`) is separate from `'perspective'`, so a real toxicity verdict and a non-answer are distinguishable **in the logs**. They are *not* distinguishable to a moderator: `flaggedReason` is never forwarded, and the webhook payload carries `moderation_status: 'flagged'` for both — the notification's union (`'clean' | 'flagged' | 'auto_approved'`) is consumed by discord-worker, so widening it is a later-sprint item.
-2. **Per-user pre-moderation cap**: `DAILY_TEXT_EDIT_LIMIT` = 30 name/description edits per UTC day (`submission_events` kind `text_edit`, migration `0012`), checked **before** the Perspective call and for every preset status, so one account cannot drive Perspective to 429 and cannot flood the queue by failing it. Submissions (10/day) and notifying edits (10/day) keep their own caps.
+2. **Per-user pre-moderation accounting**: `DAILY_TEXT_EDIT_LIMIT` = 30 changed name/description edits per UTC day (also changed tags/example links when extended checks are enabled) (`submission_events` kind `text_edit`, migration `0012`), reserved **before** the Perspective call for every preset status. Its existing backend-error policy remains fail-open; daily quotas do not prevent short bursts from reaching Perspective's global rate limit. Submission attempts reserve one of 10 daily slots atomically before moderation; post-moderation failures remain charged, and denied admissions make no scorer call. Notifying edits keep their separate 10/day cap with the existing reservation backend policy.
 3. **The slot is charged at the point of spend**, not after a successful UPDATE — otherwise a user already refused by the flagged-edit cap could loop text edits, spending a Perspective call each time and never being counted.
 4. **Local list still runs first** and short-circuits, so an obvious hit never reaches Perspective at all.
 5. **No key is not a pass**: with no `PERSPECTIVE_API_KEY` the local list still flags, but text it does not match is reported as `method: 'unscored'` (`passed: false`) and queued for a moderator, since the local list holds no profanity or slurs (FINDING-019).

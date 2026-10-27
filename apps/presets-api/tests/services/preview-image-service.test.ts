@@ -52,6 +52,18 @@ describe('sniffImageType', () => {
 // rejected or deleted picture kept resolving from the edge cache for up to a
 // year. The edge TTL is now one day, and every takedown path purges the URL.
 describe('storePreviewImage (FINDING-018)', () => {
+  it('labels processing response-read failure without exposing its provider error', async () => {
+    const env = createMockEnv({ IMAGE_WORKER: { fetch: async () => new Response(new ReadableStream({ start(c) { c.error(new Error('private provider URL')); } })) } as unknown as Fetcher });
+    await expect(storePreviewImage(env, 'p', png)).rejects.toMatchObject({ stage: 'processing', message: 'Image could not be processed' });
+  });
+
+  it('labels a partial storage failure and retains its unique key for safe cleanup', async () => {
+    const env = createMockEnv(); let attemptedKey = '';
+    env.THUMBNAILS.put = (async (key: string) => { attemptedKey = key; throw new Error('private storage URL'); }) as R2Bucket['put'];
+    const failure = await storePreviewImage(env, 'p', png).catch(error => error);
+    expect(failure).toMatchObject({ stage: 'storage', key: attemptedKey, message: 'Image could not be processed' });
+    expect(attemptedKey).toMatch(/^p\/.+\.webp$/);
+  });
   it('stores under a single-use {presetId}/{uuid}.webp key with a short edge TTL', async () => {
     const env = createMockEnv();
     const bucket = env.THUMBNAILS as unknown as MockR2Bucket;

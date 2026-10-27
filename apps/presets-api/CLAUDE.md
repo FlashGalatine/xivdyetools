@@ -69,7 +69,7 @@ Web/Bot ──HTTPS──► Hono app
             security headers + CORS (allowlisted origins + dev localhost)
                       │
                       ▼
-            /api/* : publicRateLimitMiddleware (100/min/IP, skipped without CF-Connecting-IP)
+            /api/* : publicRateLimitMiddleware (100/min/IPv4 or IPv6 /64, skipped without CF-Connecting-IP)
             /api/* : bodySizeLimit (100KB)
             /api/* : jsonDepthLimit
                       │
@@ -99,10 +99,11 @@ src/
 ├── types.ts                            # Env interface + re-exports from @xivdyetools/types
 ├── middleware/
 │   ├── auth.ts                         # Dual auth: BOT_API_SECRET (HMAC-signed) or JWT
-│   ├── ban-check.ts                    # requireNotBanned (router-level on every mutating method; fails closed outside development)
+│   ├── ban-check.ts                    # requireNotBanned (router-level on mutating methods; signed batch lookup is an intentionally separate logical read; fails closed outside development)
 │   ├── body-validation.ts              # bodySizeLimit (100KB), jsonDepthLimit
 │   └── rate-limit.ts                   # IP + per-user rate limits (100/min) via worker-kit's rate limiter
 ├── handlers/
+│   ├── preset-batch.ts                 # POST /presets/batch: signed bot acting-user read, approved-only, max 50 raw IDs
 │   ├── presets.ts                      # GET / POST / PATCH / DELETE presets, /mine, /featured, /rate-limit, /refresh-author, /:id/preview-image
 │   ├── votes.ts                        # POST/DELETE votes (atomic INSERT … ON CONFLICT)
 │   ├── categories.ts                   # Categories with computed approved-preset counts (primary + secondary)
@@ -143,9 +144,37 @@ src/
 
 **Trigger parity (FINDING-031):** `tests/migration-trigger-parity.test.ts` asserts the `presets_content_revision_after_update` trigger in `migrations/0014` and `schema.sql` are identical after whitespace/`IF NOT EXISTS` normalization.
 
-**Notification payload:** the `submission` payload's `preset` carries `content_revision` (a counter, not content) so the moderation embed's buttons bind to the exact revision shown; the dead-letter record keeps it for the same reason. A `submission` comes from `POST /presets` (`is_edit: false`) or from **every** `PATCH /presets/:id` that notifies (`is_edit: true`) — a flagged edit of an approved preset, a clean or flagged text edit of a pending one, and a rejected preset's resubmission — and an edit also carries top-level `edited_from_status`, the status before the edit (absent on POST), since `preset.status` is `pending` on every edit notification (BUG-003), and top-level `edited_from` — the `{ name, description, tags, dyes }` this edit replaced, taken from the handler's first read (the revision-bound UPDATE succeeding proves it is exactly the text overwritten; absent on POST). **`edited_from` is the diff base** — a consumer shows `edited_from` → `preset`; discord-worker's own edit post, which diffed against the real pre-edit text, was removed (BUG-004), and `previous_values` cannot replace it: a pending edit or a rejected resubmission never creates one (so there is usually none), and the write-once snapshot can be older than the replaced text. `edited_from` is never stored (`toDeadLetterRecord` drops it with the rest of the text) and never restored. `preset.previous_values` (the revert snapshot) rides along from the row spread. **A consumer may offer Revert only when `is_edit === true`, `previous_values` is non-null and `edited_from_status === 'approved'`** — a revert approves the snapshot — and should label it as restoring `previous_values`, not as undoing this edit (approved A → flagged edit B snapshots A → B approved → a flagged edit C reverts to A). To keep that safe, `PATCH /presets/:id` takes the snapshot **only when the stored status is `approved`** (BUG-003 follow-up): an edit of a pending, rejected or flagged preset neither creates nor overwrites one. `previous_values` is write-once and only a revert clears it (an approve through `/status` leaves it), so going forward a snapshot only ever holds text that was live as `approved` (moderator- or auto-approved). `tests/handlers/edit-snapshot.test.ts` pins this, including the rejected → resubmitted → approved → edited sequence that used to offer Revert to the rejected text, and pins `edited_from` against the stored text on approved, pending and rejected edits (and against an older snapshot). The Revert rule and the diff base live in `PresetSubmissionNotification`'s TSDoc (`services/notification-service.ts`) and in `docs/architecture/api-contracts.md`.
+**Notification payload:** the `submission` payload's `preset` carries `content_revision` (a counter, not content) so the moderation embed's buttons bind to the exact revision shown; the dead-letter record keeps it for the same reason. A `submission` comes from `POST /presets` (`is_edit: false`) or from **every** `PATCH /presets/:id` that notifies (`is_edit: true`) — a flagged edit of an approved preset, a clean or flagged text edit of a pending one, and a rejected preset's resubmission — and an edit also carries top-level `edited_from_status`, the status before the edit (absent on POST), since `preset.status` is `pending` on every edit notification (BUG-003), and top-level `edited_from` — the `{ name, description, tags, dyes, example_link }` this edit replaced (legacy notifications may lack the link field), taken from the handler's first read (the revision-bound UPDATE succeeding proves it is exactly the text overwritten; absent on POST). **`edited_from` is the diff base** — a consumer shows `edited_from` → `preset`; discord-worker's own edit post, which diffed against the real pre-edit text, was removed (BUG-004), and `previous_values` cannot replace it: a pending edit or a rejected resubmission never creates one (so there is usually none), and the write-once snapshot can be older than the replaced text. `edited_from` is never stored (`toDeadLetterRecord` drops it with the rest of the text) and never restored. `preset.previous_values` (the revert snapshot) rides along from the row spread. **A consumer may offer Revert only when `is_edit === true`, `previous_values` is non-null and `edited_from_status === 'approved'`** — a revert approves the snapshot — and should label it as restoring `previous_values`, not as undoing this edit (approved A → flagged edit B snapshots A → B approved → a flagged edit C reverts to A). To keep that safe, `PATCH /presets/:id` takes the snapshot **only when the stored status is `approved`** (BUG-003 follow-up): an edit of a pending, rejected or flagged preset neither creates nor overwrites one. `previous_values` is write-once and only a revert clears it (an approve through `/status` leaves it), so going forward a snapshot only ever holds text that was live as `approved` (moderator- or auto-approved). `tests/handlers/edit-snapshot.test.ts` pins this, including the rejected → resubmitted → approved → edited sequence that used to offer Revert to the rejected text, and pins `edited_from` against the stored text on approved, pending and rejected edits (and against an older snapshot). The Revert rule and the diff base live in `PresetSubmissionNotification`'s TSDoc (`services/notification-service.ts`) and in `docs/architecture/api-contracts.md`.
 
 **Deploy consideration for the approved-only snapshot (not a fix):** rows written before this rule may still hold a snapshot taken from a pending or rejected state, and a later approval does not clear it, so such a preset — once approved and edited again — passes the consumer's Revert rule with a snapshot nobody approved. Nothing in the row records which state its snapshot came from, so the only handle is time: at deploy, every row with a non-null `previous_values` predates the rule (`SELECT id, status, updated_at FROM presets WHERE previous_values IS NOT NULL` lists them); afterwards an old snapshot can be told from a new one only by date, and `updated_at` moves on every later edit.
+
+**A-PRESETS preparation:** `POST /api/v1/presets/batch` mounts before the preset mutation router,
+but after common body/auth/user limiting. Require a configured signing secret and verified v2 bot
+auth with acting user even in development; JWT/anonymous callers are refused. Validate 1–50 raw
+IDs before deduplication, return unique request order, approved-only public serialization and
+separate `missing_ids`; request errors are not missing IDs. Banned accounts can read through it.
+
+Submission admission is a fail-closed atomic conditional event insert before moderation (503 on
+admission DB failure). Count current-window events plus same-user current-window presets not
+represented by any retained submission event for that user/preset, without a date filter in the
+anti-join. Reporting uses the same formula. Spent attempts survive create failures and deletion;
+pre-existing duplicate-to-vote conversions are free. Other daily kinds keep `reserveDailyEvent`'s
+existing fail-open backend behavior. Approval/Revert SQL checks active author bans in both stored
+identity columns inside the conditional write; revision/raw snapshot CAS and atomic audit remain.
+
+`PRESET_METADATA_MODERATION_ENABLED` is an optional local var, explicitly `false` in both Wrangler
+environments; only exact `true` enables tag/path scoring, tag/link-only text-edit charging/status
+changes and link capture in new snapshots. Path text excludes host/userinfo/query/fragment, never
+fetches supplied URLs, and tolerates malformed percent syntax safely. Privileged views enrich a
+missing legacy snapshot link to effective null only while enabled; generic row parsing and raw
+persisted CAS JSON stay unchanged. Explicit recorded values are always validated/restored even
+after disabling the flag. Missing legacy links preserve current state while disabled. Verify both
+review consumers' production receipts before a separate activation-only PR; keep FINDING-016 open.
+
+Preview mutation rules use owner/key/status CAS and actual removed-key capture. Processing failure
+retains the slot; cheap validation and proven storage/DB failure refund. Unconfirmed DB writes
+retain the slot and return 503; clean only proven-unreferenced objects. R2 cleanup is best-effort,
+not a D1/R2 transaction or a guarantee against null→image→null ABA/crash orphans.
 
 Vars: `ENVIRONMENT`, `API_VERSION = v1`, `CORS_ORIGIN`, `ADDITIONAL_CORS_ORIGINS` (CSV), `JWT_ISSUER`, `CACHE_PURGE_ZONE_ID` (production only — the `xivdyetools.app` zone id behind `shots.xivdyetools.app`, FINDING-018). Custom domain: `api.xivdyetools.app` only. The retired `api.xivdyetools.projectgalatine.com` was removed in the dashboard on 2026-10-05, and `tests/wrangler-config.test.ts` pins the single route so a deploy cannot re-attach it.
 

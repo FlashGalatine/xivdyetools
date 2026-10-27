@@ -681,11 +681,9 @@ describe('PresetsHandler', () => {
                 ).toBe(true);
             });
 
-            // BUG-049: the quota pre-check is also check-then-insert, so N
-            // concurrent submissions at 9/10 can all pass it. The handler
-            // re-counts AFTER its own INSERT lands and rolls itself back --
-            // deleting the preset AND its votes -- when the count overshot.
-            it('rolls back its own preset and votes when the quota overshot', async () => {
+            // Admission already won atomically. A later aggregate can report
+            // no remaining slots, but cannot revoke the admitted winner.
+            it('does not revoke a winner when later reporting observes higher usage', async () => {
                 const { ctx } = executionCtx();
                 let insertedPresets = 0;
 
@@ -706,9 +704,7 @@ describe('PresetsHandler', () => {
                     if (query.includes('INSERT INTO votes')) {
                         return { success: true, meta: { changes: 1 } };
                     }
-                    // Every COUNT reports an overshoot: the pre-check passes
-                    // (it runs before the insert) and the post-insert re-count
-                    // is what trips the rollback.
+                    // A later reporting read observes higher usage.
                     if (query.includes('COUNT')) {
                         return insertedPresets > 0 ? { count: 99 } : { count: 0 };
                     }
@@ -722,18 +718,20 @@ describe('PresetsHandler', () => {
                     ctx
                 );
 
-                expect(res.status).toBe(429);
+                expect(res.status).toBe(201);
+                expect((await res.json() as { remaining_submissions: number }).remaining_submissions).toBe(0);
+                expect(insertedPresets).toBe(1);
 
-                // BOTH deletes must be issued -- a preset row left behind with
-                // its votes deleted, or vice versa, is worse than either.
+                // A later usage read can report no capacity, but cannot
+                // delete an admitted preset or its committed votes.
                 expect(
                     mockDb._queries.some((q) => /DELETE FROM votes WHERE preset_id/i.test(q)),
-                    'votes were not rolled back'
-                ).toBe(true);
+                    'an admitted vote must not be deleted by reporting'
+                ).toBe(false);
                 expect(
                     mockDb._queries.some((q) => /DELETE FROM presets WHERE id/i.test(q)),
-                    'the preset was not rolled back'
-                ).toBe(true);
+                    'an admitted preset must not be deleted by reporting'
+                ).toBe(false);
             });
 
             // BUG-003: the same race on the EDIT path, which answers 409 rather
@@ -1413,7 +1411,12 @@ describe('PresetsHandler', () => {
         });
 
         it('should enforce rate limiting', async () => {
-            mockDb._setupMock(() => ({ count: 10 })); // At limit
+            mockDb._setupMock(query => {
+                if (query.includes('FROM categories')) return [{ id: 'aesthetics' }, { id: 'jobs' }];
+                if (query.includes('dye_signature')) return null;
+                if (query.includes('INSERT INTO submission_events')) return null;
+                return { count: 10 };
+            });
 
             const res = await app.request(
                 '/api/v1/presets',
@@ -1913,7 +1916,13 @@ describe('PresetsHandler', () => {
                 author_discord_id: '123',
                 name: 'My Preset',
             });
-            mockDb._setupMock(() => mockRow);
+            mockDb._setupMock((query, bindings) => {
+                if (query.startsWith('UPDATE presets SET preview_image_key')) {
+                    mockRow.preview_image_key = bindings[0] as string;
+                    mockRow.preview_image_status = 'pending';
+                }
+                return mockRow;
+            });
 
             const mockDiscordWorker = { fetch: vi.fn().mockResolvedValue(new Response('OK', { status: 200 })) };
             const envWithDiscord = createMockEnv({
@@ -1960,7 +1969,13 @@ describe('PresetsHandler', () => {
         // without spending the backoff sleeps.
         it('records a dead-letter row when the Discord notification is rejected', async () => {
             const mockRow = createMockPresetRow({ id: 'preset-123', author_discord_id: '123' });
-            mockDb._setupMock(() => mockRow);
+            mockDb._setupMock((query, bindings) => {
+                if (query.startsWith('UPDATE presets SET preview_image_key')) {
+                    mockRow.preview_image_key = bindings[0] as string;
+                    mockRow.preview_image_status = 'pending';
+                }
+                return mockRow;
+            });
 
             const mockDiscordWorker = {
                 fetch: vi.fn().mockResolvedValue(new Response('nope', { status: 400 })),
@@ -2451,6 +2466,7 @@ describe('PresetsHandler', () => {
 
         // BUG-001 (2026-07-18 audit): owner edits must not lift moderator-set statuses
         it('should keep an approved preset approved on a clean edit', async () => {
+            useCleanPerspective(env);
             const mockRow = createMockPresetRow({
                 id: 'preset-123',
                 author_discord_id: '123',
@@ -2477,16 +2493,12 @@ describe('PresetsHandler', () => {
             expect(body.moderation_status).toBe('approved');
         });
 
-        // BUG-001 (2026-07-18) + FINDING-004 (2026-08-29): a tag-only edit
-        // neither self-approves a preset nor moves any status a moderator set —
-        // *every* edit used to be written back as 'pending'. (Editing a rejected
-        // preset's text is its resubmission and does queue it; that rule and its
-        // limits live in tests/handlers/presets-quotas.test.ts.)
-        // `moderation_status` is typed `approved | pending`, so the two statuses
-        // this edit cannot produce are reported by omitting the field.
+        // Tags are moderated metadata. Rejected content resubmits; a flagged
+        // preset remains under the moderator's decision.
         it.each(['rejected', 'flagged'] as const)(
-            'should leave a %s preset alone on a tag-only edit and report no moderation_status',
+            'preserves the owner status rules for a %s preset on a tag edit',
             async (status) => {
+                env.PRESET_METADATA_MODERATION_ENABLED = 'true';
                 const mockRow = createMockPresetRow({
                     id: 'preset-123',
                     author_discord_id: '123',
@@ -2514,11 +2526,13 @@ describe('PresetsHandler', () => {
                 );
 
                 expect(res.status).toBe(200);
-                expect(await res.json()).not.toHaveProperty('moderation_status');
+                if (status === 'rejected') expect(await res.json()).toHaveProperty('moderation_status', 'pending');
+                else expect(await res.json()).not.toHaveProperty('moderation_status');
             }
         );
 
         it('should keep a pending preset pending after an owner edit', async () => {
+            const ctx = { waitUntil: () => {}, passThroughOnException: () => {} } as unknown as ExecutionContext;
             const mockRow = createMockPresetRow({
                 id: 'preset-123',
                 author_discord_id: '123',
@@ -2537,7 +2551,8 @@ describe('PresetsHandler', () => {
                     },
                     body: JSON.stringify({ tags: ['updated'] }),
                 },
-                env
+                env,
+                ctx
             );
 
             expect(res.status).toBe(200);
@@ -3023,7 +3038,7 @@ describe('PresetsHandler', () => {
         });
 
         it('a category-only edit is not "No updates provided"', async () => {
-            const row = createMockPresetRow({ author_discord_id: '123456789', status: 'approved' });
+            const row = createMockPresetRow({ author_discord_id: '123456789', status: 'approved', category_id: 'jobs' });
             mockDb._setupMock((sql: string) => {
                 if (sql.includes('FROM categories')) return [{ id: 'jobs' }, { id: 'zones' }];
                 return [row];
@@ -3565,7 +3580,7 @@ describe('PresetsHandler', () => {
         // 'Bearer test-bot-secret' + X-User-Discord-ID).
         it('clears the key and status for the author', async () => {
             mockDb._setupMock(() => [
-                { author_discord_id: '123456789', preview_image_key: 'p1/a.webp', name: 'Test' },
+                { author_discord_id: '123456789', preview_image_key: 'p1/a.webp', preview_image_status: 'pending', name: 'Test' },
             ]);
 
             const res = await app.request(
@@ -3660,7 +3675,7 @@ describe('PresetsHandler', () => {
 
         it('is idempotent when there is no image', async () => {
             mockDb._setupMock(() => [
-                { author_discord_id: '123456789', preview_image_key: null, name: 'Test' },
+                { author_discord_id: '123456789', preview_image_key: null, preview_image_status: 'none', name: 'Test' },
             ]);
 
             const res = await app.request(
@@ -3676,7 +3691,7 @@ describe('PresetsHandler', () => {
             // The DB already reflects the removal; an R2 hiccup must not 500 a
             // request whose state is already correct.
             mockDb._setupMock(() => [
-                { author_discord_id: '123456789', preview_image_key: 'p1/a.webp', name: 'Test' },
+                { author_discord_id: '123456789', preview_image_key: 'p1/a.webp', preview_image_status: 'pending', name: 'Test' },
             ]);
             (env.THUMBNAILS as unknown as MockR2Bucket).delete = () => {
                 throw new Error('R2 down');

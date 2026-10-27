@@ -2,7 +2,7 @@
 
 > Dies ist eine zur Verständlichkeit bereitgestellte Übersetzung. Maßgeblich ist die englische Fassung; weichen beide voneinander ab, gilt die englische Fassung. [Englisch](PRIVACY.md)
 
-**Zuletzt aktualisiert:** 2026-10-12 · Gilt für **xivdyetools.app** und **beta.xivdyetools.app**. Der
+**Zuletzt aktualisiert:** 2026-10-27 · Gilt für **xivdyetools.app** und **beta.xivdyetools.app**. Der
 Discord-Bot hat eine eigene Richtlinie: [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.de.md).
 
 XIV Dye Tools läuft in deinem Browser. Die Farbwerkzeuge — Paletten-Extraktor, Harmonie-Explorer,
@@ -105,17 +105,12 @@ erlaubt nichts anderes) sowie den unten genannten Drittanbietern:
    du einreichst, werden unter diesem Konto gespeichert. Das Einreichen einer Vorlage zählt als
    deine Stimme dafür; hat eine veröffentlichte Vorlage bereits dieselben Farbstoffe, wird deine
    Einreichung stattdessen zu einer Stimme für diese Vorlage. Eine Vorlage enthält, was du im
-   Formular eingibst — und, falls unsere automatische Kontrolle den neuen Namen oder die neue
-   Beschreibung einer Bearbeitung zur Prüfung zurückhält, die Fassung vor der ersten solchen
+   Formular eingibst — und, falls unsere automatische Kontrolle den neuen Namen, die neue Beschreibung, die Tags oder den Beispiellink einer Bearbeitung zur Prüfung zurückhält, die Fassung vor der ersten solchen
    Bearbeitung, aufbewahrt, bis ein Moderator diese Fassung wiederherstellt oder die Vorlage gelöscht wird —
    plus das optionale Vorschaubild, das oben unter Bilder beschrieben ist. Um ein Vorschaubild zu
    entfernen, nutze das Bearbeitungsformular der
    Vorlage; wenn du eine Vorlage unter **Meine Einreichungen** löschst, wird auch ihr Vorschaubild
-   gelöscht. Wenn du eine Vorlage einreichst oder bearbeitest, können ihr Name und ihre Beschreibung
-   zusätzlich an Googles [Perspective API](https://perspectiveapi.com/) für eine
-   Moderationsbewertung gesendet werden (optional — nur zur Inhaltsmoderation); die Anfrage weist
-   Google an, sie nicht zu speichern (`doNotStore`), und sonst wird nichts — auch keine
-   Kontoidentität — dorthin gesendet. Was sonst noch zu deinen Vorlagen aufbewahrt wird und wie
+   gelöscht. Wenn du eine Vorlage einreichst oder bearbeitest, können ihr Name, ihre Beschreibung, ihre Tags und der Pfadtext des Beispiellinks für eine Moderationsbewertung an Googles [Perspective API](https://perspectiveapi.com/) gesendet werden (optional — nur zur Inhaltsmoderation). Die Anfrage weist Google an, diese Texte nicht zu speichern (`doNotStore`). URL-Abfrageparameter, Fragmente, Zugangsdaten und Hostnamen werden aus dem Linktext ausgeschlossen. Wir senden keine Konto-IDs mit dem Text und rufen den angegebenen Beispiellink niemals ab. Was sonst noch zu deinen Vorlagen aufbewahrt wird und wie
    lange, steht unten unter *Community-Vorlagen: was wir aufbewahren*; wie du es löschst,
    unter *Deine Daten löschen*. Vorschaubilder von Vorlagen werden von `shots.xivdyetools.app`
    ausgeliefert; Avatare laden vom CDN von Discord.
@@ -160,11 +155,7 @@ Discord-Server.
 
 - **Dein Kontodatensatz, deine Vorlagen und Stimmen** (Punkt 3 oben) werden aufbewahrt, bis du sie
   löschst oder uns um ihre Löschung bittest (siehe *Deine Daten löschen*).
-- **Tageslimits.** Jede Vorlage, die du einreichst, jede von dir abgesendete Bearbeitung von Name
-  oder Beschreibung einer Vorlage und jedes Vorschaubild, das du hochlädst, wird gezählt, damit
-  die Tageslimits durchgesetzt werden können. Der Zähler enthält deine Konto-ID, die Art der
-  Aktion, die Vorlage und den Zeitpunkt und wird nach **30 Tagen** gelöscht; das Löschen der
-  Vorlage löscht ihn nicht früher.
+- **Tageslimits.** Die Tageslimits zählen Einreichungsversuche, die die Moderation erreichen, Änderungen an Name oder Beschreibung einer Vorlage und Verarbeitungsversuche von Vorschaubildern. Änderungen an Tags oder Beispiellinks zählen nur bei aktivierten erweiterten Prüfungen als Bearbeitungen; nur dann können Tags und Linkpfadtexte zur Moderation gesendet werden. Unveränderte Textfelder verbrauchen keinen Bearbeitungsplatz. Fehlgeschlagene Bilddekodierungen und Zeitüberschreitungen bleiben gezählt. Nur bei Vorschaubildversuchen werden frühe Validierungsablehnungen sowie Fehler bei der Bildspeicherung oder Datenbankoperation nicht angerechnet. Kann das Ergebnis eines Datenbankschreibvorgangs nicht bestätigt werden, bleibt der Versuch gezählt. Ein Einreichungsversuch bleibt ab Beginn der Moderation gezählt, auch wenn keine Vorlage erstellt wird. Der Zähler enthält deine Konto-ID, die Art der Aktion, die Vorlage und den Zeitpunkt und wird nach **30 Tagen** gelöscht; das Löschen der Vorlage löscht ihn nicht früher.
 - **Beiträge auf unserem Discord-Server.** Unsere Moderatoren arbeiten in zwei privaten Kanälen
   unseres Discord-Servers. Der Moderationskanal erhält jede Vorlage, jede Bearbeitung und jedes
   Vorschaubild, die geprüft werden müssen: Der Beitrag zeigt die Vorlage (etwa Name, Beschreibung,

@@ -309,6 +309,22 @@ the deleted API dev worker remains retired. Merge and production acceptance rema
 
 ## Sprint A-PRESETS — apps/presets-api
 
+**Execution update 2026-10-27 — source prepared, release pending.** Stacked on A-API PR #341
+at `239cac2b`. [Implementation and verification evidence](../2026-10-26-security/evidence/remediation-presets-2026-10-27.md).
+The maintainer chose tag/decoded-link-path moderation with narrow six-language privacy alignment,
+and charging failed decode/processing attempts while refunding cheap/proven storage failures.
+Unknown DB outcomes conservatively retain their slot. Prepare presets-api 2.7.0 MINOR and web 5.16.2,
+Discord 5.9.5, moderation 1.8.4 PATCH companions. Minimum path-review consumers are included here;
+favorite-list adoption and the other A-DISCORD/A-MODERATION findings remain in their own sprints.
+
+FINDING-016 is implemented **inactive**: both API environment flags remain explicitly false.
+Verify both consumer production deployments, then prepare a later activation-only API PR.
+Explicitly recorded Revert targets stay validated/restorable after disabling the flag; only missing legacy
+targets depend on activation. No shared package, identity-provider, dependency, schema or workflow
+change is selected. All nine primary IDs remain OPEN; fixed/outstanding counts are unchanged.
+The feature diff selects existing web/Discord betas; presets/moderation have no dedicated beta
+workflow. No manual deploy, main merge, live migration or package publication runs in this slice.
+
 After A-WORKER-KIT. Add the capped approved-only batch-by-id lookup before A-DISCORD switches favorite listing; preserve missing/failed outcomes and acting-user rate limits. Atomic quota admission can satisfy both distinct quota findings with separate assertions. Any linked-identity provider support selected here must deploy before A-MODERATION.
 
 | ID | Source | Sev/Pri | Action |
@@ -323,7 +339,7 @@ After A-WORKER-KIT. Add the capped approved-only batch-by-id lookup before A-DIS
 | [2026-10-26-deep-dive/BUG-007](../2026-10-26-deep-dive/findings/BUG-007.md) | 2026-10-26-deep-dive | LOW / P2 | Build the response from the post-vote row already read for notification or copy the successful vote result's count. |
 | [2026-10-26-deep-dive/BUG-008](../2026-10-26-deep-dive/findings/BUG-008.md) | 2026-10-26-deep-dive | LOW / P2 | Compare-and-set against captured image state, inspect changes, remove newly stored object on lost/deleted row, and clean only the replaced key for the winning update. |
 
-**Ends with:** `pnpm turbo run build type-check lint test --filter=...xivdyetools-presets-api` and whole-graph gates before merge → merge → `deploy-presets-api.yml` (production); beta workflow only when explicitly selected.
+**Ends with:** scoped and whole-graph gates, dry runs, draft stacked PR and actual CI/web+Discord beta receipts. A separately authorized main merge runs the four app production workflows; verify both review consumers before a later metadata-activation PR. No preset/moderation beta or manual deploy is selected.
 
 ## Sprint A-OAUTH — apps/oauth
 

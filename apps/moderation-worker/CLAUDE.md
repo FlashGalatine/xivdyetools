@@ -308,3 +308,19 @@ npx vitest run -t "ban"                                   # Pattern match
 5. `npm run deploy:production`.
 6. If slash command schemas changed: `npm run register-commands` (with prod `DISCORD_CLIENT_ID = 1453806659708129374`). The Sprint 4 (FINDING-017) release removed the `reason` option from `/preset moderate`, so re-register against **both** the dev and production moderation apps — Discord keeps showing the old option until then.
 7. Confirm `https://moderation-bot.xivdyetools.app/health` returns `{ status: 'ok' }`.
+
+## A-PRESETS link review companion
+
+Preset review messages show complete decoded example-link path text in `Links` and, when offered,
+the effective target in `Revert link`. Do not render hostname, credentials, query or fragment or
+fetch supplied links. Escape dangerous controls visibly inside one inline-code pair; never silently
+truncate required paths. Missing link metadata is unavailable, distinct from explicit null.
+Keep Reject available when required unsafe/oversized content withholds Approve/Revert. The
+moderation consumer re-checks fresh revision/status and displayed link fields before publishing,
+refreshing old messages before action. Typed-ID confirmations use the same completeness guard.
+No command registration or public shared type change accompanies this patch.
+
+Presets API extended metadata moderation remains default off. Verify both consumer production
+deployments before preparing a separate activation-only API PR. Explicitly recorded snapshot links
+remain validated/restored even after disabling the API flag; missing legacy links preserve current
+state while disabled and clear it while enabled. This companion grants no manual deployment.

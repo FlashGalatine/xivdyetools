@@ -80,6 +80,7 @@ import {
 } from './services/i18n.js';
 import { createTranslator, createUserTranslator, type Translator } from './services/bot-i18n.js';
 import { sendModerationNotification } from './handlers/commands/preset-notifications.js';
+import type { PresetLinkMetadata } from './utils/preset-link-review.js';
 import {
   validateEnv,
   logValidationErrors,
@@ -162,13 +163,14 @@ function formatDyesForEmbed(dyeIds: number[]): string {
 
 /**
  * BUG-003 / Sprint 9: a webhook text block — the payload's `edited_from` or
- * `preset.previous_values` — or null unless it has the full four-field shape.
+ * `preset.previous_values` — or null unless it has the required four-field shape.
+ * Optional link metadata retains missing, null and malformed-present states.
  * It is runtime data from another service, and the moderation builder
  * dereferences every field of the diff's original — a malformed block is
  * dropped (no diff from it; no Revert, if it was the snapshot) rather than
  * failing the post, which presets-api would retry and then dead-letter.
  */
-function readPresetText(raw: unknown): PresetPreviousValues | null {
+function readPresetText(raw: unknown): (PresetPreviousValues & PresetLinkMetadata) | null {
   if (typeof raw !== 'object' || raw === null) return null;
   const { name, description, tags, dyes } = raw as Record<string, unknown>;
   if (
@@ -181,7 +183,9 @@ function readPresetText(raw: unknown): PresetPreviousValues | null {
   ) {
     return null;
   }
-  return { name, description, tags, dyes };
+  return { name, description, tags, dyes,
+    ...(Object.hasOwn(raw, 'example_link') ? { example_link: (raw as Record<string, unknown>).example_link } : {}),
+  };
 }
 
 // Define context variables type
@@ -446,8 +450,8 @@ app.post('/webhooks/preset-submission', async (c) => {
     //    presets-api that predates it omits the field, and only then does the
     //    diff fall back to the revert snapshot (headed as such). A present but
     //    malformed `edited_from` gives no diff — on a presets-api that sends
-    //    it, the snapshot is never a diff base. Either block holds only name,
-    //    description, tags and dyes, so it is laid over the current preset.
+    //    it, the snapshot is never a diff base. Preserve its optional link
+    //    without inheriting the current link when older metadata omits it.
     //  - Revert target: `preset.previous_values`. Revert restores it AND
     //    approves the preset, so it is offered only when the preset was live
     //    before this edit; on a pending or rejected preset the snapshot may be
@@ -467,7 +471,7 @@ app.post('/webhooks/preset-submission', async (c) => {
         kind: isEdit ? 'edit' : 'new',
         preset,
         ...(diffBase
-          ? { original: { ...preset, ...diffBase }, originalIsRevertSnapshot: diffFromSnapshot }
+          ? { original: { id: preset.id, category_id: preset.category_id, ...diffBase }, originalIsRevertSnapshot: diffFromSnapshot }
           : {}),
         ...(revertTo ? { revertTo } : {}),
         contentRevision: preset.content_revision,

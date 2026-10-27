@@ -351,3 +351,19 @@ npm run test:integration                                  # Integration suite
 4. Smoke-test core commands in the test guild.
 5. `npm run deploy:production` — or simply merge to `main`: `deploy-discord-worker.yml` deploys `--env production` **and then runs `register-commands` itself** (`DISCORD_TOKEN` from repo secrets), so a manual `npm run register-commands` is only needed for out-of-band schema pushes. The beta workflow registers guild-scoped commands the same way.
 6. Hit `https://bot.xivdyetools.app/health` to confirm the new build is live.
+
+## A-PRESETS link review companion
+
+Preset review messages show complete decoded example-link path text in `Links` and, when offered,
+the effective target in `Revert link`. Do not render hostname, credentials, query or fragment or
+fetch supplied links. Escape dangerous controls visibly inside one inline-code pair; never silently
+truncate required paths. Missing link metadata is unavailable, distinct from explicit null.
+Keep Reject available when required unsafe/oversized content withholds Approve/Revert. The
+moderation consumer re-checks fresh revision/status and displayed link fields before publishing,
+refreshing old messages before action. Typed-ID confirmations use the same completeness guard.
+No command registration or public shared type change accompanies this patch.
+
+Presets API extended metadata moderation remains default off. Verify both consumer production
+deployments before preparing a separate activation-only API PR. Explicitly recorded snapshot links
+remain validated/restored even after disabling the API flag; missing legacy links preserve current
+state while disabled and clear it while enabled. This companion grants no manual deployment.
