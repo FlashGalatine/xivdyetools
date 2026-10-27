@@ -157,6 +157,27 @@ this unmerged implementation, so the status-basis counts remain unchanged.
 
 Publish the deprecation MINOR before any removal. Also harden the quadratic GPOSERS sink as a companion to the upstream-name finding assigned to A-API. Preserve exported names when relocating live limits/types; add the legacy API deprecation record.
 
+**Execution status (2026-10-27): implementation verified; feature PR and release pending.**
+Fresh npm checks returned core 5.15.0 and bot-logic 4.11.0. This sprint prepares core
+**5.16.0 MINOR**, web **5.16.1 PATCH** and Discord **5.9.2 PATCH**. The nine live contracts
+and the 8,192-byte cap retain their exported names; six legacy symbols are deprecated,
+with implementations and parity tests retained until the separately gated core 6 release.
+BUG-003 keeps the existing 256 UTF-16-unit cap without splitting surrogate pairs. Web filename
+truncation stays in A-WEB. FINDING-002's core GPOSERS companion preserves text output while
+making newline joining linear; API body/name bounds and SVG fitting remain in A-API/A-SVG.
+[Implementation evidence](../2026-10-26-xivcharakit-dead-code/evidence/remediation-core-2026-10-27.md).
+All 62 graph tasks, the five affected app bundle gates and independent task/final reviews pass.
+Public export/declaration contracts are preserved; the package smoke check passes. Feature
+push/beta verification, merge, registry publication and production acceptance remain pending.
+
+**Actual rollout:** existing `workspace:*` consumers bundle the changed source. A core-path
+merge triggers production web, Discord, API, OpenGraph and moderation workflows independently
+of npm publication. Feature-branch pushes can replace the shared web, Discord and OpenGraph
+betas; retain those workflows and validate the affected apps, as selected for the first sprint.
+Verify core publication before the later SVG/bot-logic releases. API/OpenGraph/moderation need
+bundle validation here, but no version bump for these unchanged execution paths. No merge,
+package publication or manual production deployment is authorized by this execution record.
+
 | ID | Source | Sev/Pri | Action |
 |---|---|---|---|
 | [2026-10-26-xivcharakit-dead-code/DEAD-002](../2026-10-26-xivcharakit-dead-code/findings/DEAD-002.md) | 2026-10-26-xivcharakit-dead-code | HIGH / NONE · NONE · REMOVE | Fix the stale comments, docs and READMEs (shader-table reader claims, "lands in the stacked change", `@entrypoint` docblocks on `chara.ts` and `copy-chara-notices.mjs`, core CLAUDE.md / services.md / overview.md, the npm README and NOTICE credit for xivcharakit). |
@@ -165,7 +186,7 @@ Publish the deprecation MINOR before any removal. Also harden the quadratic GPOS
 | [2026-10-26-xivcharakit-dead-code/DEAD-021](../2026-10-26-xivcharakit-dead-code/findings/DEAD-021.md) | 2026-10-26-xivcharakit-dead-code | HIGH / MEDIUM · NONE · REFACTOR FIRST | Relocate the live slot, result and `StainIdLookup` types out of `chara-parser.ts` / `chara-resolver.ts`; type `race` as `Race \| null`; same exported names. In the same release add `@deprecated` to the legacy pair and its legacy-only types plus a `DEPRECATIONS.md` entry targeting 6.0.0 (phase 1 of [2026-10-26-xivcharakit-dead-code/DEAD-024](../2026-10-26-xivcharakit-dead-code/findings/DEAD-024.md)). |
 | [2026-10-26-deep-dive/BUG-003](../2026-10-26-deep-dive/findings/BUG-003.md) | 2026-10-26-deep-dive | LOW / P2 | Truncate on code-point boundaries while preserving a documented code-unit cap; coordinate with web file-name truncation. Publish core before consumers. |
 
-**Ends with:** `pnpm turbo run build type-check lint test --filter=...@xivdyetools/core` and whole-graph gates before merge → version/CHANGELOG decision → merge → Actions **Publish Packages to npm** for `@xivdyetools/core`; verify registry before downstream adoption.
+**Ends with:** `pnpm turbo run build type-check lint test --filter=...@xivdyetools/core`, whole-graph and affected-app bundle gates → feature PR and actual automatic-beta receipts → separately authorized merge (deploys the five apps above) → Actions **Publish Packages to npm** for core 5.16.0 and registry verification → recorded production acceptance. Keep legacy removal and remaining FINDING-002 work open.
 
 ## Sprint A-SVG — packages/svg
 

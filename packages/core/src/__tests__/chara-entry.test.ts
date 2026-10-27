@@ -77,6 +77,7 @@ describe('@xivdyetools/core/chara import graph', () => {
     'services/CharacterColorService.ts',
     'services/chara/chara-palette-provider.ts',
     'services/chara/chara-shader-colors.ts',
+    'services/chara/chara-parser.ts',
   ].map((file) => resolve(srcDir, file));
   const dataDir = resolve(srcDir, 'data');
   const isForbiddenPackage = (specifier: string): boolean =>
@@ -116,7 +117,7 @@ describe('@xivdyetools/core/chara import graph', () => {
     );
   });
 
-  it('reaches no color, localization, dye, palette or data module and no logger/spectral.js', () => {
+  it('reaches no legacy parser, color, localization, dye, palette or data module and no logger/spectral.js', () => {
     const { offending, listing } = offenders(entryFile);
     expect(offending, listing).toEqual([]);
   });

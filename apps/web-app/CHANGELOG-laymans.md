@@ -2,6 +2,11 @@
 
 ---
 
+## Web-App Version 5.16.1 — October 27, 2026
+
+### Swatch Matcher and Glamour Reader: character labels
+- **Long labels keep emoji intact.** Imported character nicknames and creating-tool labels no longer end in a broken symbol when shortened.
+
 ## Web-App Version 5.16.0 — October 26, 2026
 
 ### Swatch Matcher and Glamour Reader: a new character-file reader

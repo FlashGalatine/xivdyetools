@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.16.1] - 2026-10-27
+
+### Fixed
+
+- **Long imported character labels no longer end in a split surrogate pair.** Core 5.16.0
+  keeps nicknames and creating-tool labels within the existing 256 UTF-16-unit cap while
+  preserving complete supplementary characters.
+
+### Security
+
+- Adopt core 5.16.0's linear GPOSERS value joining without changing exported list contents
+  or ring grouping. This patch includes no API removals or new worker protocol fields.
+
 ## [5.16.0] - 2026-10-26
 
 The web half of the `xivcharakit` integration (Tasks 4-5 of the 2026-10-22 plan), on core 5.15.0.

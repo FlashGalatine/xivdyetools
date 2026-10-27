@@ -20,4 +20,4 @@
 - **Maintainer decision:** Cut core 6.0.0 to remove the legacy parser and resolver. Gate it on a shipped @deprecated MINOR with a DEPRECATIONS.md entry and on closed beta acceptance (web-app 5.16.0 and discord-worker 5.9.0 confirmed in production).
 
 ## Status
-OPEN
+OPEN — Phase 1 prepared in A-CORE on 2026-10-27: six legacy symbols deprecated for core 5.16.0, with implementations, exports and host/library parity retained. Core 6 removal still requires publication, consumer acceptance and bot-logic oracle migration. [Evidence](../evidence/remediation-core-2026-10-27.md).

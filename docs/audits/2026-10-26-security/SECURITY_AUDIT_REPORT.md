@@ -210,7 +210,7 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 | ID | Status | Commit |
 |---|---|---|
 | FINDING-001 | OPEN | — |
-| FINDING-002 | OPEN | — |
+| FINDING-002 | OPEN — core companion prepared; API/SVG outstanding | [A-CORE evidence](../2026-10-26-xivcharakit-dead-code/evidence/remediation-core-2026-10-27.md) |
 | FINDING-003 | OPEN | — |
 | FINDING-004 | OPEN — opt-in worker-kit support prepared; consumer adoption/deployment pending | [Implementation evidence](evidence/remediation-worker-kit-2026-10-27.md) |
 | FINDING-005 | OPEN | — |

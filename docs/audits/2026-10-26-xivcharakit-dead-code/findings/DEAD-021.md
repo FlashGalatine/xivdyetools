@@ -18,4 +18,4 @@
 - Published: core 5.15.0 is published and these names are on its barrel. Relocating them with the same names and shapes is NONE. Dropping or renaming any of them would be MAJOR.
 
 ## Status
-OPEN
+OPEN — A-CORE source prepared on 2026-10-27: nine live contracts moved with declaration shapes preserved; legacy deprecation and migration record prepared for core 5.16.0. Merge/publication pending. [Evidence](../evidence/remediation-core-2026-10-27.md).

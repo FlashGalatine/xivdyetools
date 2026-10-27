@@ -18,4 +18,4 @@
 - Published: core 5.15.0 local == npm latest. No export changes; README.md and NOTICE ship in the tarball ("files": dist, README.md, NOTICE), so the credits fix appears on the next core publish only.
 
 ## Status
-OPEN
+OPEN — A-CORE source prepared on 2026-10-27: comments, facade docs and npm attribution refreshed; already-correct entrypoint/shader text retained. Merge and core 5.16.0 publication pending. [Evidence](../evidence/remediation-core-2026-10-27.md).

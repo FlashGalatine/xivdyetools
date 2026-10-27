@@ -18,4 +18,4 @@
 - Published: Exported from the root of @xivdyetools/core 5.15.0 (npm latest) and not from /chara. Moving the definition between internal modules while keeping the root export leaves the published API unchanged.
 
 ## Status
-OPEN
+OPEN — A-CORE source prepared on 2026-10-27: limit moved to chara-limits.ts with legacy reexport and root name/value retained; runtime-closure regression added. Merge/core 5.16.0 release pending. [Evidence](../evidence/remediation-core-2026-10-27.md).

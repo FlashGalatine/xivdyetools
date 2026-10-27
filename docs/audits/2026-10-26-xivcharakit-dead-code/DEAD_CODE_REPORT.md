@@ -159,8 +159,8 @@ Source / configuration audit; read-only. No build, bundle measurement or workerd
 | ID | Status | Commit |
 |---|---|---|
 | DEAD-001 | OPEN | — |
-| DEAD-002 | OPEN | — |
-| DEAD-003 | OPEN | — |
+| DEAD-002 | OPEN — source prepared; release pending | [A-CORE evidence](evidence/remediation-core-2026-10-27.md) |
+| DEAD-003 | OPEN — source prepared; release pending | [A-CORE evidence](evidence/remediation-core-2026-10-27.md) |
 | DEAD-004 | OPEN | — |
 | DEAD-005 | OPEN | — |
 | DEAD-006 | OPEN | — |
@@ -177,11 +177,11 @@ Source / configuration audit; read-only. No build, bundle measurement or workerd
 | DEAD-017 | OPEN | — |
 | DEAD-018 | OPEN | — |
 | DEAD-019 | OPEN | — |
-| DEAD-020 | OPEN | — |
-| DEAD-021 | OPEN | — |
+| DEAD-020 | OPEN — source prepared; release pending | [A-CORE evidence](evidence/remediation-core-2026-10-27.md) |
+| DEAD-021 | OPEN — source prepared; release pending | [A-CORE evidence](evidence/remediation-core-2026-10-27.md) |
 | DEAD-022 | OPEN | — |
 | DEAD-023 | OPEN | — |
-| DEAD-024 | OPEN | — |
+| DEAD-024 | OPEN — phase 1 prepared; core 6 removal gated | [A-CORE evidence](evidence/remediation-core-2026-10-27.md) |
 | DEAD-025 | KEEP (no action) | — |
 | DEAD-026 | KEEP (no action) | — |
 | DEAD-027 | KEEP (no action) | — |

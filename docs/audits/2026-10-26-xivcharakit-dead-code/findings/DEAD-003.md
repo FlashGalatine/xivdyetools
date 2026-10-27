@@ -15,4 +15,4 @@
 - Published: core 5.15.0 is published, but only a JSDoc tag changes. The export surface and the .d.ts types stay the same, so this is not a semver event and can go out with the next core release.
 
 ## Status
-OPEN
+OPEN — A-CORE source prepared on 2026-10-27: seven stale barrel tags removed with exported names preserved. Independent review passed; merge pending. [Evidence](../evidence/remediation-core-2026-10-27.md).

@@ -456,6 +456,22 @@ This package lives in the [xivdyetools monorepo](https://github.com/FlashGalatin
 
 (`apps/stoat-worker` reaches core only indirectly, through `@xivdyetools/bot-logic`.)
 
+## Character files
+
+The current `.chara` path uses [xivcharakit](https://github.com/FlashGalatine/XIVCharaKit):
+`inspectCharaForTools(bytesOrText)` reads within the 8,192-byte limit, and
+`resolveCharaForTools(inspection, characterColors, dyeLookup?)` produces the application-facing
+character result. A palette-free worker can import the reader and
+`resolveCharaWithProvider(inspection, provider, dyeLookup?)` from `@xivdyetools/core/chara`.
+Producer and nickname labels retain a 256 UTF-16-unit cap without splitting a surrogate pair.
+
+The legacy `parseCharaFile` / `resolveCharaColors` pair and its legacy-only types are deprecated
+in 5.16.0, with removal reserved for 6.0.0 after the migration gates in
+[DEPRECATIONS.md](../../DEPRECATIONS.md). Existing exports and legacy behavior remain available.
+The shared size limit and live slot/result types keep their public names; callers do not need
+new import paths. See the [integration notes](../../docs/research/2026-10-22-xivcharakit-integration.md)
+when migrating between the legacy and current result/diagnostic contracts.
+
 ## Support
 
 - **Issues**: [GitHub Issues](https://github.com/FlashGalatine/xivdyetools/issues)
@@ -467,6 +483,7 @@ This package lives in the [xivdyetools monorepo](https://github.com/FlashGalatin
 - **[XIVAPI](https://xivapi.com/)** — dye names in English, Japanese, German, and French. Korean and Chinese names are manually sourced; XIVAPI does not serve them.
 - **[Universalis](https://universalis.app/)** (MIT) — market board price data consumed by `APIService`.
 - **[spectral.js](https://github.com/rvanwijnen/spectral.js)** (MIT) — Kubelka-Munk spectral paint mixing.
+- **[xivcharakit](https://github.com/FlashGalatine/XIVCharaKit)** (MIT) — character-file reading and interpretation behind the current `.chara` facade. Its license and third-party notices remain with that package; see this package's [NOTICE](./NOTICE) for attribution.
 - Color-vision deficiency simulation uses the matrices from **Brettel, Viénot & Mollon (1997)**, *"Computerized simulation of color appearance for dichromats"*, JOSA A 14(10).
 - Perceptual color difference uses **CIE76** and **CIEDE2000** as published by the International Commission on Illumination.
 
@@ -487,7 +504,7 @@ This package lives in the [xivdyetools monorepo](https://github.com/FlashGalatin
 
 MIT © 2025-2026 Flash Galatine — see [LICENSE](./LICENSE).
 
-Third-party data attributions (the Munsell hue wheel) are in [NOTICE](./NOTICE).
+Third-party attributions, including the Munsell hue wheel and xivcharakit, are in [NOTICE](./NOTICE).
 
 ## Legal Notice
 
