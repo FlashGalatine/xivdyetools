@@ -1,0 +1,19 @@
+{
+  "apps/api-worker": "0.21.0",
+  "apps/discord-worker": "5.9.0",
+  "apps/image-worker": "1.3.4",
+  "apps/moderation-worker": "1.8.2",
+  "apps/oauth": "3.1.3",
+  "apps/og-worker": "2.12.0",
+  "apps/presets-api": "2.6.1",
+  "apps/stoat-worker": "0.3.3",
+  "apps/web-app": "5.16.0",
+  "packages/auth": "2.0.2",
+  "packages/bot-logic": "4.11.0",
+  "packages/core": "5.15.0",
+  "packages/logger": "2.3.0",
+  "packages/svg": "4.4.0",
+  "packages/test-utils": "3.0.0",
+  "packages/types": "3.3.0",
+  "packages/worker-kit": "1.5.0"
+}

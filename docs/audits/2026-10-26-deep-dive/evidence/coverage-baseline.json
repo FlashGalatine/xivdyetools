@@ -1,0 +1,546 @@
+{
+  "apps/api-worker": {
+    "lines": {
+      "total": 1333,
+      "covered": 1279,
+      "skipped": 0,
+      "pct": 95.94
+    },
+    "statements": {
+      "total": 1462,
+      "covered": 1393,
+      "skipped": 0,
+      "pct": 95.28
+    },
+    "functions": {
+      "total": 277,
+      "covered": 263,
+      "skipped": 0,
+      "pct": 94.94
+    },
+    "branches": {
+      "total": 956,
+      "covered": 882,
+      "skipped": 0,
+      "pct": 92.25
+    },
+    "branchesTrue": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "apps/discord-worker": {
+    "lines": {
+      "total": 2549,
+      "covered": 2374,
+      "skipped": 0,
+      "pct": 93.13
+    },
+    "statements": {
+      "total": 2805,
+      "covered": 2590,
+      "skipped": 0,
+      "pct": 92.33
+    },
+    "functions": {
+      "total": 439,
+      "covered": 407,
+      "skipped": 0,
+      "pct": 92.71
+    },
+    "branches": {
+      "total": 2087,
+      "covered": 1764,
+      "skipped": 0,
+      "pct": 84.52
+    },
+    "branchesTrue": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "apps/image-worker": {
+    "lines": {
+      "total": 292,
+      "covered": 280,
+      "skipped": 0,
+      "pct": 95.89
+    },
+    "statements": {
+      "total": 321,
+      "covered": 295,
+      "skipped": 0,
+      "pct": 91.9
+    },
+    "functions": {
+      "total": 38,
+      "covered": 37,
+      "skipped": 0,
+      "pct": 97.36
+    },
+    "branches": {
+      "total": 228,
+      "covered": 200,
+      "skipped": 0,
+      "pct": 87.71
+    },
+    "branchesTrue": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": "Unknown"
+    }
+  },
+  "apps/moderation-worker": {
+    "lines": {
+      "total": 871,
+      "covered": 814,
+      "skipped": 0,
+      "pct": 93.45
+    },
+    "statements": {
+      "total": 922,
+      "covered": 856,
+      "skipped": 0,
+      "pct": 92.84
+    },
+    "functions": {
+      "total": 154,
+      "covered": 144,
+      "skipped": 0,
+      "pct": 93.5
+    },
+    "branches": {
+      "total": 715,
+      "covered": 615,
+      "skipped": 0,
+      "pct": 86.01
+    },
+    "branchesTrue": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "apps/oauth": {
+    "lines": {
+      "total": 581,
+      "covered": 559,
+      "skipped": 0,
+      "pct": 96.21
+    },
+    "statements": {
+      "total": 590,
+      "covered": 565,
+      "skipped": 0,
+      "pct": 95.76
+    },
+    "functions": {
+      "total": 64,
+      "covered": 60,
+      "skipped": 0,
+      "pct": 93.75
+    },
+    "branches": {
+      "total": 425,
+      "covered": 392,
+      "skipped": 0,
+      "pct": 92.23
+    },
+    "branchesTrue": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "apps/og-worker": {
+    "lines": {
+      "total": 1022,
+      "covered": 1004,
+      "skipped": 0,
+      "pct": 98.23
+    },
+    "statements": {
+      "total": 1102,
+      "covered": 1079,
+      "skipped": 0,
+      "pct": 97.91
+    },
+    "functions": {
+      "total": 223,
+      "covered": 223,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 809,
+      "covered": 762,
+      "skipped": 0,
+      "pct": 94.19
+    },
+    "branchesTrue": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "apps/presets-api": {
+    "lines": {
+      "total": 1417,
+      "covered": 1365,
+      "skipped": 0,
+      "pct": 96.33
+    },
+    "statements": {
+      "total": 1526,
+      "covered": 1458,
+      "skipped": 0,
+      "pct": 95.54
+    },
+    "functions": {
+      "total": 208,
+      "covered": 202,
+      "skipped": 0,
+      "pct": 97.11
+    },
+    "branches": {
+      "total": 1097,
+      "covered": 1003,
+      "skipped": 0,
+      "pct": 91.43
+    },
+    "branchesTrue": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "apps/stoat-worker": {
+    "lines": {
+      "total": 277,
+      "covered": 276,
+      "skipped": 0,
+      "pct": 99.63
+    },
+    "statements": {
+      "total": 303,
+      "covered": 301,
+      "skipped": 0,
+      "pct": 99.33
+    },
+    "functions": {
+      "total": 48,
+      "covered": 47,
+      "skipped": 0,
+      "pct": 97.91
+    },
+    "branches": {
+      "total": 166,
+      "covered": 150,
+      "skipped": 0,
+      "pct": 90.36
+    },
+    "branchesTrue": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "apps/web-app": {
+    "lines": {
+      "total": 17250,
+      "covered": 15428,
+      "skipped": 0,
+      "pct": 89.43
+    },
+    "statements": {
+      "total": 18558,
+      "covered": 16338,
+      "skipped": 0,
+      "pct": 88.03
+    },
+    "functions": {
+      "total": 2742,
+      "covered": 2347,
+      "skipped": 0,
+      "pct": 85.59
+    },
+    "branches": {
+      "total": 9344,
+      "covered": 7347,
+      "skipped": 0,
+      "pct": 78.62
+    },
+    "branchesTrue": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "packages/auth": {
+    "lines": {
+      "total": 236,
+      "covered": 227,
+      "skipped": 0,
+      "pct": 96.18
+    },
+    "statements": {
+      "total": 262,
+      "covered": 249,
+      "skipped": 0,
+      "pct": 95.03
+    },
+    "functions": {
+      "total": 35,
+      "covered": 33,
+      "skipped": 0,
+      "pct": 94.28
+    },
+    "branches": {
+      "total": 167,
+      "covered": 154,
+      "skipped": 0,
+      "pct": 92.21
+    },
+    "branchesTrue": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "packages/bot-logic": {
+    "lines": {
+      "total": 836,
+      "covered": 834,
+      "skipped": 0,
+      "pct": 99.76
+    },
+    "statements": {
+      "total": 949,
+      "covered": 944,
+      "skipped": 0,
+      "pct": 99.47
+    },
+    "functions": {
+      "total": 183,
+      "covered": 183,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 656,
+      "covered": 634,
+      "skipped": 0,
+      "pct": 96.64
+    },
+    "branchesTrue": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "packages/core": {
+    "lines": {
+      "total": 2874,
+      "covered": 2785,
+      "skipped": 0,
+      "pct": 96.9
+    },
+    "statements": {
+      "total": 3103,
+      "covered": 2997,
+      "skipped": 0,
+      "pct": 96.58
+    },
+    "functions": {
+      "total": 681,
+      "covered": 676,
+      "skipped": 0,
+      "pct": 99.26
+    },
+    "branches": {
+      "total": 2086,
+      "covered": 1958,
+      "skipped": 0,
+      "pct": 93.86
+    },
+    "branchesTrue": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "packages/logger": {
+    "lines": {
+      "total": 301,
+      "covered": 290,
+      "skipped": 0,
+      "pct": 96.34
+    },
+    "statements": {
+      "total": 305,
+      "covered": 294,
+      "skipped": 0,
+      "pct": 96.39
+    },
+    "functions": {
+      "total": 63,
+      "covered": 63,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 215,
+      "covered": 196,
+      "skipped": 0,
+      "pct": 91.16
+    },
+    "branchesTrue": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "packages/svg": {
+    "lines": {
+      "total": 1294,
+      "covered": 1280,
+      "skipped": 0,
+      "pct": 98.91
+    },
+    "statements": {
+      "total": 1373,
+      "covered": 1357,
+      "skipped": 0,
+      "pct": 98.83
+    },
+    "functions": {
+      "total": 131,
+      "covered": 131,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 683,
+      "covered": 645,
+      "skipped": 0,
+      "pct": 94.43
+    },
+    "branchesTrue": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "packages/test-utils": {
+    "lines": {
+      "total": 354,
+      "covered": 340,
+      "skipped": 0,
+      "pct": 96.04
+    },
+    "statements": {
+      "total": 370,
+      "covered": 356,
+      "skipped": 0,
+      "pct": 96.21
+    },
+    "functions": {
+      "total": 82,
+      "covered": 79,
+      "skipped": 0,
+      "pct": 96.34
+    },
+    "branches": {
+      "total": 228,
+      "covered": 215,
+      "skipped": 0,
+      "pct": 94.29
+    },
+    "branchesTrue": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "packages/types": {
+    "lines": {
+      "total": 69,
+      "covered": 68,
+      "skipped": 0,
+      "pct": 98.55
+    },
+    "statements": {
+      "total": 78,
+      "covered": 77,
+      "skipped": 0,
+      "pct": 98.71
+    },
+    "functions": {
+      "total": 15,
+      "covered": 15,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 41,
+      "covered": 41,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branchesTrue": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "packages/worker-kit": {
+    "lines": {
+      "total": 396,
+      "covered": 395,
+      "skipped": 0,
+      "pct": 99.74
+    },
+    "statements": {
+      "total": 412,
+      "covered": 409,
+      "skipped": 0,
+      "pct": 99.27
+    },
+    "functions": {
+      "total": 72,
+      "covered": 70,
+      "skipped": 0,
+      "pct": 97.22
+    },
+    "branches": {
+      "total": 273,
+      "covered": 258,
+      "skipped": 0,
+      "pct": 94.5
+    },
+    "branchesTrue": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    }
+  }
+}

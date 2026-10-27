@@ -1,0 +1,19 @@
+packages/core/src/data/locales\de.json: 71 codepoints | Latin-1=5
+packages/core/src/data/locales\en.json: 68 codepoints |
+packages/core/src/data/locales\fr.json: 69 codepoints | Latin-1=7
+packages/core/src/data/locales\ja.json: 177 codepoints | Katakana=72, CJK Unified=69, Hiragana=6, Fullwidth=2
+packages/core/src/data/locales\ko.json: 289 codepoints | Hangul=259
+packages/core/src/data/locales\zh.json: 343 codepoints | CJK Unified=313, Fullwidth=2
+packages/bot-logic/src/i18n/locales\de.json: 114 codepoints | Symbols=11, Latin-1=8, Greek=2, Other=1, Latin Ext Add=1
+   Other: U+FE0F(️)
+packages/bot-logic/src/i18n/locales\en.json: 105 codepoints | Symbols=10, Latin-1=2, Greek=2, Other=1
+   Other: U+FE0F(️)
+packages/bot-logic/src/i18n/locales\fr.json: 121 codepoints | Latin-1=18, Symbols=11, Greek=2, Other=1
+   Other: U+FE0F(️)
+packages/bot-logic/src/i18n/locales\ja.json: 652 codepoints | CJK Unified=417, Katakana=73, Hiragana=55, Symbols=9, Fullwidth=7, CJK Punct=5, Latin-1=2, Greek=2, Other=1
+   Other: U+FE0F(️)
+packages/bot-logic/src/i18n/locales\ko.json: 565 codepoints | Hangul=459, Symbols=10, Latin-1=2, Greek=2, Fullwidth=2, Other=1
+   Other: U+FE0F(️)
+packages/bot-logic/src/i18n/locales\zh.json: 774 codepoints | CJK Unified=665, Symbols=10, Fullwidth=9, CJK Punct=4, Latin-1=2, Greek=2, Other=1
+   Other: U+FE0F(️)
+apps/og-worker/src/services/og-strings.ts: 515 codepoints | CJK Unified=202, Hangul=146, Katakana=53, Hiragana=24, Latin-1=10, CJK Punct=3, Fullwidth=3, Symbols=2

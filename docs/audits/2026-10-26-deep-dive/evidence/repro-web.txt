@@ -1,0 +1,19 @@
+pnpm : (!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become
+the default in a future major version of Vite:
+At C:\dev\XIVProjects\xivdyetools\.claude\worktrees\deep-i18n-audits-20261026\docs\audits\2026-10-26-deep-dive\evidence
+\scripts\run-repro.ps1:15 char:3
++   pnpm --filter xivdyetools-web-app exec vitest run --config .audit-r ...
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((!) Your Vite c...ersion of Vite::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+  - `__dirname` (vitest.config.ts:102:20). Use `import.meta.dirname` instead
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.5 C:/dev/XIVProjects/xivdyetools/.claude/worktrees/deep-i18n-audits-20261026/apps/web-app
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  20:22:45
+   Duration  4.78s (environment 70%, transform 11%, setup 11%, tests 6%, import 2%, worker 1%)
