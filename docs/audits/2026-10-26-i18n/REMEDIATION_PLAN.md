@@ -288,8 +288,11 @@ FINDING-029 remains OPEN: historical tables/metadata and font subsets are unchan
 authenticating their provenance requires a controlled refresh. DEAD-004's web-app comment
 cascade remains in A-WEB. Source preparation does not increase fixed-ID counts. All 62 graph
 tasks, root checks, 990 API tests with enforced coverage, 2/2 hermetic runtime cases and the
-production dry run pass; independent group reviews approve preparation. Feature PR and
-actual remote CI receipts are pending. No existing API beta is selected or new workflow added;
+production dry run pass; independent group and whole-branch reviews approve preparation.
+Source commit `0398a058` passes [CI including 167 Playwright tests](https://github.com/FlashGalatine/xivdyetools/actions/runs/40539274766).
+[Draft PR #341](https://github.com/FlashGalatine/xivdyetools/pull/341) is stacked on #340;
+the receipt-only follow-up changes no runtime source. The actual source workflow inventory
+contains CI only. No existing API beta is selected or new workflow added;
 the deleted API dev worker remains retired. Merge and production acceptance remain pending.
 
 | ID | Source | Sev/Pri | Action |

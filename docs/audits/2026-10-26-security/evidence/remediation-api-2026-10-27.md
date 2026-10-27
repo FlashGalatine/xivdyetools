@@ -168,7 +168,18 @@ weakening source or checks. No deployment command runs without `--dry-run`.
 API-only source/docs paths select the production API workflow on a future main merge.
 Existing feature-branch beta filters do not select these paths; no beta workflow is added.
 Source preparation, dry-run validation, CI and production acceptance remain separate.
-Feature PR and actual remote CI receipts are pending.
+
+Source commit `0398a058a4a1fb84283a189a0a65b401a35ec6ea` passes
+[CI run 40539274766](https://github.com/FlashGalatine/xivdyetools/actions/runs/40539274766),
+including lint/types/tests/build, bundle gates, secret scanning, the production dependency
+audit and all **167 Playwright tests**. The separate report-only full-tree audit retains five
+existing Vite development-tool advisories (one high, three moderate, one low). Dependency
+remediation remains outside A-API. Local staged and 14-commit history Gitleaks scans pass.
+
+[Draft PR #341](https://github.com/FlashGalatine/xivdyetools/pull/341) is stacked on #340;
+its source head is mergeable against the unchanged `3e221360` base. The actual source-head
+workflow inventory contains only CI: no beta or production deployment starts. The receipt
+follow-up changes this evidence and the plan only, with no runtime source or release change.
 
 The audit count stays 133 IDs: 7 fixed, 101 outstanding (including one partial and one
 eligibility-blocked), 23 KEEP and 2 superseded. Source preparation does not increase fixed
