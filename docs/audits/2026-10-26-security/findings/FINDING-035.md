@@ -18,4 +18,4 @@
 - Policy variants to edit (all in one commit, all `Last updated` lines bumped): apps/web-app/TERMS_OF_SERVICE.md (:58 ### Moderation), .ja.md (:37 ### モデレーション), .de.md (:64 ### Moderation), .fr.md (:66 ### Modération), .ko.md (:37 ### 조정), .zh.md (:37 ### 审核); apps/discord-worker/TERMS_OF_SERVICE.md (:51 ## 5), .ja.md (:51), .de.md (:67), .fr.md (:51), .ko.md (:51), .zh.md (:51). No locales/*.json key carries this claim; a grep of app and package locales for published-immediately or auto-approv…
 
 ## Status
-OPEN
+FIXED 2026-10-27 — the [Perspective-sunset checklist](../../../../DEPRECATIONS.md) now includes both web and bot Terms of Service, their auto-publish claims, all six variants of each document, matching `Last updated` dates and the policy-parity gate. This closes the checklist omission only. Actual policy edits and behavior verification remain scheduled for key-deletion day; no policy text, key or runtime behavior changed. This change is documentation only.

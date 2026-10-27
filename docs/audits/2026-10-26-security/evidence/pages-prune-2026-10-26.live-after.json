@@ -1,0 +1,59 @@
+{
+  "checked_at": "2026-10-27T03:43:40.319Z",
+  "projects": [
+    {
+      "name": "xivdyetools",
+      "id": "1f8b22b8-5dc1-4294-acff-ac9bbaf3e697",
+      "domains": [
+        "xiv-colorexplorer.pages.dev",
+        "xivdyetools.app"
+      ],
+      "canonical_id": "970e253a-083a-4d97-bdb2-8e8e2792dee4",
+      "latest_id": "970e253a-083a-4d97-bdb2-8e8e2792dee4",
+      "total_count": 1,
+      "deployments": [
+        {
+          "id": "970e253a-083a-4d97-bdb2-8e8e2792dee4",
+          "url": "https://970e253a.xiv-colorexplorer.pages.dev",
+          "aliases": [
+            "https://xivdyetools.app"
+          ],
+          "environment": "production",
+          "status": "success"
+        }
+      ],
+      "verified": true
+    },
+    {
+      "name": "xivdyetools-beta",
+      "id": "a79b5fda-613d-4cb9-8e3e-81c7358429d7",
+      "domains": [
+        "xivdyetools-beta.pages.dev",
+        "beta.xivdyetools.app"
+      ],
+      "canonical_id": "5a3fb28b-2091-47e7-a6b3-2495c5a52090",
+      "latest_id": "5a3fb28b-2091-47e7-a6b3-2495c5a52090",
+      "total_count": 1,
+      "deployments": [
+        {
+          "id": "5a3fb28b-2091-47e7-a6b3-2495c5a52090",
+          "url": "https://5a3fb28b.xivdyetools-beta.pages.dev",
+          "aliases": [
+            "https://beta.xivdyetools.app"
+          ],
+          "environment": "production",
+          "status": "success"
+        }
+      ],
+      "verified": true
+    }
+  ],
+  "sample_absence": [
+    {
+      "project": "xivdyetools",
+      "id": "1c989934-ee7c-425c-b02c-b28962246aa6",
+      "error": "Error: Cloudflare API error: GET /accounts/<account>/pages/projects/xivdyetools/deployments/1c989934-ee7c-425c-b02c-b28962246aa6 returned HTTP 404: 8000009: The deployment ID you have specified does not exist. Update the deployment ID and try again"
+    }
+  ],
+  "all_projects_verified": true
+}

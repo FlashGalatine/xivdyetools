@@ -16,4 +16,4 @@
 - **Maintainer decision:** Only the maintainer can delete the superseded Pages deployments and the v4-ui-migration branch alias, and set a retention policy, in the Cloudflare dashboard.
 
 ## Status
-OPEN
+PARTIAL 2026-10-26 — the authorized one-off cleanup is complete: 521 superseded production-project and 239 beta-project deployments deleted, including the v4-ui-migration alias. Exactly the original protected deployment remains in each project; six live URL HTML hashes/CSPs are unchanged, and the alias plus sampled retired hash hosts return 404. [Execution evidence](../evidence/remediation-finding-009-2026-10-26.md). OPS-PAGES-HISTORY is complete; automated retention and live-origin probe integration remain in R-CI, so the overall finding stays outstanding.

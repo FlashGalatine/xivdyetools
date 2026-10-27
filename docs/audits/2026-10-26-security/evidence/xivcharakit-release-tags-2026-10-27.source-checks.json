@@ -1,0 +1,30 @@
+[
+  {
+    "version": "0.1.0-beta.1",
+    "commit": "90abb4721b35b3c8d564e8c1a6855fd8c9de0e8a",
+    "package_name": "xivcharakit",
+    "source_version": "0.1.0-beta.1",
+    "blob_sha": "8e44cd5092124c81f11d999863cbace65e5b56f3"
+  },
+  {
+    "version": "0.1.0-beta.2",
+    "commit": "8f30f7b4a20b857a5efa1aa1dc4c0b0d9ed1b48b",
+    "package_name": "xivcharakit",
+    "source_version": "0.1.0-beta.2",
+    "blob_sha": "a06f98365b11aa4cb5f7b4180bf2049618c9b229"
+  },
+  {
+    "version": "0.1.0-beta.3",
+    "commit": "39b849fb585eb2bb7d31ce139593fab5afaeb530",
+    "package_name": "xivcharakit",
+    "source_version": "0.1.0-beta.3",
+    "blob_sha": "ab7ec6e9d00624750ff4f711ab47810cd2297b6c"
+  },
+  {
+    "version": "0.1.0-beta.4",
+    "commit": "18a91afee6d29ea89d456c33a145e5a2ee4c3710",
+    "package_name": "xivcharakit",
+    "source_version": "0.1.0-beta.4",
+    "blob_sha": "fd5fcc932b3b835469bc907f3538ae3f1569f9d0"
+  }
+]

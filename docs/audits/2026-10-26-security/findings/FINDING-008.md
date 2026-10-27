@@ -15,4 +15,4 @@
 - **Maintainer decision:** Upstream XIVAuth issue: the maintainer decides whether to report or fix it upstream (MFA on the social auto-merge path, or confirm before linking by email).
 
 ## Status
-OPEN
+OPEN — private upstream report sent 2026-10-27 to XIVAuth's published security address with a PGP-encrypted attachment, under explicit maintainer authorization. The Gmail sent copy confirms the recipient and byte-identical attachment; upstream acknowledgement is pending and no mitigation has been applied. Current upstream source was rechecked and independently reviewed. The original narrative is a source-review hypothesis, not a demonstrated production takeover; real-provider feasibility and durable identity enrollment remain untested. The expanded report, source snapshots and submission receipt are stored outside Git. Upstream policy eligibility and severity remain subject to upstream triage.

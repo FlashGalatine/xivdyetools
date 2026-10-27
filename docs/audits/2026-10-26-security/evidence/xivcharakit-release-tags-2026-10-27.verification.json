@@ -1,0 +1,42 @@
+{
+  "verified_at": "2026-10-27T04:07:21Z",
+  "tags": [
+    {
+      "tag": "chara-v0.1.0-beta.1",
+      "tag_object": "1842cf3d77f72ca95957ffdaf87d22c9b1801f3c",
+      "source_commit": "90abb4721b35b3c8d564e8c1a6855fd8c9de0e8a",
+      "package_version": "0.1.0-beta.1",
+      "annotation_integrity_matches": true,
+      "url": "https://github.com/FlashGalatine/XIVCharaKit/tree/chara-v0.1.0-beta.1"
+    },
+    {
+      "tag": "chara-v0.1.0-beta.2",
+      "tag_object": "6668b12bff0a8a76d52b2aecc2b81208ae0106b6",
+      "source_commit": "8f30f7b4a20b857a5efa1aa1dc4c0b0d9ed1b48b",
+      "package_version": "0.1.0-beta.2",
+      "annotation_integrity_matches": true,
+      "url": "https://github.com/FlashGalatine/XIVCharaKit/tree/chara-v0.1.0-beta.2"
+    },
+    {
+      "tag": "chara-v0.1.0-beta.3",
+      "tag_object": "b4a7644051bcdb25c13fb381762e24017c32500e",
+      "source_commit": "39b849fb585eb2bb7d31ce139593fab5afaeb530",
+      "package_version": "0.1.0-beta.3",
+      "annotation_integrity_matches": true,
+      "url": "https://github.com/FlashGalatine/XIVCharaKit/tree/chara-v0.1.0-beta.3"
+    },
+    {
+      "tag": "chara-v0.1.0-beta.4",
+      "tag_object": "0dc70dbae23febe4e52b6083c8da50138c15592f",
+      "source_commit": "18a91afee6d29ea89d456c33a145e5a2ee4c3710",
+      "package_version": "0.1.0-beta.4",
+      "annotation_integrity_matches": true,
+      "url": "https://github.com/FlashGalatine/XIVCharaKit/tree/chara-v0.1.0-beta.4"
+    }
+  ],
+  "git_transport_verified": true,
+  "npm_integrities_unchanged": true,
+  "npm_dist_tags_unchanged": true,
+  "main_commit": "bf6009fb1ff02eb64b40cdec9e6295ee11da805f",
+  "main_unchanged": true
+}

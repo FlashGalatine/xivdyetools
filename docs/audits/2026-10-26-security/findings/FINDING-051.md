@@ -17,4 +17,4 @@
 - **Maintainer decision:** Repo settings choice: turn on enforce_admins and strict now that the 2026-10-03 remediation PRs have merged, or record the deferral as accepted.
 
 ## Status
-OPEN
+FIXED 2026-10-26 — maintainer-authorized admin enforcement and strict status-check protection enabled on main through narrow API endpoints. Fresh readback confirms both true; full before/after comparison confirms only those two booleans changed, preserving all four required checks and app bindings. [Execution evidence](../evidence/remediation-finding-051-2026-10-26.md). The old FINDING-024 deferral is closed; the separate linear-history item remains open. No code deploy or repository commit was needed for the live action.

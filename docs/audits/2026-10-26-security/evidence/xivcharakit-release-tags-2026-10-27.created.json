@@ -1,0 +1,34 @@
+[
+  {
+    "tag": "chara-v0.1.0-beta.1",
+    "source_commit": "90abb4721b35b3c8d564e8c1a6855fd8c9de0e8a",
+    "tag_object": "1842cf3d77f72ca95957ffdaf87d22c9b1801f3c",
+    "ref": "refs/tags/chara-v0.1.0-beta.1",
+    "created_at": "2026-10-27T04:06:36Z",
+    "url": "https://github.com/FlashGalatine/XIVCharaKit/tree/chara-v0.1.0-beta.1"
+  },
+  {
+    "tag": "chara-v0.1.0-beta.2",
+    "source_commit": "8f30f7b4a20b857a5efa1aa1dc4c0b0d9ed1b48b",
+    "tag_object": "6668b12bff0a8a76d52b2aecc2b81208ae0106b6",
+    "ref": "refs/tags/chara-v0.1.0-beta.2",
+    "created_at": "2026-10-27T04:06:38Z",
+    "url": "https://github.com/FlashGalatine/XIVCharaKit/tree/chara-v0.1.0-beta.2"
+  },
+  {
+    "tag": "chara-v0.1.0-beta.3",
+    "source_commit": "39b849fb585eb2bb7d31ce139593fab5afaeb530",
+    "tag_object": "b4a7644051bcdb25c13fb381762e24017c32500e",
+    "ref": "refs/tags/chara-v0.1.0-beta.3",
+    "created_at": "2026-10-27T04:06:40Z",
+    "url": "https://github.com/FlashGalatine/XIVCharaKit/tree/chara-v0.1.0-beta.3"
+  },
+  {
+    "tag": "chara-v0.1.0-beta.4",
+    "source_commit": "18a91afee6d29ea89d456c33a145e5a2ee4c3710",
+    "tag_object": "0dc70dbae23febe4e52b6083c8da50138c15592f",
+    "ref": "refs/tags/chara-v0.1.0-beta.4",
+    "created_at": "2026-10-27T04:06:41Z",
+    "url": "https://github.com/FlashGalatine/XIVCharaKit/tree/chara-v0.1.0-beta.4"
+  }
+]

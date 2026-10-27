@@ -17,4 +17,4 @@
 - **Maintainer decision:** Repo settings choice only the maintainer can make: enable non-provider patterns and validity checks in Code security.
 
 ## Status
-OPEN
+OPEN — BLOCKED 2026-10-26 on GitHub feature eligibility. Authorized combined and isolated API enable requests returned success without changing either disabled value. The user-owned repository's settings page exposes neither control; current GitHub documentation lists eligible organization-owned repositories with Secret Protection. Existing secret scanning and push protection remain enabled. [Attempt and eligibility evidence](../evidence/remediation-finding-050-2026-10-26.md). No accepted deferral or completed remediation is claimed; the CI-comment correction remains companion work in R-CI.

@@ -1,7 +1,7 @@
 # Merged Remediation Plan — 2026-10-26
 
 **Sources:** [Security](../2026-10-26-security/SECURITY_AUDIT_REPORT.md) 56 + [XIVCharaKit dead code](../2026-10-26-xivcharakit-dead-code/DEAD_CODE_REPORT.md) 47 + [deep dive](../2026-10-26-deep-dive/DEEP_DIVE_REPORT.md) 24 + [i18n](I18N_AUDIT_2026-10-26.md) 6.
-**Status basis:** **133 IDs: 0 fixed, 108 scheduled, 23 KEEP, 2 superseded for scheduling, 0 requiring rotation.** All underlying new findings remain OPEN; no remediation has started. Each primary ID appears in exactly one assignment table. Companion package/adoption sprints have no duplicate primary-ID rows.
+**Status basis:** **133 IDs: 7 fixed, 101 outstanding (including 1 partially remediated and 1 blocked on feature eligibility), 23 KEEP, 2 superseded for scheduling, 0 requiring rotation.** Execution updates 2026-10-26–27: security FINDING-028 is fixed by repository secret cleanup, FINDING-035 by the Perspective-sunset checklist addition (actual policy changes remain scheduled for key deletion), FINDING-051 by branch protection, FINDING-052 by source tags for all four published library releases, FINDING-054 and FINDING-056 by live resource deletions, and FINDING-055 by zone settings (HSTS-comment wording remains companion app work). FINDING-009's one-off history/alias cleanup is complete; automated retention remains in R-CI. FINDING-050 remains open/blocked on GitHub feature eligibility. The other findings retain their audit status. Each primary ID appears in exactly one assignment table. Companion package/adoption sprints have no duplicate primary-ID rows.
 Grades retain their source meaning: security severity/exposure, dead-code confidence/blast/semver, deep-dive severity and scheduling tier, or i18n priority. HIGH confidence in a removal is not a HIGH-severity bug.
 
 This plan supersedes the scheduling in #333 and #334 while preserving their frozen catalogs. Their live-state checks are dated evidence and were not repeated here. The older `2026-10-04-deep-dive/OPT-003` is carried into the new optimization and is outside the 133-ID accounting.
@@ -18,9 +18,11 @@ All version numbers are targets inherited from the accepted major path, not fres
 
 Each locale-owning release finalizes its text before checking/subsetting fonts. A missing drawable glyph blocks that release until its font update is ready; never ship a red glyph gate while waiting for the terminal phase. The final F-DISCORD/F-OG pass occurs only after the last rendered-text/item-name change.
 
-## Sprint OPS-API-DEV — Cloudflare stale dev worker
+## Sprint OPS-API-DEV — Cloudflare stale dev worker — ✅ COMPLETED 2026-10-26 (live action; no code commit)
 
-Future maintainer-only action; recheck the dated evidence and exact target before acting.
+The maintainer explicitly authorized deletion in chat. Rechecked all 16 workers' bindings, target domains/routes and the stale script before deleting it without force. Cloudflare confirmed deletion; the target is absent from inventory, its settings return 404 / 10007, and its public HEAD probe returns 404. [Execution evidence](../2026-10-26-security/evidence/remediation-finding-054-2026-10-26.md).
+
+**Deploy needs:** none. No package publish, application deploy or KV namespace deletion. This documentation records the action and its verification evidence.
 
 | ID | Source | Sev/Pri | Action |
 |---|---|---|---|
@@ -28,9 +30,11 @@ Future maintainer-only action; recheck the dated evidence and exact target befor
 
 **Ends with:** Explicit maintainer authorization at execution → narrowly scoped action/decision → read-only state verification recorded; no automatic action from this audit.
 
-## Sprint OPS-ZONE — Cloudflare zone transport settings
+## Sprint OPS-ZONE — Cloudflare zone transport settings — ✅ COMPLETED 2026-10-26 (live action; no code commit)
 
-Future maintainer-only action; recheck the dated evidence and exact target before acting.
+The maintainer explicitly authorized Always Use HTTPS and minimum TLS 1.2 for `xivdyetools.app`. Rechecked the exact zone and old values, applied only those two settings, and confirmed both through fresh GETs. HTTP on all five main hosts redirects to HTTPS and finishes with 200; explicit negotiation at data.xivdyetools.app rejects TLS 1.0/1.1 and accepts 1.2. [Execution evidence](../2026-10-26-security/evidence/remediation-finding-055-2026-10-26.md).
+
+**Deploy needs:** none for the live settings. This documentation records the action and its verification evidence. Reword the three worker HSTS comments in their owning app sprints; no app code changed here.
 
 | ID | Source | Sev/Pri | Action |
 |---|---|---|---|
@@ -38,9 +42,11 @@ Future maintainer-only action; recheck the dated evidence and exact target befor
 
 **Ends with:** Explicit maintainer authorization at execution → narrowly scoped action/decision → read-only state verification recorded; no automatic action from this audit.
 
-## Sprint OPS-RETIRED — Retired Cloudflare resources
+## Sprint OPS-RETIRED — Retired Cloudflare resources — ✅ COMPLETED 2026-10-26 (live actions; no code commit)
 
-Future maintainer-only action; recheck the dated evidence and exact target before acting.
+The maintainer explicitly authorized deleting `xivdyetools-api-docs` and `xivdyetools-universalis-proxy`. Rechecked the exact resources, replacement domain ownership, all 15 workers' bindings and current docs/proxy content. Deleted the Pages project with its 22 deployments and the worker without force. Fresh inventories omit both and their API GETs return 404; replacement docs and both current proxy URLs still return expected content. [Execution evidence](../2026-10-26-security/evidence/remediation-finding-056-2026-10-26.md).
+
+**Deploy needs:** none. Both DEPRECATIONS.md checklists and OPEN_ITEMS.md record the completed removals and verification evidence.
 
 | ID | Source | Sev/Pri | Action |
 |---|---|---|---|
@@ -48,9 +54,11 @@ Future maintainer-only action; recheck the dated evidence and exact target befor
 
 **Ends with:** Explicit maintainer authorization at execution → narrowly scoped action/decision → read-only state verification recorded; no automatic action from this audit.
 
-## Sprint OPS-PAGES-HISTORY — Web Pages history and aliases
+## Sprint OPS-PAGES-HISTORY — Web Pages history and aliases — ✅ COMPLETED 2026-10-26 (live actions; no code commit)
 
-Future maintainer-only action; recheck the dated evidence and exact target before acting.
+The maintainer explicitly authorized deletion of all superseded deployments and the v4-ui-migration alias while preserving the current production and beta deployments. Saved the complete 522/240-record inventory, protected the two current IDs, and deleted 521/239 records in guarded batches. Fresh inventories show exactly one protected deployment per project; the retired alias/hash probes return 404, and all six live URL HTML hashes/CSPs are unchanged. An independent read-only verifier confirmed the inventory/guards and all 760 receipts plus preservation results. [Execution evidence](../2026-10-26-security/evidence/remediation-finding-009-2026-10-26.md).
+
+**Deploy needs:** none for this cleanup. Automated retention and live-origin probe integration remain in R-CI, so FINDING-009 is PARTIAL. This documentation records the one-off cleanup and verification evidence.
 
 | ID | Source | Sev/Pri | Action |
 |---|---|---|---|
@@ -58,9 +66,11 @@ Future maintainer-only action; recheck the dated evidence and exact target befor
 
 **Ends with:** Explicit maintainer authorization at execution → narrowly scoped action/decision → read-only state verification recorded; no automatic action from this audit.
 
-## Sprint OPS-REPO-SECRETS — GitHub repository secret scope
+## Sprint OPS-REPO-SECRETS — GitHub repository secret scope — ✅ COMPLETED 2026-10-26 (live actions; no code commit)
 
-Future maintainer-only action; recheck the dated evidence and exact target before acting.
+The maintainer explicitly authorized deleting only the four repository-scope Discord secrets while keeping the environment copies. Verified current workflow environment references, both successful production command-registration steps and the environment copies before deletion. All four repository DELETEs returned 204. Fresh listings confirm the four repository copies are absent; both environment inventories and secret metadata are unchanged, and CLOUDFLARE_ACCOUNT_ID remains. [Execution evidence](../2026-10-26-security/evidence/remediation-finding-028-2026-10-26.md).
+
+**Deploy needs:** none. No environment secret mutation, token rotation or workflow run was performed. Current and carried-forward finding status plus the operations tracker record the completed repository-scope cleanup.
 
 | ID | Source | Sev/Pri | Action |
 |---|---|---|---|
@@ -68,9 +78,11 @@ Future maintainer-only action; recheck the dated evidence and exact target befor
 
 **Ends with:** Explicit maintainer authorization at execution → narrowly scoped action/decision → read-only state verification recorded; no automatic action from this audit.
 
-## Sprint OPS-SECRET-SCANNING — GitHub scanning settings
+## Sprint OPS-SECRET-SCANNING — GitHub scanning settings — BLOCKED 2026-10-26 (feature eligibility)
 
-Future maintainer-only action; recheck the dated evidence and exact target before acting.
+The maintainer authorized enabling both options. Combined and isolated non-provider-pattern API requests returned success, but fresh GETs still show both disabled. The repository is user-owned, admin permission is present, and its settings UI exposes neither control. Current GitHub documentation lists these options for eligible organization-owned repositories with Secret Protection. [Attempt and eligibility evidence](../2026-10-26-security/evidence/remediation-finding-050-2026-10-26.md).
+
+**Remaining:** eligibility must change or GitHub must clarify availability before these controls can be enabled. No ownership transfer, paid-plan change, substitute implementation or accepted deferral was performed. Existing scanning and push protection remain enabled; FINDING-050 stays OPEN and the status-basis counts are unchanged. The CI-comment correction remains companion work in R-CI.
 
 | ID | Source | Sev/Pri | Action |
 |---|---|---|---|
@@ -78,9 +90,11 @@ Future maintainer-only action; recheck the dated evidence and exact target befor
 
 **Ends with:** Explicit maintainer authorization at execution → narrowly scoped action/decision → read-only state verification recorded; no automatic action from this audit.
 
-## Sprint OPS-BRANCH-PROTECTION — GitHub branch protection
+## Sprint OPS-BRANCH-PROTECTION — GitHub branch protection — ✅ COMPLETED 2026-10-26 (live actions; no code commit)
 
-Future maintainer-only action; recheck the dated evidence and exact target before acting.
+The maintainer explicitly authorized `enforce_admins` and `strict` on main. Saved the full protection configuration, used the dedicated admin-enforcement POST and required-status-check PATCH (`strict: true` only), then read back the full configuration. Both settings are true. A semantic before/after comparison confirms that no other field changed, including all four required checks and their app bindings. [Execution evidence](../2026-10-26-security/evidence/remediation-finding-051-2026-10-26.md).
+
+**Deploy needs:** none. The old FINDING-024 deferral is closed. Linear history remains a separate open operations item; this documentation records the two authorized settings changes.
 
 | ID | Source | Sev/Pri | Action |
 |---|---|---|---|
@@ -88,9 +102,11 @@ Future maintainer-only action; recheck the dated evidence and exact target befor
 
 **Ends with:** Explicit maintainer authorization at execution → narrowly scoped action/decision → read-only state verification recorded; no automatic action from this audit.
 
-## Sprint OPS-XIVCHARAKIT-PROVENANCE — XIVCharaKit release provenance
+## Sprint OPS-XIVCHARAKIT-PROVENANCE — XIVCharaKit release provenance — ✅ COMPLETED 2026-10-27 (remote tags; no code commit)
 
-Future maintainer-only action; recheck the dated evidence and exact target before acting.
+The maintainer authorized tagging published releases. Created annotated chara-v0.1.0-beta.1 through .4 tags at commits verified from the byte-identical retained beta.1 candidate and beta.2–.4 npm provenance. An independent read-only verifier confirmed all mappings and the exclusion of npm's code-free 0.0.0-stage placeholder. Fresh GitHub reads, peeled Git refs and tagged package metadata agree. npm artifacts/dist-tags and the main branch are unchanged. [Execution evidence](../2026-10-26-security/evidence/remediation-finding-052-2026-10-27.md).
+
+**Deploy needs:** none. The published library releases now have source tags. Future publishes need the same tag discipline; publish-workflow automation is follow-up work. This documentation records the version/commit mappings and verification evidence.
 
 | ID | Source | Sev/Pri | Action |
 |---|---|---|---|
@@ -98,9 +114,9 @@ Future maintainer-only action; recheck the dated evidence and exact target befor
 
 **Ends with:** Explicit maintainer authorization at execution → narrowly scoped action/decision → read-only state verification recorded; no automatic action from this audit.
 
-## Sprint DECISION-UPSTREAM-MERGE — Upstream identity-merge decision
+## Sprint DECISION-UPSTREAM-MERGE — Upstream identity-merge decision — REPORT SENT 2026-10-27; upstream triage pending
 
-Future maintainer-only action; recheck the dated evidence and exact target before acting.
+The maintainer authorized review, preparation and then sending of the private upstream report. Rechecked current upstream source, obtained an independent security review and sent the report to XIVAuth's published security address with the policy-requested PGP-encrypted attachment. A fresh Gmail sent-copy read confirms the recipient and byte-identical attachment. The report, source snapshots and receipt remain outside Git. Upstream acknowledgement and triage are pending. FINDING-008 remains OPEN; local OAuth mitigation in A-OAUTH remains a separate decision.
 
 | ID | Source | Sev/Pri | Action |
 |---|---|---|---|
@@ -306,6 +322,8 @@ One image-worker release; validate peak decode memory in the Worker runtime befo
 
 One repository verification gate, not a package publish. Also add Pages deployment retention as the companion to the history cleanup, preserving current production/beta deployments.
 
+The 2026-10-26 one-off cleanup completed OPS-PAGES-HISTORY. FINDING-009 remains PARTIAL until the retention step and branch-alias/hash-host live-origin checks are implemented and verified here.
+
 | ID | Source | Sev/Pri | Action |
 |---|---|---|---|
 | [2026-10-26-security/FINDING-031](../2026-10-26-security/findings/FINDING-031.md) | 2026-10-26-security | LOW / LOCAL · P3 | Raise the override to `'vitepress>vite': '>=6.4.5 <7'`, `pnpm install`, confirm Dependabot alerts #13–#17 close; update the stale FINDING-036 comment. |
@@ -317,10 +335,12 @@ One repository verification gate, not a package publish. Also add Pages deployme
 
 One repository documentation/process gate. Carry dated live-state evidence as inherited, not freshly rechecked. On actual Perspective key deletion, schedule separate presets-api behavior verification and web/Discord six-file ToS updates; do not publish those claims early. If query signing is chosen, add the explicit auth/presets/Discord/moderation compatibility sequence below.
 
+**Execution update 2026-10-27:** FINDING-035's checklist addition is complete in [DEPRECATIONS.md](../../../DEPRECATIONS.md). Both Terms of Service and the key-deletion-day requirements are recorded; actual policy documents and secrets are unchanged. The other tasks in this sprint remain open; this change is documentation only.
+
 | ID | Source | Sev/Pri | Action |
 |---|---|---|---|
 | [2026-10-26-security/FINDING-030](../2026-10-26-security/findings/FINDING-030.md) | 2026-10-26-security | INFO / LOCAL · P3 | The live check found no signing secret on `-dev`. Correct `DEPLOY_ENVIRONMENTS.md:283-284` and `:324` and the discord-worker `wrangler.toml:92-96` comment to say `BOT_API_SECRET` / `BOT_SIGNING_SECRET` must NOT be set on `-dev`; reword the "writes a genuine row" residual-risk line. |
-| [2026-10-26-security/FINDING-035](../2026-10-26-security/findings/FINDING-035.md) | 2026-10-26-security | P3 · INFO / INTERNET-UNAUTH | **Dated: before 2026-12-31.** Add both Terms-of-Service auto-publish sentences to the `DEPRECATIONS.md` Perspective-sunset checklist (doc-only); the six-file CORRECTs land on key-deletion day. |
+| [2026-10-26-security/FINDING-035](../2026-10-26-security/findings/FINDING-035.md) | 2026-10-26-security | P3 · INFO / INTERNET-UNAUTH | **FIXED 2026-10-27 (checklist only).** Both Terms-of-Service auto-publish sentences are in the `DEPRECATIONS.md` Perspective-sunset checklist. The six-file CORRECTs remain scheduled for key-deletion day, with the inherited before-2026-12-31 deadline. |
 | [2026-10-26-security/FINDING-046](../2026-10-26-security/findings/FINDING-046.md) | 2026-10-26-security | INFO / INTERNAL · P3 | Decide: record "v2 signature binds the path, not the query" in `security-trade-offs.md`, or sign the query (a coordinated `auth` + three-app change). |
 | [2026-10-26-security/FINDING-053](../2026-10-26-security/findings/FINDING-053.md) | 2026-10-26-security | INFO / LOCAL · P3 | Add a deletion-and-export runbook under `docs/operations/` listing every per-user store (D1 tables, KV prefixes, R2 objects, the web and bot stores) the 30-day promises cover. |
 

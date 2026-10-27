@@ -14,4 +14,4 @@
 - In the upstream XIVCharaKit publish.yml, create and push a git tag (e.g. chara-v0.1.0-beta.4) or a GitHub release on each publish, and backfill a tag at 18a91afe for 0.1.0-beta.4. Keep the exact pin and lockfile integrity as they are.
 
 ## Status
-OPEN
+FIXED 2026-10-27 for the published library release set — created annotated chara-v0.1.0-beta.1 through .4 tags at independently verified source commits. Beta.1's retained reviewed candidate is byte-identical to npm; beta.2–.4 registry provenance digests and source identities agree. Fresh GitHub and peeled Git refs plus tagged package versions verify all four mappings. The npm-generated 0.0.0-stage stub has no library code/source commit and is explicitly excluded. [Execution evidence](../evidence/remediation-finding-052-2026-10-27.md). Future releases need matching source tags; publish-workflow automation remains follow-up work, and no workflow or npm publication changed here.

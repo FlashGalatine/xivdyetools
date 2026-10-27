@@ -15,4 +15,4 @@
 - Add both settings to the live-origin probe checklist (2026-10-03 report, recommendation 1) and reword the three "Enforce HTTPS" comments.
 
 ## Status
-OPEN
+FIXED 2026-10-26 — maintainer-authorized zone settings changes: Always Use HTTPS on and minimum TLS 1.2. Fresh API readbacks, five HTTP-to-HTTPS redirects ending in 200, and explicit TLS 1.0/1.1 rejection plus 1.2 acceptance verified; [execution evidence](../evidence/remediation-finding-055-2026-10-26.md). No code deploy or repository commit was needed for the live action. The three HSTS-comment wording cleanups remain companion work for the owning app sprints.

@@ -15,4 +15,4 @@
 - Delete the Pages project `xivdyetools-api-docs` (removes all 22 deployments) and the worker `xivdyetools-universalis-proxy`; tick `DEPRECATIONS.md:162`, `:200` and `OPEN_ITEMS.md` §2. Until then, update the item's "still present" date to 2026-10-26.
 
 ## Status
-OPEN
+FIXED 2026-10-26 — maintainer-authorized deletion of the `xivdyetools-api-docs` Pages project (22 deployments) and `xivdyetools-universalis-proxy` worker. Fresh inventories omit both; project/deployment-list GETs return 404 / 8000007 and worker settings return 404 / 10007. Replacement docs and both current proxy URLs still serve expected content; [execution evidence](../evidence/remediation-finding-056-2026-10-26.md). No code deploy or repository commit was needed for the live actions.

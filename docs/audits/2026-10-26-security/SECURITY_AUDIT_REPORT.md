@@ -216,8 +216,8 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 | FINDING-005 | OPEN | — |
 | FINDING-006 | OPEN | — |
 | FINDING-007 | OPEN | — |
-| FINDING-008 | OPEN | — |
-| FINDING-009 | OPEN | — |
+| FINDING-008 | OPEN — private encrypted report sent 2026-10-27; upstream triage pending | Sent-copy recipient and attachment verified; private receipt outside Git; no mitigation applied |
+| FINDING-009 | PARTIAL 2026-10-26 — one-off history/alias cleanup complete; automated retention remains in R-CI | [760 deletion receipts and preservation verification](evidence/remediation-finding-009-2026-10-26.md) (no code commit) |
 | FINDING-010 | OPEN | — |
 | FINDING-011 | OPEN | — |
 | FINDING-012 | OPEN | — |
@@ -236,14 +236,14 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 | FINDING-025 | OPEN | — |
 | FINDING-026 | OPEN | — |
 | FINDING-027 | OPEN | — |
-| FINDING-028 | OPEN | — |
+| FINDING-028 | FIXED 2026-10-26 | Repository secret copies deleted; environment copies preserved; [verification](evidence/remediation-finding-028-2026-10-26.md) (no code commit) |
 | FINDING-029 | OPEN | — |
 | FINDING-030 | OPEN | — |
 | FINDING-031 | OPEN | — |
 | FINDING-032 | OPEN | — |
 | FINDING-033 | OPEN | — |
 | FINDING-034 | OPEN | — |
-| FINDING-035 | OPEN | — |
+| FINDING-035 | FIXED 2026-10-27 — checklist omission closed; actual policy changes remain scheduled for key deletion | [Perspective-sunset checklist](../../../DEPRECATIONS.md) (documentation only) |
 | FINDING-036 | OPEN | — |
 | FINDING-037 | OPEN | — |
 | FINDING-038 | OPEN | — |
@@ -258,13 +258,13 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 | FINDING-047 | OPEN | — |
 | FINDING-048 | OPEN | — |
 | FINDING-049 | OPEN | — |
-| FINDING-050 | OPEN | — |
-| FINDING-051 | OPEN | — |
-| FINDING-052 | OPEN | — |
+| FINDING-050 | OPEN — BLOCKED 2026-10-26 on feature eligibility; both options remain disabled | [Attempt and verification](evidence/remediation-finding-050-2026-10-26.md); no accepted deferral |
+| FINDING-051 | FIXED 2026-10-26 — enforce_admins and strict enabled | [Live settings and preservation verification](evidence/remediation-finding-051-2026-10-26.md) (no code commit) |
+| FINDING-052 | FIXED 2026-10-27 — four published library releases have verified source tags; registry stub excluded | [Version/commit mapping and remote verification](evidence/remediation-finding-052-2026-10-27.md) |
 | FINDING-053 | OPEN | — |
-| FINDING-054 | OPEN | — |
-| FINDING-055 | OPEN | — |
-| FINDING-056 | OPEN | — |
+| FINDING-054 | FIXED 2026-10-26 | Live Cloudflare deletion; [verification](evidence/remediation-finding-054-2026-10-26.md) (no code commit) |
+| FINDING-055 | FIXED 2026-10-26 (zone settings) | Live Cloudflare settings; [verification](evidence/remediation-finding-055-2026-10-26.md) (no code commit); HSTS-comment wording follows in app sprints |
+| FINDING-056 | FIXED 2026-10-26 | Live Cloudflare project and worker deletions; [verification](evidence/remediation-finding-056-2026-10-26.md) (no code commit) |
 
 ## Next steps
 

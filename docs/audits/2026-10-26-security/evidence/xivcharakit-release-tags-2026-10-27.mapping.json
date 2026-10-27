@@ -1,0 +1,43 @@
+{
+  "repository": "FlashGalatine/XIVCharaKit",
+  "releases": [
+    {
+      "version": "0.1.0-beta.1",
+      "commit": "90abb4721b35b3c8d564e8c1a6855fd8c9de0e8a",
+      "basis": "Retained reviewed candidate from run 39541256961, exact tarball integrity equals registry",
+      "run_id": 39541256961,
+      "integrity": "sha512-gA5U4qvE/sYtwOn7Lo9X9B3Q0P6ZZK0gHy4nShR/wE62Eqcfo3FHQKfdI/ZRw2wKAM3Tmee4pgwD9KL8U1JTjw==",
+      "tag": "chara-v0.1.0-beta.1"
+    },
+    {
+      "version": "0.1.0-beta.2",
+      "commit": "8f30f7b4a20b857a5efa1aa1dc4c0b0d9ed1b48b",
+      "basis": "npm SLSA provenance subject matches registry integrity and expected workflow/repository/main",
+      "invocation": "https://github.com/FlashGalatine/XIVCharaKit/actions/runs/39716330737/attempts/2",
+      "integrity": "sha512-i0Kno7HGUeBs9h9pPVCVxanofG2tXb/O125/bB7tCjqj4qrYmXhmoF0sRhcRbBrg60veMCoUL7Tg0iUpUsOauw==",
+      "tag": "chara-v0.1.0-beta.2"
+    },
+    {
+      "version": "0.1.0-beta.3",
+      "commit": "39b849fb585eb2bb7d31ce139593fab5afaeb530",
+      "basis": "npm SLSA provenance subject matches registry integrity and expected workflow/repository/main",
+      "invocation": "https://github.com/FlashGalatine/XIVCharaKit/actions/runs/39781354413/attempts/1",
+      "integrity": "sha512-dTd+VUw68vaBGCcm8FIOpgCmh2rJwBmIjsfLMs5CcUI1bgPab+UxbFfbnj9JYx5q5+dDvZTFAY+f8k9NAaGp/A==",
+      "tag": "chara-v0.1.0-beta.3"
+    },
+    {
+      "version": "0.1.0-beta.4",
+      "commit": "18a91afee6d29ea89d456c33a145e5a2ee4c3710",
+      "basis": "npm SLSA provenance subject matches registry integrity and expected workflow/repository/main",
+      "invocation": "https://github.com/FlashGalatine/XIVCharaKit/actions/runs/40171507250/attempts/1",
+      "integrity": "sha512-fIW3xEd3fHaP+C6tKbwmBOHFHb59ymoUdW+FpEAvwbR1LcQy+ZMVi2mdhtmRxP/hOJYD9cpzuhiYmpLplRg0Mw==",
+      "tag": "chara-v0.1.0-beta.4"
+    }
+  ],
+  "excluded": [
+    {
+      "version": "0.0.0-stage",
+      "reason": "Registry-generated temporary placeholder: stub=true, only package.json and README.md, no library code or corresponding source commit; not an operational release."
+    }
+  ]
+}

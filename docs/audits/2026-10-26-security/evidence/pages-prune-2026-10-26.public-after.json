@@ -1,0 +1,74 @@
+{
+  "checked_at": "2026-10-27T03:43:53.004566+00:00",
+  "live_sites": [
+    {
+      "url": "https://xivdyetools.app/",
+      "status": 200,
+      "html_sha256": "31195b23607baa8af22cdf40267ec9b228d795cfe15400e9c993abd7488008cd",
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://cdn.discordapp.com https://shots.xivdyetools.app https://data.xivdyetools.app; connect-src 'self' https://*.xivdyetools.app; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests;",
+      "matches_before": true
+    },
+    {
+      "url": "https://xiv-colorexplorer.pages.dev/",
+      "status": 200,
+      "html_sha256": "31195b23607baa8af22cdf40267ec9b228d795cfe15400e9c993abd7488008cd",
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://cdn.discordapp.com https://shots.xivdyetools.app https://data.xivdyetools.app; connect-src 'self' https://*.xivdyetools.app; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests;",
+      "matches_before": true
+    },
+    {
+      "url": "https://970e253a.xiv-colorexplorer.pages.dev/",
+      "status": 200,
+      "html_sha256": "31195b23607baa8af22cdf40267ec9b228d795cfe15400e9c993abd7488008cd",
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://cdn.discordapp.com https://shots.xivdyetools.app https://data.xivdyetools.app; connect-src 'self' https://*.xivdyetools.app; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests;",
+      "matches_before": true
+    },
+    {
+      "url": "https://beta.xivdyetools.app/",
+      "status": 200,
+      "html_sha256": "844773ec4c14dd147592f1b268d478d24ab181550ca7e4537fd5b55d062d9f43",
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://cdn.discordapp.com https://shots.xivdyetools.app https://data.xivdyetools.app; connect-src 'self' https://*.xivdyetools.app; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests;",
+      "matches_before": true
+    },
+    {
+      "url": "https://xivdyetools-beta.pages.dev/",
+      "status": 200,
+      "html_sha256": "844773ec4c14dd147592f1b268d478d24ab181550ca7e4537fd5b55d062d9f43",
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://cdn.discordapp.com https://shots.xivdyetools.app https://data.xivdyetools.app; connect-src 'self' https://*.xivdyetools.app; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests;",
+      "matches_before": true
+    },
+    {
+      "url": "https://5a3fb28b.xivdyetools-beta.pages.dev/",
+      "status": 200,
+      "html_sha256": "844773ec4c14dd147592f1b268d478d24ab181550ca7e4537fd5b55d062d9f43",
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://cdn.discordapp.com https://shots.xivdyetools.app https://data.xivdyetools.app; connect-src 'self' https://*.xivdyetools.app; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests;",
+      "matches_before": true
+    }
+  ],
+  "retired_urls": [
+    {
+      "url": "https://v4-ui-migration.xiv-colorexplorer.pages.dev/",
+      "status": "404",
+      "curl_exit": 0,
+      "stderr": ""
+    },
+    {
+      "url": "https://66496174.xiv-colorexplorer.pages.dev/",
+      "status": "404",
+      "curl_exit": 0,
+      "stderr": ""
+    },
+    {
+      "url": "https://ecc7fb76.xivdyetools-beta.pages.dev/",
+      "status": "404",
+      "curl_exit": 0,
+      "stderr": ""
+    },
+    {
+      "url": "https://1c989934.xiv-colorexplorer.pages.dev/",
+      "status": "404",
+      "curl_exit": 0,
+      "stderr": ""
+    }
+  ],
+  "all_live_sites_unchanged": true
+}
