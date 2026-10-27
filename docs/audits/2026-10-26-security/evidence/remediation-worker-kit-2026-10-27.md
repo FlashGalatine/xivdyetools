@@ -75,9 +75,19 @@ Independent Sol/xhigh task review passed spec compliance and code quality. A sep
 Sol/xhigh release review confirmed both version decisions and metadata. The final Astra/high
 whole-branch code/security review found no remaining Critical, Important or Minor issue.
 
+## Automatic beta verification after branch push
+
+The existing feature-branch workflows deployed commit `79913e05` to the shared betas.
+[Beta Discord run 40454899881](https://github.com/FlashGalatine/xivdyetools/actions/runs/40454899881)
+completed successfully, including the actual deployment and guild-scoped command registration.
+[Beta OpenGraph run 40454899922](https://github.com/FlashGalatine/xivdyetools/actions/runs/40454899922)
+completed successfully, including deployment, health and emitted-card-URL smoke checks.
+Job/step readbacks distinguish those successful deploys from skipped guard jobs. These runs
+used the unchanged automatic workflows; no manual deployment command was issued.
+
 ## Remaining release work
 
 FINDING-004 remains open until API, presets-api and OAuth explicitly adopt and deploy the
 new option. FINDING-017 remains open until the effective deployed Discord limit is verified.
 The glamour cap reduces per-caller pressure on the shared service budget; it does not create
-separate service budgets for users. No live abuse probe, deployment or npm publication was run.
+separate service budgets for users. No live abuse probe, production deployment or npm publication was run.

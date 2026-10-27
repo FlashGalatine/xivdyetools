@@ -138,6 +138,8 @@ Source references: [Discord deployment workflow](../../../.github/workflows/depl
 regressions pass on the restored implementation; the whole graph passed 62/62 tasks and
 16,310 test summaries (36 tasks cached). All seven backend bundles passed their dry-run/size
 checks, with independent task and final security reviews. [Implementation evidence](../2026-10-26-security/evidence/remediation-worker-kit-2026-10-27.md).
+The feature-branch push also completed the existing beta Discord deployment/registration
+and beta OpenGraph deployment/health/card-URL smoke workflows; production remains pending.
 
 **Deploy needs:** separately authorized merge and seven automatic backend deployments;
 Actions publication of worker-kit 1.6.0; effective deployed Discord limit verification.
