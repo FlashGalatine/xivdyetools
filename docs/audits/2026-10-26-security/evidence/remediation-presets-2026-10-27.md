@@ -149,7 +149,7 @@ that window. The remaining post-read delivery race is not eliminated by this che
 Final API explicit coverage passes **1,254/1,254 in 50 files**, S96.92/B92.77/F97.35/L97.67%, with
 unchanged thresholds, types/lint/knip and root dead-code checks. Thirteen original and four
 notification-guard mutations fail through behavioral assertions and restore exact hashes. All
-20 nonoverlapping Task 2 paths retain their hashes; three owned handler/image-test overlaps are
+At the Task 3 handoff, 20 nonoverlapping Task 2 paths retain their hashes; three owned handler/image-test overlaps are
 documented, with existing assertions preserved. Ordinary Sol/xhigh and critical Astra/high
 reviews approve the corrected source, evidence and release boundary.
 
@@ -189,8 +189,30 @@ code changes after the gates above; the final source inventory records that whit
 
 ## Remote acceptance
 
-Source-head CI and automatic beta receipts will be appended after the feature push and draft
-PR creation. Production acceptance and later metadata activation remain pending.
+Source commit `fa018bfa56503e5d2c63999e77c110f4420e1e9f` passes
+[CI run 40565487013](https://github.com/FlashGalatine/xivdyetools/actions/runs/40565487013).
+Secret scanning, lint, affected types/tests/builds, script types and 167 self-tests, dead-code,
+documentation, bundle and logging checks pass. Affected tests are API 1,254/50 files,
+Discord 1,712/73, moderation 802/31 and web 4,416/144. The separate Chromium job passes all
+**167 Playwright tests**. Production-only dependency audit reports no known vulnerabilities;
+the full-tree report-only audit retains five development-tool advisories (one high, three
+moderate, one low), outside this sprint. Staged and 16-commit stacked-history Gitleaks scans pass.
+
+[Discord beta run 40565416626](https://github.com/FlashGalatine/xivdyetools/actions/runs/40565416626)
+passes tests and deploys version `45f2ee34-88cb-4399-9a70-a102cb4c8a8b`, at 2,736.69 KiB gzip.
+The registration log confirms all **18 guild-scoped commands** registered. No public beta
+health or live review-interaction test is claimed by that workflow.
+
+[Web beta run 40565416619](https://github.com/FlashGalatine/xivdyetools/actions/runs/40565416619)
+passes tests/build/bundle/beta checks and publishes the immutable
+[d93a70b1 deployment](https://d93a70b1.xivdyetools-beta.pages.dev). Its smoke test confirms
+`beta.xivdyetools.app` serves that deployment (SHA256 prefix `312a3290ad2f`), with noindex,
+security headers and the reader license notice. The one-locale payload remains 2.17 MB/2.20 MB.
+
+[Draft PR #342](https://github.com/FlashGalatine/xivdyetools/pull/342) is stacked on #341's
+unchanged `239cac2b` base. The source-head inventory contains these three workflows and no
+production deployment. This receipt follow-up changes this evidence and the living plan only.
+Production acceptance and later metadata activation remain pending.
 
 The existing feature-branch paths select **web and Discord beta** workflows for this diff.
 No presets/moderation beta workflow is added, and beta receipts cannot close the production

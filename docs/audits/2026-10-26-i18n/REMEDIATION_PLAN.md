@@ -310,7 +310,8 @@ the deleted API dev worker remains retired. Merge and production acceptance rema
 ## Sprint A-PRESETS — apps/presets-api
 
 **Execution update 2026-10-27 — source prepared, release pending.** Stacked on A-API PR #341
-at `239cac2b`. [Implementation and verification evidence](../2026-10-26-security/evidence/remediation-presets-2026-10-27.md).
+at `239cac2b`; [draft PR #342](https://github.com/FlashGalatine/xivdyetools/pull/342), source
+`fa018bfa`. [Implementation and verification evidence](../2026-10-26-security/evidence/remediation-presets-2026-10-27.md).
 The maintainer chose tag/decoded-link-path moderation with narrow six-language privacy alignment,
 and charging failed decode/processing attempts while refunding cheap/proven storage failures.
 Unknown DB outcomes conservatively retain their slot. Prepare presets-api 2.7.0 MINOR and web 5.16.2,
@@ -324,6 +325,14 @@ targets depend on activation. No shared package, identity-provider, dependency, 
 change is selected. All nine primary IDs remain OPEN; fixed/outstanding counts are unchanged.
 The feature diff selects existing web/Discord betas; presets/moderation have no dedicated beta
 workflow. No manual deploy, main merge, live migration or package publication runs in this slice.
+
+**Verified source receipts:** [CI](https://github.com/FlashGalatine/xivdyetools/actions/runs/40565487013)
+passes the affected gates and all 167 Playwright tests; the local full graph passes 16,879 tests
+across 17 workspaces. [Web beta](https://github.com/FlashGalatine/xivdyetools/actions/runs/40565416619)
+passes its deployment/content/robots/header smoke checks;
+[Discord beta](https://github.com/FlashGalatine/xivdyetools/actions/runs/40565416626) deploys and
+registers all 18 test-guild commands. These are source-head beta receipts, not the production
+receipts needed to activate FINDING-016. The documentation follow-up changes evidence/plan only.
 
 After A-WORKER-KIT. Add the capped approved-only batch-by-id lookup before A-DISCORD switches favorite listing; preserve missing/failed outcomes and acting-user rate limits. Atomic quota admission can satisfy both distinct quota findings with separate assertions. Any linked-identity provider support selected here must deploy before A-MODERATION.
 
