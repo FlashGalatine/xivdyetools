@@ -163,8 +163,30 @@ All nine final gate commands exit 0:
 The compiler API/declaration check passes again after the final graph build. Existing lint
 warnings and Turbo's no-output warnings for moderation/Stoat test tasks do not fail the gate.
 Final independent Astra/high review approves source/API/semver, font retention, pack and
-all nine gate results for draft-PR preparation. Git secret scanning precedes the source
-commit; remote beta/CI receipts will be recorded after the authorized feature push.
+all nine gate results for draft-PR preparation. Whitespace and Gitleaks checks pass: the
+staged diff scans approximately 140 KB and the 12-commit branch history approximately
+11.68 MB, with no leaks found. Only the explicit 60 owned paths enter the source commit;
+the root public-announcement changelog and private report material are excluded.
+
+## Automatic beta and CI receipts
+
+Both runs below match source commit `0e7d91d534b06627203b48c39062e359a3716406`:
+
+- [Beta Discord run 40519834648](https://github.com/FlashGalatine/xivdyetools/actions/runs/40519834648)
+  succeeds. The actual `Deploy beta worker` and `Register beta commands (guild-scoped)`
+  steps both succeed, rather than taking missing-token guards. The bounded registration
+  log reports `Successfully registered 18 commands`; the alternate skip step is skipped.
+- [CI run 40519914300](https://github.com/FlashGalatine/xivdyetools/actions/runs/40519914300)
+  succeeds in all four jobs, including Playwright Chromium E2E, secret scanning, lint,
+  types, package tests/build and the blocking production-dependency audit. The latter
+  reports no known vulnerabilities. The separate report-only full-tree audit retains five
+  Vite development-tool advisories through API documentation tooling (one high, three
+  moderate, one low); dependency remediation remains outside this sprint.
+
+The [draft PR #340](https://github.com/FlashGalatine/xivdyetools/pull/340) is stacked on
+#339. The following receipt-only commit changes this evidence and the plan, with no package,
+app, workflow, lockfile or font changes. Automatic beta acceptance applies to the verified
+source above; final-head CI is checked separately. Production acceptance remains pending.
 
 ## Release and acceptance
 

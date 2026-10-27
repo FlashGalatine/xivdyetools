@@ -242,6 +242,14 @@ reuse the seven existing slot labels and remove the exact five-key preparatory o
 exception when those references land. No choice registration changes here.
 [Implementation evidence](../2026-10-26-security/evidence/remediation-bot-logic-2026-10-27.md).
 
+All 62 graph tasks, root checks and affected bundle checks pass. Independent task and
+security/API/semver reviews approve preparation. Source commit `0e7d91d5` passes
+[CI including Playwright](https://github.com/FlashGalatine/xivdyetools/actions/runs/40519914300)
+and [actual Discord beta deployment/18-command registration](https://github.com/FlashGalatine/xivdyetools/actions/runs/40519834648).
+[Draft PR #340](https://github.com/FlashGalatine/xivdyetools/pull/340) is stacked on #339;
+the receipt-only follow-up changes no runtime source. Registry publication and production
+acceptance remain pending.
+
 **Rollout:** verify published core 5.16.0 → SVG 4.4.1 → bot-logic 4.12.0. Workspace apps
 bundle local source; bot-logic-path merges deploy production Discord and moderation,
 while feature pushes update only the existing Discord beta. Discord 5.9.4 follows the
