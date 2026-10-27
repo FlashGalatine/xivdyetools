@@ -59,6 +59,16 @@ Community presets are moderated. To enforce bans and to keep moderation accounta
 
 How long each record is kept is listed under *Data Retention*.
 
+### Stored identity checks and ban scope
+
+Our sign-in service keeps a session revision with your account. Authorized services can privately retrieve your stored internal account ID, linked Discord user ID if present, and revision, or check whether a session still matches the stored sign-in links. The lookup returns no XIVAuth ID, name, character roster or provider token. Stored links are not fresh upstream verification. An unsafe link change is refused; moving presets, votes and daily-limit counts requires a safely accepted link and cannot bypass an active ban.
+
+When linked-identity moderation is enabled, an authorized moderator privately reviews the exact IDs before creating or expanding a ban, or lifting one particular ban. A ban can cover several internal account IDs and Discord user IDs confirmed for that ban or preserved when a link changes. Existing restrictions survive unlinking until moderator review lifts them; later bans do not automatically spread to previously detached identities. These associations enforce only that ban and grant no account access. They follow the ban record's retention: deletion 90 days after lifting.
+
+ID review uses moderator-only ephemeral Discord responses, separate from the ordinary channel posts described in this policy. We do not promise when Discord deletes these responses. Our presets database briefly stores the acting moderator's ID, reviewed IDs and revisions, selected ban and action, proposal hash, nonce, outcome and deadlines. Confirmation records contain no names, provider tokens or freeform reasons. They expire within 15 minutes and become eligible for bounded request-triggered and daily cleanup; deletion can wait until a successful sweep.
+
+When account-link recovery is enabled, our sign-in service stores affected provider/account IDs, expected associations and revisions, intended change, status and deadlines; the presets service stores a matching operation receipt. Neither recovery record contains names, provider tokens, character rosters or freeform reasons. The operation deadline is at most 15 minutes. Completed or refused records become eligible for cleanup 24 hours after the later of the deadline or acknowledgement; an abort confirmed to have no remote receipt uses its finish time instead of acknowledgement. Cleanup is best-effort. Unresolved changes with an applied or unknown remote result remain pending for operator review after the deadline, including before erasing their recovery records for a deletion request.
+
 ## 3. Data We Do NOT Collect
 
 We explicitly do **not** collect:
@@ -115,7 +125,7 @@ To name the gear, `/glamour` sends the equipment model numbers from the file and
 | Cloudflare Workers Analytics Engine | Command usage telemetry (see *Usage Analytics*) | Cloudflare's analytics infrastructure |
 | Discord | Posts in two private channels of our Discord server. The moderation channel gets each preset, edit or preview image that needs review: the post shows the preset (such as its name, description, category and dyes) and the author name, or, for a preview image, the preset's name and the image, and it is updated when a moderator decides. If a moderator bans you, the moderation channel also gets a post with your author name, the reason and how many of your presets were hidden. Moderators can also post the list of presets waiting for review, with their author names, in the moderation channel. The submission-log channel gets each preset published without review, with its author name, and a note naming the preset when a moderator approves, rejects or reverts one, with the reason for a rejection or a revert. Posts made after 2026-10-05 do not show your Discord User ID; posts made on or before that date may | Discord's infrastructure |
 
-Everything except those Discord posts is stored on Cloudflare's infrastructure. See [Cloudflare's Privacy Policy](https://www.cloudflare.com/privacypolicy/) for more information. The Discord posts stay in those channels, under [Discord's Privacy Policy](https://discord.com/privacy), until a moderator deletes them or until you request deletion (see *Your Rights*).
+Everything except those Discord posts and the ephemeral moderator responses is stored on Cloudflare's infrastructure. See [Cloudflare's Privacy Policy](https://www.cloudflare.com/privacypolicy/) for more information. The Discord posts stay in those channels, under [Discord's Privacy Policy](https://discord.com/privacy), until a moderator deletes them or until you request deletion (see *Your Rights*).
 
 ### Data Security
 

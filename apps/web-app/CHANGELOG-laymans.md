@@ -2,6 +2,11 @@
 
 ---
 
+## Web-App Version 5.16.3 — October 27, 2026
+
+### Privacy policy
+- The policy now explains private ID review, bans that continue after unlinking, and temporary recovery records for the new moderation features when enabled. All six language versions are updated.
+
 ## Web-App Version 5.16.1 — October 27, 2026
 
 ### Swatch Matcher and Glamour Reader: character labels

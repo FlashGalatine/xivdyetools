@@ -1,6 +1,6 @@
 {
   "name": "xivdyetools-discord-worker",
-  "version": "5.9.5",
+  "version": "5.9.6",
   "private": true,
   "description": "XIV Dye Tools Discord Bot - Cloudflare Workers Edition",
   "type": "module",
@@ -20,7 +20,12 @@
     "register-commands": "npx tsx scripts/register-commands.ts",
     "upload-emojis": "npx tsx scripts/upload-emojis.ts"
   },
-  "keywords": ["discord", "bot", "ffxiv", "cloudflare-workers"],
+  "keywords": [
+    "discord",
+    "bot",
+    "ffxiv",
+    "cloudflare-workers"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {

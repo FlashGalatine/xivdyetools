@@ -56,6 +56,14 @@ export function validateEnv(env: Env): EnvValidationResult {
   const errors: string[] = [];
   const warnings: string[] = [];
 
+  if (env.OAUTH_SESSION_CHECK_ENABLED !== undefined && env.OAUTH_SESSION_CHECK_ENABLED !== 'true' && env.OAUTH_SESSION_CHECK_ENABLED !== 'false') {
+    errors.push('Invalid OAUTH_SESSION_CHECK_ENABLED flag');
+  }
+  if (env.OAUTH_SESSION_CHECK_ENABLED === 'true' &&
+    (!env.OAUTH_IDENTITY || typeof env.OAUTH_IDENTITY.validateSession !== 'function')) {
+    errors.push('Missing or invalid OAUTH_IDENTITY binding');
+  }
+
   // Check required string environment variables
   const requiredStrings: Array<keyof Env> = [
     'ENVIRONMENT',

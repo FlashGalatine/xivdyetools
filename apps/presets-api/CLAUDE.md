@@ -159,8 +159,8 @@ admission DB failure). Count current-window events plus same-user current-window
 represented by any retained submission event for that user/preset, without a date filter in the
 anti-join. Reporting uses the same formula. Spent attempts survive create failures and deletion;
 pre-existing duplicate-to-vote conversions are free. Other daily kinds keep `reserveDailyEvent`'s
-existing fail-open backend behavior. Approval/Revert SQL checks active author bans in both stored
-identity columns inside the conditional write; revision/raw snapshot CAS and atomic audit remain.
+existing fail-open backend behavior. Approval/Revert SQL checks active author bans in legacy
+identity columns or particular-ban memberships inside the conditional write; revision/raw snapshot CAS and atomic audit remain.
 
 `PRESET_METADATA_MODERATION_ENABLED` is an optional local var, explicitly `false` in both Wrangler
 environments; only exact `true` enables tag/path scoring, tag/link-only text-edit charging/status
@@ -197,7 +197,7 @@ Vars: `ENVIRONMENT`, `API_VERSION = v1`, `CORS_ORIGIN`, `ADDITIONAL_CORS_ORIGINS
 
 ## Database
 
-### Tables (`schema.sql` + `migrations/0002…0014` + `002_add_composite_indexes.sql`)
+### Tables (`schema.sql` + numbered migrations through `0016` + `002_add_composite_indexes.sql`)
 
 `presets.content_revision` is an internal optimistic concurrency token. Migration 0014's
 trigger owns all increments when content, ownership, status, or revert snapshots change,
@@ -217,7 +217,10 @@ write. The token is intentionally omitted from public preset responses.
 | `moderation_log` | Audit trail of approve/reject/flag/unflag/requeue/revert/image_approve/image_reject actions, plus ban/unban/hide/restore written by moderation-worker directly (`migrations/0013` — `preset_id` is NULL on the user-level `ban`/`unban` rows, `target_discord_id` names the moderated user). Retention: see "Moderation record retention" below |
 | `submission_events` | Append-only per-user quota log (`migrations/0011`; `0012` rebuilt it to allow the `text_edit` kind). `(user_discord_id, kind, created_at)` with `kind ∈ {submission, flagged_edit, preview_upload, text_edit}` — user actions never delete rows, so a daily cap cannot be refilled by deleting your own presets (FINDING-008) |
 | `rate_limits` | **Dropped** by `migrations/0006` (REFACTOR-018 — never read or written). NOT in `schema.sql` any more: only a comment marks where it stood, so a fresh local DB does not create it either |
-| `banned_users` | Tracked via `discord_id` or `xivauth_id`; partial unique index for active bans. A lifted ban is deleted 90 days after `unbanned_at` (see below) |
+| `banned_users` | Parent bans; effective scope is legacy `discord_id` / `xivauth_id` UNION that parent’s memberships. Partial unique indexes remain. Lifted parents are deleted after the existing 90-day retention |
+| `ban_identity_memberships` | Confirmed or continuity-carried IDs for one particular ban, cascading on parent deletion; negative authorization only |
+| `ban_continuity_operations` | Immutable applied/refused handoff receipts, stable acknowledgements and retention deadlines |
+| `moderation_ban_confirmations` | Short-lived actor-bound selection/review nonces and immutable exact-ID proposals; no names, tokens or freeform reasons |
 | `failed_notifications` | Dead-letter queue (BUG-015) for Discord notifications that exhausted retries |
 
 ### Moderation record retention (FINDING-005)
@@ -232,7 +235,7 @@ The prune runs in two places: **daily** from the retention job below, and best-e
 
 ### Daily retention job (`src/retention-job.ts`)
 
-A Cron Trigger (`[env.production.triggers]`, `23 4 * * *` UTC, **production only** — the top-level block is the routeless dev worker) calls the `scheduled` handler, which runs `pruneSubmissionEvents` (30 d), `pruneFailedNotifications` (30 d resolved / 90 d unresolved) and `pruneModerationRecords` under `Promise.allSettled`, so one failing never stops the others. Logs counts, prune names and error names only. Each prune resolves `true` when its sweep ran and `false` when it caught its own D1 error; `runRetentionJob` resolves `{ fulfilled, rejected, failed }`, where `failed` names every prune that threw *or* reported `false` (BUG-066), and logs those names with `console.error`. Because Workers Logs are pinned off (FINDING-022) that log reaches nobody, so `scheduled` hands `ctx.waitUntil` a promise that **rejects** — with an `Error` naming only the failed prunes — whenever `failed` is non-empty. Cloudflare documents the first failing `waitUntil` as the invocation's status in the Cron Events table; that this worker's failed sweeps actually show up there as failures is **not yet confirmed** — check the dashboard after the next production deploy. The lazy write-path prunes stay (cheap, idempotent). `src/index.ts` still default-exports the Hono app, with `scheduled` attached via `Object.assign(app, { scheduled })` so `app.request` / `app.fetch` keep working. `tests/wrangler-config.test.ts` pins exactly one daily cron in production and none at the top level.
+A Cron Trigger (`[env.production.triggers]`, `23 4 * * *` UTC, **production only** — the top-level block is the routeless dev worker) calls the `scheduled` handler, which runs `pruneSubmissionEvents` (30 d), `pruneFailedNotifications` (30 d resolved / 90 d unresolved) and `pruneModerationRecords`, plus bounded continuity/confirmation cleanup, under `Promise.allSettled`, so one failing never stops the others. Logs counts, prune names and error names only. Each prune resolves `true` when its sweep ran and `false` when it caught its own D1 error; `runRetentionJob` resolves `{ fulfilled, rejected, failed }`, where `failed` names every prune that threw *or* reported `false` (BUG-066), and logs those names with `console.error`. Because Workers Logs are pinned off (FINDING-022) that log reaches nobody, so `scheduled` hands `ctx.waitUntil` a promise that **rejects** — with an `Error` naming only the failed prunes — whenever `failed` is non-empty. Cloudflare documents the first failing `waitUntil` as the invocation's status in the Cron Events table; that this worker's failed sweeps actually show up there as failures is **not yet confirmed** — check the dashboard after the next production deploy. The lazy write-path prunes stay (cheap, idempotent). `src/index.ts` still default-exports the Hono app, with `scheduled` attached via `Object.assign(app, { scheduled })` so `app.request` / `app.fetch` keep working. `tests/wrangler-config.test.ts` pins exactly one daily cron in production and none at the top level.
 
 ### Composite Indexes (`migrations/002_add_composite_indexes.sql`)
 
@@ -445,3 +448,23 @@ Production hides `err.message` and stack — only the request ID is returned. De
 4. `npm run deploy` — publishes the routeless `xivdyetools-presets-api-dev` worker (no staging env; it is not reachable at `api.xivdyetools.app`). Smoke-test production after step 5 with `curl https://api.xivdyetools.app/health` and an authenticated `POST /api/v1/presets`.
 5. `npm run deploy:production`.
 6. Verify Service Binding works from `discord-worker` (submit a preset via the web app and confirm the moderation channel receives the embed).
+
+## Prepared identity and ban consumers
+
+Wrangler enters through `src/worker.ts`, preserving the Hono default and scheduled handler
+while exporting named private `BanContinuity`. Its apply/get/ack RPC adds no public route.
+Migration `0016_ban_identity_continuity.sql` must be applied once before either dependent
+worker deploys; fresh databases use `schema.sql`. Never use `d1 migrations apply`.
+
+`OAUTH_SESSION_CHECK_ENABLED` is false in both environments. When enabled, JWT verification
+and revocation precede a private `OAUTH_IDENTITY.validateSession` check, before ownership,
+moderator context or rekey. Runtime stale/missing returns 401; pending/unavailable/malformed
+replies or a 2-second caller timeout return 503. Enabled missing/malformed bindings or malformed
+flags follow the existing production configuration-error 500; all fail closed. Bot HMAC is unchanged.
+
+Every ban predicate and all five rekey writes recognize active legacy/member scope. The
+continuity transaction snapshots all matching active parents, refuses overflow or unconfirmed
+ATTACH expansion, and preserves immutable replay outcomes. DETACH adds only the fresh UUID.
+Scheduled retention deletes at most 128 eligible receipts and 128 expired confirmations per
+sweep; pending/applying or unacknowledged receipts are retained. See the
+[full contract and staged activation](../../docs/architecture/identity-moderation.md).

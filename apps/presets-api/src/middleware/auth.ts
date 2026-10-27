@@ -15,11 +15,13 @@ import {
   isTokenRevoked,
 } from '@xivdyetools/auth';
 import {
+  ErrorCode,
   unauthorizedResponse,
   forbiddenResponse,
   validationErrorResponse,
 } from '../utils/api-response.js';
 import { getLogger } from '@xivdyetools/worker-kit';
+import { checkOAuthSession } from '../services/oauth-session-service.js';
 
 type Variables = {
   auth: AuthContext;
@@ -50,6 +52,7 @@ interface ExtendedJWTPayload {
   /** Discord snowflake (present for Discord logins and Discord-linked XIVAuth accounts) */
   discord_id?: string;
   auth_provider?: 'discord' | 'xivauth';
+  identity_revision?: number;
 }
 
 /**
@@ -354,6 +357,17 @@ export async function authMiddleware(
       const jwtPayload = await verifyJWT(token, c.env);
 
       if (jwtPayload) {
+        // Signature, issuer, expiry and revocation have already been checked.
+        // Resolve authority only after OAuth confirms the current identity relationship.
+        const session = await checkOAuthSession(c.env, jwtPayload);
+        if (session === 'stale') return unauthorizedResponse(c, 'Valid authentication required');
+        if (session === 'unavailable') {
+          return c.json({
+            success: false,
+            error: ErrorCode.SERVICE_UNAVAILABLE,
+            message: 'Unable to verify account status right now. Please try again shortly.',
+          }, 503);
+        }
         // Use display name if available, fallback to username
         const displayName = jwtPayload.global_name || jwtPayload.username;
         // Discord snowflake when the token has one, internal UUID otherwise —
@@ -374,6 +388,8 @@ export async function authMiddleware(
               ? jwtPayload.discord_id
               : undefined,
         };
+      } else if (c.env.OAUTH_SESSION_CHECK_ENABLED === 'true') {
+        return unauthorizedResponse(c, 'Valid authentication required');
       }
     }
   }

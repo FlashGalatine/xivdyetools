@@ -122,6 +122,11 @@ describe('FINDING-012: a broken rate-limit binding fails open loudly', () => {
   });
 
   it('serves the autocomplete interaction and warns with type autocomplete', async () => {
+    // Exercise the enabled feature; inactive autocomplete has its own coverage.
+    env.LINKED_BAN_CONFIRMATION_ENABLED = 'true';
+    env.OAUTH_IDENTITY = {
+      lookupStoredIdentity: async () => ({ version: 1, status: 'missing' }),
+    };
     env.RL_AUTOCOMPLETE = throwingBinding();
 
     const res = await handleAutocomplete(autocompleteInteraction(), env, ctx, logger as never);

@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.0] - 2026-10-27
+
+### Added
+
+- Named private `BanContinuity` RPC with canonical hashed requests, transactional active-ban
+  snapshots, immutable applied/refused receipts and stable acknowledgement/recovery. DETACH
+  preserves only each matched ban's fresh-UUID coverage; ATTACH refuses unconfirmed expansion.
+- Per-ban identity memberships and actor-bound confirmation storage in additive migration
+  `0016_ban_identity_continuity.sql`, with capacity/null-safe constraints and scheduled bounded
+  expiry/acknowledged-terminal cleanup. Apply once before either dependent consumer deployment.
+
+### Security
+
+- Enforce active legacy/member scope in middleware, all five identity-rekey statements and
+  approval/Revert conditional SQL while preserving revision/status/snapshot and audit guards.
+- Prepare bounded private OAuth session validation after JWT cryptography/revocation and before
+  ownership/moderator context. `OAUTH_SESSION_CHECK_ENABLED` remains false in both environments;
+  separate activation requires deployed provider, schema and all disclosures. Bot HMAC is unchanged.
+
+### Operations
+
+- Preserve HTTP and cron through the wrapper, add no public continuity route, and keep metadata
+  moderation disabled. Consumer verification precedes a later OAuth split/binding activation;
+  that activation also requires the documented bounded-RPC/global-cleanup correction.
+
 ## [2.7.0] - 2026-10-27
 
 ### Added

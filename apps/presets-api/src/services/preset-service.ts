@@ -461,7 +461,9 @@ export function prepareStatusUpdate(
     WHERE id = ? AND status = ? AND content_revision = ?
       AND (? <> 'approved' OR NOT EXISTS (
         SELECT 1 FROM banned_users b
-        WHERE (b.discord_id = presets.author_discord_id OR b.xivauth_id = presets.author_discord_id)
+        WHERE (b.discord_id = presets.author_discord_id OR b.xivauth_id = presets.author_discord_id
+          OR EXISTS (SELECT 1 FROM ban_identity_memberships m
+            WHERE m.ban_id = b.id AND m.identity_id = presets.author_discord_id))
           AND b.unbanned_at IS NULL
       ))
     RETURNING *
@@ -490,7 +492,9 @@ export function prepareRevert(
     WHERE id = ? AND content_revision = ? AND status = ? AND previous_values = ?
       AND NOT EXISTS (
         SELECT 1 FROM banned_users b
-        WHERE (b.discord_id = presets.author_discord_id OR b.xivauth_id = presets.author_discord_id)
+        WHERE (b.discord_id = presets.author_discord_id OR b.xivauth_id = presets.author_discord_id
+          OR EXISTS (SELECT 1 FROM ban_identity_memberships m
+            WHERE m.ban_id = b.id AND m.identity_id = presets.author_discord_id))
           AND b.unbanned_at IS NULL
       )
     RETURNING *

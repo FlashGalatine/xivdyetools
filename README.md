@@ -25,11 +25,11 @@ Published to npm under the `@xivdyetools` scope (except `test-utils`, which is w
 
 | App | Version | Description |
 |-----|---------|-------------|
-| [`web-app`](apps/web-app/) | 5.16.2 | Main web app at [xivdyetools.app](https://xivdyetools.app) (Vite + Lit + Tailwind) |
-| [`discord-worker`](apps/discord-worker/) | 5.9.5 | Primary Discord bot — 18 slash commands (CF Worker + Hono, HTTP Interactions) |
+| [`web-app`](apps/web-app/) | 5.16.3 | Main web app at [xivdyetools.app](https://xivdyetools.app) (Vite + Lit + Tailwind) |
+| [`discord-worker`](apps/discord-worker/) | 5.9.6 | Primary Discord bot — 18 slash commands (CF Worker + Hono, HTTP Interactions) |
 | [`image-worker`](apps/image-worker/) | 1.3.4 | Photon host — `POST /extract` (raw pixels for the bot) and `POST /thumbnail` (WebP previews for presets-api), service-binding-only (CF Worker) |
-| [`moderation-worker`](apps/moderation-worker/) | 1.8.4 | Moderation bot for community presets (CF Worker) |
-| [`presets-api`](apps/presets-api/) | 2.7.0 | Community presets REST API + preview-image storage (CF Worker + D1 + R2) |
+| [`moderation-worker`](apps/moderation-worker/) | 1.9.0 | Moderation bot for community presets (CF Worker) |
+| [`presets-api`](apps/presets-api/) | 2.8.0 | Community presets REST API + preview-image storage (CF Worker + D1 + R2) |
 | [`oauth`](apps/oauth/) | 3.2.0 | Discord OAuth + JWT issuance (CF Worker + D1) |
 | [`api-worker`](apps/api-worker/) | 0.21.1 | Public REST API at [data.xivdyetools.app](https://data.xivdyetools.app) + Universalis proxy routes + docs site at [developers.xivdyetools.app](https://developers.xivdyetools.app) (CF Worker + KV) |
 | [`og-worker`](apps/og-worker/) | 2.12.1 | Dynamic OpenGraph image generation (CF Worker + WASM) |

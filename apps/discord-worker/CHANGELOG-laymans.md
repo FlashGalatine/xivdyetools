@@ -35,6 +35,10 @@ Rules:
   path filter.
 -->
 
+## [5.9.6] - 2026-10-27
+### Privacy policy
+- The policy now explains private ID review, bans that continue after unlinking, and temporary recovery records for the new moderation features when enabled. All six language versions are updated.
+
 ## [5.9.4] - 2026-10-27
 ### 🎨 Clearer character and harmony results
 - `/harmony` shows every result's distance using your selected matching method, including hue-first searches.

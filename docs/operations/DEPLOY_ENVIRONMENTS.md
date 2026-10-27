@@ -483,3 +483,24 @@ and no outbound continuity binding. Verify the provider, then the later presets/
 consumers and disclosures, before a separate OAuth activation change.
 
 [Identity contract and full release order](../architecture/identity-moderation.md).
+
+## A-MODERATION consumer preparation — 2026-10-27
+
+Preparation keeps API session checks and all new moderation ban/unban flows disabled in both
+environments. The presets wrapper preserves HTTP/cron and exports named `BanContinuity`.
+Both consumers declare OAuth `IdentityLookup` service bindings; the provider must be deployed
+and verified before either dependent deployment references it.
+
+Apply additive presets migration `0016_ban_identity_continuity.sql` once before either consumer
+deploys, using `wrangler d1 execute --file`; never `d1 migrations apply` or a fresh-schema replay.
+Membership-aware queries require the new tables even while feature flags are false. Deploy and
+verify both policy units before any new confirmation storage/display. Then prepare a separate
+consumer activation for `OAUTH_SESSION_CHECK_ENABLED` and `LINKED_BAN_CONFIRMATION_ENABLED`;
+verify sessions, explicit ban/expansion/unban scope and private replies in production.
+
+Keep OAuth splitting disabled and its outbound continuity binding absent until all consumers
+are verified and the mandatory bounded-RPC/global-cleanup fix is implemented and tested. A
+later OAuth activation-only change follows. Automatic workflows deploy units independently;
+one merge does not prove ordering. Changed moderation slash arguments register in its existing
+deployment workflow. No manual registration, migration, deployment, merge or activation is
+selected by this preparation. See [the full order](../architecture/identity-moderation.md).

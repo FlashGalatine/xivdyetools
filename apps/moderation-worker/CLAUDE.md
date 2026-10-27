@@ -333,3 +333,25 @@ Presets API extended metadata moderation remains default off. Verify both consum
 deployments before preparing a separate activation-only API PR. Explicitly recorded snapshot links
 remain validated/restored even after disabling the API flag; missing legacy links preserve current
 state while disabled and clear it while enabled. This companion grants no manual deployment.
+
+## Prepared linked-ID ban confirmation
+
+`LINKED_BAN_CONFIRMATION_ENABLED` is false in both environments and gates all new ban/unban
+command, selection, button and modal paths. There is no unsafe single-ID fallback. Private
+`OAUTH_IDENTITY.lookupStoredIdentity` has a 1.2-second caller deadline; pending/error/malformed
+results cannot create a review. An authoritative missing record permits only the explicit ID.
+`additional_user` is optional on ban_user and resolves independently; do not describe its two
+input records as freshly verified or necessarily currently linked.
+
+`ban-confirmation-service.ts` owns immutable actor-bound proposals and one-use D1 claims.
+Parent choice creates a fresh review nonce atomically. SQL checks exact scope and matching-parent
+set equality in both directions, database-time expiry, selected parent activity and the 64-ID
+cap before any write/audit. Unban uses one parent's recorded scope, excludes other active bans
+and picks a deterministic eligible hidden twin across the whole restoring scope. Counts use
+matching audit inserts so the content-revision trigger cannot inflate the reported preset count.
+
+New private confirmation storage/displays require all privacy disclosures live before activation.
+Apply presets migration `0016_ban_identity_continuity.sql` before deploying either consumer;
+verify OAuth provider before consumer bindings. Deployment registers the changed optional slash
+argument automatically; no manual registration is selected. See the
+[contract and release order](../../docs/architecture/identity-moderation.md).

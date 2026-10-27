@@ -299,3 +299,13 @@ wrangler secret put CACHE_PURGE_API_TOKEN --env production   # Optional, FINDING
 - [Moderation](moderation.md) - Content filtering details
 - [Database](database.md) - Schema and queries
 - [Rate Limiting](rate-limiting.md) - Submission limits
+
+## Prepared identity continuity
+
+`src/worker.ts` preserves HTTP and daily scheduled handling and adds named private
+`BanContinuity`. Particular-ban memberships extend negative authorization across middleware,
+rekey and approval/Revert SQL; they never transfer ownership. Additive migration
+`0016_ban_identity_continuity.sql` must precede either consumer deployment. Session checks
+remain inactive behind `OAUTH_SESSION_CHECK_ENABLED=false`; enable only after provider and
+disclosures are live, then verify all consumers before separate OAuth splitting. See
+[the protocol and rollout](../../architecture/identity-moderation.md).

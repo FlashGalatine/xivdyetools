@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] - 2026-10-27
+
+### Added
+
+- Prepare private stored-ID lookup and exact-scope ban review, with optional `additional_user`,
+  explicit choice of one parent ban and confirmation of partial-ban expansion. One-use actor-bound
+  nonces, current authorization, provider re-resolution and transactional scope/parent comparisons
+  reject stale, replayed, expired and legacy target-only controls.
+- Recorded-scope unban preserves other active bans, scrubs the selected parent's name/reason,
+  retains its memberships and restores one eligible hidden signature twin across the scope.
+  Audit-derived preset counts exclude writes made by the content-revision trigger.
+
+### Changed
+
+- Newly generated approval, rejection, Revert and ban channel/log text omits moderator attribution;
+  actor IDs remain in the accountable database audit. Existing historical posts are unchanged.
+- `LINKED_BAN_CONFIRMATION_ENABLED` remains false in both environments. All new ban/unban paths
+  refuse privately until separate activation after provider, additive presets migration and
+  disclosures are live. The optional slash argument registers through the existing deploy workflow.
+
 ## [1.8.4] - 2026-10-27
 
 ### Security

@@ -384,3 +384,13 @@ public HTTP endpoint or an additional declared outbound binding. The initial pro
 keeps identity splitting disabled and declares no `BAN_CONTINUITY` target. Later consumers
 must bind only after the named provider is deployed, with migrations and session/membership
 enforcement verified before activation. See [the staged contract](identity-moderation.md).
+
+## Prepared identity consumers
+
+Presets and moderation declare `OAUTH_IDENTITY` targeting OAuth's named `IdentityLookup`, with
+environment-specific service names. Presets uses `validateSession`; moderation uses
+`lookupStoredIdentity`. Their `OAUTH_SESSION_CHECK_ENABLED` and
+`LINKED_BAN_CONFIRMATION_ENABLED` flags remain false. The named provider must exist before
+consumer deployment, and schema/disclosures must be live before a separate activation.
+Presets exports named `BanContinuity`; OAuth still declares no outbound binding to it.
+See [the full protocol and gates](identity-moderation.md).

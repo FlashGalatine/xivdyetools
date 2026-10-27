@@ -8,7 +8,7 @@
  * within a day, whatever the traffic. The lazy write-path prunes stay as they
  * are (cheap, idempotent, and they keep working on a worker with no cron).
  *
- * The three prunes are isolated: one failing must not stop the others. Each is
+ * The prunes are isolated: one failing must not stop the others. Each is
  * already best-effort and never throws, but `Promise.allSettled` makes that a
  * property of the job rather than of its callees. Logs counts, prune names and
  * error names only: these tables hold ids, usernames and moderator reasons,
@@ -27,6 +27,7 @@ import type { Env, RetentionLogger } from './types.js';
 import { pruneSubmissionEvents } from './services/rate-limit-service.js';
 import { pruneFailedNotifications } from './services/notification-service.js';
 import { pruneModerationRecords } from './services/moderation-retention-service.js';
+import { pruneContinuityRecords } from './services/ban-continuity-retention.js';
 
 /** The job's logger: the prunes' `warn`, plus `error` for a failed sweep. */
 interface RetentionJobLogger extends RetentionLogger {
@@ -51,7 +52,7 @@ interface RetentionJobSummary {
 }
 
 /**
- * Run all three prunes. A prune that threw, or that resolved anything other
+ * Run all prunes. A prune that threw, or that resolved anything other
  * than `true`, is a failed sweep: it is named in `failed` and logged at error
  * level, so a lapse in retention cannot pass as a clean run.
  */
@@ -63,6 +64,7 @@ export async function runRetentionJob(
     ['submission_events', (): Promise<boolean> => pruneSubmissionEvents(db, logger)],
     ['failed_notifications', (): Promise<boolean> => pruneFailedNotifications(db, logger)],
     ['moderation_records', (): Promise<boolean> => pruneModerationRecords(db, logger)],
+    ['continuity_records', (): Promise<boolean> => pruneContinuityRecords(db, logger)],
   ] as const;
 
   const results = await Promise.allSettled(prunes.map(([, prune]) => prune()));

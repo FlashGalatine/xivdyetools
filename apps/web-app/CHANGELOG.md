@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.16.3] - 2026-10-27
+
+### Changed
+
+- Align all six privacy variants with private stored-ID review, particular-ban memberships and
+  continuity, ephemeral moderator responses, short-lived confirmations and interrupted-link
+  recovery retention. These disclosures precede separately activated consumer behavior.
+
 ## [5.16.2] - 2026-10-27
 
 ### Changed

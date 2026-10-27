@@ -5,9 +5,9 @@ import { Translator } from '../../services/bot-i18n.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 import { InteractionResponseType } from '../../types/env.js';
 import * as presetApi from '../../services/preset-api.js';
+import * as confirmations from '../../services/ban-confirmation-service.js';
 import * as banService from '../../services/ban-service.js';
 import * as discordApi from '../../utils/discord-api.js';
-import { base64UrlEncode } from '@xivdyetools/auth/encoding';
 import { PresetAPIError } from '../../types/preset.js';
 
 const CURRENT_PRESET = {
@@ -49,13 +49,13 @@ vi.mock('../../services/preset-api.js', async () => {
 });
 
 vi.mock('../../services/ban-service.js', () => ({
-  getUserForBanConfirmation: vi.fn(),
-  getActiveBan: vi.fn(),
   banUser: vi.fn(),
   unbanUser: vi.fn(),
   // MOD-4 (FINDING-034): approve paths consult the author's ban status
   isPresetAuthorBanned: vi.fn(),
 }));
+
+vi.mock('../../services/ban-confirmation-service.js', async () => ({...await vi.importActual('../../services/ban-confirmation-service.js'), createBanReview:vi.fn()}));
 
 describe('handlePresetCommand', () => {
   let env: Env;
@@ -199,87 +199,6 @@ describe('handlePresetCommand', () => {
       const json = (await response.json()) as any;
 
       expect(json.type).toBe(InteractionResponseType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE);
-    });
-
-    it('should route to ban_user subcommand', async () => {
-      vi.mocked(presetApi.isModerator).mockReturnValue(true);
-      vi.mocked(banService.getUserForBanConfirmation).mockResolvedValue({
-        user: {
-          discordId: '123456789012345678',
-          username: 'TargetUser',
-          presetCount: 5,
-        },
-        recentPresets: [],
-      });
-
-      const interaction: DiscordInteraction = {
-        id: 'int-1',
-        token: 'token-1',
-        application_id: 'app-123',
-        type: 2,
-        channel_id: 'channel-moderation',
-        member: { user: { id: 'mod-1', username: 'Moderator' } },
-        data: {
-          name: 'preset',
-          options: [
-            {
-              name: 'ban_user',
-              type: 1,
-              options: [{ name: 'user', type: 3, value: '123456789012345678' }],
-            },
-          ],
-        },
-      };
-
-      const response = await handlePresetCommand(interaction, env, ctx, t);
-      const json = (await response.json()) as any;
-
-      expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-      expect(json.data.embeds[0].title).toContain('Confirm');
-    });
-
-    it('should route to unban_user subcommand', async () => {
-      vi.mocked(presetApi.isModerator).mockReturnValue(true);
-      vi.mocked(banService.getActiveBan).mockResolvedValue({
-        id: 'ban-1',
-        discordId: '123456789012345678',
-        xivAuthId: null,
-        username: 'TargetUser',
-        reason: 'Ban reason',
-        bannedAt: '2025-01-15T12:00:00Z',
-        moderatorDiscordId: 'mod-1',
-        unbannedAt: null,
-        unbanModeratorDiscordId: null,
-      });
-      vi.mocked(banService.unbanUser).mockResolvedValue({
-        success: true,
-        presetsRestored: 3,
-      });
-
-      const interaction: DiscordInteraction = {
-        id: 'int-1',
-        token: 'token-1',
-        application_id: 'app-123',
-        type: 2,
-        channel_id: 'channel-moderation',
-        member: { user: { id: 'mod-1', username: 'Moderator' } },
-        data: {
-          name: 'preset',
-          options: [
-            {
-              name: 'unban_user',
-              type: 1,
-              options: [{ name: 'user', type: 3, value: '123456789012345678' }],
-            },
-          ],
-        },
-      };
-
-      const response = await handlePresetCommand(interaction, env, ctx, t);
-      const json = (await response.json()) as any;
-
-      expect(json.type).toBe(InteractionResponseType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE);
-      expect(json.data.flags).toBe(64); // Ephemeral
     });
   });
 
@@ -1288,614 +1207,6 @@ describe('handlePresetCommand', () => {
     });
   });
 
-  describe('/preset ban_user', () => {
-    it('should deny access outside moderation channel', async () => {
-      vi.mocked(presetApi.isModerator).mockReturnValue(true);
-
-      const interaction: DiscordInteraction = {
-        id: 'int-1',
-        token: 'token-1',
-        application_id: 'app-123',
-        type: 2,
-        channel_id: 'wrong-channel',
-        member: { user: { id: 'mod-1', username: 'Moderator' } },
-        data: {
-          name: 'preset',
-          options: [
-            {
-              name: 'ban_user',
-              type: 1,
-              options: [{ name: 'user', type: 3, value: '123456789012345678' }],
-            },
-          ],
-        },
-      };
-
-      const response = await handlePresetCommand(interaction, env, ctx, t);
-      const json = (await response.json()) as any;
-
-      expect(json.data.content).toContain('can only be used in the moderation channel');
-    });
-
-    it('should deny access for non-moderators', async () => {
-      vi.mocked(presetApi.isModerator).mockReturnValue(false);
-
-      const interaction: DiscordInteraction = {
-        id: 'int-1',
-        token: 'token-1',
-        application_id: 'app-123',
-        type: 2,
-        channel_id: 'channel-moderation',
-        member: { user: { id: 'user-123', username: 'NormalUser' } },
-        data: {
-          name: 'preset',
-          options: [
-            {
-              name: 'ban_user',
-              type: 1,
-              options: [{ name: 'user', type: 3, value: '123456789012345678' }],
-            },
-          ],
-        },
-      };
-
-      const response = await handlePresetCommand(interaction, env, ctx, t);
-      const json = (await response.json()) as any;
-
-      expect(json.data.content).toContain('do not have permission');
-    });
-
-    it('should return error when user parameter is missing', async () => {
-      vi.mocked(presetApi.isModerator).mockReturnValue(true);
-
-      const interaction: DiscordInteraction = {
-        id: 'int-1',
-        token: 'token-1',
-        application_id: 'app-123',
-        type: 2,
-        channel_id: 'channel-moderation',
-        member: { user: { id: 'mod-1', username: 'Moderator' } },
-        data: {
-          name: 'preset',
-          options: [{ name: 'ban_user', type: 1, options: [] }],
-        },
-      };
-
-      const response = await handlePresetCommand(interaction, env, ctx, t);
-      const json = (await response.json()) as any;
-
-      expect(json.data.content).toContain('specify a user');
-    });
-
-    it('should return error when user not found', async () => {
-      vi.mocked(presetApi.isModerator).mockReturnValue(true);
-      vi.mocked(banService.getUserForBanConfirmation).mockResolvedValue(null);
-
-      const interaction: DiscordInteraction = {
-        id: 'int-1',
-        token: 'token-1',
-        application_id: 'app-123',
-        type: 2,
-        channel_id: 'channel-moderation',
-        member: { user: { id: 'mod-1', username: 'Moderator' } },
-        data: {
-          name: 'preset',
-          options: [
-            {
-              name: 'ban_user',
-              type: 1,
-              options: [{ name: 'user', type: 3, value: '123456789012345699' }],
-            },
-          ],
-        },
-      };
-
-      const response = await handlePresetCommand(interaction, env, ctx, t);
-      const json = (await response.json()) as any;
-
-      expect(json.data.content).toContain('not found');
-    });
-
-    it('should show ban confirmation with user details', async () => {
-      vi.mocked(presetApi.isModerator).mockReturnValue(true);
-      vi.mocked(banService.getUserForBanConfirmation).mockResolvedValue({
-        user: {
-          discordId: '123456789012345678',
-          username: 'TargetUser',
-          presetCount: 5,
-        },
-        recentPresets: [
-          { id: 'preset-1', name: 'Preset 1', shareUrl: 'https://xivdyetools.app/presets/1' },
-          { id: 'preset-2', name: 'Preset 2', shareUrl: 'https://xivdyetools.app/presets/2' },
-        ],
-      });
-
-      const interaction: DiscordInteraction = {
-        id: 'int-1',
-        token: 'token-1',
-        application_id: 'app-123',
-        type: 2,
-        channel_id: 'channel-moderation',
-        member: { user: { id: 'mod-1', username: 'Moderator' } },
-        data: {
-          name: 'preset',
-          options: [
-            {
-              name: 'ban_user',
-              type: 1,
-              options: [{ name: 'user', type: 3, value: '123456789012345678' }],
-            },
-          ],
-        },
-      };
-
-      const response = await handlePresetCommand(interaction, env, ctx, t);
-      const json = (await response.json()) as any;
-
-      expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-      expect(json.data.embeds[0].title).toContain('Confirm');
-      expect(json.data.embeds[0].fields).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            name: expect.stringContaining('Username'),
-            value: 'TargetUser',
-          }),
-          expect.objectContaining({
-            name: expect.stringContaining('Discord ID'),
-            value: '123456789012345678',
-          }),
-          expect.objectContaining({ name: expect.stringContaining('Total Presets'), value: '5' }),
-        ]),
-      );
-      expect(json.data.components[0].components).toHaveLength(2);
-      // FINDING-007: the confirm button carries ONLY the target id — the
-      // username used to ride along base64url-encoded and overflowed
-      // Discord's 100-char custom_id cap for long CJK/emoji names
-      expect(json.data.components[0].components[0].custom_id).toBe('ban_confirm_123456789012345678');
-      expect(json.data.flags).toBe(64); // Ephemeral
-    });
-
-    it('FINDING-007: confirm custom_id stays within 100 chars for a 32-character CJK username', async () => {
-      vi.mocked(presetApi.isModerator).mockReturnValue(true);
-      vi.mocked(banService.getUserForBanConfirmation).mockResolvedValue({
-        user: {
-          discordId: '123456789012345678',
-          username: '彩'.repeat(32),
-          presetCount: 1,
-        },
-        recentPresets: [],
-      });
-
-      const interaction: DiscordInteraction = {
-        id: 'int-1',
-        token: 'token-1',
-        application_id: 'app-123',
-        channel_id: 'channel-moderation',
-        data: {
-          name: 'preset',
-          options: [
-            {
-              name: 'ban_user',
-              type: 1,
-              options: [{ name: 'user', type: 3, value: '123456789012345678' }],
-            },
-          ],
-        },
-        member: { user: { id: 'mod-1', username: 'Moderator' } },
-      };
-
-      const response = await handlePresetCommand(interaction, env, ctx, t);
-      const json = (await response.json()) as any;
-
-      const customId = json.data.components[0].components[0].custom_id as string;
-      expect(customId).toBe('ban_confirm_123456789012345678');
-      expect(customId.length).toBeLessThanOrEqual(100);
-      expect(customId).not.toContain(base64UrlEncode('彩'.repeat(32)));
-    });
-
-    it('should show "No presets found" when user has no recent presets', async () => {
-      vi.mocked(presetApi.isModerator).mockReturnValue(true);
-      vi.mocked(banService.getUserForBanConfirmation).mockResolvedValue({
-        user: {
-          discordId: '123456789012345678',
-          username: 'TargetUser',
-          presetCount: 0,
-        },
-        recentPresets: [],
-      });
-
-      const interaction: DiscordInteraction = {
-        id: 'int-1',
-        token: 'token-1',
-        application_id: 'app-123',
-        type: 2,
-        channel_id: 'channel-moderation',
-        member: { user: { id: 'mod-1', username: 'Moderator' } },
-        data: {
-          name: 'preset',
-          options: [
-            {
-              name: 'ban_user',
-              type: 1,
-              options: [{ name: 'user', type: 3, value: '123456789012345678' }],
-            },
-          ],
-        },
-      };
-
-      const response = await handlePresetCommand(interaction, env, ctx, t);
-      const json = (await response.json()) as any;
-
-      const recentPresetsField = json.data.embeds[0].fields.find((f: any) =>
-        f.name.includes('Recent Presets'),
-      );
-      expect(recentPresetsField.value).toBe('_No presets found_');
-    });
-  });
-
-  describe('/preset unban_user', () => {
-    it('should deny access outside moderation channel', async () => {
-      vi.mocked(presetApi.isModerator).mockReturnValue(true);
-
-      const interaction: DiscordInteraction = {
-        id: 'int-1',
-        token: 'token-1',
-        application_id: 'app-123',
-        type: 2,
-        channel_id: 'wrong-channel',
-        member: { user: { id: 'mod-1', username: 'Moderator' } },
-        data: {
-          name: 'preset',
-          options: [
-            {
-              name: 'unban_user',
-              type: 1,
-              options: [{ name: 'user', type: 3, value: '123456789012345678' }],
-            },
-          ],
-        },
-      };
-
-      const response = await handlePresetCommand(interaction, env, ctx, t);
-      const json = (await response.json()) as any;
-
-      expect(json.data.content).toContain('can only be used in the moderation channel');
-    });
-
-    it('should deny access for non-moderators', async () => {
-      vi.mocked(presetApi.isModerator).mockReturnValue(false);
-
-      const interaction: DiscordInteraction = {
-        id: 'int-1',
-        token: 'token-1',
-        application_id: 'app-123',
-        type: 2,
-        channel_id: 'channel-moderation',
-        member: { user: { id: 'user-123', username: 'NormalUser' } },
-        data: {
-          name: 'preset',
-          options: [
-            {
-              name: 'unban_user',
-              type: 1,
-              options: [{ name: 'user', type: 3, value: '123456789012345678' }],
-            },
-          ],
-        },
-      };
-
-      const response = await handlePresetCommand(interaction, env, ctx, t);
-      const json = (await response.json()) as any;
-
-      expect(json.data.content).toContain('do not have permission');
-    });
-
-    it('should return error when user parameter is missing', async () => {
-      vi.mocked(presetApi.isModerator).mockReturnValue(true);
-
-      const interaction: DiscordInteraction = {
-        id: 'int-1',
-        token: 'token-1',
-        application_id: 'app-123',
-        type: 2,
-        channel_id: 'channel-moderation',
-        member: { user: { id: 'mod-1', username: 'Moderator' } },
-        data: {
-          name: 'preset',
-          options: [{ name: 'unban_user', type: 1, options: [] }],
-        },
-      };
-
-      const response = await handlePresetCommand(interaction, env, ctx, t);
-      const json = (await response.json()) as any;
-
-      expect(json.data.content).toContain('specify a user');
-    });
-
-    it('should return error when user is not banned', async () => {
-      vi.useFakeTimers();
-      vi.setSystemTime(new Date('2025-01-15T12:00:00Z'));
-
-      vi.mocked(presetApi.isModerator).mockReturnValue(true);
-      vi.mocked(banService.getActiveBan).mockResolvedValue(null);
-
-      const interaction: DiscordInteraction = {
-        id: 'int-1',
-        token: 'token-1',
-        application_id: 'app-123',
-        type: 2,
-        channel_id: 'channel-moderation',
-        member: { user: { id: 'mod-1', username: 'Moderator' } },
-        data: {
-          name: 'preset',
-          options: [
-            {
-              name: 'unban_user',
-              type: 1,
-              options: [{ name: 'user', type: 3, value: '123456789012345678' }],
-            },
-          ],
-        },
-      };
-
-      await handlePresetCommand(interaction, env, ctx, t);
-      // Wait for waitUntil callback
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
-        vi.mocked(ctx.waitUntil).mock.calls.length - 1
-      ]?.[0];
-      if (waitUntilPromise) await waitUntilPromise;
-
-      expect(discordApi.safeEditOriginalResponse).toHaveBeenCalledWith(
-        'app-123',
-        'token-1',
-        expect.objectContaining({
-          embeds: expect.arrayContaining([
-            expect.objectContaining({
-              description: expect.stringContaining('not currently banned'),
-            }),
-          ]),
-        }),
-      );
-    });
-
-    it('should successfully unban user', async () => {
-      vi.useFakeTimers();
-      vi.setSystemTime(new Date('2025-01-15T12:00:00Z'));
-
-      vi.mocked(presetApi.isModerator).mockReturnValue(true);
-      vi.mocked(banService.getActiveBan).mockResolvedValue({
-        id: 'ban-1',
-        discordId: '123456789012345678',
-        xivAuthId: null,
-        username: 'BannedUser',
-        reason: 'Ban reason',
-        bannedAt: '2025-01-14T12:00:00Z',
-        moderatorDiscordId: 'mod-2',
-        unbannedAt: null,
-        unbanModeratorDiscordId: null,
-      });
-      vi.mocked(banService.unbanUser).mockResolvedValue({
-        success: true,
-        presetsRestored: 3,
-      });
-
-      const interaction: DiscordInteraction = {
-        id: 'int-1',
-        token: 'token-1',
-        application_id: 'app-123',
-        type: 2,
-        channel_id: 'channel-moderation',
-        member: { user: { id: 'mod-1', username: 'Moderator' } },
-        data: {
-          name: 'preset',
-          options: [
-            {
-              name: 'unban_user',
-              type: 1,
-              options: [{ name: 'user', type: 3, value: '123456789012345678' }],
-            },
-          ],
-        },
-      };
-
-      await handlePresetCommand(interaction, env, ctx, t);
-      // Wait for waitUntil callback
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
-        vi.mocked(ctx.waitUntil).mock.calls.length - 1
-      ]?.[0];
-      if (waitUntilPromise) await waitUntilPromise;
-
-      expect(banService.unbanUser).toHaveBeenCalledWith(db, '123456789012345678', 'mod-1');
-      expect(discordApi.safeEditOriginalResponse).toHaveBeenCalledWith(
-        'app-123',
-        'token-1',
-        expect.objectContaining({
-          embeds: expect.arrayContaining([
-            expect.objectContaining({
-              title: expect.stringContaining('Unbanned'),
-              description: expect.stringContaining('BannedUser'),
-              fields: expect.arrayContaining([
-                expect.objectContaining({ name: 'User ID', value: '123456789012345678' }),
-                expect.objectContaining({ value: '3' }),
-              ]),
-            }),
-          ]),
-        }),
-      );
-    });
-
-    it('FINDING-021: tells the moderator how many presets stayed hidden and why', async () => {
-      vi.useFakeTimers();
-      vi.setSystemTime(new Date('2025-01-15T12:00:00Z'));
-
-      vi.mocked(presetApi.isModerator).mockReturnValue(true);
-      vi.mocked(banService.getActiveBan).mockResolvedValue({
-        id: 'ban-1',
-        discordId: '123456789012345678',
-        xivAuthId: null,
-        username: 'BannedUser',
-        reason: 'Ban reason',
-        bannedAt: '2025-01-14T12:00:00Z',
-        moderatorDiscordId: 'mod-2',
-        unbannedAt: null,
-        unbanModeratorDiscordId: null,
-      });
-      vi.mocked(banService.unbanUser).mockResolvedValue({
-        success: true,
-        presetsRestored: 2,
-        presetsStillHidden: 1,
-      });
-
-      const interaction: DiscordInteraction = {
-        id: 'int-1',
-        token: 'token-1',
-        application_id: 'app-123',
-        type: 2,
-        channel_id: 'channel-moderation',
-        member: { user: { id: 'mod-1', username: 'Moderator' } },
-        data: {
-          name: 'preset',
-          options: [
-            {
-              name: 'unban_user',
-              type: 1,
-              options: [{ name: 'user', type: 3, value: '123456789012345678' }],
-            },
-          ],
-        },
-      };
-
-      await handlePresetCommand(interaction, env, ctx, t);
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
-        vi.mocked(ctx.waitUntil).mock.calls.length - 1
-      ]?.[0];
-      if (waitUntilPromise) await waitUntilPromise;
-
-      expect(discordApi.safeEditOriginalResponse).toHaveBeenCalledWith(
-        'app-123',
-        'token-1',
-        expect.objectContaining({
-          embeds: expect.arrayContaining([
-            expect.objectContaining({
-              fields: expect.arrayContaining([
-                expect.objectContaining({
-                  name: 'Presets Still Hidden',
-                  value: expect.stringMatching(/^1 — .*same dye combination/),
-                }),
-              ]),
-            }),
-          ]),
-        }),
-      );
-    });
-
-    it('should handle unban failure', async () => {
-      vi.useFakeTimers();
-      vi.setSystemTime(new Date('2025-01-15T12:00:00Z'));
-
-      vi.mocked(presetApi.isModerator).mockReturnValue(true);
-      vi.mocked(banService.getActiveBan).mockResolvedValue({
-        id: 'ban-1',
-        discordId: '123456789012345678',
-        xivAuthId: null,
-        username: 'BannedUser',
-        reason: 'Ban reason',
-        bannedAt: '2025-01-14T12:00:00Z',
-        moderatorDiscordId: 'mod-2',
-        unbannedAt: null,
-        unbanModeratorDiscordId: null,
-      });
-      vi.mocked(banService.unbanUser).mockResolvedValue({
-        success: false,
-        presetsRestored: 0,
-        error: 'Database error',
-      });
-
-      const interaction: DiscordInteraction = {
-        id: 'int-1',
-        token: 'token-1',
-        application_id: 'app-123',
-        type: 2,
-        channel_id: 'channel-moderation',
-        member: { user: { id: 'mod-1', username: 'Moderator' } },
-        data: {
-          name: 'preset',
-          options: [
-            {
-              name: 'unban_user',
-              type: 1,
-              options: [{ name: 'user', type: 3, value: '123456789012345678' }],
-            },
-          ],
-        },
-      };
-
-      await handlePresetCommand(interaction, env, ctx, t);
-      // Wait for waitUntil callback
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
-        vi.mocked(ctx.waitUntil).mock.calls.length - 1
-      ]?.[0];
-      if (waitUntilPromise) await waitUntilPromise;
-
-      expect(discordApi.safeEditOriginalResponse).toHaveBeenCalledWith(
-        'app-123',
-        'token-1',
-        expect.objectContaining({
-          embeds: expect.arrayContaining([
-            expect.objectContaining({
-              description: expect.stringContaining('Database error'),
-            }),
-          ]),
-        }),
-      );
-    });
-
-    it('should handle unexpected errors during unban', async () => {
-      vi.useFakeTimers();
-      vi.setSystemTime(new Date('2025-01-15T12:00:00Z'));
-
-      vi.mocked(presetApi.isModerator).mockReturnValue(true);
-      vi.mocked(banService.getActiveBan).mockRejectedValue(new Error('Database connection lost'));
-
-      const interaction: DiscordInteraction = {
-        id: 'int-1',
-        token: 'token-1',
-        application_id: 'app-123',
-        type: 2,
-        channel_id: 'channel-moderation',
-        member: { user: { id: 'mod-1', username: 'Moderator' } },
-        data: {
-          name: 'preset',
-          options: [
-            {
-              name: 'unban_user',
-              type: 1,
-              options: [{ name: 'user', type: 3, value: '123456789012345678' }],
-            },
-          ],
-        },
-      };
-
-      await handlePresetCommand(interaction, env, ctx, t);
-      // Wait for waitUntil callback
-      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
-        vi.mocked(ctx.waitUntil).mock.calls.length - 1
-      ]?.[0];
-      if (waitUntilPromise) await waitUntilPromise;
-
-      expect(discordApi.safeEditOriginalResponse).toHaveBeenCalledWith(
-        'app-123',
-        'token-1',
-        expect.objectContaining({
-          embeds: expect.arrayContaining([
-            expect.objectContaining({
-              description: expect.stringContaining('unexpected error'),
-            }),
-          ]),
-        }),
-      );
-    });
-  });
 });
 
 // ============================================================================
@@ -1938,16 +1249,6 @@ describe('handlePresetCommand — security audit remediations', () => {
     channel_id: 'channel-moderation',
     member: { user: { id: MOD, username: 'Moderator' } },
     data: { name: 'preset', options: [{ name: 'moderate', type: 1, options }] },
-  });
-
-  const subcommand = (name: 'ban_user' | 'unban_user', user: string): DiscordInteraction => ({
-    id: 'int-1',
-    token: 'token-1',
-    application_id: 'app-123',
-    type: 2,
-    channel_id: 'channel-moderation',
-    member: { user: { id: MOD, username: 'Moderator' } },
-    data: { name: 'preset', options: [{ name, type: 1, options: [{ name: 'user', type: 3, value: user }] }] },
   });
 
   const flushWaitUntil = async () => {
@@ -2040,142 +1341,6 @@ describe('handlePresetCommand — security audit remediations', () => {
       expect(description).not.toContain('@everyone');
       expect(description).not.toContain('**x**');
     });
-
-    it('ban confirmation: username is escaped and preset links cannot be broken out of', async () => {
-      vi.mocked(banService.getUserForBanConfirmation).mockResolvedValueOnce({
-        user: { discordId: TARGET, username: '[Nice](https://evil.example) @everyone', presetCount: 1 },
-        recentPresets: [
-          {
-            id: PRESET_ID,
-            name: 'Nice palette](https://evil.example/login) [x',
-            shareUrl: `https://xivdyetools.app/presets/${PRESET_ID}`,
-          },
-        ],
-      });
-
-      const response = await handlePresetCommand(subcommand('ban_user', TARGET), env, ctx, t);
-      const json = (await response.json()) as any;
-      const fields: Array<{ name: string; value: string }> = json.data.embeds[0].fields;
-
-      const username = fields.find((f) => f.name === 'Username')!.value;
-      expect(username).not.toMatch(/\[Nice\]\(https:\/\/evil\.example\)/);
-      expect(username).not.toContain('@everyone');
-
-      const links = fields.find((f) => f.name === 'Recent Presets')!.value;
-      expect(links).not.toMatch(/\]\(https:\/\/evil\.example/);
-      expect(links).toContain(`https://xivdyetools.app/presets/${PRESET_ID}`);
-      // interaction responses carry allowed_mentions too
-      expect(json.data.allowed_mentions).toEqual({ parse: [] });
-    });
-
-    it('unban: the stored username is escaped in the success embed', async () => {
-      vi.mocked(banService.getActiveBan).mockResolvedValueOnce({
-        id: 'ban-1',
-        discordId: TARGET,
-        xivAuthId: null,
-        username: '**Bold** <@&123456789012345678>',
-        moderatorDiscordId: MOD,
-        reason: 'r',
-        bannedAt: '2026-08-21T00:00:00Z',
-        unbannedAt: null,
-        unbanModeratorDiscordId: null,
-      });
-      vi.mocked(banService.unbanUser).mockResolvedValueOnce({ success: true, presetsRestored: 1 });
-
-      await handlePresetCommand(subcommand('unban_user', TARGET), env, ctx, t);
-      await flushWaitUntil();
-
-      const description: string = lastEdit().embeds[0].description;
-      expect(description).not.toContain('**Bold**');
-      expect(description).not.toContain('<@&');
-    });
-  });
-
-  describe('FINDING-020 — ban targets must be a Discord snowflake or XIVAuth UUID', () => {
-    it('ban_user rejects a malformed target before touching D1', async () => {
-      const response = await handlePresetCommand(subcommand('ban_user', '../not-an-id'), env, ctx, t);
-      const json = (await response.json()) as any;
-
-      expect(json.data.flags).toBe(64);
-      expect(json.data.content).toContain('Invalid user ID');
-      expect(banService.getUserForBanConfirmation).not.toHaveBeenCalled();
-    });
-
-    it('unban_user rejects a malformed target before touching D1', async () => {
-      const response = await handlePresetCommand(subcommand('unban_user', 'xivauth-uuid-ish'), env, ctx, t);
-      const json = (await response.json()) as any;
-
-      expect(json.data.flags).toBe(64);
-      expect(json.data.content).toContain('Invalid user ID');
-      expect(banService.getActiveBan).not.toHaveBeenCalled();
-      expect(banService.unbanUser).not.toHaveBeenCalled();
-    });
-
-    // BUG-001 path (a): XIVAuth-only preset authors have no Discord snowflake —
-    // presets-api stores their JWT `sub` (a UUID) as `author_discord_id`, so a
-    // ban target with that shape must reach the same confirmation step a
-    // snowflake target does, not the "Invalid user ID" refusal.
-    const XIVAUTH_UUID = 'a1b2c3d4-e5f6-4789-a1b2-c3d4e5f67890';
-
-    it('ban_user accepts a UUID target and reaches the confirmation step', async () => {
-      vi.mocked(banService.getUserForBanConfirmation).mockResolvedValueOnce({
-        user: { discordId: XIVAUTH_UUID, username: 'XivauthOnlyAuthor', presetCount: 2 },
-        recentPresets: [],
-      });
-
-      const response = await handlePresetCommand(subcommand('ban_user', XIVAUTH_UUID), env, ctx, t);
-      const json = (await response.json()) as any;
-
-      expect(json.data.content).toBeUndefined();
-      expect(banService.getUserForBanConfirmation).toHaveBeenCalledWith(
-        env.DB,
-        XIVAUTH_UUID,
-        expect.any(String),
-      );
-      const confirmButton = json.data.components[0].components[0];
-      expect(confirmButton.custom_id).toBe(`ban_confirm_${XIVAUTH_UUID}`);
-      // A4 (2026-09-16 PR review): the id field must be labeled "XIVAuth ID",
-      // not "Discord ID", when the target has no real Discord snowflake.
-      expect(json.data.embeds[0].fields).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ name: 'XIVAuth ID', value: XIVAUTH_UUID }),
-        ]),
-      );
-    });
-
-    it('unban_user accepts a UUID target and reaches unbanUser', async () => {
-      vi.mocked(banService.getActiveBan).mockResolvedValueOnce({
-        id: 'ban-2',
-        discordId: XIVAUTH_UUID,
-        xivAuthId: null,
-        username: 'XivauthOnlyAuthor',
-        moderatorDiscordId: MOD,
-        reason: 'r',
-        bannedAt: '2026-08-21T00:00:00Z',
-        unbannedAt: null,
-        unbanModeratorDiscordId: null,
-      });
-      vi.mocked(banService.unbanUser).mockResolvedValueOnce({ success: true, presetsRestored: 0 });
-
-      await handlePresetCommand(subcommand('unban_user', XIVAUTH_UUID), env, ctx, t);
-      await flushWaitUntil();
-
-      expect(banService.unbanUser).toHaveBeenCalledWith(env.DB, XIVAUTH_UUID, MOD);
-    });
-  });
-
-  describe('FINDING-023 — moderator-facing links use the canonical domain', () => {
-    it('builds preset links from https://xivdyetools.app', async () => {
-      vi.mocked(banService.getUserForBanConfirmation).mockResolvedValueOnce(null);
-
-      await handlePresetCommand(subcommand('ban_user', TARGET), env, ctx, t);
-
-      expect(banService.getUserForBanConfirmation).toHaveBeenCalledWith(
-        env.DB,
-        TARGET,
-        'https://xivdyetools.app',
-      );
-    });
   });
 
   describe('FINDING-034 — MOD-4: approval refuses a banned author', () => {
@@ -2266,34 +1431,6 @@ describe('handlePresetCommand — security audit remediations', () => {
       await flushWaitUntil();
 
       expect(lastEdit().embeds[0].description).toBe('Moderation action failed.');
-    });
-
-    it('unban failure shows the service message and logs the cause', async () => {
-      const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() } as never;
-      vi.mocked(banService.getActiveBan).mockResolvedValueOnce({
-        id: 'ban-1',
-        discordId: TARGET,
-        xivAuthId: null,
-        username: 'U',
-        moderatorDiscordId: MOD,
-        reason: 'r',
-        bannedAt: '2026-08-21T00:00:00Z',
-        unbannedAt: null,
-        unbanModeratorDiscordId: null,
-      });
-      const cause = new Error('D1_ERROR: database is locked: SQLITE_BUSY');
-      vi.mocked(banService.unbanUser).mockResolvedValueOnce({
-        success: false,
-        presetsRestored: 0,
-        error: 'Failed to unban user.',
-        cause,
-      });
-
-      await handlePresetCommand(subcommand('unban_user', TARGET), env, ctx, t, logger);
-      await flushWaitUntil();
-
-      expect(lastEdit().embeds[0].description).toBe('Failed to unban user.');
-      expect((logger as any).error).toHaveBeenCalledWith(expect.stringContaining('Unban failed'), cause);
     });
   });
 });
@@ -2436,4 +1573,37 @@ describe('/preset moderate approve|reject — the confirmation (Sprint 17)', () 
     expect(edit.embeds[0].description).not.toContain('**Edit:**');
     expect(edit.embeds[0].description).not.toContain('Revert');
   });
+});
+
+describe('explicit private account reviews',()=>{
+ const MOD='987654321098765432',D='123456789012345678',U='a0000000-0000-4000-8000-000000000001',N='b0000000-0000-4000-8000-000000000001';
+ const ctx={} as ExecutionContext;
+ let env:Env;
+ const command=(action='ban_user',target=D,additional?:unknown):DiscordInteraction=>({id:'i',token:'t',application_id:'a',channel_id:'moderation',user:{id:MOD},data:{name:'preset',options:[{name:action,options:[{name:'user',value:target},...(additional===undefined?[]:[{name:'additional_user',value:additional as string}])]}]}});
+ const run=async(i:DiscordInteraction)=> (await(await handlePresetCommand(i,env,ctx,new Translator('en'))).json()) as any;
+ beforeEach(()=>{
+  vi.clearAllMocks();env={LINKED_BAN_CONFIRMATION_ENABLED:'true',MODERATOR_IDS:MOD,MODERATION_CHANNEL_ID:'moderation',DB:{prepare:vi.fn()}} as unknown as Env;
+  vi.mocked(confirmations.createBanReview).mockResolvedValue({nonce:N,actorId:MOD,phase:'review',hash:'a'.repeat(64),createdAt:1,expiresAt:2,proposal:{v:1,action:'ban',mode:'new',banId:N,ids:[D,U],inputs:[D],snapshots:[{input:D,result:{version:1,status:'found',internalId:U,discordId:D,identityRevision:8}}],scope:[],candidates:[],parentIds:[],presetPreview:{hide:0,restore:0,stillHidden:0}}});
+ });
+ it.each(['ban_user','unban_user'])('inactive %s refuses before storage or scope display',async action=>{
+  env.LINKED_BAN_CONFIRMATION_ENABLED='false';const body=await run(command(action));expect(body.data.flags).toBe(64);expect(JSON.stringify(body)).not.toContain(D);expect(confirmations.createBanReview).not.toHaveBeenCalled();expect(env.DB.prepare).not.toHaveBeenCalled();
+ });
+ it('valid additional_user independently enters exact new review, whose customID carries only nonce',async()=>{
+  const body=await run(command('ban_user',D,U));expect(confirmations.createBanReview).toHaveBeenCalledWith(env,MOD,'ban',[D,U]);expect(body.type).toBe(4);expect(body.data.flags).toBe(64);expect(body.data.embeds[0].description).toContain('stored revision 8');expect(body.data.components[0].components[0].custom_id).toBe(`ban_confirm_${N}`);
+ });
+ it('unban command only starts recorded-scope review, never immediately executes',async()=>{
+  await run(command('unban_user'));expect(confirmations.createBanReview).toHaveBeenCalledWith(env,MOD,'unban',[D]);expect(banService.unbanUser).not.toHaveBeenCalled();
+ });
+ it.each(['garbage',U.toUpperCase(),' 123456789012345678',"' OR 1=1"] )('invalid target %s refuses before review',async id=>{expect((await run(command('ban_user',id))).data.flags).toBe(64);expect(confirmations.createBanReview).not.toHaveBeenCalled();});
+ it.each(['invalid',42])('invalid additional input %# refuses before review',async additional=>{await run(command('ban_user',D,additional));expect(confirmations.createBanReview).not.toHaveBeenCalled();});
+ it('XIVAuth-only author ID remains valid',async()=>{await run(command('ban_user',U));expect(confirmations.createBanReview).toHaveBeenCalledWith(env,MOD,'ban',[U]);});
+ it('channel and current moderator guards precede storage',async()=>{const i=command();i.channel_id='other';await run(i);env.MODERATOR_IDS='899999999999999999';await run(command());expect(confirmations.createBanReview).not.toHaveBeenCalled();});
+ it('missing target and unavailable identity never fall back to target-only controls',async()=>{const i=command();i.data!.options![0]!.options=[];await run(i);expect(confirmations.createBanReview).not.toHaveBeenCalled();vi.mocked(confirmations.createBanReview).mockRejectedValue(new Error('provider private'));const text=JSON.stringify(await run(command()));expect(text).not.toContain('provider private');expect(text).not.toContain(`ban_confirm_${D}`);});
+});
+
+it('overflow remains an explicit private manual-review refusal',async()=>{
+ const actor='987654321098765432';const env={LINKED_BAN_CONFIRMATION_ENABLED:'true',MODERATOR_IDS:actor,MODERATION_CHANNEL_ID:'moderation'} as Env;
+ vi.mocked(confirmations.createBanReview).mockRejectedValue(new Error('Too many active bans match. Manual review is required.'));
+ const response=await handlePresetCommand({id:'i',token:'t',application_id:'a',channel_id:'moderation',user:{id:actor},data:{options:[{name:'ban_user',options:[{name:'user',value:'123456789012345678'}]}]}},env,{} as ExecutionContext,new Translator('en'));
+ const body=await response.json() as any;expect(body.data.flags).toBe(64);expect(body.data.content).toContain('Manual review is required');
 });

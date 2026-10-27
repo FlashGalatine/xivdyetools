@@ -16,4 +16,4 @@
 - **Maintainer decision:** how the ban learns an author's other identity (a presets-api or oauth lookup over a service binding). The live population is at most one author (1 UUID-keyed author of 7 in production); an id-level overlap check was deliberately not run, to avoid reading identifiers.
 
 ## Status
-OPEN
+OPEN — private OAuth lookup, explicit per-ban ID confirmation/expansion, membership enforcement and recorded-scope unban prepared inactive 2026-10-27. Schema/provider/disclosure deployment, consumer activation and production verification remain pending. [A-MODERATION evidence](../evidence/remediation-moderation-2026-10-27.md).

@@ -38,7 +38,8 @@ type Variables = {
  * the UUID stopped matching. The caller now passes EVERY id the session
  * proves (acting id, JWT `sub`, JWT `discord_id`) and an active ban matches if
  * any of them equals `banned_users.discord_id` OR `banned_users.xivauth_id`.
- * moderation-worker writing the right column is Sprint 4.
+ * Particular-ban memberships also match, only while their own parent is active.
+ * Memberships are sanction scope and never provide ownership or login authority.
  *
  * @param db - D1 database binding
  * @param userIds - every id the caller is known by; empty/duplicate entries
@@ -56,9 +57,14 @@ export async function isUserBanned(
   const marks = ids.map(() => '?').join(', ');
   const result = await db
     .prepare(
-      `SELECT 1 FROM banned_users WHERE (discord_id IN (${marks}) OR xivauth_id IN (${marks})) AND unbanned_at IS NULL LIMIT 1`
+      `SELECT 1 FROM banned_users b WHERE (
+        b.discord_id IN (${marks}) OR b.xivauth_id IN (${marks}) OR EXISTS (
+          SELECT 1 FROM ban_identity_memberships m
+          WHERE m.ban_id = b.id AND m.identity_id IN (${marks})
+        )
+      ) AND b.unbanned_at IS NULL LIMIT 1`
     )
-    .bind(...ids, ...ids)
+    .bind(...ids, ...ids, ...ids)
     .first();
   return result !== null && result !== undefined;
 }

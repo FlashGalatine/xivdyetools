@@ -37,6 +37,34 @@ sessions. The row's last-used provider does not disable its other linked provide
 Requests authorized before a transition may finish. These checks do not promise instantaneous
 cancellation inside a separate database's mutation transaction.
 
+## Prepared consumer behavior
+
+Presets declares `OAUTH_IDENTITY` targeting the named OAuth provider and keeps
+`OAUTH_SESSION_CHECK_ENABLED=false`. Enabled web sessions need a valid stored relationship
+before ownership/moderator context or rekey; runtime lookup failure is unavailable and a late
+reply cannot resume authority. Bot HMAC remains a separate path. Membership predicates cover
+all five rekey mutations and approval/Revert SQL, preserving their concurrency/audit guards.
+
+Moderation keeps `LINKED_BAN_CONFIRMATION_ENABLED=false`. All ban/unban commands, selection
+controls and modals refuse privately until a separate consumer activation. When enabled,
+`ban_user` resolves `user` and optional `additional_user` independently, shows exact stored IDs
+and one selected parent ban privately, and requires explicit confirmation. Existing partial
+bans can be expanded; independent parents are never merged implicitly. More than 16 matching
+parents refuses for manual review, and a parent holds at most 64 effective IDs.
+
+Server-held confirmation nonces expire within 15 minutes. Selection consumes its nonce and
+creates a fresh immutable review. The claim, SQL scope/parent set comparison in both directions,
+expiry/cap checks, mutation, audits and finalization share one transaction. A stale/forged/replayed
+or legacy target-only control cannot write. OAuth re-resolution is a preauthorization check,
+not a distributed lock. Unban uses the selected recorded scope and preserves any other active ban;
+signature restoration chooses one eligible hidden twin across the entire restoring scope.
+
+Presets migration `0016_ban_identity_continuity.sql` adds memberships, durable handoff receipts
+and confirmations. Daily scheduled retention preserves unacknowledged/applying receipts and
+valid reviews while pruning bounded eligible batches. All 12 web/bot privacy variants disclose
+these uses before consumer activation. Separate consumer activation/production verification
+precedes OAuth's later outbound-binding and split activation.
+
 ## Preserve the Discord anchor
 
 When XIVAuth no longer asserts the stored Discord ID, retain the original UUID and Discord ID

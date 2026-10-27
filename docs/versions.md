@@ -27,12 +27,12 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.16.2 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v5.9.5 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
+| **Web Application** | v5.16.3 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Discord Bot** | v5.9.6 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.4 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
-| **Moderation Bot** | v1.8.4 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
+| **Moderation Bot** | v1.9.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.2.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
-| **Presets API** | v2.7.0 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
+| **Presets API** | v2.8.0 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
 | **Public REST API** | v0.21.1 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
 | **OpenGraph Worker** | v2.12.1 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.3.4 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
@@ -127,6 +127,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.16.3 | Oct 2026 | Six-language identity-review, particular-ban continuity and recovery-retention privacy disclosures |
 | v5.16.2 | Oct 2026 | Six-language privacy alignment for preset metadata moderation, safe link snapshots and attempt/refund accounting |
 | v5.16.1 | Oct 2026 | Core 5.16.0: imported character nickname/producer labels keep surrogate pairs intact when capped; GPOSERS export newline joining is linear with the same output |
 | v5.16.0 | Oct 2026 | The Swatch Matcher and Glamour Reader read `.chara` files through core 5.15.0's `xivcharakit` adapter in a cancellable Web Worker (the web app's first), with a palette bridge so no reference data ships twice: files that hold only gear load, the lip-color bit and a mirror-only face paint are read, an unconfirmed highlight, face-paint or lip color is shown but never matched or saved, failures are fixed localized messages, and incomplete gear is flagged. Intentional differences are recorded in `docs/research/2026-10-22-xivcharakit-integration.md` |
@@ -212,6 +213,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.9.6 | Oct 2026 | Six-language identity-review, particular-ban continuity and recovery-retention privacy disclosures |
 | v5.9.5 | Oct 2026 | Complete path-only preset reviews and Revert targets; six-language privacy alignment for optional metadata moderation and attempt/refund accounting |
 | v5.9.4 | Oct 2026 | Bot-logic 4.12.0: harmony distances use the selected metric, eyes merge only for equal eligible colors, bounded and sanitized glamour descriptions; command-choice localization remains in A-DISCORD |
 | v5.9.3 | Oct 2026 | SVG 4.4.1: shared card text fitting is linear while preserving existing card content, widths and truncation; security-only patch after the separate core deployment |
@@ -313,6 +315,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v2.8.0 | Oct 2026 | Private continuity receipts and membership enforcement; inactive OAuth session checks and additive migration |
 | v2.7.0 | Oct 2026 | Approved-only signed bot batch lookup; database ban guards, atomic pre-moderation quota, default-off tag/link-path moderation, safe snapshots and preview concurrency/refund fixes; IPv6 /64 and bounded pagination |
 | v2.6.1 | Oct 2026 | `expected_status` checked against `@xivdyetools/types`' `REVIEW_STATUSES` (2026-10-04 remediation, Sprint 26, REFACTOR-001); the two 404 bodies moderation-worker reads are pinned. No behavior change |
 | v2.6.0 | Oct 2026 | 2026-10-04 remediation, Sprint 9 — every PATCH notification carries `edited_from`, the text the edit replaced, so the moderation embed can diff an edit; `previous_values` stays the Revert target only |
@@ -410,6 +413,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v1.9.0 | Oct 2026 | Inactive private linked-ID confirmation, explicit partial-ban expansion, recorded-scope unban and neutral decision posts |
 | v1.8.4 | Oct 2026 | Complete path-only link reviews, revision-bound action guards and stale-message refresh; companion for later metadata-moderation activation |
 | v1.8.3 | Oct 2026 | Bot-logic 4.12.0: shared embed sanitizer escapes Discord angle tokens and strips additional invisible controls; review routing and decisions unchanged |
 | v1.8.2 | Oct 2026 | Review custom_id grammar from `@xivdyetools/types` (2026-10-04 remediation, Sprint 26, REFACTOR-001); a parity test pins the routing prefixes. No visible change |

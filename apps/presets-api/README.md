@@ -69,6 +69,18 @@ Two callers, two mechanisms:
 - **Users** present a JWT issued by [`apps/oauth`](../../apps/oauth/), verified with `@xivdyetools/auth`'s HS256-only `verifyJWT`.
 - **Bots** (`discord-worker`, `moderation-worker`) reach this Worker over a **Service Binding** and authenticate with an HMAC-SHA256 request signature that binds the request itself — method, path, body, timestamp, nonce and user — verified by `verifyBotSignatureV2` and sent as `X-Request-Signature-V2`. This is the **only** accepted signature since 2.2.0 (FINDING-015): the v1 scheme, which signed just `timestamp:userId:userName` and therefore bound nothing about the request, is no longer accepted here, no longer sent by either bot, and its verifier was removed from `@xivdyetools/auth` in 2.0.0.
 
+## Prepared private identity services
+
+The named `BanContinuity` entrypoint supports immutable particular-ban handoffs; it is not an
+HTTP endpoint. Ban middleware, rekey, approval and Revert enforce both legacy IDs and that
+ban's memberships. These memberships never grant account ownership.
+
+`OAUTH_SESSION_CHECK_ENABLED` remains false in both environments. After a separately verified
+activation, web JWT requests also need a current OAuth revision/provider check before authority.
+Apply additive migration `0016_ban_identity_continuity.sql` before the dependent deployment,
+then verify provider, disclosures and consumers before later OAuth splitting. See
+[the staged contract](../../docs/architecture/identity-moderation.md).
+
 ## Notifications
 
 When a preset is submitted, this Worker calls back into `discord-worker` over the `DISCORD_WORKER` Service Binding to post an embed in the moderation channel. Delivery failures are recorded and surfaced through `/api/v1/moderation/failed-notifications` rather than silently dropped.

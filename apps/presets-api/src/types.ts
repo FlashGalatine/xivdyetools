@@ -109,12 +109,26 @@ export interface RetentionLogger {
 // CLOUDFLARE BINDINGS (Project-specific)
 // ============================================
 
+export interface OAuthSessionRequest {
+  sub: string;
+  identityRevision?: number;
+  authProvider: 'discord' | 'xivauth';
+  discordId?: string | null;
+}
+
+/** Result is deliberately unknown: the consumer validates the private RPC response. */
+export interface OAuthIdentityBinding {
+  validateSession(input: OAuthSessionRequest): Promise<unknown>;
+}
+
 export interface Env {
   // D1 Database
   DB: D1Database;
 
   // Service bindings
   DISCORD_WORKER?: Fetcher;
+  OAUTH_IDENTITY?: OAuthIdentityBinding;
+  OAUTH_SESSION_CHECK_ENABLED?: string;
   IMAGE_WORKER: Fetcher;
 
   // R2 buckets

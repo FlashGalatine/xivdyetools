@@ -36,6 +36,14 @@ const oauthToml = readFileSync(join(__dirname, '..', '..', 'oauth', 'wrangler.to
 );
 
 describe('wrangler.toml', () => {
+  it('registers the private continuity wrapper and inactive named OAuth providers in both environments', () => {
+    expect(topLevel).toMatch(/^main = "src\/worker.ts"$/m);
+    expect(topLevel).toMatch(/^OAUTH_SESSION_CHECK_ENABLED = "false"$/m);
+    expect(production).toMatch(/^vars\s*=\s*\{[^\n]*OAUTH_SESSION_CHECK_ENABLED\s*=\s*"false"/m);
+    const block=(text:string,prefix:string)=>text.match(new RegExp('^\\[\\['+prefix+'services\\]\\]\\n(?:(?!^\\[)[\\s\\S])*?binding = "OAUTH_IDENTITY"\\nservice = "([^"\\n]+)"\\nentrypoint = "([^"\\n]+)"','m'));
+    expect(block(topLevel,'' )?.slice(1)).toEqual(['xivdyetools-oauth-dev','IdentityLookup']);
+    expect(block(production,'env\\.production\\.')?.slice(1)).toEqual(['xivdyetools-oauth','IdentityLookup']);
+  });
   it('prepares metadata moderation disabled explicitly in both environments', () => {
     const devVars = topLevel.match(/^\[vars\]\n([\s\S]*?)(?=^\[|$(?![\s\S]))/m)?.[1] ?? '';
     expect(devVars).toMatch(/^PRESET_METADATA_MODERATION_ENABLED = "false"$/m);

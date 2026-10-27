@@ -16,4 +16,4 @@
 - **Maintainer decision:** product trade-off: whether oauth clears or replaces `discord_id` when XIVAuth stops asserting it (affects legitimately linked users). The production population is small (4 of 19 users are linked to both ids); a check for stale rows needs a comparison with XIVAuth's current links.
 
 ## Status
-OPEN — OAuth 3.2.0 private provider, session revisions and inactive split prepared 2026-10-27. Both split flags remain false with no outbound continuity binding; detected existing relationship changes fail closed. Migration, presets/moderation consumers, disclosures, separate activation and production verification remain required. [Preparation evidence](../evidence/remediation-oauth-2026-10-27.md).
+OPEN — OAuth provider and presets/moderation consumers prepared inactive 2026-10-27. Migrations, disclosure deployments, consumer activation, bounded OAuth RPC/cleanup and separate split activation/production verification remain required. [Provider evidence](../evidence/remediation-oauth-2026-10-27.md); [consumer evidence](../evidence/remediation-moderation-2026-10-27.md).

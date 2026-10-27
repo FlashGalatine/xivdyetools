@@ -209,7 +209,7 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 
 | ID | Status | Commit |
 |---|---|---|
-| FINDING-001 | OPEN | — |
+| FINDING-001 | OPEN — moderation posts prepared; Discord companion/release pending | [A-MODERATION evidence](evidence/remediation-moderation-2026-10-27.md) |
 | FINDING-002 | OPEN — core/SVG/API source prepared; release pending | [Core evidence](../2026-10-26-xivcharakit-dead-code/evidence/remediation-core-2026-10-27.md); [SVG evidence](evidence/remediation-svg-2026-10-27.md); [API evidence](evidence/remediation-api-2026-10-27.md) |
 | FINDING-003 | OPEN | — |
 | FINDING-004 | OPEN — library and all three app opt-ins prepared; release pending | [A-OAUTH evidence](evidence/remediation-oauth-2026-10-27.md) |
@@ -231,9 +231,9 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 | FINDING-020 | OPEN | — |
 | FINDING-021 | OPEN — source prepared; release pending | [A-BOT-LOGIC evidence](evidence/remediation-bot-logic-2026-10-27.md) |
 | FINDING-022 | OPEN | — |
-| FINDING-023 | OPEN — provider and inactive split prepared; consumers/activation pending | [A-OAUTH evidence](evidence/remediation-oauth-2026-10-27.md) |
+| FINDING-023 | OPEN — provider/consumers prepared inactive; bounded RPC/activation/release pending | [A-MODERATION evidence](evidence/remediation-moderation-2026-10-27.md) |
 | FINDING-024 | OPEN | — |
-| FINDING-025 | OPEN | — |
+| FINDING-025 | OPEN — private confirmed ban scope prepared inactive; activation/release pending | [A-MODERATION evidence](evidence/remediation-moderation-2026-10-27.md) |
 | FINDING-026 | OPEN | — |
 | FINDING-027 | OPEN | — |
 | FINDING-028 | FIXED 2026-10-26 | Repository secret copies deleted; environment copies preserved; [verification](evidence/remediation-finding-028-2026-10-26.md) (no code commit) |

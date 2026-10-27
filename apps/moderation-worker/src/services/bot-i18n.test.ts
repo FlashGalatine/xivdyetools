@@ -158,10 +158,8 @@ describe('bot-i18n', () => {
       it('should translate ban-related keys', () => {
         const translator = new Translator('en');
 
-        expect(translator.t('ban.confirmTitle')).toBe('Confirm User Ban');
-        expect(translator.t('ban.yesBan')).toBe('Yes, Ban User');
-        expect(translator.t('ban.cancel')).toBe('Cancel');
-        expect(translator.t('ban.userUnbanned')).toBe('User Unbanned');
+        expect(translator.t('ban.channelRestricted')).toBe('This command can only be used in the moderation channel.');
+        expect(translator.t('ban.permissionDenied')).toBe('You do not have permission to perform this action.');
       });
     });
 

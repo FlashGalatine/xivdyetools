@@ -510,3 +510,17 @@ dataset = "xivdyetools_bot_analytics"   # og-worker: xivdyetools_og_analytics,
 - [Local Setup](local-setup.md) - Development environment
 - [Deployment](deployment.md) - Deployment procedures
 - [Troubleshooting](troubleshooting.md) - Common issues
+
+## Prepared identity-consumer flags
+
+| Unit | Variable | Prepared value and behavior |
+|---|---|---|
+| presets-api | `OAUTH_SESSION_CHECK_ENABLED` | `false` in both environments; exact `true` requires valid `OAUTH_IDENTITY.validateSession` and checks web sessions before authority |
+| moderation-worker | `LINKED_BAN_CONFIRMATION_ENABLED` | `false` in both environments; all new ban/unban/selection/button/modal paths refuse privately while inactive |
+
+Unset stays inactive; malformed values are configuration errors. `OAUTH_IDENTITY` is a private
+named service binding, not a secret or public endpoint. Enable consumers only after additive
+presets migration, deployed OAuth provider and all privacy disclosures are verified. Verify
+active consumers before a separate OAuth split activation, including its mandatory bounded
+RPC/cleanup correction before any outbound continuity binding is added. See
+[the staged identity contract](../architecture/identity-moderation.md).

@@ -372,6 +372,12 @@ After A-WORKER-KIT. Resolve the identity-link product decision first. If oauth i
 
 ## Sprint A-MODERATION — apps/moderation-worker
 
+**Preparation 2026-10-27:** all three maintainer choices are resolved: OAuth canonical private lookup, exact stored-ID review before scope expansion, and particular-ban continuity after unlinking. Provider preparation is in draft PR #343 with passing source CI. This sprint preserves moderation's reviewed name-removal patch and adds the required presets receipt/membership/session companion, private one-use confirmations, explicit expansion of partial bans and recorded-scope unban. All affected web/bot privacy variants are synchronized; the new uses remain inactive. [Implementation and verification evidence](../2026-10-26-security/evidence/remediation-moderation-2026-10-27.md).
+
+Prepared versions are presets 2.8.0 and moderation 1.9.0 MINOR, Discord 5.9.6 and web 5.16.3 PATCH. Both consumer flags remain false in both environments, including all new ban/unban controls. Apply additive presets migration before either dependent deployment, verify provider and disclosures, then enable consumers in a separate verified change. OAuth splitting/outbound binding remains a later activation with its mandatory bounded-RPC/global-cleanup correction. No name-derived association, implicit parent-ban merge, ownership grant, main merge, live migration, manual deployment or publication is selected. FINDING-001 still needs A-DISCORD's preview-image companion; both primary IDs and FINDING-023 remain OPEN.
+
+Final local preparation: **45/45 build/type/lint tasks**, **25/25 test tasks**, **17,231 tests across 600 files**. Presets 1,394 and moderation 846 pass configured coverage; script/docs/logging/policy/budget/integration/dry-run gates pass. Independent ordinary/scoped and final critical reviews pass, including per-identity audit, full recorded-scope unban comparison and informational preview corrections. Source publication and actual CI/beta receipts follow in the evidence.
+
 After A-PRESETS, A-BOT-LOGIC and the selected identity provider. Preserve the accepted decision to remove moderator names, with no policy AMEND for those removed names.
 
 | ID | Source | Sev/Pri | Action |
@@ -379,7 +385,7 @@ After A-PRESETS, A-BOT-LOGIC and the selected identity provider. Preserve the ac
 | [2026-10-26-security/FINDING-001](../2026-10-26-security/findings/FINDING-001.md) | 2026-10-26-security | MEDIUM / INTERNET-AUTH · P2 | *(decided 2026-10-26)* Attribute decisions through `moderation_log` and drop the moderator username from the moderation-channel and submission-log posts, the ban post and discord-worker's preview-image post (the discord-worker file changes in A-DISCORD); update the `previewImage.approvedFooter` / `rejectedFooter` keys and tests; no policy edit. |
 | [2026-10-26-security/FINDING-025](../2026-10-26-security/findings/FINDING-025.md) | 2026-10-26-security | LOW / INTERNET-AUTH · P2 | Ask presets-api or oauth for the author's linked identities and hide and match both on ban; or show the moderator every id sharing the author name. (existing decision gate) |
 
-**Ends with:** `pnpm turbo run build type-check lint test --filter=...xivdyetools-moderation-worker` and whole-graph gates before merge → merge → `deploy-moderation-worker.yml` (production); beta workflow only when explicitly selected.
+**Ends with:** scoped/full local gates, configured coverage, real SQLite/Workerd proof, production-config dry runs, reviewed draft stacked PR and actual CI/web+Discord beta receipts. A separately authorized production release needs migration/provider/disclosure ordering; consumer activation and later OAuth activation remain separate. No presets/moderation beta or manual deployment is selected.
 
 ## Sprint A-DISCORD — apps/discord-worker
 
