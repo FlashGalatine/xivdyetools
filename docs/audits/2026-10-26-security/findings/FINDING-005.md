@@ -14,4 +14,4 @@
 - Charge only cache misses on /v1/chara/* to a dedicated per-IP native rate-limit binding (mirror the Universalis onMiss pattern, with a 20x service key for discord-worker's /glamour). Optionally accept ?version= only when it equals the currently discovered or pinned game key, or serve it uncacheable otherwise. Add a short circuit-breaker on upstream 429/503.
 
 ## Status
-OPEN
+OPEN — source prepared in A-API: separate public/service Chara upstream-operation budgets, existing coalesced waiters free, current canonical icon-key validation and request-local 429 formatting; [API evidence](../evidence/remediation-api-2026-10-27.md). General admission remains; runtime backend exceptions retain the documented fail-open soft-throttle policy. Merge and production acceptance remain pending; no API beta is selected.

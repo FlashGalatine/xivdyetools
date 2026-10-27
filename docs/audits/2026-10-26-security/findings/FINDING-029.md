@@ -15,4 +15,4 @@
 - Resolve the Teamcraft staging HEAD to a SHA the way build-acquisition.ts pinTeamcraft does, fetch from that SHA, and record it (plus a sha256 of each file) in meta.sources. Record the local clone's `git rev-parse HEAD` and fail instead of falling back to 'master'. Add a content gate that rejects names containing C0/C1 controls, bidi overrides or over-long values (U+200F is already allow-listed in discord-worker's co…
 
 ## Status
-OPEN
+OPEN — future-builder remediation prepared in A-API: immutable validated source commits, exact-byte SHA256 per language, pinned local Git blobs, shared name cleaning and validation before writes; [API evidence](../evidence/remediation-api-2026-10-27.md). Historical tables and metadata are unchanged; their source provenance remains unresolved pending a controlled data/font refresh. No historical SHA is invented, and source preparation does not close this finding.

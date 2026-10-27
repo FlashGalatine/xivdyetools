@@ -210,10 +210,10 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 | ID | Status | Commit |
 |---|---|---|
 | FINDING-001 | OPEN | — |
-| FINDING-002 | OPEN — core/SVG companions prepared; API outstanding | [Core evidence](../2026-10-26-xivcharakit-dead-code/evidence/remediation-core-2026-10-27.md); [SVG evidence](evidence/remediation-svg-2026-10-27.md) |
+| FINDING-002 | OPEN — core/SVG/API source prepared; release pending | [Core evidence](../2026-10-26-xivcharakit-dead-code/evidence/remediation-core-2026-10-27.md); [SVG evidence](evidence/remediation-svg-2026-10-27.md); [API evidence](evidence/remediation-api-2026-10-27.md) |
 | FINDING-003 | OPEN | — |
 | FINDING-004 | OPEN — opt-in worker-kit support prepared; consumer adoption/deployment pending | [Implementation evidence](evidence/remediation-worker-kit-2026-10-27.md) |
-| FINDING-005 | OPEN | — |
+| FINDING-005 | OPEN — upstream budgets/current icon key prepared; production acceptance pending | [API evidence](evidence/remediation-api-2026-10-27.md) |
 | FINDING-006 | OPEN | — |
 | FINDING-007 | OPEN | — |
 | FINDING-008 | OPEN — private encrypted report sent 2026-10-27; upstream triage pending | Sent-copy recipient and attachment verified; private receipt outside Git; no mitigation applied |
@@ -237,7 +237,7 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 | FINDING-026 | OPEN | — |
 | FINDING-027 | OPEN | — |
 | FINDING-028 | FIXED 2026-10-26 | Repository secret copies deleted; environment copies preserved; [verification](evidence/remediation-finding-028-2026-10-26.md) (no code commit) |
-| FINDING-029 | OPEN | — |
+| FINDING-029 | OPEN — future builder prepared; historical provenance unresolved pending controlled refresh | [API evidence](evidence/remediation-api-2026-10-27.md) |
 | FINDING-030 | OPEN | — |
 | FINDING-031 | OPEN | — |
 | FINDING-032 | OPEN | — |
@@ -246,7 +246,7 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 | FINDING-035 | FIXED 2026-10-27 — checklist omission closed; actual policy changes remain scheduled for key deletion | [Perspective-sunset checklist](../../../DEPRECATIONS.md) (documentation only) |
 | FINDING-036 | OPEN | — |
 | FINDING-037 | OPEN | — |
-| FINDING-038 | OPEN | — |
+| FINDING-038 | OPEN — numeric telemetry triple prepared; release pending | [API evidence](evidence/remediation-api-2026-10-27.md) |
 | FINDING-039 | OPEN | — |
 | FINDING-040 | OPEN | — |
 | FINDING-041 | OPEN | — |

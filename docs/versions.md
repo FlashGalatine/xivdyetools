@@ -33,7 +33,7 @@
 | **Moderation Bot** | v1.8.3 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.3 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.6.1 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
-| **Public REST API** | v0.21.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
+| **Public REST API** | v0.21.1 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
 | **OpenGraph Worker** | v2.12.1 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.3.4 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
@@ -653,6 +653,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v0.21.1 | Oct 2026 | A-API: bounded and sanitized upstream character data, dedicated cache-miss soft budgets, current-version-only icon overrides, IPv6 /64 adoption and numeric-only telemetry versions; future item-name builder pins/hashes sources, with historical table provenance still awaiting controlled refresh |
 | v0.21.0 | Oct 2026 | Snapshot/schema-aware equipment caching, optional versioned icon URLs and conditional PNG refresh, isolate-local Item/Glasses miss coalescing |
 | v0.20.1 | Oct 2026 | Acquisition lines for 671 older tomestone items omit the redundant base-item upgrade exchange when a reachable vendor sells the item outright for Poetics |
 | v0.20.0 | Oct 2026 | `uiCategory` (the named item's ItemUICategory row) on each resolved item, so the GPOSERS list can tell which main hands take an Off Hand; row cache shape 5 (every cached row refetches once) |
@@ -752,6 +753,7 @@ and the [rollout runbook](operations/security-remediation-2026-09-15.md) for the
 | OG Worker v2.10.4–2.11.1 | @xivdyetools/core v5.7.0+ | Creator palettes on the Swatch Matcher card |
 | OG Worker v2.10–2.10.3 | @xivdyetools/core v5.2.0+ | `?wheel=` validated against `COLOR_WHEEL_IDS`; `@xivdyetools/svg` v4.1.0+ |
 | OG Worker v2.5–2.9 | @xivdyetools/core v4.2.0+ | `generateHarmonySlots` (2.6.0+); `@xivdyetools/svg` v3.1.0+ (`bandInk` export) |
+| API Worker v0.21.1+ | @xivdyetools/worker-kit v1.6.0+ | Opt-in IPv6 /64 keys for API, telemetry, proxy and Chara limits; workspace deployment bundles local source independently of npm publication |
 | API Worker v0.16+ | @xivdyetools/core v5.8.0+ | `items.<slot>.rules` on `POST /v1/chara/resolve` (`groupCharaTwinRules`, `charaWearMask`) |
 | API Worker v0.14–0.15 | @xivdyetools/core v5.2.0+ | `/v1/wheels`, `/v1/harmony` |
 | API Worker v0.12–0.13 | @xivdyetools/core v5.1.0+ | `?method=oklab` is ΔEOK2 |

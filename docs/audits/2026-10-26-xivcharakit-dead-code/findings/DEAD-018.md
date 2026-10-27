@@ -14,4 +14,4 @@
 - Cascade: None. The 503-specific semantics (XIVAPI search re-indexing) remain documented in the file header comment at xivapi.ts:14-17 and covered by existing 503 tests.
 
 ## Status
-OPEN
+OPEN — source prepared in A-API: remove only the redundant `status === 503` disjunct, retaining `>= 500`, 429 handling and the re-indexing explanation; [API evidence](../../2026-10-26-security/evidence/remediation-api-2026-10-27.md). Merge and production acceptance remain pending.

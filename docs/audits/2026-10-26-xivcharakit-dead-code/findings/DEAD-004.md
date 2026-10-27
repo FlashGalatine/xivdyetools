@@ -17,4 +17,4 @@
 - Cascade: Same stale Swatch-consumer claim at apps/api-worker/src/index.ts:174 (same unit, not in the filed rows); apps/web-app/CLAUDE.md:136 and apps/web-app/src/services/chara-resolve-service.ts:3 (web-app slice).
 
 ## Status
-OPEN
+OPEN — API and hub documentation/comments prepared in A-API: icon TTLs, current-key authority, Item/1 discovery, actual consumers, CORS and stale-cache semantics; [API evidence](../../2026-10-26-security/evidence/remediation-api-2026-10-27.md). Merge/production acceptance remain pending. The web-app CLAUDE/service-comment cascade remains assigned to A-WEB and does not create another primary finding.

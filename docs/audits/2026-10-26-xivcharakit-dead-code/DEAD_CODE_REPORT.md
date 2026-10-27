@@ -161,7 +161,7 @@ Source / configuration audit; read-only. No build, bundle measurement or workerd
 | DEAD-001 | OPEN | — |
 | DEAD-002 | OPEN — source prepared; release pending | [A-CORE evidence](evidence/remediation-core-2026-10-27.md) |
 | DEAD-003 | OPEN — source prepared; release pending | [A-CORE evidence](evidence/remediation-core-2026-10-27.md) |
-| DEAD-004 | OPEN | — |
+| DEAD-004 | OPEN — API docs prepared; release and A-WEB comment cascade pending | [API evidence](../2026-10-26-security/evidence/remediation-api-2026-10-27.md) |
 | DEAD-005 | OPEN — source prepared; release pending | [A-BOT-LOGIC evidence](../2026-10-26-security/evidence/remediation-bot-logic-2026-10-27.md) |
 | DEAD-006 | OPEN | — |
 | DEAD-007 | OPEN | — |
@@ -175,8 +175,8 @@ Source / configuration audit; read-only. No build, bundle measurement or workerd
 | DEAD-015 | OPEN — source prepared; release pending | [A-BOT-LOGIC evidence](../2026-10-26-security/evidence/remediation-bot-logic-2026-10-27.md) |
 | DEAD-016 | OPEN — source prepared; release pending | [A-BOT-LOGIC evidence](../2026-10-26-security/evidence/remediation-bot-logic-2026-10-27.md) |
 | DEAD-017 | OPEN — source prepared; release pending | [A-BOT-LOGIC evidence](../2026-10-26-security/evidence/remediation-bot-logic-2026-10-27.md) |
-| DEAD-018 | OPEN | — |
-| DEAD-019 | OPEN | — |
+| DEAD-018 | OPEN — redundant disjunct removed in source; release pending | [API evidence](../2026-10-26-security/evidence/remediation-api-2026-10-27.md) |
+| DEAD-019 | OPEN — internal re-export removed in source; release pending | [API evidence](../2026-10-26-security/evidence/remediation-api-2026-10-27.md) |
 | DEAD-020 | OPEN — source prepared; release pending | [A-CORE evidence](evidence/remediation-core-2026-10-27.md) |
 | DEAD-021 | OPEN — source prepared; release pending | [A-CORE evidence](evidence/remediation-core-2026-10-27.md) |
 | DEAD-022 | OPEN — source prepared; release pending | [A-BOT-LOGIC evidence](../2026-10-26-security/evidence/remediation-bot-logic-2026-10-27.md) |

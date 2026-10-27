@@ -275,6 +275,23 @@ acceptance remain pending; source preparation does not increase the fixed-ID cou
 
 After A-WORKER-KIT/A-CORE/A-SVG as applicable. Adopt IPv6 keying and the updated core; combine upstream bounds with adjacent dead-code cleanup.
 
+**Execution status (2026-10-27):** source preparation targets API worker 0.21.1 PATCH,
+stacked on A-BOT-LOGIC PR #340. The seven primary IDs prepare bounded upstream bodies,
+one runtime/build name cleaner, dedicated Chara upstream-operation budgets, current icon
+version validation, numeric-only telemetry versions, immutable future-builder provenance
+and adjacent API cleanup. Existing client-IP extraction opts into worker-kit 1.6.0's IPv6
+`/64` keying. General admission remains; dedicated budget counts actual owned data fetches,
+with existing coalesced waiters free and runtime backend errors fail-open as soft limits.
+[Implementation evidence](../2026-10-26-security/evidence/remediation-api-2026-10-27.md).
+
+FINDING-029 remains OPEN: historical tables/metadata and font subsets are unchanged;
+authenticating their provenance requires a controlled refresh. DEAD-004's web-app comment
+cascade remains in A-WEB. Source preparation does not increase fixed-ID counts. All 62 graph
+tasks, root checks, 990 API tests with enforced coverage, 2/2 hermetic runtime cases and the
+production dry run pass; independent group reviews approve preparation. Feature PR and
+actual remote CI receipts are pending. No existing API beta is selected or new workflow added;
+the deleted API dev worker remains retired. Merge and production acceptance remain pending.
+
 | ID | Source | Sev/Pri | Action |
 |---|---|---|---|
 | [2026-10-26-security/FINDING-002](../2026-10-26-security/findings/FINDING-002.md) | 2026-10-26-security | LOW / INTERNET-UNAUTH · P2 | Read the search and Glasses bodies with the existing bounded reader (about 2 MiB / 32 KiB), map oversize to `UpstreamUnavailableError`; in `cleanName` strip C0/C1 controls and bidi, collapse whitespace, cap at about 128 code points before caching; same cleaner in the build scripts. The two quadratic sinks (core `chara-gposers.ts:120`, svg `fitText`) are hardened in A-CORE and A-SVG. |

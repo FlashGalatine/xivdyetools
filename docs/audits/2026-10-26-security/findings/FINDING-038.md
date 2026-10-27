@@ -13,4 +13,4 @@
 - Store only the numeric triple, e.g. `/^(\d{1,4}\.\d{1,4}\.\d{1,4})/` match [1], or allowlist the one prerelease shape the beta build emits (`-beta\.\d+`), with anything else mapped to 'invalid'. Update schema.test.ts:174 (the timestamped-prerelease case) and spec section 4 to match.
 
 ## Status
-OPEN
+OPEN — source prepared in A-API: validate the complete input version, store only a numeric triple with 1–4 ASCII digits per component, and discard a validated prerelease suffix; all five event schemas covered. Invalid input maps to `invalid` without partial clamping or blob-layout changes; [API evidence](../evidence/remediation-api-2026-10-27.md). Merge and production acceptance remain pending.

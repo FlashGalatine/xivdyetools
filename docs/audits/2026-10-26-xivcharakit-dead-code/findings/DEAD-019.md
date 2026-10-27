@@ -14,4 +14,4 @@
 - Cascade: None. The import has to stay because types.ts:67 uses it.
 
 ## Status
-OPEN
+OPEN — source prepared in A-API: remove only the unused internal `CharaTwinRules` re-export, preserving its local import and rules field; [API evidence](../../2026-10-26-security/evidence/remediation-api-2026-10-27.md). Merge and production acceptance remain pending.
