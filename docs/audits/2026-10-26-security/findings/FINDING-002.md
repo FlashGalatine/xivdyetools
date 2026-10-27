@@ -19,4 +19,4 @@
 - Optional defense in depth: make fitText binary-search its cut point and rewrite gposers text() without the leading \s* backtracking.
 
 ## Status
-OPEN — A-CORE companion source prepared on 2026-10-27: GPOSERS newline joining is linear with equivalent output. API body/name bounds and SVG fitText remain outstanding; merge/release verification is pending. This does not close the finding. [Evidence](../../2026-10-26-xivcharakit-dead-code/evidence/remediation-core-2026-10-27.md).
+OPEN — A-CORE's GPOSERS companion source is prepared and beta-verified; [core evidence](../../2026-10-26-xivcharakit-dead-code/evidence/remediation-core-2026-10-27.md). A-SVG's linear, output-equivalent fitText implementation passes 562 unit tests, whole-graph/affected-app gates and independent review; feature PR/beta receipts and release remain pending; [SVG evidence](../evidence/remediation-svg-2026-10-27.md). API body/name bounds and production release verification remain outstanding. These companions do not close the finding.

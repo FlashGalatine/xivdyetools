@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.4.1] - 2026-10-27
+
+### Security
+
+- **Fit long card text in linear time.** `fitText` scans code-point prefixes once using the
+  existing width estimator, replacing repeated joins and measurements. Font width classes,
+  the original-content fast path, minimum-prefix fallback, trimming, ellipsis and numeric
+  edge behavior retain their existing output. Public exports and signatures are unchanged.
+
+This A-SVG companion addresses the SVG sink in 2026-10-26 security FINDING-002. Its API
+body/name bounds remain separate work. Publish core 5.16.0 before this package: packing the
+unchanged `workspace:*` dependency records that exact core version.
+
 ## [4.4.0] - 2026-10-06
 
 Sprints 14 and 28 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`),

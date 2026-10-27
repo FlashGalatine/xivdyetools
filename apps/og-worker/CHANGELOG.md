@@ -5,6 +5,14 @@ All notable changes to the XIV Dye Tools OpenGraph Worker will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.12.1] - 2026-10-27
+
+### Security
+
+- Adopt SVG 4.4.1's linear text fitting in default-card text. Existing card content,
+  truncation, font widths and layouts remain identical. The patch version identifies
+  this runtime hardening; routes and query grammar are unchanged.
+
 ## [2.12.0] - 2026-10-06
 
 Sprint 11 of the 2026-10-04 remediation plan. Minor rather than patch, as 2.8.0 (`mode`) and

@@ -197,7 +197,34 @@ After A-CORE: harden quadratic fitText and adopt the new core release. This is a
 
 Companion task only; its primary finding is assigned to A-API.
 
-**Ends with:** `pnpm turbo run build type-check lint test --filter=...@xivdyetools/svg` and whole-graph gates before merge → version/CHANGELOG decision → merge → Actions **Publish Packages to npm** for `@xivdyetools/svg`; verify registry before downstream adoption.
+**Execution status (2026-10-27): implementation and local gates verified; feature PR/release pending, stacked on A-CORE / #338.**
+Fresh npm checks returned SVG 4.4.0, core 5.15.0 and bot-logic 4.11.0. Prepare SVG
+**4.4.1 PATCH**, Discord **5.9.3 PATCH** and OpenGraph **2.12.1 PATCH**. Discord 5.9.2
+identifies the earlier core deployment; the sequential release needs its own patch identity.
+Keep all public API and card output, width classification, Unicode boundaries, trimming and
+numeric edge behavior. Replace repeated prefix joins/measurements with a linear scan using
+the existing width helper. [Evidence](../2026-10-26-security/evidence/remediation-svg-2026-10-27.md).
+All 62 graph tasks, 167 script tests, five affected app bundle checks and independent code
+reviews pass. Source, packed-package and declaration parity checks preserve the public API.
+Feature PR/beta receipts, merge, npm publication and production acceptance remain pending.
+
+**Actual rollout:** SVG paths trigger production web, Discord, API, OpenGraph and moderation
+workflows; feature pushes can update their existing three shared web/Discord/OpenGraph betas.
+Discord and OpenGraph execute the changed fitter and receive technical patch notes. Web/API
+consume glyphs and moderation consumes bot helpers, so filter matches alone do not justify
+their version bumps. Parked Stoat invokes a card generator before discarding its SVG; it has
+no automatic deploy here. Keep player-facing changelogs unchanged for this security-only fix.
+
+**Release ordering:** prepare stacked source now. A-CORE's merge deploys Discord 5.9.2;
+publish and verify core 5.16.0 before releasing SVG 4.4.1, whose packed `workspace:*` dependency
+resolves to that version. A-SVG's later merge deploys Discord 5.9.3/OpenGraph 2.12.1 from local
+workspace code independently of npm. No merge, package publication or manual deploy is
+authorized by this execution record. API body/name bounds remain outstanding in FINDING-002.
+
+**Ends with:** SVG/dependents gate, whole-graph/root checks, all five affected app bundles and
+package/API parity checks → draft feature PR and automatic-beta receipts → separately authorized
+merge after the core release prerequisite → Actions **Publish Packages to npm** for SVG 4.4.1
+and registry verification → later bot-logic/adoption sprint. Keep FINDING-002 open.
 
 ## Sprint A-BOT-LOGIC — packages/bot-logic
 
