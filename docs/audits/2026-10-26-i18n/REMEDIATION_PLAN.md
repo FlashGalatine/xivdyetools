@@ -157,7 +157,7 @@ this unmerged implementation, so the status-basis counts remain unchanged.
 
 Publish the deprecation MINOR before any removal. Also harden the quadratic GPOSERS sink as a companion to the upstream-name finding assigned to A-API. Preserve exported names when relocating live limits/types; add the legacy API deprecation record.
 
-**Execution status (2026-10-27): implementation verified; feature PR and release pending.**
+**Execution status (2026-10-27): [draft PR #338](https://github.com/FlashGalatine/xivdyetools/pull/338) open; implementation and automatic betas verified; production release pending.**
 Fresh npm checks returned core 5.15.0 and bot-logic 4.11.0. This sprint prepares core
 **5.16.0 MINOR**, web **5.16.1 PATCH** and Discord **5.9.2 PATCH**. The nine live contracts
 and the 8,192-byte cap retain their exported names; six legacy symbols are deprecated,
@@ -167,8 +167,11 @@ truncation stays in A-WEB. FINDING-002's core GPOSERS companion preserves text o
 making newline joining linear; API body/name bounds and SVG fitting remain in A-API/A-SVG.
 [Implementation evidence](../2026-10-26-xivcharakit-dead-code/evidence/remediation-core-2026-10-27.md).
 All 62 graph tasks, the five affected app bundle gates and independent task/final reviews pass.
-Public export/declaration contracts are preserved; the package smoke check passes. Feature
-push/beta verification, merge, registry publication and production acceptance remain pending.
+Public export/declaration contracts are preserved; the package smoke check passes. Source
+commit `33c5abc7` deployed through the unchanged web, Discord and OpenGraph beta workflows,
+including actual deploy and smoke/registration steps. Source PR CI passed, including Playwright.
+The receipt-only documentation follow-up changes neither package nor app source. Merge, registry
+publication and production acceptance remain pending.
 
 **Actual rollout:** existing `workspace:*` consumers bundle the changed source. A core-path
 merge triggers production web, Discord, API, OpenGraph and moderation workflows independently

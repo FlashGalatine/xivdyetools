@@ -92,6 +92,26 @@ function matched a separate code-point oracle in 1,728 boundary cases. It indepe
 the nine relocated contracts, 22 declaration shapes and legacy implementations. A separate
 Astra/high final security/public-API review found no Critical, Important or Minor issue.
 
+## Automatic beta verification after branch push
+
+The existing feature-branch workflows deployed source commit
+`33c5abc7de1a9bc27d43942692b8a4687c0e0636`:
+
+- [Beta web run 40483082880](https://github.com/FlashGalatine/xivdyetools/actions/runs/40483082880)
+  succeeded, including beta-build identity verification, bundle budget, the actual Cloudflare
+  Pages deployment and its fresh-deployment/domain smoke test.
+- [Beta Discord run 40483082783](https://github.com/FlashGalatine/xivdyetools/actions/runs/40483082783)
+  succeeded, including the actual deployment and guild-scoped command registration.
+- [Beta OpenGraph run 40483082809](https://github.com/FlashGalatine/xivdyetools/actions/runs/40483082809)
+  succeeded, including deployment, health smoke and emitted-card-URL smoke checks.
+
+Job/step readbacks distinguish these actual deployments from skipped missing-token guard jobs.
+PR [CI run 40483159301](https://github.com/FlashGalatine/xivdyetools/actions/runs/40483159301)
+succeeded: audit, lint/type-check/test/build, secret scanning and Playwright E2E all passed.
+Top-level run readbacks confirm success for CI and all three beta workflows. These receipts
+describe automatic beta workflows, not a manual or production deployment. The subsequent
+receipt-only documentation commit leaves the verified package/app source unchanged.
+
 ## Rollout and remaining work
 
 Existing workspace consumers bundle local core source. A core-path merge triggers web,
@@ -99,7 +119,7 @@ Discord, API, OpenGraph and moderation production workflows independently of npm
 pushes can replace the shared web, Discord and OpenGraph betas. The maintainer selected
 retaining those workflows with validation of affected apps. No manual deployment is planned.
 
-Automatic-beta receipts will be recorded after the feature push. Registry publication and
-production acceptance remain separate release actions. Audit IDs remain open while their
+The [draft PR #338](https://github.com/FlashGalatine/xivdyetools/pull/338) is stacked on #337.
+Registry publication and production acceptance remain separate release actions. Audit IDs remain open while their
 source is prepared; the plan's fixed-ID count is unchanged. Private upstream correspondence
 is outside this repository and is not part of the change.
