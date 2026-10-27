@@ -7,6 +7,7 @@ import { Hono } from 'hono';
 import type { Env, DiscordTokenResponse, DiscordUser, AuthResponse } from '../types.js';
 import { createJWTForUser, getAvatarUrl } from '../services/jwt-service.js';
 import { findOrCreateUser } from '../services/user-service.js';
+import { IdentityError } from '../services/identity-contract.js';
 import { verifyPkceStateBinding } from '../utils/pkce-binding.js';
 import { buildGetCallbackHandler } from './oauth-flow.js';
 import { DISCORD_FLOW_CONFIG } from './authorize.js';
@@ -241,7 +242,7 @@ callbackRouter.post('/callback', async (c) => {
       xivauth_id: null, // Discord login doesn't provide XIVAuth ID
       username: discordUser.global_name || discordUser.username,
       auth_provider: 'discord',
-    });
+    }, undefined, c.env);
 
     // Create our JWT with the database user
     const { token, expires_at } = await createJWTForUser(user, c.env, {
@@ -264,6 +265,9 @@ callbackRouter.post('/callback', async (c) => {
       expires_at,
     });
   } catch (err) {
+    if (err instanceof IdentityError) {
+      return c.json<AuthResponse>({ success: false, error: 'Authentication temporarily unavailable. Sign in again.' }, 503);
+    }
     // Sanitize logs in production - only log error name and message
     if (c.env.ENVIRONMENT === 'development') {
       console.error('OAuth callback error:', err);

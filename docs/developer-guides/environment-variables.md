@@ -125,6 +125,7 @@ XIVAUTH_CLIENT_ID = "phx-..."     # XIVAuth application id (the second provider)
 FRONTEND_URL = "https://xivdyetools.app"
 WORKER_URL = "https://auth.xivdyetools.app"
 JWT_EXPIRY = "3600"               # Seconds (default: 1 hour)
+IDENTITY_SPLIT_ENABLED = "false"   # Both environments; separate verified activation required
 ```
 
 The redirect / CORS allowlist also carries `https://beta.xivdyetools.app`. Note `oauth`'s
@@ -135,6 +136,11 @@ other than `development` getting the production gates.
 
 Bindings: `DB` (D1 `xivdyetools-users`), `TOKEN_BLACKLIST` (KV — the revoked-jti list, shared
 with presets-api), and the `RL_AUTH_10` / `RL_AUTH_20` / `RL_AUTH_30` rate-limit bindings.
+
+The initial private identity-provider release declares no outbound `BAN_CONTINUITY` binding.
+Add that named service binding only after the presets target and all enforcement consumers
+are deployed and verified. Development explicitly uses `routes = []` and `workers_dev = false`.
+See [identity rollout and migration order](../architecture/identity-moderation.md).
 
 ### Secrets
 

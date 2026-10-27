@@ -212,7 +212,7 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 | FINDING-001 | OPEN | — |
 | FINDING-002 | OPEN — core/SVG/API source prepared; release pending | [Core evidence](../2026-10-26-xivcharakit-dead-code/evidence/remediation-core-2026-10-27.md); [SVG evidence](evidence/remediation-svg-2026-10-27.md); [API evidence](evidence/remediation-api-2026-10-27.md) |
 | FINDING-003 | OPEN | — |
-| FINDING-004 | OPEN — opt-in worker-kit support prepared; consumer adoption/deployment pending | [Implementation evidence](evidence/remediation-worker-kit-2026-10-27.md) |
+| FINDING-004 | OPEN — library and all three app opt-ins prepared; release pending | [A-OAUTH evidence](evidence/remediation-oauth-2026-10-27.md) |
 | FINDING-005 | OPEN — upstream budgets/current icon key prepared; production acceptance pending | [API evidence](evidence/remediation-api-2026-10-27.md) |
 | FINDING-006 | OPEN | — |
 | FINDING-007 | OPEN | — |
@@ -231,7 +231,7 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 | FINDING-020 | OPEN | — |
 | FINDING-021 | OPEN — source prepared; release pending | [A-BOT-LOGIC evidence](evidence/remediation-bot-logic-2026-10-27.md) |
 | FINDING-022 | OPEN | — |
-| FINDING-023 | OPEN | — |
+| FINDING-023 | OPEN — provider and inactive split prepared; consumers/activation pending | [A-OAUTH evidence](evidence/remediation-oauth-2026-10-27.md) |
 | FINDING-024 | OPEN | — |
 | FINDING-025 | OPEN | — |
 | FINDING-026 | OPEN | — |
@@ -240,11 +240,11 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 | FINDING-029 | OPEN — future builder prepared; historical provenance unresolved pending controlled refresh | [API evidence](evidence/remediation-api-2026-10-27.md) |
 | FINDING-030 | OPEN | — |
 | FINDING-031 | OPEN | — |
-| FINDING-032 | OPEN | — |
+| FINDING-032 | OPEN — development isolation prepared; release pending | [A-OAUTH evidence](evidence/remediation-oauth-2026-10-27.md) |
 | FINDING-033 | OPEN | — |
 | FINDING-034 | OPEN | — |
 | FINDING-035 | FIXED 2026-10-27 — checklist omission closed; actual policy changes remain scheduled for key deletion | [Perspective-sunset checklist](../../../DEPRECATIONS.md) (documentation only) |
-| FINDING-036 | OPEN | — |
+| FINDING-036 | OPEN — state domain separation prepared; release pending | [A-OAUTH evidence](evidence/remediation-oauth-2026-10-27.md) |
 | FINDING-037 | OPEN — source prepared; release pending | [A-PRESETS evidence](evidence/remediation-presets-2026-10-27.md) |
 | FINDING-038 | OPEN — numeric telemetry triple prepared; release pending | [API evidence](evidence/remediation-api-2026-10-27.md) |
 | FINDING-039 | OPEN | — |

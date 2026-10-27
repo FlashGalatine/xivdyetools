@@ -7,6 +7,7 @@
 
 import type { Env } from '../types.js';
 import { isValidSnowflake } from '@xivdyetools/types';
+import { continuityBinding } from '../services/identity-contract.js';
 
 export interface EnvValidationResult {
   valid: boolean;
@@ -43,6 +44,9 @@ export const ALLOWED_ENVIRONMENTS: readonly string[] = ['development', 'producti
  */
 export function validateEnv(env: Env): EnvValidationResult {
   const errors: string[] = [];
+  if (env.IDENTITY_SPLIT_ENABLED === 'true' && !continuityBinding(env.BAN_CONTINUITY)) {
+    errors.push('Enabled identity transitions require the BanContinuity binding');
+  }
 
   // Check required string environment variables
   const requiredStrings: Array<keyof Env> = [

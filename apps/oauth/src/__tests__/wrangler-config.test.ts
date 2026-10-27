@@ -35,6 +35,12 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // Normalise CRLF so `$` anchors line ends on a Windows checkout too.
 const toml = readFileSync(join(__dirname, '..', '..', 'wrangler.toml'), 'utf-8').replace(/\r\n/g, '\n');
 
+it('registers the actual RPC wrapper, keeps split inactive in both environments, and has no outbound continuity binding',()=>{
+  expect(toml).toMatch(/^main = "src\/worker\.ts"$/m);
+  expect(toml.match(/IDENTITY_SPLIT_ENABLED = "false"/g)).toHaveLength(2);
+  expect(toml).not.toMatch(/binding\s*=\s*"BAN_CONTINUITY"/);
+});
+
 // Cross-file: FINDING-002's revocation cross-check requires the two workers'
 // TOKEN_BLACKLIST ids to actually agree, not just be individually present
 // (FINDING-013's fail-closed validateEnv only catches a *missing* binding).
@@ -44,6 +50,20 @@ const presetsApiToml = readFileSync(
 ).replace(/\r\n/g, '\n');
 
 describe('wrangler.toml', () => {
+  // End at the next exact TOML header: physically later top-level tables
+  // must never count as fields belonging to this environment.
+  const development = toml.match(/^\[env\.development\]\n([\s\S]*?)(?=^\[|$(?![\s\S]))/m)?.[1];
+
+  it('explicitly disables inherited routes in the exact development table', () => {
+    expect(development).toBeDefined();
+    expect(development).toMatch(/^routes = \[\]$/m);
+  });
+
+  it('explicitly disables workers.dev in the exact development table', () => {
+    expect(development).toBeDefined();
+    expect(development).toMatch(/^workers_dev = false$/m);
+  });
+
   it('names the top-level (production) worker xivdyetools-oauth', () => {
     expect(toml).toMatch(/^name = "xivdyetools-oauth"$/m);
   });

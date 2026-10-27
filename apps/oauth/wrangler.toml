@@ -1,5 +1,5 @@
 name = "xivdyetools-oauth"
-main = "src/index.ts"
+main = "src/worker.ts"
 compatibility_date = "2024-12-01"
 # ARCH-001: nodejs_compat removed — no Node.js APIs used
 
@@ -21,6 +21,7 @@ XIVAUTH_CLIENT_ID = "phx-sXZeb_Ran6GAdcnsnjvdtOeNM4df0BZyF3Jyti0"
 FRONTEND_URL = "https://xivdyetools.app"
 WORKER_URL = "https://auth.xivdyetools.app"
 JWT_EXPIRY = "3600"
+IDENTITY_SPLIT_ENABLED = "false"
 
 # FINDING-003: native Workers Rate Limiting bindings for /auth/* (one per OAUTH_LIMITS value, per IP+path, 60 s).
 # Top-level block = PRODUCTION for this worker. namespace_id unique per account.
@@ -58,7 +59,9 @@ enabled = false
 
 [env.development]
 name = "xivdyetools-oauth-dev"
-vars = { ENVIRONMENT = "development", DISCORD_CLIENT_ID = "1447108133020369048", XIVAUTH_CLIENT_ID = "phx-sXZeb_Ran6GAdcnsnjvdtOeNM4df0BZyF3Jyti0", FRONTEND_URL = "http://localhost:5173", WORKER_URL = "http://localhost:8788", JWT_EXPIRY = "3600" }
+routes = []
+workers_dev = false
+vars = { ENVIRONMENT = "development", DISCORD_CLIENT_ID = "1447108133020369048", XIVAUTH_CLIENT_ID = "phx-sXZeb_Ran6GAdcnsnjvdtOeNM4df0BZyF3Jyti0", FRONTEND_URL = "http://localhost:5173", WORKER_URL = "http://localhost:8788", JWT_EXPIRY = "3600", IDENTITY_SPLIT_ENABLED = "false" }
 
 [[kv_namespaces]]
 binding = "TOKEN_BLACKLIST"
