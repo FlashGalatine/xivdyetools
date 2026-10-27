@@ -2,7 +2,7 @@
 
 **Single source of truth for all XIV Dye Tools project versions**
 
-*Last Updated: October 11, 2026*
+*Last Updated: October 27, 2026*
 
 > **Versions below match each project's `package.json` in this checkout** and are checked
 > against it by `pnpm docs:check-versions` (`scripts/check-doc-versions.ts`, run in CI), so
@@ -15,6 +15,9 @@
 > there rather than trusting this sentence to stay current. Merging to
 > `main` is the release — see [Release Process](developer-guides/release-process.md) and the
 > per-workspace `CHANGELOG.md` files for what each version contains.
+>
+> The first remediation sprint prepares `@xivdyetools/worker-kit` 1.6.0; npm latest was
+> independently checked as 1.5.0 on 2026-10-27. Its publication remains a separate Actions step.
 
 ---
 
@@ -25,7 +28,7 @@
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
 | **Web Application** | v5.16.0 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v5.9.0 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
+| **Discord Bot** | v5.9.1 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.4 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.8.2 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.3 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
@@ -44,7 +47,7 @@
 | **Types** | v3.3.0 | `@xivdyetools/types` | npm | Active |
 | **Auth** (incl. `/encoding`) | v2.0.2 | `@xivdyetools/auth` | npm | Active |
 | **Logger** | v2.3.0 | `@xivdyetools/logger` | npm | Active |
-| **Worker Kit** (middleware + `/rate-limiter`) | v1.5.0 | `@xivdyetools/worker-kit` | npm | Active |
+| **Worker Kit** (middleware + `/rate-limiter`) | v1.6.0 | `@xivdyetools/worker-kit` | npm | Active |
 | **SVG** | v4.4.0 | `@xivdyetools/svg` | npm | Active |
 | **Bot Logic** (incl. `/i18n`) | v4.11.0 | `@xivdyetools/bot-logic` | npm | Active |
 | **Test Utils** | v3.0.0 | `@xivdyetools/test-utils` | workspace-private | Active (never published) |
@@ -206,6 +209,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.9.1 | Oct 2026 | Worker-kit 1.6.0's shared `/glamour` preset selects the existing RL_5 binding at 5/minute instead of the inherited 15/minute; native lookup regression coverage; command shape unchanged |
 | v5.9.0 | Oct 2026 | Core 5.15.0 + bot-logic 4.11.0: `/swatch` and `/glamour` pass the attachment's capped bytes to the `xivcharakit`-backed reader (invalid UTF-8 refused), `/glamour` opens gear-only files, unmatched or unreadable colors, gear and dyes get a fixed line; attachment guards unchanged; no command shape change; bundle 2,732.6 KiB gzip (88.9 % of the cap) |
 | v5.8.15 | Oct 2026 | Core 5.13.0 + 5.14.0, bot-logic 4.10.0 (2026-10-15 import review): `/swatch` and `/glamour` refuse an attachment not named `.chara` before deferring, and the cap is 8 KiB (was 1 MiB) on the reported size and the streamed download, with an 8 KB message; no command shape changes |
 | v5.8.14 | Oct 2026 | bot-logic 4.9.0 (no source change here): `/glamour`'s list leaves out invisible pieces and an Off Hand the main hand doesn't take; the card is unchanged; no command shape changes |
@@ -519,6 +523,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v1.6.0 | Oct 2026 | Opt-in `getClientIp` IPv6 /64 network keys with mapped-IPv4 and malformed-input compatibility; existing callers stay opted out; explicit `/glamour` 5/minute preset without burst selects Discord's existing RL_5 binding |
 | v1.5.0 | Oct 2026 | 2026-10-04 remediation Sprint 16 — minor, for behavior changes (as 1.2.0 and 1.3.0): `jsonDepthLimit` recognizes JSON case-insensitively and `+json` while still guarding anything the old substring test did (BUG-149); a `formatError` response gets the computed `X-RateLimit-*` / `Retry-After` headers it lacks (BUG-150); `KVRateLimiter.reset()` / `resetAll()` page the KV cursor and delete the whole prefix (BUG-151); pins logger 2.3.0 |
 | v1.4.1 | Sep 2026 | Packaging patch — the optional `@cloudflare/workers-types` peer range admits 5.x as well as 4.x (was `^4.0.0`, so `npm install` next to the 5.x line every Worker here uses failed with `ERESOLVE`); the optional `hono` peer stays at 1.4.0's `^4.13.7`; no code change — the published files differ from 1.4.0 only in `package.json` and the README line quoting the peer ranges |
 | v1.4.0 | Sep 2026 | 2026-09-16 deep-dive Sprint 13 — two new subpaths: `/body-guards` (`bodyGuards({ maxSize, maxDepth, onTooLarge, onInvalidJson, exempt })` → `bodySizeLimit` + `jsonDepthLimit`, the oauth and presets-api copies folded in, REFACTOR-009) and `/image-sniff` (`detectImageFormat`, `sniffImageType(bytes, accept)`, `IMAGE_MAGIC_BYTES` — image-worker's table is the source of truth, REFACTOR-008); `body-guards` is subpath-only (it imports `hono/body-limit` at runtime and `hono` is an optional peer) |
@@ -741,6 +746,7 @@ and the [rollout runbook](operations/security-remediation-2026-09-15.md) for the
 | Discord Worker v5.0+ | @xivdyetools/core v4.0.0+ | Also `@xivdyetools/svg` v2.0.0+, `@xivdyetools/bot-logic` v2.0.0+ (incl. `/i18n`), `@xivdyetools/worker-kit` v1.0.0+ |
 | OG Worker v2.0+ | @xivdyetools/svg v2.0.0+ | 15E band frame generators |
 | Any consumer of blending | @xivdyetools/core v2.8.0+ | `@xivdyetools/color-blending` retired; import from `@xivdyetools/core/blending` |
+| Callers opting into IPv6 /64 keys; Discord Worker v5.9.1+ | @xivdyetools/worker-kit v1.6.0+ | `getClientIp(..., { ipv6Prefix64: true })`; shared `/glamour` limit selects RL_5 |
 | Any worker using middleware | @xivdyetools/worker-kit v1.0.0+ | Replaces `worker-middleware` and `rate-limiter` |
 | Web App v4.9–4.12 | @xivdyetools/core v2.5.0+ | Patch 7.5 dye consolidation active end-to-end |
 | Web App v4.5–4.8 | @xivdyetools/core v2.0.0+ | Types imported from `@xivdyetools/types` directly |

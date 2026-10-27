@@ -212,7 +212,7 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 | FINDING-001 | OPEN | — |
 | FINDING-002 | OPEN | — |
 | FINDING-003 | OPEN | — |
-| FINDING-004 | OPEN | — |
+| FINDING-004 | OPEN — opt-in worker-kit support prepared; consumer adoption/deployment pending | [Implementation evidence](evidence/remediation-worker-kit-2026-10-27.md) |
 | FINDING-005 | OPEN | — |
 | FINDING-006 | OPEN | — |
 | FINDING-007 | OPEN | — |
@@ -225,7 +225,7 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 | FINDING-014 | OPEN | — |
 | FINDING-015 | OPEN | — |
 | FINDING-016 | OPEN | — |
-| FINDING-017 | OPEN | — |
+| FINDING-017 | OPEN — shared preset and Discord RL_5 regression prepared; deployed verification pending | [Implementation evidence](evidence/remediation-worker-kit-2026-10-27.md) |
 | FINDING-018 | OPEN | — |
 | FINDING-019 | OPEN | — |
 | FINDING-020 | OPEN | — |

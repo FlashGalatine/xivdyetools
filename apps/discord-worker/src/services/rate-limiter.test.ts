@@ -226,6 +226,27 @@ describe('rate-limiter.ts', () => {
    * smallest tier that can hold it.
    */
   describe('native [[ratelimits]] bindings', () => {
+    it('routes glamour to RL_5 with its native key and propagates a rejected request', async () => {
+      const bindings = createMockBindings();
+      bindings.RL_5.limit.mockResolvedValue({ success: false });
+      const result = await checkRateLimit(
+        { bindings: bindings as unknown as DiscordRateLimitBindings, kv: mockKV },
+        mockUserId,
+        'glamour',
+      );
+
+      expect(result.allowed).toBe(false);
+      expect(result.remaining).toBe(0);
+      expect(result.retryAfter).toBe(60);
+      expect(bindings.RL_5.limit).toHaveBeenCalledExactlyOnceWith({
+        key: 'ratelimit:user:user-123:glamour:t5_60',
+      });
+      for (const name of TIER_NAMES) {
+        if (name !== 'RL_5') expect(bindings[name].limit).not.toHaveBeenCalled();
+      }
+      expect(mockKV.put).not.toHaveBeenCalled();
+    });
+
     it.each([
       { command: 'budget', subcommand: undefined, tier: 'RL_10', key: 'budget' },
       // RL_20 is the only tier no other row covers — without these two, a

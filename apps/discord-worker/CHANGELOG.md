@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.9.1] - 2026-10-27
+
+### Security
+
+- **`/glamour` uses the existing RL_5 binding at 5 requests per minute.** The worker-kit
+  1.6.0 shared preset replaces the inherited 15/minute default; a regression test checks
+  the real command lookup and native binding selection. Command registration is unchanged.
+  This narrows the load one caller can place on the shared API service budget; it does not
+  eliminate cross-user contention in that service budget.
+
 ## [5.9.0] - 2026-10-26
 
 `/swatch` and `/glamour` read the attachment through core 5.15.0's `xivcharakit` facade, with

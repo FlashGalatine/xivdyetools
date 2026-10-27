@@ -16,4 +16,4 @@
 - **Maintainer decision:** the live check is done (IPv6 on, Pseudo IPv4 off). Choose dashboard-side mitigation (a WAF rate-limiting rule keyed on the /64) or /64 keying in the `getClientIp`-based limiters; the code fix is Sprint 1 of the plan.
 
 ## Status
-OPEN
+OPEN — opt-in library support and regression tests prepared 2026-10-27 in worker-kit 1.6.0; existing callers remain opted out. API, presets-api and OAuth adoption/deployment remain in their owning app sprints. No npm publication or live verification has occurred. [Implementation and verification evidence](../evidence/remediation-worker-kit-2026-10-27.md).

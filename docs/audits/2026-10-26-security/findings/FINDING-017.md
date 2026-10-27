@@ -14,4 +14,4 @@
 - Give glamour its own tier in DISCORD_COMMAND_LIMITS, e.g. 5/min on the existing RL_5 binding, which also needs a worker-kit release, or add a LOCAL_COMMAND_LIMITS entry in discord-worker as a stopgap. Optionally key api-worker's service bucket per Discord user (a forwarded, binding-only header) so one user group cannot fill the shared 'workers' key.
 
 ## Status
-OPEN
+OPEN — the 5/minute shared glamour preset and existing Discord RL_5 selection regression are prepared 2026-10-27 in worker-kit 1.6.0 / Discord 5.9.1. The maintainer approved keeping the automatic consumer deployments, with all affected apps validated first. Deployed effective-limit verification remains pending; the shared upstream service budget is still shared. [Implementation and verification evidence](../evidence/remediation-worker-kit-2026-10-27.md).

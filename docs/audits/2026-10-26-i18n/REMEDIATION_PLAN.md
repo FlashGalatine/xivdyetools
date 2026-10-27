@@ -124,22 +124,32 @@ The maintainer authorized review, preparation and then sending of the private up
 
 **Ends with:** Explicit maintainer authorization at execution → narrowly scoped action/decision → read-only state verification recorded; no automatic action from this audit.
 
-## Sprint A-WORKER-KIT — packages/worker-kit
+## Sprint A-WORKER-KIT — packages/worker-kit — IMPLEMENTED 2026-10-27; release pending
 
 Prepare an additive MINOR; the 2026-10-27 registry check found local and npm latest both at 1.5.0, so the current target is 1.6.0. API, presets-api and oauth explicitly opt into IPv6 keying in their own app sprints.
 
 **Readiness review 2026-10-27:** both findings are still present. Preserve default `getClientIp` output, header precedence and X-Forwarded-For opt-in. With the new /64 option enabled, normalize valid IPv6 to a canonical network key without a `/64` suffix. Treat IPv4-mapped IPv6 separately: dotted and hex forms should resolve to the embedded IPv4 address rather than sharing one zero-prefix /64 bucket. Preserve the existing trimmed/lowercase pass-through for malformed input. Pin these compatibility expectations, equivalent spellings, same/different prefixes, shared quota consumption and key-scope redaction in regression tests.
 
-**Rollout decision required before implementation:** the existing production workflows for all seven backend apps include `packages/worker-kit/**` in their push filters and bundle workspace dependencies. Merging this package change therefore triggers consumer deployments independently of npm publication. Discord already calls the shared `getDiscordCommandLimit` lookup, so adding `glamour: { maxRequests: 5, windowMs: 60_000 }` activates its existing RL_5 tier on that deployment; separate wiring is unnecessary. Confirm either the current automatic-deployment behavior, with affected-app gates and a Discord glamour-to-RL_5 integration test, or an explicit release-gating change first. Do not assume a publish-only merge. FINDING-004 remains open until consumer opt-ins are deployed; FINDING-017 closes only after the effective Discord limit is verified.
+**Rollout decision approved 2026-10-27:** the maintainer selected the existing automatic-deployment behavior and validation of every affected app. All seven backend production workflows include `packages/worker-kit/**` in their push filters and bundle workspace dependencies, so merging this package change triggers their deployments independently of npm publication. Discord already calls the shared `getDiscordCommandLimit` lookup: the new `glamour: { maxRequests: 5, windowMs: 60_000 }` entry selects RL_5 on that deployment, covered by a native-binding integration regression. Discord's patch release is 5.9.1; no workflow gating change is planned. FINDING-004 remains open until consumer opt-ins are deployed; FINDING-017 closes only after the effective Discord limit is verified. This rollout choice does not itself merge, publish or manually deploy the changes.
 
 Source references: [Discord deployment workflow](../../../.github/workflows/deploy-discord-worker.yml#L21), [existing shared-limit lookup](../../../apps/discord-worker/src/services/rate-limiter.ts#L242), and [RL_5 production binding](../../../apps/discord-worker/wrangler.toml#L172).
+
+**Execution update:** worker-kit 1.6.0 and Discord 5.9.1 are prepared. Red-first and mutation
+regressions pass on the restored implementation; the whole graph passed 62/62 tasks and
+16,310 test summaries (36 tasks cached). All seven backend bundles passed their dry-run/size
+checks, with independent task and final security reviews. [Implementation evidence](../2026-10-26-security/evidence/remediation-worker-kit-2026-10-27.md).
+
+**Deploy needs:** separately authorized merge and seven automatic backend deployments;
+Actions publication of worker-kit 1.6.0; effective deployed Discord limit verification.
+Explicit IPv6 opt-ins remain in A-API, A-PRESETS and A-OAUTH. Neither finding is closed by
+this unmerged implementation, so the status-basis counts remain unchanged.
 
 | ID | Source | Sev/Pri | Action |
 |---|---|---|---|
 | [2026-10-26-security/FINDING-004](../2026-10-26-security/findings/FINDING-004.md) | 2026-10-26-security | LOW / INTERNET-UNAUTH · P2 | `getClientIp` (opt-in option): collapse IPv6 to its /64 (expand `::`, keep four hextets), leave IPv4 alone; test that two addresses in one /64 share a key. |
 | [2026-10-26-security/FINDING-017](../2026-10-26-security/findings/FINDING-017.md) | 2026-10-26-security | LOW / INTERNET-AUTH · P2 | Add `glamour: { maxRequests: 5, windowMs: 60_000 }` to `DISCORD_COMMAND_LIMITS` without burst; verify the existing Discord lookup selects RL_5 under the chosen rollout. |
 
-**Ends with:** resolve the rollout gate above → `pnpm turbo run build type-check lint test --filter=...@xivdyetools/worker-kit` and whole-graph gates before merge → version/CHANGELOG decision → merge (currently triggers all seven backend deployment workflows) → Actions **Publish Packages to npm** for `@xivdyetools/worker-kit`; verify registry availability and actual consumer deployment/adoption separately.
+**Ends with:** `pnpm turbo run build type-check lint test --filter=...@xivdyetools/worker-kit` and whole-graph gates before merge → version/CHANGELOG decision → separately authorized merge (triggers all seven backend deployment workflows) → Actions **Publish Packages to npm** for `@xivdyetools/worker-kit`; verify registry availability and actual consumer deployment/adoption separately.
 
 ## Sprint A-CORE — packages/core
 

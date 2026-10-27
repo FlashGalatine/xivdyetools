@@ -41,7 +41,12 @@ pnpm --filter @xivdyetools/worker-kit run test
 - **Request-ID validation** — upstream `X-Request-ID` accepted only if UUID-v4-shaped (log-injection defense); otherwise replaced via `crypto.randomUUID()`.
 - **Rate-limit backend memoization (BUG-061)** — a `backend` factory's result is cached per isolate; never construct `MemoryRateLimiter` inside the factory.
 - **Fail-open default** — backend errors let requests through; `onError: 'fail-closed'` opts into 429. Logged on every fail-open path even with no logger configured (FINDING-012, 2026-08-29: `console.warn` fallback in `CloudflareRateLimiter`, `KVRateLimiter.checkOnly`, `UpstashRateLimiter` — previously silent when a consumer passed none), and the log context never carries the raw key (FINDING-010: `keyScope` via the internal `scopeRateLimitKey()` helper, e.g. `public:ip` or a shape label like `ip`/`id` when no `keyPrefix` is configured) — never widen that to a hash, a hashed IP still correlates two log lines by client. `CloudflareRateLimiter`'s constructor also validates every tier's `binding.limit` is callable and throws if not, rather than fail-opening silently on the first request that reaches a misconfigured tier.
-- **`getClientIp` only** for keys (SEC-002) — `X-Forwarded-For` is spoofable.
+- **`getClientIp` only** for keys (SEC-002) — `X-Forwarded-For` is spoofable. The opt-in
+  `ipv6Prefix64` option groups valid IPv6 hosts by /64 without changing default callers;
+  mapped IPv4 forms resolve to dotted IPv4 rather than sharing a zero-prefix bucket.
+  Invalid input retains the old lowercase output. Preserve header precedence and log only
+  the key scope, never the raw network key. The shared `glamour` preset is 5/minute without
+  burst and selects Discord's existing RL_5 tier through its normal lookup.
 - **Standard headers** — `X-RateLimit-Limit/Remaining/Reset` on every response; `Retry-After` on 429. A `formatError` Response that lacks any of them gets them copied on (BUG-150), never overwriting its own.
 - **`KVRateLimiter.reset`/`resetAll` page the cursor** (BUG-151) and delete in chunks of 50; the chunking bounds concurrency, not total operations.
 
