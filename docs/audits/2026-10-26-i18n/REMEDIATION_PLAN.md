@@ -356,6 +356,10 @@ After A-WORKER-KIT. Add the capped approved-only batch-by-id lookup before A-DIS
 
 Required presets continuity/membership/session support is prepared with the following A-MODERATION consumer work. Its actual ban transaction and moderator confirmation are not claimed by the provider's local RPC stubs. Apply additive migrations before dependent deployments, verify provider before consumer bindings, then verify all consumers/disclosures before a separate OAuth activation-only change. No main merge, deployment, publication or live migration is selected here. The reviewed ten-file moderation name-removal patch remains on its isolated branch for continuation.
 
+Draft [PR #343](https://github.com/FlashGalatine/xivdyetools/pull/343) prepares the provider. Local final graph: 25 tasks / 17,047 tests pass. Initial CI caught an ignored-directory assumption in the disk-restart test; its self-contained temporary-directory correction preserves all recovery assertions and passes the full 552-test OAuth unit, configured coverage, types and lint. [Updated verification evidence](../2026-10-26-security/evidence/remediation-oauth-2026-10-27.md) retains the failed run and subsequent receipts.
+
+Source `80026b53`: [CI](https://github.com/FlashGalatine/xivdyetools/actions/runs/40589390369) passes all four jobs, including **167/167 Chromium Playwright tests**. Provider preparation is ready for the following consumer work; release/production acceptance remains pending, including the mandatory bounded-RPC/cleanup gate before adding an outbound continuity binding. No merge or production action is selected.
+
 After A-WORKER-KIT. Resolve the identity-link product decision first. If oauth is chosen as the linked-identity provider, ship that support before A-MODERATION.
 
 | ID | Source | Sev/Pri | Action |
