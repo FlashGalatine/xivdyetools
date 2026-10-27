@@ -5,11 +5,15 @@
  * Format: base64url(json).hmac_signature
  * - Lighter than full JWT (no header, simplified structure)
  * - Reuses crypto primitives from jwt-service.ts
- * - Supports transition period for backward compatibility
+ * - Domain-separates new state signatures from JWT signing
+ * - Accepts signed legacy states only during a fixed, finite migration window
  */
 
 // OAUTH-REF-003: Import base64UrlDecode from jwt-service to avoid duplication
 import { base64UrlEncode, base64UrlDecode, signJwtData, verifyJwtData } from '../services/jwt-service.js';
+import { LEGACY_STATE_ISSUANCE_CUTOFF_SECONDS, STATE_EXPIRY_SECONDS } from '../constants/oauth.js';
+
+const STATE_SIGNING_PREFIX = 'oauth-state-v1:';
 
 /**
  * OAuth state data structure
@@ -35,18 +39,18 @@ export interface StateData {
 export async function signState(state: StateData, secret: string): Promise<string> {
   const json = JSON.stringify(state);
   const encodedState = base64UrlEncode(json);
-  const signature = await signJwtData(encodedState, secret);
+  const signature = await signJwtData(STATE_SIGNING_PREFIX + encodedState, secret);
 
   return `${encodedState}.${signature}`;
 }
 
 /**
  * Verify and decode signed state
- * Supports backward compatibility with unsigned states during transition
+ * Supports a finite signed-legacy migration and explicit development unsigned states
  *
  * @param signedState - Signed state string or legacy base64 state
  * @param secret - HMAC secret (typically JWT_SECRET)
- * @param allowUnsigned - Allow unsigned states (for transition period)
+ * @param allowUnsigned - Allow unsigned states (development GET callbacks only)
  * @returns Decoded state data
  * @throws Error if signature is invalid or state is malformed
  */
@@ -62,21 +66,43 @@ export async function verifyState(
     const [encodedState, providedSignature] = parts;
 
     // FINDING-001: Use crypto.subtle.verify (constant-time) instead of string !=
-    const isValid = await verifyJwtData(encodedState, providedSignature, secret);
+    const isCurrentSignature = await verifyJwtData(
+      STATE_SIGNING_PREFIX + encodedState, providedSignature, secret
+    );
+    const now = Math.floor(Date.now() / 1000);
 
-    if (!isValid) {
-      throw new Error('Invalid state signature');
+    if (!isCurrentSignature) {
+      // FINDING-036: raw-HMAC compatibility has a fixed deadline, independent
+      // of deploy/module/request timing. Authenticate before reading timestamps.
+      if (
+        now > LEGACY_STATE_ISSUANCE_CUTOFF_SECONDS + STATE_EXPIRY_SECONDS ||
+        !(await verifyJwtData(encodedState, providedSignature, secret))
+      ) {
+        throw new Error('Invalid state signature');
+      }
     }
 
     // Signature verified - decode state
     const json = base64UrlDecode(encodedState);
     const state = JSON.parse(json) as StateData;
 
+    if (!isCurrentSignature) {
+      if (
+        !Number.isInteger(state.iat) ||
+        !Number.isInteger(state.exp) ||
+        state.iat > now ||
+        state.iat > LEGACY_STATE_ISSUANCE_CUTOFF_SECONDS ||
+        state.exp - state.iat <= 0 ||
+        state.exp - state.iat > STATE_EXPIRY_SECONDS
+      ) {
+        throw new Error('Invalid legacy state timestamps');
+      }
+    }
+
     // REFACTOR-007 (2026-07-18 audit): the replay-window invariant is enforced
     // here at the primitive, not by per-caller discipline — the two callbacks
     // had already diverged on missing-exp semantics. Signed states have always
     // carried exp, so requiring it cannot reject legitimate states.
-    const now = Math.floor(Date.now() / 1000);
     if (!state.exp) {
       throw new Error('State missing expiration timestamp');
     }

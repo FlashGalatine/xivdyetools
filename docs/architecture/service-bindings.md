@@ -376,3 +376,11 @@ const env = {
 - [API Contracts](api-contracts.md) - Headers and payloads for inter-service calls
 - [Data Flow](data-flow.md) - Sequence diagrams showing service interactions
 - [Dependency Graph](dependency-graph.md) - Package dependencies
+
+## Prepared OAuth identity entrypoint
+
+OAuth additionally exports the named private `IdentityLookup` RPC entrypoint. This is not a
+public HTTP endpoint or an additional declared outbound binding. The initial provider release
+keeps identity splitting disabled and declares no `BAN_CONTINUITY` target. Later consumers
+must bind only after the named provider is deployed, with migrations and session/membership
+enforcement verified before activation. See [the staged contract](identity-moderation.md).

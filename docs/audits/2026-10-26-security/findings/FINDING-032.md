@@ -14,4 +14,4 @@
 - Add `routes = []` and `workers_dev = false` (or an explicit dev route) under [env.development] in apps/oauth/wrangler.toml, or delete the env block. Extend apps/oauth/src/__tests__/wrangler-config.test.ts to assert the dev env overrides routes.
 
 ## Status
-OPEN
+OPEN — explicit development routes/worker-dev isolation implemented and tested in OAuth 3.2.0 source; release verification pending. [Preparation evidence](../evidence/remediation-oauth-2026-10-27.md).

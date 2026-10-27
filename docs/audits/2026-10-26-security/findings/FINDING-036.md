@@ -13,4 +13,4 @@
 - Derive a separate state key, for example HMAC(JWT_SECRET, "oauth-state-v1"), or sign "state.v1:" + encodedState, in signState and verifyState. During the 10-minute state TTL, also accept the old signature (or just accept that in-flight logins fail once at deploy).
 
 ## Status
-OPEN
+OPEN — domain-separated state input and finite legacy compatibility implemented and tested in OAuth 3.2.0 source; release verification pending. Legacy acceptance ends 2026-10-28 00:10:00 UTC. [Preparation evidence](../evidence/remediation-oauth-2026-10-27.md).

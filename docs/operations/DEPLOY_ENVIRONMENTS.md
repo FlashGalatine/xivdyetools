@@ -469,3 +469,17 @@ redirect-URI error:
 Both workers deploy from `main` on push, but both expose `workflow_dispatch` and
 `actions/checkout` takes the dispatched ref — so allowlist changes can be
 released from a feature branch without merging.
+
+## Update 2026-10-27 — OAuth identity prerequisites
+
+OAuth remains the exception: its top-level Wrangler block deploys production, while
+`[env.development]` now explicitly declares `routes = []` and `workers_dev = false`.
+The development D1 placeholder must not be replaced or deployed as part of this preparation.
+
+The provider release requires the additive users migration before its deployment. Use
+`wrangler d1 execute --file` once for the existing database; do not replay migrations with
+`d1 migrations apply`. It exports the named private identity service with splitting disabled
+and no outbound continuity binding. Verify the provider, then the later presets/moderation
+consumers and disclosures, before a separate OAuth activation change.
+
+[Identity contract and full release order](../architecture/identity-moderation.md).

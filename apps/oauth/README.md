@@ -124,7 +124,12 @@ wrangler secret put XIVAUTH_CLIENT_SECRET   # Only for XIVAuth confidential-clie
 - **PKCE** on both OAuth2 flows — the authorization code alone is not sufficient to obtain a token. The GET callback echoes the worker-signed `state`; the SPA must return it in the POST callback body (`{ code, code_verifier, state }` — `400 Missing state` otherwise), and the worker verifies `S256(code_verifier)` against the signed `code_challenge` **before** calling the provider, so PKCE does not depend on the IdP enforcing it (FINDING-012).
 - **Exact redirect target** — `redirect_uri` must be an allowlisted origin **and** exactly `/auth/callback` (no query string or fragment); `return_path` and the SPA `state` are bounded server-side (256 visible-ASCII characters).
 - **XIVAuth identity** — only a verified character becomes `username`/`global_name`; the XIVAuth-asserted Discord link must be a valid snowflake, an existing local account is never silently merged or deleted, and the XIVAuth handler logs no identifiers (FINDING-013).
-- **Data minimisation** — a sign-in stores one identity row and nothing else. The FFXIV character roster XIVAuth returns is read in memory to pick the verified character and then discarded (the `xivauth_characters` table is gone — FINDING-001), the avatar URL is recomputed on every response rather than stored (FINDING-002), and the JWT carries only the claims consumers read: `sub`, `iat`, `exp`, `iss`, `jti`, `username`, `global_name`, `avatar`, `auth_provider`, and `discord_id` whenever the account has one (an XIVAuth-only account gets nine claims).
+- **Data minimization** — ordinary successful sign-in stores the current identity record and
+  revision. The prepared transition journal contains identifiers, expected associations and
+  recovery state only; it stores no names, provider tokens or character rosters. Splitting
+  remains disabled. The FFXIV roster is read in memory and discarded, and avatar URLs are
+  recomputed. JWTs add `identity_revision` to the existing minimal claims (ten on an
+  XIVAuth-only account, eleven when a Discord ID is present).
 - **HS256 pinning** — tokens are signed and verified with HS256 only; `alg: none` and `alg: RS256` confusion attacks are rejected at verification time in `@xivdyetools/auth`.
 - **Required claims** — issued tokens always carry `exp` and `sub`; consumers reject tokens missing either.
 - **Timing-safe comparison** for all secret comparisons.
@@ -168,3 +173,19 @@ MIT © 2025-2026 Flash Galatine — see [LICENSE](./LICENSE).
 **FINAL FANTASY XIV © SQUARE ENIX CO., LTD.**
 
 XIV Dye Tools is an unofficial fan project and is **not affiliated with, endorsed by, or sponsored by Square Enix Co., Ltd.**
+
+## Identity-provider preparation
+
+OAuth exports a named private `IdentityLookup` service entrypoint alongside its normal HTTP
+app. Stored associations are not freshly verified upstream links. Pending/current revision
+checks fence stale sessions; the prepared split retains the Discord anchor and uses a separate
+ban-specific continuity handoff before granting a new identity.
+
+`IDENTITY_SPLIT_ENABLED` is false in both environments. Existing relationship changes are
+refused while inactive; matching sign-ins and fresh accounts continue. Apply the additive
+users migration before deployment, then verify provider and consumer releases before a
+separate activation. No outbound continuity binding is declared in this initial release.
+Development explicitly overrides routes with an empty list and disables workers.dev.
+
+See [stored identities and moderation continuity](../../docs/architecture/identity-moderation.md)
+for the private contract, recovery/retention limits and rollout order.

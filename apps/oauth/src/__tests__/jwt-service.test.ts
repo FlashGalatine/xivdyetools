@@ -110,6 +110,7 @@ describe('JWT Service', () => {
 
   beforeEach(() => {
     mockEnv = createMockEnv();
+    void mockEnv.DB.prepare('INSERT INTO users (id,discord_id,auth_provider,username) VALUES (?,?,?,?)').bind('123456789','123456789','discord','testuser').run();
     mockUser = createMockUser();
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2024-01-01T00:00:00Z'));

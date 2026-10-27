@@ -606,6 +606,7 @@ describe('OAuth Worker App', () => {
 
             expect(response.status).toBe(500);
             expect(json.error).toBe('Service misconfigured');
+            expect(response.headers.get('Strict-Transport-Security')).toBe('max-age=31536000; includeSubDomains');
             consoleSpy.mockRestore();
         });
 

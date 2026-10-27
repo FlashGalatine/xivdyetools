@@ -352,6 +352,10 @@ After A-WORKER-KIT. Add the capped approved-only batch-by-id lookup before A-DIS
 
 ## Sprint A-OAUTH — apps/oauth
 
+**Preparation decision 2026-10-27:** the maintainer selected OAuth as the private canonical provider, explicit private confirmation of stored IDs before ban expansion, and existing-ban continuity across unlinking. OAuth 3.2.0 prepares the provider, revision fencing and durable transition protocol; both `IDENTITY_SPLIT_ENABLED` flags remain false and no outbound continuity binding is declared. Detected existing relationship changes fail closed while inactive. The aggregate-only production recheck found 19 users / 4 linked rows, with zero writes and no identifiers selected. Existing finding bodies/counts remain historical; all three IDs stay OPEN pending release, with FINDING-023 additionally awaiting consumers and activation. [Preparation and verification evidence](../2026-10-26-security/evidence/remediation-oauth-2026-10-27.md).
+
+Required presets continuity/membership/session support is prepared with the following A-MODERATION consumer work. Its actual ban transaction and moderator confirmation are not claimed by the provider's local RPC stubs. Apply additive migrations before dependent deployments, verify provider before consumer bindings, then verify all consumers/disclosures before a separate OAuth activation-only change. No main merge, deployment, publication or live migration is selected here. The reviewed ten-file moderation name-removal patch remains on its isolated branch for continuation.
+
 After A-WORKER-KIT. Resolve the identity-link product decision first. If oauth is chosen as the linked-identity provider, ship that support before A-MODERATION.
 
 | ID | Source | Sev/Pri | Action |
@@ -360,7 +364,7 @@ After A-WORKER-KIT. Resolve the identity-link product decision first. If oauth i
 | [2026-10-26-security/FINDING-032](../2026-10-26-security/findings/FINDING-032.md) | 2026-10-26-security | LOW / LOCAL · P3 | `[env.development]`: add `routes = []` and `workers_dev = false` (or an explicit dev route); extend `wrangler-config.test.ts`. |
 | [2026-10-26-security/FINDING-036](../2026-10-26-security/findings/FINDING-036.md) | 2026-10-26-security | INFO / INTERNET-UNAUTH · P3 | Domain-separate the state HMAC from the JWT signing key (prefix or derived subkey) with a migration window for in-flight states. |
 
-**Ends with:** `pnpm turbo run build type-check lint test --filter=...xivdyetools-oauth-worker` and whole-graph gates before merge → merge → `deploy-oauth.yml` (production); beta workflow only when explicitly selected.
+**Ends with:** scoped/full local gates, real SQLite and local RPC proof, dry run, reviewed draft stacked PR and actual CI receipts. A separately authorized main merge runs `deploy-oauth.yml` against production only after its additive migration. Consumer production verification and a separate activation change follow; no OAuth beta or manual deploy is selected.
 
 ## Sprint A-MODERATION — apps/moderation-worker
 

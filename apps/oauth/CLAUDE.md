@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Cloudflare Worker that handles OAuth authentication for the XIV Dye Tools ecosystem. Supports two providers — **Discord** (primary, used everywhere) and **XIVAuth** (FFXIV community SSO that adds character verification). Both flows are PKCE-only (no implicit grant, no client_secret in the browser) and issue HS256 JWTs that downstream services (`xivdyetools-presets-api`, `xivdyetools-web-app`) verify with a shared `JWT_SECRET`.
 
-The worker also owns a small D1 database (`xivdyetools-users`) holding exactly one thing: a unified user identity row per provider (the record behind the JWT `sub`). JWT revocation is supported via a KV-backed blacklist with TTL matching token expiry.
+The worker also owns a small D1 database (`xivdyetools-users`) holding current provider identity rows (the records behind JWT `sub`), a local identity revision, and a bounded recovery journal/locks for the prepared relationship-transition protocol. JWT revocation is supported via a KV-backed blacklist with TTL matching token expiry.
 
 ## Commands
 
@@ -96,6 +96,7 @@ XIVAuth follows the same shape under `/auth/xivauth` and `/auth/xivauth/callback
 
 ```
 src/
+├── worker.ts                         # Wrangler entry: default Hono app + named IdentityLookup RPC
 ├── index.ts                          # Hono app, CORS allowlist, rate limiting, route mounting
 ├── types.ts                          # Env interface + re-exports from @xivdyetools/types
 ├── constants/
@@ -124,7 +125,7 @@ src/
 
 | Binding | Type | Purpose |
 |---------|------|---------|
-| `DB` | D1 (`xivdyetools-users`) | User identity rows (one table) |
+| `DB` | D1 (`xivdyetools-users`) | Current identity rows, revisions, transition journal and locks |
 | `TOKEN_BLACKLIST` | KV Namespace | Revoked JWT IDs (TTL = token expiry + a 15-minute grace), and the **fallback** `/auth/*` rate-limit counters under the `rl:` prefix |
 | `RL_AUTH_10` | Workers Rate Limiting (`[[ratelimits]]`, 10 / 60 s) | Login-initiation paths (`/auth/discord`, `/auth/xivauth`) |
 | `RL_AUTH_20` | Workers Rate Limiting (`[[ratelimits]]`, 20 / 60 s) | Token-exchange paths (`/auth/callback`, `/auth/xivauth/callback`) |
@@ -159,7 +160,9 @@ Vars: `ENVIRONMENT`, `DISCORD_CLIENT_ID`, `XIVAUTH_CLIENT_ID` (required — the 
 
 | Table | Purpose |
 |-------|---------|
-| `users` | The only table. Unified identity row — `id`, `discord_id`, `xivauth_id`, `auth_provider`, `username`, timestamps. `discord_id` and `xivauth_id` are nullable but at least one must be set (CHECK constraint); `auth_provider` records the most-recent login source. |
+| `users` | Unified identity row — `id`, `discord_id`, `xivauth_id`, `auth_provider`, `username`, `identity_revision`, timestamps. Provider IDs are nullable but at least one must be set (CHECK constraint); `auth_provider` records the most-recent login source. |
+| `identity_operations` | Immutable transition payload/hash, pending or terminal outcome, deadline and recovery/acknowledgement timestamps. |
+| `identity_operation_locks` | Namespaced identity resources reserved by a pending operation; removed on its confirmed completion or abort. |
 
 Partial unique indexes on `discord_id` and `xivauth_id` enforce per-provider uniqueness while still allowing rows with only one ID set.
 
@@ -189,15 +192,20 @@ Partial unique indexes on `discord_id` and `xivauth_id` enforce per-provider uni
 
 ### State Parameter Signing
 
-`signState(payload, env.JWT_SECRET)` produces `<base64url-json>.<base64url-hmac>`; `verifyState` verifies the signature over the base64url-encoded portion (`crypto.subtle.verify`, timing-safe), then rejects a state with no `exp` or an `exp` in the past (`exp` is minted as `iat + STATE_EXPIRY_SECONDS (600)`). Without a valid signature the callback returns 400. The state carries the `redirect_uri`, `return_path`, and original `state` value supplied by the SPA.
+`signState(payload, env.JWT_SECRET)` produces `<base64url-json>.<base64url-hmac>`; `verifyState` verifies the signature over `oauth-state-v1:` plus the base64url-encoded portion (`crypto.subtle.verify`, timing-safe), then rejects a state with no `exp` or an `exp` in the past (`exp` is minted as `iat + STATE_EXPIRY_SECONDS (600)`). Without a valid signature the callback returns 400. The state carries the `redirect_uri`, `return_path`, and original `state` value supplied by the SPA.
+
+Legacy signed states have a fixed issuance cutoff of 2026-10-28 00:00:00 UTC and maximum
+600-second lifetime; final acceptance ends at 00:10:00 UTC. This deadline never resets with an
+isolate. Deployment afterward makes an old in-flight sign-in retry once. Development unsigned
+GET compatibility stays separate; POST requires signed state.
 
 ### JWT Service
 
 - `jwt-service.ts` has no `decodeJWT` wrapper any more (DEAD-036); the `mintToken` tests import `decodeJWT` from `@xivdyetools/auth` directly.
 - HS256 via Web Crypto HMAC, delegated to `hmacSign` / `hmacVerify` in `@xivdyetools/auth` (`signJwtData` / `verifyJwtData` wrap them).
-- Mints exactly `sub`, `iat`, `exp`, `iss`, `jti`, `username`, `global_name`, `avatar`, `auth_provider` and — whenever the account has one — `discord_id` (an XIVAuth-only account gets nine claims): what the clients read, and nothing else (FINDING-002). `orig_iat` (its only reader, `/auth/refresh`, is gone), `xivauth_id` (never had one) and `primary_character` (an FFXIV character name + home world the web app copies and never renders, unverified registrations included) are no longer minted. All three are optional in `@xivdyetools/types`.
+- Mints exactly `sub`, `iat`, `exp`, `iss`, `jti`, `username`, `global_name`, `avatar`, `auth_provider`, `identity_revision` and — whenever the account has one — `discord_id` (an XIVAuth-only account gets ten claims): what the clients read, and nothing else (FINDING-002). `orig_iat` (its only reader, `/auth/refresh`, is gone), `xivauth_id` (never had one) and `primary_character` (an FFXIV character name + home world the web app copies and never renders, unverified registrations included) are no longer minted. All three are optional in `@xivdyetools/types`.
 - `verifyJWT` rejects non-HS256 algorithms, validates signature, and checks `exp`.
-- `verifyJWTWithRevocationCheck` additionally queries `TOKEN_BLACKLIST` for the `jti`.
+- `verifyJWTWithRevocationCheck` additionally queries `TOKEN_BLACKLIST` for the `jti`; `/auth/me` then checks the current identity revision and provider relationship.
 - `revokeToken` writes the `jti` with TTL = remaining lifetime + `REFRESH_GRACE_SECONDS` so it auto-expires (FINDING-001).
 
 ### No Token Refresh (removed in 3.0.0)
@@ -216,7 +224,7 @@ Every response the app dispatches carries `Cache-Control: no-store` and `Pragma:
 
 ### Rate Limiting
 
-`/auth/*` is rate-limited **per IP and per path**, with the limit chosen by `OAUTH_LIMITS`. The path is `c.req.path` — the decoded path Hono routes on — not the wire spelling, so `/auth/%63allback` shares `/auth/callback`'s bucket and 20/min tier instead of getting its own (BUG-007). A path no route matches (a 404) still gets its own bucket per spelling (the default tier unless it merely starts with a keyed path such as `/auth/callback`, in which case it takes that path's tier), and the key is not length-bounded.
+`/auth/*` is rate-limited **per normalized IP and per path**, with the limit chosen by `OAUTH_LIMITS`. The path is `c.req.path` — the decoded path Hono routes on — not the wire spelling, so `/auth/%63allback` shares `/auth/callback`'s bucket and 20/min tier instead of getting its own (BUG-007). A path no route matches (a 404) still gets its own bucket per spelling (the default tier unless it merely starts with a keyed path such as `/auth/callback`, in which case it takes that path's tier), and the key is not length-bounded. The app opts into worker-kit's IPv6 /64 normalization; mapped IPv6 uses its embedded IPv4 identity, and X-Forwarded-For remains ignored by default.
 
 The limit is chosen by `OAUTH_LIMITS`:
 10/min on the login-initiation paths, 20/min on the token-exchange callbacks, 30/min on everything
@@ -326,3 +334,19 @@ npx vitest run -t "PKCE"                              # Pattern match
 6. `npm run deploy` (bare — this worker has no `production` env; see the note under Commands).
 7. Smoke-test the full flow from the web app: `/auth/discord` → consent → callback → `/auth/me` returns user info with the issued JWT.
 8. Confirm the production worker still has all four security bindings — `RL_AUTH_10`, `RL_AUTH_20`, `RL_AUTH_30` and `TOKEN_BLACKLIST`. `validateEnv` fails the request when one is missing in production, so a dropped binding shows up as a hard failure rather than a silent downgrade.
+
+## Prepared private identity provider
+
+`IdentityLookup` is a named service entrypoint, not a public HTTP route. It returns only the
+current internal UUID, nullable Discord ID and revision, with distinct found/missing/pending
+results; it never returns upstream XIVAuth IDs, names or tokens. `validateSession` checks the
+current provider relationship and revision after JWT verification. Missing token revision means
+zero only for a nonpending current revision-zero row.
+
+`IDENTITY_SPLIT_ENABLED` is explicitly false in both environments, and the initial deployment
+has no outbound continuity binding. A detected existing relationship change is refused without
+mutation or a stale-Discord token while inactive. Matching logins and fresh accounts continue.
+The additive users migration must precede deployment. Later presets enforcement, moderation
+confirmation and disclosures must deploy and be verified before a separate activation change.
+Development explicitly declares `routes = []` and `workers_dev = false`; bare deployment is
+still production. See [the complete contract and rollout order](../../docs/architecture/identity-moderation.md).
