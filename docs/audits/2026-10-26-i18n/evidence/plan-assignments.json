@@ -1,0 +1,650 @@
+{
+  "scheduled": [
+    {
+      "id": "2026-10-26-security/FINDING-054",
+      "sprint": "OPS-API-DEV",
+      "unit": "Cloudflare stale dev worker"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-055",
+      "sprint": "OPS-ZONE",
+      "unit": "Cloudflare zone transport settings"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-056",
+      "sprint": "OPS-RETIRED",
+      "unit": "Retired Cloudflare resources"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-009",
+      "sprint": "OPS-PAGES-HISTORY",
+      "unit": "Web Pages history and aliases"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-028",
+      "sprint": "OPS-REPO-SECRETS",
+      "unit": "GitHub repository secret scope"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-050",
+      "sprint": "OPS-SECRET-SCANNING",
+      "unit": "GitHub scanning settings"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-051",
+      "sprint": "OPS-BRANCH-PROTECTION",
+      "unit": "GitHub branch protection"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-052",
+      "sprint": "OPS-XIVCHARAKIT-PROVENANCE",
+      "unit": "XIVCharaKit release provenance"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-008",
+      "sprint": "DECISION-UPSTREAM-MERGE",
+      "unit": "Upstream identity-merge decision"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-004",
+      "sprint": "A-WORKER-KIT",
+      "unit": "packages/worker-kit"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-017",
+      "sprint": "A-WORKER-KIT",
+      "unit": "packages/worker-kit"
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-002",
+      "sprint": "A-CORE",
+      "unit": "packages/core"
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-003",
+      "sprint": "A-CORE",
+      "unit": "packages/core"
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-020",
+      "sprint": "A-CORE",
+      "unit": "packages/core"
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-021",
+      "sprint": "A-CORE",
+      "unit": "packages/core"
+    },
+    {
+      "id": "2026-10-26-deep-dive/BUG-003",
+      "sprint": "A-CORE",
+      "unit": "packages/core"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-014",
+      "sprint": "A-BOT-LOGIC",
+      "unit": "packages/bot-logic"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-021",
+      "sprint": "A-BOT-LOGIC",
+      "unit": "packages/bot-logic"
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-005",
+      "sprint": "A-BOT-LOGIC",
+      "unit": "packages/bot-logic"
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-015",
+      "sprint": "A-BOT-LOGIC",
+      "unit": "packages/bot-logic"
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-016",
+      "sprint": "A-BOT-LOGIC",
+      "unit": "packages/bot-logic"
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-017",
+      "sprint": "A-BOT-LOGIC",
+      "unit": "packages/bot-logic"
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-022",
+      "sprint": "A-BOT-LOGIC",
+      "unit": "packages/bot-logic"
+    },
+    {
+      "id": "2026-10-26-deep-dive/BUG-001",
+      "sprint": "A-BOT-LOGIC",
+      "unit": "packages/bot-logic"
+    },
+    {
+      "id": "2026-10-26-deep-dive/BUG-002",
+      "sprint": "A-BOT-LOGIC",
+      "unit": "packages/bot-logic"
+    },
+    {
+      "id": "2026-10-26-deep-dive/BUG-004",
+      "sprint": "A-BOT-LOGIC",
+      "unit": "packages/bot-logic"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-002",
+      "sprint": "A-API",
+      "unit": "apps/api-worker"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-005",
+      "sprint": "A-API",
+      "unit": "apps/api-worker"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-029",
+      "sprint": "A-API",
+      "unit": "apps/api-worker"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-038",
+      "sprint": "A-API",
+      "unit": "apps/api-worker"
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-004",
+      "sprint": "A-API",
+      "unit": "apps/api-worker"
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-018",
+      "sprint": "A-API",
+      "unit": "apps/api-worker"
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-019",
+      "sprint": "A-API",
+      "unit": "apps/api-worker"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-015",
+      "sprint": "A-PRESETS",
+      "unit": "apps/presets-api"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-016",
+      "sprint": "A-PRESETS",
+      "unit": "apps/presets-api"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-018",
+      "sprint": "A-PRESETS",
+      "unit": "apps/presets-api"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-019",
+      "sprint": "A-PRESETS",
+      "unit": "apps/presets-api"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-037",
+      "sprint": "A-PRESETS",
+      "unit": "apps/presets-api"
+    },
+    {
+      "id": "2026-10-26-deep-dive/BUG-005",
+      "sprint": "A-PRESETS",
+      "unit": "apps/presets-api"
+    },
+    {
+      "id": "2026-10-26-deep-dive/BUG-006",
+      "sprint": "A-PRESETS",
+      "unit": "apps/presets-api"
+    },
+    {
+      "id": "2026-10-26-deep-dive/BUG-007",
+      "sprint": "A-PRESETS",
+      "unit": "apps/presets-api"
+    },
+    {
+      "id": "2026-10-26-deep-dive/BUG-008",
+      "sprint": "A-PRESETS",
+      "unit": "apps/presets-api"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-023",
+      "sprint": "A-OAUTH",
+      "unit": "apps/oauth"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-032",
+      "sprint": "A-OAUTH",
+      "unit": "apps/oauth"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-036",
+      "sprint": "A-OAUTH",
+      "unit": "apps/oauth"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-001",
+      "sprint": "A-MODERATION",
+      "unit": "apps/moderation-worker"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-025",
+      "sprint": "A-MODERATION",
+      "unit": "apps/moderation-worker"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-022",
+      "sprint": "A-DISCORD",
+      "unit": "apps/discord-worker"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-024",
+      "sprint": "A-DISCORD",
+      "unit": "apps/discord-worker"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-039",
+      "sprint": "A-DISCORD",
+      "unit": "apps/discord-worker"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-040",
+      "sprint": "A-DISCORD",
+      "unit": "apps/discord-worker"
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-014",
+      "sprint": "A-DISCORD",
+      "unit": "apps/discord-worker"
+    },
+    {
+      "id": "2026-10-26-deep-dive/BUG-009",
+      "sprint": "A-DISCORD",
+      "unit": "apps/discord-worker"
+    },
+    {
+      "id": "2026-10-26-deep-dive/BUG-010",
+      "sprint": "A-DISCORD",
+      "unit": "apps/discord-worker"
+    },
+    {
+      "id": "2026-10-26-deep-dive/BUG-011",
+      "sprint": "A-DISCORD",
+      "unit": "apps/discord-worker"
+    },
+    {
+      "id": "2026-10-26-i18n/HC-002",
+      "sprint": "A-DISCORD",
+      "unit": "apps/discord-worker"
+    },
+    {
+      "id": "2026-10-26-i18n/I18N-001",
+      "sprint": "A-DISCORD",
+      "unit": "apps/discord-worker"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-003",
+      "sprint": "A-WEB",
+      "unit": "apps/web-app"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-006",
+      "sprint": "A-WEB",
+      "unit": "apps/web-app"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-007",
+      "sprint": "A-WEB",
+      "unit": "apps/web-app"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-010",
+      "sprint": "A-WEB",
+      "unit": "apps/web-app"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-011",
+      "sprint": "A-WEB",
+      "unit": "apps/web-app"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-012",
+      "sprint": "A-WEB",
+      "unit": "apps/web-app"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-013",
+      "sprint": "A-WEB",
+      "unit": "apps/web-app"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-026",
+      "sprint": "A-WEB",
+      "unit": "apps/web-app"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-027",
+      "sprint": "A-WEB",
+      "unit": "apps/web-app"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-033",
+      "sprint": "A-WEB",
+      "unit": "apps/web-app"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-034",
+      "sprint": "A-WEB",
+      "unit": "apps/web-app"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-041",
+      "sprint": "A-WEB",
+      "unit": "apps/web-app"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-045",
+      "sprint": "A-WEB",
+      "unit": "apps/web-app"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-048",
+      "sprint": "A-WEB",
+      "unit": "apps/web-app"
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-001",
+      "sprint": "A-WEB",
+      "unit": "apps/web-app"
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-006",
+      "sprint": "A-WEB",
+      "unit": "apps/web-app"
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-007",
+      "sprint": "A-WEB",
+      "unit": "apps/web-app"
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-008",
+      "sprint": "A-WEB",
+      "unit": "apps/web-app"
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-009",
+      "sprint": "A-WEB",
+      "unit": "apps/web-app"
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-010",
+      "sprint": "A-WEB",
+      "unit": "apps/web-app"
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-011",
+      "sprint": "A-WEB",
+      "unit": "apps/web-app"
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-012",
+      "sprint": "A-WEB",
+      "unit": "apps/web-app"
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-013",
+      "sprint": "A-WEB",
+      "unit": "apps/web-app"
+    },
+    {
+      "id": "2026-10-26-deep-dive/BUG-012",
+      "sprint": "A-WEB",
+      "unit": "apps/web-app"
+    },
+    {
+      "id": "2026-10-26-deep-dive/BUG-013",
+      "sprint": "A-WEB",
+      "unit": "apps/web-app"
+    },
+    {
+      "id": "2026-10-26-deep-dive/BUG-014",
+      "sprint": "A-WEB",
+      "unit": "apps/web-app"
+    },
+    {
+      "id": "2026-10-26-deep-dive/BUG-015",
+      "sprint": "A-WEB",
+      "unit": "apps/web-app"
+    },
+    {
+      "id": "2026-10-26-deep-dive/BUG-016",
+      "sprint": "A-WEB",
+      "unit": "apps/web-app"
+    },
+    {
+      "id": "2026-10-26-deep-dive/BUG-017",
+      "sprint": "A-WEB",
+      "unit": "apps/web-app"
+    },
+    {
+      "id": "2026-10-26-deep-dive/BUG-018",
+      "sprint": "A-WEB",
+      "unit": "apps/web-app"
+    },
+    {
+      "id": "2026-10-26-deep-dive/BUG-019",
+      "sprint": "A-WEB",
+      "unit": "apps/web-app"
+    },
+    {
+      "id": "2026-10-26-deep-dive/BUG-020",
+      "sprint": "A-WEB",
+      "unit": "apps/web-app"
+    },
+    {
+      "id": "2026-10-26-deep-dive/BUG-021",
+      "sprint": "A-WEB",
+      "unit": "apps/web-app"
+    },
+    {
+      "id": "2026-10-26-deep-dive/BUG-022",
+      "sprint": "A-WEB",
+      "unit": "apps/web-app"
+    },
+    {
+      "id": "2026-10-26-deep-dive/BUG-023",
+      "sprint": "A-WEB",
+      "unit": "apps/web-app"
+    },
+    {
+      "id": "2026-10-26-i18n/HC-001",
+      "sprint": "A-WEB",
+      "unit": "apps/web-app"
+    },
+    {
+      "id": "2026-10-26-i18n/TERM-001",
+      "sprint": "A-WEB",
+      "unit": "apps/web-app"
+    },
+    {
+      "id": "2026-10-26-i18n/I18N-002",
+      "sprint": "A-OG-COPY",
+      "unit": "apps/og-worker"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-020",
+      "sprint": "A-IMAGE",
+      "unit": "apps/image-worker"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-031",
+      "sprint": "R-CI",
+      "unit": "repository tooling/workflows"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-049",
+      "sprint": "R-CI",
+      "unit": "repository tooling/workflows"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-030",
+      "sprint": "R-DOCS-DECISIONS",
+      "unit": "repository docs/process"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-035",
+      "sprint": "R-DOCS-DECISIONS",
+      "unit": "repository docs/process"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-046",
+      "sprint": "R-DOCS-DECISIONS",
+      "unit": "repository docs/process"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-053",
+      "sprint": "R-DOCS-DECISIONS",
+      "unit": "repository docs/process"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-044",
+      "sprint": "H-LOGGER",
+      "unit": "packages/logger"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-047",
+      "sprint": "H-LOGGER",
+      "unit": "packages/logger"
+    },
+    {
+      "id": "2026-10-26-security/FINDING-042",
+      "sprint": "H-AUTH",
+      "unit": "packages/auth"
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-024",
+      "sprint": "M-CORE",
+      "unit": "packages/core"
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-023",
+      "sprint": "M-BOT-LOGIC",
+      "unit": "packages/bot-logic"
+    },
+    {
+      "id": "2026-10-26-i18n/FONT-001",
+      "sprint": "F-OG",
+      "unit": "apps/og-worker"
+    }
+  ],
+  "keep": [
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-025",
+      "reason": "Preserve the existing KEEP verdict and revisit trigger."
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-026",
+      "reason": "Preserve the existing KEEP verdict and revisit trigger."
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-027",
+      "reason": "Preserve the existing KEEP verdict and revisit trigger."
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-028",
+      "reason": "Preserve the existing KEEP verdict and revisit trigger."
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-029",
+      "reason": "Preserve the existing KEEP verdict and revisit trigger."
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-030",
+      "reason": "Preserve the existing KEEP verdict and revisit trigger."
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-031",
+      "reason": "Preserve the existing KEEP verdict and revisit trigger."
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-032",
+      "reason": "Preserve the existing KEEP verdict and revisit trigger."
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-033",
+      "reason": "Preserve the existing KEEP verdict and revisit trigger."
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-034",
+      "reason": "Preserve the existing KEEP verdict and revisit trigger."
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-035",
+      "reason": "Preserve the existing KEEP verdict and revisit trigger."
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-036",
+      "reason": "Preserve the existing KEEP verdict and revisit trigger."
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-037",
+      "reason": "Preserve the existing KEEP verdict and revisit trigger."
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-038",
+      "reason": "Preserve the existing KEEP verdict and revisit trigger."
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-039",
+      "reason": "Preserve the existing KEEP verdict and revisit trigger."
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-040",
+      "reason": "Preserve the existing KEEP verdict and revisit trigger."
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-041",
+      "reason": "Preserve the existing KEEP verdict and revisit trigger."
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-042",
+      "reason": "Preserve the existing KEEP verdict and revisit trigger."
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-043",
+      "reason": "Preserve the existing KEEP verdict and revisit trigger."
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-044",
+      "reason": "Preserve the existing KEEP verdict and revisit trigger."
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-045",
+      "reason": "Preserve the existing KEEP verdict and revisit trigger."
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-046",
+      "reason": "Preserve the existing KEEP verdict and revisit trigger."
+    },
+    {
+      "id": "2026-10-26-xivcharakit-dead-code/DEAD-047",
+      "reason": "Preserve the existing KEEP verdict and revisit trigger."
+    }
+  ],
+  "superseded": [
+    {
+      "id": "2026-10-26-security/FINDING-043",
+      "by": "2026-10-26-xivcharakit-dead-code/DEAD-023",
+      "reason": "Approved result-field removal wins over the narrower field hardening; restore the security task if that approved major path is reversed."
+    },
+    {
+      "id": "2026-10-26-deep-dive/OPT-001",
+      "by": "2026-10-26-security/FINDING-024",
+      "reason": "Scheduling deduplication only: the same capped batch lookup/caller change has one implementation. Retain request-count and failure-semantic acceptance checks."
+    }
+  ]
+}

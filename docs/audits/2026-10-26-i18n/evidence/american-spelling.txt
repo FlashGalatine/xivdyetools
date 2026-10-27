@@ -1,0 +1,8 @@
+| location | zone | found | suggested | note |
+|---|---|---|---|---|
+| packages/core/src/data/locales/en.json:facewearColors.grey:262 | ui-text | Grey | Gray | glossary? |
+
+Files swept: 5 · candidates: 1 in 1 files
+Suppressed zones (code/link, --all shows them): 0 · dictionary: 1905 entries
+Most frequent: grey→gray 1
+Candidates, not findings — confirm each against ../american-english.md before filing.
