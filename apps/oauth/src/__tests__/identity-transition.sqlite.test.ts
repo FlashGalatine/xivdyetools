@@ -9,8 +9,10 @@ import {
 import { cleanupIdentityOperations } from '../services/identity-transition-service.js';
 import { lookupStoredIdentity, validateSession } from '../services/identity-service.js';
 import type { UserRow } from '../types.js';
-import { readFileSync, unlinkSync } from 'node:fs';
-import { URL, fileURLToPath } from 'node:url';
+import { mkdtempSync, readFileSync, rmdirSync, unlinkSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { URL } from 'node:url';
 
 const U = '10000000-0000-4000-8000-000000000001';
 const X = '20000000-0000-4000-8000-000000000001';
@@ -271,7 +273,9 @@ describe('identity transitions with real transactional SQLite', () => {
     });
   });
   it('recovers a pending operation after closing and reopening the actual SQLite database', async()=>{
-    const filename=fileURLToPath(new URL(`../../../../.superpowers/sdd/REMEDIATION_PLAN/task-3-restart-${crypto.randomUUID()}.sqlite`,import.meta.url));
+    // A clean checkout has no ignored scratch directories; this fixture owns its storage.
+    const directory = mkdtempSync(join(tmpdir(), 'xivdyetools-oauth-restart-'));
+    const filename = join(directory, 'identity.sqlite');
     let disk=createSQLiteD1(undefined,undefined,{filename});
     const remote=remoteFixture();remote.control.loseApply=true;
     const config={IDENTITY_SPLIT_ENABLED:'true',BAN_CONTINUITY:remote.remote};
@@ -284,7 +288,7 @@ describe('identity transitions with real transactional SQLite', () => {
       expect(await findOrCreateUser(disk.db,params(),undefined,config)).toMatchObject({discord_id:null,xivauth_id:X});
       expect(disk.sqlite.prepare('SELECT * FROM identity_operations').get()).toMatchObject({id:prior.id,payload_hash:prior.payload_hash,payload_json:prior.payload_json,state:'complete'});
       expect(remote.calls).toHaveLength(1);
-    } finally {disk.close();unlinkSync(filename);}
+    } finally {disk.close();unlinkSync(filename);rmdirSync(directory);}
   });
 
   it('prepare CAS loss rolls back operation, locks and revision changes', async () => {
