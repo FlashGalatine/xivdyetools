@@ -2,7 +2,7 @@
 
 **State:** all 14 security rows implemented for web **5.16.4 PATCH** on isolated branch
 `codex/sprint9-web-security-20261028`, based on `cf22202d` (A-DISCORD companion draft #346).
-Final web-scoped verification passes; source publication and CI receipts are pending. Local whole-graph
+Source `a6e1e3c59334e6e2b61b84f6bc02f1aee46f3abf` is published in [draft PR #347](https://github.com/FlashGalatine/xivdyetools/pull/347). Final web-scoped verification, affected CI and automatic web beta pass. Local whole-graph
 validation is outstanding because of the Windows runner failures recorded below. This completes the
 selected implementation scope; all nonsecurity A-WEB rows remain deferred. Findings remain
 OPEN until production acceptance. No production release is selected.
@@ -84,7 +84,7 @@ and the added privacy-test file's ESLint checks also exit 0. The full suite expo
 assertions requiring the old imported names; an independent TEST WRONG verdict led to updating
 only the Swatch expectations and generic-label cap fixture. All original logging canaries and
 Glamour naming cases remain, with additional saved-name exclusions; scoped re-review passes.
-Actual affected Linux CI and Playwright receipts will be recorded after publication.
+Actual affected Linux CI and Playwright receipts are recorded below; they do not establish a whole-graph pass.
 The earlier partial-scope **4,480/144** web gate precedes approved naming/CSP additions and is
 not relabeled as final. The early baseline collector's lost exit/concurrent coverage-lock attempt
 was superseded by the captured successful partial gate; neither erases the graph failures above.
@@ -104,7 +104,29 @@ removal. After production deployment, verify actual served headers, new generic 
 records retained, local deletion boundaries and authenticated vote-state behavior. Preserve
 existing saved data; do not mutate production accounts just to collect evidence.
 
-A non-main source push selects the repository's automatic web beta workflow. Actual source CI,
-beta and smoke-test receipts will be recorded after that run; no workflow dispatch/rerun is
-selected. No manual deploy, package publish, main merge or command registration is selected.
+The non-main source push selected the repository's automatic web beta workflow. Source CI,
+beta and smoke-test receipts are recorded below; no workflow was dispatched or rerun. No manual deploy, package publish, main merge or command registration is selected.
 Private XIVAuth material remains outside Git and outside this worktree's scope.
+
+## Published source receipts
+
+Source `a6e1e3c` is in draft [#347](https://github.com/FlashGalatine/xivdyetools/pull/347),
+stacked on unchanged #346 / `cf22202d`.
+[CI 40637868381](https://github.com/FlashGalatine/xivdyetools/actions/runs/40637868381) passes all
+four jobs: affected lint/types/tests/build, production-dependency audit, secret scan and
+Playwright Chromium. Actual E2E log: **167 passed /0 failed** in **5.5 minutes**.
+[Automatic web beta 40637850053](https://github.com/FlashGalatine/xivdyetools/actions/runs/40637850053)
+passes both jobs, including beta branding/bundle checks, deployment and smoke verification.
+The smoke test verifies that the custom beta domain serves the deployed body (SHA-256 prefix
+`01fd593a4baf`), robots/security headers and the reader license notice. No Discord beta was
+selected. Fully redacted staged and stacked-history secret scans pass.
+
+A separate read-only HEAD of `https://beta.xivdyetools.app/` at **2026-10-28 05:28:45 UTC**
+returns 200, `noindex, nofollow`, exactly the new self/api/auth/data connection sources and the
+original image origins. This verifies the beta CSP, not production. No presets/accounts are
+created or changed for this verification. This receipt update changes audit documents only;
+application source, versions, headers and flags remain exactly the reviewed source commit.
+
+Security implementation preparation is complete for this selected subset. All nonsecurity
+A-WEB rows remain deferred, and whole-graph testing/publication/production acceptance remain
+outstanding release gates. These source receipts do not waive them.

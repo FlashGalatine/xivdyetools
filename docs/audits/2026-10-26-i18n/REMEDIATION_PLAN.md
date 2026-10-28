@@ -438,7 +438,7 @@ flags; production publication orchestration, provider/consumer verification and 
 
 ## Sprint A-WEB — apps/web-app
 
-**Security-only implementation 2026-10-28 — PREPARED:** all 14 security rows are implemented in web **5.16.4 PATCH**, including the three approved choices. Independent reviews and **4,483 web tests** pass. All nonsecurity A-WEB rows remain deferred. [Evidence and Windows whole-graph limitation](../2026-10-26-security/evidence/remediation-web-security-2026-10-28.md). Affected CI and production acceptance remain release gates; no production release is selected.
+**Security-only preparation — COMPLETE 2026-10-28 (`a6e1e3c`, [draft #347](https://github.com/FlashGalatine/xivdyetools/pull/347)):** all 14 selected security rows are implemented in web **5.16.4 PATCH**, including the three approved choices. Independent reviews, **4,483 web tests**, affected CI, **167 Playwright tests** and automatic web beta pass. All nonsecurity A-WEB rows remain deferred. [Evidence and Windows whole-graph limitation](../2026-10-26-security/evidence/remediation-web-security-2026-10-28.md). Whole-graph verification, prerequisite publication and production acceptance remain release gates; no production release is selected.
 
 After required package publishes. Also apply the code-point-safe file-name cap paired with core labels. Keep persisted settings, result rendering, async modal ownership and cache generations consistent. All policy edits are six-file owner changes, behind unresolved decisions where listed.
 
