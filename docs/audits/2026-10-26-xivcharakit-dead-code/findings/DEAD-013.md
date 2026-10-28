@@ -16,4 +16,4 @@
 - Cascade: Removing the dye-selector row requires removing EMITTED line 54 in bundle-budget.test.ts in the same change. The vite.config manualChunks returns, the CLAUDE.md bullets and components.md:192 go with the rows. Nothing else depends on them: no workflow, script or test references the labels.
 
 ## Status
-OPEN
+OPEN — inert spectral/dye-selector cleanup prepared in web 5.16.4; generic vendor assignment and its 30 KB guard intentionally KEPT/reclassified at recheck. All current emitted bytes and budget assignments are preserved; production acceptance pending. [A-WEB evidence](../../2026-10-26-deep-dive/evidence/remediation-web-2026-10-28.md).

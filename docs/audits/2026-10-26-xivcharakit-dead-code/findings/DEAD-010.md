@@ -17,4 +17,4 @@
 - Cascade: Interface narrowing breaks typed test fixtures (excess property) and two assertions (test.ts:122 reads .version; :179 toEqual expects version: null). The e2e route.fulfill payloads and the envelope() mocks are API-shaped and can keep version. No production cascade.
 
 ## Status
-OPEN
+OPEN — remaining A-WEB implementation and regression proof prepared in web 5.16.4 (draft #347); production acceptance pending. [A-WEB evidence](../../2026-10-26-deep-dive/evidence/remediation-web-2026-10-28.md).

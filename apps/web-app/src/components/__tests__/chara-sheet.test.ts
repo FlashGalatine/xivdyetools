@@ -85,6 +85,21 @@ afterEach(() => {
 });
 
 describe('CharaSheet — THIS CHARACTER', () => {
+  it('includes an itemID-zero dye in the nearest dye shown on a slot', () => {
+    const existing = dyeService.getAllDyes()[0];
+    vi.spyOn(dyeService, 'getAllDyes').mockReturnValue([
+      { ...existing, itemID: 0, name: 'Nearest zero-item dye' },
+    ]);
+    CharaSessionService.setSession({
+      fileName: 'test.chara',
+      resolved: makeImportedCharacter({
+        slots: [makeImportedSlot({ slot: 'leftEye', displayHex: '#123456', matchHex: '#123456' })],
+      }),
+    });
+    const { container } = mountSheet();
+    expect(container.textContent).toContain('Nearest zero-item dye');
+  });
+
   it('stays empty until a file is loaded, then draws one card per slot', async () => {
     const { container } = mountSheet();
     expect(container.childElementCount).toBe(0);

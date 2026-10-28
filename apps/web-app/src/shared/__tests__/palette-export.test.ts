@@ -42,6 +42,115 @@ const PAYLOAD: ExportPayload = {
 };
 
 describe('generateExport', () => {
+  // Catch lost metric identity and rounding that turns a real OKLAB match into zero.
+  it.each(['css', 'scss', 'tailwind'] as const)(
+    'preserves small OKLAB distances with their units in %s',
+    (format) => {
+      const out = generateExport(
+        {
+          ...PAYLOAD,
+          matchingMethod: 'oklab',
+          entries: [
+            { key: 'a', delta: 0.024 },
+            { key: 'b', delta: 0.004 },
+          ],
+        },
+        format
+      );
+      expect(out).toContain(format === 'scss' ? '// a — ΔEOK2 0.024\n' : '/* a — ΔEOK2 0.024 */');
+      expect(out).toContain(format === 'scss' ? '// b — ΔEOK2 0.004\n' : '/* b — ΔEOK2 0.004 */');
+      expect(out).not.toContain('ΔE 0.0');
+    }
+  );
+
+  it.each([
+    ['ciede2000', 'ΔE2000 12.3', 12.35],
+    ['cie76', 'ΔE76 12.3', 12.35],
+    ['redmean', 'REDMEAN 12.3', 12.35],
+    ['rgb', 'RGB DIST 12.3', 12.35],
+    ['distinguish', 'DISTINGUISH % 12', 12.35],
+  ] as const)(
+    'identifies %s with native display precision and compatible JSON precision',
+    (matchingMethod, note, deltaE) => {
+      const payload = { ...PAYLOAD, matchingMethod, entries: [{ key: 'a', delta: 12.346 }] };
+      for (const format of ['css', 'scss', 'tailwind'] as const) {
+        expect(generateExport(payload, format)).toContain(
+          format === 'scss' ? `// a — ${note}\n` : `/* a — ${note} */`
+        );
+      }
+      expect(JSON.parse(generateExport(payload, 'json'))).toMatchObject({
+        matchingMethod,
+        entries: [{ key: 'a', deltaE }],
+      });
+    }
+  );
+
+  it('adds normalized JSON method identity and retains nonzero OKLAB values', () => {
+    const out = JSON.parse(
+      generateExport(
+        {
+          ...PAYLOAD,
+          matchingMethod: 'oklab',
+          entries: [
+            { key: 'a', delta: 0.024 },
+            { key: 'b', delta: 0.004 },
+          ],
+        },
+        'json'
+      )
+    );
+    expect(out.matchingMethod).toBe('oklab');
+    expect(out.entries).toEqual([
+      { key: 'a', deltaE: 0.024 },
+      { key: 'b', deltaE: 0.004 },
+    ]);
+  });
+
+  it('defaults legacy payloads to CIEDE2000 and preserves the deltaE JSON field and two decimals', () => {
+    expect(
+      JSON.parse(
+        generateExport(
+          {
+            ...PAYLOAD,
+            entries: [{ key: 'a', delta: 3.426 }],
+          },
+          'json'
+        )
+      )
+    ).toMatchObject({
+      matchingMethod: 'ciede2000',
+      entries: [{ key: 'a', deltaE: 3.43 }],
+    });
+    expect(
+      JSON.parse(
+        generateExport(
+          {
+            ...PAYLOAD,
+            matchingMethod: 'hyab' as never,
+          },
+          'json'
+        )
+      ).matchingMethod
+    ).toBe('ciede2000');
+  });
+
+  it.each([
+    ['hyab', 'ciede2000', 'ΔE2000 12.3'],
+    ['euclidean', 'rgb', 'RGB DIST 12.3'],
+    ['unknown-method', 'ciede2000', 'ΔE2000 12.3'],
+  ] as const)(
+    'normalizes persisted %s method identity consistently',
+    (legacy, normalized, note) => {
+      const payload = {
+        ...PAYLOAD,
+        matchingMethod: legacy as never,
+        entries: [{ key: 'a', delta: 12.346 }],
+      };
+      expect(generateExport(payload, 'css')).toContain(note);
+      expect(JSON.parse(generateExport(payload, 'json')).matchingMethod).toBe(normalized);
+    }
+  );
+
   it('emits both the source and the dye for a matched entry (CSS)', () => {
     const css = generateExport(PAYLOAD, 'css');
     expect(css).toContain('--pick-1-source: #A32D35;');
@@ -50,7 +159,7 @@ describe('generateExport', () => {
 
   it('annotates entries with dye name, stainID and drift', () => {
     const css = generateExport(PAYLOAD, 'css');
-    expect(css).toContain('/* pick-1 — Rolanberry Red · stainID 27 · ΔE 3.4 */');
+    expect(css).toContain('/* pick-1 — Rolanberry Red · stainID 27 · ΔE2000 3.4 */');
   });
 
   it('omits the half that does not exist', () => {
@@ -145,9 +254,11 @@ describe('generateExport', () => {
     // pure and service-free.
     const localized: ExportPayload = { ...PAYLOAD, nameOf: (dye) => `ja-${dye.stainID}` };
     expect(generateExport(localized, 'css')).toContain(
-      '/* pick-1 — ja-27 · stainID 27 · ΔE 3.4 */'
+      '/* pick-1 — ja-27 · stainID 27 · ΔE2000 3.4 */'
     );
-    expect(generateExport(localized, 'scss')).toContain('// pick-1 — ja-27 · stainID 27 · ΔE 3.4');
+    expect(generateExport(localized, 'scss')).toContain(
+      '// pick-1 — ja-27 · stainID 27 · ΔE2000 3.4'
+    );
     expect(generateExport(localized, 'tailwind')).toContain('ja-27 · stainID 27');
     expect(generateExport(localized, 'css')).not.toContain('Rolanberry Red');
   });

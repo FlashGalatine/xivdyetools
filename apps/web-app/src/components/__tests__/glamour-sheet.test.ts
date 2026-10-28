@@ -60,7 +60,6 @@ function source(picked: Partial<Record<string, number>> = {}): GlamourListSource
         Legs: item(6000, 'Viera Gaskins'),
       },
       glasses: null,
-      version: 'test',
     },
     picked: {
       HeadGear: {
@@ -503,7 +502,7 @@ describe('glamour list omissions', () => {
         glassesId: null,
         gender,
       } as unknown as ResolvedCharaCharacter,
-      equipment: equipment ? { items, glasses: null, version: 'test' } : null,
+      equipment: equipment ? { items, glasses: null } : null,
     }) as GlamourListSource;
   const everyRendering = (source: GlamourListSource) => {
     const input = glamourMarkdownInput(source);

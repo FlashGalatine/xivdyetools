@@ -16,4 +16,4 @@
 - Cascade: None. Comments, a test comment and the app CLAUDE.md only. No symbol, import or locale key changes.
 
 ## Status
-OPEN
+OPEN — remaining A-WEB implementation and regression proof prepared in web 5.16.4 (draft #347); production acceptance pending. [A-WEB evidence](../../2026-10-26-deep-dive/evidence/remediation-web-2026-10-28.md).

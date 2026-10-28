@@ -261,6 +261,8 @@ vi.mock('../collapsible-panel', () => ({
   },
 }));
 
+vi.mock('@components/export-sheet', () => ({ openExportSheet: vi.fn() }));
+
 vi.mock('../market-board', () => ({
   /**
    * Mirrors the real MarketBoard component's public surface. Every board a
@@ -564,6 +566,22 @@ describe('MixerTool', () => {
 
   const dye = (id: number, name = `Dye ${id}`) =>
     ({ ...mockDyes[0], id, itemID: 5000 + id, name, hex: '#336699' }) as never;
+
+  it('exports the selected OKLAB method from the actual export action (BUG-013)', async () => {
+    const { openExportSheet } = await import('@components/export-sheet');
+    tool = mount();
+    tool.setConfig({ matchingMethod: 'oklab' });
+    tool.selectDye(dye(1));
+    tool.selectDye(dye(2));
+    const button = rightPanel.querySelector<HTMLButtonElement>('[data-testid="mixer-export"]')!;
+    expect(button.disabled).toBe(false);
+    button.click();
+    expect(vi.mocked(openExportSheet).mock.calls.at(-1)?.[0]).toMatchObject({
+      tool: 'mixer',
+      matchingMethod: 'oklab',
+      entries: expect.any(Array),
+    });
+  });
 
   describe('selectDye — the two input slots', () => {
     it('fills the first slot', async () => {

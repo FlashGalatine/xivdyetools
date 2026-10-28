@@ -16,4 +16,4 @@
 - Cascade: None. No other file reads swatch-tool's private constants. The same MONO duplicates exist in budget-tool.ts:151 (module-level) and mixer-tool.ts:1265 (function-local) and are out of scope here.
 
 ## Status
-OPEN
+OPEN — remaining A-WEB implementation and regression proof prepared in web 5.16.4 (draft #347); production acceptance pending. [A-WEB evidence](../../2026-10-26-deep-dive/evidence/remediation-web-2026-10-28.md).

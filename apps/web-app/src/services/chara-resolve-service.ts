@@ -1,6 +1,6 @@
 /**
  * Equipment identity for a loaded `.chara` — the client side of api-worker's
- * `POST /v1/chara/resolve` (Swatch Matcher 11a/11c "Dyes on this glamour").
+ * `POST /v1/chara/resolve`, used by the Glamour Reader and item-links menu.
  *
  * The request carries the file's model keys — twelve small integers plus the
  * facewear row — and nothing else (no name, no appearance, never the
@@ -86,15 +86,11 @@ export interface CharaResolveResult {
    */
   items: Partial<Record<CharaGearSlotId, CharaResolvedItem | null>>;
   glasses: CharaResolvedGlasses | null;
-  version: string | null;
 }
 
 /** api-worker is down, rate-limited, re-indexing after a patch, or unreachable. */
 export class CharaResolveUnavailableError extends Error {
-  constructor(
-    message: string,
-    public readonly status?: number
-  ) {
+  constructor(message: string) {
     super(message);
     this.name = 'CharaResolveUnavailableError';
   }
@@ -305,7 +301,7 @@ export async function resolveCharaEquipment(
   }
   const glasses = glassesId !== null && inLane(glassesId, 1) ? glassesId : null;
   if (sendable.length === 0 && glasses === null) {
-    return { items: outOfRange, glasses: null, version: null };
+    return { items: outOfRange, glasses: null };
   }
 
   const body: { gear: readonly CharaGearModel[]; glasses?: number } = { gear: sendable };
@@ -331,10 +327,7 @@ export async function resolveCharaEquipment(
 
   if (!response.ok) {
     logger.warn(`[CharaResolve] api-worker answered ${response.status}`);
-    throw new CharaResolveUnavailableError(
-      `api-worker answered ${response.status}`,
-      response.status
-    );
+    throw new CharaResolveUnavailableError(`api-worker answered ${response.status}`);
   }
 
   let envelope: unknown;
@@ -362,7 +355,6 @@ export async function resolveCharaEquipment(
   const result: CharaResolveResult = {
     items,
     glasses: glasses === null ? null : readGlasses(envelope.data.glasses),
-    version: envelope.data.version ?? null,
   };
   sessionCache.set(signature, result);
   return result;

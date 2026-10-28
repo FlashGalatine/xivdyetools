@@ -124,7 +124,8 @@ const BUNDLE_LIMITS = [
   // is correctly absent from first paint. Verified in a browser.
   { label: 'swatch reference data', pattern: /^vendor-core-/, limit: 950 * KB },
   { label: 'lit framework', pattern: /^vendor-lit-/, limit: 20 * KB },
-  { label: 'spectral.js', pattern: /^vendor-spectral-/, limit: 15 * KB },
+  // Keep the 30 KB guard for future non-core/lit dependency chunks, even
+  // though the current build emits only vendor-core and vendor-lit.
   { label: 'other vendor', pattern: /^vendor-(?!core|lit|spectral)/, limit: 30 * KB },
 
   // Tool chunks, lazy-loaded per route
@@ -155,7 +156,6 @@ const BUNDLE_LIMITS = [
   { label: 'chara inspection worker', pattern: /^chara-inspection\.worker-/, limit: 35 * KB },
 
   // Shared components
-  { label: 'dye selector', pattern: /^dye-selector-/, limit: 50 * KB },
   { label: 'result card', pattern: /^result-card-/, limit: 50 * KB },
 
   // On-demand data: the parsed CHANGELOG-laymans.md, fetched when What's New

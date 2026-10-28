@@ -4,6 +4,22 @@
 
 ## Web-App Version 5.16.4 — October 28, 2026
 
+### Color tools
+- Changing language keeps Swatch matches and sharing ready to use.
+- Saved display settings apply to the first Accessibility and Comparison results. Harmony settings stay synchronized with the sidebar.
+- Newly selected Comparison dyes and changed Gradient steps load their prices when prices are enabled.
+- Choose a Gradient Start before choosing its End.
+- Exported match distances identify the selected algorithm and keep its useful precision, including small OKLAB differences.
+
+### Presets and character files
+- Preset vote checks stay fresh after voting or changing accounts. Edited presets refresh the Mine view, including changes awaiting review.
+- An edit finishing in the background no longer closes a different dialog. Keyboard use of Save and Vote keeps working independently of opening preset details.
+- Replacing or clearing a character closes its export sheet and prevents an older sheet from opening afterward.
+- Long file names keep complete emoji within the existing length limit.
+
+### Language
+- Startup error details now use your supported browser language even when language initialization fails. Five Korean Hue descriptions use the established terminology.
+
 ### Saving character colors
 - New character-color saves in the Swatch Matcher use a generic name in your current language. Older saves keep their existing names.
 

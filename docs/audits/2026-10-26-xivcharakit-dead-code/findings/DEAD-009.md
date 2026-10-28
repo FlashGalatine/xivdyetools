@@ -15,4 +15,4 @@
 - Cascade: One test assertion goes (test.ts:92). Nothing else reads the field, and neither docs nor CLAUDE.md mention `status`.
 
 ## Status
-OPEN
+OPEN — remaining A-WEB implementation and regression proof prepared in web 5.16.4 (draft #347); production acceptance pending. [A-WEB evidence](../../2026-10-26-deep-dive/evidence/remediation-web-2026-10-28.md).

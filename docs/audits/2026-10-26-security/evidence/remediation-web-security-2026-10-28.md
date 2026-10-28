@@ -5,7 +5,9 @@
 Source `a6e1e3c59334e6e2b61b84f6bc02f1aee46f3abf` is published in [draft PR #347](https://github.com/FlashGalatine/xivdyetools/pull/347). Final web-scoped verification, affected CI and automatic web beta pass. The Windows loader
 follow-up now passes the fresh full graph: **17,410 tests /603 files /17 workspaces**;
 [diagnosis and final proof](remediation-windows-loader-2026-10-28.md) preserve the initial failures. This completes the
-selected implementation scope; all nonsecurity A-WEB rows remain deferred. Findings remain
+initial security-only implementation scope. The maintainer subsequently reopened the nonsecurity
+rows; [combined A-WEB preparation](../../2026-10-26-deep-dive/evidence/remediation-web-2026-10-28.md)
+records that work and the later full-repository verification. Findings remain
 OPEN until production acceptance. No production release is selected.
 
 ## Scope and maintainer decisions
@@ -142,5 +144,6 @@ created or changed for this verification. This receipt update changes audit docu
 application source, versions, headers and flags remain exactly the reviewed source commit.
 
 Security implementation preparation is complete for this selected subset. All nonsecurity
-A-WEB rows remain deferred. Whole-graph testing now passes; prerequisite publication and
+A-WEB rows were deferred at this receipt stage and are subsequently prepared in the combined
+A-WEB evidence linked above. Whole-graph testing passes; prerequisite publication and
 production acceptance remain outstanding release gates. These source receipts do not waive them.

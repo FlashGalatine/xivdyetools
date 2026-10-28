@@ -15,4 +15,4 @@
 - Apply the established 색상 house term to these five Hue uses, retaining the surrounding Korean wording. This is an existing project terminology decision, not a new translation or a guessed game-client term.
 
 ## Status
-OPEN — audit only; no implementation change.
+OPEN — remaining A-WEB implementation and regression proof prepared in web 5.16.4 (draft #347); production acceptance pending. [A-WEB evidence](../../2026-10-26-deep-dive/evidence/remediation-web-2026-10-28.md).

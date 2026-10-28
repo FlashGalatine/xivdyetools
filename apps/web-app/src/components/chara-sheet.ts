@@ -160,7 +160,6 @@ function gridRefOf(slot: ImportedCharaSlot): CharaSlotGridRef | null {
 function bestDye(hex: string): { dye: Dye; deltaE: number } | null {
   let best: { dye: Dye; deltaE: number } | null = null;
   for (const dye of dyeService.getAllDyes()) {
-    if (dye.itemID <= 0) continue;
     const deltaE = ColorService.getDistanceForMethod(hex, dye.hex, 'ciede2000');
     if (!best || deltaE < best.deltaE) best = { dye, deltaE };
   }

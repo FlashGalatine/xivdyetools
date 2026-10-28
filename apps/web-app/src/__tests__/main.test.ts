@@ -24,12 +24,13 @@ const mocks = vi.hoisted(() => ({
   initializeTutorialSpotlight: vi.fn(),
   offlineBannerInitialize: vi.fn(),
   markTutorialsUnavailable: vi.fn(),
+  initializeLanguage: vi.fn(async () => {}),
 }));
 
 vi.mock('@services/index', () => ({
   initializeServices: mocks.initializeServices,
   getServicesStatus: mocks.getServicesStatus,
-  LanguageService: { initialize: vi.fn(async () => {}) },
+  LanguageService: { initialize: mocks.initializeLanguage },
   StorageService: { removeItem: vi.fn() },
   TutorialService: { markUnavailable: mocks.markTutorialsUnavailable },
 }));
@@ -131,6 +132,129 @@ describe('main.ts boot (OPT-001)', () => {
     await boot();
 
     await vi.waitFor(() => expect(logger.warn).toHaveBeenCalledWith(expect.any(String), failure));
+  });
+});
+
+describe('fatal startup localization (HC-001)', () => {
+  const cases = [
+    [
+      'en-US',
+      'Application Error',
+      'Failed to initialize XIV Dye Tools',
+      'An unexpected error occurred',
+      'Reload Page',
+    ],
+    [
+      'de-DE',
+      'Anwendungsfehler',
+      'XIV Dye Tools konnte nicht initialisiert werden',
+      'Ein unerwarteter Fehler ist aufgetreten',
+      'Seite neu laden',
+    ],
+    [
+      'fr-FR',
+      "Erreur de l'application",
+      "Échec de l'initialisation de XIV Dye Tools",
+      "Une erreur inattendue s'est produite",
+      'Recharger la page',
+    ],
+    [
+      'ja-JP',
+      'アプリケーションエラー',
+      'XIV Dye Tools の初期化に失敗しました',
+      '予期しないエラーが発生しました',
+      'ページを再読み込み',
+    ],
+    [
+      'ko-KR',
+      '애플리케이션 오류',
+      'XIV Dye Tools 초기화에 실패했습니다',
+      '예기치 않은 오류가 발생했습니다',
+      '페이지 새로고침',
+    ],
+    ['zh-CN', '应用程序错误', 'XIV Dye Tools 初始化失败', '发生意外错误', '重新加载页面'],
+    [
+      'xx-XX',
+      'Application Error',
+      'Failed to initialize XIV Dye Tools',
+      'An unexpected error occurred',
+      'Reload Page',
+    ],
+    [
+      '',
+      'Application Error',
+      'Failed to initialize XIV Dye Tools',
+      'An unexpected error occurred',
+      'Reload Page',
+    ],
+    [
+      undefined,
+      'Application Error',
+      'Failed to initialize XIV Dye Tools',
+      'An unexpected error occurred',
+      'Reload Page',
+    ],
+  ] as const;
+
+  let app: HTMLElement;
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.getServicesStatus.mockResolvedValue(STATUS);
+    app = document.createElement('div');
+    app.id = 'app';
+    document.body.appendChild(app);
+  });
+  afterEach(() => {
+    app.remove();
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it.each(cases)(
+    'renders all four safe sentences for browser locale %s when language initialization fails',
+    async (locale, title, body, detail, button) => {
+      await boot();
+      const startup = await import('../main');
+      vi.spyOn(navigator, 'language', 'get').mockReturnValue(locale as string);
+      const failure = new Error('<img src=x onerror=alert(1)>private startup detail');
+      mocks.initializeLanguage.mockRejectedValueOnce(failure);
+      const reload = vi.fn();
+      vi.stubGlobal('window', { location: { reload } });
+
+      await expect(startup.initializeApp()).rejects.toBe(failure);
+
+      expect(Array.from(app.querySelectorAll('h1, p, button'), (node) => node.textContent)).toEqual(
+        [title, body, detail, button]
+      );
+      expect(app.textContent).not.toContain(failure.message);
+      expect(app.querySelector('img, script, [onerror], [onclick]')).toBeNull();
+      const { logger } = await import('@shared/logger');
+      expect(logger.error).toHaveBeenCalledWith(
+        '❌ Failed to initialize application:',
+        expect.objectContaining({ message: failure.message })
+      );
+      app.querySelector('button')!.click();
+      expect(reload).toHaveBeenCalledTimes(1);
+    }
+  );
+});
+
+describe('Korean Hue house terminology (TERM-001)', () => {
+  it('uses 색상 while preserving the five surrounding descriptions', async () => {
+    const { default: ko } = await import('../locales/ko.json');
+    expect([
+      ko.config.hueMatchingDesc,
+      ko.config.colorSpaceHsvDesc,
+      ko.config.colorSpaceLchDesc,
+      ko.harmony.types.monochromaticDesc,
+      ko.gradient.mode.hsv,
+    ]).toEqual([
+      '예술적인 색상 조화를 위해 색상 각도 사용',
+      '색상환을 따름. 선명한 전환, 색상이 변할 수 있음.',
+      '원통형 LAB. 지각적 밝기로 좋은 색상 보존.',
+      '단일 색상의 변형으로 섬세하고 응집력 있는 룩',
+      '색상 기반 (선명함)',
+    ]);
   });
 });
 

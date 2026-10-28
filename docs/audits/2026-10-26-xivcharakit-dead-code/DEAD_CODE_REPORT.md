@@ -158,19 +158,19 @@ Source / configuration audit; read-only. No build, bundle measurement or workerd
 
 | ID | Status | Commit |
 |---|---|---|
-| DEAD-001 | OPEN | — |
+| DEAD-001 | OPEN — A-WEB source prepared in 5.16.4; production acceptance pending | [A-WEB evidence](../2026-10-26-deep-dive/evidence/remediation-web-2026-10-28.md) |
 | DEAD-002 | OPEN — source prepared; release pending | [A-CORE evidence](evidence/remediation-core-2026-10-27.md) |
 | DEAD-003 | OPEN — source prepared; release pending | [A-CORE evidence](evidence/remediation-core-2026-10-27.md) |
-| DEAD-004 | OPEN — API docs prepared; release and A-WEB comment cascade pending | [API evidence](../2026-10-26-security/evidence/remediation-api-2026-10-27.md) |
+| DEAD-004 | OPEN — API documentation and A-WEB comment cascade prepared; production acceptance pending | [API evidence](../2026-10-26-security/evidence/remediation-api-2026-10-27.md); [A-WEB evidence](../2026-10-26-deep-dive/evidence/remediation-web-2026-10-28.md) |
 | DEAD-005 | OPEN — source prepared; release pending | [A-BOT-LOGIC evidence](../2026-10-26-security/evidence/remediation-bot-logic-2026-10-27.md) |
-| DEAD-006 | OPEN | — |
-| DEAD-007 | OPEN | — |
-| DEAD-008 | OPEN | — |
-| DEAD-009 | OPEN | — |
-| DEAD-010 | OPEN | — |
-| DEAD-011 | OPEN | — |
-| DEAD-012 | OPEN | — |
-| DEAD-013 | OPEN | — |
+| DEAD-006 | OPEN — A-WEB source prepared in 5.16.4; production acceptance pending | [A-WEB evidence](../2026-10-26-deep-dive/evidence/remediation-web-2026-10-28.md) |
+| DEAD-007 | OPEN — A-WEB source prepared in 5.16.4; production acceptance pending | [A-WEB evidence](../2026-10-26-deep-dive/evidence/remediation-web-2026-10-28.md) |
+| DEAD-008 | OPEN — A-WEB source prepared in 5.16.4; production acceptance pending | [A-WEB evidence](../2026-10-26-deep-dive/evidence/remediation-web-2026-10-28.md) |
+| DEAD-009 | OPEN — A-WEB source prepared in 5.16.4; production acceptance pending | [A-WEB evidence](../2026-10-26-deep-dive/evidence/remediation-web-2026-10-28.md) |
+| DEAD-010 | OPEN — A-WEB source prepared in 5.16.4; production acceptance pending | [A-WEB evidence](../2026-10-26-deep-dive/evidence/remediation-web-2026-10-28.md) |
+| DEAD-011 | OPEN — A-WEB source prepared in 5.16.4; production acceptance pending | [A-WEB evidence](../2026-10-26-deep-dive/evidence/remediation-web-2026-10-28.md) |
+| DEAD-012 | OPEN — A-WEB source prepared in 5.16.4; production acceptance pending | [A-WEB evidence](../2026-10-26-deep-dive/evidence/remediation-web-2026-10-28.md) |
+| DEAD-013 | OPEN — inert rows removed in preparation; dormant 30 KB vendor guard KEPT/reclassified; release pending | [A-WEB evidence](../2026-10-26-deep-dive/evidence/remediation-web-2026-10-28.md) |
 | DEAD-014 | OPEN — app attachment text shape and adapter pass-through removed in prepared source; original-byte guards retained; release pending. | [A-DISCORD evidence](../2026-10-26-security/evidence/remediation-discord-2026-10-27.md) |
 | DEAD-015 | OPEN — source prepared; release pending | [A-BOT-LOGIC evidence](../2026-10-26-security/evidence/remediation-bot-logic-2026-10-27.md) |
 | DEAD-016 | OPEN — source prepared; release pending | [A-BOT-LOGIC evidence](../2026-10-26-security/evidence/remediation-bot-logic-2026-10-27.md) |

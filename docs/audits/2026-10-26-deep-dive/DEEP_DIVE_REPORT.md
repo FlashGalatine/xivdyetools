@@ -107,7 +107,7 @@ These percentages apply to each configured coverage include/exclude set. They do
 |---|---|---|
 | [BUG-001](findings/BUG-001.md) | OPEN — source prepared; release pending | [A-BOT-LOGIC evidence](../2026-10-26-security/evidence/remediation-bot-logic-2026-10-27.md) |
 | [BUG-002](findings/BUG-002.md) | OPEN — source prepared; release pending | [A-BOT-LOGIC evidence](../2026-10-26-security/evidence/remediation-bot-logic-2026-10-27.md) |
-| [BUG-003](findings/BUG-003.md) | OPEN — source prepared; release pending | [A-CORE evidence](../2026-10-26-xivcharakit-dead-code/evidence/remediation-core-2026-10-27.md) |
+| [BUG-003](findings/BUG-003.md) | OPEN — core cap and A-WEB filename companion prepared; core publication and production acceptance pending | [A-CORE evidence](../2026-10-26-xivcharakit-dead-code/evidence/remediation-core-2026-10-27.md); [A-WEB evidence](evidence/remediation-web-2026-10-28.md) |
 | [BUG-004](findings/BUG-004.md) | OPEN — source prepared; release pending | [A-BOT-LOGIC evidence](../2026-10-26-security/evidence/remediation-bot-logic-2026-10-27.md) |
 | [BUG-005](findings/BUG-005.md) | OPEN — source prepared; release pending | [A-PRESETS evidence](../2026-10-26-security/evidence/remediation-presets-2026-10-27.md) |
 | [BUG-006](findings/BUG-006.md) | OPEN — source prepared; release pending | [A-PRESETS evidence](../2026-10-26-security/evidence/remediation-presets-2026-10-27.md) |
@@ -117,18 +117,18 @@ These percentages apply to each configured coverage include/exclude set. They do
 | [OPT-001](findings/OPT-001.md) | OPEN | — |
 | [BUG-010](findings/BUG-010.md) | OPEN — exact batch found/missing classification and visible/traced service failure prepared; release pending. | [A-DISCORD evidence](../2026-10-26-security/evidence/remediation-discord-2026-10-27.md) |
 | [BUG-011](findings/BUG-011.md) | OPEN — checked Glamour delivery, unserved failure and one short fallback prepared; release pending. | [A-DISCORD evidence](../2026-10-26-security/evidence/remediation-discord-2026-10-27.md) |
-| [BUG-012](findings/BUG-012.md) | OPEN | — |
-| [BUG-013](findings/BUG-013.md) | OPEN | — |
-| [BUG-014](findings/BUG-014.md) | OPEN | — |
-| [BUG-015](findings/BUG-015.md) | OPEN | — |
-| [BUG-016](findings/BUG-016.md) | OPEN | — |
-| [BUG-017](findings/BUG-017.md) | OPEN | — |
-| [BUG-018](findings/BUG-018.md) | OPEN | — |
-| [BUG-019](findings/BUG-019.md) | OPEN | — |
-| [BUG-020](findings/BUG-020.md) | OPEN | — |
-| [BUG-021](findings/BUG-021.md) | OPEN | — |
-| [BUG-022](findings/BUG-022.md) | OPEN | — |
-| [BUG-023](findings/BUG-023.md) | OPEN | — |
+| [BUG-012](findings/BUG-012.md) | OPEN — A-WEB source prepared in 5.16.4; production acceptance pending | [A-WEB evidence](evidence/remediation-web-2026-10-28.md) |
+| [BUG-013](findings/BUG-013.md) | OPEN — A-WEB source prepared in 5.16.4; production acceptance pending | [A-WEB evidence](evidence/remediation-web-2026-10-28.md) |
+| [BUG-014](findings/BUG-014.md) | OPEN — A-WEB source prepared in 5.16.4; production acceptance pending | [A-WEB evidence](evidence/remediation-web-2026-10-28.md) |
+| [BUG-015](findings/BUG-015.md) | OPEN — A-WEB source prepared in 5.16.4; production acceptance pending | [A-WEB evidence](evidence/remediation-web-2026-10-28.md) |
+| [BUG-016](findings/BUG-016.md) | OPEN — A-WEB source prepared in 5.16.4; production acceptance pending | [A-WEB evidence](evidence/remediation-web-2026-10-28.md) |
+| [BUG-017](findings/BUG-017.md) | OPEN — A-WEB source prepared in 5.16.4; production acceptance pending | [A-WEB evidence](evidence/remediation-web-2026-10-28.md) |
+| [BUG-018](findings/BUG-018.md) | OPEN — A-WEB source prepared in 5.16.4; production acceptance pending | [A-WEB evidence](evidence/remediation-web-2026-10-28.md) |
+| [BUG-019](findings/BUG-019.md) | OPEN — A-WEB source prepared in 5.16.4; production acceptance pending | [A-WEB evidence](evidence/remediation-web-2026-10-28.md) |
+| [BUG-020](findings/BUG-020.md) | OPEN — A-WEB source prepared in 5.16.4; production acceptance pending | [A-WEB evidence](evidence/remediation-web-2026-10-28.md) |
+| [BUG-021](findings/BUG-021.md) | OPEN — A-WEB source prepared in 5.16.4; production acceptance pending | [A-WEB evidence](evidence/remediation-web-2026-10-28.md) |
+| [BUG-022](findings/BUG-022.md) | OPEN — A-WEB source prepared in 5.16.4; production acceptance pending | [A-WEB evidence](evidence/remediation-web-2026-10-28.md) |
+| [BUG-023](findings/BUG-023.md) | OPEN — A-WEB source prepared in 5.16.4; production acceptance pending | [A-WEB evidence](evidence/remediation-web-2026-10-28.md) |
 
 ## Next steps
 

@@ -65,7 +65,6 @@ describe('chara-resolve-service', () => {
       expect(result).toEqual({
         items: { HeadGear: ITEM, MainHand: null },
         glasses: GLASSES,
-        version: 'v',
       });
       const nodes = (value: unknown): object[] =>
         typeof value === 'object' && value !== null
@@ -97,7 +96,6 @@ describe('chara-resolve-service', () => {
       expect(await resolveCharaEquipment(GEAR, null)).toEqual({
         items: { HeadGear: old, MainHand: { ...old, rules: [] } },
         glasses: null,
-        version: null,
       });
     });
 
@@ -194,7 +192,6 @@ describe('chara-resolve-service', () => {
       expect(result).toEqual({
         items: { HeadGear: ITEM, Body: null },
         glasses: null,
-        version: null,
       });
     });
   });
@@ -220,7 +217,6 @@ describe('chara-resolve-service', () => {
     expect(result).toEqual({
       items: { HeadGear: null, MainHand: null },
       glasses: null,
-      version: 'v',
     });
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
@@ -258,7 +254,7 @@ describe('chara-resolve-service', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(envelope({}, 503)));
     const down = await resolveCharaEquipment(GEAR, null).catch((e: unknown) => e);
     expect(down).toBeInstanceOf(CharaResolveUnavailableError);
-    expect((down as CharaResolveUnavailableError).status).toBe(503);
+    expect((down as Error).message).toBe('api-worker answered 503');
 
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
     await expect(resolveCharaEquipment(GEAR, null)).rejects.toBeInstanceOf(
@@ -288,7 +284,10 @@ describe('chara-resolve-service', () => {
     await expect(resolveCharaEquipment(GEAR, null)).rejects.toBeInstanceOf(
       CharaResolveUnavailableError
     );
-    expect((await resolveCharaEquipment(GEAR, null)).version).toBe('v');
+    expect((await resolveCharaEquipment(GEAR, null)).items).toEqual({
+      HeadGear: null,
+      MainHand: null,
+    });
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
@@ -314,7 +313,6 @@ describe('chara-resolve-service', () => {
           envelope({
             items,
             glasses: body.glasses ? { ...GLASSES, id: body.glasses } : null,
-            version: 'v',
           })
         );
       });
@@ -349,7 +347,7 @@ describe('chara-resolve-service', () => {
       );
 
       expect(fetchMock).not.toHaveBeenCalled();
-      expect(result).toEqual({ items: { Body: null }, glasses: null, version: null });
+      expect(result).toEqual({ items: { Body: null }, glasses: null });
     });
 
     it('still sends an in-range facewear row on its own', async () => {

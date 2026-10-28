@@ -182,6 +182,8 @@ export class CommunityPresetService {
    * no invalidation ran while it was out.
    */
   private cacheGeneration = 0;
+  private authGeneration = 0;
+  private authSession: ReturnType<typeof authService.getState>;
 
   private constructor() {
     // Build-time override only (same as auth-service / preset-submission-
@@ -192,6 +194,24 @@ export class CommunityPresetService {
     // an attacker host. Runtime globals never choose an API origin.
     this.apiUrl = import.meta.env.VITE_PRESETS_API_URL || DEFAULT_API_URL;
     this.cache = new SimpleCache(CACHE_TTL);
+
+    // Vote checks belong to a session. Reading this snapshot does not build
+    // auth headers; tokens are still attached only when a request is sent.
+    this.authSession = authService.getState();
+    authService.subscribe((state) => this.reconcileAuthSession(state));
+  }
+
+  private reconcileAuthSession(state: ReturnType<typeof authService.getState>): void {
+    if (
+      state.isAuthenticated !== this.authSession.isAuthenticated ||
+      state.token !== this.authSession.token ||
+      state.user?.id !== this.authSession.user?.id ||
+      state.provider !== this.authSession.provider
+    ) {
+      this.authGeneration++;
+      this.cache.deleteByPrefix('vote:');
+    }
+    this.authSession = state;
   }
 
   /**
@@ -531,6 +551,10 @@ export class CommunityPresetService {
       return { has_voted: false };
     }
 
+    // Initial storage restoration does not emit an auth notification. Capture
+    // that session before consulting the cache so its later logout is seen.
+    this.reconcileAuthSession(authService.getState());
+
     // Check cache first
     const cacheKey = `vote:${presetId}`;
     const cached = this.cache.get(cacheKey) as VoteCheckResponse | null;
@@ -538,6 +562,8 @@ export class CommunityPresetService {
       return cached;
     }
 
+    const generation = this.cacheGeneration;
+    const authGeneration = this.authGeneration;
     try {
       const response = await this.fetchWithTimeout(
         `${this.apiUrl}/api/v1/votes/${encodeURIComponent(presetId)}/check`,
@@ -555,8 +581,11 @@ export class CommunityPresetService {
 
       const data = (await response.json()) as VoteCheckResponse;
 
-      // Cache the result
-      this.cache.set(cacheKey, data);
+      // A delayed check must not reinsert pre-mutation or another session's
+      // answer after the cache has been invalidated (BUG-014).
+      if (generation === this.cacheGeneration && authGeneration === this.authGeneration) {
+        this.cache.set(cacheKey, data);
+      }
 
       return data;
     } catch (error) {

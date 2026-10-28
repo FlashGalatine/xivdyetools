@@ -33,6 +33,7 @@ import type { EditResult, PresetEditRequest } from '@services/preset-submission-
 // ============================================
 
 interface FormState {
+  modalId: ReturnType<typeof ModalService.show> | null;
   name: string;
   description: string;
   /** Editable since 5.0 — was a locked read-only display */
@@ -120,6 +121,7 @@ export function showPresetEditForm(preset: CommunityPreset, onEdit?: OnEditCallb
 
   // Initialize form state with existing values
   const state: FormState = {
+    modalId: null,
     name: preset.name,
     description: preset.description,
     categories: {
@@ -139,7 +141,7 @@ export function showPresetEditForm(preset: CommunityPreset, onEdit?: OnEditCallb
   const content = createFormContent(preset, state, onEdit);
 
   // Show modal using ModalService
-  ModalService.show({
+  state.modalId = ModalService.show({
     type: 'custom',
     title: LanguageService.t('preset.editTitle'),
     content,
@@ -649,7 +651,7 @@ function createSubmitButton(
   cancelBtn.textContent = LanguageService.t('common.cancel');
 
   cancelBtn.addEventListener('click', () => {
-    ModalService.dismissTop();
+    if (state.modalId) ModalService.dismiss(state.modalId);
   });
 
   cancelBtn.addEventListener('mouseenter', () => {
@@ -864,7 +866,9 @@ function createSubmitButton(
       // Deliberately no `else`: an image-only edit whose image call failed has
       // already shown its warning, and has nothing to report as a success.
 
-      ModalService.dismissTop();
+      if (state.modalId) ModalService.dismiss(state.modalId);
+      // A committed edit still refreshes its caller when the form was closed
+      // during the request; closing it must never dismiss a later modal.
       onEdit?.(result);
     } catch {
       ToastService.error(LanguageService.t('errors.saveChangesFailed'));

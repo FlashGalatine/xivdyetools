@@ -9,6 +9,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [5.16.4] - 2026-10-28
 
+### Fixed
+
+- Restore Swatch match cards and sharing after locale changes without reloading the
+  character or duplicating live subscriptions. Close pending and open Glamour export
+  sheets when the loaded character changes.
+- Apply canonical display options before initial Accessibility and Comparison results;
+  synchronize Harmony type/count changes and pin clearing without duplicate generation.
+- Refresh prices for direct Comparison selections and completed Gradient calculations,
+  including restored endpoints and pin changes. Require Start before arming Gradient End.
+- Fence vote-cache writes across mutations and authentication changes, including silently
+  restored sessions. Refresh authoritative Mine submissions after edits and reject stale
+  responses. Dismiss only the originating edit modal; retain nested button keyboard behavior.
+- Carry matching-method identity through palette exports and use canonical distance tags
+  and display precision. Preserve the JSON `deltaE` field and existing precision while
+  retaining small OKLAB values; use matching precision in Swatch summaries and badges.
+- Localize every fatal startup sentence without requiring LanguageService, correct five
+  Korean Hue terms, and truncate file names without splitting surrogate pairs within the
+  existing 256 UTF-16-unit limit.
+
+### Maintenance
+
+- Remove unreachable character UI/DTO branches, unused result fields and duplicate font
+  constants while preserving response-envelope validation and worker dye-null guards.
+- Retire the English-only error formatter and its unused message table after startup
+  errors move to the standalone localized copy; retain normalization and logging.
+- Remove unused spectral/dye-selector chunk rules and stale documentation. Fresh builds
+  remain byte-identical; retain the generic future-vendor 30 KB guard and all active limits.
+
 ### Security
 
 - Save new Swatch character-color collections under the localized generic name instead of

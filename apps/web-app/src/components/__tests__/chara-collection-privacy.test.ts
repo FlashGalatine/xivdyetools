@@ -186,7 +186,10 @@ const buttonByText = (root: HTMLElement, text: string): HTMLButtonElement => {
 async function mountGlamour(fixture: object, fileName: string): Promise<HTMLElement> {
   const host = createTestContainer('chara-glamour');
   hosts.push(host);
-  block = new GlamourBlock(host, { onSubmitPalette: vi.fn() });
+  const actionsHost = document.createElement('div');
+  const content = document.createElement('div');
+  host.append(actionsHost, content);
+  block = new GlamourBlock(content, { actionsHost, onSubmitPalette: vi.fn() });
   block.init();
   expect(await load(fixture, fileName)).toEqual({ ok: true });
   buttonByText(host, LanguageService.t('swatch.makePalette')).click();

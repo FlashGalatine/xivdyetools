@@ -233,18 +233,14 @@ const GLAMOUR_CSS = `
 
 export interface GlamourBlockCallbacks {
   /** Make-a-palette submit: kept worn dyes + the panel's name draft */
-  onSubmitPalette?: (dyes: Dye[], name?: string) => void;
+  onSubmitPalette: (dyes: Dye[], name?: string) => void;
   /**
    * Where Copy list / Save .md go. The Glamour Reader puts them in its own
-   * header (design 1a); without a host they sit in the block's header.
+   * header (design 1a).
    */
-  actionsHost?: HTMLElement;
+  actionsHost: HTMLElement;
 }
 
-/**
- * DYES ON THIS GLAMOUR for whatever character is loaded; empty when none is,
- * or when the character wears nothing.
- */
 /**
  * Twin picks, by slot, per loaded file: which identical item the list names.
  * They live with the session and never in storage (design 1a), so leaving the
@@ -286,7 +282,7 @@ export class GlamourBlock {
   /** Twin picks, by slot, for the loaded file (`PICKS`). */
   private picks = new Map<CharaGearSlotId, number>();
 
-  constructor(container: HTMLElement, callbacks: GlamourBlockCallbacks = {}) {
+  constructor(container: HTMLElement, callbacks: GlamourBlockCallbacks) {
     this.container = container;
     this.callbacks = callbacks;
     this.glamourView = readGlamourView();
@@ -300,13 +296,14 @@ export class GlamourBlock {
 
   /**
    * Draw into `container` from now on. The host calls this when it re-renders
-   * around the block (a language switch rebuilds the Swatch Matcher's panel),
+   * around the block (a language switch rebuilds the Glamour Reader's panel),
    * so the palette draft, dropped chips and item names survive the redraw.
    */
-  moveTo(container: HTMLElement, actionsHost?: HTMLElement): void {
+  moveTo(container: HTMLElement, actionsHost: HTMLElement): void {
     clearContainer(this.container);
     this.container = container;
-    if (actionsHost) this.callbacks.actionsHost = actionsHost;
+    clearContainer(this.callbacks.actionsHost);
+    this.callbacks.actionsHost = actionsHost;
     this.render();
   }
 
@@ -322,7 +319,7 @@ export class GlamourBlock {
     closeTwinPicker();
     closeGlamourSheetIfLoaded();
     clearContainer(this.container);
-    if (this.callbacks.actionsHost) clearContainer(this.callbacks.actionsHost);
+    clearContainer(this.callbacks.actionsHost);
     this.resolved = null;
     this.fileName = null;
     this.equipment = null;
@@ -335,6 +332,8 @@ export class GlamourBlock {
    * user's, so they carry over.
    */
   private show(session: CharaSession | null): void {
+    // Retire any export tied to the previous session before adopting another file.
+    closeGlamourSheetIfLoaded();
     this.resolved = session?.resolved ?? null;
     this.fileName = session?.fileName ?? null;
     this.droppedStainIds.clear();
@@ -356,7 +355,7 @@ export class GlamourBlock {
     if (!glamour) {
       this.glamourBox = null;
       // No file, no list: the host's Copy list / Save .md go with it.
-      if (this.callbacks.actionsHost) clearContainer(this.callbacks.actionsHost);
+      clearContainer(this.callbacks.actionsHost);
       return;
     }
     const style = document.createElement('style');
@@ -385,7 +384,7 @@ export class GlamourBlock {
     }
     if (resolved.gearModels.length === 0 && resolved.glassesId === null) {
       this.resolveState = 'ready';
-      this.equipment = { items: {}, glasses: null, version: null };
+      this.equipment = { items: {}, glasses: null };
       return;
     }
     const controller = new AbortController();
@@ -565,12 +564,8 @@ export class GlamourBlock {
     headerRight.appendChild(this.renderViewToggle());
     headerRight.appendChild(this.renderShowAllSwitch());
     const actionsHost = this.callbacks.actionsHost;
-    if (actionsHost) {
-      clearContainer(actionsHost);
-      for (const action of this.renderListActions()) actionsHost.appendChild(action);
-    } else {
-      for (const action of this.renderListActions()) headerRight.appendChild(action);
-    }
+    clearContainer(actionsHost);
+    for (const action of this.renderListActions()) actionsHost.appendChild(action);
 
     const paletteBtn = el(
       'button',
@@ -807,7 +802,7 @@ export class GlamourBlock {
     void import('@components/glamour-sheet')
       .then((m) => {
         glamourSheet = m;
-        // Destroyed (or asked again) while the chunk loaded: this open is stale
+        // Destroyed, session replaced/cleared, or asked again while the chunk loaded: stale.
         if (token !== sheetOpenToken) return;
         m.openGlamourSheet(source, focus, opener);
       })
@@ -1771,24 +1766,22 @@ export class GlamourBlock {
     }
     actions.appendChild(saveBtn);
 
-    if (this.callbacks.onSubmitPalette) {
-      const submitBtn = el(
-        'button',
-        `height: 40px; padding: 0 14px; border-radius: 10px; font-family: inherit; font-size: 12.5px; font-weight: 600; background: var(--theme-primary); border: none; color: #fff; ${actionState}`,
-        tSwatch('submitCommunity')
-      );
-      (submitBtn as HTMLButtonElement).type = 'button';
-      (submitBtn as HTMLButtonElement).disabled = !valid;
-      if (valid) {
-        submitBtn.addEventListener('click', () => {
-          this.callbacks.onSubmitPalette?.(
-            kept.map((w) => w.dye),
-            this.communityPaletteName()
-          );
-        });
-      }
-      actions.appendChild(submitBtn);
+    const submitBtn = el(
+      'button',
+      `height: 40px; padding: 0 14px; border-radius: 10px; font-family: inherit; font-size: 12.5px; font-weight: 600; background: var(--theme-primary); border: none; color: #fff; ${actionState}`,
+      tSwatch('submitCommunity')
+    );
+    (submitBtn as HTMLButtonElement).type = 'button';
+    (submitBtn as HTMLButtonElement).disabled = !valid;
+    if (valid) {
+      submitBtn.addEventListener('click', () => {
+        this.callbacks.onSubmitPalette(
+          kept.map((w) => w.dye),
+          this.communityPaletteName()
+        );
+      });
     }
+    actions.appendChild(submitBtn);
     panel.appendChild(actions);
 
     return panel;

@@ -353,6 +353,12 @@ describe('validateImportedCharacter', () => {
     });
   });
 
+  it('rejects a non-null offline dye object at the worker boundary', () => {
+    const d = draftWithDye();
+    expect(validateImportedCharacter(d)).toBeNull();
+    expect(parseInspectionResponse({ type: 'success', id: 1, result: d })).toBeNull();
+  });
+
   describe('dye badges: null is the worker form', () => {
     it('accepts a projection whose every badge carries dye: null', () => {
       // The worker never looks dyes up (the page attaches them), so every badge it sends is null.
@@ -420,8 +426,7 @@ describe('validateImportedCharacter', () => {
     });
 
     it('rejects thirteen models', () => {
-      // With 12 gear slots a 13th model must repeat one, so the uniqueness check rejects this
-      // first; the count cap is redundant (see MAX_GEAR_MODELS) and no test reaches it alone.
+      // The array length cap rejects first; uniqueness is the backstop within the cap.
       const d = draft();
       d.gearModels = [...models(12), { slot: 'Body', base: 999, variant: 2 }];
       expect(validateImportedCharacter(d)).toBeNull();
@@ -450,8 +455,7 @@ describe('validateImportedCharacter', () => {
     });
 
     it('rejects twenty-five channels', () => {
-      // A 25th channel must repeat a (slot, channel) pair, so the uniqueness check rejects this
-      // first; the count cap is redundant (see MAX_DYE_CHANNELS) and no test reaches it alone.
+      // The array length cap rejects first; uniqueness is the backstop within the cap.
       const d = draft();
       d.gearDyes = [...channels(24), { slot: 'Body', channel: 1, stainId: 6, dye: null }];
       expect(validateImportedCharacter(d)).toBeNull();
@@ -840,7 +844,7 @@ describe('validateImportedCharacter', () => {
 
     it('returns a rebuilt object that shares no object or array with the input', () => {
       // Red if the validator returns the received object (or any part of it) by reference.
-      const d = draftWithDye();
+      const d = draft();
       slotNamed(d, 'lip').lipComposite = { hex: '#A0B0C0', alpha: 0.5, derived: true };
       d.issues[0].path = ['Body', 0];
       const result = validateImportedCharacter(d);
@@ -864,65 +868,11 @@ describe('validateImportedCharacter', () => {
     });
   });
 
-  describe('dye objects: the offline database shape, allowlisted (F4)', () => {
-    it('accepts a real dye object (lowercase hex) and carries every field of it', () => {
-      const d = draftWithDye();
-      expect((d.gearDyes[0].dye as LooseRecord).hex).toMatch(/^#[0-9a-f]{6}$/);
-      const result = validateImportedCharacter(d);
-      expect(result).toEqual(d);
-      expect(result?.gearDyes[0].dye).toStrictEqual(realDye(86));
-    });
-
-    it('rejects an extra key on a dye', () => {
-      // Red if only `dye.stainID` is checked: anything else could ride along in the dye object.
-      const d = draftWithDye();
-      (d.gearDyes[0].dye as LooseRecord).raw = 'RAW-CANARY';
+  describe('dye objects are never worker DTO data', () => {
+    it.each([realDye(86), {}, [], 'dye', 86, false])('rejects a non-null dye %j', (dye) => {
+      const d = draft();
+      d.gearDyes[0].dye = dye;
       expect(validateImportedCharacter(d)).toBeNull();
-    });
-
-    it.each(['nameLower', 'lab', 'legacyItemID', 'hex', 'isMetallic', 'currency'])(
-      'rejects a dye without %s',
-      (key) => {
-        const d = draftWithDye();
-        delete (d.gearDyes[0].dye as LooseRecord)[key];
-        expect(validateImportedCharacter(d)).toBeNull();
-      }
-    );
-
-    it('rejects a dye whose stainID differs from the badge', () => {
-      const d = draftWithDye();
-      d.gearDyes[0].stainId = 85;
-      expect(validateImportedCharacter(d)).toBeNull();
-    });
-
-    type DyeSetter = (dye: LooseRecord) => void;
-    it.each<[string, DyeSetter]>([
-      ['a numeric hex', (dye) => (dye.hex = 0xe2000e)],
-      ['a hex that is not #RRGGBB', (dye) => (dye.hex = 'red')],
-      ['a string flag', (dye) => (dye.isMetallic = 'yes')],
-      ['a numeric name', (dye) => (dye.name = 7)],
-      ['a fractional itemID', (dye) => (dye.itemID = 1.5)],
-      ['a non-finite cost', (dye) => (dye.cost = Number.POSITIVE_INFINITY)],
-      ['a numeric currency', (dye) => (dye.currency = 42)],
-      ['an unknown consolidation type', (dye) => (dye.consolidationType = 'D')],
-      ['an rgb with an extra channel', (dye) => ((dye.rgb as LooseRecord).a = 1)],
-      ['an hsv channel that is a string', (dye) => ((dye.hsv as LooseRecord).h = '1')],
-      ['a NaN lab channel', (dye) => ((dye.lab as LooseRecord).L = Number.NaN)],
-      ['an array for rgb', (dye) => (dye.rgb = [226, 0, 14])],
-    ])('rejects a dye with %s', (_label, set) => {
-      const d = draftWithDye();
-      set(d.gearDyes[0].dye as LooseRecord);
-      expect(validateImportedCharacter(d)).toBeNull();
-    });
-
-    it.each<[string, DyeSetter]>([
-      ['a null currency', (dye) => (dye.currency = null)],
-      ['a null consolidation type', (dye) => (dye.consolidationType = null)],
-      ['a null legacyItemID', (dye) => (dye.legacyItemID = null)],
-    ])('accepts a dye with %s', (_label, set) => {
-      const d = draftWithDye();
-      set(d.gearDyes[0].dye as LooseRecord);
-      expect(validateImportedCharacter(d)).toEqual(d);
     });
   });
 });

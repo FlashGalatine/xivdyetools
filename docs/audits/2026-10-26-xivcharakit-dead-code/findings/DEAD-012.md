@@ -17,4 +17,4 @@
 - Cascade: Six test call sites switch to a host plus a spy, and the assertions at glamour-block.test.ts:749-751 move to the host element. glamour-tool.ts:148 drops `?? undefined`, which means the actionsHost field (now HTMLElement|null) has to be narrowed or asserted. No change outside web-app.
 
 ## Status
-OPEN
+OPEN — remaining A-WEB implementation and regression proof prepared in web 5.16.4 (draft #347); production acceptance pending. [A-WEB evidence](../../2026-10-26-deep-dive/evidence/remediation-web-2026-10-28.md).

@@ -84,10 +84,8 @@ export const CHARA_PALETTE_REQUEST_CAP = 64;
 export const CHARA_INSPECTION_TIMEOUT_MS = 5_000;
 
 const MAX_LABEL_UNITS = 256;
-// The two count caps below are redundant with the uniqueness checks and kept as a cheap first
-// gate: there are only 12 gear slots, so a 13th model must repeat a slot, and a 25th dye channel
-// must repeat a (slot, channel) pair, and the uniqueness check rejects either first. No test can
-// reach either cap on its own.
+// Reject oversized arrays before reading entries; uniqueness checks remain the backstop
+// for repeated slots and (slot, channel) pairs within those bounds.
 const MAX_GEAR_MODELS = 12;
 const MAX_DYE_CHANNELS = 24;
 const MAX_ISSUES = 64;
@@ -95,28 +93,10 @@ const MAX_ISSUE_PATH_SEGMENTS = 32;
 const MAX_SERIALIZED_CHARS = 256 * 1024;
 const UINT16_MAX = 0xffff;
 const CANONICAL_HEX = /^#[0-9A-F]{6}$/;
-/** The offline database's hex form: `DyeDatabase` admits either case and stores lowercase. */
-const DYE_HEX = /^#[0-9A-Fa-f]{6}$/;
 
 type ImportedGearModel = ImportedCharaCharacter['gearModels'][number];
 type ImportedGearDye = ImportedCharaCharacter['gearDyes'][number];
-type ImportedDye = NonNullable<ImportedGearDye['dye']>;
 type ImportedIssue = ImportedCharaCharacter['issues'][number];
-
-/**
- * The fields `DyeDatabase.initialize()` adds to every runtime `Dye` beyond the interface: the
- * stored `legacyItemID`, the search keys and the precomputed LAB. The worker sends `dye: null`;
- * a non-null dye stays valid in this shape (the database's own object), and the page replaces it
- * with its own lookup either way.
- */
-interface RuntimeDyeExtras {
-  legacyItemID: number | null;
-  nameLower: string;
-  categoryLower: string;
-  lab: { L: number; a: number; b: number };
-}
-
-type RuntimeDye = ImportedDye & RuntimeDyeExtras;
 
 // Each vocabulary below is a Record over its type, so a value added upstream fails type-check
 // here until the validator learns it.
@@ -286,31 +266,6 @@ const GEAR_MODEL_KEYS: ReadonlySet<string> = new Set([...GEAR_MODEL_REQUIRED_KEY
 const GEAR_DYE_KEYS: ReadonlySet<string> = new Set(['slot', 'channel', 'stainId', 'dye']);
 const ISSUE_KEYS: ReadonlySet<string> = new Set(['code', 'severity', 'path']);
 
-// A Record over the runtime dye's keys, so a field added to `Dye` upstream fails type-check here.
-const DYE_FIELDS: Record<keyof RuntimeDye, true> = {
-  itemID: true,
-  stainID: true,
-  id: true,
-  name: true,
-  hex: true,
-  rgb: true,
-  hsv: true,
-  category: true,
-  acquisition: true,
-  cost: true,
-  currency: true,
-  isMetallic: true,
-  isPastel: true,
-  isDark: true,
-  isCosmic: true,
-  isIshgardian: true,
-  consolidationType: true,
-  legacyItemID: true,
-  nameLower: true,
-  categoryLower: true,
-  lab: true,
-};
-const DYE_KEYS: ReadonlySet<string> = new Set(Object.keys(DYE_FIELDS));
 const MAX_PALETTE_INDEX = 255;
 const MAX_TRIBE_UNITS = 32;
 const MAX_DATASET_VERSION_UNITS = 64;
@@ -351,10 +306,6 @@ const PALETTE_COLOR_REQUIRED_KEYS = [
 const PALETTE_MESSAGE_KEYS: ReadonlySet<string> = new Set(['type', 'id', 'seq', 'request']);
 const PALETTE_RESULT_KEYS: ReadonlySet<string> = new Set(['type', 'id', 'seq', 'color']);
 const PALETTE_ERROR_KEYS: ReadonlySet<string> = new Set(['type', 'id', 'seq']);
-
-const RGB_KEYS: ReadonlySet<string> = new Set(['r', 'g', 'b']);
-const HSV_KEYS: ReadonlySet<string> = new Set(['h', 's', 'v']);
-const LAB_KEYS: ReadonlySet<string> = new Set(['L', 'a', 'b']);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -422,10 +373,6 @@ function isNonNegativeInteger(value: unknown): value is number {
   return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
 }
 
-function isSafeInteger(value: unknown): value is number {
-  return typeof value === 'number' && Number.isSafeInteger(value);
-}
-
 function isFiniteNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value);
 }
@@ -445,21 +392,6 @@ function isCanonicalHex(value: unknown): value is string {
 
 function isHexOrNull(value: unknown): value is string | null {
   return value === null || isCanonicalHex(value);
-}
-
-/** Read a record of finite numbers with exactly these keys (a dye's rgb / hsv / lab). */
-function readNumbers<K extends string>(
-  value: unknown,
-  keys: ReadonlySet<string>
-): Record<K, number> | null {
-  const fields = readRecord(value, keys);
-  if (!fields) return null;
-  const numbers: Record<string, number> = {};
-  for (const [key, field] of fields) {
-    if (!isFiniteNumber(field)) return null;
-    numbers[key] = field;
-  }
-  return numbers as Record<K, number>;
 }
 
 /** `undefined` when invalid; `null` is a valid "no composite". */
@@ -603,90 +535,6 @@ function readGearModels(value: unknown): ImportedGearModel[] | null {
   return models;
 }
 
-/**
- * The offline database's own dye object, allowlisted key by key with primitive types only: its hex
- * is lowercase, so the canonical-hex rule does not apply. `undefined` when invalid; `null` is a
- * valid "unknown stain".
- */
-function readDye(value: unknown, stainId: number): RuntimeDye | null | undefined {
-  if (value === null) return null;
-  const fields = readRecord(value, DYE_KEYS);
-  if (!fields) return undefined;
-  const itemID = fields.get('itemID');
-  const stainID = fields.get('stainID');
-  const id = fields.get('id');
-  const name = fields.get('name');
-  const hex = fields.get('hex');
-  const rgb = readNumbers<'r' | 'g' | 'b'>(fields.get('rgb'), RGB_KEYS);
-  const hsv = readNumbers<'h' | 's' | 'v'>(fields.get('hsv'), HSV_KEYS);
-  const category = fields.get('category');
-  const acquisition = fields.get('acquisition');
-  const cost = fields.get('cost');
-  const currency = fields.get('currency');
-  const isMetallic = fields.get('isMetallic');
-  const isPastel = fields.get('isPastel');
-  const isDark = fields.get('isDark');
-  const isCosmic = fields.get('isCosmic');
-  const isIshgardian = fields.get('isIshgardian');
-  const consolidationType = fields.get('consolidationType');
-  const legacyItemID = fields.get('legacyItemID');
-  const nameLower = fields.get('nameLower');
-  const categoryLower = fields.get('categoryLower');
-  const lab = readNumbers<'L' | 'a' | 'b'>(fields.get('lab'), LAB_KEYS);
-  if (!(
-    isSafeInteger(itemID) &&
-    stainID === stainId &&
-    isSafeInteger(id) &&
-    typeof name === 'string' &&
-    typeof hex === 'string' &&
-    DYE_HEX.test(hex) &&
-    rgb &&
-    hsv &&
-    typeof category === 'string' &&
-    typeof acquisition === 'string' &&
-    isFiniteNumber(cost) &&
-    (currency === null || typeof currency === 'string') &&
-    typeof isMetallic === 'boolean' &&
-    typeof isPastel === 'boolean' &&
-    typeof isDark === 'boolean' &&
-    typeof isCosmic === 'boolean' &&
-    typeof isIshgardian === 'boolean' &&
-    (consolidationType === null ||
-      consolidationType === 'A' ||
-      consolidationType === 'B' ||
-      consolidationType === 'C') &&
-    (legacyItemID === null || isSafeInteger(legacyItemID)) &&
-    typeof nameLower === 'string' &&
-    typeof categoryLower === 'string' &&
-    lab
-  )) {
-    return undefined;
-  }
-  return {
-    itemID,
-    stainID: stainId,
-    id,
-    name,
-    hex,
-    rgb,
-    hsv,
-    category,
-    acquisition,
-    cost,
-    currency,
-    isMetallic,
-    isPastel,
-    isDark,
-    isCosmic,
-    isIshgardian,
-    consolidationType,
-    legacyItemID,
-    nameLower,
-    categoryLower,
-    lab,
-  };
-}
-
 function readGearDyes(value: unknown): ImportedGearDye[] | null {
   const items = readArray(value, MAX_DYE_CHANNELS);
   if (!items) return null;
@@ -701,12 +549,12 @@ function readGearDyes(value: unknown): ImportedGearDye[] | null {
     if (!isIn(GEAR_SLOTS, slot)) return null;
     if (channel !== 1 && channel !== 2) return null;
     if (!isUint16(stainId)) return null;
-    const dye = readDye(fields.get('dye'), stainId);
-    if (dye === undefined) return null;
+    // The worker never owns dye data; only the page attaches its offline dye objects.
+    if (fields.get('dye') !== null) return null;
     const channelKey = `${slot}:${channel}`;
     if (seen.has(channelKey)) return null;
     seen.add(channelKey);
-    badges.push({ slot, channel, stainId, dye });
+    badges.push({ slot, channel, stainId, dye: null });
   }
   return badges;
 }

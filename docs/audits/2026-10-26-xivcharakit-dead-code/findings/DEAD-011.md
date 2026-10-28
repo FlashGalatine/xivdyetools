@@ -17,4 +17,4 @@
 - Cascade: isSafeInteger (protocol.ts:406-408) becomes unused because readDye is its only caller. The no-shared-node test at protocol.test.ts:811-822 uses draftWithDye and must move to draft(). protocol.test.ts loses its DyeService/dyeDatabase imports. Two comments need rewording: service.ts:263 and protocol.ts:14-16/105-110. The inline mock (chara-inspection-inline.ts) and the imported-chara factory are unaffected.
 
 ## Status
-OPEN
+OPEN — remaining A-WEB implementation and regression proof prepared in web 5.16.4 (draft #347); production acceptance pending. [A-WEB evidence](../../2026-10-26-deep-dive/evidence/remediation-web-2026-10-28.md).
