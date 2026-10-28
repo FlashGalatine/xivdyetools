@@ -1,7 +1,8 @@
 # A-DISCORD notification-binding companion — 2026-10-27
 
-**State:** provider integration and local verification complete; draft publication and remote
-receipts pending. Provider source: `9e6ae7cd`, draft [PR #345](https://github.com/FlashGalatine/xivdyetools/pull/345).
+**State:** prepared in draft [PR #346](https://github.com/FlashGalatine/xivdyetools/pull/346),
+with source CI and automatic Discord beta passing. Provider source: `9e6ae7cd`, draft
+[PR #345](https://github.com/FlashGalatine/xivdyetools/pull/345). Production release/cutover remain separate.
 This is the separate presets **2.8.1 PATCH** companion to
 [A-DISCORD's private provider](remediation-discord-2026-10-27.md). FINDING-039 remains OPEN
 until verified producer cutover and a separately authorized binding-only activation.
@@ -48,3 +49,18 @@ reachability **642/639**. The actual production-config dry run passes locally at
 
 No live service call, migration, package publication, workflow hold, deployment, command
 registration or activation is selected here. The private XIVAuth report remains outside Git.
+
+## Published source receipts
+
+Source `ae26ddc3fbfef4eca5a2c7806f7809ff5101a8a8` is published in draft #346, stacked on #345.
+[CI 40624786941](https://github.com/FlashGalatine/xivdyetools/actions/runs/40624786941) passes all
+four jobs, including **167 Playwright tests**, lint/types/tests/build, production security audit
+and Gitleaks. [Automatic Discord beta 40624743878](https://github.com/FlashGalatine/xivdyetools/actions/runs/40624743878)
+deploys successfully and registers **18 commands**. No web beta was selected.
+
+CI retains the existing nonblocking `validation-service.ts:249` unsafe-any lint annotation;
+that runtime file is unchanged by this companion. Staged and full stacked-history secret scans
+pass with 100% redaction. The provider's receipt-only commit `f13e8266` is integrated; this update
+changes evidence only. Runtime source, both app versions and the false activation flags are
+unchanged. These receipts establish draft source/deployment readiness, not live production
+notification delivery or authorization to activate binding-only mode.
