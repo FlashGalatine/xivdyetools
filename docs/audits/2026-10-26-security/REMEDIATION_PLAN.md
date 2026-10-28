@@ -11,11 +11,11 @@ Tiers: **P2** = the MEDIUM, plus LOW findings with a reachable code path or a fa
 | # | Finding | Decision |
 |---|---|---|
 | 1 | [FINDING-001](findings/FINDING-001.md) | **DECIDED 2026-10-26:** drop the moderator username from the posts (code fix, no policy change); MEDIUM kept. An AMEND (12 files) only if you reverse this. |
-| 2 | [FINDING-003](findings/FINDING-003.md) | Correct PRIVACY.md to say no per-record rename/delete exists, or restore a per-record control in v4. Independently: stop defaulting the Swatch character-save name to the .chara nickname. |
-| 3 | [FINDING-011](findings/FINDING-011.md) | Narrow `connect-src` to the four named hosts (policy becomes true) or reword the policy. |
+| 2 | [FINDING-003](findings/FINDING-003.md) | **DECIDED 2026-10-28:** use the localized generic name for new Swatch character saves and correct all six privacy variants to describe the existing deletion controls. Existing saved names are retained; no new rename/delete UI. |
+| 3 | [FINDING-011](findings/FINDING-011.md) | **DECIDED 2026-10-28:** narrow `connect-src` to the site itself plus `api.xivdyetools.app`, `auth.xivdyetools.app` and `data.xivdyetools.app`; retain the separate image hosts. The old four-host count included an image-only origin. |
 | 4 | [FINDING-016](findings/FINDING-016.md), [-019](findings/FINDING-019.md), [-040](findings/FINDING-040.md) | Product calls: moderate tags and example links; keep or drop the preview-slot refund on decode failure; add a button rate-limit tier or record it in `security-trade-offs.md`. |
 | 5 | [FINDING-023](findings/FINDING-023.md), [-025](findings/FINDING-025.md) | Whether oauth detaches a Discord id XIVAuth stops asserting, and how the ban learns an author's other identity (needs a presets-api or oauth lookup). |
-| 6 | [FINDING-026](findings/FINDING-026.md) | **AMEND** web PRIVACY.md item 3: signed-in viewers send the token when opening a preset. |
+| 6 | [FINDING-026](findings/FINDING-026.md) | **DECIDED 2026-10-28:** approve the six-language **AMEND**: signed-out browsing sends no account information; signed-in preset opening sends the token for the existing vote-state check, which stores no view record. Check timing and UI stay unchanged. |
 | 7 | Live-state checks | **DONE 2026-10-26** with your yes: read-only Cloudflare queries settled most items and added FINDING-054, -055 and -056 (report § *Live state*). The still-open checks are listed there. |
 | 8 | Plan gate | **DECIDED 2026-10-26:** review first, start nothing. No sprint, bump, publish or deploy runs until you say so. |
 

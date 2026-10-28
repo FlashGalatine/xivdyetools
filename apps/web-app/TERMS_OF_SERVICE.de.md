@@ -2,7 +2,7 @@
 
 > Dies ist eine zur Verständlichkeit bereitgestellte Übersetzung. Maßgeblich ist die englische Fassung; weichen beide voneinander ab, gilt die englische Fassung. [Englisch](TERMS_OF_SERVICE.md)
 
-**Zuletzt aktualisiert:** 2026-10-12 · Gilt für **xivdyetools.app** und **beta.xivdyetools.app**. Wie
+**Zuletzt aktualisiert:** 2026-10-28 · Gilt für **xivdyetools.app** und **beta.xivdyetools.app**. Wie
 wir mit deinen Daten umgehen, ist ein eigenes Dokument: [`PRIVACY.md`](PRIVACY.de.md). Der
 Discord-Bot hat eigene Bedingungen:
 [`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.de.md).
@@ -30,7 +30,7 @@ Community-Vorlagen einzureichen, zu bearbeiten oder darüber abzustimmen.
 
 - Die Anmeldung läuft über Discord oder XIVAuth. Wir sehen oder speichern niemals ein Passwort.
 - Die Anmeldung legt einen Kontodatensatz mit deiner Anbieter-ID und einem Namen an. Bei Discord
-  ist der Name dein Anzeigename. Bei XIVAuth ist der Name der Name deines verifizierten
+  ist der Name dein Anzeigename oder, wenn du keinen hast, dein Benutzername. Bei XIVAuth ist der Name der Name deines verifizierten
   Charakters oder "XIVAuth User", gefolgt von den ersten 8 Zeichen deiner XIVAuth-ID, wenn bei
   deiner Anmeldung kein verifizierter Charakter verfügbar ist, wie in den Datenschutzhinweisen
   beschrieben. Ist dein XIVAuth-Konto mit Discord verknüpft, enthält der Datensatz
@@ -80,7 +80,8 @@ eingereicht hast, entfernt wird:
 
 1. Tritt dem Discord bei: <https://discord.gg/5VUSKTZCe5>
 2. Frag in **#dyetools-issues-and-suggestions**, oder schreibe "Flash Galatine" eine DM
-3. Gib deine Discord-Benutzer-ID und den Namen der Vorlage an
+3. Sag, ob du dich mit Discord oder XIVAuth anmeldest, und gib deine Discord-Benutzer-ID
+   oder den auf deinen Vorlagen angezeigten Autorennamen sowie den Namen der Vorlage an
 
 Widersprüche werden innerhalb von 7 Tagen geprüft. Um deinen Kontodatensatz und alles, was darunter
 eingereicht wurde, entfernen zu lassen, siehe [`PRIVACY.md`](PRIVACY.de.md).

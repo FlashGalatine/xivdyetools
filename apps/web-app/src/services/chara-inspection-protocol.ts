@@ -193,6 +193,25 @@ const RACES: Record<NonNullable<ImportedCharaCharacter['race']>, true> = {
   Viera: true,
 };
 
+const SUBRACES: Record<NonNullable<ImportedCharaCharacter['tribe']>, true> = {
+  Midlander: true,
+  Highlander: true,
+  Wildwood: true,
+  Duskwight: true,
+  Plainsfolk: true,
+  Dunesfolk: true,
+  SeekerOfTheSun: true,
+  KeeperOfTheMoon: true,
+  SeaWolf: true,
+  Hellsguard: true,
+  Raen: true,
+  Xaela: true,
+  Helions: true,
+  TheLost: true,
+  Rava: true,
+  Veena: true,
+};
+
 const GENDERS: Record<NonNullable<ImportedCharaCharacter['gender']>, true> = {
   Male: true,
   Female: true,
@@ -736,7 +755,7 @@ function readCharacter(value: unknown): ImportedCharaCharacter | null {
     isLabelOrNull(producer) &&
     isLabelOrNull(nickname) &&
     (race === null || isIn(RACES, race)) &&
-    isLabelOrNull(tribe) &&
+    (tribe === null || isIn(SUBRACES, tribe)) &&
     (gender === null || isIn(GENDERS, gender)) &&
     typeof extendedValid === 'boolean' &&
     typeof extendedDeclared === 'boolean' &&
@@ -753,8 +772,7 @@ function readCharacter(value: unknown): ImportedCharaCharacter | null {
   return {
     producer,
     race,
-    // A bounded label, as before: the page treats an unknown tribe like any other local label.
-    tribe: tribe as ImportedCharaCharacter['tribe'],
+    tribe,
     gender,
     nickname,
     extendedValid,

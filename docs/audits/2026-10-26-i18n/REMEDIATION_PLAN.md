@@ -438,18 +438,20 @@ flags; production publication orchestration, provider/consumer verification and 
 
 ## Sprint A-WEB — apps/web-app
 
+**Security-only implementation 2026-10-28 — PREPARED:** all 14 security rows are implemented in web **5.16.4 PATCH**, including the three approved choices. Independent reviews and **4,483 web tests** pass. All nonsecurity A-WEB rows remain deferred. [Evidence and Windows whole-graph limitation](../2026-10-26-security/evidence/remediation-web-security-2026-10-28.md). Affected CI and production acceptance remain release gates; no production release is selected.
+
 After required package publishes. Also apply the code-point-safe file-name cap paired with core labels. Keep persisted settings, result rendering, async modal ownership and cache generations consistent. All policy edits are six-file owner changes, behind unresolved decisions where listed.
 
 | ID | Source | Sev/Pri | Action |
 |---|---|---|---|
-| [2026-10-26-security/FINDING-003](../2026-10-26-security/findings/FINDING-003.md) | 2026-10-26-security | LOW / INTERNET-UNAUTH · P2 | Name the Swatch character record with the localized default or add an empty name field; CORRECT PRIVACY.md:36-40 (six files). (existing decision gate) |
+| [2026-10-26-security/FINDING-003](../2026-10-26-security/findings/FINDING-003.md) | 2026-10-26-security | LOW / INTERNET-UNAUTH · P2 | **DECIDED 2026-10-28:** use the localized generic default for new Swatch character saves; preserve older names and numbering; CORRECT all six privacy variants to describe existing deletion controls. |
 | [2026-10-26-security/FINDING-006](../2026-10-26-security/findings/FINDING-006.md) | 2026-10-26-security | LOW / INTERNET-UNAUTH · P2 | Reword `preset.gateBrowseNote` in all six `locales/*.json`; run `validate:i18n`. |
 | [2026-10-26-security/FINDING-007](../2026-10-26-security/findings/FINDING-007.md) | 2026-10-26-security | LOW / INTERNET-UNAUTH · P2 | CORRECT the "saved palettes" term collision in `PRIVACY.fr.md` (and ja/ko where it collides): say saved community presets are not cleared by that control. |
 | [2026-10-26-security/FINDING-010](../2026-10-26-security/findings/FINDING-010.md) | 2026-10-26-security | LOW / INTERNET-UNAUTH · P2 | CORRECT "a dozen small integers" (up to 27 plus 12 slot names). |
-| [2026-10-26-security/FINDING-011](../2026-10-26-security/findings/FINDING-011.md) | 2026-10-26-security | LOW / INTERNET-UNAUTH · P2 | Narrow `connect-src` to the named hosts, or CORRECT the sentence. (existing decision gate) |
+| [2026-10-26-security/FINDING-011](../2026-10-26-security/findings/FINDING-011.md) | 2026-10-26-security | LOW / INTERNET-UNAUTH · P2 | **DECIDED 2026-10-28:** narrow `connect-src` to self plus the three actual connection hosts (api/auth/data), preserving the separate image policy; pin the exact set in header tests. |
 | [2026-10-26-security/FINDING-012](../2026-10-26-security/findings/FINDING-012.md) | 2026-10-26-security | LOW / INTERNET-UNAUTH · P2 | CORRECT Terms "Appeals and removal" step 3 so XIVAuth-only accounts can follow it. |
 | [2026-10-26-security/FINDING-013](../2026-10-26-security/findings/FINDING-013.md) | 2026-10-26-security | LOW / INTERNET-UNAUTH · P2 | CORRECT Terms "Accounts": display name, with the username as the fallback. |
-| [2026-10-26-security/FINDING-026](../2026-10-26-security/findings/FINDING-026.md) | 2026-10-26-security | LOW / INTERNET-AUTH · P2 | **AMEND** PRIVACY.md Network access item 3: browsing while signed out sends nothing; signed in, opening a preset sends the token to check the vote. (existing decision gate) Optionally defer the check. |
+| [2026-10-26-security/FINDING-026](../2026-10-26-security/findings/FINDING-026.md) | 2026-10-26-security | LOW / INTERNET-AUTH · P2 | **AMEND APPROVED 2026-10-28:** signed-out browsing sends no account information; opening a preset while signed in sends the token for the existing vote check, which stores no view record. Update all six policies; retain timing and UI. |
 | [2026-10-26-security/FINDING-027](../2026-10-26-security/findings/FINDING-027.md) | 2026-10-26-security | LOW / INTERNET-AUTH · P2 | CORRECT the previous-version-snapshot wording (approved presets only) in web PRIVACY.md; the bot policy half rides A-DISCORD's commit. |
 | [2026-10-26-security/FINDING-033](../2026-10-26-security/findings/FINDING-033.md) | 2026-10-26-security | INFO / INTERNET-UNAUTH · P3 | Translation fix: "other people" in `PRIVACY.de.md` and `PRIVACY.fr.md` (and ja). |
 | [2026-10-26-security/FINDING-034](../2026-10-26-security/findings/FINDING-034.md) | 2026-10-26-security | INFO / INTERNET-UNAUTH · P3 | Restore the "not uploaded" assurance in `de.json` `preset.shotSlot`. |

@@ -1006,7 +1006,7 @@
     "signinBlurb": "저장한 팔레트는 이 기기에 남아 로그아웃해도, 서비스가 중단돼도 사라지지 않습니다. 계정은 투고할 때만 필요합니다.",
     "gateTitle": "계정으로 할 수 있는 것",
     "gateBrowse": "둘러보기·검색",
-    "gateBrowseNote": "계정 불필요, 속도 제한 없음.",
+    "gateBrowseNote": "계정이 필요 없습니다.",
     "gateSave": "팔레트 저장",
     "gateSaveNote": "이 기기에 저장.",
     "gateVote": "투표",

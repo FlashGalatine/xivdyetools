@@ -2,7 +2,7 @@
 
 > Dies ist eine zur Verständlichkeit bereitgestellte Übersetzung. Maßgeblich ist die englische Fassung; weichen beide voneinander ab, gilt die englische Fassung. [Englisch](PRIVACY.md)
 
-**Zuletzt aktualisiert:** 2026-10-27 · Gilt für **xivdyetools.app** und **beta.xivdyetools.app**. Der
+**Zuletzt aktualisiert:** 2026-10-28 · Gilt für **xivdyetools.app** und **beta.xivdyetools.app**. Der
 Discord-Bot hat eine eigene Richtlinie: [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.de.md).
 
 XIV Dye Tools läuft in deinem Browser. Die Farbwerkzeuge — Paletten-Extraktor, Harmonie-Explorer,
@@ -33,18 +33,22 @@ vollständige Liste.
 
 - Eine `.chara`-Datei (Anamnesis, Ktisis, Brio) wird auf deinem Gerät ausgelesen. Ihr Charaktername
   wird niemals irgendwohin gesendet und niemals als Vorlagenname, Autorenname oder irgendetwas
-  anderes verwendet, das andere Spieler sehen können. Um eine Projektion bei den Community-Vorlagen
+  anderes verwendet, das andere Personen sehen können. Um eine Projektion bei den Community-Vorlagen
   einzureichen, musst du selbst einen Namen eingeben — das Feld ist absichtlich leer, denn sowohl
   der Charaktername als auch der Dateiname sind Orte, an denen Spieler ihren echten Namen ablegen.
-- **Eine Ausnahme, und die bleibt auf deinem Gerät.** Wenn du eine Projektion oder ihre Palette in
-  diesem Browser speicherst, ohne einen Namen einzugeben, greift der gespeicherte Eintrag auf den
-  Spitznamen des Charakters zurück, dann auf den Namen der `.chara`-Datei. Dieser Name liegt im
-  Speicher deines Browsers neben deinen anderen gespeicherten Sammlungen. Er wird niemals
-  hochgeladen, und der Community-Pfad oben liest ihn nie. Benenne den Eintrag um, lösche ihn, oder
-  lösche deine Website-Daten, und er ist verschwunden.
+- **Auf diesem Gerät gespeicherte Namen.** Neu gespeicherte Charakterfarben im Farbmuster-Matcher
+  erhalten einen allgemeinen Namen in deiner Sprache. Ältere Charaktereinträge können weiterhin
+  ihren gespeicherten Spitznamen oder Dateinamen tragen. Wenn du eine Projektion oder ihre Palette
+  ohne Namenseingabe speicherst, kann dieser Eintrag weiterhin auf den Spitznamen des Charakters
+  und danach auf den Namen der `.chara`-Datei zurückgreifen. Diese Namen bleiben im Speicher deines
+  Browsers; sie werden nie hochgeladen und vom Community-Pfad oben nie gelesen. Die App hat keine
+  Steuerung zum Umbenennen oder Löschen einzelner Einträge. **Erweiterte Einstellungen →
+  Gespeicherte Paletten löschen** entfernt alle gespeicherten Palettensammlungen. Um
+  Charaktersammlungen zu löschen, musst du die Website-Daten in deinem Browser löschen; dabei
+  werden auch deine anderen lokal gespeicherten Arbeiten und dein Anmeldetoken gelöscht.
 - Um die Ausrüstung im Projektionsleser zu benennen, fragt die App unsere API nach dem Gegenstand
   hinter jedem Slot. Die Anfrage enthält nur die **Modellnummern** der Ausrüstung aus der Datei
-  und die ID ihres Gesichtsaccessoires (ein Dutzend kleiner Ganzzahlen pro Datei) — nicht die
+  und die ID ihres Gesichtsaccessoires (bis zu 27 kleine Ganzzahlen und 12 feste Slotnamen pro Datei) — nicht die
   Datei, nicht den Namen, nicht die Farben, nicht die Farbstoffe. Unsere API schlägt diese Nummern
   bei [XIVAPI](https://xivapi.com/) nach, einem Community-Dienst für Spieldaten, der die Nummern
   erhält und nichts über dich. Die Gegenstandsnamen, die Bezugsquelle jedes Gegenstands und die
@@ -65,6 +69,9 @@ einen Teil:
 - **Erweiterte Einstellungen → Favoriten löschen** löscht deine favorisierten Farbstoffe.
 - **Erweiterte Einstellungen → Gespeicherte Paletten löschen** löscht alle deine gespeicherten
   Paletten auf einmal. Die App hat kein Steuerelement, das eine einzelne Palette löscht.
+- **Gemerkte Community-Vorlagen** im Vorlagen-Tool sind davon getrennt. „Gespeicherte Paletten
+  löschen“ entfernt sie nicht. Mit dem Merken-Schalter der jeweiligen Vorlage entfernst du
+  ihre gespeicherte Kopie; über die Website-Daten-Steuerung deines Browsers entfernst du alle.
 - Tausche, die du in den Budget-Vorschlägen speicherst, und Charakterfarben, die du im
   Farbmuster-Matcher speicherst, haben in der App kein Steuerelement zum Löschen; die
   Website-Daten-Steuerung deines Browsers löscht sie.
@@ -89,7 +96,9 @@ erlaubt nichts anderes) sowie den unten genannten Drittanbietern:
    gehen an unseren Proxy unter `data.xivdyetools.app`, der von [Universalis](https://universalis.app)
    abruft.
 2. **Ausrüstungsnamen und -symbole für `.chara`-Importe** — `data.xivdyetools.app` (siehe oben).
-3. **Community-Vorlagen** (`api.xivdyetools.app`): Das Durchsuchen sendet nichts über dich. Die
+3. **Community-Vorlagen** (`api.xivdyetools.app`): Beim Durchsuchen ohne Anmeldung werden keine Kontoinformationen gesendet. Wenn du angemeldet
+   bist und eine Vorlage öffnest, wird dein Anmeldetoken gesendet, um zu prüfen, ob du bereits
+   abgestimmt hast. Diese Prüfung speichert keinen Eintrag über deinen Aufruf. Die
    Anmeldung über `auth.xivdyetools.app` mit Discord oder XIVAuth legt sofort einen
    Kontodatensatz an, unabhängig davon, ob du anschließend etwas einreichst oder abstimmst. Bei
    Discord enthält der Datensatz deine Discord-Benutzer-ID und deinen Anzeigenamen (deinen
@@ -105,7 +114,7 @@ erlaubt nichts anderes) sowie den unten genannten Drittanbietern:
    du einreichst, werden unter diesem Konto gespeichert. Das Einreichen einer Vorlage zählt als
    deine Stimme dafür; hat eine veröffentlichte Vorlage bereits dieselben Farbstoffe, wird deine
    Einreichung stattdessen zu einer Stimme für diese Vorlage. Eine Vorlage enthält, was du im
-   Formular eingibst — und, falls unsere automatische Kontrolle den neuen Namen, die neue Beschreibung, die Tags oder den Beispiellink einer Bearbeitung zur Prüfung zurückhält, die Fassung vor der ersten solchen
+   Formular eingibst — und, falls unsere automatische Kontrolle beim Bearbeiten einer bereits veröffentlichten Vorlage den neuen Namen, die neue Beschreibung, die Tags oder den Beispiellink zur Prüfung zurückhält, die Fassung vor der ersten solchen
    Bearbeitung, aufbewahrt, bis ein Moderator diese Fassung wiederherstellt oder die Vorlage gelöscht wird —
    plus das optionale Vorschaubild, das oben unter Bilder beschrieben ist. Um ein Vorschaubild zu
    entfernen, nutze das Bearbeitungsformular der

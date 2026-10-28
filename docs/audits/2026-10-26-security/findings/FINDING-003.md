@@ -17,4 +17,4 @@
 - **Maintainer decision:** restore an in-app per-record rename/delete control in v4 (then the text becomes true) or correct the text as above.
 
 ## Status
-OPEN
+OPEN — security-only A-WEB implementation and reviews prepared in web 5.16.4; affected CI, whole-graph verification and production acceptance remain release gates. [A-WEB evidence](../evidence/remediation-web-security-2026-10-28.md).

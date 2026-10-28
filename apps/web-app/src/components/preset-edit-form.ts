@@ -22,7 +22,7 @@ import {
 } from '@services/preset-submission-service';
 import { createCategorySelector, type CategorySelection } from './preset-category-selector';
 import { presetErrorMessage, presetValidationMessage } from '@shared/preset-i18n';
-import { exampleLinkError } from '@shared/example-link';
+import { exampleLinkError, sanitizePreviewImageUrl } from '@shared/example-link';
 import { dyeNameMatches, localizedDyeName } from '@shared/dye-name';
 import type { Dye } from '@xivdyetools/types';
 import type { CommunityPreset } from '@services/community-preset-service';
@@ -132,7 +132,7 @@ export function showPresetEditForm(preset: CommunityPreset, onEdit?: OnEditCallb
     newPreviewImage: null,
     clearPreviewImage: false,
     previewImageStatus: preset.preview_image_status ?? 'none',
-    previewImageUrl: preset.preview_image_url ?? null,
+    previewImageUrl: sanitizePreviewImageUrl(preset.preview_image_url),
   };
 
   // Create form content

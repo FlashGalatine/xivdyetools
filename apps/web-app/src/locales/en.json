@@ -1006,7 +1006,7 @@
     "signinBlurb": "Saved presets live on this device, so they survive both signing out and the presets service going down. An account is only needed to put something back in.",
     "gateTitle": "WHAT AN ACCOUNT ADDS",
     "gateBrowse": "Browse and search",
-    "gateBrowseNote": "No account, no rate limit.",
+    "gateBrowseNote": "No account needed.",
     "gateSave": "Save presets",
     "gateSaveNote": "Stored on this device.",
     "gateVote": "Vote",

@@ -15,4 +15,4 @@
 - Optionally also assert Number.isInteger(raw.row_id) in api-worker parseItemRow.
 
 ## Status
-OPEN
+OPEN — security-only A-WEB implementation and reviews prepared in web 5.16.4; affected CI, whole-graph verification and production acceptance remain release gates. [A-WEB evidence](../evidence/remediation-web-security-2026-10-28.md).

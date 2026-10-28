@@ -297,7 +297,7 @@ npx playwright test --project=mobile-chrome
 **Sibling apps it talks to:**
 - `xivdyetools-presets-api` — community presets (HTTPS)
 - `xivdyetools-oauth` — Discord login + JWT issuance
-- `xivdyetools-api-worker` — market-board pricing via its `/universalis` routes (absorbed CORS proxy), and `.chara` equipment identity via `POST /v1/chara/resolve` + `GET /v1/chara/icon/:id` (the Glamour Reader's DYES ON THIS GLAMOUR names/icons; the SPA never talks to XIVAPI — CSP `img-src` allows `data.xivdyetools.app` for the proxied icons, `connect-src` already covers `*.xivdyetools.app`). Local dev: `VITE_API_WORKER_URL` (default `http://localhost:8790`); when the worker is down the block degrades to slot-only rows by design; opt-in telemetry via `POST /v1/telemetry`
+- `xivdyetools-api-worker` — market-board pricing via its `/universalis` routes (absorbed CORS proxy), and `.chara` equipment identity via `POST /v1/chara/resolve` + `GET /v1/chara/icon/:id` (the Glamour Reader's DYES ON THIS GLAMOUR names/icons; the SPA never talks to XIVAPI — CSP `img-src` allows `data.xivdyetools.app` for the proxied icons, `connect-src` explicitly allows `api.xivdyetools.app`, `auth.xivdyetools.app` and `data.xivdyetools.app`, plus the site itself). Local dev: `VITE_API_WORKER_URL` (default `http://localhost:8790`); when the worker is down the block degrades to slot-only rows by design; opt-in telemetry via `POST /v1/telemetry`
 - `xivdyetools-og-worker` — dynamic OpenGraph images for share links
 
 ## Documentation

@@ -2,6 +2,16 @@
 
 ---
 
+## Web-App Version 5.16.4 — October 28, 2026
+
+### Saving character colors
+- New character-color saves in the Swatch Matcher use a generic name in your current language. Older saves keep their existing names.
+
+### Clearer privacy information
+- All six privacy guides explain local save and deletion controls, equipment lookups, signed-in vote checks and retained pre-edit versions more precisely.
+- Account-name and appeal instructions now cover the different sign-in options. Browsing still needs no account; the message no longer promises unlimited requests.
+- German example-link captions now say the image is linked, not uploaded.
+
 ## Web-App Version 5.16.3 — October 27, 2026
 
 ### Privacy policy

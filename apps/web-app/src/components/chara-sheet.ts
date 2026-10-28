@@ -189,7 +189,7 @@ function uniqueCollectionName(base: string): string {
  * colours count: a slot whose control the file does not state is never saved.
  */
 export function saveCharacterColors(session: CharaSession): void {
-  const { resolved, fileName } = session;
+  const { resolved } = session;
 
   const stainIds: number[] = [];
   for (const slot of resolved.slots) {
@@ -205,13 +205,7 @@ export function saveCharacterColors(session: CharaSession): void {
     return;
   }
 
-  // BUG-082 (2026-10-04 deep-dive): `??` kept an empty or whitespace Nickname,
-  // which createCollection then rejected as blank on every save.
-  const base = (
-    resolved.nickname?.trim() ||
-    fileName ||
-    LanguageService.t('swatch.characterDefaultName')
-  ).slice(0, 50);
+  const base = LanguageService.t('swatch.characterDefaultName').slice(0, 50);
   // BUG-016 (2026-10-04 deep-dive): a full store and a taken name both made
   // createCollection return null, shown as the generic save failure. Say which
   // one it is, and number a taken name the way the glamour palette save does.
@@ -228,7 +222,6 @@ export function saveCharacterColors(session: CharaSession): void {
   for (const stainId of stainIds) {
     CollectionService.addDyeToCollection(record.id, stainId);
   }
-  // FINDING-001: the name can be the imported nickname or file name; counts only.
   logger.info(`[CharaSheet] Saved a character (${stainIds.length} colours)`);
   ToastService.success(
     stainIds.length === 1

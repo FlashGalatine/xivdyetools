@@ -13,4 +13,4 @@
 - In readCharacter, check tribe with `(tribe === null || isIn(SUBRACES, tribe))`, as race and gender already are, and drop the cast at :757. Add a protocol test that rejects an unknown tribe.
 
 ## Status
-OPEN
+OPEN — security-only A-WEB implementation and reviews prepared in web 5.16.4; affected CI, whole-graph verification and production acceptance remain release gates. [A-WEB evidence](../evidence/remediation-web-security-2026-10-28.md).

@@ -57,6 +57,36 @@ const GEAR_SLOTS = [
 
 const KIB_256 = 256 * 1024;
 
+describe('character tribe vocabulary', () => {
+  it.each([
+    'Midlander',
+    'Highlander',
+    'Wildwood',
+    'Duskwight',
+    'Plainsfolk',
+    'Dunesfolk',
+    'SeekerOfTheSun',
+    'KeeperOfTheMoon',
+    'SeaWolf',
+    'Hellsguard',
+    'Raen',
+    'Xaela',
+    'Helions',
+    'TheLost',
+    'Rava',
+    'Veena',
+    null,
+  ] as const)('retains valid tribe %s', (tribe) => {
+    expect(validateImportedCharacter({ ...baseCharacter(), tribe })?.tribe).toBe(tribe);
+  });
+  it.each(['UnknownClan', '', 'toString', 1, true, {}, [], undefined].map((tribe) => [tribe]))(
+    'rejects invalid tribe %j',
+    (tribe) => {
+      expect(validateImportedCharacter({ ...baseCharacter(), tribe })).toBeNull();
+    }
+  );
+});
+
 /** A confirmed-active, resolved palette slot: the only shape whose `matchHex` may be non-null. */
 function slot(name: (typeof SLOT_NAMES)[number]): ImportedCharaSlot {
   return {

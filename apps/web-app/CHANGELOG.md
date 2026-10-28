@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.16.4] - 2026-10-28
+
+### Security
+
+- Save new Swatch character-color collections under the localized generic name instead of
+  persisting an imported nickname or file name. Preserve existing records and unique numbering.
+- Restrict production CSP connections to this site and the three named API hosts, keeping the
+  separate image policy intact.
+- Apply the shared HTTPS preview guard in the preset edit form, accept only actual clans from
+  the inspection worker, and validate equipment-resolution fields before rendering or caching.
+  Preserve valid family, alternate, rule and acquisition metadata; malformed rows become null.
+
+### Changed
+
+- Align all six Privacy and Terms variants with the actual local deletion controls, equipment
+  request contents, signed-in vote checks, approved-preset edit snapshots, Discord name fallback
+  and appeal identifiers. Older character names remain disclosed; no vote-check timing changes.
+- Remove the unlimited-browsing claim from all six sign-in notes and restore the German
+  example-link caption's linked/not-uploaded assurance.
+
 ## [5.16.3] - 2026-10-27
 
 ### Changed

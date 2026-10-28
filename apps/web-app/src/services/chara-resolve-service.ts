@@ -139,15 +139,145 @@ function signatureOf(gear: readonly CharaGearModel[], glassesId: number | null):
   return JSON.stringify({ gear: sorted, glasses: glassesId ?? 0 });
 }
 
-interface ResolveEnvelope {
-  success?: boolean;
-  data?: {
-    items?: CharaResolveResult['items'];
-    glasses?: CharaResolvedGlasses | null;
-    version?: string | null;
+const GEAR_SLOTS: Record<CharaGearSlotId, true> = {
+  MainHand: true,
+  OffHand: true,
+  HeadGear: true,
+  Body: true,
+  Hands: true,
+  Legs: true,
+  Feet: true,
+  Ears: true,
+  Neck: true,
+  Wrists: true,
+  LeftRing: true,
+  RightRing: true,
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isKnownSlot(value: string): value is CharaGearSlotId {
+  return Object.prototype.hasOwnProperty.call(GEAR_SLOTS, value);
+}
+
+function isPositiveId(value: unknown): value is number {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value > 0;
+}
+
+function readNames(value: unknown): CharaItemNames | null {
+  if (!isRecord(value)) return null;
+  const { en, ja, de, fr, ko, zh } = value;
+  if (
+    typeof en !== 'string' ||
+    typeof ja !== 'string' ||
+    typeof de !== 'string' ||
+    typeof fr !== 'string'
+  )
+    return null;
+  if ((ko !== undefined && typeof ko !== 'string') || (zh !== undefined && typeof zh !== 'string'))
+    return null;
+  return {
+    en,
+    ja,
+    de,
+    fr,
+    ...(ko !== undefined ? { ko } : {}),
+    ...(zh !== undefined ? { zh } : {}),
   };
-  error?: string;
-  message?: string;
+}
+
+function readAlternates(value: unknown): CharaResolvedItem['alternates'] | null {
+  if (!Array.isArray(value)) return null;
+  const alternates: CharaResolvedItem['alternates'] = [];
+  for (const entry of value) {
+    if (!isRecord(entry)) return null;
+    const { itemId, acquisition } = entry;
+    const names = readNames(entry.names);
+    if (
+      !isPositiveId(itemId) ||
+      !names ||
+      (acquisition !== undefined && typeof acquisition !== 'string')
+    )
+      return null;
+    alternates.push({ itemId, names, ...(acquisition !== undefined ? { acquisition } : {}) });
+  }
+  return alternates;
+}
+
+function readRules(value: unknown): CharaTwinRules[] | null {
+  if (!Array.isArray(value)) return null;
+  const rules: CharaTwinRules[] = [];
+  for (const entry of value) {
+    if (!isRecord(entry)) return null;
+    const { dyeCount, glamourable, wearMask, grandCompany, itemIds } = entry;
+    // Game contract: 0–2 dye channels, 16 race/gender bits, and company rows 0–3.
+    if (
+      (dyeCount !== 0 && dyeCount !== 1 && dyeCount !== 2) ||
+      typeof glamourable !== 'boolean' ||
+      (wearMask !== null && !(isPositiveId(wearMask) && wearMask <= 0xffff)) ||
+      (grandCompany !== 0 && grandCompany !== 1 && grandCompany !== 2 && grandCompany !== 3) ||
+      !Array.isArray(itemIds) ||
+      itemIds.length === 0
+    )
+      return null;
+    const ids: number[] = [];
+    for (const id of itemIds) {
+      if (!isPositiveId(id)) return null;
+      ids.push(id);
+    }
+    // The API carries every family member here, beyond its capped picker alternates.
+    rules.push({ dyeCount, glamourable, wearMask, grandCompany, itemIds: ids });
+  }
+  return rules;
+}
+
+function readItem(value: unknown): CharaResolvedItem | null {
+  if (!isRecord(value)) return null;
+  const { itemId, iconId, familySize, viaMainHand, acquisition, retired, uiCategory } = value;
+  const names = readNames(value.names);
+  const alternates = readAlternates(value.alternates);
+  const rules = value.rules === undefined ? undefined : readRules(value.rules);
+  if (
+    !isPositiveId(itemId) ||
+    (iconId !== null && !isPositiveId(iconId)) ||
+    !names ||
+    !isPositiveId(familySize) ||
+    !alternates ||
+    typeof viaMainHand !== 'boolean' ||
+    rules === null ||
+    (acquisition !== undefined && typeof acquisition !== 'string') ||
+    (retired !== undefined && retired !== true) ||
+    (uiCategory !== undefined && !isPositiveId(uiCategory))
+  )
+    return null;
+  return {
+    itemId,
+    names,
+    iconId,
+    familySize,
+    alternates,
+    viaMainHand,
+    ...(rules !== undefined ? { rules } : {}),
+    ...(acquisition !== undefined ? { acquisition } : {}),
+    ...(retired !== undefined ? { retired } : {}),
+    ...(uiCategory !== undefined ? { uiCategory } : {}),
+  };
+}
+
+function readGlasses(value: unknown): CharaResolvedGlasses | null {
+  if (!isRecord(value)) return null;
+  const { id, iconId, acquisition } = value;
+  const names = readNames(value.names);
+  if (
+    !isPositiveId(id) ||
+    (iconId !== null && !isPositiveId(iconId)) ||
+    !names ||
+    (acquisition !== undefined && typeof acquisition !== 'string')
+  )
+    return null;
+  return { id, names, iconId, ...(acquisition !== undefined ? { acquisition } : {}) };
 }
 
 /**
@@ -168,10 +298,10 @@ export async function resolveCharaEquipment(
   // or corrupt file has one) made api-worker 400 the whole batch, so every
   // piece lost its name and the note blamed availability. Such a piece is
   // left out and answered here as `null`: no Item row can carry that model.
-  const sendable = gear.filter(isSendable);
+  const sendable = gear.filter((model) => isKnownSlot(model.slot) && isSendable(model));
   const outOfRange: CharaResolveResult['items'] = {};
   for (const model of gear) {
-    if (!sendable.includes(model)) outOfRange[model.slot] = null;
+    if (isKnownSlot(model.slot) && !sendable.includes(model)) outOfRange[model.slot] = null;
   }
   const glasses = glassesId !== null && inLane(glassesId, 1) ? glassesId : null;
   if (sendable.length === 0 && glasses === null) {
@@ -207,25 +337,31 @@ export async function resolveCharaEquipment(
     );
   }
 
-  let envelope: ResolveEnvelope | null;
+  let envelope: unknown;
   try {
-    envelope = (await response.json()) as ResolveEnvelope;
+    envelope = await response.json();
   } catch {
     envelope = null;
   }
   if (
-    !envelope ||
+    !isRecord(envelope) ||
     envelope.success !== true ||
-    !envelope.data ||
-    typeof envelope.data.items !== 'object' ||
-    envelope.data.items === null
+    !isRecord(envelope.data) ||
+    !isRecord(envelope.data.items) ||
+    (envelope.data.version !== undefined &&
+      envelope.data.version !== null &&
+      typeof envelope.data.version !== 'string')
   ) {
     throw new CharaResolveUnavailableError('Malformed resolve envelope');
   }
 
+  const items: CharaResolveResult['items'] = { ...outOfRange };
+  for (const model of sendable) {
+    items[model.slot] = readItem(envelope.data.items[model.slot]);
+  }
   const result: CharaResolveResult = {
-    items: { ...outOfRange, ...envelope.data.items },
-    glasses: envelope.data.glasses ?? null,
+    items,
+    glasses: glasses === null ? null : readGlasses(envelope.data.glasses),
     version: envelope.data.version ?? null,
   };
   sessionCache.set(signature, result);

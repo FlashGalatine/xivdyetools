@@ -108,6 +108,7 @@ vi.mock('@services/preset-submission-service', async (importOriginal) => {
 });
 
 import { showPresetEditForm } from '../preset-edit-form';
+import { uploadPreviewImage, removePreviewImage } from '@services/preset-submission-service';
 import type { CommunityPreset } from '@services/community-preset-service';
 
 /** 48 characters — long enough to clear MIN_DESC_LENGTH. */
@@ -145,6 +146,45 @@ describe('showPresetEditForm — localization', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  it.each([
+    'http://shots.xivdyetools.app/a.webp',
+    'javascript:alert(1)',
+    'data:image/png;base64,AA',
+    'blob:https://xivdyetools.app/id',
+  ])('never renders unsafe stored preview %s', (url) => {
+    showPresetEditForm(makePreset({ preview_image_status: 'approved', preview_image_url: url }));
+    expect(getFormContent().querySelector('img')).toBeNull();
+  });
+
+  it('keeps an approved HTTPS image and the stored remove action usable', async () => {
+    const url = 'https://shots.xivdyetools.app/preset-1/a.webp';
+    showPresetEditForm(makePreset({ preview_image_status: 'approved', preview_image_url: url }));
+    const content = getFormContent();
+    expect(content.querySelector('img')?.getAttribute('src')).toBe(url);
+    Array.from(content.querySelectorAll('button'))
+      .find((b) => b.textContent === 'preset.previewImageRemove')!
+      .click();
+    expect(content.querySelector('img')).toBeNull();
+    content.querySelector<HTMLButtonElement>('#save-preset-btn')!.click();
+    await vi.waitFor(() => expect(removePreviewImage).toHaveBeenCalledWith('preset-1'));
+  });
+
+  it('can upload a new preview independently of an unsafe stored URL', async () => {
+    showPresetEditForm(
+      makePreset({
+        preview_image_status: 'approved',
+        preview_image_url: 'http://unsafe.test/a.webp',
+      })
+    );
+    const content = getFormContent();
+    const file = new File(['image'], 'new.webp', { type: 'image/webp' });
+    const input = content.querySelector<HTMLInputElement>('input[type="file"]')!;
+    Object.defineProperty(input, 'files', { value: [file] });
+    input.dispatchEvent(new Event('change'));
+    content.querySelector<HTMLButtonElement>('#save-preset-btn')!.click();
+    await vi.waitFor(() => expect(uploadPreviewImage).toHaveBeenCalledWith('preset-1', file));
   });
 
   it('takes the modal title, labels and placeholders from translation keys', () => {

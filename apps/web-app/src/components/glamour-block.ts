@@ -1808,8 +1808,7 @@ export class GlamourBlock {
 
   /**
    * The name for the on-device `kind: 'palette'` record: the draft, else a
-   * local-only fallback in the same order chara-sheet's `saveCharacterColors`
-   * uses (nickname → file name → localized default). It stays in this
+   * local-only fallback (nickname → file name → localized default). It stays in this
    * browser's storage like the character record; the community path above
    * never reads it.
    */

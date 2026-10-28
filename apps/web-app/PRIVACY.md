@@ -2,7 +2,7 @@
 
 > Also available in: [日本語](PRIVACY.ja.md) · [Deutsch](PRIVACY.de.md) · [Français](PRIVACY.fr.md) · [한국어](PRIVACY.ko.md) · [中文](PRIVACY.zh.md). This English version is the authoritative text.
 
-**Last updated:** 2026-10-27 · Covers **xivdyetools.app** and **beta.xivdyetools.app**. The Discord
+**Last updated:** 2026-10-28 · Covers **xivdyetools.app** and **beta.xivdyetools.app**. The Discord
 bot has its own policy: [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.md).
 
 XIV Dye Tools runs in your browser. The color tools — the Palette Extractor, Harmony Explorer,
@@ -33,14 +33,17 @@ and the sections below are the complete list.
   can see. Submitting a glamour to the community presets requires you to type a name yourself —
   the field starts empty on purpose, because the character name and the file name are both places
   players put their real name.
-- **One exception, and it stays on your device.** If you save a glamour or its palette to this
-  browser without typing a name, the saved record falls back to the character's nickname, then to
-  the `.chara` file name. That name lives in your browser's storage next to your other saved
-  collections. It is never uploaded, and the community path above never reads it. Rename or delete
-  the record, or clear your site data, and it is gone.
+- **Names saved on this device.** New character-color saves in the Swatch Matcher use a generic
+  localized name. Older character records can still carry their saved nickname or file name. If
+  you save a glamour or its palette without typing a name, that record can still fall back to the
+  character's nickname, then the `.chara` file name. These names stay in your browser's storage;
+  they are never uploaded, and the community path above never reads them. The app has no
+  per-record rename or delete control. **Advanced Settings → Clear Saved Palettes** removes all
+  saved palette collections. Character collections require clearing the site's data through your
+  browser, which also clears your other locally saved work and sign-in token.
 - To name the gear in the Glamour Reader, the app asks our API for the item behind each slot. The
   request carries only the equipment **model numbers** from the file and the id of its facewear
-  (a dozen small integers per file) — not the file, not the name, not the colors, not the dyes.
+  (up to 27 small integers and 12 fixed slot names per file) — not the file, not the name, not the colors, not the dyes.
   Our API looks those numbers up in [XIVAPI](https://xivapi.com/), a community game-data service,
   which is sent the numbers and nothing about you. The item names, where each item is obtained,
   and the item icons come back from the same host (`data.xivdyetools.app`).
@@ -58,6 +61,9 @@ site-data controls clear all of it. Inside the app, each of these clears one par
 - **Advanced Settings → Clear Favorites** deletes your favorite dyes.
 - **Advanced Settings → Clear Saved Palettes** deletes all your saved palettes at once. The app has
   no control that deletes a single palette.
+- **Saved community presets** in the Presets tool are separate. Clear Saved Palettes does
+  not remove them. Use each preset's save toggle to remove its saved copy, or clear your
+  browser's site data to remove all of them.
 - Swaps you save in Budget Suggestions and character colors you save in the Swatch Matcher have no
   delete control in the app; your browser's site-data controls clear them.
 - Signing out deletes the session token.
@@ -79,7 +85,9 @@ else) plus the third parties named below:
    or data center you chose go to our proxy at `data.xivdyetools.app`, which fetches from
    [Universalis](https://universalis.app).
 2. **Gear names and icons for `.chara` imports** — `data.xivdyetools.app` (see above).
-3. **Community presets** (`api.xivdyetools.app`): browsing sends nothing about you. Signing in
+3. **Community presets** (`api.xivdyetools.app`): browsing while signed out sends no account information. While signed in,
+   opening a preset sends your sign-in token to check whether you already voted. This check does
+   not store a record of your view. Signing in
    through `auth.xivdyetools.app` with Discord or XIVAuth creates an account record right away,
    whether or not you go on to submit or vote. With Discord, the record holds your Discord user ID
    and your display name (your username if you have no display name). With XIVAuth, the record
@@ -92,8 +100,8 @@ else) plus the third parties named below:
    sign in (again, not while a ban is active). Presets and votes you
    submit are stored under that account. Submitting a preset counts as your vote for it; if a
    published preset already has the same dyes, your submission becomes a vote for that preset
-   instead. A preset holds what you enter in the form — and, if our automatic check holds an edit's
-   new name, description, tags or example link for review, the version from before the first such edit, kept until a
+   instead. A preset holds what you enter in the form — and, if our automatic check holds an edit to a published preset's
+   name, description, tags or example link for review, the version from before the first such edit, kept until a
    moderator restores it or the preset is deleted — plus the optional preview image described under
    Images above. To remove a
    preview image, use the preset's edit form; deleting a preset from **My Submissions** deletes its

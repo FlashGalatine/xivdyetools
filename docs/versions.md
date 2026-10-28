@@ -27,7 +27,7 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.16.3 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Web Application** | v5.16.4 | `xivdyetools-web-app` | Cloudflare Pages | Active |
 | **Discord Bot** | v5.9.7 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.4 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.9.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
@@ -127,6 +127,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.16.4 | Oct 2026 | Generic character-save names, named CSP connection hosts, validated previews/character replies and six-language privacy/Terms corrections |
 | v5.16.3 | Oct 2026 | Six-language identity-review, particular-ban continuity and recovery-retention privacy disclosures |
 | v5.16.2 | Oct 2026 | Six-language privacy alignment for preset metadata moderation, safe link snapshots and attempt/refund accounting |
 | v5.16.1 | Oct 2026 | Core 5.16.0: imported character nickname/producer labels keep surrogate pairs intact when capped; GPOSERS export newline joining is linear with the same output |
