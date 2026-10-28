@@ -19,7 +19,7 @@ import {
   validateFileSize,
   readBodyWithCap,
   MAX_FILE_SIZE_BYTES,
-  MAX_IMAGE_DIMENSION,
+  MAX_EXTRACTION_DIMENSION,
   MIN_MAX_DIMENSION,
   assertValidMaxDimension,
 } from './validators.js';
@@ -27,7 +27,7 @@ import { processImageForExtraction, processImageForThumbnail } from './photon.js
 
 /**
  * FINDING-004: `maxDimension` must be an integer in
- * [MIN_MAX_DIMENSION, MAX_IMAGE_DIMENSION].
+ * [MIN_MAX_DIMENSION, MAX_EXTRACTION_DIMENSION].
  *
  * REFACTOR-007 (deep dive 2026-09-02): the rule, the bound and the message
  * were written twice — this route had its own `MIN_MAX_DIMENSION` and
@@ -39,7 +39,7 @@ import { processImageForExtraction, processImageForThumbnail } from './photon.js
  */
 function maxDimensionError(value: unknown): string | null {
   if (typeof value !== 'number') {
-    return `Invalid maxDimension: expected an integer between ${MIN_MAX_DIMENSION} and ${MAX_IMAGE_DIMENSION}`;
+    return `Invalid maxDimension: expected an integer between ${MIN_MAX_DIMENSION} and ${MAX_EXTRACTION_DIMENSION}`;
   }
   try {
     assertValidMaxDimension(value);

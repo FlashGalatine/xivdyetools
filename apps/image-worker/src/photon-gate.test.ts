@@ -62,12 +62,25 @@ describe('pre-decode dimension gate', () => {
   it('still decodes an in-limit image', async () => {
     const result = await processImageForExtraction(pngHeader(640, 480));
     expect(result.width).toBe(100);
-    // decode happened (loadImage; resizeImage's no-op copy path may call it again)
+    // The header gate allowed the original decode.
     expect(PhotonImage.new_from_byteslice).toHaveBeenCalled();
   });
 
+  it('admits the pixel boundary and ordinary 4K/ultrawide inputs', async () => {
+    for (const [width, height] of [[4096, 2048], [3840, 2160], [3440, 1440]]) {
+      expect((await processImageForExtraction(pngHeader(width, height))).width).toBe(100);
+      expect(processImageForThumbnail(pngHeader(width, height))).toEqual(new Uint8Array([0x52, 0x49, 0x46, 0x46]));
+    }
+  });
+
+  it('rejects one row above the pixel boundary before either processor decodes', async () => {
+    await expect(processImageForExtraction(pngHeader(4096, 2049))).rejects.toThrow('Image has too many pixels (8.0MP). Maximum is 8MP');
+    expect(() => processImageForThumbnail(pngHeader(4096, 2049))).toThrow('Image has too many pixels (8.0MP). Maximum is 8MP');
+    expect(PhotonImage.new_from_byteslice).not.toHaveBeenCalled();
+  });
+
   it('rejects an invalid maxDimension before decoding', async () => {
-    for (const bad of [0, -5, 1.5, NaN, Infinity, 100000] as number[]) {
+    for (const bad of [0, -5, 1.5, NaN, Infinity, 513, 100000] as number[]) {
       await expect(processImageForExtraction(pngHeader(64, 64), { maxDimension: bad })).rejects.toThrow(
         /maxDimension/,
       );

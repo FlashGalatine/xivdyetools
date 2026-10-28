@@ -44,8 +44,21 @@ function ok(width: number, height: number): ImageDimensions | undefined {
 }
 
 function readPng(b: Uint8Array): ImageDimensions | undefined {
-  // signature(8) + length(4) + 'IHDR'(4) + width(4) + height(4)
-  if (b.length < 24 || !tag(b, 12, 'IHDR')) return undefined;
+  // Require the complete signature and IHDR (13 data bytes plus CRC).
+  if (
+    b.length < 33 || !tag(b, 0, '\x89PNG\r\n\x1a\n') ||
+    u32be(b, 8) !== 13 || !tag(b, 12, 'IHDR')
+  ) return undefined;
+
+  // FINDING-020: 16-bit decode needs larger intermediate pixel buffers than
+  // the RGBA8 memory budget allows. Refuse it before Photon allocates them.
+  const depth = b[24];
+  const color = b[25];
+  const subByteDepth = depth === 1 || depth === 2 || depth === 4;
+  const supportedDepthAndColor =
+    ((color === 0 || color === 3) && (subByteDepth || depth === 8)) ||
+    ((color === 2 || color === 4 || color === 6) && depth === 8);
+  if (!supportedDepthAndColor || b[26] !== 0 || b[27] !== 0 || b[28] > 1) return undefined;
   return ok(u32be(b, 16), u32be(b, 20));
 }
 

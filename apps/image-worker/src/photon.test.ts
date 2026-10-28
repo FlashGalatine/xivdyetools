@@ -1,14 +1,14 @@
 /**
  * Tests for Photon image processing service
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // Create mock PhotonImage instances
 const createMockPhotonImage = (width = 100, height = 100) => ({
     get_width: () => width,
     get_height: () => height,
     get_raw_pixels: () => new Uint8Array([255, 0, 0, 255, 0, 255, 0, 255]),
-    get_bytes: () => pngHeader(100, 100),
+    get_bytes: vi.fn(() => pngHeader(100, 100)),
     free: vi.fn(),
 });
 
@@ -19,12 +19,12 @@ const mockResizedImage = createMockPhotonImage(50, 50);
  * FINDING-004: the processing entry points now gate on the container header
  * before decoding, so test buffers must carry a readable PNG IHDR.
  */
-function pngHeader(width: number, height: number): Uint8Array {
+function pngHeader(width: number, height: number, bitDepth = 8, colorType = 6): Uint8Array {
     const u32 = (n: number): number[] => [(n >>> 24) & 0xff, (n >>> 16) & 0xff, (n >>> 8) & 0xff, n & 0xff];
     return new Uint8Array([
         0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
         ...u32(13), 0x49, 0x48, 0x44, 0x52, ...u32(width), ...u32(height),
-        8, 6, 0, 0, 0, 0, 0, 0, 0,
+        bitDepth, colorType, 0, 0, 0, 0, 0, 0, 0,
     ]);
 }
 
@@ -56,6 +56,50 @@ import {
     THUMBNAIL_HEIGHT,
 } from './photon.js';
 import { PhotonImage, resize, SamplingFilter, crop } from '@cf-wasm/photon';
+import app from './index.js';
+import { imageInputReason } from '../../discord-worker/src/services/image-input-errors.js';
+
+describe('16-bit PNG pre-decode rejection (FINDING-020)', () => {
+    beforeEach(() => vi.clearAllMocks());
+    afterEach(() => vi.restoreAllMocks());
+
+    it.each([0, 2, 4, 6])('rejects color type %i in both processors before constructing Photon', async (color) => {
+        for (const [width, height] of [[1, 1], [4096, 2048]]) {
+            const header = pngHeader(width, height, 16, color);
+            await expect(processImageForExtraction(header)).rejects.toThrow(
+                'Unsupported image format or unreadable image dimensions',
+            );
+            expect(() => processImageForThumbnail(header)).toThrow(
+                'Unsupported image format or unreadable image dimensions',
+            );
+        }
+        expect(PhotonImage.new_from_byteslice).not.toHaveBeenCalled();
+        expect(crop).not.toHaveBeenCalled();
+        expect(resize).not.toHaveBeenCalled();
+    });
+
+    it.each([0, 2, 4, 6])('returns HTTP 400 and caller format classification for color type %i on both routes', async (color) => {
+        const header = pngHeader(4096, 2048, 16, color);
+        vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(header));
+
+        const extraction = await app.request('https://image-worker/extract', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: 'https://cdn.discordapp.com/attachment.png' }),
+        }, {});
+        const thumbnail = await app.request('https://image-worker/thumbnail', {
+            method: 'POST', body: header,
+        }, {});
+
+        for (const response of [extraction, thumbnail]) {
+            expect(response.status).toBe(400);
+            const body = await response.json() as { error: string };
+            expect(body).toEqual({ error: 'Unsupported image format or unreadable image dimensions' });
+            expect(imageInputReason(new Error(body.error))).toBe('format');
+        }
+        expect(PhotonImage.new_from_byteslice).not.toHaveBeenCalled();
+    });
+});
 
 describe('photon image processing', () => {
     beforeEach(() => {
@@ -103,13 +147,15 @@ describe('photon image processing', () => {
             expect(result).toBe(mockResizedImage);
         });
 
-        it('returns copy when image is already smaller', () => {
+        it('returns the original without encoding or decoding when no resize is needed', () => {
             const smallImage = createMockPhotonImage(100, 100);
 
-            resizeImage(smallImage as unknown as ReturnType<typeof PhotonImage.new_from_byteslice>, 256);
+            const result = resizeImage(smallImage as unknown as ReturnType<typeof PhotonImage.new_from_byteslice>, 256);
 
-            // Should create a new image from bytes (copy)
-            expect(PhotonImage.new_from_byteslice).toHaveBeenCalled();
+            expect(result).toBe(smallImage);
+            expect(smallImage.get_bytes).not.toHaveBeenCalled();
+            expect(PhotonImage.new_from_byteslice).not.toHaveBeenCalled();
+            expect(resize).not.toHaveBeenCalled();
         });
 
         it('maintains aspect ratio for landscape images', () => {
@@ -207,24 +253,34 @@ describe('photon image processing', () => {
             await processImageForExtraction(buffer);
 
             // Should have freed the processed image (mockPhotonImage since size is 100x100 < 256)
-            expect(mockPhotonImage.free).toHaveBeenCalled();
+            expect(mockPhotonImage.free).toHaveBeenCalledTimes(1);
+            expect(mockPhotonImage.get_bytes).not.toHaveBeenCalled();
+            expect(PhotonImage.new_from_byteslice).toHaveBeenCalledTimes(1);
         });
 
         it('frees memory even on error', async () => {
+            const largeImage = createMockPhotonImage(500, 300);
             vi.mocked(PhotonImage.new_from_byteslice)
-                .mockReturnValueOnce(mockPhotonImage as unknown as ReturnType<typeof PhotonImage.new_from_byteslice>)
-                .mockImplementationOnce(() => { throw new Error('Resize failed'); });
+                .mockReturnValueOnce(largeImage as unknown as ReturnType<typeof PhotonImage.new_from_byteslice>);
+            vi.mocked(resize).mockImplementationOnce(() => { throw new Error('Resize failed'); });
 
-            const buffer = pngHeader(100, 100);
+            await expect(processImageForExtraction(pngHeader(500, 300))).rejects.toThrow('Resize failed');
 
-            try {
-                await processImageForExtraction(buffer);
-            } catch {
-                // Expected to throw
-            }
+            expect(largeImage.free).toHaveBeenCalledTimes(1);
+        });
 
-            // Should still have freed the original image
-            expect(mockPhotonImage.free).toHaveBeenCalled();
+        it('frees the original once if pixel extraction fails without a resize', async () => {
+            const image = {
+                ...createMockPhotonImage(),
+                get_raw_pixels: () => { throw new Error('Pixel extraction failed'); },
+            };
+            vi.mocked(PhotonImage.new_from_byteslice).mockReturnValueOnce(image as unknown as PhotonImage);
+
+            await expect(processImageForExtraction(pngHeader(100, 100))).rejects.toThrow('Pixel extraction failed');
+
+            expect(image.free).toHaveBeenCalledTimes(1);
+            expect(image.get_bytes).not.toHaveBeenCalled();
+            expect(PhotonImage.new_from_byteslice).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -271,6 +327,95 @@ describe('photon image processing', () => {
     });
 
     describe('processImageForThumbnail', () => {
+        it('releases each consumed image before the next allocating stage', () => {
+            const original = createMockPhotonImage(1920, 1080);
+            const cropped = createMockPhotonImage(1920, 792);
+            const bytes = new Uint8Array([82, 73, 70, 70]);
+            const resized = {
+                ...createMockPhotonImage(640, 264),
+                get_bytes_webp: () => {
+                    expect(original.free).toHaveBeenCalledTimes(1);
+                    expect(cropped.free).toHaveBeenCalledTimes(1);
+                    return bytes;
+                },
+            };
+            vi.mocked(PhotonImage.new_from_byteslice).mockReturnValueOnce(original as unknown as PhotonImage);
+            vi.mocked(crop).mockReturnValueOnce(cropped as unknown as PhotonImage);
+            vi.mocked(resize).mockImplementationOnce(() => {
+                expect(original.free).toHaveBeenCalledTimes(1);
+                expect(cropped.free).not.toHaveBeenCalled();
+                return resized as unknown as PhotonImage;
+            });
+
+            expect(processImageForThumbnail(pngHeader(1920, 1080))).toEqual(bytes);
+            for (const image of [original, cropped, resized]) {
+                expect(image.free).toHaveBeenCalledTimes(1);
+            }
+        });
+
+        it.each(['crop', 'resize', 'encode'])('frees every acquired image once when %s throws', (stage) => {
+            const original = createMockPhotonImage(1920, 1080);
+            const cropped = createMockPhotonImage(1920, 792);
+            const resized = {
+                ...createMockPhotonImage(640, 264),
+                get_bytes_webp: () => { throw new Error('encode failure'); },
+            };
+            vi.mocked(PhotonImage.new_from_byteslice).mockReturnValueOnce(original as unknown as PhotonImage);
+            if (stage === 'crop') {
+                vi.mocked(crop).mockImplementationOnce(() => { throw new Error('crop failure'); });
+            } else {
+                vi.mocked(crop).mockReturnValueOnce(cropped as unknown as PhotonImage);
+                vi.mocked(resize).mockImplementationOnce(() => {
+                    expect(original.free).toHaveBeenCalledTimes(1);
+                    if (stage === 'resize') throw new Error('resize failure');
+                    return resized as unknown as PhotonImage;
+                });
+            }
+
+            expect(() => processImageForThumbnail(pngHeader(1920, 1080))).toThrow(`${stage} failure`);
+            expect(original.free).toHaveBeenCalledTimes(1);
+            expect(cropped.free).toHaveBeenCalledTimes(stage === 'crop' ? 0 : 1);
+            expect(resized.free).toHaveBeenCalledTimes(stage === 'encode' ? 1 : 0);
+        });
+
+        it.each(['crop aliases original', 'resize aliases crop', 'all alias'])('frees each distinct image once when %s', (aliases) => {
+            const bytes = new Uint8Array([82, 73, 70, 70]);
+            const original = { ...createMockPhotonImage(), get_bytes_webp: () => bytes };
+            const cropped = aliases === 'resize aliases crop'
+                ? { ...createMockPhotonImage(), get_bytes_webp: () => bytes } : original;
+            const resized = aliases === 'crop aliases original'
+                ? { ...createMockPhotonImage(), get_bytes_webp: () => bytes } : cropped;
+            vi.mocked(PhotonImage.new_from_byteslice).mockReturnValueOnce(original as unknown as PhotonImage);
+            vi.mocked(crop).mockReturnValueOnce(cropped as unknown as PhotonImage);
+            vi.mocked(resize).mockImplementationOnce(() => {
+                expect(original.free).toHaveBeenCalledTimes(original === cropped ? 0 : 1);
+                return resized as unknown as PhotonImage;
+            });
+
+            expect(processImageForThumbnail(pngHeader(100, 100))).toEqual(bytes);
+            for (const image of new Set([original, cropped, resized])) {
+                expect(image.free).toHaveBeenCalledTimes(1);
+            }
+        });
+
+        it('continues processing and cleans up once when early or final free throws', () => {
+            const bytes = new Uint8Array([82, 73, 70, 70]);
+            const original = createMockPhotonImage();
+            const cropped = createMockPhotonImage();
+            const resized = { ...createMockPhotonImage(), get_bytes_webp: () => bytes };
+            for (const image of [original, cropped, resized]) {
+                image.free.mockImplementation(() => { throw new Error('free failure'); });
+            }
+            vi.mocked(PhotonImage.new_from_byteslice).mockReturnValueOnce(original as unknown as PhotonImage);
+            vi.mocked(crop).mockReturnValueOnce(cropped as unknown as PhotonImage);
+            vi.mocked(resize).mockReturnValueOnce(resized as unknown as PhotonImage);
+
+            expect(processImageForThumbnail(pngHeader(100, 100))).toEqual(bytes);
+            for (const image of [original, cropped, resized]) {
+                expect(image.free).toHaveBeenCalledTimes(1);
+            }
+        });
+
         it('returns WebP bytes', () => {
             const buffer = pngHeader(100, 100);
             const webpBytes = new Uint8Array([0x52, 0x49, 0x46, 0x46]); // RIFF

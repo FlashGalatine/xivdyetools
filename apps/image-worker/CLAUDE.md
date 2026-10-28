@@ -72,7 +72,7 @@ discord-worker ──Service Binding──► POST /extract
                               validateAndFetchImage(url)   (validators.ts)
                                   ├─ SSRF allowlist check (Discord CDN only)
                                   ├─ fetch with 10s timeout, one manual redirect hop
-                                  ├─ file-size check (10 MB max)
+                                  ├─ file-size check (5 MiB max)
                                   └─ magic-byte format check (png/jpeg/gif/webp/bmp)
                                           │
                                           ▼
@@ -135,12 +135,12 @@ POST /thumbnail
   body: raw image bytes (NOT JSON, and NOT a URL — the caller already holds the upload)
 
 200 → body:    WebP bytes, Content-Type: image/webp
-400 → body:    { error: string }   — empty body, over the 10 MB cap, rejected by the pre-decode dimension gate, or photon could not decode
+400 → body:    { error: string }   — empty body, over the 5 MiB cap, rejected by the pre-decode dimension gate, or photon could not decode
 ```
 
 Unlike `/extract`, this route takes **bytes, not a URL**, so the SSRF and fetch-timeout paths in
 `validators.ts` do not run on it — nothing here fetches anything. It is *not* unguarded, though:
-there is a `Content-Length` pre-check, a streaming 10 MB cap (`readBodyWithCap`), an empty-body
+there is a `Content-Length` pre-check, a streaming 5 MiB cap (`readBodyWithCap`), an empty-body
 check, and the same pre-decode header dimension gate `/extract` uses
 (`assertImageDimensionsFromHeader` inside `processImageForThumbnail`).
 
@@ -156,11 +156,11 @@ character's head high in frame. Both axes clamp into `[1, source]`, so a degener
 
 `DEFAULT_MAX_DIMENSION` in `photon.ts` is **256**. When the caller omits `maxDimension`,
 `processImageForExtraction` resizes to that default before extracting pixels, so the response
-body is bounded at 256 × 256 × 4 bytes = **256 KiB** regardless of the 10 MB input-file limit
+body is bounded at 256 × 256 × 4 bytes = **256 KiB** regardless of the 5 MiB input-file limit
 (`MAX_FILE_SIZE_BYTES` in `validators.ts`). `discord-worker`'s `image-client.ts` does not pass
 `maxDimension`, so this default is what production traffic actually gets; a caller that does
 supply a larger `maxDimension` receives a proportionally larger response, bounded by
-`MAX_IMAGE_DIMENSION` (4096). Since 1.1.0 that value **is** validated — `assertValidMaxDimension`
+`MAX_EXTRACTION_DIMENSION` (512), independently of the 4096-pixel input-side cap. Since 1.1.0 the requested output **is** validated — `assertValidMaxDimension`
 in `validators.ts` is the one rule, called by the `/extract` route (as a 400) and by
 `processImageForExtraction` (as a throw). It lives in `validators.ts` rather than `photon.ts`
 because every route test mocks `photon.js` wholesale, so a rule reached through it would be
@@ -232,11 +232,13 @@ redirect target is validated through the same allowlist before being followed.
 `@cf-wasm/photon`'s `PhotonImage` instances are not garbage-collected — `processImageForExtraction`
 `.free()`s both the original and resized image in a `finally` block (guarding against the
 original/resized image being the same reference when no resize was needed) so a Worker isolate
-handling many requests does not leak WASM memory toward the 128 MB limit.
+releases its owned allocations. Linear-memory capacity does not shrink after freeing, so
+warm-isolate measurements remain necessary. Thumbnail processing also releases consumed
+original/cropped images before the next allocation, retaining alias-safe failure cleanup.
 
 ### What is actually bounded on the request path
 
-Two limits are enforced before pixels are ever extracted: the 10 MB file size
+Two limits are enforced before pixels are ever extracted: the 5 MiB file size
 (`MAX_FILE_SIZE_BYTES`, checked against both the `Content-Length` header and the fetched buffer
 in `validators.ts`) and the 10-second fetch timeout (`FETCH_TIMEOUT_MS`, via `AbortController`).
 Input dimensions **are** capped, before any decode. `assertImageDimensionsFromHeader` reads
@@ -246,20 +248,23 @@ apply:
 
 - `MAX_IMAGE_DIMENSION` = 4096 per side — the secondary guard, rejecting a shape no legitimate
   palette source has.
-- `MAX_PIXEL_COUNT` = **9,437,184 px (≈ 9.4 MP)**, and it is *derived from the memory budget*,
-  not from the side length: `PIXEL_MEMORY_BUDGET_BYTES` (72 MiB) / (4 bytes per RGBA pixel x 2
-  concurrent copies inside photon). It used to be `16 * 1024 * 1024` — exactly 4096^2 — so the
-  largest square the side cap admits passed at equality and the pixel branch was unreachable. One
-  RGBA buffer for it is 64 MiB and photon holds two, which needs >= 128 MiB against Cloudflare's
-  128 MiB per-isolate limit; a solid-color 4096x4096 PNG compresses to tens of KB, far under the
-  10 MB file cap, so the OOM this gate exists to prevent was reachable from any Discord attachment
-  (BUG-052). The budget was raised from 32 MiB (4 MP) because 3840x2160 is 8.29 MP and 3440x1440 is
-  4.95 MP — a 4K or ultrawide capture, the commonest palette source a player has, was being refused
-  pre-decode. At 72 MiB those pass and 4096x4096 (134 MiB of RGBA) is still refused; peak memory
-  lands near 95-100 MB of the 128 MiB isolate, so this is a ceiling, not a floor to raise again
-  without measuring.
+- `MAX_PIXEL_COUNT` = **8,388,608 px**, derived from a 64 MiB pixel allowance divided
+  by 4 bytes and two charged copies. This arithmetic is an admission model, not a complete
+  measurement of Photon memory. It retains 3840×2160 and 3440×1440 inputs while refusing
+  4096². The old 72 MiB allowance and its claimed peak were invalidated by A-IMAGE's
+  real workerd measurements.
+- Encoded input is capped at **5 MiB** while streaming, and extraction output at **512**
+  pixels per side (default **256**). PNG IHDR depth/color metadata is checked before decode;
+  16-bit input is refused with the existing unsupported-format envelope.
+- No-resize extraction reuses its original Photon image, and thumbnail processing releases
+  each consumed distinct image before the next allocating stage. Failure cleanup remains
+  alias-safe and best effort. Warm-isolate memory evidence, including its limitations, is
+  recorded in the dated A-IMAGE audit evidence; OS process RSS is not isolate usage.
 
 The request body's `maxDimension` is validated too — see the `/extract` contract above.
+The bot manual's six-language 5 MB companion must ship before the image-worker's lower cap.
+Package publication alone does not hold automatic consumer deployments. No production hold
+or activation is implied by source preparation.
 
 ## Dependencies
 
@@ -285,9 +290,17 @@ The request body's `maxDimension` is validated too — see the `/extract` contra
 
 ## Deployment Checklist
 
-**Deploy order is load-bearing.** This Worker must be deployed *before* its callers, or their
+**A-IMAGE 1.3.5 activation is held.** Do not merge or deploy this release until the
+aggregate-memory/platform gate **and** deployment of the corrected bot manual are verified.
+The [dated execution evidence](../../docs/audits/2026-10-26-security/evidence/remediation-image-2026-10-28.md)
+records the unresolved warm allocated-memory observations. Passing tests, a bundle dry-run
+and stable WASM capacity do not satisfy that platform gate.
+
+**Deploy order is load-bearing for a new binding or route.** This Worker must exist *before* its callers, or their
 `IMAGE_WORKER` service bindings fail to resolve (the reverse order is harmless — an old caller
-alongside a new image Worker simply doesn't use the new route yet).
+alongside a new image Worker simply doesn't use the new route yet). For A-IMAGE's lower
+file cap, both routes already exist: deploy and verify the corrected bot manual before
+activating the lower image-worker limit.
 
 1. `pnpm lint && pnpm test && pnpm type-check` — must be green.
 2. `pnpm deploy:production` (or via CI: `.github/workflows/deploy-image-worker.yml`).

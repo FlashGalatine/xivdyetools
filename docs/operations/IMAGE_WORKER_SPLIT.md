@@ -89,7 +89,7 @@ dependency as photon itself.
 | File | Note |
 |---|---|
 | `photon.ts` | the sole photon consumer |
-| `validators.ts` | `MAX_FILE_SIZE_BYTES` 10 MB, `MAX_IMAGE_DIMENSION` 4096, `MAX_PIXEL_COUNT` 16 M at split time — since revised to 9,437,184 px (≈9.4 MP), derived from `PIXEL_MEMORY_BUDGET_BYTES` |
+| `validators.ts` | `MAX_FILE_SIZE_BYTES` 5 MiB, `MAX_IMAGE_DIMENSION` 4096, `MAX_PIXEL_COUNT` 8,388,608 derived from the 64 MiB allowance; extraction output max 512 (A-IMAGE). At split time the caps were 10 MB /16 M pixels |
 | `index.ts` | re-export surface |
 | `photon.test.ts`, `validators.test.ts`, `index.test.ts` | move with their source |
 
@@ -111,7 +111,7 @@ POST /extract
 binding, which passes `Request`/`Response` objects directly.
 
 **Payload is bounded at 256 KiB.** `DEFAULT_MAX_DIMENSION` is 256 (`photon.ts:55`), so the worst
-case is 256 × 256 × 4 bytes regardless of the 10 MB input limit.
+case is 256 × 256 × 4 bytes regardless of the 5 MiB input limit. Explicit extraction output is now bounded at 512 pixels per side (1 MiB RGBA); thumbnail output remains 640×264.
 
 ## Deployment shape
 

@@ -6,6 +6,7 @@ import {
     validateImageUrl,
     validateFileSize,
     validateDimensions,
+    assertValidMaxDimension,
     detectImageFormat,
     validateImageFormat,
     fetchImageWithTimeout,
@@ -32,11 +33,11 @@ describe('validators.ts', () => {
 
     describe('Constants', () => {
         it('should have correct default values', () => {
-            expect(MAX_FILE_SIZE_BYTES).toBe(10 * 1024 * 1024); // 10MB
+            expect(MAX_FILE_SIZE_BYTES).toBe(5 * 1024 * 1024); // 5MiB
             expect(MAX_IMAGE_DIMENSION).toBe(4096);
             // BUG-052: derived from the memory budget, not the side length —
-            // 72 MiB / (4 B/px x 2 concurrent RGBA copies) = 9 MP.
-            expect(MAX_PIXEL_COUNT).toBe(9 * 1024 * 1024); // 9,437,184 px
+            // 64 MiB / (4 B/px x 2 concurrent RGBA copies) = 8 Mi pixels.
+            expect(MAX_PIXEL_COUNT).toBe(8 * 1024 * 1024); // 8,388,608 px
             expect(FETCH_TIMEOUT_MS).toBe(10000);
         });
     });
@@ -135,6 +136,10 @@ describe('validators.ts', () => {
     // ==========================================================================
 
     describe('validateFileSize', () => {
+        it('accepts exactly 5 MiB and rejects one byte more', () => {
+            expect(validateFileSize(5 * 1024 * 1024)).toBeUndefined();
+            expect(validateFileSize(5 * 1024 * 1024 + 1)).toBe('Image too large (5.0MB). Maximum size is 5MB');
+        });
         it('should accept valid file sizes', () => {
             expect(validateFileSize(1024)).toBeUndefined();
             expect(validateFileSize(5 * 1024 * 1024)).toBeUndefined(); // 5MB
@@ -154,7 +159,7 @@ describe('validators.ts', () => {
         it('should reject files over the size limit', () => {
             const result = validateFileSize(MAX_FILE_SIZE_BYTES + 1);
             expect(result).toContain('Image too large');
-            expect(result).toContain('10MB');
+            expect(result).toContain('5MB');
         });
 
         it('should format size in the error message', () => {
@@ -167,7 +172,7 @@ describe('validators.ts', () => {
         it('should accept valid dimensions', () => {
             expect(validateDimensions(100, 100)).toBeUndefined();
             expect(validateDimensions(1920, 1080)).toBeUndefined();
-            // 2048x2048 = 4MP exactly at the limit (BUG-052)
+            // 2048x2048 remains below the pixel ceiling.
             expect(validateDimensions(2048, 2048)).toBeUndefined();
         });
 
@@ -190,10 +195,10 @@ describe('validators.ts', () => {
         });
 
         it('should allow a wide image within the pixel budget', () => {
-            // 4096x2304 = 9,437,184 px = exactly MAX_PIXEL_COUNT.
-            expect(validateDimensions(4096, 2304)).toBeUndefined();
+            // 4096x2048 = 8,388,608 px = exactly MAX_PIXEL_COUNT.
+            expect(validateDimensions(4096, 2048)).toBeUndefined();
             // and one row past it is refused
-            expect(validateDimensions(4096, 2305)).toContain('too many pixels');
+            expect(validateDimensions(4096, 2049)).toBe('Image has too many pixels (8.0MP). Maximum is 8MP');
         });
 
         /**
@@ -227,12 +232,21 @@ describe('validators.ts', () => {
         it('rejects the largest square the SIDE cap admits — 4096x4096 is 64 MiB per RGBA copy', () => {
             const result = validateDimensions(4096, 4096);
             expect(result).toContain('too many pixels');
-            expect(result).toContain('9MP');
+            expect(result).toContain('8MP');
         });
 
-        it('the pixel cap binds before the side cap for any square over 3072', () => {
-            expect(validateDimensions(3072, 3072)).toBeUndefined(); // 9.44 MP, just inside
-            expect(validateDimensions(3073, 3073)).toContain('too many pixels');
+        it('the pixel cap binds between 2896 and 2897 square pixels', () => {
+            expect(validateDimensions(2896, 2896)).toBeUndefined(); // 8,386,816 px
+            expect(validateDimensions(2897, 2897)).toContain('too many pixels'); // 8,392,609 px
+        });
+    });
+
+    describe('assertValidMaxDimension', () => {
+        it('accepts 16 and 512 but rejects 513 without changing the input-side cap', () => {
+            expect(() => assertValidMaxDimension(16)).not.toThrow();
+            expect(() => assertValidMaxDimension(512)).not.toThrow();
+            expect(() => assertValidMaxDimension(513)).toThrow('Invalid maxDimension: expected an integer between 16 and 512');
+            expect(validateDimensions(4096, 1)).toBeUndefined();
         });
     });
 

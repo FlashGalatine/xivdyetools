@@ -23,11 +23,11 @@ function u32le(n: number): number[] {
 }
 const ascii = (s: string): number[] => [...s].map((c) => c.charCodeAt(0));
 
-export function pngHeader(width: number, height: number): Uint8Array {
+export function pngHeader(width: number, height: number, bitDepth = 8, colorType = 6): Uint8Array {
   return new Uint8Array([
     0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, // signature
     ...u32be(13), ...ascii('IHDR'), ...u32be(width), ...u32be(height),
-    8, 6, 0, 0, 0, // bit depth, colour type, compression, filter, interlace
+    bitDepth, colorType, 0, 0, 0, // bit depth, colour type, compression, filter, interlace
     0, 0, 0, 0, // crc (unchecked)
   ]);
 }
@@ -92,6 +92,49 @@ describe('readImageDimensions', () => {
   it('reads PNG IHDR', () => {
     expect(readImageDimensions(pngHeader(640, 480))).toEqual({ width: 640, height: 480 });
     expect(readImageDimensions(pngHeader(20000, 20000))).toEqual({ width: 20000, height: 20000 });
+  });
+
+  it.each([
+    [1, 0], [2, 0], [4, 0], [8, 0], [8, 2],
+    [1, 3], [2, 3], [4, 3], [8, 3], [8, 4], [8, 6],
+  ])('reads supported PNG depth %i / color type %i', (depth, color) => {
+    expect(readImageDimensions(pngHeader(640, 480, depth, color))).toEqual({ width: 640, height: 480 });
+  });
+
+  it.each([0, 2, 4, 6])('refuses 16-bit PNG color type %i even at small dimensions', (color) => {
+    expect(readImageDimensions(pngHeader(1, 1, 16, color))).toBeUndefined();
+    expect(readImageDimensions(pngHeader(3072, 3072, 16, color))).toBeUndefined();
+  });
+
+  it.each([
+    [0, 0], [3, 0], [32, 0], [1, 2], [2, 2], [4, 2],
+    [16, 3], [1, 4], [2, 4], [4, 4], [1, 6], [2, 6], [4, 6],
+    [8, 1], [8, 5], [8, 7], [8, 255],
+  ])('refuses illegal PNG depth %i / color type %i', (depth, color) => {
+    expect(readImageDimensions(pngHeader(640, 480, depth, color))).toBeUndefined();
+  });
+
+  it.each([24, 25, 26, 28, 29, 32])('refuses an incomplete %i-byte PNG IHDR', (length) => {
+    expect(readImageDimensions(pngHeader(640, 480).subarray(0, length))).toBeUndefined();
+  });
+
+  it.each([
+    [4, 0], // complete PNG signature required
+    [11, 12], [11, 14], // IHDR payload length must be 13
+    [12, 0], // IHDR must be the first chunk
+    [26, 1], // unsupported compression method
+    [27, 1], // unsupported filter method
+    [28, 2], // invalid interlace method
+  ])('refuses malformed PNG metadata at byte %i', (offset, value) => {
+    const header = pngHeader(640, 480);
+    header[offset] = value;
+    expect(readImageDimensions(header)).toBeUndefined();
+  });
+
+  it('reads an Adam7 PNG header', () => {
+    const header = pngHeader(640, 480);
+    header[28] = 1;
+    expect(readImageDimensions(header)).toEqual({ width: 640, height: 480 });
   });
 
   it('reads baseline and progressive JPEG SOF, skipping APPn/DQT segments', () => {

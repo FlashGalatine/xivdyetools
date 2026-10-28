@@ -500,6 +500,8 @@ After relevant core/SVG publication. Correct the default Discord-frame subtitle 
 
 ## Sprint A-IMAGE — apps/image-worker
 
+**Execution update 2026-10-28 — PARTIAL / source prepared, activation held:** image-worker **1.3.5 PATCH** rejects PNG16 before decode, bounds encoded/pixel/output allocation and releases consumed Photon images early. [Real workerd evidence](../2026-10-26-security/evidence/remediation-image-2026-10-28.md) records cold/control parity and a stable warm WASM plateau, but also a **142.330 MiB** allocated checkpoint. Aggregate headroom/platform acceptance remains unresolved; do not mark the finding fully fixed. A separate six-language bot-manual numeric companion must be published with complete bot-logic source and deployed before the lower cap. No production hold is assumed and no activation is selected.
+
 One image-worker release; validate peak decode memory in the Worker runtime before treating the accounting change as complete.
 
 | ID | Source | Sev/Pri | Action |

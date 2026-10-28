@@ -14,4 +14,4 @@
 - Read the PNG IHDR bit depth (byte 24) and color type (byte 25) in dimensions.ts. Either refuse 16-bit input or charge it a bytes-per-pixel factor of 2x or more against the pixel budget. Then re-measure the real wasm peak (8-bit at the cap is already 110 MiB) and lower PIXEL_MEMORY_BUDGET_BYTES until it leaves real headroom, with a regression test on a 16-bit PNG at the cap.
 
 ## Status
-OPEN
+PARTIAL / OPEN — reviewed A-IMAGE mitigation prepared in image-worker 1.3.5. PNG16 is rejected before Photon; encoded/pixel/output bounds and image lifetimes are tightened. Actual cold/warm workerd results and the 142.330 MiB allocated checkpoint are recorded in [execution evidence](../evidence/remediation-image-2026-10-28.md). Aggregate memory headroom and Cloudflare production acceptance remain unresolved; activation is held. The six-language bot-manual companion must ship before the lower cap. No production memory-safety verdict or deployment is claimed.

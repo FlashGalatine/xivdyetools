@@ -228,7 +228,7 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 | FINDING-017 | OPEN — shared preset and Discord RL_5 regression prepared; deployed verification pending | [Implementation evidence](evidence/remediation-worker-kit-2026-10-27.md) |
 | FINDING-018 | OPEN — source prepared; release pending | [A-PRESETS evidence](evidence/remediation-presets-2026-10-27.md) |
 | FINDING-019 | OPEN — source prepared; release pending | [A-PRESETS evidence](evidence/remediation-presets-2026-10-27.md) |
-| FINDING-020 | OPEN | — |
+| FINDING-020 | PARTIAL / OPEN — A-IMAGE mitigation source prepared; aggregate memory/platform gate unresolved | [Execution evidence](evidence/remediation-image-2026-10-28.md) |
 | FINDING-021 | OPEN — source prepared; release pending | [A-BOT-LOGIC evidence](evidence/remediation-bot-logic-2026-10-27.md) |
 | FINDING-022 | OPEN — six-language character-card policy correction prepared; release pending. | [A-DISCORD evidence](evidence/remediation-discord-2026-10-27.md) |
 | FINDING-023 | OPEN — provider/consumers prepared inactive; bounded RPC/activation/release pending | [A-MODERATION evidence](evidence/remediation-moderation-2026-10-27.md) |

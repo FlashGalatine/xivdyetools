@@ -5,6 +5,27 @@ All notable changes to the XIV Dye Tools Image Worker will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.5] - 2026-10-28
+
+### Security
+
+- Reject 16-bit PNGs and invalid IHDR metadata before Photon decoding (FINDING-020).
+  Legal lower-depth PNGs and the other supported image formats retain their paths.
+- Bound encoded input to **5 MiB**, total input pixels to **8,388,608** and extraction's
+  requested output side to **16–512**. Input sides may still reach **4096**, so ordinary
+  3840×2160 and 3440×1440 screenshots fit the pixel allowance. Default extraction remains
+  **256**; thumbnail dimensions remain **640×264**. Inputs between 5 and 10 MiB and internal
+  requests above 512 output pixels now receive the existing rejection envelope.
+- Remove the no-resize PNG encode/decode round trip, and release consumed thumbnail images
+  before allocating later stages. Each distinct Photon object is freed once, including
+  failure paths; successful pixel/WebP output semantics stay unchanged.
+
+The six-language bot-manual limit companion must be included in the complete reviewed
+bot-logic publication and the corrected manual deployed before this lower cap activates.
+Aggregate memory/platform acceptance remains unresolved; activation is held until that gate
+and the corrected manual deployment are verified. No image-worker deployment is selected
+by this source preparation.
+
 ## [1.3.4] - 2026-10-06
 
 Sprint 21 of the 2026-10-04 remediation plan (DEAD-038). Merging deploys production; the bundle is unchanged.
