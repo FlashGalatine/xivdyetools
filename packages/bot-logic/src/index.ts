@@ -41,6 +41,8 @@ export {
   getLocalizedAcquisition,
   getLocalizedHarmonyType,
   getLocalizedVisionType,
+  getLocalizedRace,
+  getLocalizedClan,
   /** @public */
   getLocalizedCurrency,
 } from './localization.js';

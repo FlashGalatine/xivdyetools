@@ -185,6 +185,24 @@ describe('handlers/commands/preferences.ts', () => {
         });
     });
 
+    it('shows official Japanese clan and race names with canonical tokens in invalid-clan validation', async () => {
+        const { createUserTranslator } = await import('../../services/bot-i18n.js');
+        const { createTranslator } = await import('@xivdyetools/bot-logic/i18n');
+        const { initializeLocale } = await import('@xivdyetools/bot-logic');
+        await initializeLocale('ja');
+        vi.mocked(createUserTranslator).mockResolvedValueOnce(createTranslator('ja'));
+        const { setPreferences } = await import('../../services/preferences.js');
+        vi.mocked(setPreferences).mockResolvedValueOnce([{ success: false, reason: 'invalidClan' }]);
+        const response = await handlePreferencesCommand(interactionFor([
+            { name: 'set', type: 1, options: [{ name: 'clan', type: 3, value: 'invalid' }] },
+        ]), mockEnv, mockCtx);
+        await settle();
+        const body = await response.json() as { data?: { embeds?: Array<{ description?: string }> } };
+        const text = body.data?.embeds?.[0]?.description ?? (await editedEmbed()).description ?? '';
+        expect(text).toContain('ミコッテ');
+        expect(text).toContain('サンシーカー (`Seeker of the Sun`)');
+    });
+
     /**
      * FINDING-019 (2026-08-29 security audit): `/preferences set world:` wrote
      * whatever the user typed into `prefs:v1:<userId>` — the same field

@@ -113,10 +113,10 @@ These percentages apply to each configured coverage include/exclude set. They do
 | [BUG-006](findings/BUG-006.md) | OPEN — source prepared; release pending | [A-PRESETS evidence](../2026-10-26-security/evidence/remediation-presets-2026-10-27.md) |
 | [BUG-007](findings/BUG-007.md) | OPEN — source prepared; release pending | [A-PRESETS evidence](../2026-10-26-security/evidence/remediation-presets-2026-10-27.md) |
 | [BUG-008](findings/BUG-008.md) | OPEN — source prepared; release pending | [A-PRESETS evidence](../2026-10-26-security/evidence/remediation-presets-2026-10-27.md) |
-| [BUG-009](findings/BUG-009.md) | OPEN | — |
+| [BUG-009](findings/BUG-009.md) | OPEN — complete escaped favorite lines/notices budgeted and delivery checked in prepared A-DISCORD source; release pending. | [A-DISCORD evidence](../2026-10-26-security/evidence/remediation-discord-2026-10-27.md) |
 | [OPT-001](findings/OPT-001.md) | OPEN | — |
-| [BUG-010](findings/BUG-010.md) | OPEN | — |
-| [BUG-011](findings/BUG-011.md) | OPEN | — |
+| [BUG-010](findings/BUG-010.md) | OPEN — exact batch found/missing classification and visible/traced service failure prepared; release pending. | [A-DISCORD evidence](../2026-10-26-security/evidence/remediation-discord-2026-10-27.md) |
+| [BUG-011](findings/BUG-011.md) | OPEN — checked Glamour delivery, unserved failure and one short fallback prepared; release pending. | [A-DISCORD evidence](../2026-10-26-security/evidence/remediation-discord-2026-10-27.md) |
 | [BUG-012](findings/BUG-012.md) | OPEN | — |
 | [BUG-013](findings/BUG-013.md) | OPEN | — |
 | [BUG-014](findings/BUG-014.md) | OPEN | — |

@@ -7,8 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [4.12.0] - 2026-10-27
 
+### Added
+
+- Export the existing `getLocalizedRace` and `getLocalizedClan` getters for consumer autocomplete
+  and validation. Call `initializeLocale` first, as for the other synchronous localized getters.
+
 ### Fixed
 
+- Prepare six-language favorite-list availability, overflow and service-error messages, and
+  actor-free preview-image decision footers for A-DISCORD. Fold these into this still-unpublished
+  MINOR; publish the source including this companion before deploying its consumer.
 - Harmony's primary card row reports distance in the selected matching method after hue-first
   selection, consistently with companion rows; selection and winning dyes are unchanged.
 - Swatch eye rows merge only when both eligible winning colors are equal. Different live colors

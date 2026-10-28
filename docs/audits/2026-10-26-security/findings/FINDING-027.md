@@ -16,4 +16,4 @@
 - Policy variants to edit (all in one commit, all `Last updated` lines bumped): apps/web-app/PRIVACY.ja.md, PRIVACY.de.md, PRIVACY.fr.md, PRIVACY.ko.md, PRIVACY.zh.md (same Community presets paragraph); apps/discord-worker/PRIVACY_POLICY.ja.md, PRIVACY_POLICY.de.md, PRIVACY_POLICY.fr.md, PRIVACY_POLICY.ko.md, PRIVACY_POLICY.zh.md (Preset Submissions row). No locales/*.json key carries this text: a git grep of apps/*/src/locales and packages JSON found none.
 
 ## Status
-OPEN
+OPEN — six-language bot snapshot correction prepared; web policy half remains A-WEB; release pending. [A-DISCORD evidence](../evidence/remediation-discord-2026-10-27.md).

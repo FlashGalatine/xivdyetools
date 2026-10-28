@@ -296,7 +296,10 @@
       "listTitle": "您的收藏预设",
       "listTitleCount": "您的收藏预设（{n}/{max}）",
       "empty": "您还没有收藏任何预设。使用 `/preset favorite add` 添加一个。",
-      "allRemoved": "您收藏的预设似乎已全部被删除。使用 `/preset favorite remove` 清理条目。"
+      "allRemoved": "您保存的预设当前均不可用。您的收藏仍会保留。",
+      "unavailableSummary": "当前不可用的已保存预设：{count}个。",
+      "truncated": "因本条消息空间不足而省略的可用预设：{count}个。",
+      "lookupFailed": "无法加载您的收藏。请稍后重试。"
     },
     "noValidDyes": "此预设中没有有效的染剂"
   },
@@ -463,8 +466,8 @@
     "invalidButton": "无效的按钮交互。",
     "notPermitted": "您没有权限审核预览图片。",
     "actionFailed": "更新预览图片失败，请重试。",
-    "approvedFooter": "预览图片已由 {moderator} 批准",
-    "rejectedFooter": "预览图片已由 {moderator} 拒绝（预设本身未受影响）"
+    "approvedFooter": "预览图已批准",
+    "rejectedFooter": "预览图已拒绝 — 预设不受影响"
   },
   "matchImage": {
     "missingImage": "请附加一张图片进行分析。",

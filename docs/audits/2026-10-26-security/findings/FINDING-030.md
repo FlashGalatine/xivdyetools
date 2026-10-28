@@ -16,4 +16,4 @@
 - **Maintainer decision:** none needed; the live check is done. Correct `DEPLOY_ENVIRONMENTS.md:283-284` and `:324` to say the pair must NOT be set on `-dev`.
 
 ## Status
-OPEN
+OPEN — beta secret comments and deployment runbook corrected in A-DISCORD source; release acceptance pending. [A-DISCORD evidence](../evidence/remediation-discord-2026-10-27.md).

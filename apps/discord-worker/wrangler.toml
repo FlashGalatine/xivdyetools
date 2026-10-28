@@ -10,7 +10,7 @@
 # explicitly in both environments — leaving `routes` up here would attach the
 # production custom domains to the beta Worker.
 name = "xivdyetools-discord-worker-dev"
-main = "src/index.ts"
+main = "src/worker.ts"
 compatibility_date = "2024-12-01"
 # ARCH-001: nodejs_compat removed — no Node.js APIs used
 workers_dev = true
@@ -83,14 +83,17 @@ simple = { limit = 70, period = 60 }
 # "production", so it must be declared in BOTH blocks — vars are not
 # inheritable, and a production deploy without the line would skip the check.
 ENVIRONMENT = "development"
+# F039: compatibility deploy first; producer named-binding cutover precedes activation.
+PRESET_WEBHOOK_BINDING_ONLY = "false"
 # The BETA Discord application — separate from production because an
 # application has exactly one Interactions Endpoint URL.
 DISCORD_CLIENT_ID = "1536085517270261771"
 PRESETS_API_URL = "https://api.xivdyetools.app"
 ANNOUNCEMENT_CHANNEL_ID = "1441800851747508314"
 
-# Secrets: DISCORD_TOKEN, DISCORD_PUBLIC_KEY, BOT_API_SECRET,
-# BOT_SIGNING_SECRET
+# Beta secrets: DISCORD_TOKEN + DISCORD_PUBLIC_KEY.
+# Do NOT set BOT_API_SECRET or BOT_SIGNING_SECRET on beta: its PRESETS_API
+# binding targets production; those credentials would authorize beta writes.
 # Beta needs only DISCORD_TOKEN + DISCORD_PUBLIC_KEY. Rate limiting needs no
 # secret at all: it runs on the `RL_*` bindings above and falls back to KV
 # only when no tier is bound (tests / local dev without bindings).
@@ -137,6 +140,8 @@ enabled = false
 # FINDING-013: turns on validateEnv's production block (the six `RL_*`
 # bindings become required). See the top-level [vars] comment — not inherited.
 ENVIRONMENT = "production"
+# F039: activate separately after the producer named-binding deployment is verified.
+PRESET_WEBHOOK_BINDING_ONLY = "false"
 DISCORD_CLIENT_ID = "1447108133020369048"
 PRESETS_API_URL = "https://api.xivdyetools.app"
 # vars are NOT inheritable — this must be repeated here or the GitHub

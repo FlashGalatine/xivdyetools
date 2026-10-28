@@ -31,12 +31,12 @@ Verbindung zu Square Enix.
 | Einstellungen | Sprache, Mischmodus, Matching-Algorithmus, Ergebnisanzahl, Stamm, Geschlecht, Standard-Welt / -Datenzentrum, ob Marktbrett-Preise standardmäßig angezeigt werden, Farbanzeige-Umschalter und Design sowie welche Farbstoffkategorien von den Suchergebnissen ausgeschlossen werden sollen (metallisch, pastellfarben, dunkel, kosmisch, ishgardisch, teuer, vom Händler verkauft, hergestellt), dazu der Zeitpunkt, zu dem du sie zuletzt geändert hast | Bis du sie zurücksetzt oder eine Löschung beantragst |
 | Favorisierte Vorlagen | Bis zu 50 Community-Vorlagen, die du mit `/preset favorite add` markierst — die ID der Vorlage und der Name, den sie bei der Speicherung hatte | Bis du sie entfernst oder eine Löschung beantragst |
 | Erstlauf-Hinweis-Markierung | Eine Markierung pro Nutzer, dass der Bot seine einmalige Prüfung auf den 5.0-Willkommenshinweis durchgeführt hat. Sie wird gesetzt, wenn du zum ersten Mal einen Befehl ausführst, unabhängig davon, ob der Hinweis gesendet wird (er wird nicht gesendet, wenn du bereits gespeicherte Einstellungen hast); enthält keinen Inhalt | Läuft automatisch nach 180 Tagen ab |
-| Vorlagen-Einreichungen | Name, Beschreibung, Farbstoffe, Tags, Kategorie, Beispiellink — und, falls unsere automatische Prüfung den neuen Namen, die neue Beschreibung, die Tags oder den Beispiellink einer Bearbeitung zur Prüfung zurückhält, die Fassung vor der ersten solchen Bearbeitung, aufbewahrt, bis ein Moderator diese Fassung wiederherstellt oder die Vorlage gelöscht wird | Bis du sie löschst (unter "Meine Einreichungen" in der Web-App, angemeldet mit demselben Discord-Konto) oder eine Löschung beantragst |
+| Vorlagen-Einreichungen | Name, Beschreibung, Farbstoffe, Tags, Kategorie, Beispiellink — und, falls unsere automatische Prüfung eine Bearbeitung des Namens, der Beschreibung, der Tags oder des Beispiellinks einer veröffentlichten (genehmigten) Vorlage zur Prüfung zurückhält, die Fassung vor der ersten solchen Bearbeitung, aufbewahrt, bis ein Moderator diese Fassung wiederherstellt oder die Vorlage gelöscht wird | Bis du sie löschst (unter "Meine Einreichungen" in der Web-App, angemeldet mit demselben Discord-Konto) oder eine Löschung beantragst |
 | Stimmen | Deine Stimmen zu Community-Vorlagen. Das Einreichen einer Vorlage zählt als deine Stimme dafür; hat eine veröffentlichte Vorlage bereits dieselben Farbstoffe, wird deine Einreichung stattdessen zu einer Stimme für diese Vorlage | Bis du die Stimme entfernst oder eine Löschung beantragst |
 
 ### Ratenbegrenzungsdaten
 
-- Zähler pro Nutzer und Befehl werden vom Rate-Limiting-Dienst der Cloudflare Workers für das
+- Zähler pro Nutzer für Befehle und Schaltflächen werden vom Rate-Limiting-Dienst der Cloudflare Workers für das
   60-Sekunden-Fenster gehalten und niemals in KV geschrieben.
 - **Fallback**: Auf einer Bereitstellung ohne die nativen Rate-Limiting-Bindings werden die Zähler
   stattdessen in Cloudflare KV gehalten, unter einem Schlüssel, der deine Discord-Benutzer-ID und
@@ -118,7 +118,7 @@ Wenn du `/extractor image` verwendest, wird dein hochgeladenes Bild:
 
 Wenn du `/swatch` oder `/glamour` verwendest, wird deine hochgeladene `.chara`-Datei:
 1. Von Discord heruntergeladen und im Arbeitsspeicher auf Cloudflares Edge-Servern gelesen
-2. Auf ihre Farben, Farbstoffe und Ausrüstung ausgelesen
+2. Auf Farben, Farbstoffe, Ausrüstung, Stamm, Geschlecht und das Werkzeug, mit dem die Datei gespeichert wurde, ausgelesen. Die im Kanal veröffentlichte Karte zeigt auch den Stamm, das Geschlecht und eine zugelassene Werkzeugbezeichnung
 3. **Sofort verworfen** nach der Verarbeitung
 4. **Niemals gespeichert** auf unseren Servern
 

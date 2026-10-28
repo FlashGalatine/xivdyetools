@@ -129,21 +129,31 @@ async function processGlamourCommand(
   logger?: ExtendedLogger
 ): Promise<void> {
   const t = createTranslator(locale);
-  const fail = (text: string): Promise<unknown> =>
-    safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+  // A failed delivery gets one short localized attempt, even when the first
+  // payload was already an error. First-mark-wins tracing preserves the cause.
+  const deliver = async (payload: Parameters<typeof safeEditOriginalResponse>[2]): Promise<void> => {
+    const delivered = await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, payload);
+    if (delivered) return;
+    markCommandOutcome(interaction, 'unknown', { served: false });
+    const fallbackDelivered = await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+      content: t.t('errors.generationFailed'),
+      embeds: [],
+    });
+    if (!fallbackDelivered) logger?.warn('Glamour fallback delivery failed');
+  };
+  const fail = (text: string): Promise<void> =>
+    deliver({
       embeds: [errorEmbed(t.t('common.error'), text)],
     });
 
-  let fileText: string;
   let fileBytes: Uint8Array;
   try {
-    const file = await downloadCharaAttachment(fileUrl, t, true);
+    const file = await downloadCharaAttachment(fileUrl, t);
     if (!file.ok) {
       markCommandOutcome(interaction, 'image_input');
       await fail(file.message);
       return;
     }
-    fileText = file.text;
     fileBytes = file.bytes;
   } catch (error) {
     // Only the CDN fetch and the capped read live in this try.
@@ -154,7 +164,6 @@ async function processGlamourCommand(
   }
 
   const input: GlamourInput = {
-    fileText,
     // What bot-logic reads: invalid UTF-8 is refused there, not re-encoded
     fileBytes,
     locale,
@@ -182,7 +191,7 @@ async function processGlamourCommand(
 
   try {
     const pngBuffer = await renderSvgToPng(result.svgString, { scale: 2, locale });
-    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+    await deliver({
       embeds: [
         {
           title: result.embed.title,

@@ -17,4 +17,4 @@
 - No policy edit is needed once the name is gone (the existing text becomes true). If the maintainer later keeps the name instead, it becomes an AMEND: bot `PRIVACY_POLICY.md` §5 Discord row and web `PRIVACY.md` "Posts in our Discord server", six variants each, landing after the code.
 
 ## Status
-OPEN — moderation decision-post name removal prepared 2026-10-27; the separate Discord preview-image companion and release/production acceptance remain pending. Database actor attribution is retained. [A-MODERATION evidence](../evidence/remediation-moderation-2026-10-27.md).
+OPEN — moderation and Discord preview companions prepared; production release acceptance pending. [A-DISCORD evidence](../evidence/remediation-discord-2026-10-27.md).

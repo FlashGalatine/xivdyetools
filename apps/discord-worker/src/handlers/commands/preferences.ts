@@ -36,7 +36,6 @@ import { validateWorld } from '../../services/budget/index.js';
 import {
   BLENDING_MODES,
   MATCHING_METHODS,
-  CLANS_BY_RACE,
   type PreferenceKey,
   type UserPreferences,
 } from '../../types/preferences.js';
@@ -45,6 +44,7 @@ import { hasActiveFilters } from '@xivdyetools/core';
 import { createUserTranslator, type Translator } from '../../services/bot-i18n.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 import { BRAND_ACCENT, STATE } from '../../utils/brand.js';
+import { getClanValidationOptions } from '../../utils/clan-display.js';
 
 // ============================================================================
 // Constants
@@ -782,7 +782,7 @@ function getValidationErrorMessage(t: Translator, _key: PreferenceKey, reason?: 
       return t.t('preferences.validation.invalidCount');
 
     case 'invalidClan': {
-      const options = Object.entries(CLANS_BY_RACE).map(([race, clans]) => `• **${race}**: ${clans.join(', ')}`).join('\n');
+      const options = getClanValidationOptions(t.getLocale());
       return t.t('preferences.validation.invalidClan', { options });
     }
 

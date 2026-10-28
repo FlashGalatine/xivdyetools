@@ -15,4 +15,4 @@
 - Reject requests that carry CF-Connecting-IP before the auth check, since presets-api reaches this route only through the DISCORD_WORKER service binding. Alternatively, put a worker-kit limiter keyed on IP in front of timingSafeEqual. Confirm first that no non-binding caller (for example a manual retry script) depends on the public route.
 
 ## Status
-OPEN
+OPEN — private named notification provider and separate presets binding companion prepared; default-false gate requires provider/consumer verification and separately authorized public cutover. [A-DISCORD evidence](../evidence/remediation-discord-2026-10-27.md).

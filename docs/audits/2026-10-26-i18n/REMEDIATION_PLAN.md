@@ -391,14 +391,30 @@ After A-PRESETS, A-BOT-LOGIC and the selected identity provider. Preserve the ac
 
 ## Sprint A-DISCORD — apps/discord-worker
 
+**Preparation update 2026-10-27:** Discord **5.9.7 PATCH** and the additive exports/locale
+companion in unpublished bot-logic **4.12.0 MINOR** pass local verification: **45/45 static tasks**,
+**25/25 test tasks, 17,340 tests / 602 files**, configured coverage and independent ordinary/
+escalated reviews. The private notification
+boundary requires a separate presets **2.8.1 PATCH** configuration companion, after the Discord
+provider; independent deploy jobs must not race. `PRESET_WEBHOOK_BINDING_ONLY=false` in both
+provider configurations retains public compatibility until actual named delivery is verified
+and a later cutover is separately authorized. FINDING-039 remains OPEN through that cutover;
+all findings retain production release acceptance gates. [Execution evidence](../2026-10-26-security/evidence/remediation-discord-2026-10-27.md).
+
+The manual publish workflow and automatic consumer deploys do not enforce the required ordering.
+Before a production merge, separately authorize and verify publication from the reviewed ref
+where eligible, or hold all affected automatic deployments before merge/publish/verification and
+release that hold afterward. Never publish an incomplete 4.12.0 snapshot and reuse its version.
+No publication, workflow hold or production deployment is selected by this preparation.
+
 After A-WORKER-KIT/A-BOT-LOGIC and the capped batch endpoint. Also remove moderator names from preview posts, apply the bot half of snapshot-policy correction, fix paired attachment comments, and correct beta-secret comments. Measure favorite requests at 1/10/50 entries: up to 49 fewer request/query round trips, not rows read. Command localization registration ships through the workflow.
 
 | ID | Source | Sev/Pri | Action |
 |---|---|---|---|
 | [2026-10-26-security/FINDING-022](../2026-10-26-security/findings/FINDING-022.md) | 2026-10-26-security | LOW / INTERNET-AUTH · P2 | CORRECT `PRIVACY_POLICY.md` §3 Character Files item 2: the card also shows clan, gender and the producing tool. Six files; same commit as the policy half of [2026-10-26-security/FINDING-027](../2026-10-26-security/findings/FINDING-027.md). |
 | [2026-10-26-security/FINDING-024](../2026-10-26-security/findings/FINDING-024.md) | 2026-10-26-security | LOW / INTERNET-AUTH · P2 | After A-PRESETS deploys its capped approved-only batch lookup, switch favorite listing to that endpoint; preserve favorite order, distinguish missing from failed results, and pass acting-user rate-limit context. Assert one binding request for a 50-entry list and handle delivery/partial failures. This one implementation also satisfies the deduplicated optimization. |
-| [2026-10-26-security/FINDING-039](../2026-10-26-security/findings/FINDING-039.md) | 2026-10-26-security | INFO / INTERNET-UNAUTH · P3 | `/webhooks/preset-submission`: failed-auth throttle (or binding-only check) before the bearer compare. |
-| [2026-10-26-security/FINDING-040](../2026-10-26-security/findings/FINDING-040.md) | 2026-10-26-security | INFO / INTERNET-AUTH · P3 | Add a cheap `button` tier before `trackButtonClick`, or record the Analytics-Engine-only effect in `security-trade-offs.md` (existing decision gate). |
+| [2026-10-26-security/FINDING-039](../2026-10-26-security/findings/FINDING-039.md) | 2026-10-26-security | INFO / INTERNET-UNAUTH · P3 | Prepare private `PresetNotifications` Fetch entrypoint and default-false public cutover gate. Deploy/verify provider, then separate presets binding companion, then authorize activation; public requests are rejected before bearer comparison/body reads when active. |
+| [2026-10-26-security/FINDING-040](../2026-10-26-security/findings/FINDING-040.md) | 2026-10-26-security | INFO / INTERNET-AUTH · P3 | Add the cheap per-user `button` tier before `trackButtonClick`, using the existing native binding; preserve backend failure reporting and private rejection. |
 | [2026-10-26-xivcharakit-dead-code/DEAD-014](../2026-10-26-xivcharakit-dead-code/findings/DEAD-014.md) | 2026-10-26-xivcharakit-dead-code | HIGH / LOW · NONE · REMOVE | Drop `downloadCharaAttachment`'s text-only shape and the adapters' `fileText` pass-through; the adapters assert `fileBytes`. |
 | [2026-10-26-deep-dive/BUG-009](../2026-10-26-deep-dive/findings/BUG-009.md) | 2026-10-26-deep-dive | LOW / P2 | Paginate or budget complete lines within 4096 including escaped names and truncation notice; check edit success. |
 | [2026-10-26-deep-dive/BUG-010](../2026-10-26-deep-dive/findings/BUG-010.md) | 2026-10-26-deep-dive | LOW / P2 | Preserve found/missing/failed outcomes; show and trace upstream failures; identify partial results. |
@@ -406,7 +422,7 @@ After A-WORKER-KIT/A-BOT-LOGIC and the capped batch endpoint. Also remove modera
 | [2026-10-26-i18n/HC-002](findings/HC-002.md) | 2026-10-26-i18n | P1 | Carry locale into autocomplete, match/display official localized race/clan names while preserving existing canonical stored values, and render localized names alongside canonical tokens in validation. Keep this optional preference's dormant consumer status explicit. |
 | [2026-10-26-i18n/I18N-001](findings/I18N-001.md) | 2026-10-26-i18n | P2 | Reuse card.swatchSlotName.* for slot display names while preserving emoji and canonical values. Author six-language row-order and sort display keys, then cover these three choice families in localize.test.ts. Deliberately English method tags, endonyms and preset categories are outside this finding. |
 
-**Ends with:** `pnpm turbo run build type-check lint test --filter=...xivdyetools-discord-worker` and whole-graph gates before merge → merge → `deploy-discord-worker.yml` (production); beta workflow only when explicitly selected.
+**Ends with:** scoped/full local gates, actual configured Workerd boundary proof, coverage, font/bundle/dry-run/secret checks, independent ordinary/escalated reviews, and separate stacked provider/configuration draft PRs with actual CI/beta receipts. Production release remains separately authorized: publish prerequisite packages, deploy the capped batch provider, deploy Discord with compatibility retained, deploy/verify the presets binding companion, then separately activate binding-only mode. No manual deployment, registration or activation is selected.
 
 ## Sprint A-WEB — apps/web-app
 

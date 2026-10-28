@@ -296,7 +296,10 @@
       "listTitle": "Your favorite presets",
       "listTitleCount": "Your favorite presets ({n}/{max})",
       "empty": "You haven't favorited any presets yet. Use `/preset favorite add` to add one.",
-      "allRemoved": "All of your favorited presets appear to have been removed. Use `/preset favorite remove` to clean up entries."
+      "allRemoved": "None of your saved presets are currently available. Your favorites have been kept.",
+      "unavailableSummary": "Unavailable saved presets: {count}.",
+      "truncated": "Available presets omitted to fit this message: {count}.",
+      "lookupFailed": "We could not load your favorites. Please try again later."
     },
     "noValidDyes": "No valid dyes in this preset"
   },
@@ -463,8 +466,8 @@
     "invalidButton": "Invalid button interaction.",
     "notPermitted": "You do not have permission to moderate preview images.",
     "actionFailed": "Failed to update the preview image. Please try again.",
-    "approvedFooter": "Preview image approved by {moderator}",
-    "rejectedFooter": "Preview image rejected by {moderator} — preset unaffected"
+    "approvedFooter": "Preview image approved",
+    "rejectedFooter": "Preview image rejected — preset unaffected"
   },
   "matchImage": {
     "missingImage": "Please attach an image to analyze.",

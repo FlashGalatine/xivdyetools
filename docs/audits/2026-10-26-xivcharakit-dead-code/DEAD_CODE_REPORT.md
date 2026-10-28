@@ -171,7 +171,7 @@ Source / configuration audit; read-only. No build, bundle measurement or workerd
 | DEAD-011 | OPEN | — |
 | DEAD-012 | OPEN | — |
 | DEAD-013 | OPEN | — |
-| DEAD-014 | OPEN | — |
+| DEAD-014 | OPEN — app attachment text shape and adapter pass-through removed in prepared source; original-byte guards retained; release pending. | [A-DISCORD evidence](../2026-10-26-security/evidence/remediation-discord-2026-10-27.md) |
 | DEAD-015 | OPEN — source prepared; release pending | [A-BOT-LOGIC evidence](../2026-10-26-security/evidence/remediation-bot-logic-2026-10-27.md) |
 | DEAD-016 | OPEN — source prepared; release pending | [A-BOT-LOGIC evidence](../2026-10-26-security/evidence/remediation-bot-logic-2026-10-27.md) |
 | DEAD-017 | OPEN — source prepared; release pending | [A-BOT-LOGIC evidence](../2026-10-26-security/evidence/remediation-bot-logic-2026-10-27.md) |

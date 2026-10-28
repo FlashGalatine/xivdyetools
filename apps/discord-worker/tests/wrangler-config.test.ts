@@ -66,6 +66,12 @@ function parseTiers(header: string): Map<string, ParsedTier> {
 }
 
 describe('wrangler.toml', () => {
+  it('ships the named-entrypoint module with binding-only cutover disabled in both environments', () => {
+    expect(topLevel).toMatch(/^main = "src\/worker\.ts"$/m);
+    expect(topLevel).toMatch(/^PRESET_WEBHOOK_BINDING_ONLY = "false"$/m);
+    expect(production).toMatch(/^PRESET_WEBHOOK_BINDING_ONLY = "false"$/m);
+  });
+
   it('keeps the top-level worker the routeless beta bot', () => {
     expect(productionStart).toBeGreaterThan(-1);
     const name = topLevel.match(/^name = "([^"]+)"$/m)?.[1];
@@ -95,10 +101,11 @@ describe('wrangler.toml', () => {
     }
   });
 
-  it('gives all twelve tiers a distinct namespace_id in this worker\'s reserved range', () => {
-    const ids = [...parseTiers('ratelimits').values(), ...parseTiers('env.production.ratelimits').values()].map(
-      (tier) => tier.namespaceId,
-    );
+  it("gives all twelve tiers a distinct namespace_id in this worker's reserved range", () => {
+    const ids = [
+      ...parseTiers('ratelimits').values(),
+      ...parseTiers('env.production.ratelimits').values(),
+    ].map((tier) => tier.namespaceId);
     expect(ids).toHaveLength(12);
     // 1001-1034 belong to api-worker / presets-api / oauth / moderation-worker.
     for (const id of ids) expect(id).toBeGreaterThanOrEqual(1041);

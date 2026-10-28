@@ -126,9 +126,18 @@ describe('downloadCharaAttachment', () => {
     vi.unstubAllGlobals();
   });
 
-  it('returns the text of a file the CDN hands over', async () => {
+  it('returns the original bytes of a file the CDN hands over', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response('{"REyeColor":42}')));
-    expect(await downloadCharaAttachment(CDN_URL, de)).toEqual({ ok: true, text: '{"REyeColor":42}' });
+    expect(await downloadCharaAttachment(CDN_URL, de)).toEqual({ ok: true, bytes: new TextEncoder().encode('{"REyeColor":42}') });
+  });
+
+  it('preserves malformed UTF-8 and keeps redirects and the bounded download signal at the fetch boundary', async () => {
+    const bytes = new Uint8Array([123, 34, 0xff, 34, 125]);
+    const fetchMock = vi.fn<typeof fetch>(async () => new Response(bytes.slice()));
+    vi.stubGlobal('fetch', fetchMock);
+    const result = await downloadCharaAttachment(CDN_URL, de);
+    expect(result).toEqual({ ok: true, bytes });
+    expect(fetchMock).toHaveBeenCalledWith(CDN_URL, { redirect: 'manual', signal: expect.any(AbortSignal) });
   });
 
   it('names the status of a refused download in the reader’s language', async () => {
@@ -143,7 +152,7 @@ describe('downloadCharaAttachment', () => {
   it('reads a body exactly at the cap', async () => {
     const text = 'x'.repeat(MAX_FILE_BYTES);
     vi.stubGlobal('fetch', vi.fn(async () => new Response(text)));
-    expect(await downloadCharaAttachment(CDN_URL, de)).toEqual({ ok: true, text });
+    expect(await downloadCharaAttachment(CDN_URL, de)).toEqual({ ok: true, bytes: new TextEncoder().encode(text) });
   });
 
   /**
@@ -169,7 +178,7 @@ describe('downloadCharaAttachment', () => {
 
     it('accepts 8,192 declared bytes', async () => {
       vi.stubGlobal('fetch', declaring(MAX_FILE_BYTES));
-      expect(await downloadCharaAttachment(CDN_URL, de)).toEqual({ ok: true, text: SHORT });
+      expect(await downloadCharaAttachment(CDN_URL, de)).toEqual({ ok: true, bytes: new TextEncoder().encode(SHORT) });
     });
   });
 

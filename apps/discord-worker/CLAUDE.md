@@ -225,6 +225,40 @@ Long-running handlers return `DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE` immediately,
 
 Always prefer the Service Binding (`env.PRESETS_API.fetch(req)`) — zero HTTP overhead. Falls back to `PRESETS_API_URL` for local dev when the binding is absent.
 
+Favorite listing uses one signed `POST /api/v1/presets/batch` for up to 50 IDs, with the acting
+Discord user as signed rate-limit context. The approved-only response partitions requested IDs
+into presets and missing IDs; transport, malformed or incomplete replies fail the whole lookup.
+Keep favorite order and KV entries, budget complete escaped lines plus notices within 4096,
+and check every list delivery result. A failed edit marks the command unserved and attempts one
+short fallback. `/glamour` applies the same bounded delivery rule. Character attachment transport
+returns capped original bytes only; the shared parser owns UTF-8 validation.
+
+The private named `PresetNotifications` entrypoint accepts the existing notification Fetch
+protocol. `PRESET_WEBHOOK_BINDING_ONLY` stays explicitly false in both configurations until
+the separate presets binding companion is deployed and verified. A later activation makes
+the public webhook return 404 before bearer comparison/body reading; private dispatch uses an
+unforgeable internal marker and retains authentication, validation and the actual-byte cap.
+Keep the named export while consumers use it. To roll a consumer back to the default binding,
+first restore and verify public compatibility; never remove the provider entrypoint first.
+Buttons use a separate per-user `button` key at 30/min before analytics/dispatch, with existing
+backend fail-open reporting. Command limits remain unchanged.
+
+Clan autocomplete matches localized official clan/race labels and canonical English values;
+stored values stay canonical and the preference remains dormant. Registered Swatch order/slot
+and preset-sort labels consume the prepared six-language keys. New preview-image decisions omit
+moderator names/ID fallbacks from posts while retaining API actor attribution.
+
+Release prerequisite: publish bot-logic 4.12.0 from source including A-DISCORD's additive
+race/clan exports and locale companion (after its core/SVG prerequisites), and deploy the capped
+presets batch endpoint before the Discord consumer. Command registration runs through the deploy
+workflow. Keep production bot API credentials off beta; the signed favorites success path is
+proved locally with fake bindings. Production merge/activation is a separate authorized step.
+The manual package publish and automatic consumer workflows do not enforce that order. Before
+production merges, verify eligibility to publish the reviewed ref first, or separately authorize
+and verify a hold on all affected automatic consumer deployments before merge/publish/verification.
+Only then release/deploy the reviewed consumer source. Do not reuse an earlier published package
+version for this companion; this source preparation changes no workflows or environment policy.
+
 ### Analytics Tracking
 
 Tier A (2026-08-29, spec `docs/superpowers/specs/2026-08-29-bot-analytics-tier-a-design.md`): `handleCommand()` starts a `CommandTrace` (`services/command-trace.ts`) before the rate-limit check and hands every handler a **traced `ExecutionContext`** whose `waitUntil` also records the promise on the trace; the `finally` calls `finishCommandTrace()`, which drains those promises (bounded by `DRAIN_DEADLINE_MS` = 20 s, after which the row is written as `unknown` instead of being lost) and then writes the datapoint through `trackCommandWithKV()` — so `success`/latency describe the deferred work, not the deferred ack. The trace has **one writer**: `markCommandOutcome()`. Handlers call it wherever a command ends with an error embed — a catch (`classifyError(error[, 'render'])`), a bot-logic `GENERATION_FAILED` branch (`'render'`), an unreadable image/`.chara` (`'image_input'`); `/dye`'s text fallbacks mark `'render'` with `{ served: true }`; the dispatcher calls it for a rate-limited request and a handler throw; nobody else finishes a trace. **Two axes per datapoint:** `success` (blob4, and the KV `success`/`failure` counters behind `/stats`) = the user got an answer to what they asked; the outcome class (blob5) = the most significant thing of ours that broke, or `ok` — `ok`, `rejected`, `rate_limited`, `upstream_universalis`, `upstream_presets`, `image_input`, `render`, `unknown`. `classifyError` maps a presets-api / Universalis **4xx other than 408 and 429 to `rejected`** (the service's own reply, relayed to the user — answered, but visible as its own class so a systematic 4xx from our payload is a spike); a 408 (a timeout — universalis-client raises one for its own 10 s abort), a 429, a 5xx and a network/binding failure are `upstream_universalis` / `upstream_presets` and unanswered (BUG-005); a `served` mark is answered too; everything else with a class is a failure. Rate-limited requests are AE-only (no KV counters — `/stats` counts commands that ran, and KV allows one write per second per key). Columns: blobs 1–4 unchanged (command, userId, guild/dm, answered), blob5 **outcome class** (was the never-set `errorType`), blob6 subcommand/button kind, blob7 locale bucket, blob8 `command|button`, double2 real latency. Copy-button clicks are AE-only `kind=button` rows via `trackButtonClick()`; the button kinds are `COPY_BUTTON_KINDS` in `handlers/buttons/copy.ts`; the image-worker rejection markers are `services/image-input-errors.ts`. The list of what must **never** be recorded lives on `CommandEvent` in `services/analytics.ts` (the only place a value is written) and is promised by `PRIVACY_POLICY.md` §2. Queries and the outcome rules: `docs/operations/ANALYTICS_QUERIES.md` (Discord section).
