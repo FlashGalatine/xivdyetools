@@ -28,12 +28,12 @@ We are committed to protecting your privacy and being transparent about our data
 | Preferences | Language, blending mode, matching algorithm, result count, clan, gender, default world / data center, whether to show Market Board prices by default, color-display toggles, theme, and which dye categories to exclude from search results (metallic, pastel, dark, cosmic, Ishgardian, expensive, vendor-sold, crafted), plus the time you last changed them | Until you reset them or request deletion |
 | Preset favorites | Up to 50 community presets you mark with `/preset favorite add` — the preset's id and the name it had when you saved it | Until you remove them or request deletion |
 | First-run notice flag | A per-user marker that the Bot has made its one-time check for the 5.0 welcome notice. It is set the first time you run a command, whether or not the notice is sent (it is not sent if you already have stored preferences); carries no content | Expires automatically after 180 days |
-| Preset Submissions | Name, description, dyes, tags, category, example link — and, if our automatic check holds an edit's new name, description, tags or example link for review, the version from before the first such edit, kept until a moderator restores it or the preset is deleted | Until you delete it (in the web app's My Submissions, signed in with the same Discord account) or request deletion |
+| Preset Submissions | Name, description, dyes, tags, category, example link — and, if our automatic check holds an edit of a published (approved) preset's name, description, tags or example link for review, the version from before the first such edit, kept until a moderator restores it or the preset is deleted | Until you delete it (in the web app's My Submissions, signed in with the same Discord account) or request deletion |
 | Votes | Your votes on community presets. Submitting a preset counts as your vote for it; if a published preset already has the same dyes, your submission becomes a vote for that preset instead | Until you remove vote or request deletion |
 
 ### Rate Limiting Data
 
-- Per-user, per-command counters are held by Cloudflare's Workers rate-limiting service for the 60-second window and are never written to KV.
+- Per-user command and button counters are held by Cloudflare's Workers rate-limiting service for the 60-second window and are never written to KV.
 - **Fallback**: on a deployment without the native rate-limiting bindings, the counters are kept in Cloudflare KV instead, under a key containing your Discord User ID and the command name, with a 120-second expiry. Both production and beta bind the native service, so this path is not in use there.
 - The Bot never sees or uses your IP address for rate limiting — it identifies you by Discord User ID, because commands arrive from Discord's servers rather than from you directly.
 - No third party is involved.
@@ -95,7 +95,7 @@ When you use `/extractor image`, your uploaded image is:
 
 When you use `/swatch` or `/glamour`, your uploaded `.chara` file is:
 1. Downloaded from Discord and read in-memory on Cloudflare's edge servers
-2. Read for its colors, dyes and equipment
+2. Read for its colors, dyes, equipment, clan, gender and the tool that saved the file. The card posted in the channel also shows the clan, gender and an allowlisted tool label
 3. **Immediately discarded** after processing
 4. **Never stored** on our servers
 

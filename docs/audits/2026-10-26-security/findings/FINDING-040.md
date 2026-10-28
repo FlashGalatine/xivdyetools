@@ -15,4 +15,4 @@
 - Optionally add a cheap checkRateLimit(..., 'button') tier, a native RL binding, before trackButtonClick in handleComponent and fail soft with an ephemeral notice. Alternatively, record this as an accepted trade-off in docs/architecture/security-trade-offs.md, since the only effects are Analytics Engine writes and KV reads.
 
 ## Status
-OPEN
+OPEN — button limit before analytics/dispatch prepared; release pending. [A-DISCORD evidence](../evidence/remediation-discord-2026-10-27.md).

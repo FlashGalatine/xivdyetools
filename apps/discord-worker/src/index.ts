@@ -86,11 +86,12 @@ import {
   logValidationErrors,
   MIN_WEBHOOK_SECRET_LENGTH,
   PRODUCTION_ENV_ERROR_PREFIX,
+  PRESET_WEBHOOK_FLAG_ERROR,
 } from './utils/env-validation.js';
 import { requestIdMiddleware, loggerMiddleware } from '@xivdyetools/worker-kit';
 import type { MiddlewareVariables } from '@xivdyetools/worker-kit';
 import { sanitizePresetName, sanitizePresetDescription } from './utils/sanitize.js';
-import { CLANS_BY_RACE } from './types/preferences.js';
+import { getClanAutocompleteChoices } from './utils/clan-display.js';
 import { getWorldAutocomplete } from './services/budget/index.js';
 
 /**
@@ -191,8 +192,15 @@ function readPresetText(raw: unknown): (PresetPreviousValues & PresetLinkMetadat
 // Define context variables type
 type Variables = MiddlewareVariables;
 
+// A module-private capability: only the named WorkerEntrypoint's in-process
+// dispatcher can attach it. Request headers, URLs and payloads cannot forge it.
+const presetNotificationEntrypoint = Symbol('presetNotificationEntrypoint');
+interface RequestEnv extends Env {
+  [presetNotificationEntrypoint]?: true;
+}
+
 // Create Hono app with environment type
-const app = new Hono<{ Bindings: Env; Variables: Variables }>();
+const app = new Hono<{ Bindings: RequestEnv; Variables: Variables }>();
 
 // BUG-017 (2026-07-18 audit): validation runs on every request (it's cheap
 // string checks) so the critical-secret check applies to every request. Only
@@ -254,7 +262,8 @@ app.use('*', async (c, next) => {
         (e) =>
           e.includes('DISCORD_TOKEN') ||
           e.includes('DISCORD_PUBLIC_KEY') ||
-          e.startsWith(PRODUCTION_ENV_ERROR_PREFIX),
+          e.startsWith(PRODUCTION_ENV_ERROR_PREFIX) ||
+          e === PRESET_WEBHOOK_FLAG_ERROR,
       )
     ) {
       return c.json({ error: 'Service misconfigured' }, 500);
@@ -296,11 +305,18 @@ app.get('/health', (c) => {
  */
 app.post('/webhooks/preset-submission', async (c) => {
   const env = c.env;
+  const logger = c.get('logger');
+
+  // FINDING-039: activated only after the producer selects PresetNotifications.
+  // Binding transport narrows reachability; the bearer and all existing guards
+  // still apply below. Never trust a request header or IP as transport evidence.
+  if (env.PRESET_WEBHOOK_BINDING_ONLY === 'true' && env[presetNotificationEntrypoint] !== true) {
+    return c.json({ error: 'Not found' }, 404);
+  }
 
   // Verify webhook secret using constant-time comparison to prevent timing attacks
   const authHeader = c.req.header('Authorization') || '';
   const expectedAuth = `Bearer ${env.INTERNAL_WEBHOOK_SECRET}`;
-  const logger = c.get('logger');
 
   // DISCORD-CRITICAL-003: Separate checks to prevent timing oracle attack
   // Check if secret is configured first (this is a configuration error, not an auth attempt)
@@ -1236,7 +1252,7 @@ async function handleAutocomplete(
 
     if (focusedName === 'clan') {
       // Clan autocomplete - show race-grouped clan suggestions
-      choices = getClanAutocompleteChoices(query);
+      choices = getClanAutocompleteChoices(query, locale);
     } else if (focusedName === 'world') {
       // World/datacenter autocomplete - reuse budget world autocomplete
       choices = await getWorldAutocomplete(env, query, logger, locale);
@@ -1281,36 +1297,6 @@ function getDyeAutocompleteChoices(
       name: `${getLocalizedDyeName(dye.itemID, dye.name, locale)} (${dye.hex.toUpperCase()})`,
       value: String(dye.stainID),
     }));
-}
-
-/**
- * Get clan autocomplete choices for the given query
- *
- * Shows clans grouped by race, filtered by query.
- * When no query, shows all clans organized by race.
- */
-function getClanAutocompleteChoices(query: string): Array<{ name: string; value: string }> {
-  const lowerQuery = query.toLowerCase().trim();
-  const choices: Array<{ name: string; value: string }> = [];
-
-  for (const [race, clans] of Object.entries(CLANS_BY_RACE)) {
-    for (const clan of clans) {
-      // Match against clan name or race name
-      if (
-        lowerQuery.length === 0 ||
-        clan.toLowerCase().includes(lowerQuery) ||
-        race.toLowerCase().includes(lowerQuery)
-      ) {
-        choices.push({
-          name: `${clan} (${race})`,
-          value: clan,
-        });
-      }
-    }
-  }
-
-  // Limit to 25 for Discord autocomplete
-  return choices.slice(0, 25);
 }
 
 /**
@@ -1485,6 +1471,25 @@ async function handleComponent(
 
   // Buttons have component_type 2
   if (componentType === 2) {
+    const userId = interaction.member?.user?.id ?? interaction.user?.id;
+    if (!userId) {
+      return ephemeralResponse(
+        (await routerTranslator(env, interaction, logger)).t('errors.unknownUser'),
+      );
+    }
+    // FINDING-040: all button kinds share one user bucket before analytics or
+    // handlers. Preserve the command limiter's logged fail-open convention.
+    const result = await checkRateLimit(
+      { bindings: rateLimitBindings(env), kv: env.KV },
+      userId,
+      'button',
+      logger,
+    );
+    if (!result.allowed) {
+      // Use the Discord locale without adding a preferences read to denied clicks.
+      const t = createTranslator(discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en');
+      return ephemeralResponse(formatRateLimitMessage(result, t));
+    }
     // Tier A: copy-button clicks are counted (kind=button, no KV counters);
     // moderation/preview buttons and unknown ids are not. Enqueued BEFORE
     // `handleButtonInteraction` runs and independent of its outcome.
@@ -1548,5 +1553,15 @@ app.onError((err, c) => {
   }
   return c.json({ error: 'Internal Server Error' }, 500);
 });
+
+/** In-process dispatcher used only by worker.ts; not exported from the Worker module. */
+export async function fetchPresetNotification(
+  request: Request,
+  env: Env,
+  ctx: ExecutionContext,
+): Promise<Response> {
+  // Never mutate the shared binding env: private/public requests may overlap.
+  return app.fetch(request, { ...env, [presetNotificationEntrypoint]: true }, ctx);
+}
 
 export default app;

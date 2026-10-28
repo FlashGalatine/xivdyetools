@@ -281,10 +281,16 @@ Discord (beta app) ──► ...-dev.workers.dev ──┬─► own KV namespac
 Isolated where beta activity would corrupt real user state; shared where realistic data is the
 whole point of the test.
 
-**Accepted residual risk:** `/preset submit` from beta writes a genuine row into the live
-moderation queue. Do not exercise that path on beta, or delete the row afterward. Full isolation
-would require standing up a staging `presets-api` plus a migrated D1 database, which is
-deliberately out of scope (see below).
+**Credential boundary:** do not set `BOT_API_SECRET` or `BOT_SIGNING_SECRET` on the beta
+worker. Without the signing secret, authenticated preset operations are refused by the live
+presets API; beta is not a safe place to exercise writes. The signed favorite-batch lookup
+also requires that secret, so its success path is tested locally with a fake binding rather
+than by giving beta production credentials. Public preset reads remain available.
+
+**Residual risk if this boundary is broken:** giving beta production bot credentials can let
+`/preset submit` write a genuine row into the live moderation queue. A separate staging presets
+API and migrated D1 database would be needed for isolated authenticated testing; that remains
+outside this setup.
 
 ---
 
@@ -321,8 +327,9 @@ deliberately out of scope (see below).
    npx wrangler secret put DISCORD_TOKEN        # beta bot token
    npx wrangler secret put DISCORD_PUBLIC_KEY   # beta app public key
    ```
-   Optional secrets (`BOT_API_SECRET`, `INTERNAL_WEBHOOK_SECRET`) may be omitted. Rate limiting
-   needs no secret — it runs on the `[[ratelimits]]` bindings declared in `wrangler.toml`.
+   Do **not** set `BOT_API_SECRET` or `BOT_SIGNING_SECRET` on beta: they would authorize calls
+   against the live presets API. `INTERNAL_WEBHOOK_SECRET` is optional. Rate limiting needs no
+   secret — it runs on the `[[ratelimits]]` bindings declared in `wrangler.toml`.
 9. In the Discord portal, set **Interactions Endpoint URL** to the `workers.dev` URL from
    step 7. Discord sends a signed PING and refuses to save unless verification passes; a
    successful save confirms `DISCORD_PUBLIC_KEY` is correct.

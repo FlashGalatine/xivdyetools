@@ -296,7 +296,10 @@
       "listTitle": "Vos préréglages favoris",
       "listTitleCount": "Vos préréglages favoris ({n}/{max})",
       "empty": "Vous n'avez encore aucun préréglage favori. Utilisez `/preset favorite add` pour en ajouter un.",
-      "allRemoved": "Tous vos préréglages favoris semblent avoir été supprimés. Utilisez `/preset favorite remove` pour nettoyer les entrées."
+      "allRemoved": "Aucun de vos préréglages enregistrés n’est disponible pour le moment. Vos favoris sont conservés.",
+      "unavailableSummary": "Préréglages enregistrés indisponibles : {count}.",
+      "truncated": "Préréglages disponibles omis faute de place dans ce message : {count}.",
+      "lookupFailed": "Impossible de charger vos favoris. Veuillez réessayer plus tard."
     },
     "noValidDyes": "Aucune teinture valide dans ce préréglage"
   },
@@ -463,8 +466,8 @@
     "invalidButton": "Interaction de bouton invalide.",
     "notPermitted": "Vous n'avez pas la permission de modérer les images d'aperçu.",
     "actionFailed": "Échec de la mise à jour de l'image d'aperçu. Veuillez réessayer.",
-    "approvedFooter": "Image d'aperçu approuvée par {moderator}",
-    "rejectedFooter": "Image d'aperçu rejetée par {moderator} — modèle inchangé"
+    "approvedFooter": "Image d’aperçu approuvée",
+    "rejectedFooter": "Image d’aperçu rejetée — préréglage inchangé"
   },
   "matchImage": {
     "missingImage": "Veuillez joindre une image à analyser.",

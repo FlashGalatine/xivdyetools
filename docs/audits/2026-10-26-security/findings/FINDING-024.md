@@ -14,4 +14,4 @@
 - Render the list from the v2 denormalized {id,name} entries, or add a batch `GET /presets?ids=` endpoint so the command makes one call. Failing that, cap the concurrency and send the acting userDiscordId so presets-api's per-user limiter counts these reads.
 
 ## Status
-OPEN
+OPEN — signed, capped and ordered batch favorites prepared; provider/publication/deployment acceptance pending. [A-DISCORD evidence](../evidence/remediation-discord-2026-10-27.md).

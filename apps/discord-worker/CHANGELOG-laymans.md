@@ -35,6 +35,14 @@ Rules:
   path filter.
 -->
 
+## [5.9.7] - 2026-10-27
+### Favorite lists and clearer replies
+- `/preset favorite list` keeps your saved order, fits long names into its reply, and distinguishes unavailable presets from a temporary service problem. Your favorites stay saved.
+- `/glamour` detects when Discord cannot deliver its card and tries one short fallback message.
+### Your language and privacy
+- Clan suggestions and validation use your language. Swatch slot/order choices and preset sort choices are translated too.
+- New preview-image decisions omit the moderator's name. The privacy policy now explains the clan, gender and tool label shown on character cards, and when an edit snapshot is kept, in all six languages.
+
 ## [5.9.6] - 2026-10-27
 ### Privacy policy
 - The policy now explains private ID review, bans that continue after unlinking, and temporary recovery records for the new moderation features when enabled. All six language versions are updated.

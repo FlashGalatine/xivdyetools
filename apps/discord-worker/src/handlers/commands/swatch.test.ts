@@ -210,12 +210,12 @@ describe('/swatch attachment handling', () => {
       expect(lastEditEmbed().description).toContain('it is larger than 8 KB');
     });
 
-    it('hands the downloaded text to executeSwatch when it is within the cap', async () => {
+    it('hands the downloaded bytes to executeSwatch when it is within the cap', async () => {
       await handleSwatchCommand(makeInteraction(CDN_URL), env, ctx);
       await settle();
 
       expect(mockExecuteSwatch).toHaveBeenCalledWith(
-        expect.objectContaining({ fileText: '{"SkinColor":1}' }),
+        expect.objectContaining({ fileBytes: new TextEncoder().encode('{"SkinColor":1}') }),
       );
       // The attachment filename must never reach the renderer — players name
       // exports "Firstname Lastname.chara" (chara-name privacy, bot-logic 3.0.0).

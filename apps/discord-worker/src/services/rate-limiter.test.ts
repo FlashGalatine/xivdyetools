@@ -5,6 +5,7 @@
  * fallback that runs when no `RL_*` tier is bound.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { createWorkerLogger } from '@xivdyetools/logger';
 import { createTranslator } from '@xivdyetools/bot-logic/i18n';
 import {
   checkRateLimit,
@@ -51,7 +52,10 @@ function createMockKV() {
 /** Tier names in the order they are declared in wrangler.toml. */
 const TIER_NAMES = ['RL_5', 'RL_10', 'RL_15', 'RL_20', 'RL_30', 'RL_70'] as const;
 
-type FakeBindings = Record<(typeof TIER_NAMES)[number], { limit: ReturnType<typeof vi.fn> }>;
+type FakeBindings = Record<
+  (typeof TIER_NAMES)[number],
+  { limit: ReturnType<typeof vi.fn<NonNullable<Env['RL_30']>['limit']>> }
+>;
 
 /** All six `[[ratelimits]]` tiers bound, each admitting the request by default. */
 function createMockBindings(success = true): FakeBindings {
@@ -110,6 +114,17 @@ describe('rate-limiter.ts', () => {
       mockKV._clear();
       result = await checkRateLimit(config, mockUserId, 'about');
       expect(result.remaining).toBe(29); // 30 - 1 = 29
+    });
+
+    it('allows 30 button clicks per user per minute then resets without sharing other commands', async () => {
+      for (let i = 0; i < 30; i++) {
+        expect((await checkRateLimit(config, 'button-user', 'button')).allowed).toBe(true);
+      }
+      expect((await checkRateLimit(config, 'button-user', 'button')).allowed).toBe(false);
+      expect((await checkRateLimit(config, 'other-user', 'button')).allowed).toBe(true);
+      expect((await checkRateLimit(config, 'button-user', 'about')).allowed).toBe(true);
+      vi.advanceTimersByTime(60_001);
+      expect((await checkRateLimit(config, 'button-user', 'button')).allowed).toBe(true);
     });
 
     it('should use default limit for unknown commands', async () => {
@@ -314,6 +329,29 @@ describe('rate-limiter.ts', () => {
         key: 'ratelimit:user:user-123:budget:t30_60',
       });
       expect(mockKV.put).not.toHaveBeenCalled();
+    });
+
+    it('reuses the native singleton for successive button checks without freezing a request logger', async () => {
+      const bindings = createMockBindings();
+      bindings.RL_30.limit.mockRejectedValue(new Error('binding failed'));
+      const firstLogger = createWorkerLogger({ service: 'test', environment: 'test' }, 'first');
+      const nextLogger = createWorkerLogger({ service: 'test', environment: 'test' }, 'next');
+      const firstError = vi.spyOn(firstLogger, 'error').mockImplementation(() => {});
+      const nextError = vi.spyOn(nextLogger, 'error').mockImplementation(() => {});
+      const otherBindings = createMockBindings();
+      const first = await checkRateLimit({ bindings }, 'singleton-user', 'button', firstLogger);
+      const next = await checkRateLimit(
+        { bindings: otherBindings },
+        'singleton-user',
+        'button',
+        nextLogger,
+      );
+      expect(first.backendError).toBe(true);
+      expect(next.backendError).toBe(true);
+      expect(bindings.RL_30.limit).toHaveBeenCalledTimes(2);
+      expect(otherBindings.RL_30.limit).not.toHaveBeenCalled();
+      expect(firstError).toHaveBeenCalledTimes(1);
+      expect(nextError).toHaveBeenCalledTimes(1);
     });
 
     it('rateLimitBindings carries exactly the six RL_* tiers off the env', async () => {

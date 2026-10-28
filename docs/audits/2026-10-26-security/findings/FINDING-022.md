@@ -14,4 +14,4 @@
 - Policy variants to edit (all in one commit, all `Last updated` lines bumped): apps/discord-worker/PRIVACY_POLICY.md:88, PRIVACY_POLICY.ja.md:90, PRIVACY_POLICY.de.md:111, PRIVACY_POLICY.fr.md:88, PRIVACY_POLICY.ko.md:88, PRIVACY_POLICY.zh.md:88 (also bump Last Updated in each). No locales/*.json key carries this policy sentence (git grep for the phrase finds only the .md files).
 
 ## Status
-OPEN
+OPEN — six-language character-card policy correction prepared; release pending. [A-DISCORD evidence](../evidence/remediation-discord-2026-10-27.md).

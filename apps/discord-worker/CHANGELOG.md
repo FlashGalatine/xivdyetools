@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.9.7] - 2026-10-27
+
+### Fixed
+
+- Favorite lists use one signed, acting-user batch lookup for up to 50 saved IDs, preserve
+  order and distinguish unavailable presets from service failure. Complete escaped lines and
+  notices fit Discord's description limit; failed delivery is recorded and gets one short fallback.
+- Glamour delivery checks the Discord edit result and records a failed delivery even when a
+  short fallback arrives. Character attachments pass their original capped bytes without decoding
+  an unused text copy.
+- Clan autocomplete and validation use official localized race/clan labels while keeping canonical
+  saved values. Command registration localizes Swatch order/slots and preset sort choices.
+
+### Security
+
+- Add a private named notification entrypoint and a separately activated binding-only gate for
+  the public webhook. Keep compatibility enabled until the presets binding companion is deployed
+  and verified. Button interactions check their per-user tier before analytics and dispatch.
+- New preview-image decisions omit the moderator name and ID fallback from posts; database
+  attribution remains. Six-language privacy corrections describe public character-card details
+  and approved-only edit snapshots. Beta instructions forbid production bot API credentials.
+
 ## [5.9.6] - 2026-10-27
 
 ### Changed

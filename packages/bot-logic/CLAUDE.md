@@ -86,6 +86,8 @@ type ResolveColorOptions = { excludeFacewear?; findClosestForHex?; locale? };
 async function initializeLocale(locale: LocaleCode): Promise<void>;
 function getLocalizedDyeName(itemID: number, fallbackName: string, locale?: LocaleCode): string;
 function getLocalizedCategory(category: string, locale?: LocaleCode): string;
+function getLocalizedRace(key: RaceKey, locale?: LocaleCode): string;
+function getLocalizedClan(key: ClanKey, locale?: LocaleCode): string;
 type LocaleCode;  // re-exported from ./i18n (formerly @xivdyetools/bot-i18n): 'en'|'ja'|'de'|'fr'|'ko'|'zh'
 
 // @xivdyetools/bot-logic/i18n — the locale layer both Discord bots share (REFACTOR-001)

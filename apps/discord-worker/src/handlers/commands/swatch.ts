@@ -71,7 +71,6 @@ export async function handleSwatchCommand(
   }
 
   const input: SwatchInput = {
-    fileText: '',
     locale: t.getLocale(),
     logger,
   };
@@ -97,7 +96,7 @@ async function processSwatchCommand(
   const t = createTranslator(locale);
 
   try {
-    const file = await downloadCharaAttachment(fileUrl, t, true);
+    const file = await downloadCharaAttachment(fileUrl, t);
     if (!file.ok) {
       markCommandOutcome(interaction, 'image_input');
       await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
@@ -105,9 +104,7 @@ async function processSwatchCommand(
       });
       return;
     }
-    // The bytes are what bot-logic reads (invalid UTF-8 is refused there,
-    // not re-encoded); the text stays for callers that read it
-    input.fileText = file.text;
+    // Preserve malformed UTF-8 for the reader's validation.
     input.fileBytes = file.bytes;
   } catch (error) {
     // Only the CDN fetch and the capped read live in this try: a network

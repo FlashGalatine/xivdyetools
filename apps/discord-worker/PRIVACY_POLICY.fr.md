@@ -28,12 +28,12 @@ Nous nous engageons à protéger votre vie privée et à être transparents sur 
 | Préférences | Langue, mode de mélange, méthode de correspondance, nombre de résultats, clan, genre, Monde / centre de données par défaut, si les prix du tableau des ventes doivent être affichés par défaut, bascules d'affichage des couleurs, thème, et quelles catégories de teintures exclure des résultats de recherche (teintures métalliques, pastel, sombres, cosmiques, ishgardaises, coûteuses, vendues par un marchand, artisanales), ainsi que le moment où vous les avez modifiées pour la dernière fois | Jusqu'à réinitialisation ou demande de suppression |
 | Préréglages favoris | Jusqu'à 50 préréglages communautaires que vous marquez avec `/preset favorite add` — l'id du préréglage et le nom qu'il portait quand vous l'avez enregistré | Jusqu'à leur retrait ou demande de suppression |
 | Repère de premier lancement | Un repère par utilisateur indiquant que le Bot a effectué sa vérification unique de l'avis de bienvenue 5.0. Il est posé la première fois que vous exécutez une commande, que l'avis soit envoyé ou non (il n'est pas envoyé si vous avez déjà des préférences enregistrées) ; ne porte aucun contenu | Expire automatiquement après 180 jours |
-| Soumissions de préréglages | Nom, description, teintures, étiquettes, catégorie, lien d'exemple — et, si notre vérification automatique retient pour examen le nouveau nom, la description, les étiquettes ou le lien d'exemple d'une modification, la version antérieure à la première modification de ce type, conservée jusqu'à ce qu'un modérateur la restaure ou que le préréglage soit supprimé | Jusqu'à ce que vous le supprimiez (dans Mes soumissions de l'application web, connecté avec le même compte Discord) ou demandiez la suppression |
+| Soumissions de préréglages | Nom, description, teintures, étiquettes, catégorie, lien d'exemple — et, si notre vérification automatique retient pour examen une modification du nom, de la description, des étiquettes ou du lien d'exemple d'un préréglage publié (approuvé), la version antérieure à la première modification de ce type, conservée jusqu'à ce qu'un modérateur la restaure ou que le préréglage soit supprimé | Jusqu'à ce que vous le supprimiez (dans Mes soumissions de l'application web, connecté avec le même compte Discord) ou demandiez la suppression |
 | Votes | Vos votes sur les préréglages communautaires. Soumettre un préréglage compte comme votre vote pour lui ; si un préréglage publié a déjà les mêmes teintures, votre soumission devient un vote pour ce préréglage à la place | Jusqu'à leur retrait ou demande de suppression |
 
 ### Données de limitation de débit
 
-- Les compteurs par utilisateur et par commande sont conservés par le service de limitation de débit des Workers de Cloudflare pendant la fenêtre de 60 secondes et ne sont jamais écrits dans KV.
+- Les compteurs par utilisateur pour les commandes et les boutons sont conservés par le service de limitation de débit des Workers de Cloudflare pendant la fenêtre de 60 secondes et ne sont jamais écrits dans KV.
 - **Repli** : sur un déploiement sans les liaisons natives de limitation de débit, les compteurs sont conservés dans Cloudflare KV à la place, sous une clé contenant votre identifiant utilisateur Discord et le nom de la commande, avec une expiration de 120 secondes. La production et la bêta lient toutes deux le service natif, ce chemin n'y est donc pas utilisé.
 - Le Bot ne voit ni n'utilise jamais votre adresse IP pour la limitation de débit — il vous identifie par votre identifiant utilisateur Discord, car les commandes arrivent depuis les serveurs de Discord plutôt que directement de vous.
 - Aucun tiers n'est impliqué.
@@ -95,7 +95,7 @@ Lorsque vous utilisez `/extractor image`, votre image téléversée est :
 
 Lorsque vous utilisez `/swatch` ou `/glamour`, votre fichier `.chara` téléversé est :
 1. Téléchargé depuis Discord et lu en mémoire sur les serveurs de périphérie de Cloudflare
-2. Lu pour en extraire les couleurs, les teintures et l'équipement
+2. Lu pour en extraire les couleurs, les teintures, l'équipement, le clan, le genre et l'outil qui a enregistré le fichier. La carte publiée dans le canal affiche aussi le clan, le genre et un libellé d'outil figurant sur une liste autorisée
 3. **Immédiatement supprimé** après traitement
 4. **Jamais stocké** sur nos serveurs
 
