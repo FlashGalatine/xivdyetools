@@ -1,7 +1,8 @@
 # Sprint A-DISCORD preparation — 2026-10-27
 
-**State:** local source preparation and independent verification complete; draft publication
-and remote receipts pending. Base: `0a7ef240`
+**State:** prepared in draft [PR #345](https://github.com/FlashGalatine/xivdyetools/pull/345);
+source CI and automatic Discord beta pass. Production release and cutover remain separate.
+Base: `0a7ef240`
 (A-MODERATION, draft #344). Production merge, package publication, manual deployment and
 webhook cutover are separate actions. The private XIVAuth report is excluded.
 
@@ -112,8 +113,8 @@ explicit equal-length repeat expression required no scanner exemption; the uncha
 helper and all assertions remain. Its **75 tests**, TypeScript and lint pass, followed by the
 fresh final whole-graph receipt above. No runtime source changed after independent review.
 The two Workerd fixture paths/default handlers and runtime builtin are narrowly declared in
-Knip; shipped export checking remains enabled. Full stacked-history and remote CI/beta receipts
-follow source publication.
+Knip; shipped export checking remains enabled. The full stacked source-history scan passes with
+100% redaction; actual remote receipts are recorded below.
 
 The corrected boundary now passes independent ordinary/scoped and final escalated source
 review, with no remaining source findings. **260 focused tests**, including **7 actual Workerd
@@ -126,3 +127,19 @@ fixture has no moderation channel, so it does not prove real Discord posting.
 The actual production-config dry run passes at **8649.86 KiB raw / 2739.15 KiB gzip**. The
 unchanged bundle gate reports **2739.2/3072 KiB**, leaving **332.8 KiB**. Fake profile/credentials,
 disabled dotenv/telemetry and local bundling isolate these checks; nothing is deployed.
+
+## Published source receipts
+
+Source `9e6ae7cd4f65c1aa3c67e1280e20ad486c403059` is published in draft #345, stacked on #344.
+[CI run 40623733378](https://github.com/FlashGalatine/xivdyetools/actions/runs/40623733378)
+passes all four jobs, including **167 Playwright tests**, lint/types/tests/build, production
+security audit and Gitleaks. [Automatic Discord beta 40623672320](https://github.com/FlashGalatine/xivdyetools/actions/runs/40623672320)
+deploys successfully and registers **18 commands**. No web beta was selected.
+
+The configuration companion is draft [PR #346](https://github.com/FlashGalatine/xivdyetools/pull/346).
+Its source `ae26ddc3` integrates this provider, preserves both app versions, and passes
+[CI 40624786941](https://github.com/FlashGalatine/xivdyetools/actions/runs/40624786941), including
+**167 Playwright tests**; its [automatic Discord beta](https://github.com/FlashGalatine/xivdyetools/actions/runs/40624743878)
+also registers **18 commands**. These beta runs verify deployment/registration, not the separately
+required production notification acceptance. This receipt-only update changes evidence/plan;
+runtime source and disabled activation flags are unchanged.
