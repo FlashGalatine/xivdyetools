@@ -1,0 +1,723 @@
+{
+  "schemaVersion": 1,
+  "kind": "bounded-local-image-memory-investigation",
+  "date": "2026-10-28",
+  "sourceHead": "a35034bce2288fb47c922f23fe4bacfbe5e25617",
+  "status": "diagnostic-only; FINDING-020 remains PARTIAL / OPEN; no production acceptance",
+  "originalArtifactSHA256": {
+    "probe.mjs": "7018ae3e5ff60b914d8a5b77bcef39b04c52c3b966435419be4ac6a36007c6e7",
+    "analyze.mjs": "f3e453b033699735fa0e58ddb689a0615b5a315dd24cf8b5f8d4dc575a7ab671",
+    "result.json": "4be5a0fe3853fc265695783c1cad0eb8b3dfdc9ae3933b152f9d39835c352272",
+    "summary.json": "ea6118040b51a273c524c868ac0f306402a318bbf078f58e8d8986118729d6db",
+    "heap-analysis.json": "dd43738128ac404c69a134154d83044545fdfc6edb799277e355636d6e6d5df3",
+    "retained.heapsnapshot": "213dfefba3626988cc91b2d3dad982e5c87990a6a7ad8c7669b035beee28e6b2",
+    "released.heapsnapshot": "222b3dc4a9114fe0d411175dda601e311bdadbb6404c213873c10035bedd5118",
+    "sources.json": "dee8e0d5fff32282c0f551909dc3081e560d572eb090c291d0fcecc58d2d11d6",
+    "photon-provenance.json": "da72dbfa4920086f6b3335defdff340a72f799ddf61774f903cb439024fb9b88",
+    "photon-tree.json": "4b2362ae09b57987acc4174d837fc5932255da3947cef84f909ab59193a7b2f8",
+    "photon-phases.json": "a306beb699664dcf19826c82e93809ace13a97ec1f2ac564310f5ae888eb2079"
+  },
+  "artifactWorkspace": "<source-root>/.superpowers/sdd/image-investigation-20261028/runtime",
+  "sourceReferences": [
+    {
+      "name": "workerd-worker.c++",
+      "url": "https://raw.githubusercontent.com/cloudflare/workerd/v1.20261019.1/src/workerd/io/worker.c++",
+      "sha256": "373ce3159ec1cf4229be5f8606c20fb3dc3bb8601e70a955128dd84dac757f28"
+    },
+    {
+      "name": "workerd-setup.c++",
+      "url": "https://raw.githubusercontent.com/cloudflare/workerd/v1.20261019.1/src/workerd/jsg/setup.c++",
+      "sha256": "071cd611d4af78858351e5cd7026165501da9c039ca0f8c59822948ec111e29d"
+    },
+    {
+      "name": "workerd-setup.h",
+      "url": "https://raw.githubusercontent.com/cloudflare/workerd/v1.20261019.1/src/workerd/jsg/setup.h",
+      "sha256": "3914a757860940200ab65ad1a5c1510dec221fc91abd0f2773e0323ef7bdd0f5"
+    },
+    {
+      "name": "workerd-v8.MODULE.bazel",
+      "url": "https://raw.githubusercontent.com/cloudflare/workerd/v1.20261019.1/build/deps/v8.MODULE.bazel",
+      "sha256": "b6780c276a8524ec8251da5daac734830559db2d803be016ead43ce97aec72fe"
+    },
+    {
+      "name": "v8-heap-profiler-agent-impl.cc",
+      "url": "https://raw.githubusercontent.com/v8/v8/15.7.112.5/src/inspector/v8-heap-profiler-agent-impl.cc",
+      "sha256": "bf1263240633724bb5d030412ec66b715db3233656de21334c9659792af6a1eb"
+    },
+    {
+      "name": "v8-heap-snapshot-generator.cc",
+      "url": "https://raw.githubusercontent.com/v8/v8/15.7.112.5/src/profiler/heap-snapshot-generator.cc",
+      "sha256": "98702fd9fe98a0d8b3c16733c4b70b09b1c2d959edad6672ebf98e0f33ecb8a9"
+    }
+  ],
+  "summary": {
+    "sourceHead": "a35034bce2288fb47c922f23fe4bacfbe5e25617",
+    "sourceUnchanged": true,
+    "sourceMatchesFrozenReceipt": true,
+    "versions": {
+      "miniflare": "5.20261019.2-beta",
+      "workerd": "1.20261019.1",
+      "esbuild": "0.28.2",
+      "ws": "8.21.0"
+    },
+    "requests": 6,
+    "allHTTP200": true,
+    "allFrozenControlParity": true,
+    "parity": [
+      {
+        "fixture": "rgba8-64cap-near5MiB",
+        "flow": "extract512",
+        "status": 200,
+        "equalToFrozenControl": true
+      },
+      {
+        "fixture": "rgba8-4K-near5MiB",
+        "flow": "thumbnail",
+        "status": 200,
+        "equalToFrozenControl": true
+      },
+      {
+        "fixture": "rgba8-ultrawide-near5MiB",
+        "flow": "extract512",
+        "status": 200,
+        "equalToFrozenControl": true
+      },
+      {
+        "fixture": "rgba8-smaller-near5MiB",
+        "flow": "thumbnail",
+        "status": 200,
+        "equalToFrozenControl": true
+      },
+      {
+        "fixture": "rgba8-64cap-near5MiB",
+        "flow": "thumbnail",
+        "status": 200,
+        "equalToFrozenControl": true
+      },
+      {
+        "fixture": "rgba8-4K-near5MiB",
+        "flow": "extract256",
+        "status": 200,
+        "equalToFrozenControl": true
+      }
+    ],
+    "experiments": [
+      {
+        "name": "collectGarbage-with-health-dispatch",
+        "gc": {
+          "ok": true,
+          "durationMs": 531.7786000000001,
+          "value": {
+            "id": 48,
+            "result": {}
+          }
+        },
+        "snapshot": null,
+        "before": {
+          "label": "e1-before",
+          "usedSize": 4657464,
+          "totalSize": 7610368,
+          "embedderHeapUsedSize": 1072288,
+          "backingStorageSize": 20824074,
+          "wasmBytes": 108396544,
+          "diagnosticAccountingBytes": 134950370
+        },
+        "after": {
+          "label": "e1-after",
+          "usedSize": 1338092,
+          "totalSize": 2629632,
+          "embedderHeapUsedSize": 222256,
+          "backingStorageSize": 220536,
+          "wasmBytes": 108396544,
+          "diagnosticAccountingBytes": 110177428
+        }
+      },
+      {
+        "name": "snapshot-with-retained-sentinel",
+        "gc": null,
+        "snapshot": {
+          "ok": true,
+          "durationMs": 115.46100000000024,
+          "value": {
+            "id": 67,
+            "method": "HeapProfiler.takeHeapSnapshot",
+            "params": {
+              "reportProgress": true,
+              "captureNumericValue": true,
+              "exposeInternals": true
+            }
+          },
+          "bytes": 3102546,
+          "chunks": 48,
+          "sha256": "213dfefba3626988cc91b2d3dad982e5c87990a6a7ad8c7669b035beee28e6b2"
+        },
+        "before": {
+          "label": "e2-before",
+          "usedSize": 1341628,
+          "totalSize": 2629632,
+          "embedderHeapUsedSize": 222256,
+          "backingStorageSize": 220536,
+          "wasmBytes": 108396544,
+          "diagnosticAccountingBytes": 110180964
+        },
+        "after": {
+          "label": "e2-after",
+          "usedSize": 1249772,
+          "totalSize": 1843200,
+          "embedderHeapUsedSize": 1312,
+          "backingStorageSize": 8609144,
+          "wasmBytes": 108396544,
+          "diagnosticAccountingBytes": 118256772
+        }
+      },
+      {
+        "name": "snapshot-after-sentinel-release",
+        "gc": null,
+        "snapshot": {
+          "ok": true,
+          "durationMs": 103.06829999999991,
+          "value": {
+            "id": 86,
+            "method": "HeapProfiler.takeHeapSnapshot",
+            "params": {
+              "reportProgress": true,
+              "captureNumericValue": true,
+              "exposeInternals": true
+            }
+          },
+          "bytes": 3102287,
+          "chunks": 48,
+          "sha256": "222b3dc4a9114fe0d411175dda601e311bdadbb6404c213873c10035bedd5118"
+        },
+        "before": {
+          "label": "e3-before",
+          "usedSize": 1253308,
+          "totalSize": 2105344,
+          "embedderHeapUsedSize": 1312,
+          "backingStorageSize": 8609144,
+          "wasmBytes": 108396544,
+          "diagnosticAccountingBytes": 118260308
+        },
+        "after": {
+          "label": "e3-after",
+          "usedSize": 1249596,
+          "totalSize": 1843200,
+          "embedderHeapUsedSize": 1312,
+          "backingStorageSize": 220536,
+          "wasmBytes": 108396544,
+          "diagnosticAccountingBytes": 109867988
+        }
+      }
+    ],
+    "sentinelBackingDelta": 8388608,
+    "snapshots": [
+      {
+        "name": "retained",
+        "nodeCount": 32806,
+        "totalSelfBytes": 120041950,
+        "nativeTotalBytes": 118723202,
+        "jsArrayBufferDataBytes": 116785164,
+        "largeNative": [
+          {
+            "id": 56311,
+            "name": "system / JSArrayBufferData",
+            "bytes": 108396544
+          },
+          {
+            "id": 58251,
+            "name": "system / JSArrayBufferData",
+            "bytes": 8388608
+          },
+          {
+            "id": 52249,
+            "name": "system / CppGCManaged (WasmNativeModule)",
+            "bytes": 1776410
+          }
+        ],
+        "sentinelGlobalPropertyPresent": true
+      },
+      {
+        "name": "released",
+        "nodeCount": 32801,
+        "totalSelfBytes": 111653166,
+        "nativeTotalBytes": 110334594,
+        "jsArrayBufferDataBytes": 108396556,
+        "largeNative": [
+          {
+            "id": 56311,
+            "name": "system / JSArrayBufferData",
+            "bytes": 108396544
+          },
+          {
+            "id": 52249,
+            "name": "system / CppGCManaged (WasmNativeModule)",
+            "bytes": 1776410
+          }
+        ],
+        "sentinelGlobalPropertyPresent": false
+      }
+    ],
+    "limitations": [
+      "Only one six-request sequence and three diagnostic experiments; not a concurrency or continuous-peak test.",
+      "Forced GC and heap snapshots change runtime behavior; no production128MiB enforcement or safety conclusion.",
+      "Health scheduling association plus pinned source supports the idle-timeout cause; 500ms idle here reuses prior15s idle timeout evidence.",
+      "First startup failure missing explicit execution context occurred before warm requests/experiments; preserved separately.",
+      "Snapshot self-size attribution and diagnostic counter sum are distinct measures; neither is a continuous production memory accounting."
+    ]
+  },
+  "rawResult": {
+    "createdAt": "2026-10-28T18:33:17.437Z",
+    "hypothesis": "V8 collectGarbage posts non-nestable foreground task; local inspector and health dispatch may not pump it. workerd custom synchronous takeHeapSnapshot can collect and expose reachable backing stores.",
+    "beforeHashes": {
+      "apps/image-worker/src/index.ts": "b4cc10292bfe82610e034d1abc91b3e9064f4e17d61629beceb8ecf601d896b8",
+      "apps/image-worker/src/photon.ts": "554ad016422af11a68b505238569a4958496cee3c6013b01d2e959e398facbdb",
+      "apps/image-worker/src/validators.ts": "69ac9284fad0f087f2cb1c1d2016abc3fc5039d2c7e7a95986dd5eb452200844",
+      "apps/image-worker/src/dimensions.ts": "9976ed63307b5c402cb09ceede043cf9ad7b3f073d1a1b6ac4806db50586edc8",
+      "apps/image-worker/wrangler.toml": "b3876ec32b249a50bde9439a659a21dccbab3616e2529233baca63b198f41bb8",
+      "pnpm-lock.yaml": "707a5d7d9e59fd3790011a986435b91ac0d1347ebdb069e854c9828996d7434f"
+    },
+    "versions": {
+      "miniflare": "5.20261019.2-beta",
+      "workerd": "1.20261019.1",
+      "esbuild": "0.28.2",
+      "ws": "8.21.0"
+    },
+    "baselineReuse": "docs/audits/2026-10-26-security/evidence/remediation-image-memory-runtime-only-2026-10-28.json",
+    "cf": false,
+    "telemetry": false,
+    "experiments": [
+      {
+        "name": "collectGarbage-with-health-dispatch",
+        "before": {
+          "label": "e1-before",
+          "usedSize": 4657464,
+          "totalSize": 7610368,
+          "embedderHeapUsedSize": 1072288,
+          "backingStorageSize": 20824074,
+          "wasmBytes": 108396544,
+          "diagnosticAccountingBytes": 134950370
+        },
+        "settledBeforeDispatch": false,
+        "health": [
+          {
+            "status": 200,
+            "body": "{\"status\":\"ok\"}"
+          },
+          {
+            "status": 200,
+            "body": "{\"status\":\"ok\"}"
+          },
+          {
+            "status": 200,
+            "body": "{\"status\":\"ok\"}"
+          }
+        ],
+        "collectGarbage": {
+          "ok": true,
+          "durationMs": 531.7786000000001,
+          "value": {
+            "id": 48,
+            "result": {}
+          }
+        },
+        "after": {
+          "label": "e1-after",
+          "usedSize": 1338092,
+          "totalSize": 2629632,
+          "embedderHeapUsedSize": 222256,
+          "backingStorageSize": 220536,
+          "wasmBytes": 108396544,
+          "diagnosticAccountingBytes": 110177428
+        }
+      },
+      {
+        "name": "snapshot-with-retained-sentinel",
+        "before": {
+          "label": "e2-before",
+          "usedSize": 1341628,
+          "totalSize": 2629632,
+          "embedderHeapUsedSize": 222256,
+          "backingStorageSize": 220536,
+          "wasmBytes": 108396544,
+          "diagnosticAccountingBytes": 110180964
+        },
+        "withSentinel": {
+          "label": "e2-with-sentinel",
+          "usedSize": 1342432,
+          "totalSize": 2629632,
+          "embedderHeapUsedSize": 222256,
+          "backingStorageSize": 8609144,
+          "wasmBytes": 108396544,
+          "diagnosticAccountingBytes": 118570376
+        },
+        "snapshot": {
+          "ok": true,
+          "durationMs": 115.46100000000024,
+          "value": {
+            "id": 67,
+            "method": "HeapProfiler.takeHeapSnapshot",
+            "params": {
+              "reportProgress": true,
+              "captureNumericValue": true,
+              "exposeInternals": true
+            }
+          },
+          "bytes": 3102546,
+          "chunks": 48,
+          "sha256": "213dfefba3626988cc91b2d3dad982e5c87990a6a7ad8c7669b035beee28e6b2"
+        },
+        "after": {
+          "label": "e2-after",
+          "usedSize": 1249772,
+          "totalSize": 1843200,
+          "embedderHeapUsedSize": 1312,
+          "backingStorageSize": 8609144,
+          "wasmBytes": 108396544,
+          "diagnosticAccountingBytes": 118256772
+        }
+      },
+      {
+        "name": "snapshot-after-sentinel-release",
+        "before": {
+          "label": "e3-before",
+          "usedSize": 1253308,
+          "totalSize": 2105344,
+          "embedderHeapUsedSize": 1312,
+          "backingStorageSize": 8609144,
+          "wasmBytes": 108396544,
+          "diagnosticAccountingBytes": 118260308
+        },
+        "afterReleaseBeforeSnapshot": {
+          "label": "e3-release-before-snapshot",
+          "usedSize": 1253896,
+          "totalSize": 2105344,
+          "embedderHeapUsedSize": 1312,
+          "backingStorageSize": 8609144,
+          "wasmBytes": 108396544,
+          "diagnosticAccountingBytes": 118260896
+        },
+        "snapshot": {
+          "ok": true,
+          "durationMs": 103.06829999999991,
+          "value": {
+            "id": 86,
+            "method": "HeapProfiler.takeHeapSnapshot",
+            "params": {
+              "reportProgress": true,
+              "captureNumericValue": true,
+              "exposeInternals": true
+            }
+          },
+          "bytes": 3102287,
+          "chunks": 48,
+          "sha256": "222b3dc4a9114fe0d411175dda601e311bdadbb6404c213873c10035bedd5118"
+        },
+        "after": {
+          "label": "e3-after",
+          "usedSize": 1249596,
+          "totalSize": 1843200,
+          "embedderHeapUsedSize": 1312,
+          "backingStorageSize": 220536,
+          "wasmBytes": 108396544,
+          "diagnosticAccountingBytes": 109867988
+        }
+      }
+    ],
+    "warm": [
+      {
+        "fixture": "rgba8-64cap-near5MiB",
+        "flow": "extract512",
+        "status": 200,
+        "responseBytes": 524288,
+        "responseSHA256": "036eab0dcd98294f424a287aa2d8fb7edf0f40817e3c0d45c96629dc19f68525",
+        "sample": {
+          "label": "warm-0",
+          "usedSize": 2694084,
+          "totalSize": 5513216,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10943925,
+          "wasmBytes": 108396544,
+          "diagnosticAccountingBytes": 122937313
+        }
+      },
+      {
+        "fixture": "rgba8-4K-near5MiB",
+        "flow": "thumbnail",
+        "status": 200,
+        "responseBytes": 20538,
+        "responseSHA256": "357e14588ea682e924a99ca41c99e53a6a046a4ddbb87d32171e1704be0a25b2",
+        "sample": {
+          "label": "warm-1",
+          "usedSize": 2705164,
+          "totalSize": 5513216,
+          "embedderHeapUsedSize": 536016,
+          "backingStorageSize": 10450745,
+          "wasmBytes": 108396544,
+          "diagnosticAccountingBytes": 122088469
+        }
+      },
+      {
+        "fixture": "rgba8-ultrawide-near5MiB",
+        "flow": "extract512",
+        "status": 200,
+        "responseBytes": 438272,
+        "responseSHA256": "d538a4ca7fb38c40dc0fb5a0f326ea7ef05bb5cadd9a4443be2e83f58f0d69e8",
+        "sample": {
+          "label": "warm-2",
+          "usedSize": 4489356,
+          "totalSize": 6823936,
+          "embedderHeapUsedSize": 1031904,
+          "backingStorageSize": 21058270,
+          "wasmBytes": 108396544,
+          "diagnosticAccountingBytes": 134976074
+        }
+      },
+      {
+        "fixture": "rgba8-smaller-near5MiB",
+        "flow": "thumbnail",
+        "status": 200,
+        "responseBytes": 651418,
+        "responseSHA256": "fcc7259458ddaa07ca7924755810ee416bbd1595cfce7e4ea6f282d930c42685",
+        "sample": {
+          "label": "warm-3",
+          "usedSize": 5065820,
+          "totalSize": 7872512,
+          "embedderHeapUsedSize": 1547760,
+          "backingStorageSize": 21228579,
+          "wasmBytes": 108396544,
+          "diagnosticAccountingBytes": 136238703
+        }
+      },
+      {
+        "fixture": "rgba8-64cap-near5MiB",
+        "flow": "thumbnail",
+        "status": 200,
+        "responseBytes": 47310,
+        "responseSHA256": "123fcf1fe7b72a48acbac64c407a9d59126e54f5ab0c3be94310480bf4e5a914",
+        "sample": {
+          "label": "warm-4",
+          "usedSize": 2867784,
+          "totalSize": 7610368,
+          "embedderHeapUsedSize": 618744,
+          "backingStorageSize": 10466947,
+          "wasmBytes": 108396544,
+          "diagnosticAccountingBytes": 122350019
+        }
+      },
+      {
+        "fixture": "rgba8-4K-near5MiB",
+        "flow": "extract256",
+        "status": 200,
+        "responseBytes": 147456,
+        "responseSHA256": "f2a9d8e5791d0821810090c400557387cbd642d7228961c7e4115f7282132a38",
+        "sample": {
+          "label": "warm-5",
+          "usedSize": 4657232,
+          "totalSize": 7610368,
+          "embedderHeapUsedSize": 1072288,
+          "backingStorageSize": 20824074,
+          "wasmBytes": 108396544,
+          "diagnosticAccountingBytes": 134950138
+        }
+      }
+    ],
+    "fixtures": [
+      {
+        "name": "rgba8-64cap-near5MiB",
+        "path": "<source-root>\\.superpowers\\sdd\\image-memory-repro-public-copy-final\\fixtures\\rgba8-64cap-near5MiB.png",
+        "bytes": 5095485,
+        "sha256": "d87f2ffb72f4d71c26576f1b56e8e7d56df8289d471c3560da0d56ea5b90928b",
+        "width": 4096,
+        "height": 2048,
+        "depth": 8,
+        "colorType": 6,
+        "randomRows": 309,
+        "seed": "0x7a6b5c4d"
+      },
+      {
+        "name": "rgba8-4K-near5MiB",
+        "path": "<source-root>\\.superpowers\\sdd\\image-memory-repro-public-copy-final\\fixtures\\rgba8-4K-near5MiB.png",
+        "bytes": 5101959,
+        "sha256": "84607a30cb3017caaadedc96856c79af09281dd4484bd135a7c5b34e20905abf",
+        "width": 3840,
+        "height": 2160,
+        "depth": 8,
+        "colorType": 6,
+        "randomRows": 330,
+        "seed": "0x7a6b5c4d"
+      },
+      {
+        "name": "rgba8-ultrawide-near5MiB",
+        "path": "<source-root>\\.superpowers\\sdd\\image-memory-repro-public-copy-final\\fixtures\\rgba8-ultrawide-near5MiB.png",
+        "bytes": 5082021,
+        "sha256": "ff5e875bd22bec3913f5ab846d1a3a18f246b7dde7aa056464e372e742070ffc",
+        "width": 3440,
+        "height": 1440,
+        "depth": 8,
+        "colorType": 6,
+        "randomRows": 368,
+        "seed": "0x7a6b5c4d"
+      },
+      {
+        "name": "rgba8-smaller-near5MiB",
+        "path": "<source-root>\\.superpowers\\sdd\\image-memory-repro-public-copy-final\\fixtures\\rgba8-smaller-near5MiB.png",
+        "bytes": 5072010,
+        "sha256": "00032fc925d037db28417e61b786f22c114534a6aac0a882f6772521daa1cac9",
+        "width": 1280,
+        "height": 1024,
+        "depth": 8,
+        "colorType": 6,
+        "randomRows": 990,
+        "seed": "0x7a6b5c4d"
+      }
+    ],
+    "bundleSHA256": "908f9ae0896fadc76ebe20dcf1da409e9acf4809497bcbcdacf22bca52720c3e",
+    "bundleInputs": [
+      "node_modules/.pnpm/hono@4.13.13/node_modules/hono/dist/http-exception.js",
+      "node_modules/.pnpm/hono@4.13.13/node_modules/hono/dist/request/constants.js",
+      "node_modules/.pnpm/hono@4.13.13/node_modules/hono/dist/utils/crypto.js",
+      "node_modules/.pnpm/hono@4.13.13/node_modules/hono/dist/utils/buffer.js",
+      "node_modules/.pnpm/hono@4.13.13/node_modules/hono/dist/utils/body.js",
+      "node_modules/.pnpm/hono@4.13.13/node_modules/hono/dist/utils/url.js",
+      "node_modules/.pnpm/hono@4.13.13/node_modules/hono/dist/request.js",
+      "node_modules/.pnpm/hono@4.13.13/node_modules/hono/dist/utils/html.js",
+      "node_modules/.pnpm/hono@4.13.13/node_modules/hono/dist/context.js",
+      "node_modules/.pnpm/hono@4.13.13/node_modules/hono/dist/compose.js",
+      "node_modules/.pnpm/hono@4.13.13/node_modules/hono/dist/router.js",
+      "node_modules/.pnpm/hono@4.13.13/node_modules/hono/dist/utils/constants.js",
+      "node_modules/.pnpm/hono@4.13.13/node_modules/hono/dist/hono-base.js",
+      "node_modules/.pnpm/hono@4.13.13/node_modules/hono/dist/router/utils.js",
+      "node_modules/.pnpm/hono@4.13.13/node_modules/hono/dist/router/reg-exp-router/matcher.js",
+      "node_modules/.pnpm/hono@4.13.13/node_modules/hono/dist/router/reg-exp-router/node.js",
+      "node_modules/.pnpm/hono@4.13.13/node_modules/hono/dist/router/reg-exp-router/trie.js",
+      "node_modules/.pnpm/hono@4.13.13/node_modules/hono/dist/router/reg-exp-router/router.js",
+      "node_modules/.pnpm/hono@4.13.13/node_modules/hono/dist/router/reg-exp-router/prepared-router.js",
+      "node_modules/.pnpm/hono@4.13.13/node_modules/hono/dist/router/reg-exp-router/index.js",
+      "node_modules/.pnpm/hono@4.13.13/node_modules/hono/dist/router/smart-router/router.js",
+      "node_modules/.pnpm/hono@4.13.13/node_modules/hono/dist/router/trie-router/node.js",
+      "node_modules/.pnpm/hono@4.13.13/node_modules/hono/dist/router/trie-router/router.js",
+      "node_modules/.pnpm/hono@4.13.13/node_modules/hono/dist/router/trie-router/index.js",
+      "node_modules/.pnpm/hono@4.13.13/node_modules/hono/dist/hono.js",
+      "node_modules/.pnpm/hono@4.13.13/node_modules/hono/dist/index.js",
+      "packages/worker-kit/dist/middleware/request-id.js",
+      "packages/logger/dist/constants.js",
+      "packages/logger/dist/core/base-logger.js",
+      "packages/logger/dist/adapters/json-adapter.js",
+      "packages/logger/dist/presets/worker.js",
+      "packages/worker-kit/dist/middleware/logger.js",
+      "packages/worker-kit/dist/rate-limiter/backends/memory.js",
+      "packages/worker-kit/dist/rate-limiter/key-scope.js",
+      "packages/worker-kit/dist/rate-limiter/backends/kv.js",
+      "node_modules/.pnpm/uncrypto@0.1.3/node_modules/uncrypto/dist/crypto.web.mjs",
+      "node_modules/.pnpm/@upstash+redis@1.39.0/node_modules/@upstash/redis/chunk-4WQYU7T6.mjs",
+      "node_modules/.pnpm/@upstash+redis@1.39.0/node_modules/@upstash/redis/nodejs.mjs",
+      "packages/worker-kit/dist/rate-limiter/backends/upstash.js",
+      "packages/worker-kit/dist/rate-limiter/backends/cloudflare.js",
+      "packages/worker-kit/dist/rate-limiter/ip.js",
+      "packages/worker-kit/dist/rate-limiter/headers.js",
+      "packages/worker-kit/dist/rate-limiter/presets/configs.js",
+      "packages/worker-kit/dist/rate-limiter/index.js",
+      "packages/worker-kit/dist/middleware/rate-limit.js",
+      "packages/worker-kit/dist/middleware/index.js",
+      "packages/worker-kit/dist/image-sniff/detect.js",
+      "packages/worker-kit/dist/image-sniff/index.js",
+      "packages/worker-kit/dist/index.js",
+      "apps/image-worker/src/dimensions.ts",
+      "apps/image-worker/src/validators.ts",
+      "node_modules/.pnpm/@cf-wasm+photon@0.4.0/node_modules/@cf-wasm/photon/dist/lib/photon_rs.js",
+      "node_modules/.pnpm/@cf-wasm+internals@0.2.0/node_modules/@cf-wasm/internals/dist/polyfills/image-data.js",
+      "node_modules/.pnpm/@cf-wasm+photon@0.4.0/node_modules/@cf-wasm/photon/dist/photon.js",
+      "node_modules/.pnpm/@cf-wasm+photon@0.4.0/node_modules/@cf-wasm/photon/dist/workerd.js",
+      "apps/image-worker/src/photon.ts",
+      "apps/image-worker/src/index.ts",
+      "apps/image-worker/local-probe-entry.mjs"
+    ],
+    "cold": {
+      "label": "cold",
+      "usedSize": 978408,
+      "totalSize": 1581056,
+      "embedderHeapUsedSize": 515872,
+      "backingStorageSize": 0,
+      "wasmBytes": 1376256,
+      "diagnosticAccountingBytes": 2870536
+    },
+    "preExperiments": {
+      "label": "before-experiments",
+      "usedSize": 4657348,
+      "totalSize": 7610368,
+      "embedderHeapUsedSize": 1072288,
+      "backingStorageSize": 20824074,
+      "wasmBytes": 108396544,
+      "diagnosticAccountingBytes": 134950254
+    },
+    "afterHashes": {
+      "apps/image-worker/src/index.ts": "b4cc10292bfe82610e034d1abc91b3e9064f4e17d61629beceb8ecf601d896b8",
+      "apps/image-worker/src/photon.ts": "554ad016422af11a68b505238569a4958496cee3c6013b01d2e959e398facbdb",
+      "apps/image-worker/src/validators.ts": "69ac9284fad0f087f2cb1c1d2016abc3fc5039d2c7e7a95986dd5eb452200844",
+      "apps/image-worker/src/dimensions.ts": "9976ed63307b5c402cb09ceede043cf9ad7b3f073d1a1b6ac4806db50586edc8",
+      "apps/image-worker/wrangler.toml": "b3876ec32b249a50bde9439a659a21dccbab3616e2529233baca63b198f41bb8",
+      "pnpm-lock.yaml": "707a5d7d9e59fd3790011a986435b91ac0d1347ebdb069e854c9828996d7434f"
+    },
+    "sourceUnchanged": true,
+    "finishedAt": "2026-10-28T18:33:21.574Z"
+  },
+  "normalization": "Only source checkout absolute path prefixes replaced with <source-root>; numeric fields, fixture hashes, frozen source hashes and original artifact hashes preserved. Heap snapshots and harness remain local; this is not a new portable reproduction package.",
+  "photonArtifactProvenance": {
+    "installedWasm": {
+      "bytes": 1566855,
+      "sha256": "f477b87cbea0445c65fc7e580e89050190600379fcd44821cec67403483872b1",
+      "gitBlob": "d35be6ba83cdfd147110fdfea3ce5ce1b7d8f45e",
+      "releaseCommit": "a7423d01eacc7ce20359ad0df202d0ce58cf0347",
+      "releaseWasmBlob": "d35be6ba83cdfd147110fdfea3ce5ce1b7d8f45e",
+      "matchesReleaseTreeBlob": true,
+      "producers": [
+        {
+          "field": "language",
+          "entries": [
+            {
+              "name": "Rust",
+              "version": ""
+            }
+          ]
+        },
+        {
+          "field": "processed-by",
+          "entries": [
+            {
+              "name": "rustc",
+              "version": "1.96.1 (31fca3adb 2026-06-26)"
+            },
+            {
+              "name": "walrus",
+              "version": "0.26.4"
+            },
+            {
+              "name": "wasm-bindgen",
+              "version": "0.2.126 (21ac804a9)"
+            }
+          ]
+        }
+      ],
+      "embeddedDependencyPaths": [
+        "image-0.24.9",
+        "jpeg-decoder-0.3.2",
+        "gif-0.13.3",
+        "png-0.17.16",
+        "wasm-bindgen-0.2.126"
+      ]
+    },
+    "limitations": [
+      "Embedded paths identify used crate versions but do not reconstruct a complete Cargo.lock or binaryen build version.",
+      "Tree blob equality proves installed WASM equals checked-in release artifact; it does not prove reproducible Rust build from the release source."
+    ],
+    "releaseTree": {
+      "source": "https://api.github.com/repos/fineshopdesign/cf-wasm/git/trees/a7423d01eacc7ce20359ad0df202d0ce58cf0347?recursive=1",
+      "commit": "a7423d01eacc7ce20359ad0df202d0ce58cf0347",
+      "truncated": false,
+      "hasCrateLock": false,
+      "toolchains": []
+    },
+    "phaseRowsReuse": "photon-phases.json selects frozen implementation receipt rows; no additional image measurements",
+    "proposedVariantMatrix": "24 requests per variant is an unexecuted prototype proposal, not a new result"
+  }
+}

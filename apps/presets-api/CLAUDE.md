@@ -181,7 +181,9 @@ after disabling the flag. Missing legacy links preserve current state while disa
 review consumers' production receipts before a separate activation-only PR; keep FINDING-016 open.
 
 Preview mutation rules use owner/key/status CAS and actual removed-key capture. Processing failure
-retains the slot; cheap validation and proven storage/DB failure refund. Unconfirmed DB writes
+retains the slot, including image-worker overload and binding/response-read failure; service
+unavailability returns a generic 503 while invalid-image responses remain 400. Cheap validation
+and proven storage/DB failure refund. Unconfirmed DB writes
 retain the slot and return 503; clean only proven-unreferenced objects. R2 cleanup is best-effort,
 not a D1/R2 transaction or a guarantee against null→image→null ABA/crash orphans.
 

@@ -28,7 +28,7 @@ function pngHeader(width: number, height: number, bitDepth = 8, colorType = 6): 
     ]);
 }
 
-vi.mock('@cf-wasm/photon', () => ({
+vi.mock('./photon-runtime.js', () => ({
     PhotonImage: {
         new_from_byteslice: vi.fn(() => mockPhotonImage),
     },
@@ -55,7 +55,7 @@ import {
     THUMBNAIL_WIDTH,
     THUMBNAIL_HEIGHT,
 } from './photon.js';
-import { PhotonImage, resize, SamplingFilter, crop } from '@cf-wasm/photon';
+import { PhotonImage, resize, SamplingFilter, crop } from './photon-runtime.js';
 import app from './index.js';
 import { imageInputReason } from '../../discord-worker/src/services/image-input-errors.js';
 

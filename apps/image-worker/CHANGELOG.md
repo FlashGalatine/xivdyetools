@@ -19,6 +19,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remove the no-resize PNG encode/decode round trip, and release consumed thumbnail images
   before allocating later stages. Each distinct Photon object is freed once, including
   failure paths; successful pixel/WebP output semantics stay unchanged.
+- Use a pinned Photon ownership patch that transfers decoded RGBA storage and borrows crop/
+  resize inputs instead of cloning them. Retain source, lock, licenses, artifact hashes and
+  a verified rebuild recipe; the installed wrapper initializes only this WASM artifact.
+- Admit one image acquisition/processing operation per isolate with no waiting queue. Busy
+  requests receive a generic 503 before body/CDN work. Cancel abandoned I/O without waiting
+  on stalled cancellation, and preserve the complete dispatch lifetime for admission cleanup
+  after caller disconnects. Runtime termination and outstanding response bodies remain separate
+  limits; this does not establish a total-memory bound.
 
 The six-language bot-manual limit companion must be included in the complete reviewed
 bot-logic publication and the corrected manual deployed before this lower cap activates.

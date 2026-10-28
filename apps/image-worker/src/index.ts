@@ -24,6 +24,7 @@ import {
   assertValidMaxDimension,
 } from './validators.js';
 import { processImageForExtraction, processImageForThumbnail } from './photon.js';
+import { imageAdmission, IMAGE_UNAVAILABLE_ERROR } from './admission.js';
 
 /**
  * FINDING-004: `maxDimension` must be an integer in
@@ -132,11 +133,16 @@ app.get('/health', (c) => c.json({ status: 'ok' }));
  * (`IMAGE_INPUT_MARKERS`) — never reword or generalise a thrown message
  * without updating it there.
  */
-app.post('/extract', async (c) => {
+app.post('/extract', imageAdmission, async (c) => {
+  const signal = c.req.raw.signal;
   let body: { url?: string; maxDimension?: number };
   try {
-    body = await c.req.json();
+    // Own the reader so an incoming abort stops accumulation. Infinity keeps
+    // the existing JSON size semantics; image bytes have their separate cap.
+    const bytes = await readBodyWithCap(c.req.raw.body, Infinity, signal);
+    body = JSON.parse(new TextDecoder().decode(bytes)) as typeof body;
   } catch {
+    if (signal.aborted) return c.json({ error: IMAGE_UNAVAILABLE_ERROR }, 503);
     return c.json({ error: 'Invalid JSON body' }, 400);
   }
 
@@ -153,7 +159,9 @@ app.post('/extract', async (c) => {
   }
 
   try {
-    const { buffer } = await validateAndFetchImage(body.url);
+    signal.throwIfAborted();
+    const { buffer } = await validateAndFetchImage(body.url, signal);
+    signal.throwIfAborted();
     const processed = await processImageForExtraction(
       buffer,
       body.maxDimension === undefined ? {} : { maxDimension: body.maxDimension }
@@ -168,6 +176,7 @@ app.post('/extract', async (c) => {
       },
     });
   } catch (error) {
+    if (signal.aborted) return c.json({ error: IMAGE_UNAVAILABLE_ERROR }, 503);
     return c.json(
       { error: error instanceof Error ? error.message : 'Image processing failed' },
       400
@@ -182,7 +191,8 @@ app.post('/extract', async (c) => {
  * /extract this takes raw bytes rather than a URL: the caller already holds
  * the file, so there is nothing to fetch and no SSRF surface.
  */
-app.post('/thumbnail', async (c) => {
+app.post('/thumbnail', imageAdmission, async (c) => {
+  const signal = c.req.raw.signal;
   // FINDING-004: enforce the byte cap from Content-Length before buffering,
   // then while streaming — never hold an oversized body in memory.
   const declared = c.req.header('Content-Length');
@@ -195,8 +205,9 @@ app.post('/thumbnail', async (c) => {
 
   let buffer: Uint8Array;
   try {
-    buffer = await readBodyWithCap(c.req.raw.body, MAX_FILE_SIZE_BYTES);
+    buffer = await readBodyWithCap(c.req.raw.body, MAX_FILE_SIZE_BYTES, signal);
   } catch (error) {
+    if (signal.aborted) return c.json({ error: IMAGE_UNAVAILABLE_ERROR }, 503);
     return c.json({ error: error instanceof Error ? error.message : 'Image too large' }, 400);
   }
 
@@ -205,12 +216,14 @@ app.post('/thumbnail', async (c) => {
   }
 
   try {
+    signal.throwIfAborted();
     const webp = processImageForThumbnail(buffer);
     return new Response(webp, {
       status: 200,
       headers: { 'Content-Type': 'image/webp' },
     });
   } catch (error) {
+    if (signal.aborted) return c.json({ error: IMAGE_UNAVAILABLE_ERROR }, 503);
     return c.json(
       { error: error instanceof Error ? error.message : 'Image processing failed' },
       400

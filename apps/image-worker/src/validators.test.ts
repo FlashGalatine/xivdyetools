@@ -11,11 +11,78 @@ import {
     validateImageFormat,
     fetchImageWithTimeout,
     validateAndFetchImage,
+    readBodyWithCap,
     MAX_FILE_SIZE_BYTES,
     MAX_IMAGE_DIMENSION,
     MAX_PIXEL_COUNT,
     FETCH_TIMEOUT_MS,
 } from './validators.js';
+
+describe('image acquisition cancellation', () => {
+    it('forwards incoming cancellation while retaining an ignored fetch until settlement', async () => {
+        let release!: (response: Response) => void;
+        let entered!: () => void;
+        const started = new Promise<void>(resolve => { entered = resolve; });
+        const response = new Promise<Response>(resolve => { release = resolve; });
+        const abort = new AbortController();
+        let signal: AbortSignal | undefined;
+        const fetcher = vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, options) => {
+            signal = options?.signal ?? undefined;
+            entered();
+            return response;
+        });
+        const result = fetchImageWithTimeout('https://cdn.discordapp.com/x.png', { signal: abort.signal });
+        const cancel = vi.fn();
+        const unused = new Response(new ReadableStream<Uint8Array>({ cancel }, { highWaterMark: 0 }));
+        const settled = vi.fn();
+        void result.then(settled, settled);
+        await started;
+        abort.abort();
+        try {
+            expect(signal?.aborted).toBe(true);
+            await Promise.resolve();
+            expect(settled).not.toHaveBeenCalled();
+        } finally {
+            release(unused);
+            await result.catch(() => undefined);
+            fetcher.mockRestore();
+        }
+        expect(cancel).toHaveBeenCalledOnce();
+    });
+
+    it('refuses pre-aborted acquisition without pulling bytes', async () => {
+        const abort = new AbortController(); abort.abort();
+        const pull = vi.fn((c: ReadableStreamDefaultController<Uint8Array>) => { c.enqueue(new Uint8Array([1])); c.close(); });
+        const cancel = vi.fn();
+        const body = new ReadableStream({ pull, cancel }, { highWaterMark: 0 });
+        await expect(readBodyWithCap(body, 5, abort.signal)).rejects.toMatchObject({ name: 'AbortError' });
+        expect(pull).not.toHaveBeenCalled();
+        expect(cancel).toHaveBeenCalledOnce();
+    });
+
+    it('removes its abort listener and releases its reader after a failed read', async () => {
+        const abort = new AbortController();
+        const remove = vi.spyOn(abort.signal, 'removeEventListener');
+        const reader = { read: vi.fn(async () => { throw new Error('read failed'); }), releaseLock: vi.fn(), cancel: vi.fn(async () => {}) };
+        const body = { getReader: () => reader } as unknown as ReadableStream<Uint8Array>;
+        await expect(readBodyWithCap(body, 5, abort.signal)).rejects.toThrow('read failed');
+        expect(remove).toHaveBeenCalledWith('abort', expect.any(Function));
+        expect(reader.releaseLock).toHaveBeenCalledOnce();
+        abort.abort();
+        expect(reader.cancel).not.toHaveBeenCalled();
+        remove.mockRestore();
+    });
+
+    it.each(['reject', 'stall'] as const)('does not await an oversized source cancellation that will %s', async behavior => {
+        const cancel = vi.fn(() => behavior === 'reject'
+            ? Promise.reject(new Error('cancel failed')) : new Promise<void>(() => {}));
+        const body = new ReadableStream<Uint8Array>({
+            pull(c) { c.enqueue(new Uint8Array(6)); }, cancel,
+        }, { highWaterMark: 0 });
+        await expect(readBodyWithCap(body, 5)).rejects.toThrow('Image too large');
+        expect(cancel).toHaveBeenCalledOnce();
+    });
+});
 
 // Mock fetch
 const mockFetch = vi.fn();

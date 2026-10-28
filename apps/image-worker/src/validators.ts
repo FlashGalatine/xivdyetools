@@ -12,6 +12,7 @@
 import type { UrlValidationResult, FormatValidationResult, ImageFormat } from './types.js';
 import { readImageDimensions, type ImageDimensions } from './dimensions.js';
 import { detectImageFormat } from '@xivdyetools/worker-kit/image-sniff';
+import { cancelWithoutWaiting } from './admission.js';
 
 // ============================================================================
 // Constants
@@ -52,11 +53,12 @@ export const MAX_IMAGE_DIMENSION = 4096;
 const BYTES_PER_RGBA_PIXEL = 4;
 
 /**
- * Full RGBA copies charged to the input pixel allowance.
+ * Conservative RGBA buffers charged to the input pixel allowance.
  *
- * `get_raw_pixels()` materialises one, and `dyn_image_from_raw` copies that
- * vector again for each operation. This factor is an admission model, not
- * a measurement of the full WASM and JS peak.
+ * Keep the existing two-buffer allowance after the owned-buffer Photon patch.
+ * Removing input clones does not remove codec scratch, transformation outputs
+ * or allocator high-water capacity. This is an admission model, not a full
+ * WASM/JS peak measurement or a reason to raise the input limits.
  */
 const CONCURRENT_RGBA_COPIES = 2;
 
@@ -318,27 +320,36 @@ export function assertImageDimensionsFromHeader(buffer: Uint8Array): ImageDimens
  */
 export async function readBodyWithCap(
   body: ReadableStream<Uint8Array> | null,
-  maxBytes: number = MAX_FILE_SIZE_BYTES
+  maxBytes: number = MAX_FILE_SIZE_BYTES,
+  signal?: AbortSignal
 ): Promise<Uint8Array> {
+  if (signal?.aborted) {
+    cancelWithoutWaiting(body, signal.reason);
+    signal.throwIfAborted();
+  }
   if (!body) return new Uint8Array(0);
 
   const reader = body.getReader();
+  const abortRead = (): void => cancelWithoutWaiting(reader, signal?.reason);
+  signal?.addEventListener('abort', abortRead, { once: true });
   const chunks: Uint8Array[] = [];
   let total = 0;
   try {
     for (;;) {
       const { done, value } = await reader.read();
+      signal?.throwIfAborted();
       if (done) break;
       if (!value) continue;
       total += value.byteLength;
       if (total > maxBytes) {
-        await reader.cancel().catch(() => undefined);
+        cancelWithoutWaiting(reader);
         const maxMB = (maxBytes / 1024 / 1024).toFixed(0);
         throw new Error(`Image too large. Maximum size is ${maxMB}MB`);
       }
       chunks.push(value);
     }
   } finally {
+    signal?.removeEventListener('abort', abortRead);
     try {
       reader.releaseLock();
     } catch {
@@ -407,13 +418,16 @@ export function validateImageFormat(buffer: Uint8Array): FormatValidationResult 
  */
 export async function fetchImageWithTimeout(
   url: string,
-  options: { maxBytes?: number } = {}
+  options: { maxBytes?: number; signal?: AbortSignal } = {}
 ): Promise<Uint8Array> {
   const maxBytes = options.maxBytes ?? MAX_FILE_SIZE_BYTES;
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  const abortFetch = (): void => controller.abort(options.signal?.reason);
+  options.signal?.addEventListener('abort', abortFetch, { once: true });
 
   try {
+    options.signal?.throwIfAborted();
     // SECURITY: Use manual redirect handling to validate redirect targets
     // This prevents SSRF attacks where Discord CDN might redirect to internal hosts
     let response = await fetch(url, {
@@ -424,10 +438,15 @@ export async function fetchImageWithTimeout(
         'User-Agent': 'XIV Dye Tools Discord Bot/1.0',
       },
     });
+    if (controller.signal.aborted) {
+      cancelWithoutWaiting(response.body, controller.signal.reason);
+      controller.signal.throwIfAborted();
+    }
 
     // Handle redirects manually with validation
     if (response.status >= 300 && response.status < 400) {
       const redirectUrl = response.headers.get('Location');
+      cancelWithoutWaiting(response.body);
       if (!redirectUrl) {
         throw new Error('Redirect without Location header');
       }
@@ -449,9 +468,14 @@ export async function fetchImageWithTimeout(
           'User-Agent': 'XIV Dye Tools Discord Bot/1.0',
         },
       });
+      if (controller.signal.aborted) {
+        cancelWithoutWaiting(response.body, controller.signal.reason);
+        controller.signal.throwIfAborted();
+      }
     }
 
     if (!response.ok) {
+      controller.abort();
       throw new Error(`Failed to fetch image: HTTP ${response.status}`);
     }
 
@@ -460,6 +484,7 @@ export async function fetchImageWithTimeout(
     if (contentLength) {
       const size = parseInt(contentLength, 10);
       if (Number.isFinite(size) && size > maxBytes) {
+        controller.abort();
         const sizeError = validateFileSize(size);
         throw new Error(sizeError ?? 'Image too large');
       }
@@ -470,8 +495,9 @@ export async function fetchImageWithTimeout(
     // (Real responses always expose `body`; the arrayBuffer() branch only
     // serves hand-built responses without a stream, e.g. in tests.)
     const bytes = response.body
-      ? await readBodyWithCap(response.body, maxBytes)
+      ? await readBodyWithCap(response.body, maxBytes, controller.signal)
       : new Uint8Array(await response.arrayBuffer());
+    controller.signal.throwIfAborted();
 
     // Validate actual size (also catches empty bodies)
     const sizeError = validateFileSize(bytes.byteLength);
@@ -487,6 +513,7 @@ export async function fetchImageWithTimeout(
     throw error;
   } finally {
     clearTimeout(timeoutId);
+    options.signal?.removeEventListener('abort', abortFetch);
   }
 }
 
@@ -516,7 +543,7 @@ export async function fetchImageWithTimeout(
  * }
  * ```
  */
-export async function validateAndFetchImage(url: string): Promise<{
+export async function validateAndFetchImage(url: string, signal?: AbortSignal): Promise<{
   buffer: Uint8Array;
   format: ImageFormat;
 }> {
@@ -527,7 +554,7 @@ export async function validateAndFetchImage(url: string): Promise<{
   }
 
   // Step 2: Fetch with timeout
-  const buffer = await fetchImageWithTimeout(urlResult.normalizedUrl!);
+  const buffer = await fetchImageWithTimeout(urlResult.normalizedUrl!, { signal });
 
   // Step 3: Validate format
   const formatResult = validateImageFormat(buffer);

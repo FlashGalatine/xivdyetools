@@ -306,16 +306,19 @@ describe('preview ownership and attempt accounting on real D1', () => {
     const response = kind === 'read' ? await app.request(new Request('http://local/presets/p/preview-image', { method: 'POST', body, duplex: 'half' } as RequestInit), undefined, env) : await request('POST', undefined, body);
     expect(response.status).toBe(kind === 'read' ? 500 : 400); expect(await events()).toBe(0); expect(decodes).toBe(0); expect([...live]).toEqual(['p/old.webp']);
   });
-  it.each(['status', 'fetch', 'timeout', 'read'])('processing %s failure retains its reservation and leaks no provider details', async kind => {
+  it.each(['status', 'busy', 'input', 'fetch', 'timeout', 'read'])('processing %s failure retains its reservation and leaks no provider details', async kind => {
     env.IMAGE_WORKER = { fetch: async () => {
       decodes++;
       if (kind === 'status') return new Response('provider secret', { status: 500 });
+      if (kind === 'busy') return new Response('provider secret', { status: 503 });
+      if (kind === 'input') return new Response('provider secret', { status: 400 });
       if (kind === 'read') return new Response(new ReadableStream({ start(c) { c.error(new Error('provider secret')); } }));
       throw kind === 'timeout' ? new DOMException('provider secret', 'TimeoutError') : new Error('provider secret');
     } } as unknown as Fetcher;
-    const response = await request(); expect(response.status).toBe(400);
-    expect(await response.json()).toEqual({ success: false, error: 'VALIDATION_ERROR', message: 'Image could not be processed' });
+    const response = await request(); expect(response.status).toBe(kind === 'input' ? 400 : 503);
+    expect(await response.json()).toEqual({ success: false, error: kind === 'input' ? 'VALIDATION_ERROR' : 'SERVICE_UNAVAILABLE', message: 'Image could not be processed' });
     expect(await events()).toBe(1); expect([...live]).toEqual(['p/old.webp']); expect(await sent()).toHaveLength(0);
+    expect(await row()).toMatchObject({ preview_image_key: 'p/old.webp' });
   });
   it('partial R2 put failure refunds and removes its unreferenced key', async () => {
     env.THUMBNAILS.put = vi.fn(async (key: string) => { live.add(key); throw new Error('private provider detail'); }) as unknown as R2Bucket['put'];

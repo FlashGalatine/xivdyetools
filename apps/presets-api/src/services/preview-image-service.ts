@@ -124,7 +124,7 @@ export function sniffImageType(bytes: Uint8Array): 'png' | 'jpeg' | 'webp' | nul
 
 /** Internal stage marker; provider messages never enter the public envelope. */
 export class PreviewImageStoreError extends Error {
-  constructor(readonly stage: 'processing' | 'storage', readonly key?: string) {
+  constructor(readonly stage: 'processing' | 'unavailable' | 'storage', readonly key?: string) {
     super('Image could not be processed');
     this.name = 'PreviewImageStoreError';
   }
@@ -157,12 +157,18 @@ export async function storePreviewImage(
         signal: AbortSignal.timeout(IMAGE_WORKER_TIMEOUT_MS),
       })
     );
-    if (!response.ok) throw new PreviewImageStoreError('processing');
+    if (!response.ok) {
+      // Refusals have no usable image body. Do not wait on a stalled producer
+      // to cancel it, or read provider details into the public error envelope.
+      try { void response.body?.cancel().catch(() => undefined); } catch { /* best effort */ }
+      throw new PreviewImageStoreError(response.status >= 500 ? 'unavailable' : 'processing');
+    }
     webp = await response.arrayBuffer();
-  } catch {
+  } catch (error) {
     // A fetch rejection, timeout or failed response read may follow real decode
-    // work. All retain the attempt; none are mistaken for R2 failures.
-    throw new PreviewImageStoreError('processing');
+    // work. All retain the attempt; none are mistaken for input or R2 failures.
+    if (error instanceof PreviewImageStoreError) throw error;
+    throw new PreviewImageStoreError('unavailable');
   }
   const key = `${presetId}/${crypto.randomUUID()}.webp`;
   try {

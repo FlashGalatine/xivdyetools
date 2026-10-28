@@ -10,6 +10,10 @@ It has since become the monorepo's general photon host rather than a single-call
 
 This Worker has **no public routes and no `workers.dev` subdomain**. The only way in is an `IMAGE_WORKER` Service Binding — from `discord-worker` (`POST /extract`) or `presets-api` (`POST /thumbnail`). See [`docs/operations/IMAGE_WORKER_SPLIT.md`](../../docs/operations/IMAGE_WORKER_SPLIT.md).
 
+The runtime uses a [pinned Photon ownership patch](vendor/photon/REBUILD.md) through the
+installed wrapper's manual initializer. Ordinary builds use the checked-in WASM; they do not
+download or compile Rust. Source, dependency lock, licenses and the rebuild recipe accompany it.
+
 ## API
 
 ### `GET /health`
@@ -42,13 +46,19 @@ The body is the raw pixel buffer. Dimensions come back as headers:
 
 **Errors** — `400` with `{ "error": "<message>" }`.
 
+Both image routes share one active acquisition/processing slot per isolate, with no waiting
+queue. Busy or aborted requests receive `503` with `{ "error": "Image processing unavailable" }`.
+Health checks are outside admission. The configured `src/worker.ts` entry retains complete
+dispatch work with `waitUntil` so an aborted caller can unwind admission cleanup; this extension
+is bounded by the platform. It does not bound outstanding response bodies or other isolates.
+
 > ⚠️ **The error envelope is a hard contract.** `discord-worker` substring-matches the `error` value to pick a localized user-facing message and to classify the analytics outcome. The source of truth is the marker table `IMAGE_INPUT_MARKERS` in [`apps/discord-worker/src/services/image-input-errors.ts`](../discord-worker/src/services/image-input-errors.ts) — a `[reason, substring]` list covering `url`, `too_large`, `format`, `timeout` and `fetch`. (No message thrown anywhere in this Worker contains the string `SSRF`; the real host rejection reads `Only Discord CDN URLs are allowed for security`.) Never reword, truncate, or generalise a thrown message without updating that table in the same change — `image-input-errors-contract.test.ts` in discord-worker reads this Worker's source and fails when a message has no marker.
 
 ### `POST /thumbnail`
 
 Crops and encodes an uploaded image into a preset card thumbnail. Unlike `/extract` this takes **raw image bytes, not JSON and not a URL** — the caller already holds the file, so nothing is fetched and there is no SSRF surface.
 
-**Request** — the raw image bytes as the body. Capped at 10 MB, checked first against `Content-Length` and then while streaming (`readBodyWithCap`), plus the same pre-decode header dimension gate `/extract` uses.
+**Request** — the raw image bytes as the body. Capped at 5 MiB, checked first against `Content-Length` and then while streaming (`readBodyWithCap`), plus the same pre-decode header dimension gate `/extract` uses.
 
 **Response** — `200 OK`, `Content-Type: image/webp`; the body is the encoded thumbnail. The pipeline is decode → crop to the 640 × 264 band (`computeCropBox`) → resize with Lanczos3 → WebP. The round trip also drops EXIF, so GPS coordinates in an author's screenshot never reach R2.
 
@@ -95,7 +105,7 @@ No KV, D1, R2, or secrets. The Worker is stateless; its only input is the reques
 | Package | Purpose |
 |---------|---------|
 | `hono` | HTTP framework |
-| `@cf-wasm/photon` | WASM image decoding and resizing |
+| `@cf-wasm/photon` | Exactly pinned wrapper for the retained ownership-patched WASM |
 | `@xivdyetools/worker-kit` | `requestIdMiddleware`, `loggerMiddleware` |
 
 ## Consumers

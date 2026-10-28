@@ -19,14 +19,14 @@ const createMockPhotonImage = (width = 100, height = 100) => ({
 });
 const mockImage = createMockPhotonImage();
 
-vi.mock('@cf-wasm/photon', () => ({
+vi.mock('./photon-runtime.js', () => ({
   PhotonImage: { new_from_byteslice: vi.fn(() => mockImage) },
   SamplingFilter: { Lanczos3: 0 },
   resize: vi.fn(() => mockImage),
   crop: vi.fn(() => mockImage),
 }));
 
-import { PhotonImage } from '@cf-wasm/photon';
+import { PhotonImage } from './photon-runtime.js';
 import { processImageForExtraction, processImageForThumbnail } from './photon.js';
 
 /** Minimal PNG header (signature + IHDR) declaring width × height. */

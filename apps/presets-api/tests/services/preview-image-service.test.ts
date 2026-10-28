@@ -52,9 +52,36 @@ describe('sniffImageType', () => {
 // rejected or deleted picture kept resolving from the edge cache for up to a
 // year. The edge TTL is now one day, and every takedown path purges the URL.
 describe('storePreviewImage (FINDING-018)', () => {
-  it('labels processing response-read failure without exposing its provider error', async () => {
+  it('labels response-read unavailability without exposing its provider error', async () => {
     const env = createMockEnv({ IMAGE_WORKER: { fetch: async () => new Response(new ReadableStream({ start(c) { c.error(new Error('private provider URL')); } })) } as unknown as Fetcher });
-    await expect(storePreviewImage(env, 'p', png)).rejects.toMatchObject({ stage: 'processing', message: 'Image could not be processed' });
+    await expect(storePreviewImage(env, 'p', png)).rejects.toMatchObject({ stage: 'unavailable', message: 'Image could not be processed' });
+  });
+
+  it.each([400, 415, 500, 503])('distinguishes image-service HTTP %s without storing or leaking provider text', async status => {
+    const env = createMockEnv({ IMAGE_WORKER: { fetch: async () => new Response('private provider detail', { status }) } as unknown as Fetcher });
+    const put = vi.spyOn(env.THUMBNAILS, 'put');
+    await expect(storePreviewImage(env, 'p', png)).rejects.toMatchObject({
+      stage: status >= 500 ? 'unavailable' : 'processing',
+      message: 'Image could not be processed',
+    });
+    expect(put).not.toHaveBeenCalled();
+  });
+
+  it.each(['fetch', 'timeout'])('labels a binding %s failure as unavailable', async kind => {
+    const env = createMockEnv({ IMAGE_WORKER: { fetch: async () => {
+      throw kind === 'timeout' ? new DOMException('private provider detail', 'TimeoutError') : new Error('private provider detail');
+    } } as unknown as Fetcher });
+    const put = vi.spyOn(env.THUMBNAILS, 'put');
+    await expect(storePreviewImage(env, 'p', png)).rejects.toMatchObject({ stage: 'unavailable', message: 'Image could not be processed' });
+    expect(put).not.toHaveBeenCalled();
+  });
+
+  it.each(['stalled', 'rejected'])('handles %s cancellation of an unused refusal body without delaying its error', async kind => {
+    const cancel = vi.fn(() => kind === 'stalled' ? new Promise<void>(() => {}) : Promise.reject(new Error('private cancellation detail')));
+    const response = new Response(new ReadableStream({ cancel }, { highWaterMark: 0 }), { status: 503 });
+    const env = createMockEnv({ IMAGE_WORKER: { fetch: async () => response } as unknown as Fetcher });
+    await expect(storePreviewImage(env, 'p', png)).rejects.toMatchObject({ stage: 'unavailable' });
+    expect(cancel).toHaveBeenCalledTimes(1);
   });
 
   it('labels a partial storage failure and retains its unique key for safe cleanup', async () => {

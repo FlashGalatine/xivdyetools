@@ -34,6 +34,22 @@ endpoints, two callers:
 Adding a photon-backed feature anywhere in the monorepo means adding a route here, not a second
 copy of the WASM blob — that is the whole point of the split.
 
+The current runtime initializes the retained ownership-patched WASM through exactly pinned
+`@cf-wasm/photon/others`, via `src/photon-runtime.ts`. Never import the default or `/workerd`
+entry in production code: those initialize the original artifact and would conflict with this
+singleton. [Source, lock, licenses and rebuild instructions](vendor/photon/REBUILD.md) accompany
+the artifact; regular builds require no Rust tools. The allocation patch transfers decoded RGBA
+ownership and borrows crop/resize inputs while retaining owned outputs and the existing algorithms.
+
+`src/worker.ts` is Wrangler's entry. It registers the complete Hono dispatch with `waitUntil`
+before returning it, protecting admission's `finally` when a caller disconnects. The two POST
+routes share one active acquisition/processing slot and no queue; 503 refusals happen before
+JSON/body/CDN work. Incoming cancellation uses the narrow `enable_request_signal` flag with
+owned-reader cleanup. A disconnect alone never releases the slot while work is still pending.
+The platform bounds post-disconnect `waitUntil`; runtime termination/noncooperative I/O cannot
+carry an unconditional cleanup guarantee. Outstanding responses and other isolates are not bounded
+by this guard. Health checks and the existing public-surface protections remain outside admission.
+
 ## Commands
 
 ```bash
@@ -92,10 +108,13 @@ discord-worker ──Service Binding──► POST /extract
 
 ```
 src/
+├── worker.ts       # Configured entry: retain whole dispatch for cancellation cleanup
+├── admission.ts    # One active operation per isolate; generic 503, no queue
 ├── index.ts        # Hono app: GET /health, POST /extract, POST /thumbnail
 ├── types.ts        # Env (no bindings) + UrlValidationResult/FormatValidationResult/ImageFormat
 ├── validators.ts   # SSRF allowlist, size/dimension/format checks, timeout fetch
 ├── dimensions.ts   # Header-only width/height parsers (PNG/JPEG/GIF/WebP/BMP) for the pre-decode gate
+├── photon-runtime.ts # Manual initialization of the single retained WASM artifact
 └── photon.ts       # loadImage / resizeImage / extractPixels
                     # + processImageForExtraction, processImageForThumbnail, computeCropBox
 ```
@@ -112,6 +131,7 @@ POST /extract
       headers: X-Image-Width, X-Image-Height, Content-Type: application/octet-stream
 
 400 → body:    { error: string }   — see "The error contract is verbatim" below
+503 → body:    { error: 'Image processing unavailable' } — busy/aborted operation
 ```
 
 **The error contract is verbatim.** `discord-worker` substring-matches the `error` field to pick
@@ -229,8 +249,9 @@ redirect target is validated through the same allowlist before being followed.
 
 ### WASM Memory Management
 
-`@cf-wasm/photon`'s `PhotonImage` instances are not garbage-collected — `processImageForExtraction`
-`.free()`s both the original and resized image in a `finally` block (guarding against the
+`PhotonImage` owned pixels require explicit `.free()` for predictable lifetime; optional
+finalizers are not a cleanup or memory-budget guarantee. `processImageForExtraction`
+frees both the original and resized image in a `finally` block (guarding against the
 original/resized image being the same reference when no resize was needed) so a Worker isolate
 releases its owned allocations. Linear-memory capacity does not shrink after freeing, so
 warm-isolate measurements remain necessary. Thumbnail processing also releases consumed
@@ -271,7 +292,7 @@ or activation is implied by source preparation.
 | Package | Purpose |
 |---------|---------|
 | `hono` | HTTP framework |
-| `@cf-wasm/photon` | Image decode/resize/pixel-extraction (WASM) — the entire reason this Worker exists |
+| `@cf-wasm/photon` | Exactly pinned manual wrapper for the retained ownership-patched WASM |
 | `@xivdyetools/worker-kit` | `requestIdMiddleware`, `loggerMiddleware` (structured logging arrives transitively via `@xivdyetools/logger`, not declared directly — see `apps/og-worker` for the same pattern); `detectImageFormat` / `ImageFormat` from the `/image-sniff` subpath (magic-byte format check) |
 
 ## Related Projects

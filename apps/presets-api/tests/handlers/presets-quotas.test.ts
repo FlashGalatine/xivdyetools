@@ -1135,7 +1135,7 @@ describe('daily quotas (FINDING-008)', () => {
 
         // Processing is charged even when it fails; an unconfirmed DB write is
         // also charged because latest state cannot establish it never committed.
-        it('retains the reservation when image processing returns non-ok', async () => {
+        it('retains the reservation when image service is unavailable', async () => {
             const table = mockSubmissionEventsTable(mockDb, () =>
                 createMockPresetRow({ id: 'preset-123', author_discord_id: '123' })
             );
@@ -1153,8 +1153,9 @@ describe('daily quotas (FINDING-008)', () => {
                 ctx
             );
 
-            expect(res.status).toBe(400);
-            const body = (await res.json()) as { message: string };
+            expect(res.status).toBe(503);
+            const body = (await res.json()) as { message: string; error: string };
+            expect(body.error).toBe('SERVICE_UNAVAILABLE');
             expect(body.message).toBe('Image could not be processed');
             expect(table.events()).toHaveLength(1);
         });

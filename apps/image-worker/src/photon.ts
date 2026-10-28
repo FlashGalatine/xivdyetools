@@ -12,7 +12,7 @@
  * @module services/image/photon
  */
 
-import { PhotonImage, SamplingFilter, resize, crop } from '@cf-wasm/photon';
+import { PhotonImage, SamplingFilter, resize, crop } from './photon-runtime.js';
 import { assertImageDimensionsFromHeader } from './validators.js';
 
 // REFACTOR-007: ONE `maxDimension` rule. It lives in validators.ts — which the

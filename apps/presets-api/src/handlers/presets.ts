@@ -1283,9 +1283,10 @@ presetsRouter.post('/:id/preview-image', async (c) => {
       }
       await uploadReservation.release?.();
     }
+    const unavailable = error instanceof PreviewImageStoreError && error.stage === 'unavailable';
     return c.json(
-      { success: false, error: ErrorCode.VALIDATION_ERROR, message: 'Image could not be processed' },
-      400
+      { success: false, error: unavailable ? ErrorCode.SERVICE_UNAVAILABLE : ErrorCode.VALIDATION_ERROR, message: 'Image could not be processed' },
+      unavailable ? 503 : 400
     );
   }
 

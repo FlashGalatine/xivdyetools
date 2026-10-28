@@ -1,0 +1,117 @@
+{
+  "date": "2026-10-28",
+  "worktree": "<source-root>",
+  "commands": [
+    {
+      "exit_status": 0,
+      "notes": [
+        "api-worker build output warning"
+      ],
+      "n": 1,
+      "tasks": "45/45 successful",
+      "command": "pnpm turbo run build type-check lint --concurrency=2",
+      "log": "01-build-type-lint.log"
+    },
+    {
+      "failed_test_names": [],
+      "n": 2,
+      "log": "02-test.log",
+      "test_files": "607 passed",
+      "tasks": "25/25 successful",
+      "tests": "17613 passed",
+      "exit_status": 0,
+      "command": "pnpm turbo run test --concurrency=1 --force",
+      "workspaces": 17,
+      "failed_tests": 0,
+      "skipped_tests": 0
+    },
+    {
+      "command": "pnpm test:scripts",
+      "tests": "167 passed, 0 failed",
+      "n": 3,
+      "log": "03-test-scripts.log",
+      "exit_status": 0,
+      "skipped": 0
+    },
+    {
+      "command": "pnpm type-check:scripts",
+      "n": 4,
+      "log": "04-type-scripts.log",
+      "exit_status": 0
+    },
+    {
+      "exit_status": 0,
+      "test_files": 644,
+      "n": 5,
+      "production_files": 646,
+      "command": "pnpm dead-code:check",
+      "log": "05-dead-code.log"
+    },
+    {
+      "command": "pnpm docs:check-versions",
+      "log": "06-doc-versions.log",
+      "n": 6,
+      "claims_checked": 34,
+      "exit_status": 0
+    },
+    {
+      "exit_status": 0,
+      "documents": 260,
+      "n": 7,
+      "relative_links_checked": 1067,
+      "command": "pnpm docs:check-links",
+      "log": "07-doc-links.log"
+    },
+    {
+      "command": "pnpm workers:check-logs",
+      "worker_configs": 7,
+      "n": 8,
+      "log": "08-worker-logs.log",
+      "exit_status": 0
+    },
+    {
+      "exit_status": 0,
+      "test_files": "11 passed",
+      "n": 9,
+      "command": "pnpm --filter xivdyetools-image-worker test:coverage",
+      "tests": "257 passed",
+      "log": "09-image-coverage.log",
+      "coverage": {
+        "statements": "93.14% (367/394)",
+        "functions": "100% (44/44)",
+        "branches": "89.29% (242/271)",
+        "lines": "96.35% (344/357)"
+      },
+      "coverage_source_entries": [
+        "admission.ts",
+        "dimensions.ts",
+        "index.ts",
+        "photon-runtime.ts",
+        "photon.ts",
+        "validators.ts",
+        "wasm.d.ts",
+        "worker.ts"
+      ],
+      "coverage_excluded_by_report": [],
+      "coverage_summary_path": "apps/image-worker/coverage/coverage-summary.json"
+    },
+    {
+      "upload_kib": 1676.23,
+      "log": "10-wrangler-dry-run.log",
+      "command": "pnpm --filter xivdyetools-image-worker exec wrangler deploy --env production --dry-run --outdir <gatesdir>/dry-run",
+      "wasm_file": "6c81b3b666f981fbb8d6a2ccb3a1490a73ae4aa3-photon-owned.wasm",
+      "gzip_kib": 648.65,
+      "exit_status": 0,
+      "n": 10,
+      "wasm_bytes": 1571497,
+      "dry_run_only": true
+    }
+  ],
+  "initial_shell_attempt": {
+    "command": "pnpm turbo run build type-check lint --concurrency=2",
+    "error": "WSL Bash had no installed distribution; command not executed. Re-ran with Git Bash.",
+    "exit_status": 1
+  },
+  "originalReceiptSHA256": "05a2cb5ca531b2ba3329e447b195a2bdd56a38b1b72ac849074235a6018a1adb",
+  "normalization": "Only checkout path prefixes normalized; native exit codes, counts, metrics and recorded outcomes preserved."
+}

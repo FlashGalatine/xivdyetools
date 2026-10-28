@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Return a generic 503 when preview-image processing is unavailable, including overload,
+  binding timeouts and failed response reads. Invalid-image responses remain 400. Both
+  failures retain the reserved attempt; existing storage/validation refunds are unchanged,
+  and unavailable processing never attaches or stores a preview image.
 - Restrict the test loader's `.js` alias to relative source imports so Windows
   dependency paths retain their real filenames. Add a dependency/source-import
   integration check; application behavior and test thresholds are unchanged.

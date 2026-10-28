@@ -3,12 +3,13 @@
 # routes, so a plain `wrangler deploy` can never overwrite production. Production
 # config lives exclusively under [env.production].
 name = "xivdyetools-image-worker-dev"
-main = "src/index.ts"
+main = "src/worker.ts"
 compatibility_date = "2024-12-01"
+compatibility_flags = ["enable_request_signal"]
 # ARCH-001: no nodejs_compat — no Node.js APIs used
 # This Worker is binding-only by design (see docs/operations/IMAGE_WORKER_SPLIT.md):
-# it has no signature check and no rate limiting, and every request fetches up to
-# 10 MB from a CDN and runs a full photon WASM decode. workers_dev = true here would
+# it has no caller authentication; image routes fetch/process up to 5 MiB and run
+# a full Photon WASM decode. workers_dev = true here would
 # publish an unauthenticated public POST endpoint at the "-dev" name that nothing
 # binds to (both discord-worker and presets-api bind the "xivdyetools-image-worker"
 # production name, in every one of their own environments — never this "-dev" one)
