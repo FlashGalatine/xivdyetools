@@ -428,6 +428,14 @@ After A-WORKER-KIT/A-BOT-LOGIC and the capped batch endpoint. Also remove modera
 
 **Ends with:** scoped/full local gates, actual configured Workerd boundary proof, coverage, font/bundle/dry-run/secret checks, independent ordinary/escalated reviews, and separate stacked provider/configuration draft PRs with actual CI/beta receipts. Production release remains separately authorized: publish prerequisite packages, deploy the capped batch provider, deploy Discord with compatibility retained, deploy/verify the presets binding companion, then separately activate binding-only mode. No manual deployment, registration or activation is selected.
 
+Published drafts: [provider #345](https://github.com/FlashGalatine/xivdyetools/pull/345) source `9e6ae7cd`
+and [binding companion #346](https://github.com/FlashGalatine/xivdyetools/pull/346) source `ae26ddc3`.
+Their [provider CI](https://github.com/FlashGalatine/xivdyetools/actions/runs/40623733378) and
+[companion CI](https://github.com/FlashGalatine/xivdyetools/actions/runs/40624786941) pass all four jobs
+with **167 Playwright tests each**. Both automatically selected Discord betas deploy and register
+**18 commands**. No web beta is selected. Receipt-only updates preserve runtime source and false
+flags; production publication orchestration, provider/consumer verification and cutover remain.
+
 ## Sprint A-WEB — apps/web-app
 
 After required package publishes. Also apply the code-point-safe file-name cap paired with core labels. Keep persisted settings, result rendering, async modal ownership and cache generations consistent. All policy edits are six-file owner changes, behind unresolved decisions where listed.
