@@ -503,7 +503,7 @@
     "supportedFormats": "Supported Formats",
     "supportedFormatsContent": "• PNG\n• JPG/JPEG\n• GIF\n• WebP\n• BMP",
     "fileLimits": "File Limits",
-    "fileLimitsContent": "• Maximum size: 10MB",
+    "fileLimitsContent": "• Maximum size: 5MB",
     "matchQualityRatings": "Match Distance",
     "matchQualityRatingsContent": "Every listed match prints its distance from your color - lower is closer.\n\nThe six matching methods and how their bands work: `/manual` topic {topic}",
     "poweredBy": "Powered by Photon WASM image processing"
