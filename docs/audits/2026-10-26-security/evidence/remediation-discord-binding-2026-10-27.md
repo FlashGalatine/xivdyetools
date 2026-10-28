@@ -1,6 +1,7 @@
 # A-DISCORD notification-binding companion — 2026-10-27
 
-**State:** source preparation; provider integration and final remote receipts pending.
+**State:** provider integration and local verification complete; draft publication and remote
+receipts pending. Provider source: `9e6ae7cd`, draft [PR #345](https://github.com/FlashGalatine/xivdyetools/pull/345).
 This is the separate presets **2.8.1 PATCH** companion to
 [A-DISCORD's private provider](remediation-discord-2026-10-27.md). FINDING-039 remains OPEN
 until verified producer cutover and a separately authorized binding-only activation.
@@ -34,8 +35,16 @@ records expose failures for review; list/resolve endpoints are not automatic red
 - Scoped build/type/lint: **7/7 tasks**; tests **6/6 tasks**, **57 files / 1,396 tests**.
   No runtime source changed and no coverage threshold/exclusion changed.
 - Version check: **34/34 claims** match package manifests.
-- Independent ordinary review: specification and quality PASS; no findings. Provider
-  integration/deployment and later delivery verification remain explicit required gates.
+- Independent ordinary and post-merge reviews: specification and quality PASS; no findings.
+  Provider production deployment and later delivery verification remain required gates.
+
+Provider source was merged without conflict into the isolated companion at `48d65d1e`.
+The diff from provider contains only the reviewed companion configuration, test and release/docs
+paths. Both app version rows survive: Discord **5.9.7**, presets **2.8.1**; bot-logic remains **4.12.0**.
+Fresh post-merge verification passes: **8/8** Discord dependency builds, **7/7** presets static tasks,
+**6/6** test tasks with **1,396/57**, actual Workerd **7/7**, versions **34**, links **1,063/259** and
+reachability **642/639**. The actual production-config dry run passes locally at **263.42 KiB raw /
+66.51 KiB gzip**, with fake credentials and an isolated profile; it does not verify a live provider.
 
 No live service call, migration, package publication, workflow hold, deployment, command
 registration or activation is selected here. The private XIVAuth report remains outside Git.

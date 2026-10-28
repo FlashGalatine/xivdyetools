@@ -407,6 +407,10 @@ where eligible, or hold all affected automatic deployments before merge/publish/
 release that hold afterward. Never publish an incomplete 4.12.0 snapshot and reuse its version.
 No publication, workflow hold or production deployment is selected by this preparation.
 
+The separate presets **2.8.1** binding companion integrates provider `9e6ae7cd` ([draft #345](https://github.com/FlashGalatine/xivdyetools/pull/345))
+before its own publication. Post-merge gates pass: **1,396 presets tests**, **7 actual Workerd
+tests**, scoped static checks, dry run, docs and reachability. [Companion evidence](../2026-10-26-security/evidence/remediation-discord-binding-2026-10-27.md).
+
 After A-WORKER-KIT/A-BOT-LOGIC and the capped batch endpoint. Also remove moderator names from preview posts, apply the bot half of snapshot-policy correction, fix paired attachment comments, and correct beta-secret comments. Measure favorite requests at 1/10/50 entries: up to 49 fewer request/query round trips, not rows read. Command localization registration ships through the workflow.
 
 | ID | Source | Sev/Pri | Action |
