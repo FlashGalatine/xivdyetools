@@ -15,4 +15,4 @@
 - **Maintainer decision:** Only the maintainer knows whether a private deletion/export procedure exists. If not, approve adding a tracked operations runbook that lists every per-user store.
 
 ## Status
-OPEN
+FIXED — deletion/export runbook and operations index link added 2026-10-28; schema-backed SQL/synthetic checks and independent security review passed. Active-ban identity bindings, unresolved recovery and inactive session enforcement remain explicit execution holds; no live request was executed or policy changed. [R-sprint evidence](../evidence/remediation-repository-2026-10-28.md).

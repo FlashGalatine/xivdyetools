@@ -16,4 +16,4 @@
 - **Maintainer decision:** none needed; the live check is done. Correct `DEPLOY_ENVIRONMENTS.md:283-284` and `:324` to say the pair must NOT be set on `-dev`.
 
 ## Status
-OPEN — beta secret comments and deployment runbook corrected in A-DISCORD source; release acceptance pending. [A-DISCORD evidence](../evidence/remediation-discord-2026-10-27.md).
+FIXED (source guidance) — beta secret comments and deployment runbook corrected in A-DISCORD source and rechecked in R-DOCS-DECISIONS on 2026-10-28. Both bot credentials are explicitly forbidden on beta; the genuine-row risk is conditional on violating that boundary. The 2026-10-26 live secret-name evidence is inherited, not rechecked. A-DISCORD release acceptance remains separate. [A-DISCORD evidence](../evidence/remediation-discord-2026-10-27.md); [R-sprint evidence](../evidence/remediation-repository-2026-10-28.md).

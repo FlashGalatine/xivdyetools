@@ -8,6 +8,8 @@
 
 ## Severity × exposure
 
+**Execution addendum 2026-10-28 — R-CI / R-DOCS-DECISIONS:** see [dated evidence](evidence/remediation-repository-2026-10-28.md). Repository tooling and process documentation passed verification and independent source review: the patched lock awaits default-branch alert closure, Pages cleanup remains dry-run, and no publish/deploy/policy change or data-subject operation was performed. The audit totals and live-state tables below remain historical snapshots.
+
 | Severity | INTERNET-UNAUTH | INTERNET-AUTH | INTERNAL | LOCAL | Total |
 |---|---:|---:|---:|---:|---:|
 | CRITICAL | 0 | 0 | 0 | 0 | 0 |

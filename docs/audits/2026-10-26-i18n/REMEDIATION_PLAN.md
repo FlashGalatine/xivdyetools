@@ -512,6 +512,8 @@ One image-worker release; validate peak decode memory in the Worker runtime befo
 
 ## Sprint R-CI — repository tooling/workflows
 
+**Execution update 2026-10-28 — source prepared; operational acceptance held:** the VitePress floor resolves Vite 6.4.5 and the publisher build/test/pack boundary is separated from OIDC publication. Pages retention and expanded CSP/current/retired-origin checks are prepared; workflow retention calls remain dry-run until reviewed activation. Default-branch Dependabot alerts #13–#17 remain open pending integration. See [R-sprint evidence](../2026-10-26-security/evidence/remediation-repository-2026-10-28.md) for verification and remaining acceptance.
+
 One repository verification gate, not a package publish. Also add Pages deployment retention as the companion to the history cleanup, preserving current production/beta deployments.
 
 The 2026-10-26 one-off cleanup completed OPS-PAGES-HISTORY. FINDING-009 remains PARTIAL until the retention step and branch-alias/hash-host live-origin checks are implemented and verified here.
@@ -524,6 +526,8 @@ The 2026-10-26 one-off cleanup completed OPS-PAGES-HISTORY. FINDING-009 remains 
 **Ends with:** `pnpm test:scripts`, `pnpm type-check:scripts`, `pnpm docs:check-links`, `pnpm docs:check-versions`, `pnpm workers:check-logs` as affected → repository verification gate; no unrelated application deploy.
 
 ## Sprint R-DOCS-DECISIONS — repository docs/process
+
+**Execution update 2026-10-28 — documentation implemented:** rechecked FINDING-030's already-corrected beta credential boundary and FINDING-035's completed checklist. Recorded FINDING-046's existing path-only v2 contract and independent query authorization; no protocol migration. Added FINDING-053's source-backed deletion/export runbook with explicit ban/recovery/session/analytics limitations. No policy, secret or deployment change. [R-sprint evidence](../2026-10-26-security/evidence/remediation-repository-2026-10-28.md).
 
 One repository documentation/process gate. Carry dated live-state evidence as inherited, not freshly rechecked. On actual Perspective key deletion, schedule separate presets-api behavior verification and web/Discord six-file ToS updates; do not publish those claims early. If query signing is chosen, add the explicit auth/presets/Discord/moderation compatibility sequence below.
 

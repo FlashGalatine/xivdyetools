@@ -14,4 +14,4 @@
 - Split the work into two jobs. A `build` job with no id-token builds, tests and runs `pnpm pack` to tarballs, then uploads them as an artifact. A minimal `publish` job with `environment: production` and `id-token: write` downloads them and publishes them with no install or build. This does not stop a build-time compromise from tampering the tarballs, but it removes that code's ability to mint a publish credential for…
 
 ## Status
-OPEN
+FIXED in source — 2026-10-28: unprivileged build/test/pack and a separate main-only production OIDC publisher, with verified tarballs, source-loaded helper and lifecycle scripts disabled. Strict bounded archive validation, all-seven-package compatibility checks and independent security review passed. No npm publication or external configuration change. [R-sprint evidence](../evidence/remediation-repository-2026-10-28.md).

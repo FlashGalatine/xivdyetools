@@ -12,6 +12,9 @@ comment-only change needs no publish of its own.
 
 ### Changed
 
+- Clarify that v2 bot signatures do not authenticate query values; callers must
+  authorize their effects independently against the signed identity (FINDING-046).
+  Documentation only; no wire-format, runtime or type change.
 - **The `JWTPayload` doc comment is accurate** (REFACTOR-006). It no longer claims a re-export from
   `@xivdyetools/types` (auth is Level 0 and declares its own, narrower verifier-side shape: `iss`, `username`,
   `global_name` and `avatar` are optional, and `auth_provider` and `discord_id` are absent), and `sub` is labeled as

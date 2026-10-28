@@ -8,6 +8,8 @@ Runbooks and checklists for the maintainer. Everything here needs credentials CI
 | [SECRET_ROTATION.md](SECRET_ROTATION.md) | Every secret, who consumes it, and the rotation order |
 | [Security remediation — 2026-09-15](security-remediation-2026-09-15.md) | Rollout record: migration 0014, independent auth/bot/API/OG rollouts, and acceptance checks for the six security fixes (executed 2026-09-15) |
 | [MODERATION.md](MODERATION.md) | Moderating community presets with the moderation bot |
+| [DATA_SUBJECT_REQUESTS.md](DATA_SUBJECT_REQUESTS.md) | Privately verifying, exporting and deleting user data, with identity, ban, session and retention holds |
+| [PAGES_RETENTION.md](PAGES_RETENTION.md) | Dry-run Pages history retention, current/retired origin checks and the held apply-activation requirements |
 | [ANALYTICS_QUERIES.md](ANALYTICS_QUERIES.md) | The Analytics Engine datasets (web-app telemetry, bot command traces) and the queries that read them |
 | [DOMAIN_DEPRECATION.md](DOMAIN_DEPRECATION.md) | Retiring `*.xivdyetools.projectgalatine.com` in phases (custom domains removed 2026-10-04/05; the apex-redirect code remains) |
 | [OPEN_ITEMS.md](OPEN_ITEMS.md) | **The living list of open operational work** — dashboard settings, secrets, manual verifications, gated code removals, recurring audits, accepted residual risks. The 5.0 merge-day record it grew out of is archived at [`historical/20260828-PostMerge5.0/`](../historical/20260828-PostMerge5.0/POST_MERGE_CHECKLIST.md) |

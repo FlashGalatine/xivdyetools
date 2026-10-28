@@ -30,6 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Maintenance
 
+- Prepare Pages deployment retention in dry-run mode and verify current custom,
+  canonical, hash and branch origins against the built CSP, including actual 404
+  checks for retired hosts. Destructive cleanup activation remains held.
 - Remove unreachable character UI/DTO branches, unused result fields and duplicate font
   constants while preserving response-envelope validation and worker dye-null guards.
 - Retire the English-only error formatter and its unused message table after startup

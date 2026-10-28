@@ -16,4 +16,4 @@
 - Update the FINDING-036 comment, whose "Drop this when vitepress ships on Vite >= 6.4.3" is now stale.
 
 ## Status
-OPEN
+PARTIAL — 2026-10-28 source override/lockfile resolves Vite 6.4.5, with minimumReleaseAge unchanged. Default-branch Dependabot alerts #13–#17 remain open on the fresh GET-only check; auto-closure awaits integration. No manual dismissal. [R-sprint evidence](../evidence/remediation-repository-2026-10-28.md).

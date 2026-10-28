@@ -13,7 +13,8 @@ This document explains security-related design decisions where we've consciously
 3. [JWT Algorithm Restrictions](#jwt-algorithm-restrictions)
 4. [Timing-Safe Comparison Fallback](#timing-safe-comparison-fallback)
 5. [Content Moderation Fails Closed](#content-moderation-fails-closed)
-6. [Summary Matrix](#summary-matrix)
+6. [Bot V2 Signatures Bind the Path Only](#bot-v2-signatures-bind-the-path-only)
+7. [Summary Matrix](#summary-matrix)
 
 ---
 
@@ -328,6 +329,53 @@ Related: FINDING-006 in the same audit moved the Perspective key out of the quer
 
 ---
 
+## Bot V2 Signatures Bind the Path Only
+
+**ID:** [FINDING-046](../audits/2026-10-26-security/findings/FINDING-046.md) | **Decision recorded:** 2026-10-28 | **Status:** existing v2 contract retained
+
+V2 authenticates the uppercase HTTP method, URL pathname, SHA-256 of the raw body,
+timestamp, nonce and optional acting identity. It does **not** authenticate the origin
+or query string. Both bot clients and the presets verifier pass `URL.pathname` to the
+shared implementation. Changing a query therefore leaves the v2 signature valid.
+
+The current bot list filters (`category`, `search`, `status`, `sort`, `page`, `limit`)
+travel through the configured `PRESETS_API` service binding. This transport limits
+exposure; it does not turn the query into signed data. The HTTP fallback additionally
+depends on HTTPS and its selected destination. Binding availability is a deployment
+acceptance check, not something source configuration proves about production.
+
+Every query-controlled action must be authorized independently against authenticated
+identity and server-side permissions. A query must never establish identity, ownership,
+moderator status or the scope of an identity operation. For example, the presets list
+validates `status` and refuses non-approved statuses unless `auth.isModerator` is true;
+that role comes from the authenticated actor and the server's moderator list, never
+from a query parameter. Filters and pagination cannot substitute for an ownership or
+authorization check. The Discord bot's ordinary list call supplies no acting identity
+and cannot gain moderator access by requesting `status=pending`.
+
+The presets verifier requires a fresh timestamp and a nonce. Its KV replay cache is
+best-effort: missing KV and KV errors skip enforcement, and the eventually consistent
+get/put sequence is not atomic. It can reject a nonce already visible in KV, but does
+not guarantee single use. These controls do not protect query integrity. A future endpoint requiring a
+signed query needs a new protocol version with explicit canonicalization rules for
+encoding, repeated parameters and ordering. Do not change v2 canonicalization in place:
+publish the compatible auth implementation first, then coordinate presets-api,
+discord-worker and moderation-worker migration, verify both sides, and retire the old
+version only after all callers have moved. This sprint makes no protocol change.
+
+Review this decision when adding authorization-sensitive query parameters, changing
+the service-binding/HTTP fallback boundary, or adding a new v2 consumer.
+
+Source references:
+
+- [V2 request and canonical fields](../../packages/auth/src/hmac.ts)
+- [Presets authentication and signed actor roles](../../apps/presets-api/src/middleware/auth.ts)
+- [Presets list status authorization](../../apps/presets-api/src/handlers/presets.ts)
+- [Discord client](../../apps/discord-worker/src/services/preset-api.ts) and
+  [moderation client](../../apps/moderation-worker/src/services/preset-api.ts)
+
+---
+
 ## Summary Matrix
 
 | Trade-Off | We Chose | Over | Rationale |
@@ -337,6 +385,7 @@ Related: FINDING-006 in the same audit moved the Perspective key out of the quer
 | Single JWT Algorithm | **Security** | Flexibility | Eliminates entire class of attacks |
 | Timing-Safe Fallback | **Compatibility** | Guarantee | Best-effort is sufficient for our threat model |
 | Moderation Fail-Closed | **Safety** | Availability of publishing | A queued preset costs a moderator a click; an unmoderated one is published under our name |
+| Bot V2 Path-Only Signature | **Existing protocol compatibility** | Query integrity from the signature | Independent query authorization, scoped transport and replay controls; signed-query changes require coordinated v3 migration |
 
 ---
 
@@ -349,6 +398,7 @@ These trade-offs should be reconsidered if:
 3. **JWT Algorithm**: Need to accept tokens from external issuers
 4. **Timing-Safe**: Protecting high-value secrets in non-Worker environments
 5. **Moderation Fail-Closed**: Perspective outages start filling the queue faster than moderators drain it — the answer is a paid quota or a second scorer, not a fail-open path
+6. **Bot V2 Path-Only Signature**: A new query changes authorization scope, a new consumer is added, or the trusted transport boundary changes
 
 ---
 

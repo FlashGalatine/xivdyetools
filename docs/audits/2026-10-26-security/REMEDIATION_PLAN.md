@@ -177,6 +177,9 @@ Defence in depth for [FINDING-002](findings/FINDING-002.md) (tracked in Sprint 7
 **Ends with:** `pnpm turbo run build type-check lint test --filter=@xivdyetools/core...` then `--filter=@xivdyetools/svg...` → bump each → merge → Actions publish `core`, then `svg`.
 
 ## Sprint 13 — CI and repository (terminal, hardening)
+
+**Execution update 2026-10-28 (R-CI):** patched Vite 6.4.5 is locked; default-branch alerts #13–#17 await integration. Publishing privilege separation and the Pages retention/origin-check companion are source-prepared. Retention calls stay dry-run; live activation/acceptance is held. [Evidence](evidence/remediation-repository-2026-10-28.md).
+
 | ID | Source | Sev/Pri | Item |
 |---|---|---|---|
 | [FINDING-031](findings/FINDING-031.md) | security | LOW / LOCAL · P3 | Raise the override to `'vitepress>vite': '>=6.4.5 <7'`, `pnpm install`, confirm Dependabot alerts #13–#17 close; update the stale FINDING-036 comment. |
@@ -185,6 +188,9 @@ Defence in depth for [FINDING-002](findings/FINDING-002.md) (tracked in Sprint 7
 **Ends with:** `pnpm turbo run build type-check lint test`, `pnpm test:scripts`, `pnpm dead-code:check` → merge (CI-only; no deploy).
 
 ## Sprint 14 — docs and process (terminal)
+
+**Execution update 2026-10-28 (R-DOCS-DECISIONS):** beta secret guidance and Perspective checklist rechecked; v2 path-only signature decision documented; deletion/export runbook added and independently security-reviewed. Existing operational and key-deletion-day policy holds remain. [Evidence](evidence/remediation-repository-2026-10-28.md).
+
 | ID | Source | Sev/Pri | Item |
 |---|---|---|---|
 | [FINDING-030](findings/FINDING-030.md) | security | INFO / LOCAL · P3 | The live check found no signing secret on `-dev`. Correct `DEPLOY_ENVIRONMENTS.md:283-284` and `:324` and the discord-worker `wrangler.toml:92-96` comment to say `BOT_API_SECRET` / `BOT_SIGNING_SECRET` must NOT be set on `-dev`; reword the "writes a genuine row" residual-risk line. |

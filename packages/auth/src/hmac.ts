@@ -249,7 +249,10 @@ export const BOT_SIGNATURE_NONCE_HEADER = 'X-Request-Nonce';
  */
 export interface BotSignatureV2Request {
   method: string;
-  /** URL path only (no origin, no query) */
+  /**
+   * URL path only (no origin, no query). Query values are not authenticated by
+   * v2: authorize their effects independently against the signed identity.
+   */
   path: string;
   body?: string | Uint8Array | ArrayBuffer | null;
   /** Unix seconds as a string (the value sent in X-Request-Timestamp) */
