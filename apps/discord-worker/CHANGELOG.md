@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Stabilize the cross-button throttle regression's clock inside its minute window. The
+  existing German plural assertion and all dispatch/tracking/ephemeral checks are retained;
+  a valid one-second singular reply no longer causes a CI-only fixture failure.
+
 - Favorite lists use one signed, acting-user batch lookup for up to 50 saved IDs, preserve
   order and distinguish unavailable presets from service failure. Complete escaped lines and
   notices fit Discord's description limit; failed delivery is recorded and gets one short fallback.

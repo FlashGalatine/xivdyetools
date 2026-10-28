@@ -29,6 +29,26 @@ including **167** script tests. Independent source/release review passes. No new
 mirror the six numeric edits, and no existing assertions, timeouts, skips or coverage
 requirements are relaxed.
 
+## Automatic beta test correction
+
+Initial source `14f859af` passes all four CI jobs and 169 Chromium tests. Its automatic
+Discord beta test step fails **1 /1,821** tests before deployment or guild registration:
+the cross-button throttle regression unconditionally expects German plural `Sekunden`,
+while the real minute-aligned window legitimately has one second remaining and returns
+`1 Sekunde`. Both deployment and registration are skipped; this is not a successful beta.
+
+The test-resolver verifier classifies **TEST WRONG**. A controlled `Date.now() =119,999`
+reproduces the exact singular/plural failure; fixing that fixture to **90,000** yields
+30 seconds remaining and passes the original plural assertion. The spy is restored in
+`finally`. All 31st-request blocking, dispatch/tracking counts, shared key, localized text
+and ephemeral-response assertions remain unchanged. No production rate-limit code,
+threshold, locale wording, timeout or skip is changed. The test-only correction folds into
+Discord's existing pending **5.9.7** changelog; there is no new runtime release or version bump.
+Post-correction checks pass: **157** file tests, **1,821** Discord tests, **10/10** static
+tasks, and a fresh forced full graph of **17,481 tests /604 files /17 workspaces**, **25/25**
+tasks, zero cached. Fresh automatic beta receipts remain pending the corrected head's push
+and are recorded in the PR after completion.
+
 ## Production sequencing
 
 Both source changes must be reviewed and gated. Publish and verify the complete eligible
