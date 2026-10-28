@@ -14,4 +14,4 @@
 - Policy variants to edit (all in one commit, all `Last updated` lines bumped): Same term collision in PRIVACY.ja.md:27, where the control '保存したパレットをクリア' is the same phrase ja.json:1006/1010 use for saved presets ('保存したパレット', 'パレット保存'). PRIVACY.ko.md:27 has it too: '저장된 팔레트' against ko.json:1006 '저장한 팔레트' and gateSave '팔레트 저장'. PRIVACY.de.md:66 is weaker: 'Gespeicherte Paletten' against de.json 'Gemerkte Paletten'/'Paletten merken'. PRIVACY.zh.md:27 does not collide ('调色板' against zh.json '配色')…
 
 ## Status
-OPEN — security-only A-WEB implementation and reviews prepared in web 5.16.4; affected CI, whole-graph verification and production acceptance remain release gates. [A-WEB evidence](../evidence/remediation-web-security-2026-10-28.md).
+OPEN — security-only A-WEB implementation and reviews prepared in web 5.16.4; local full-repository verification and affected CI/beta pass; prerequisite publication and production acceptance remain release gates. [A-WEB evidence](../evidence/remediation-web-security-2026-10-28.md).

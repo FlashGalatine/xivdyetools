@@ -2,8 +2,9 @@
 
 **State:** all 14 security rows implemented for web **5.16.4 PATCH** on isolated branch
 `codex/sprint9-web-security-20261028`, based on `cf22202d` (A-DISCORD companion draft #346).
-Source `a6e1e3c59334e6e2b61b84f6bc02f1aee46f3abf` is published in [draft PR #347](https://github.com/FlashGalatine/xivdyetools/pull/347). Final web-scoped verification, affected CI and automatic web beta pass. Local whole-graph
-validation is outstanding because of the Windows runner failures recorded below. This completes the
+Source `a6e1e3c59334e6e2b61b84f6bc02f1aee46f3abf` is published in [draft PR #347](https://github.com/FlashGalatine/xivdyetools/pull/347). Final web-scoped verification, affected CI and automatic web beta pass. The Windows loader
+follow-up now passes the fresh full graph: **17,410 tests /603 files /17 workspaces**;
+[diagnosis and final proof](remediation-windows-loader-2026-10-28.md) preserve the initial failures. This completes the
 selected implementation scope; all nonsecurity A-WEB rows remain deferred. Findings remain
 OPEN until production acceptance. No production release is selected.
 
@@ -58,7 +59,7 @@ patch. The root announcement changelog is untouched.
   original bytes and every non-head table, so their exact original binaries were restored.
   Discord/OG font suites pass **17 +15 tests**. No font or OG-version change is needed.
 
-## Verification record and Windows limitation
+## Initial verification record and Windows failures
 
 - Whole-graph build/types/lint: **45/45 tasks**, **42 cached**, exit 0.
 - Build/budget, i18n, policy parity, script tests/types, versions (**34**), living-doc links
@@ -72,11 +73,12 @@ patch. The root announcement changelog is untouched.
   `/@fs/` module paths despite the targets existing. A direct short-temp auth probe passes
   **49/49**; changing to the original temp path reproduces the import failure. Full-unit attempts
   still fail. Safe instrumentation shows Node **22.21.0**, no Bun and the intended temp path;
-  the precise loader cause remains unresolved. No source/dependency/test/timeout change is justified.
-- The final security reviewer accepts a draft PR and fresh affected Linux CI as preparation
-  delivery, provided these local failures remain disclosed. **Whole-graph test validation remains
-  outstanding.** CI's `...[HEAD^]` filter will verify the affected web scope; its always-run
-  presets Wrangler check does not establish a presets-api or whole-graph test pass.
+  at that stage the loader cause was unresolved. Those probes alone did not justify a source,
+  dependency, test or timeout change; the subsequent alias trace establishes the cause below.
+- At initial source delivery, the final security reviewer accepted a draft PR and fresh affected
+  Linux CI as preparation, provided the local failures remained disclosed. Whole-graph testing
+  was outstanding then. CI's `...[HEAD^]` filter verifies affected scope; its always-run
+  presets Wrangler check alone does not establish a presets-api or whole-graph test pass.
 
 Final configured web suite exits **0**: **4,483/4,483 tests across 144 files**, with V8 coverage
 **88.06% statements /78.81% branches /85.64% functions /89.46% lines**. Fresh web TypeScript
@@ -84,10 +86,22 @@ and the added privacy-test file's ESLint checks also exit 0. The full suite expo
 assertions requiring the old imported names; an independent TEST WRONG verdict led to updating
 only the Swatch expectations and generic-label cap fixture. All original logging canaries and
 Glamour naming cases remain, with additional saved-name exclusions; scoped re-review passes.
-Actual affected Linux CI and Playwright receipts are recorded below; they do not establish a whole-graph pass.
+Actual affected Linux CI and Playwright receipts are recorded below; the separate fresh
+Windows run establishes the whole-graph pass.
 The earlier partial-scope **4,480/144** web gate precedes approved naming/CSP additions and is
 not relabeled as final. The early baseline collector's lost exit/concurrent coverage-lock attempt
 was superseded by the captured successful partial gate; neither erases the graph failures above.
+
+## Windows loader follow-up
+
+The broad presets-api test alias stripped `.js` from absolute dependency filenames.
+A traced `ENOENT`, relative-only correction and matched three-file reversal establish the
+cause and fix. The focused 104-test check, full 1,397-test presets suite and independent
+review pass. Fresh whole-graph build/type/lint passes **45/45 tasks**; forced serialized
+full testing passes **25/25 tasks, 0 cached, 17,410 tests /603 files /17 workspaces**.
+The intervening concurrency-two moderation timeout is retained in the
+[full diagnosis and proof](remediation-windows-loader-2026-10-28.md); test rules and timeouts
+are unchanged. This closes local whole-graph verification, not production acceptance.
 
 ## Release handoff and limits
 
@@ -128,5 +142,5 @@ created or changed for this verification. This receipt update changes audit docu
 application source, versions, headers and flags remain exactly the reviewed source commit.
 
 Security implementation preparation is complete for this selected subset. All nonsecurity
-A-WEB rows remain deferred, and whole-graph testing/publication/production acceptance remain
-outstanding release gates. These source receipts do not waive them.
+A-WEB rows remain deferred. Whole-graph testing now passes; prerequisite publication and
+production acceptance remain outstanding release gates. These source receipts do not waive them.

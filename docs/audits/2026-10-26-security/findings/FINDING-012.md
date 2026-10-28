@@ -14,4 +14,4 @@
 - Policy variants to edit (all in one commit, all `Last updated` lines bumped): apps/web-app/TERMS_OF_SERVICE.ja.md:49, TERMS_OF_SERVICE.de.md:83, TERMS_OF_SERVICE.fr.md:85, TERMS_OF_SERVICE.ko.md:49, TERMS_OF_SERVICE.zh.md:49. No src/locales/*.json key holds the appeal steps (git grep found none).
 
 ## Status
-OPEN — security-only A-WEB implementation and reviews prepared in web 5.16.4; affected CI, whole-graph verification and production acceptance remain release gates. [A-WEB evidence](../evidence/remediation-web-security-2026-10-28.md).
+OPEN — security-only A-WEB implementation and reviews prepared in web 5.16.4; local full-repository verification and affected CI/beta pass; prerequisite publication and production acceptance remain release gates. [A-WEB evidence](../evidence/remediation-web-security-2026-10-28.md).

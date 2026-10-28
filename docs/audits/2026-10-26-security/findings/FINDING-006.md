@@ -15,4 +15,4 @@
 - Policy variants to edit (all in one commit, all `Last updated` lines bumped): apps/web-app/src/locales/en.json:1009, ja.json:1009 ("アカウント不要、レート制限なし。"), de.json:1009 ("Ohne Konto, ohne Limit."), fr.json:1009 ("Sans compte, sans limite."), ko.json:1009 ("계정 불필요, 속도 제한 없음."), zh.json:1009 ("无需账号，无速率限制。"). There are no .md policy siblings, since this key is only UI copy.
 
 ## Status
-OPEN — security-only A-WEB implementation and reviews prepared in web 5.16.4; affected CI, whole-graph verification and production acceptance remain release gates. [A-WEB evidence](../evidence/remediation-web-security-2026-10-28.md).
+OPEN — security-only A-WEB implementation and reviews prepared in web 5.16.4; local full-repository verification and affected CI/beta pass; prerequisite publication and production acceptance remain release gates. [A-WEB evidence](../evidence/remediation-web-security-2026-10-28.md).

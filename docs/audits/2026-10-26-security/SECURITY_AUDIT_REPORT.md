@@ -211,17 +211,17 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 |---|---|---|
 | FINDING-001 | OPEN — moderation and Discord preview companions prepared; production release acceptance pending. | [A-DISCORD evidence](evidence/remediation-discord-2026-10-27.md) |
 | FINDING-002 | OPEN — core/SVG/API source prepared; release pending | [Core evidence](../2026-10-26-xivcharakit-dead-code/evidence/remediation-core-2026-10-27.md); [SVG evidence](evidence/remediation-svg-2026-10-27.md); [API evidence](evidence/remediation-api-2026-10-27.md) |
-| FINDING-003 | OPEN — 5.16.4 in draft #347; affected CI/beta pass; whole-graph and production acceptance pending | [A-WEB evidence](evidence/remediation-web-security-2026-10-28.md) |
+| FINDING-003 | OPEN — 5.16.4 in draft #347; local full graph and affected CI/beta pass; prerequisite publication and production acceptance pending | [A-WEB evidence](evidence/remediation-web-security-2026-10-28.md) |
 | FINDING-004 | OPEN — library and all three app opt-ins prepared; release pending | [A-OAUTH evidence](evidence/remediation-oauth-2026-10-27.md) |
 | FINDING-005 | OPEN — upstream budgets/current icon key prepared; production acceptance pending | [API evidence](evidence/remediation-api-2026-10-27.md) |
-| FINDING-006 | OPEN — 5.16.4 in draft #347; affected CI/beta pass; whole-graph and production acceptance pending | [A-WEB evidence](evidence/remediation-web-security-2026-10-28.md) |
-| FINDING-007 | OPEN — 5.16.4 in draft #347; affected CI/beta pass; whole-graph and production acceptance pending | [A-WEB evidence](evidence/remediation-web-security-2026-10-28.md) |
+| FINDING-006 | OPEN — 5.16.4 in draft #347; local full graph and affected CI/beta pass; prerequisite publication and production acceptance pending | [A-WEB evidence](evidence/remediation-web-security-2026-10-28.md) |
+| FINDING-007 | OPEN — 5.16.4 in draft #347; local full graph and affected CI/beta pass; prerequisite publication and production acceptance pending | [A-WEB evidence](evidence/remediation-web-security-2026-10-28.md) |
 | FINDING-008 | OPEN — private encrypted report sent 2026-10-27; upstream triage pending | Sent-copy recipient and attachment verified; private receipt outside Git; no mitigation applied |
 | FINDING-009 | PARTIAL 2026-10-26 — one-off history/alias cleanup complete; automated retention remains in R-CI | [760 deletion receipts and preservation verification](evidence/remediation-finding-009-2026-10-26.md) (no code commit) |
-| FINDING-010 | OPEN — 5.16.4 in draft #347; affected CI/beta pass; whole-graph and production acceptance pending | [A-WEB evidence](evidence/remediation-web-security-2026-10-28.md) |
-| FINDING-011 | OPEN — 5.16.4 in draft #347; affected CI/beta pass; whole-graph and production acceptance pending | [A-WEB evidence](evidence/remediation-web-security-2026-10-28.md) |
-| FINDING-012 | OPEN — 5.16.4 in draft #347; affected CI/beta pass; whole-graph and production acceptance pending | [A-WEB evidence](evidence/remediation-web-security-2026-10-28.md) |
-| FINDING-013 | OPEN — 5.16.4 in draft #347; affected CI/beta pass; whole-graph and production acceptance pending | [A-WEB evidence](evidence/remediation-web-security-2026-10-28.md) |
+| FINDING-010 | OPEN — 5.16.4 in draft #347; local full graph and affected CI/beta pass; prerequisite publication and production acceptance pending | [A-WEB evidence](evidence/remediation-web-security-2026-10-28.md) |
+| FINDING-011 | OPEN — 5.16.4 in draft #347; local full graph and affected CI/beta pass; prerequisite publication and production acceptance pending | [A-WEB evidence](evidence/remediation-web-security-2026-10-28.md) |
+| FINDING-012 | OPEN — 5.16.4 in draft #347; local full graph and affected CI/beta pass; prerequisite publication and production acceptance pending | [A-WEB evidence](evidence/remediation-web-security-2026-10-28.md) |
+| FINDING-013 | OPEN — 5.16.4 in draft #347; local full graph and affected CI/beta pass; prerequisite publication and production acceptance pending | [A-WEB evidence](evidence/remediation-web-security-2026-10-28.md) |
 | FINDING-014 | OPEN — source prepared; release pending | [A-BOT-LOGIC evidence](evidence/remediation-bot-logic-2026-10-27.md) |
 | FINDING-015 | OPEN — source prepared; release pending | [A-PRESETS evidence](evidence/remediation-presets-2026-10-27.md) |
 | FINDING-016 | OPEN — implemented inactive; later activation required | [A-PRESETS evidence](evidence/remediation-presets-2026-10-27.md) |
@@ -234,29 +234,29 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 | FINDING-023 | OPEN — provider/consumers prepared inactive; bounded RPC/activation/release pending | [A-MODERATION evidence](evidence/remediation-moderation-2026-10-27.md) |
 | FINDING-024 | OPEN — signed, capped and ordered batch favorites prepared; provider/publication/deployment acceptance pending. | [A-DISCORD evidence](evidence/remediation-discord-2026-10-27.md) |
 | FINDING-025 | OPEN — private confirmed ban scope prepared inactive; activation/release pending | [A-MODERATION evidence](evidence/remediation-moderation-2026-10-27.md) |
-| FINDING-026 | OPEN — 5.16.4 in draft #347; affected CI/beta pass; whole-graph and production acceptance pending | [A-WEB evidence](evidence/remediation-web-security-2026-10-28.md) |
-| FINDING-027 | OPEN — 5.16.4 in draft #347; affected CI/beta pass; whole-graph and production acceptance pending | [A-WEB evidence](evidence/remediation-web-security-2026-10-28.md) |
+| FINDING-026 | OPEN — 5.16.4 in draft #347; local full graph and affected CI/beta pass; prerequisite publication and production acceptance pending | [A-WEB evidence](evidence/remediation-web-security-2026-10-28.md) |
+| FINDING-027 | OPEN — 5.16.4 in draft #347; local full graph and affected CI/beta pass; prerequisite publication and production acceptance pending | [A-WEB evidence](evidence/remediation-web-security-2026-10-28.md) |
 | FINDING-028 | FIXED 2026-10-26 | Repository secret copies deleted; environment copies preserved; [verification](evidence/remediation-finding-028-2026-10-26.md) (no code commit) |
 | FINDING-029 | OPEN — future builder prepared; historical provenance unresolved pending controlled refresh | [API evidence](evidence/remediation-api-2026-10-27.md) |
 | FINDING-030 | OPEN — beta secret comments and deployment runbook corrected in A-DISCORD source; release acceptance pending. | [A-DISCORD evidence](evidence/remediation-discord-2026-10-27.md) |
 | FINDING-031 | OPEN | — |
 | FINDING-032 | OPEN — development isolation prepared; release pending | [A-OAUTH evidence](evidence/remediation-oauth-2026-10-27.md) |
-| FINDING-033 | OPEN — 5.16.4 in draft #347; affected CI/beta pass; whole-graph and production acceptance pending | [A-WEB evidence](evidence/remediation-web-security-2026-10-28.md) |
-| FINDING-034 | OPEN — 5.16.4 in draft #347; affected CI/beta pass; whole-graph and production acceptance pending | [A-WEB evidence](evidence/remediation-web-security-2026-10-28.md) |
+| FINDING-033 | OPEN — 5.16.4 in draft #347; local full graph and affected CI/beta pass; prerequisite publication and production acceptance pending | [A-WEB evidence](evidence/remediation-web-security-2026-10-28.md) |
+| FINDING-034 | OPEN — 5.16.4 in draft #347; local full graph and affected CI/beta pass; prerequisite publication and production acceptance pending | [A-WEB evidence](evidence/remediation-web-security-2026-10-28.md) |
 | FINDING-035 | FIXED 2026-10-27 — checklist omission closed; actual policy changes remain scheduled for key deletion | [Perspective-sunset checklist](../../../DEPRECATIONS.md) (documentation only) |
 | FINDING-036 | OPEN — state domain separation prepared; release pending | [A-OAUTH evidence](evidence/remediation-oauth-2026-10-27.md) |
 | FINDING-037 | OPEN — source prepared; release pending | [A-PRESETS evidence](evidence/remediation-presets-2026-10-27.md) |
 | FINDING-038 | OPEN — numeric telemetry triple prepared; release pending | [API evidence](evidence/remediation-api-2026-10-27.md) |
 | FINDING-039 | OPEN — private named notification provider and separate presets binding companion prepared; default-false gate requires provider/consumer verification and separately authorized public cutover. | [A-DISCORD evidence](evidence/remediation-discord-2026-10-27.md) |
 | FINDING-040 | OPEN — button limit before analytics/dispatch prepared; release pending. | [A-DISCORD evidence](evidence/remediation-discord-2026-10-27.md) |
-| FINDING-041 | OPEN — 5.16.4 in draft #347; affected CI/beta pass; whole-graph and production acceptance pending | [A-WEB evidence](evidence/remediation-web-security-2026-10-28.md) |
+| FINDING-041 | OPEN — 5.16.4 in draft #347; local full graph and affected CI/beta pass; prerequisite publication and production acceptance pending | [A-WEB evidence](evidence/remediation-web-security-2026-10-28.md) |
 | FINDING-042 | OPEN | — |
 | FINDING-043 | OPEN | — |
 | FINDING-044 | OPEN | — |
-| FINDING-045 | OPEN — 5.16.4 in draft #347; affected CI/beta pass; whole-graph and production acceptance pending | [A-WEB evidence](evidence/remediation-web-security-2026-10-28.md) |
+| FINDING-045 | OPEN — 5.16.4 in draft #347; local full graph and affected CI/beta pass; prerequisite publication and production acceptance pending | [A-WEB evidence](evidence/remediation-web-security-2026-10-28.md) |
 | FINDING-046 | OPEN | — |
 | FINDING-047 | OPEN | — |
-| FINDING-048 | OPEN — 5.16.4 in draft #347; affected CI/beta pass; whole-graph and production acceptance pending | [A-WEB evidence](evidence/remediation-web-security-2026-10-28.md) |
+| FINDING-048 | OPEN — 5.16.4 in draft #347; local full graph and affected CI/beta pass; prerequisite publication and production acceptance pending | [A-WEB evidence](evidence/remediation-web-security-2026-10-28.md) |
 | FINDING-049 | OPEN | — |
 | FINDING-050 | OPEN — BLOCKED 2026-10-26 on feature eligibility; both options remain disabled | [Attempt and verification](evidence/remediation-finding-050-2026-10-26.md); no accepted deferral |
 | FINDING-051 | FIXED 2026-10-26 — enforce_admins and strict enabled | [Live settings and preservation verification](evidence/remediation-finding-051-2026-10-26.md) (no code commit) |

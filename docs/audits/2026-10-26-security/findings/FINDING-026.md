@@ -15,4 +15,4 @@
 - Policy variants to edit (all in one commit, all `Last updated` lines bumped): apps/web-app/PRIVACY.ja.md:40, apps/web-app/PRIVACY.de.md:92, apps/web-app/PRIVACY.fr.md:98, apps/web-app/PRIVACY.ko.md:40, apps/web-app/PRIVACY.zh.md:40. No locales/*.json key carries this sentence (en.json:1005 'Browsing and saving work without an account.' and :1009 'No account, no rate limit.' remain true).
 
 ## Status
-OPEN — security-only A-WEB implementation and reviews prepared in web 5.16.4; affected CI, whole-graph verification and production acceptance remain release gates. [A-WEB evidence](../evidence/remediation-web-security-2026-10-28.md).
+OPEN — security-only A-WEB implementation and reviews prepared in web 5.16.4; local full-repository verification and affected CI/beta pass; prerequisite publication and production acceptance remain release gates. [A-WEB evidence](../evidence/remediation-web-security-2026-10-28.md).

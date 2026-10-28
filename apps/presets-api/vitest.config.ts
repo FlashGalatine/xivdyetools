@@ -20,7 +20,8 @@ export default defineConfig({
   },
   resolve: {
     alias: [
-      { find: /^(.+)\.js$/, replacement: '$1' },
+      // Adapt relative TypeScript imports without stripping dependency filenames.
+      { find: /^(\.{1,2}\/.*)\.js$/, replacement: '$1' },
     ],
   },
   esbuild: {

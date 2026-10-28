@@ -14,4 +14,4 @@
 - At preset-edit-form.ts:135, set `previewImageUrl: sanitizePreviewImageUrl(preset.preview_image_url)`, imported from @shared/example-link, so every read path uses the same guard. Optionally add a unit test where a non-https stored URL renders no img.
 
 ## Status
-OPEN — security-only A-WEB implementation and reviews prepared in web 5.16.4; affected CI, whole-graph verification and production acceptance remain release gates. [A-WEB evidence](../evidence/remediation-web-security-2026-10-28.md).
+OPEN — security-only A-WEB implementation and reviews prepared in web 5.16.4; local full-repository verification and affected CI/beta pass; prerequisite publication and production acceptance remain release gates. [A-WEB evidence](../evidence/remediation-web-security-2026-10-28.md).

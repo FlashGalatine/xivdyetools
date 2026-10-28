@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.8.1] - 2026-10-27
 
+### Fixed
+
+- Restrict the test loader's `.js` alias to relative source imports so Windows
+  dependency paths retain their real filenames. Add a dependency/source-import
+  integration check; application behavior and test thresholds are unchanged.
+
 ### Security
 
 - Select Discord's private `PresetNotifications` entrypoint on both existing notification

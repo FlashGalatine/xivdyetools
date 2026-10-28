@@ -14,4 +14,4 @@
 - Policy variants to edit (all in one commit, all `Last updated` lines bumped): apps/web-app/PRIVACY.md:43; apps/web-app/PRIVACY.ja.md:19; apps/web-app/PRIVACY.de.md:47; apps/web-app/PRIVACY.fr.md:51; apps/web-app/PRIVACY.ko.md:19; apps/web-app/PRIVACY.zh.md:19. The locales/*.json key glamour charaHintGlamour (line 1167 in each) names model numbers + facewear ID without a count, so it is accurate and needs no edit.
 
 ## Status
-OPEN — security-only A-WEB implementation and reviews prepared in web 5.16.4; affected CI, whole-graph verification and production acceptance remain release gates. [A-WEB evidence](../evidence/remediation-web-security-2026-10-28.md).
+OPEN — security-only A-WEB implementation and reviews prepared in web 5.16.4; local full-repository verification and affected CI/beta pass; prerequisite publication and production acceptance remain release gates. [A-WEB evidence](../evidence/remediation-web-security-2026-10-28.md).

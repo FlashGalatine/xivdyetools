@@ -16,4 +16,4 @@
 - Policy variants to edit (all in one commit, all `Last updated` lines bumped): apps/web-app/PRIVACY.de.md:36 and apps/web-app/PRIVACY.fr.md:38 are in scope. apps/web-app/PRIVACY.ja.md:17 ("他のユーザーに見える形") narrows the clause the same way but is not in this group. ko (PRIVACY.ko.md:17) and zh (PRIVACY.zh.md:17) are faithful to the English. No src/locales/*.json key carries this clause: git grep finds the phrase only in the PRIVACY.*.md files.
 
 ## Status
-OPEN — security-only A-WEB implementation and reviews prepared in web 5.16.4; affected CI, whole-graph verification and production acceptance remain release gates. [A-WEB evidence](../evidence/remediation-web-security-2026-10-28.md).
+OPEN — security-only A-WEB implementation and reviews prepared in web 5.16.4; local full-repository verification and affected CI/beta pass; prerequisite publication and production acceptance remain release gates. [A-WEB evidence](../evidence/remediation-web-security-2026-10-28.md).
