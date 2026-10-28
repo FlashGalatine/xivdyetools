@@ -488,6 +488,8 @@ After required package publishes. Also apply the code-point-safe file-name cap p
 
 ## Sprint A-OG-COPY — apps/og-worker
 
+**Execution update 2026-10-28:** source prepared in OpenGraph **2.12.2 PATCH**, with all six count corrections, the required Chinese glyph subset and a fresh Worker cache version beyond beta 2.12.1. [Evidence](evidence/remediation-og-copy-2026-10-28.md) records regression/reversal proof and the release gates. Production acceptance remains pending; A-IMAGE follows this sprint verification.
+
 After relevant core/SVG publication. Correct the default Discord-frame subtitle in all six authored tables; X omits this subtitle. Bump the OG cache version and run glyph/fit gates.
 
 | ID | Source | Sev/Pri | Action |

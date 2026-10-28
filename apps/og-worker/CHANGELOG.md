@@ -5,6 +5,17 @@ All notable changes to the XIV Dye Tools OpenGraph Worker will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.12.2] - 2026-10-28
+
+### Fixed
+
+- Default Harmony cards describe **ten** supported harmony types in all six languages
+  (I18N-002). The Discord subtitle keeps its existing wording apart from the count;
+  the X frame still omits it. Route-level regressions check the displayed copy and fit.
+- Advance the Worker image-cache version beyond 2.12.1, which already reached beta,
+  so previously rendered default cards cannot reuse its seven-day cache entries.
+  Existing browser and social-platform copies are not purged.
+
 ## [2.12.1] - 2026-10-27
 
 ### Security
