@@ -98,6 +98,7 @@ database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 [[services]]
 binding = "DISCORD_WORKER"
 service = "xivdyetools-discord-worker"
+entrypoint = "PresetNotifications"
 
 [[services]]
 binding = "IMAGE_WORKER"
@@ -125,7 +126,7 @@ interface Env {
   DB: D1Database;
 
   // Service Bindings
-  DISCORD_WORKER?: Fetcher;       // For notifications
+  DISCORD_WORKER?: Fetcher;       // Private PresetNotifications entrypoint, same Fetch protocol
   IMAGE_WORKER: Fetcher;          // POST /thumbnail — preview-image encoding
 
   // R2

@@ -36,6 +36,21 @@ const oauthToml = readFileSync(join(__dirname, '..', '..', 'oauth', 'wrangler.to
 );
 
 describe('wrangler.toml', () => {
+  it.each([
+    ['top level', topLevel, 'services'],
+    ['production', production, 'env\\.production\\.services'],
+  ])(
+    'routes %s Discord notifications to the named entrypoint on the existing production service',
+    (_environment, config, table) => {
+      const services = [...config.matchAll(new RegExp(`^\\[\\[${table}\\]\\]\\n([^\\[]*)`, 'gm'))];
+      const discordBindings = services.filter((service) =>
+        /^binding = "DISCORD_WORKER"$/m.test(service[1])
+      );
+      expect(discordBindings).toHaveLength(1);
+      expect(discordBindings[0]?.[1]).toMatch(/^service = "xivdyetools-discord-worker"$/m);
+      expect(discordBindings[0]?.[1]).toMatch(/^entrypoint = "PresetNotifications"$/m);
+    }
+  );
   it('registers the private continuity wrapper and inactive named OAuth providers in both environments', () => {
     expect(topLevel).toMatch(/^main = "src\/worker.ts"$/m);
     expect(topLevel).toMatch(/^OAUTH_SESSION_CHECK_ENABLED = "false"$/m);
