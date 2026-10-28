@@ -26,3 +26,22 @@
 # the scanner then flagged here. The text above is fixed; this pins the commit
 # that carried it.
 7fc6679eb943aaff1c4137cf5b6c91fef6f0b075:.gitleaksignore:generic-api-key:12
+
+# 2026-10-28 A-IMAGE evidence: independently verified SHA-256 source-file
+# checksums of the compiled worker-kit rate-limiter module, repeated in before/
+# after maps. These are not credentials. Exact fingerprints cover only the
+# original evidence commit/line; future commits and all secret rules remain
+# scanned. See remediation-image-push-review-2026-10-28.md in the audit evidence.
+1815fe82a934262c8cf5a07bf2954f3ccc3afd54:docs/audits/2026-10-26-security/evidence/remediation-image-owned-buffers-memory-2026-10-28.json:generic-api-key:246
+1815fe82a934262c8cf5a07bf2954f3ccc3afd54:docs/audits/2026-10-26-security/evidence/remediation-image-owned-buffers-memory-2026-10-28.json:generic-api-key:653
+1815fe82a934262c8cf5a07bf2954f3ccc3afd54:docs/audits/2026-10-26-security/evidence/remediation-image-owned-buffers-memory-2026-10-28.json:generic-api-key:1257
+1815fe82a934262c8cf5a07bf2954f3ccc3afd54:docs/audits/2026-10-26-security/evidence/remediation-image-owned-buffers-memory-2026-10-28.json:generic-api-key:1341
+1815fe82a934262c8cf5a07bf2954f3ccc3afd54:docs/audits/2026-10-26-security/evidence/remediation-image-owned-buffers-memory-2026-10-28.json:generic-api-key:1647
+1815fe82a934262c8cf5a07bf2954f3ccc3afd54:docs/audits/2026-10-26-security/evidence/remediation-image-owned-buffers-memory-2026-10-28.json:generic-api-key:1731
+1815fe82a934262c8cf5a07bf2954f3ccc3afd54:docs/audits/2026-10-26-security/evidence/remediation-image-owned-buffers-memory-2026-10-28.json:generic-api-key:1846
+1815fe82a934262c8cf5a07bf2954f3ccc3afd54:docs/audits/2026-10-26-security/evidence/remediation-image-owned-buffers-memory-2026-10-28.json:generic-api-key:1930
+1815fe82a934262c8cf5a07bf2954f3ccc3afd54:docs/audits/2026-10-26-security/evidence/remediation-image-owned-buffers-memory-2026-10-28.json:generic-api-key:2534
+1815fe82a934262c8cf5a07bf2954f3ccc3afd54:docs/audits/2026-10-26-security/evidence/remediation-image-owned-buffers-memory-2026-10-28.json:generic-api-key:2618
+1815fe82a934262c8cf5a07bf2954f3ccc3afd54:docs/audits/2026-10-26-security/evidence/remediation-image-owned-buffers-memory-2026-10-28.json:generic-api-key:2924
+1815fe82a934262c8cf5a07bf2954f3ccc3afd54:docs/audits/2026-10-26-security/evidence/remediation-image-owned-buffers-memory-2026-10-28.json:generic-api-key:3008
+1815fe82a934262c8cf5a07bf2954f3ccc3afd54:docs/audits/2026-10-26-security/evidence/remediation-image-owned-buffers-memory-2026-10-28.json:generic-api-key:3123
