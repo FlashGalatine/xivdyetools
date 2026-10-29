@@ -370,6 +370,15 @@ Draft [PR #343](https://github.com/FlashGalatine/xivdyetools/pull/343) prepares 
 
 Source `80026b53`: [CI](https://github.com/FlashGalatine/xivdyetools/actions/runs/40589390369) passes all four jobs, including **167/167 Chromium Playwright tests**. Provider preparation is ready for the following consumer work; release/production acceptance remains pending, including the mandatory bounded-RPC/cleanup gate before adding an outbound continuity binding. No merge or production action is selected.
 
+**Local release-prerequisite follow-up 2026-10-29:** lookup/apply now share a five-second
+deadline; terminal acknowledgements and bounded cleanup have one-second remote-wait budgets.
+Unknown operations remain quarantined for an immutable retry, and late replies cannot resume
+local identity writes or session issuance. Cleanup selects at most eight acknowledgements and
+deletes at most eight eligible records; rotation is best-effort within an isolate/D1 handle.
+[Dated evidence and release checkpoint](../2026-10-26-security/evidence/remediation-release-prerequisites-2026-10-29.md)
+separate this source prerequisite from D1/platform waits, provider/consumer deployment and
+production activation. Both split flags remain false; no continuity binding is added.
+
 After A-WORKER-KIT. Resolve the identity-link product decision first. If oauth is chosen as the linked-identity provider, ship that support before A-MODERATION.
 
 | ID | Source | Sev/Pri | Action |

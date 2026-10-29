@@ -1,0 +1,202 @@
+{
+  "schema": 1,
+  "baseCommit": "d132dc5e554473c67e5b7c5cc5e2e2846ad740ab",
+  "verifiedAt": "2026-10-29T12:10:40.328Z",
+  "scope": "Local real-archive handoff verification and inert publication choreography only",
+  "identityLabel": "SYNTHETIC LOCAL IDENTITY - NOT CI ATTESTATION",
+  "runtime": {
+    "node": "22.21.0",
+    "pnpm": "11.17.0",
+    "packScripts": false
+  },
+  "packages": [
+    {
+      "name": "@xivdyetools/logger",
+      "version": "2.4.0",
+      "filename": "logger.tgz",
+      "sha256": "13055dc40bad9e4780deacb165bd11b52346f6bf7cd4547752f9b1024ae19265"
+    },
+    {
+      "name": "@xivdyetools/auth",
+      "version": "3.0.0",
+      "filename": "auth.tgz",
+      "sha256": "e5b67734e419fc036a6db0ee2792f88e1d3c559efa50a8b2e4914b57159e0a4a"
+    },
+    {
+      "name": "@xivdyetools/core",
+      "version": "5.16.0",
+      "filename": "core.tgz",
+      "sha256": "8f0e99497b929ca882a91f9afd858fb1ff3ff773f90a92a8c99cf60a25657efd"
+    },
+    {
+      "name": "@xivdyetools/worker-kit",
+      "version": "1.6.0",
+      "filename": "worker-kit.tgz",
+      "sha256": "769284216c94b8057677aef27005b53b44d32fad195e95822b77206f6e8477f4"
+    },
+    {
+      "name": "@xivdyetools/svg",
+      "version": "4.4.1",
+      "filename": "svg.tgz",
+      "sha256": "94ef9b9cc263ecfdb5e257b9f57b1b4ccf87a50110d1cb06adc24e1c566a93f3"
+    },
+    {
+      "name": "@xivdyetools/bot-logic",
+      "version": "4.12.0",
+      "filename": "bot-logic.tgz",
+      "sha256": "f405ca9d57151ba3524073ebe5de0aae61d54dcdce68dce84e8dac2c2ade39d5"
+    }
+  ],
+  "distFilesCompared": 596,
+  "manualLocalesCompared": 6,
+  "sourceFilesHashed": 608,
+  "scenarios": [
+    {
+      "name": "dependency-order-success",
+      "simulatedResult": {
+        "published": [
+          "@xivdyetools/logger",
+          "@xivdyetools/auth",
+          "@xivdyetools/core",
+          "@xivdyetools/worker-kit",
+          "@xivdyetools/svg",
+          "@xivdyetools/bot-logic"
+        ],
+        "failed": [],
+        "skipped": []
+      }
+    },
+    {
+      "name": "missing-upstream-failclosed",
+      "simulatedResult": {
+        "published": [
+          "@xivdyetools/logger",
+          "@xivdyetools/auth",
+          "@xivdyetools/worker-kit"
+        ],
+        "failed": [],
+        "skipped": [
+          "@xivdyetools/core",
+          "@xivdyetools/svg",
+          "@xivdyetools/bot-logic"
+        ]
+      }
+    },
+    {
+      "name": "unverified-upstream-failclosed",
+      "simulatedResult": {
+        "published": [
+          "@xivdyetools/logger",
+          "@xivdyetools/auth",
+          "@xivdyetools/worker-kit"
+        ],
+        "failed": [],
+        "skipped": [
+          "@xivdyetools/core",
+          "@xivdyetools/svg",
+          "@xivdyetools/bot-logic"
+        ]
+      }
+    },
+    {
+      "name": "logger-failure-isolation",
+      "simulatedResult": {
+        "published": [
+          "@xivdyetools/auth"
+        ],
+        "failed": [
+          "@xivdyetools/logger"
+        ],
+        "skipped": [
+          "@xivdyetools/core",
+          "@xivdyetools/worker-kit",
+          "@xivdyetools/svg",
+          "@xivdyetools/bot-logic"
+        ]
+      }
+    },
+    {
+      "name": "tampered-archive-precallback-rejection",
+      "callbackCount": 0,
+      "rejection": "release entry/digest mismatch"
+    }
+  ],
+  "registry": {
+    "recordedAt": "2026-10-29T12:05:14Z",
+    "originalLookupTime": "unknown",
+    "packages": [
+      {
+        "latestIntegrity": "sha512-U7FA4NKcqNpXT8ubMuEnfRYh+7KtYEfiNTLc2ZWHe2E8Cs0ztEL3bNI2sRfx+c0pD4QCaIa2AC1X2e/uFlmwtA==",
+        "name": "@xivdyetools/logger",
+        "plannedVersionExists": false,
+        "latest": "2.3.0",
+        "plannedVersion": "2.4.0",
+        "registryUrl": "https://registry.npmjs.org/%40xivdyetools%2Flogger"
+      },
+      {
+        "latestIntegrity": "sha512-MywRNqYcILu0h4hgxuWO5dMge/gApamRvqrx5lxdcb5hel355fqL793DVxnXXdHZ5xGfv97YwkiWdYChbWuuaA==",
+        "name": "@xivdyetools/auth",
+        "plannedVersionExists": false,
+        "latest": "2.0.2",
+        "plannedVersion": "3.0.0",
+        "registryUrl": "https://registry.npmjs.org/%40xivdyetools%2Fauth"
+      },
+      {
+        "latestIntegrity": "sha512-cCFdvxZbv94vzaUc+rlhSAgOFnaaJIIEt/S95XRi9kAJjKT0K7DubVIoDGIOkJT4qsjxu679DCsW3JLH+fw21g==",
+        "name": "@xivdyetools/core",
+        "plannedVersionExists": false,
+        "latest": "5.15.0",
+        "plannedVersion": "5.16.0",
+        "registryUrl": "https://registry.npmjs.org/%40xivdyetools%2Fcore"
+      },
+      {
+        "latestIntegrity": "sha512-7700+LaHXZbQEQ5BUSIdTHiPQd/Vmm+nDPr5gEHWjJYXx329kdFuC1cwj7uE6NtER73VOnJf1BIkUhnMGql44Q==",
+        "name": "@xivdyetools/worker-kit",
+        "plannedVersionExists": false,
+        "latest": "1.5.0",
+        "plannedVersion": "1.6.0",
+        "registryUrl": "https://registry.npmjs.org/%40xivdyetools%2Fworker-kit"
+      },
+      {
+        "latestIntegrity": "sha512-FxYuscJBtmcFdZnEnBivgbLIwHiLlNu4bBCrkiyUl8S2qlsZz0Mu7eHqkJgzDHZRcKJKZOtXLvYxegqgTp+22A==",
+        "name": "@xivdyetools/svg",
+        "plannedVersionExists": false,
+        "latest": "4.4.0",
+        "plannedVersion": "4.4.1",
+        "registryUrl": "https://registry.npmjs.org/%40xivdyetools%2Fsvg"
+      },
+      {
+        "latestIntegrity": "sha512-9BrfqT0S/dsmAXcFRdRpBNyO83jEZQ3M5mC7jO08S25x01/O008ElB8qT+aDLyLDLdIavlRy4qFROPxAHIc7gQ==",
+        "name": "@xivdyetools/bot-logic",
+        "plannedVersionExists": false,
+        "latest": "4.11.0",
+        "plannedVersion": "4.12.0",
+        "registryUrl": "https://registry.npmjs.org/%40xivdyetools%2Fbot-logic"
+      }
+    ],
+    "typesLookup": {
+      "name": "@xivdyetools/types",
+      "version": "3.3.0",
+      "versionExists": true,
+      "integrity": "sha512-7/GXcPeZJ53hadTebEsxYp6mO9hrQtTnMWSW4d/4ZmYd3WAlCMjfEBrJQpSBwU24/GF8mQgyqwGU61W+ny3frg==",
+      "registryUrl": "https://registry.npmjs.org/@xivdyetools%2ftypes",
+      "checkedAt": "2026-10-29T12:05:54Z"
+    }
+  },
+  "evidenceHashes": {
+    "rehearsal.mjs": "2974196e37e5f568736eaa831c1cf3d808a1d2a8051c7ec099fb022a54830dc3",
+    "receipt.json": "be3e1177743a13b38fd2396f988547fc30ee80b7ce5f3bb5b55a2c6d48ea8ba4",
+    "hashes.json": "24cc9adcc10dfb7a282e67356e4b9fc03ddb219b5fd518aed607fc6f379bdb53",
+    "pack-receipt.json": "be485ced0f1f1927f8859d8f38b6ba0dc4bd37ee09e315af20a926730bbdefca",
+    "handoff/release.json": "ccf78e7adf72b731324b4a5137c1171fbae5d86d665de52eed8249fe5542ea46"
+  },
+  "publisherScriptSha256": "c1b6adb969ca22180069f1c0347ebed3c619b97548236d4af0bf917f92e58ff7",
+  "limitations": [
+    "Uses existing built outputs; no builds rerun",
+    "No npm install consumption test",
+    "No CI provenance or OIDC attestation",
+    "No publication, deployment, registry mutation, or authentication",
+    "Registry availability uses dated collector snapshot; scenario callbacks are inert simulations",
+    "Pack scripts disabled to preserve existing dist"
+  ]
+}

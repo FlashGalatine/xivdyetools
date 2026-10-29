@@ -187,5 +187,12 @@ users migration before deployment, then verify provider and consumer releases be
 separate activation. No outbound continuity binding is declared in this initial release.
 Development explicitly overrides routes with an empty list and disables workers.dev.
 
+The prepared continuity client bounds lookup/apply to one shared five-second deadline and
+terminal acknowledgement to one second. Cleanup attempts at most eight acknowledgements in
+parallel within one shared second and deletes at most eight retention-eligible records.
+Unknown outcomes retain their journal and locks for retry; late replies cannot resume local
+identity changes or token issuance. Remote effects are not cancelled, and D1/platform time is
+outside these RPC bounds. Cleanup rotation is best-effort within an isolate/D1 handle.
+
 See [stored identities and moderation continuity](../../docs/architecture/identity-moderation.md)
 for the private contract, recovery/retention limits and rollout order.

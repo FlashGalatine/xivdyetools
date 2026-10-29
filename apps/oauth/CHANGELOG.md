@@ -27,6 +27,13 @@ identity splitting is disabled, and this release declares no outbound continuity
 
 ### Security
 
+- Bound the prepared ban-continuity lookup/apply pair to one five-second deadline. Unknown
+  timeouts preserve the operation and locks for an unchanged retry; late replies cannot resume
+  local identity writes or token issuance. Terminal acknowledgement is best-effort within one
+  second, and cleanup shares that one-second remote budget across at most eight concurrent
+  acknowledgements, rotating candidates within the isolate/D1 handle and deleting at most
+  eight retention-eligible terminal records. This does not cancel remote effects or bound D1
+  execution; production binding and activation remain separate gates.
 - Refuse detected existing relationship changes while `IDENTITY_SPLIT_ENABLED` is false, without
   changing the association or minting its stale Discord identity. Matching sign-ins and new
   accounts continue. Safe automatic splitting remains pending consumer rollout and activation.
@@ -39,6 +46,9 @@ identity splitting is disabled, and this release declares no outbound continuity
 
 ### Operations
 
+- Deadline regression tests wait for the actual continuity-call timer to start after asynchronous
+  journal decoding. A persisted journal alone is not that signal; slower CI crypto scheduling
+  no longer leaves the test waiting on an unadvanced fake clock. All deadline assertions remain.
 - Apply additive users migration `0002_identity_transitions.sql` before the dependent deployment,
   using `wrangler d1 execute --file` once. Never replay migrations with `d1 migrations apply`.
 - Verify the provider, then the later presets/moderation enforcement and disclosures, before a
