@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - A core `Logger` interface (debug/info/warn/error) plus an `ExtendedLogger` with `child()`, `setContext()`, and `time()`/`timeAsync()` performance helpers.
 - Three pre-built presets (`browser`, `worker`, `library`) tuned for each runtime.
-- Field-level secret redaction (recursive, cycle-guarded — not depth-limited), a value-shape scan for secret-shaped strings regardless of key (context fields, array items including nested arrays, and — for JWT/Discord-token shapes only — bare tokens inside free-text messages), and pattern-based `key=value` sanitization that runs over `message`, `error.message`, and (when `sanitizeErrors` is on) every string value in a context, so a secret embedded in a longer context string is redacted too.
+- Field-level secret redaction (recursive, cycle-guarded — not depth-limited), a value-shape scan for secret-shaped strings regardless of key (context fields, array items including nested arrays, and — for JWT/Discord-token and Discord URL shapes — substrings inside free-text messages), and pattern-based `key=value` sanitization that runs over `message`, `error.message`, and (when `sanitizeErrors` is on) every string value in a context, so a secret embedded in a longer context string is redacted too. For console/adapter output, non-`Error` objects in the error slot receive the same guarded field/value traversal before serialization.
 
 The package exists so that the workers, web app, and shared libraries can emit consistent JSON-structured logs (worker side) or pretty console output (browser/library side) without each app re-implementing redaction, correlation IDs, and adapter selection. It ships with `sideEffects: false`.
 
@@ -147,6 +147,48 @@ User-supplied `redactFields` are **merged** with the defaults, never replaced (F
 **2. Value-shape redaction** (`looksLikeSecretValue`, FINDING-026 + FINDING-025) redacts a string that itself *looks* like a secret regardless of its key — `Bearer …`, a three-part JWT, a Discord bot token, or a `≥64`-hex blob. This runs inside `redactSensitiveFields`'s per-key loop, so it already reached a string value at **any object nesting depth**, including a string inside an object that is itself an array item (`{ a: [{ note: 'Bearer ...' }] }` was always caught, at any depth) — S10-R10 (2026-08-30 fix round 1) corrects an earlier version of this doc, which wrongly claimed the scan "ran only against top-level context field values" before FINDING-025; that was never true, and a future sprint chasing that phantom gap would waste time. The one thing FINDING-025 (2026-08-29 audit) actually added is narrower: a **bare string item directly inside an array** — `{ tokens: ['eyJ…'] }` — because the array-recursion branch only recursed into *object* items and returned every other item, strings included, unchanged. That fix reaches items nested in arrays inside arrays too (an array item has no key of its own, so this is the only one of the three mechanisms that can apply to it — the key-name rule needs a key, and the array's *own* key gets checked separately, one level up). The same fix corrected a shape bug in the array recursion: an item that was itself an array used to be spread into a plain object with numeric-string keys (`{ a: [[1, 2]] }` logged as `{ a: [{ '0': 1, '1': 2 }] }`) instead of staying an array. S10-R8 (2026-08-30 fix round 1) fixed a separate, older bug in the same recursion: the cycle guard was a *global* seen-set, so a value referenced from two sibling keys (`{ a: shared, b: shared }`) was redacted only at its first reference — the guard is now an ancestor (recursion-path) set, popped after each branch finishes, so an aliased value is redacted at every reference. That fix's own follow-up, S10-R12 (2026-08-30 fix round 2): the ancestor set alone makes a heavily-aliased structure exponentially expensive to walk (the same shared child re-processed once per path to it), so round 1 added a total node-visit budget (`MAX_REDACT_NODES`) to bound that — but review found the budget failed OPEN (`if (exhausted) return context unchanged`), so an oversized context emitted everything past the cutoff completely unscanned: a silent redaction bypass, not a safety net. The budget is gone; `RedactionGuard` now carries a `memo: WeakMap<object, unknown>` alongside `ancestors` instead. A node's fully-redacted result is cached only on the way OUT of `redactSensitiveFields`/`redactArrayItems` (after its own children are fully processed, never before — an ancestor still on the current path is caught by the `ancestors` check FIRST and never consults `memo`, so a cycle can never receive its own partial result). Every distinct node is processed exactly once no matter how many times it's aliased, aliased references resolve to the SAME redacted object, and there is no cutoff left to fail open past.
 
 **`toJSON` values** (BUG-141, 2026-10-04 deep dive). The spread copy `redactSensitiveFields` makes turns any object with no own enumerable keys into `{}`, so a `Date` or `URL` in a context used to log as `{}`. A nested object or array item that has a `toJSON` (own or inherited) is now serialized first, the way `JSON.stringify` would (`toJSON(key)`), and the RESULT goes through the same redaction as any other value: `Date` becomes its ISO string (an invalid `Date` becomes `null`), `URL` becomes its href, and a class with `toJSON` becomes its redacted shape. Consumers that parsed `context.at` as an object now see a string. `Map` and `Set` have no `toJSON` and stay `{}`, as under `JSON.stringify`. An `Error` in a context, with `sanitizeErrors` on (the default), never has its `toJSON` called: a `toJSON` can return the stack in any shape (`String(this.stack)`, or nested under another key) that no key-based strip catches, so it takes the spread path it took before BUG-141 and logs only its own enumerable fields — `{}` for a plain `Error`, `{ name, code, severity }` for an `AppError` — with no stack and no message. With `sanitizeErrors` off its `toJSON` runs like any other, stack included. Guards, all in `redactNested`: a `toJSON` that throws, or returns the same object, falls back to the spread copy (a log call must never throw); a result that throws while it is walked (a Proxy whose `ownKeys` trap throws) logs `'[Unserializable]'`; an `Error` check that itself throws (a Proxy whose `getPrototypeOf` trap throws) counts as an `Error` and takes the spread path; the original stays in `ancestors` while its result is walked, so a result pointing back at it logs `'[Circular]'`; nested `toJSON` results are capped at `MAX_TO_JSON_DEPTH = 32` and past it the value is `'[Truncated]'` (fail closed); the `toJSON` calls per top-level log call that return an object or array are capped at `MAX_TO_JSON_CALLS = 4096` (`RedactionGuard.jsonCalls`), because the depth cap alone does not bound fan-out (a `toJSON` returning two fresh instances is 2^depth calls). Only those calls are counted, since only an object or array result can hold further `toJSON` values: a `toJSON` that returns a string or other primitive (every `Date` and `URL`), a plain object, an array and an `Error` under `sanitizeErrors` are never counted, so 5000 rows that each carry a `Date` log in full. Once the count reaches the cap, any further value that has a `toJSON` becomes `'[Truncated]'` without the call, and plain objects are still redacted normally; an own function-valued `toJSON` is deleted from the redacted copy so it cannot re-run and emit raw data at serialization time. One hook does survive, unchanged from 2.2.1: a function or class VALUE is passed through as-is (it is not an object to the walk), so if it carries a `toJSON`, `JSON.stringify` calls it and the result is emitted unredacted. `memo` is keyed by identity, so an object aliased under two keys gets `toJSON` once, with the first key. Non-plain objects are deliberately not skipped, since that would bypass key redaction.
+
+**Discord URL shapes** (FINDING-047, 2026-10-26 security audit). Paths matching
+`/webhooks/<numeric-id>/<token>` (including follow-up message URLs) or
+`/interactions/<numeric-id>/<token>` (including `/callback`) are detected in
+full URLs and relative paths. The path shape is matched regardless of host;
+ordinary URLs without that shape stay unchanged. Context strings and array
+items containing the shape become `[REDACTED]` even with `sanitizeErrors: false`.
+With sanitization on, messages and error messages replace only the token,
+preserving the prefix, message/callback suffix and query. The shared pattern
+starts with a fixed slash-delimited prefix, so long IDs and malformed repeated
+prefixes do not introduce overlapping unbounded scans.
+
+**Non-Error error arguments in console/adapter output** (FINDING-044,
+2026-10-26 security audit). Before
+`safeStringify`, objects in the error slot enter the existing nested-value
+traversal with a fresh ancestor/memo/serializer guard and root key `''`. Arrays
+stay arrays, `Date`/`URL` keep their serialized values, and root `toJSON`
+results receive field/value redaction. Root arrays with `toJSON` also retain
+their serializer behavior; context arrays keep their established item walk
+without running array hooks. Every array copy is a plain Array, preserving
+holes and inherited indexed values without consulting custom `map` or
+`Symbol.species`, so a subclass cannot carry its inherited `toJSON` into the
+final serialization. Callable serializer results become `[Unserializable]`
+rather than exposing another hook to that final pass. Throwing or self-returning serializers fall back
+to the redacted enumerable shape; cycles, fan-out and depth use the same
+sentinels/bounds as contexts. An unreadable error value becomes
+`{ name: 'Unknown', message: '[Unserializable]' }` without exposing the thrown
+trap/getter message. Source objects are not changed by the traversal (user
+serializers/getters can still have their own side effects). The pre-existing
+function/class-value `toJSON` exception described above also applies here:
+those callable values are not walked for key redaction. Strings and other
+primitives keep their previous formatting; `sanitizeErrors: false` still
+disables free-text sanitization and stack suppression, while field/value
+redaction stays active for object error arguments. The final historical
+free-text pass still runs over serialized non-Error output; as before, its
+key/value rules can alter JSON quoting, so `error.message` is diagnostic text,
+not a guaranteed parseable JSON document.
+
+The optional browser preset `errorTracker` forwarding path remains a separate,
+pre-existing limitation: non-`Error` arguments there use `safeStringify` plus
+free-text sanitization without this object field traversal. The new object-error
+guarantees above describe console/adapter output, not external tracker forwarding.
 
 The normalized redact-field `Set` is built once in the constructor (OPT-010) rather than per node, so a subclass that reassigns `config.redactFields` after construction would see a stale set.
 

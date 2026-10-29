@@ -1,0 +1,28 @@
+{
+  "verification": "local packed artifacts and real public subpath imports; no npm publication or CI provenance",
+  "packages": [
+    {
+      "name": "@xivdyetools/logger",
+      "version": "2.4.0",
+      "filename": "logger.tgz",
+      "sha256": "13055dc40bad9e4780deacb165bd11b52346f6bf7cd4547752f9b1024ae19265"
+    },
+    {
+      "name": "@xivdyetools/auth",
+      "version": "3.0.0",
+      "filename": "auth.tgz",
+      "sha256": "e5b67734e419fc036a6db0ee2792f88e1d3c559efa50a8b2e4914b57159e0a4a"
+    }
+  ],
+  "passed": 8,
+  "cases": [
+    "both public JWT verifier subpaths accept native canonical issuer output",
+    "both packed JWT verifiers reject padded signature aliases",
+    "strict codecs and unchanged generic mixed-case hex utility",
+    "packed HMAC subpath preserves signers and rejects alternate encodings",
+    "packed v2 signer and verifier agree without a protocol migration",
+    "packed adapter redaction and serializer guards, sanitizeErrors=false",
+    "packed adapter redaction and serializer guards, sanitizeErrors=true",
+    "packed free-text callback token redaction preserves path suffix"
+  ]
+}

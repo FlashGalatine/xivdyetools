@@ -14,4 +14,4 @@
 - In base64UrlDecodeBytes, reject any input that does not match /^[A-Za-z0-9_-]*$/, has length%4==1, or fails the round trip base64UrlEncodeBytes(decoded)===input. In verifyBotSignatureV2/hmacVerifyHex, require lowercase hex (/^[0-9a-f]{64}$/) before verifying.
 
 ## Status
-OPEN
+PARTIAL — H-AUTH source prepared 2026-10-28 in auth 3.0.0: canonical unpadded Base64URL and lowercase 64-hex verification boundaries, with native-valid/re-signed fixture controls. MAJOR reflects the narrowed public general hex-verifier contract; generic hex decoding and v2 signing bytes are unchanged. Source reviews passed; publication and separate consumer/private verification adoption remain pending. [Execution evidence](../evidence/remediation-logger-auth-2026-10-28.md).

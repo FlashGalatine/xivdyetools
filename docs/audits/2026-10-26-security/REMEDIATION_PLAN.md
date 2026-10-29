@@ -154,6 +154,8 @@ Deploy: production via `deploy-image-worker.yml`; binding-only.
 **Ends with:** `pnpm turbo run build type-check lint test --filter=xivdyetools-image-worker...` → merge → `deploy-image-worker.yml`.
 
 ## Sprint 10 — logger (publish): redaction gaps
+
+**Execution update 2026-10-28 (H-LOGGER):** logger 2.4.0 source and independent review prepared; object-error adapter redaction and URL-token shapes are covered. Publication, package/application adoption and context-as-error call-site corrections remain separate. [Evidence](evidence/remediation-logger-auth-2026-10-28.md).
 **Review lens: verifier** (secret redaction).
 
 | ID | Source | Sev/Pri | Item |
@@ -164,6 +166,8 @@ Deploy: production via `deploy-image-worker.yml`; binding-only.
 **Ends with:** `pnpm turbo run build type-check lint test --filter=@xivdyetools/logger...` → bump (MINOR) → merge → Actions publish `@xivdyetools/logger`; consumers pick it up at their next deploy.
 
 ## Sprint 11 — auth (publish): canonical signature encoding
+
+**Execution update 2026-10-28 (H-AUTH):** auth 3.0.0 source and independent review prepared. Canonical Base64URL and lowercase hex verification preserve v2 signing bytes; the public general hex-input restriction requires MAJOR. Publication and consumer adoption remain pending. [Evidence](evidence/remediation-logger-auth-2026-10-28.md).
 **Review lens: verifier** (signature checks).
 
 | ID | Source | Sev/Pri | Item |

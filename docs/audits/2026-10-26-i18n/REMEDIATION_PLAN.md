@@ -544,6 +544,8 @@ One repository documentation/process gate. Carry dated live-state evidence as in
 
 ## Sprint H-LOGGER — packages/logger
 
+**Execution update 2026-10-28 — source prepared, publication/adoption pending:** logger **2.4.0 MINOR** adds guarded object-error adapter redaction and Discord webhook/interaction token-path handling. Independent reviews cover serializer/copy guards, configuration and performance; current app call-site corrections remain in their owning adoption sprints. Optional browser tracker and direct callable-value limitations are explicit. [Evidence and handoff](../2026-10-26-security/evidence/remediation-logger-auth-2026-10-28.md).
+
 Publish hardening after ordinary correctness work. Its dependent package and app adoption sprints below are required; do not leave propagation as next deploy.
 
 | ID | Source | Sev/Pri | Action |
@@ -554,6 +556,8 @@ Publish hardening after ordinary correctness work. Its dependent package and app
 **Ends with:** `pnpm turbo run build type-check lint test --filter=...@xivdyetools/logger` and whole-graph gates before merge → version/CHANGELOG decision → merge → Actions **Publish Packages to npm** for `@xivdyetools/logger`; verify registry before downstream adoption.
 
 ## Sprint H-AUTH — packages/auth
+
+**Execution update 2026-10-28 — source prepared, publication/adoption pending:** auth **3.0.0 MAJOR** enforces canonical Base64URL and lowercase 64-hex verification. The general hex verifier's accepted public inputs narrow; generic hex decoding and v2 protocol/issuance remain unchanged. Private local producer tests pass, but do not close the post-publication H-TEST-UTILS gate. [Evidence and handoff](../2026-10-26-security/evidence/remediation-logger-auth-2026-10-28.md).
 
 Publish canonical-encoding hardening. Run private test-utils verification, then release each auth consumer separately using the adoption table.
 

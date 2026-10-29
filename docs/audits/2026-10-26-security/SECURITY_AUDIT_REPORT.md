@@ -8,6 +8,8 @@
 
 ## Severity × exposure
 
+**Execution addendum 2026-10-28 — H-LOGGER / H-AUTH:** [source evidence](evidence/remediation-logger-auth-2026-10-28.md) records logger 2.4.0 and auth 3.0.0 preparation, accepted compatibility/security reviews and separate publication/adoption holds. No package or consumer is claimed released from local workspace checks. Historical finding totals remain unchanged.
+
 **Execution addendum 2026-10-28 — R-CI / R-DOCS-DECISIONS:** see [dated evidence](evidence/remediation-repository-2026-10-28.md). Repository tooling and process documentation passed verification and independent source review: the patched lock awaits default-branch alert closure, Pages cleanup remains dry-run, and no publish/deploy/policy change or data-subject operation was performed. The audit totals and live-state tables below remain historical snapshots.
 
 | Severity | INTERNET-UNAUTH | INTERNET-AUTH | INTERNAL | LOCAL | Total |

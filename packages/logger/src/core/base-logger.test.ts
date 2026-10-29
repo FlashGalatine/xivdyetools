@@ -328,9 +328,60 @@ describe('BaseLogger', () => {
         message: 'undefined',
       });
     });
+
+    it.each([true, false, 0, 42, 123n, Symbol('detail')])(
+      'keeps primitive non-Error formatting for %s',
+      (value) => {
+        expect(logger.testFormatError(value)).toEqual({
+          name: 'Unknown',
+          message: typeof value === 'bigint' ? '"123"' : String(value),
+        });
+      },
+    );
+
+    it('fails closed when non-Error classification or enumeration throws', () => {
+      const classify = new Proxy(
+        {},
+        {
+          getPrototypeOf(): never {
+            throw new Error('private-classification-detail');
+          },
+        },
+      );
+      const enumerate = new Proxy(
+        {},
+        {
+          ownKeys(): never {
+            throw new Error('private-enumeration-detail');
+          },
+        },
+      );
+      for (const value of [classify, enumerate]) {
+        expect(logger.testFormatError(value)).toEqual({
+          name: 'Unknown',
+          message: '[Unserializable]',
+        });
+      }
+    });
   });
 
   describe('redactSensitiveFields', () => {
+    it('uses plain arrays, preserving sparse holes and inherited indexed values', () => {
+      class Payload extends Array<unknown> {}
+      const source = new Payload(3);
+      const prototype = Object.create(Payload.prototype) as Payload;
+      prototype[1] = { cookie: 'inherited-cookie' };
+      Object.setPrototypeOf(source, prototype);
+      const redacted = logger.testRedactSensitiveFields({ source }).source as unknown[];
+      expect(Object.getPrototypeOf(redacted)).toBe(Array.prototype);
+      expect(redacted).toHaveLength(3);
+      expect(0 in redacted).toBe(false);
+      expect(1 in redacted).toBe(true);
+      expect(2 in redacted).toBe(false);
+      expect(redacted[1]).toEqual({ cookie: '[REDACTED]' });
+      expect(source[1]).toEqual({ cookie: 'inherited-cookie' });
+    });
+
     it('should redact default sensitive fields', () => {
       const context = {
         userId: 'visible',
@@ -1042,7 +1093,7 @@ describe('BUG-005: every auth scheme redacts its credential, not just Bearer', (
 
   it('the existing Bearer contract is unchanged', () => {
     expect(sanitize('Authorization: Bearer token123abc failed')).toBe(
-      'Authorization: Bearer [REDACTED] failed'
+      'Authorization: Bearer [REDACTED] failed',
     );
   });
 });

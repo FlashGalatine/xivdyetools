@@ -251,34 +251,56 @@ export abstract class BaseLogger implements ExtendedLogger {
    * Format an error for logging
    */
   protected formatError(error: unknown): LogEntry['error'] {
-    if (error instanceof Error) {
-      const formatted: LogEntry['error'] = {
-        name: error.name,
-        message: this.config.sanitizeErrors
-          ? this.sanitizeErrorMessage(error.message)
-          : error.message,
+    try {
+      if (error instanceof Error) {
+        const formatted: LogEntry['error'] = {
+          name: error.name,
+          message: this.config.sanitizeErrors
+            ? this.sanitizeErrorMessage(error.message)
+            : error.message,
+        };
+
+        // Include error code if present
+        if ('code' in error && typeof error.code === 'string') {
+          formatted.code = error.code;
+        }
+
+        // Only include stack in non-production or if not sanitizing
+        if (!this.config.sanitizeErrors) {
+          formatted.stack = error.stack;
+        }
+
+        return formatted;
+      }
+
+      // FINDING-044: redact keys and values BEFORE serializing a thrown object.
+      // Use the nested-value entry point rather than spreading the root: arrays,
+      // Date/URL and root toJSON results must retain their serialization shape.
+      // Strings and other primitives keep their existing formatting contract.
+      const redacted =
+        typeof error === 'object' && error !== null
+          ? this.redactNested(
+              error,
+              '',
+              {
+                ancestors: new WeakSet<object>(),
+                memo: new WeakMap<object, unknown>(),
+                jsonDepth: 0,
+                jsonCalls: 0,
+              },
+              true,
+            )
+          : error;
+      const raw = typeof error === 'string' ? error : safeStringify(redacted);
+      return {
+        name: 'Unknown',
+        message: this.config.sanitizeErrors ? this.sanitizeErrorMessage(raw) : raw,
       };
-
-      // Include error code if present
-      if ('code' in error && typeof error.code === 'string') {
-        formatted.code = error.code;
-      }
-
-      // Only include stack in non-production or if not sanitizing
-      if (!this.config.sanitizeErrors) {
-        formatted.stack = error.stack;
-      }
-
-      return formatted;
+    } catch {
+      // A hostile Proxy/getter can throw during classification or redaction.
+      // Never emit its unprocessed object or exception text as a fallback.
+      return { name: 'Unknown', message: UNSERIALIZABLE_SENTINEL };
     }
-
-    // Handle non-Error objects — FINDING-026: sanitised like Error messages
-    // (a thrown string or object frequently carries the upstream payload)
-    const raw = typeof error === 'string' ? error : safeStringify(error);
-    return {
-      name: 'Unknown',
-      message: this.config.sanitizeErrors ? this.sanitizeErrorMessage(raw) : raw,
-    };
   }
 
   /**
@@ -287,7 +309,7 @@ export abstract class BaseLogger implements ExtendedLogger {
    * The patterns themselves are module scope (`SANITIZE_RULES`) — this used to
    * compile 15 regexes on every call, and it runs once per log line plus once
    * per error message with `sanitizeErrors: true`, the Worker default
-   * (OPT-007). All 15 are constant; nothing depended on the arguments. Reuse
+   * (OPT-007). All rules are constant; nothing depends on the arguments. Reuse
    * across calls is safe because every rule is applied through
    * `String.prototype.replace` with a `g` flag, which resets `lastIndex`
    * itself — that would NOT hold for `.exec` / `.test`, which are not used
@@ -470,8 +492,11 @@ export abstract class BaseLogger implements ExtendedLogger {
    * would call it per key); a `toJSON` that throws is called once and the
    * object then falls back to the spread copy.
    */
-  private redactNested(value: object, key: string, g: RedactionGuard): unknown {
-    if (Array.isArray(value)) {
+  private redactNested(value: object, key: string, g: RedactionGuard, rootError = false): unknown {
+    // A root thrown array previously had its toJSON honored by safeStringify.
+    // Keep that behavior while redacting the result; context arrays retain
+    // their established item-by-item behavior, including ignoring array hooks.
+    if (Array.isArray(value) && (!rootError || !hasToJson(value))) {
       return this.redactArrayItems(value as unknown[], g);
     }
     if (g.ancestors.has(value)) {
@@ -496,7 +521,9 @@ export abstract class BaseLogger implements ExtendedLogger {
     }
     const serialized = callToJson(value, key);
     if (serialized === NO_TO_JSON) {
-      return this.redactSensitiveFields(value as LogContext, g);
+      return Array.isArray(value)
+        ? this.redactArrayItems(value, g)
+        : this.redactSensitiveFields(value as LogContext, g);
     }
     // Counted only when the result is an object or array: that is the only
     // result that can hold further `toJSON` values (fan-out). A Date's string
@@ -514,7 +541,12 @@ export abstract class BaseLogger implements ExtendedLogger {
     try {
       let out: unknown = serialized.result;
       try {
-        if (typeof out === 'string') {
+        if (typeof out === 'function') {
+          // JSON.stringify does not re-run toJSON on a serializer's result.
+          // A callable result is not JSON data; passing it to a later stringify
+          // would execute its own hook as a NEW input and bypass this walk.
+          out = UNSERIALIZABLE_SENTINEL;
+        } else if (typeof out === 'string') {
           out = this.scrubString(out);
         } else if (Array.isArray(out)) {
           out = this.redactArrayItems(out as unknown[], g);
@@ -583,22 +615,28 @@ export abstract class BaseLogger implements ExtendedLogger {
 
     guard.ancestors.add(items);
     try {
-      const redacted = items.map((item: unknown, index: number) => {
+      // Never invoke input.map or Array species: a subclass result can retain
+      // an inherited toJSON that safeStringify would execute AFTER redaction.
+      // Snapshot length and preserve holes/HasProperty like Array.prototype.map.
+      const length = items.length;
+      const redacted = new Array<unknown>(length);
+      for (let index = 0; index < length; index++) {
+        if (!(index in items)) continue;
+        const item = items[index];
         if (typeof item === 'string') {
-          return this.scrubString(item);
-        }
-        if (Array.isArray(item)) {
+          redacted[index] = this.scrubString(item);
+        } else if (Array.isArray(item)) {
           // `Array.isArray` narrows to `any[]` per the lib types; re-assert
           // as `unknown[]` so this branch doesn't return an implicit `any`.
           // No pre-check against ancestors/memo needed (S10-R12) — the
           // callee does both at its own entry.
-          return this.redactArrayItems(item as unknown[], guard);
+          redacted[index] = this.redactArrayItems(item as unknown[], guard);
+        } else if (typeof item === 'object' && item !== null) {
+          redacted[index] = this.redactNested(item, String(index), guard);
+        } else {
+          redacted[index] = item;
         }
-        if (typeof item === 'object' && item !== null) {
-          return this.redactNested(item, String(index), guard);
-        }
-        return item;
-      });
+      }
       guard.memo.set(items, redacted);
       return redacted;
     } finally {
@@ -768,9 +806,9 @@ class DelegatingLogger implements ExtendedLogger {
 /**
  * Value shapes that are secrets regardless of the key they hang off, used
  * WHOLE-VALUE by `looksLikeSecretValue()` below (a field or array item that
- * IS one of these, in full, gets redacted). Named individually because two
- * of the four are also reused as free-text SUBSTRING matchers in
- * `sanitizeErrorMessage` — see the FINDING-025 comments on each.
+ * IS one of these gets redacted). Named individually because token and
+ * Discord URL patterns are also reused as free-text SUBSTRING matchers in
+ * `sanitizeErrorMessage` — see the comments on each.
  */
 const BEARER_VALUE_PATTERN = /^\s*Bearer\s+\S+/i;
 /**
@@ -836,10 +874,20 @@ const DISCORD_TOKEN_VALUE_PATTERN = /\b[MN][A-Za-z\d]{23,}\.[\w-]{6}\.[\w-]{27,}
  */
 const HEX64_VALUE_PATTERN = /^[A-Fa-f0-9]{64,}$/;
 
+/**
+ * FINDING-047: both webhook/follow-up and interaction callback paths carry a
+ * credential after a numeric ID. Match the path so full URLs and relative
+ * paths share one rule. The fixed slash-delimited prefix means failed starts
+ * cannot overlap a digit/token run: this stays linear on malformed long IDs.
+ * No global flag here: value-shape .test must not depend on lastIndex.
+ */
+const DISCORD_URL_VALUE_PATTERN = /(\/(?:webhooks|interactions)\/\d+\/)[A-Za-z0-9._-]+/;
+
 const SECRET_VALUE_PATTERNS: RegExp[] = [
   BEARER_VALUE_PATTERN,
   DISCORD_TOKEN_VALUE_PATTERN,
   HEX64_VALUE_PATTERN,
+  DISCORD_URL_VALUE_PATTERN,
 ];
 
 /** @internal */
@@ -930,6 +978,7 @@ const SANITIZE_RULES: ReadonlyArray<SanitizeRule> = ((): ReadonlyArray<SanitizeR
     // hands back every match that is not a JWT (see `JWT_SCAN`).
     [JWT_SCAN, redactJwtMatch],
     [withGlobalFlag(DISCORD_TOKEN_VALUE_PATTERN), '[REDACTED]'],
+    [withGlobalFlag(DISCORD_URL_VALUE_PATTERN), '$1[REDACTED]'],
     // BUG-141 review: URL userinfo (`scheme://user:password@host`). A `URL`
     // object in a context now logs as its href, so credentials in it must go.
     // Only the password part is replaced; the user name stays diagnosable.

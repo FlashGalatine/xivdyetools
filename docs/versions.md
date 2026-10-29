@@ -45,8 +45,8 @@
 |---------|---------|--------------|----------|--------|
 | **Core** (incl. `/blending` + schema-v2 data) | v5.16.0 | `@xivdyetools/core` | npm | Active |
 | **Types** | v3.3.0 | `@xivdyetools/types` | npm | Active |
-| **Auth** (incl. `/encoding`) | v2.0.2 | `@xivdyetools/auth` | npm | Active |
-| **Logger** | v2.3.0 | `@xivdyetools/logger` | npm | Active |
+| **Auth** (incl. `/encoding`) | v3.0.0 | `@xivdyetools/auth` | npm | Active |
+| **Logger** | v2.4.0 | `@xivdyetools/logger` | npm | Active |
 | **Worker Kit** (middleware + `/rate-limiter`) | v1.6.0 | `@xivdyetools/worker-kit` | npm | Active |
 | **SVG** | v4.4.1 | `@xivdyetools/svg` | npm | Active |
 | **Bot Logic** (incl. `/i18n`) | v4.12.0 | `@xivdyetools/bot-logic` | npm | Active |
@@ -395,6 +395,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v2.4.0 | Oct 2026 | H-LOGGER source prepared: non-Error object/array error arguments use guarded field/value redaction; Discord webhook/interaction URL tokens redact across log entry points. MINOR follows the observable-output precedent; publication and consumer adoption remain separate |
 | v2.3.0 | Oct 2026 | 2026-10-04 remediation Sprint 12 — minor, because log output changes (the rule 2.2.0 set): a context string gets the free-text redaction pass, so a secret inside a longer string is redacted (BUG-140; `sanitizeErrors: false` keeps the old output); a `Date`, `URL` or other `toJSON` value logs as its serialized, redacted form instead of `{}`, bounded and never throwing (BUG-141); URL user-info passwords redacted; the redact set is built once per logger (OPT-010) |
 | v2.2.1 | Sep 2026 | 2026-09-16 deep-dive Sprint 9 — the browser preset's error-tracker wrapper serializes a non-`Error` value with `safeStringify`, so a circular or BigInt-bearing value no longer throws inside `logger.error()` (BUG-020; latent — no app configures a tracker) |
 | **v2.2.0** | **Sep 2026** | **2026-09-02 deep-dive (Sprint 13) — a secret reachable only through a cycle is redacted (the cycle guards returned the raw original node, BUG-004); `sanitizeErrorMessage` output changes shape for non-`Bearer` auth schemes** |
@@ -518,6 +519,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v3.0.0 | Oct 2026 | H-AUTH source prepared: canonical unpadded Base64URL and lowercase 64-hex signatures; MAJOR because the exported hex verifier no longer accepts uppercase/mixed-case digests. Generic hex decoding and v2 signing bytes remain unchanged; publication/adoption pending |
 | v2.0.2 | Sep 2026 | Enforce Discord byte caps during streaming, cancel early, verify original bytes |
 | v2.0.1 | Sep 2026 | knip dead-code gate — 17 barrel exports tagged `@public` (the four encoding helpers are live via `@xivdyetools/auth/encoding`, only the root re-export is unreferenced) |
 | **v2.0.0** | **Aug 2026** | **BREAKING — 2026-08-29 security audit (FINDING-015): `verifyBotSignature` (v1 bot request signature, `timestamp:userId:userName`, no request binding) removed from `hmac.ts` and the barrel; `createBotSignatureV2`/`verifyBotSignatureV2` (1.4.0) are now the only signature scheme. No in-repo caller remained — `presets-api` 2.2.0, `discord-worker` 5.1.0 and `moderation-worker` 1.6.0 had already stopped accepting/sending v1** |

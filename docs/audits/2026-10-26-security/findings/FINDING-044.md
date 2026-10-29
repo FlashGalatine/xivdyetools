@@ -15,4 +15,4 @@
 - In formatError's non-Error branch, run a plain object through redactSensitiveFields (the full context pipeline) before safeStringify, so the key-name list and SENSITIVE_SUFFIX apply. Optionally fix the five call sites to `logger.error(msg, undefined, ctx)`. Add a test pinning cookie/session_id/nested keys in the error slot.
 
 ## Status
-OPEN
+PARTIAL — H-LOGGER source prepared 2026-10-28 in logger 2.4.0: adapter/console object-error formatting now uses the guarded field/value pipeline; array serializer and callable-result regressions are covered and independently reviewed. Publication and required consumer adoption remain pending. App context-as-error corrections remain in their adoption sprints. The pre-existing optional browser tracker and direct callable-value limitations are explicitly documented, outside the formatter target. [Execution evidence](../evidence/remediation-logger-auth-2026-10-28.md).

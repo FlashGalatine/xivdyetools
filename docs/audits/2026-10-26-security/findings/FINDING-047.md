@@ -14,4 +14,4 @@
 - Add a linear, global free-text rule to SANITIZE_RULES, for example /(\/webhooks\/\d+\/)[A-Za-z0-9._-]+/g → '$1[REDACTED]', and add its worst-case adversarial input to hardening.test.ts. Optionally move moderation-worker's url-sanitizer pattern into the logger so both workers share one implementation.
 
 ## Status
-OPEN
+PARTIAL — H-LOGGER source prepared 2026-10-28 in logger 2.4.0: flagless shape detection and global free-text redaction cover webhook/follow-up and interaction callback token paths, with configuration/negative/performance controls. Source reviews passed; publication and separate dependent adoption remain pending. No live leak or deployment is claimed. [Execution evidence](../evidence/remediation-logger-auth-2026-10-28.md).
