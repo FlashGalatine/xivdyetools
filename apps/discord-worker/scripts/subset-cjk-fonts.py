@@ -131,6 +131,23 @@ LOCALE_LANGUAGES = ["ja", "ko", "zh", "de", "fr"]
 # Character collection
 # ============================================================================
 
+def exclude_command_picker_metadata(data):
+    """Drop only commands.<cmd>.options/choices; keep drawable descriptions.
+
+    Mirrors font-coverage.test.ts's metadata regression fixture.
+    >>> data = {"commands": {"swatch": {"description": "card-description", "options": {"order": {"description": "picker-option"}}, "choices": {"order": {"slots": "picker-choice"}}}}, "choices": {"label": "card-choice"}, "card": {"options": "card-option"}}
+    >>> exclude_command_picker_metadata(data)
+    >>> data
+    {'commands': {'swatch': {'description': 'card-description'}}, 'choices': {'label': 'card-choice'}, 'card': {'options': 'card-option'}}
+    """
+    cmds = data.get("commands")
+    if isinstance(cmds, dict):
+        for cmd in cmds.values():
+            if isinstance(cmd, dict):
+                cmd.pop("options", None)
+                cmd.pop("choices", None)
+
+
 def collect_characters(languages, item_name_languages):
     """Collect all unique characters from core + bot locale files for languages,
     plus the item-name tables named in item_name_languages (those also in languages)."""
@@ -169,17 +186,10 @@ def collect_characters(languages, item_name_languages):
             )
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
-        # I18N-001 (2026-09-19 i18n audit): commands.<cmd>.options.*.description
-        # feeds Discord's own command-picker tooltips, never resvg — Discord
-        # renders the picker client-side, this worker never draws it. Excluding
-        # just the `options` subtree (keeping `commands.<cmd>.description` as
-        # before) keeps these CJK subsets from growing on every option added to
-        # schemas.ts, on a worker already close to the 3 MiB gzip Worker limit.
-        cmds = data.get("commands")
-        if isinstance(cmds, dict):
-            for cmd in cmds.values():
-                if isinstance(cmd, dict):
-                    cmd.pop("options", None)
+        # I18N-001 / A-DISCORD: option tooltips and choice labels feed Discord's
+        # client-side picker, never resvg. Keep commands.<cmd>.description,
+        # which cards CAN render. Match font-coverage.test.ts's exact exclusion.
+        exclude_command_picker_metadata(data)
         add_strings(data)
         print(f"  Bot  {lang}.json: loaded")
 

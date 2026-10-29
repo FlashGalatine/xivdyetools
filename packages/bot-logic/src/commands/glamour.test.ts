@@ -108,6 +108,175 @@ const input = (over: Partial<GlamourInput> = {}): GlamourInput => ({
 const svgTexts = (svg: string): string[] => [...svg.matchAll(/<text [^>]*>([^<]*)<\/text>/g)].map((m) => m[1]);
 
 describe('executeGlamour', () => {
+  describe('resolver text safety (F014)', () => {
+    const hostile = '[Claim](https://evil.example)\r\n# Admin <#123> @everyone';
+    const literal = '\\[Claim\\]\\(https://evil.example\\) \\# Admin \\<\\#123\\> @\u200deveryone';
+
+    it.each(['ordinary', 'fixed', 'blocked', 'company'] as const)(
+      'keeps complete backslash escapes in %s names, acquisition and advisory text (T1-R1)', async (kind) => {
+        const value = 'a' + '\\'.repeat(200);
+        const safe = 'a' + '\\'.repeat(254) + '…';
+        const item = {
+          itemId: 1, names: names(value), acquisition: value,
+          alternates: kind === 'fixed' ? [{ itemId: 2, names: names(value), acquisition: value }] : [],
+          rules: kind === 'fixed'
+            ? [rules([1], { glamourable: false }), rules([2])]
+            : [rules([1], { glamourable: kind !== 'blocked', grandCompany: kind === 'company' ? 1 : 0 })],
+        };
+        const result = await executeGlamour(input({
+          fileText: JSON.stringify({ Body: { ModelBase: 812, ModelVariant: 2 } }),
+          resolve: async () => ({ items: { Body: item } }),
+        }));
+        if (!result.ok) throw new Error(result.errorMessage);
+        const d = result.embed.description!;
+        expect(d).toContain(`**Body:** ${safe}\nAcquisition: ${safe}`);
+        if (kind === 'fixed') expect(d).toContain(`${safe} (not ${safe}, which can't be a glamour)`);
+        if (kind === 'blocked') expect(d).toContain(`No fix: ${safe} (it can't be a glamour)`);
+        if (kind === 'company') expect(d).toContain(`Needs the right Grand Company: ${safe}`);
+        const runs = [...d.matchAll(/(\\+)…/g)];
+        expect(runs.length).toBeGreaterThanOrEqual(2);
+        for (const run of runs) expect(run[1].length % 2).toBe(0);
+        expect(d.length).toBeLessThanOrEqual(4000);
+        expect(d.endsWith('More on character files: `/manual topic:👤`\nhttps://xivdyetools.app/glamour')).toBe(true);
+      },
+    );
+
+    it('sanitizes body names and acquisition while retaining trusted form and closing lines', async () => {
+      const answer: GlamourResolveAnswer = { items: { Body: {
+        itemId: 8002, names: names(hostile), alternates: [],
+        rules: [rules([8002], { dyeCount: 2 })], acquisition: hostile,
+      } } };
+      const result = await executeGlamour(input({
+        fileText: JSON.stringify({ Body: { ModelBase: 812, ModelVariant: 2 } }),
+        resolve: async () => answer,
+      }));
+      if (!result.ok) throw new Error(result.errorMessage);
+      expect(result.embed.description).toBe(
+        `**Glamour Items:**\n**Body:** ${literal}\nAcquisition: ${literal}\n\nMore on character files: \`/manual topic:👤\`\nhttps://xivdyetools.app/glamour`,
+      );
+    });
+
+    it.each(['fixed', 'blocked', 'company'] as const)('sanitizes %s note names independently of body text', async (kind) => {
+      const item = kind === 'fixed'
+        ? { itemId: 1, names: names(hostile), alternates: [{ itemId: 2, names: names(hostile) }],
+            rules: [rules([1], { glamourable: false }), rules([2])] }
+        : { itemId: 1, names: names(hostile), alternates: [],
+            rules: [rules([1], kind === 'blocked' ? { glamourable: false } : { grandCompany: 1 })] };
+      const result = await executeGlamour(input({
+        fileText: JSON.stringify({ Body: { ModelBase: 812, ModelVariant: 2 } }),
+        resolve: async () => ({ items: { Body: item } }),
+      }));
+      if (!result.ok) throw new Error(result.errorMessage);
+      const note = result.embed.description!.split('\n\n')[1];
+      expect(note).toContain(kind === 'fixed' ? `${literal} (not ${literal}, which can't be a glamour)`
+        : kind === 'blocked' ? `No fix: ${literal} (it can't be a glamour)`
+        : `Needs the right Grand Company: ${literal}`);
+      expect(note).not.toContain('\r');
+      expect(note).not.toContain('\n# Admin');
+    });
+
+    it('bounds resolver values including escape growth and keeps parentheses readable as literals', async () => {
+      const result = await executeGlamour(input({ resolve: async () => ({ items: {
+        Body: { itemId: 2, names: names('['.repeat(1000)), alternates: [],
+          rules: [rules([2], { dyeCount: 2 })], acquisition: 'Crafted (WVR Lvl. 1)' },
+      } }) }));
+      if (!result.ok) throw new Error(result.errorMessage);
+      expect(result.embed.description).toContain(`**Body:** ${'\\['.repeat(127)}…\n`);
+      expect(result.embed.description).toContain('Acquisition: Crafted \\(WVR Lvl. 1\\)');
+    });
+  });
+
+  describe('whole description budget (BUG004)', () => {
+    const slots = ['MainHand', 'OffHand', 'HeadGear', 'Body', 'Hands', 'Legs', 'Feet', 'Ears', 'Neck', 'Wrists', 'RightRing', 'LeftRing'] as const;
+    const closing = 'More on character files: `/manual topic:👤`\nhttps://xivdyetools.app/glamour';
+    const fileText = JSON.stringify({ Nickname: 'Real Name', Race: 'Hyur', Tribe: 'Midlander', Gender: 'Feminine',
+      ...Object.fromEntries(slots.map((slot) => [slot, { ModelSet: 1, ModelBase: 1, ModelVariant: 1 }])),
+    });
+    function answerFor(value: string, kind: 'fixed' | 'blocked' | 'company' | 'combined', others = slots.map(() => value)): GlamourResolveAnswer {
+      return { items: Object.fromEntries(slots.map((slot, i) => [slot, {
+        itemId: 100 + i, names: names(others[i]), acquisition: value,
+        alternates: kind === 'fixed' || kind === 'combined' ? [{ itemId: 200 + i, names: names(value) }] : [],
+        rules: kind === 'fixed' || kind === 'combined'
+          ? [rules([100 + i], { glamourable: false }), rules([200 + i], { grandCompany: kind === 'combined' ? 1 : 0 })]
+          : [rules([100 + i], { glamourable: kind !== 'blocked', grandCompany: kind === 'company' ? 1 : 0 })],
+      }])) };
+    }
+    async function description(answer: GlamourResolveAnswer, locale: GlamourInput['locale'] = 'en'): Promise<string> {
+      const warn = vi.fn();
+      const result = await executeGlamour(input({ fileText, locale, resolve: async () => answer, logger: { warn } }));
+      if (!result.ok) throw new Error(result.errorMessage);
+      expect(JSON.stringify([result, warn.mock.calls])).not.toContain('Real Name');
+      return result.embed.description!;
+    }
+
+    it.each(['fixed', 'blocked', 'company', 'combined'] as const)(
+      'bounds enormous %s notes after per-value escaping and preserves the closing links', async (kind) => {
+        const d = await description(answerFor('🎨[漢]'.repeat(2000), kind));
+        expect(d.length).toBeLessThanOrEqual(4000);
+        expect(d.endsWith(closing)).toBe(true);
+        if (kind === 'fixed' || kind === 'combined') {
+          expect(d).toContain('Named from a twin:');
+          expect(d).toContain("which can't be a glamour)");
+        }
+        if (kind === 'blocked') expect(d).toContain("(it can't be a glamour)");
+        if (kind === 'company' || kind === 'combined') expect(d).toContain('Needs the right Grand Company:');
+        expect(d).not.toMatch(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/u);
+        expect(d).not.toMatch(/(?<!\\)(?:\\\\)*\\…/u);
+      },
+    );
+
+    it('uses a bounded ellipsis when no complete body line fits', async () => {
+      const value = 'n'.repeat(80);
+      const others = slots.map(() => value);
+      const tailFor = () => `Named from a twin: ${others.map((other) => `${value} (not ${other}, which can't be a glamour)`).join(' · ')}\nNeeds the right Grand Company: ${slots.map(() => value).join(' · ')}\n${closing}`;
+      let extra = 3990 - tailFor().length;
+      expect(extra).toBeGreaterThan(0);
+      for (let i = 0; i < others.length && extra > 0; i++) {
+        const add = Math.min(256 - others[i].length, extra);
+        others[i] += 'x'.repeat(add);
+        extra -= add;
+      }
+      expect(tailFor()).toHaveLength(3990);
+      const d = await description(answerFor(value, 'combined', others));
+      expect(d.length).toBeLessThanOrEqual(4000);
+      expect(d).toBe(`…\n\n${tailFor()}`);
+    });
+
+    it.each(['en', 'ja', 'de', 'fr', 'ko', 'zh'] as const)('bounds all note paths in %s', async (locale) => {
+      const d = await description(answerFor('🎨'.repeat(2000), 'combined'), locale);
+      expect(d.length).toBeLessThanOrEqual(4000);
+      expect(d.endsWith('`/manual topic:👤`\nhttps://xivdyetools.app/glamour')).toBe(true);
+    });
+
+    it.each([3999, 4000, 4001])('keeps whole body lines around the %i-unit boundary', async (uncutLength) => {
+      // Twelve body name/acquisition pairs, no notes: each resolver value stays below 256.
+      const value = 'a'.repeat(140);
+      const answer = answerFor(value, 'company');
+      for (const item of Object.values(answer.items)) item!.rules = [rules([item!.itemId])];
+      const uncut = await description(answer);
+      let missing = uncutLength - uncut.length;
+      expect(missing).toBeGreaterThan(0);
+      let expectedUncut = uncut;
+      for (const slot of slots.slice(0, 7)) {
+        const add = Math.min(116, missing);
+        answer.items[slot]!.acquisition += 'x'.repeat(add);
+        expectedUncut = expectedUncut.replace(`Acquisition: ${value}\n`, `Acquisition: ${value}${'x'.repeat(add)}\n`);
+        missing -= add;
+      }
+      expect(missing).toBe(0);
+      expect(expectedUncut).toHaveLength(uncutLength);
+      const d = await description(answer);
+      expect(d.length).toBeLessThanOrEqual(4000);
+      expect(d.endsWith(closing)).toBe(true);
+      if (uncutLength <= 4000) expect(d).toBe(expectedUncut);
+      else {
+        expect(d).toContain('\n…\n\n');
+        const kept = d.split('\n\n')[0].split('\n').slice(0, -1);
+        expect(expectedUncut.split('\n\n')[0].split('\n').slice(0, kept.length)).toEqual(kept);
+      }
+    });
+  });
+
   it('asks the resolver for every worn piece, weapons with their set', async () => {
     const i = input();
     await executeGlamour(i);
@@ -216,7 +385,7 @@ describe('executeGlamour', () => {
     expect(result.embed.title).toBe('Glamour · 5 dyed pieces');
     expect(d).toContain('**Glamour Items:**');
     expect(d).toContain('**Main Hand:** Curtana Zenith Replica\nDye 1: Metallic Gold\nAcquisition: Zodiac Weapons Saga');
-    expect(d).toContain('**Head:** Hempen Coif\nDye 1: Snow White\nAcquisition: Crafted (WVR Lvl. 1)');
+    expect(d).toContain('**Head:** Hempen Coif\nDye 1: Snow White\nAcquisition: Crafted \\(WVR Lvl. 1\\)');
     expect(d).toContain('**Body:** Lady’s Yukata\nDye 1: Wine Red\nDye 2: Dalamud Red\nAcquisition:');
     // Undyed pieces are in the list too — the embed carries what the cap drops
     expect(d).toContain('**Feet:** Hempen Boots\nAcquisition:');
@@ -642,22 +811,21 @@ describe('executeGlamour', () => {
       },
     };
 
-    it('cuts the list at a whole line and keeps the closing lines', async () => {
+    it('bounds each oversized acquisition value and keeps the closing lines', async () => {
       const result = await executeGlamour(input({ resolve: async () => LONG_ANSWER }));
       if (!result.ok) throw new Error(result.errorMessage);
       const d = result.embed.description ?? '';
       const tail = '\n\nMore on character files: `/manual topic:👤`\nhttps://xivdyetools.app/glamour';
 
-      // The uncut list would be six acquisition lines of ~900 characters each
+      // Raw resolver values would exceed the aggregate budget; each is capped first.
       expect(LONG.length * 6).toBeGreaterThan(4096);
-      expect(d.length).toBeLessThanOrEqual(4096);
-      expect(d.endsWith(`\n…${tail}`)).toBe(true);
-      const kept = d.slice(0, -(`\n…${tail}`).length).split('\n');
+      expect(d.length).toBeLessThanOrEqual(4000);
+      expect(d.endsWith(tail)).toBe(true);
+      const kept = d.slice(0, -tail.length).split('\n');
       expect(kept[0]).toBe('**Glamour Items:**');
       expect(kept.length).toBeGreaterThan(4);
-      // Every line kept is whole: no Acquisition line is cut mid-sentence
-      for (const line of kept.filter((l) => l.startsWith('Acquisition:'))) expect(line).toBe(`Acquisition: ${LONG}`);
-      expect(d).not.toContain('Long Boots');
+      for (const line of kept.filter((l) => l.startsWith('Acquisition:'))) expect(line).toBe(`Acquisition: ${LONG.slice(0, 255)}…`);
+      expect(d).toContain('Long Boots');
     });
 
     it('leaves a list that fits alone', async () => {

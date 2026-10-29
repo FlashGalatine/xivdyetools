@@ -64,12 +64,21 @@ Every input takes an optional `logger: { warn(message: string): void }`. It rece
 ```
 [mixer] generation failed: TypeError
 [gradient] generation failed: AppError INVALID_HEX_COLOR
-[swatch] parse failed: AppError INVALID_INPUT
+[swatch] parse failed: CharaInputError INVALID_JSON
 [glamour] generation failed: string
 [glamour] resolve failed: Error (status 503)
 ```
 
-Each command logs under its own tag (`[dye info]` and `[dye random]` for the two dye commands). The line gives the error's class, plus its `code` when it carries a string one (an `AppError`'s code, for example). A thrown non-Error is named by its `typeof`. The line never includes the error message, because a message can quote what the user typed or a value from their `.chara` file. `[glamour] resolve failed` is written only for `RESOLVE_FAILED`: a busy resolver (HTTP 429) and a refused file (400/413/422) are expected answers and are not logged.
+Each command logs under its own tag (`[dye info]` and `[dye random]` for the two dye commands). The line gives the error's class, plus its `code` when it carries a string one (an `AppError`'s code, for example). A thrown non-Error is named by its `typeof`. The current `.chara` facade uses fixed library refusals such as the example above; it does not relay the legacy parser's value-quoting errors. The logging boundary still excludes every error message, since core/runtime or injected resolver errors can contain user input. `[glamour] resolve failed` is written only for `RESOLVE_FAILED`: a busy resolver (HTTP 429) and a refused file (400/413/422) are expected answers and are not logged.
+
+### Swatch result compatibility
+
+Use `svgString` and `embed` for presentation. `SwatchResult.character` and the exported
+`SwatchCharacter` projection are deprecated in 4.12.0, with removal reserved for bot-logic
+5.0.0 after the published-minor and consumer-acceptance gates in
+[DEPRECATIONS.md](../../DEPRECATIONS.md). The required field, legacy type shape and both
+success routes remain available in this minor. The legacy projection is not sanitized
+display text; the card/embed remain the supported presentation boundary.
 
 ## Usage
 

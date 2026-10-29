@@ -406,9 +406,34 @@ diagnostics and color eligibility are intentionally different from the legacy re
 - [x] Relocate the shared limit and live types while preserving public names and declaration shapes.
 - [ ] Publish core 5.16.0 through **Publish Packages to npm** and verify registry availability.
 - [ ] Record beta and production acceptance for web/bot consumers of the current facade.
-- [ ] Prepare bot-logic's legacy test-oracle rewrite in A-BOT-LOGIC (DEAD-022); publication pending.
+- [x] Prepare bot-logic's legacy test-oracle rewrite in A-BOT-LOGIC (DEAD-022); publication pending.
 - [ ] In core 6.0.0, remove the legacy pair, its legacy-only symbols and the parity harness's
       host half only after the preceding gates pass (DEAD-024).
+
+---
+
+
+### Legacy swatch result projection (`@xivdyetools/bot-logic`)
+
+| Field | Value |
+|---|---|
+| Deprecation prepared | 2026-10-27, bot-logic 4.12.0 MINOR; publication pending |
+| Remove in | Bot-logic 5.0.0 after the published MINOR, prerequisites and consumer acceptance |
+| Severity | High — published result contract; removal requires a MAJOR |
+
+**Deprecated:** `SwatchResult.character` and `SwatchCharacter`. The field remains required
+on both successful result routes, with its legacy member shape and back-mapping intact in
+4.x. Use `svgString`/`embed` for presentation. Deprecation does not sanitize legacy metadata
+or resolve the raw-producer concern scheduled for the major removal (FINDING-043 / DEAD-023).
+
+**Removal gates:**
+
+- [x] Prepare the 4.12.0 tags and replace display/matching test oracles with card/embed assertions.
+- [ ] Publish and verify core 5.16.0, SVG 4.4.1, then bot-logic 4.12.0.
+- [ ] Record consumer beta/production acceptance while retaining compatibility/privacy tests.
+- [ ] Recheck external npm consumer usage; cancel removal if an active consumer still needs the field.
+- [ ] After the major prerequisite releases, remove the approved field/type/back-mapping in
+      M-BOT-LOGIC 5.0.0. Keep fileText, NO_INPUT and familySize unless separately approved.
 
 ---
 

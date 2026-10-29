@@ -1,12 +1,12 @@
 import type { LocaleCode, LocaleData, TranslatorLogger } from './types.js';
 
 // Bundled locale data (static imports work in both CF Workers and Node.js)
-import enLocale from './locales/en.json';
-import jaLocale from './locales/ja.json';
-import deLocale from './locales/de.json';
-import frLocale from './locales/fr.json';
-import koLocale from './locales/ko.json';
-import zhLocale from './locales/zh.json';
+import enLocale from './locales/en.json' with { type: 'json' };
+import jaLocale from './locales/ja.json' with { type: 'json' };
+import deLocale from './locales/de.json' with { type: 'json' };
+import frLocale from './locales/fr.json' with { type: 'json' };
+import koLocale from './locales/ko.json' with { type: 'json' };
+import zhLocale from './locales/zh.json' with { type: 'json' };
 
 const locales: Record<LocaleCode, LocaleData> = {
   en: enLocale,

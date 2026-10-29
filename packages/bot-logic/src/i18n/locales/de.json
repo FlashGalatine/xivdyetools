@@ -296,7 +296,10 @@
       "listTitle": "Deine favorisierten Vorlagen",
       "listTitleCount": "Deine favorisierten Vorlagen ({n}/{max})",
       "empty": "Du hast noch keine Vorlagen favorisiert. Füge mit `/preset favorite add` eine hinzu.",
-      "allRemoved": "Alle deine favorisierten Vorlagen scheinen entfernt worden zu sein. Räume die Einträge mit `/preset favorite remove` auf."
+      "allRemoved": "Keine deiner gespeicherten Vorlagen ist derzeit verfügbar. Deine Favoriten bleiben gespeichert.",
+      "unavailableSummary": "Nicht verfügbare gespeicherte Vorlagen: {count}.",
+      "truncated": "Weitere verfügbare Vorlagen, die nicht in diese Nachricht passen: {count}.",
+      "lookupFailed": "Deine Favoriten konnten nicht geladen werden. Bitte versuche es später erneut."
     },
     "noValidDyes": "Keine gültigen Farbstoffe in dieser Vorlage"
   },
@@ -463,8 +466,8 @@
     "invalidButton": "Ungültige Schaltflächeninteraktion.",
     "notPermitted": "Du hast keine Berechtigung, Vorschaubilder zu moderieren.",
     "actionFailed": "Das Vorschaubild konnte nicht aktualisiert werden. Bitte versuche es erneut.",
-    "approvedFooter": "Vorschaubild genehmigt von {moderator}",
-    "rejectedFooter": "Vorschaubild abgelehnt von {moderator} – Vorlage unverändert"
+    "approvedFooter": "Vorschaubild genehmigt",
+    "rejectedFooter": "Vorschaubild abgelehnt — Vorlage unverändert"
   },
   "matchImage": {
     "missingImage": "Bitte hänge ein Bild zur Analyse an.",
@@ -500,7 +503,7 @@
     "supportedFormats": "Unterstützte Formate",
     "supportedFormatsContent": "• PNG\n• JPG/JPEG\n• GIF\n• WebP\n• BMP",
     "fileLimits": "Dateilimits",
-    "fileLimitsContent": "• Maximale Größe: 10MB",
+    "fileLimitsContent": "• Maximale Größe: 5MB",
     "matchQualityRatings": "Match-Distanz",
     "matchQualityRatingsContent": "Jede aufgelistete Übereinstimmung zeigt ihre Distanz zu deiner Farbe - niedriger ist näher.\n\nDie sechs Matching-Methoden und wie ihre Bänder funktionieren: `/manual`-Thema {topic}",
     "poweredBy": "Betrieben mit Photon-WASM-Bildverarbeitung"
@@ -846,6 +849,12 @@
         "slot": {
           "description": "Zeigt stattdessen die fünf nächsten Farbstoffe für einen Slot"
         }
+      },
+      "choices": {
+        "order": {
+          "slots": "Slots — Dateireihenfolge (Standard)",
+          "hardest": "Schwierigste — schlechteste Übereinstimmung zuerst"
+        }
       }
     },
     "glamour": {
@@ -1133,6 +1142,13 @@
               "description": "Deine favorisierten Vorlagen auflisten"
             }
           }
+        }
+      },
+      "choices": {
+        "sort": {
+          "popular": "Am beliebtesten",
+          "recent": "Neueste zuerst",
+          "name": "Alphabetisch"
         }
       }
     },

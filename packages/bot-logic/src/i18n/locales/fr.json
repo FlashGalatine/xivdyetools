@@ -296,7 +296,10 @@
       "listTitle": "Vos préréglages favoris",
       "listTitleCount": "Vos préréglages favoris ({n}/{max})",
       "empty": "Vous n'avez encore aucun préréglage favori. Utilisez `/preset favorite add` pour en ajouter un.",
-      "allRemoved": "Tous vos préréglages favoris semblent avoir été supprimés. Utilisez `/preset favorite remove` pour nettoyer les entrées."
+      "allRemoved": "Aucun de vos préréglages enregistrés n’est disponible pour le moment. Vos favoris sont conservés.",
+      "unavailableSummary": "Préréglages enregistrés indisponibles : {count}.",
+      "truncated": "Préréglages disponibles omis faute de place dans ce message : {count}.",
+      "lookupFailed": "Impossible de charger vos favoris. Veuillez réessayer plus tard."
     },
     "noValidDyes": "Aucune teinture valide dans ce préréglage"
   },
@@ -463,8 +466,8 @@
     "invalidButton": "Interaction de bouton invalide.",
     "notPermitted": "Vous n'avez pas la permission de modérer les images d'aperçu.",
     "actionFailed": "Échec de la mise à jour de l'image d'aperçu. Veuillez réessayer.",
-    "approvedFooter": "Image d'aperçu approuvée par {moderator}",
-    "rejectedFooter": "Image d'aperçu rejetée par {moderator} — modèle inchangé"
+    "approvedFooter": "Image d’aperçu approuvée",
+    "rejectedFooter": "Image d’aperçu rejetée — préréglage inchangé"
   },
   "matchImage": {
     "missingImage": "Veuillez joindre une image à analyser.",
@@ -500,7 +503,7 @@
     "supportedFormats": "Formats pris en charge",
     "supportedFormatsContent": "• PNG\n• JPG/JPEG\n• GIF\n• WebP\n• BMP",
     "fileLimits": "Limites de fichier",
-    "fileLimitsContent": "• Taille maximale : 10 Mo",
+    "fileLimitsContent": "• Taille maximale : 5 Mo",
     "matchQualityRatings": "Distance de correspondance",
     "matchQualityRatingsContent": "Chaque correspondance listée indique sa distance par rapport à votre couleur - plus c'est bas, plus c'est proche.\n\nLes six méthodes de correspondance et le fonctionnement de leurs bandes : sujet {topic} de `/manual`",
     "poweredBy": "Propulsé par le traitement d'image Photon WASM"
@@ -846,6 +849,12 @@
         "slot": {
           "description": "Afficher les cinq teintures proches d'un seul emplacement"
         }
+      },
+      "choices": {
+        "order": {
+          "slots": "Emplacements — ordre du fichier (par défaut)",
+          "hardest": "Plus difficiles — correspondance la moins bonne en premier"
+        }
       }
     },
     "glamour": {
@@ -1133,6 +1142,13 @@
               "description": "Lister vos préréglages favoris"
             }
           }
+        }
+      },
+      "choices": {
+        "sort": {
+          "popular": "Les plus populaires",
+          "recent": "Les plus récents",
+          "name": "Ordre alphabétique"
         }
       }
     },
