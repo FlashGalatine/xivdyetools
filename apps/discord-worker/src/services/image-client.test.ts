@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { extractImagePixels } from './image-client.js';
+import { imageInputReason } from './image-input-errors.js';
 import type { Env } from '../types/env.js';
 
 function envWith(fetchImpl: (req: Request) => Promise<Response>): Env {
@@ -39,6 +40,17 @@ describe('extractImagePixels', () => {
     await expect(
       extractImagePixels({} as Env, 'https://cdn.discordapp.com/x.png')
     ).rejects.toThrow('IMAGE_WORKER binding is not configured');
+  });
+
+  it('preserves admission unavailability without classifying it as an invalid image', async () => {
+    const env = envWith(async () => new Response(JSON.stringify({ error: 'Image processing unavailable' }), {
+      status: 503,
+      headers: { 'Content-Type': 'application/json' },
+    }));
+    const failure: unknown = await extractImagePixels(env, 'https://cdn.discordapp.com/x.png').catch((error: unknown) => error);
+    expect(failure).toBeInstanceOf(Error);
+    expect((failure as Error).message).toBe('Image processing unavailable');
+    expect(imageInputReason(failure)).toBeNull();
   });
 
   it('sends the url and maxDimension in the request body', async () => {

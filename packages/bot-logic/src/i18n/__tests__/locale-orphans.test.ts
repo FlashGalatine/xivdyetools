@@ -55,7 +55,7 @@
  *      throws — this gate fails loudly instead of silently treating a whole
  *      namespace as reachable.
  *
- * Preparatory A-DISCORD metadata has a separate exact, reasoned exception
+ * Preparatory A-DISCORD choice metadata has a separate exact, reasoned exception
  * map. These keys must exist in all locales and remain naturally unreachable;
  * the exceptions go stale as soon as literal consumer references land.
  */
@@ -107,12 +107,6 @@ const PREPARATION_EXCEPTIONS: Readonly<Record<string, string>> = {
     'A-DISCORD: prepare the recent-sort choice label; remove when literal consumer references land.',
   'commands.preset.choices.sort.name':
     'A-DISCORD: prepare the name-sort choice label; remove when literal consumer references land.',
-  'preset.favorite.unavailableSummary':
-    'C3 Discord favorites consumer follows C2 batch-provider acceptance; remove when its preset.ts literal call lands.',
-  'preset.favorite.truncated':
-    'C3 Discord favorites consumer follows C2 batch-provider acceptance; remove when its preset.ts literal call lands.',
-  'preset.favorite.lookupFailed':
-    'C3 Discord favorites consumer follows C2 batch-provider acceptance; remove when its preset.ts literal call lands.',
 };
 
 /** Flatten a nested locale object to dot-notation leaf keys. */
@@ -353,7 +347,7 @@ describe('bot-logic i18n orphan gate', () => {
     const localeKeys = Object.fromEntries(
       LOCALE_CODES.map((code) => [code, new Set(flattenKeys(loadLocale(code)))]),
     );
-    expect(Object.keys(PREPARATION_EXCEPTIONS)).toHaveLength(8);
+    expect(Object.keys(PREPARATION_EXCEPTIONS)).toHaveLength(5);
     expect(
       preparationExceptionProblems(
         PREPARATION_EXCEPTIONS,

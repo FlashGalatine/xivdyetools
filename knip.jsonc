@@ -183,7 +183,23 @@
         "entry": ["docs/.vitepress/config.ts", "docs/.vitepress/theme/index.ts"],
       },
     },
-    "apps/discord-worker": { "includeEntryExports": true },
+    "apps/discord-worker": {
+      "includeEntryExports": true,
+      // Actual Workerd scripts loaded by path in preset-notifications.workerd.test.ts.
+      "entry": [
+        "tests/fixtures/preset-notification-caller.ts",
+        "tests/fixtures/unused-service.ts",
+      ],
+      // Their default handlers are consumed by Workerd, not a JavaScript import.
+      // Keep includeEntryExports enabled for the shipped app and all other files.
+      "ignoreIssues": {
+        "tests/fixtures/preset-notification-caller.ts": ["exports"],
+        "tests/fixtures/unused-service.ts": ["exports"],
+      },
+      // Workers runtime builtin `cloudflare:workers`, not the cloudflare npm SDK.
+      // Knip normalizes this protocol import to the package name `cloudflare`.
+      "ignoreDependencies": ["cloudflare"],
+    },
     "apps/moderation-worker": { "includeEntryExports": true },
     "apps/oauth": {
       "includeEntryExports": true,

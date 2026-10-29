@@ -14,6 +14,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, it, expect, beforeAll } from 'vitest';
 import { initializeLocale } from '@xivdyetools/bot-logic';
+import { createTranslator } from '@xivdyetools/bot-logic/i18n';
 import { commands } from './schemas.js';
 import {
   localizeCommands,
@@ -142,6 +143,29 @@ describe('localizeCommands', () => {
     expect(descriptions).toBeGreaterThanOrEqual(commands.length);
     // +6 over the pre-I18N-002 floor for the /manual topic choices.
     expect(choiceNames).toBeGreaterThanOrEqual(16 + 2 + 2 + 8 + 5 * 2 + 8 + 6);
+  });
+
+  it('localizes all twelve swatch and preset choices while retaining emoji and canonical values', () => {
+    const families = [
+      { command: 'swatch', option: 'order', prefix: 'commands.swatch.choices.order', values: ['slots', 'hardest'] },
+      { command: 'swatch', option: 'slot', prefix: 'card.swatchSlotName', values: ['skin', 'hair', 'highlights', 'eyes', 'lip', 'facepaint', 'limbal'] },
+      { command: 'preset', option: 'sort', prefix: 'commands.preset.choices.sort', values: ['popular', 'recent', 'name'] },
+    ];
+    for (const family of families) {
+      const cmd = localized.find((c) => c.name === family.command)!;
+      const opts = family.command === 'preset' ? cmd.options!.find((o) => o.name === 'list')!.options! : cmd.options!;
+      const choices = opts.find((o) => o.name === family.option)!.choices!;
+      expect(choices.map((c) => c.value)).toEqual(family.values);
+      for (const choice of choices) {
+        const emoji = choice.name.match(/^(\P{Letter}+) /u)?.[1];
+        for (const [tag, locale] of DISCORD_LOCALE_MAP) {
+          const label = createTranslator(locale).t(`${family.prefix}.${choice.value}`);
+          expect(label).not.toBe(`${family.prefix}.${choice.value}`);
+          expect(choice.name_localizations?.[tag], `${family.option}/${choice.value}/${tag}`).toBe(emoji ? `${emoji} ${label}` : label);
+        }
+      }
+    }
+    expect(localized.find((c) => c.name === 'swatch')!.options!.find((o) => o.name === 'slot')!.choices![0].name_localizations?.ja).toBe('👤 肌');
   });
 
   // ==========================================================================

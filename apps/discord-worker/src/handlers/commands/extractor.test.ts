@@ -57,6 +57,7 @@ vi.mock('../../services/image-client.js', () => ({ extractImagePixels: extractIm
 import { handleExtractorCommand } from './extractor.js';
 import { PaletteService } from '@xivdyetools/core';
 import { dyeService } from '@xivdyetools/bot-logic';
+import { startCommandTrace } from '../../services/command-trace.js';
 
 function makeInteraction(
   colorOptions: Array<{ name: string; value: unknown }>,
@@ -301,6 +302,21 @@ describe('/extractor image — color count line (I18N-006)', () => {
       width: 1,
       height: 1,
     });
+  });
+
+  it.each(['busy', 'timeout'])('keeps image-service %s on the generic localized failure and coarse unknown outcome', async kind => {
+    extractImagePixelsMock.mockRejectedValueOnce(kind === 'busy'
+      ? new Error('Image processing unavailable')
+      : new DOMException('The operation was aborted due to timeout', 'TimeoutError'));
+    const interaction = makeImageInteraction('att-1', 'https://cdn.discordapp.com/i.png');
+    const trace = startCommandTrace(interaction, { command: 'extractor', subcommand: 'image', userId: 'user-1', locale: 'en' });
+    const { ctx, flush } = makeCtx();
+    await handleExtractorCommand(interaction, env, ctx);
+    await flush();
+    expect(trace.outcome).toBe('unknown');
+    const response = editOriginalResponseMock.mock.calls[0][2] as { embeds: Array<{ description: string }> };
+    expect(response.embeds[0].description).toBe('matchImage.processingFailed');
+    expect(renderSvgToPngMock).not.toHaveBeenCalled();
   });
 
   it('renders the singular "1 color" line when only one dye match survives', async () => {

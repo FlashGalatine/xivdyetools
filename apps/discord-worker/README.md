@@ -58,6 +58,17 @@ The `/about` roster is built from the command registry at runtime, so it cannot 
 
 **Removed in 5.0:** `/match`, `/match_image`, `/favorites`, `/collection`, `/language`. Matching folded into `/extractor` and `/swatch`; language moved into `/preferences`.
 
+`/preset favorite list` uses a single signed batch lookup, keeps saved order and retains saved
+entries when a preset is unavailable or the service fails. Long lists show complete lines and
+an omitted count. Clan suggestions and command-choice labels use the selected language while
+canonical option values remain unchanged; the stored clan preference is still not consumed by
+character commands.
+
+The prepared consumer requires the capped presets batch endpoint and bot-logic's A-DISCORD
+locale/export companion before production deployment. Beta must not receive `BOT_API_SECRET`
+or `BOT_SIGNING_SECRET`; signed favorites are exercised locally with fake bindings. See
+[deployment environments](../../docs/operations/DEPLOY_ENVIRONMENTS.md).
+
 ## Development
 
 ```bash

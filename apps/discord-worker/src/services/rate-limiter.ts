@@ -4,7 +4,7 @@
  * Per-user, per-command limits for Discord commands.
  *
  * Backends (in priority order):
- * 1. Native Workers Rate Limiting bindings (`RL_5`…`RL_70`) — atomic,
+ * 1. Native Workers Rate Limiting bindings (`RL_5`…`RL_70`) — approximate,
  *    per-colo, no storage writes and no third-party processor
  * 2. Cloudflare KV — fallback when no tier is bound (tests / local dev)
  *
@@ -187,6 +187,8 @@ const SUBCOMMAND_SCOPED = new Set<string>(['extractor']);
  * without subcommand-scoped tiers belong in this table.
  */
 const LOCAL_COMMAND_LIMITS: Record<string, RateLimitConfig> = {
+  // FINDING-040: one per-user bucket for every button kind (existing native RL_30).
+  button: { maxRequests: 30, windowMs: 60_000 },
   // same tier as /about and /manual; moves into worker-kit's preset in Sprint 9 (FINDING-020)
   changelog: { maxRequests: 30, windowMs: 60_000 },
 };
