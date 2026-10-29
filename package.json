@@ -14,10 +14,11 @@
     "docs:check-versions": "tsx scripts/check-doc-versions.ts",
     "docs:check-links": "tsx scripts/check-doc-links.ts",
     "workers:check-logs": "tsx scripts/check-worker-logs.ts",
-    "test:scripts": "tsx --test scripts/check-dead-code.test.ts scripts/knip-config.test.ts scripts/check-doc-versions.test.ts scripts/check-doc-links.test.ts scripts/check-worker-logs.test.ts scripts/check-workflows.test.ts",
+    "test:scripts": "tsx --test scripts/check-dead-code.test.ts scripts/knip-config.test.ts scripts/check-doc-versions.test.ts scripts/check-doc-links.test.ts scripts/check-worker-logs.test.ts scripts/check-workflows.test.ts && pnpm test:research-privacy",
     "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,json,md}\"",
-    "clean": "turbo run clean"
+    "clean": "turbo run clean",
+    "test:research-privacy": "node --test scripts/check-research-privacy.test.mjs docs/research/2026-10-11-chat-platform-expansion/evidence/scripts/collectors.test.mjs"
   },
   "devDependencies": {
     "turbo": "^2.11.10",
