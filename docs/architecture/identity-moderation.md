@@ -146,13 +146,17 @@ the parent record is deleted 90 days after lifting, with dependent memberships r
 3. Prepare, migrate, deploy and verify the presets continuity/membership/session enforcement
    and moderation confirmation consumers. Their bindings must target already deployed named
    entrypoints. Update all six variants of each affected privacy policy before new uses run.
-4. Before adding any OAuth outbound continuity binding, bound remote apply/get-operation waits
-   and acknowledgement/cleanup work, with timeout/retry tests. The prepared source currently
-   awaits those RPC calls directly. Cleanup scans terminal operations across users, so a hung
-   acknowledgement could stall an unrelated login even with splitting disabled once a binding
-   exists. Timed-out unknown operations must remain pending; abandoned RPC continuations must
-   never commit identity changes or mint sessions. Confirmed terminal outcomes and unrelated
-   logins must not wait indefinitely on acknowledgement.
+4. Before adding any OAuth outbound continuity binding, verify the prepared remote-wait bounds:
+   lookup and apply share a five-second deadline; a terminal acknowledgement has a one-second
+   deadline. Request-triggered cleanup selects at most eight acknowledgements in parallel under
+   one shared second, then deletes at most eight eligible terminal records. A best-effort cursor
+   rotates acknowledgement candidates within an isolate/D1 handle; it resets with that handle
+   and does not guarantee eventual cleanup across isolates or restarts. Timed-out unknown
+   operations remain pending and locked for the same immutable retry. Late remote replies cannot
+   resume local identity changes, session issuance or acknowledgement bookkeeping. These bounds
+   cover remote waits, not D1/platform execution, and do not cancel remote effects. Confirmed
+   outcomes survive acknowledgement failure. See the [local prerequisite evidence](../audits/2026-10-26-security/evidence/remediation-release-prerequisites-2026-10-29.md);
+   deployed provider/consumer acceptance is still required.
 5. Only then prepare a separate OAuth activation change adding the continuity binding and
    enabling relationship transitions. Verify production behavior before closing FINDING-023.
 

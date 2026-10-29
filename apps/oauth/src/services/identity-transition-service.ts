@@ -41,6 +41,33 @@ export interface FreshAssertion {
   xivauthId: string;
   discordId: string | null;
 }
+// Only remote waits are raced. D1 transactions keep their existing atomic guards.
+const CONTINUITY_TIMEOUT_MS = 5000;
+const ACKNOWLEDGEMENT_TIMEOUT_MS = 1000;
+const CLEANUP_BATCH_SIZE = 8;
+// Best-effort scheduling within this isolate/D1 handle, never an authorization decision.
+const cleanupCursors = new WeakMap<D1Database, string>();
+async function remoteBefore<T>(deadline: number, call: () => Promise<T>): Promise<T> {
+  const remaining = deadline - Date.now();
+  if (remaining <= 0) throw new IdentityError('unavailable');
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      Promise.resolve()
+        .then(call)
+        .then((result) => {
+          // A delayed timer callback must not let an expired reply reach a local mutation.
+          if (Date.now() >= deadline) throw new IdentityError('unavailable');
+          return result;
+        }),
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new IdentityError('unavailable')), remaining);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
 const epoch = (): number => Math.floor(Date.now() / 1000);
 const placeholders = (items: unknown[]): string => items.map(() => '?').join(',');
 
@@ -200,14 +227,17 @@ async function acknowledge(
   remote: BanContinuity,
   payload: FrozenPayload,
   outcome: 'complete' | 'aborted',
+  deadline = Date.now() + ACKNOWLEDGEMENT_TIMEOUT_MS,
 ): Promise<void> {
   const request = payload.request;
   try {
-    const ack = await remote.acknowledge({
-      operationId: request.operationId,
-      payloadHash: request.payloadHash,
-      outcome,
-    });
+    const ack = await remoteBefore(deadline, () =>
+      remote.acknowledge({
+        operationId: request.operationId,
+        payloadHash: request.payloadHash,
+        outcome,
+      }),
+    );
     if (
       !exactObject(ack, [
         'v',
@@ -289,16 +319,21 @@ async function finishOperation(
   const request = payload.request;
   if (!freshMatches(payload, fresh)) throw new IdentityError('retry');
   let receipt;
+  const deadline = Date.now() + CONTINUITY_TIMEOUT_MS;
   try {
     receipt = validateReceipt(
-      await remote.getOperation({ operationId: row.id, payloadHash: row.payload_hash }),
+      await remoteBefore(deadline, () =>
+        remote.getOperation({ operationId: row.id, payloadHash: row.payload_hash }),
+      ),
       request,
     );
-    if (receipt === 'missing' && request.expiresAt > epoch())
+    if (receipt === 'missing' && request.expiresAt > epoch()) {
+      const validated = await validateContinuityRequest(request, epoch());
       receipt = validateReceipt(
-        await remote.apply(await validateContinuityRequest(request, epoch())),
+        await remoteBefore(deadline, () => remote.apply(validated)),
         request,
       );
+    }
   } catch (error) {
     throw error instanceof IdentityError ? error : new IdentityError('unavailable');
   }
@@ -381,24 +416,40 @@ export async function cleanupIdentityOperations(
 ): Promise<void> {
   try {
     if (remote) {
-      const rows = await db
-        .prepare(
-          "SELECT * FROM identity_operations WHERE state!='pending' AND resolution IN ('applied','refused') AND acknowledged_at IS NULL LIMIT 8",
-        )
-        .all<OperationRow>();
-      for (const row of rows.results)
-        await acknowledge(
-          db,
-          remote,
-          await decodeOperation(row),
-          row.state === 'complete' ? 'complete' : 'aborted',
-        );
+      const deadline = Date.now() + ACKNOWLEDGEMENT_TIMEOUT_MS;
+      const cursor = cleanupCursors.get(db) ?? '';
+      const select = (comparison: '>' | '<=', limit: number): Promise<D1Result<OperationRow>> =>
+        db
+          .prepare(
+            `SELECT * FROM identity_operations WHERE id${comparison}? AND state!='pending' AND resolution IN ('applied','refused') AND acknowledged_at IS NULL ORDER BY id LIMIT ?`,
+          )
+          .bind(cursor, limit)
+          .all<OperationRow>();
+      const rows = (await select('>', CLEANUP_BATCH_SIZE)).results;
+      if (cursor && rows.length < CLEANUP_BATCH_SIZE)
+        rows.push(...(await select('<=', CLEANUP_BATCH_SIZE - rows.length)).results);
+      if (rows.length) cleanupCursors.set(db, rows[rows.length - 1].id);
+      await Promise.all(
+        rows.map(async (row) => {
+          try {
+            await acknowledge(
+              db,
+              remote,
+              await decodeOperation(row),
+              row.state === 'complete' ? 'complete' : 'aborted',
+              deadline,
+            );
+          } catch {
+            /* One malformed journal must not suppress another terminal acknowledgement. */
+          }
+        }),
+      );
     }
     await db
       .prepare(
-        "DELETE FROM identity_operations WHERE state!='pending' AND ((resolution IN ('applied','refused') AND acknowledged_at IS NOT NULL AND MAX(expires_at,acknowledged_at)+86400<=?) OR (state='aborted' AND resolution='missing' AND MAX(expires_at,finished_at)+86400<=?))",
+        "DELETE FROM identity_operations WHERE id IN (SELECT id FROM identity_operations WHERE state!='pending' AND ((resolution IN ('applied','refused') AND acknowledged_at IS NOT NULL AND MAX(expires_at,acknowledged_at)+86400<=?) OR (state='aborted' AND resolution='missing' AND MAX(expires_at,finished_at)+86400<=?)) LIMIT ?)",
       )
-      .bind(epoch(), epoch())
+      .bind(epoch(), epoch(), CLEANUP_BATCH_SIZE)
       .run();
   } catch {
     /* A cleanup failure must not weaken session or association guards. */

@@ -273,6 +273,13 @@ External APIs are bounded:
 - Token exchange: `REQUEST_TIMEOUT_MS = 10s`.
 - User info / character fetch: `USER_INFO_TIMEOUT_MS = 5s`.
 
+Prepared private continuity calls use one shared 5s deadline for lookup/apply and a 1s terminal
+acknowledgement deadline. Cleanup selects at most eight acknowledgements concurrently under
+one shared 1s deadline, then deletes at most eight eligible terminal records. Unknown timeouts
+retain their immutable journal/locks; late remote replies cannot resume local identity changes
+or session issuance. These are remote-wait bounds, not remote cancellation or D1 timeouts.
+Acknowledgement rotation is best-effort within an isolate/D1 handle and resets with it.
+
 Prevents the worker from hanging on a slow Discord/XIVAuth response.
 
 ### Scope Validation
@@ -329,7 +336,11 @@ npx vitest run -t "PKCE"                              # Pattern match
 1. `wrangler secret put` for `DISCORD_CLIENT_SECRET` and `JWT_SECRET` (and `XIVAUTH_CLIENT_SECRET` if using XIVAuth confidential mode).
 2. Confirm `JWT_SECRET` matches the value in `xivdyetools-presets-api` — otherwise web auth will fail across the API.
 3. Verify `wrangler.toml` has correct `FRONTEND_URL` and `WORKER_URL` for the target env.
-4. Apply schema if needed: `wrangler d1 execute xivdyetools-users --remote --file=./schema/users.sql`.
+4. For an existing pre-transition users database, apply additive
+   `migrations/0002_identity_transitions.sql` once before the dependent deployment with
+   `wrangler d1 execute --file`; verify its actual state before running it. Use
+   `schema/users.sql` only for a new database. Never replay numbered migrations with
+   `wrangler d1 migrations apply`.
 5. `npm run lint && npm run test -- --run && npm run type-check`.
 6. `npm run deploy` (bare — this worker has no `production` env; see the note under Commands).
 7. Smoke-test the full flow from the web app: `/auth/discord` → consent → callback → `/auth/me` returns user info with the issued JWT.

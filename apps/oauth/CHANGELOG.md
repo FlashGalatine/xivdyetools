@@ -27,6 +27,13 @@ identity splitting is disabled, and this release declares no outbound continuity
 
 ### Security
 
+- Bound the prepared ban-continuity lookup/apply pair to one five-second deadline. Unknown
+  timeouts preserve the operation and locks for an unchanged retry; late replies cannot resume
+  local identity writes or token issuance. Terminal acknowledgement is best-effort within one
+  second, and cleanup shares that one-second remote budget across at most eight concurrent
+  acknowledgements, rotating candidates within the isolate/D1 handle and deleting at most
+  eight retention-eligible terminal records. This does not cancel remote effects or bound D1
+  execution; production binding and activation remain separate gates.
 - Refuse detected existing relationship changes while `IDENTITY_SPLIT_ENABLED` is false, without
   changing the association or minting its stale Discord identity. Matching sign-ins and new
   accounts continue. Safe automatic splitting remains pending consumer rollout and activation.
