@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [4.12.0] - 2026-10-27
 
+### Hardening adoption
+
+- **H-BOT-LOGIC-ADOPT preparation:** pack core 5.16.0 and SVG 4.4.1, carrying logger 2.4.0 transitively. Command APIs are unchanged. Publish only after both adopted upstream releases are available.
+- Add JSON import attributes to the six bot UI locale imports so the built /i18n subpath loads in Node 22 without a custom loader. Locale text and translation behavior are unchanged.
+
 ### Added
 
 - Export the existing `getLocalizedRace` and `getLocalizedClan` getters for consumer autocomplete
