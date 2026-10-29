@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.2.0] - 2026-10-27
 
+### Hardening adoption
+
+- **H-OAUTH preparation:** verify auth 3.0.0 canonical signing round trips and equivalent noncanonical signature rejection through the OAuth verifier boundaries. Adopt worker-kit 1.6.0/logger 2.4.0 with unchanged issuance, sessions and v2 protocol. Deploy only after upstream publication and existing provider prerequisites.
+
 Sprint A-OAUTH provider prerequisites for the 2026-10-26 remediation plan. Preparation only:
 identity splitting is disabled, and this release declares no outbound continuity binding.
 

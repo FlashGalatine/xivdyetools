@@ -179,6 +179,25 @@ describe('JWT Service', () => {
   });
 
   describe('verifyJWT', () => {
+    it.each(['padding', 'unused bits'] as const)('rejects a valid-equivalent JWT signature alias with %s through both verifier contracts', async alias => {
+      const { token } = await mintToken(mockEnv);
+      const [header, payload, signature] = token.split('.');
+      const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+      const alternate = alias === 'padding' ? `${signature}=`
+        : signature.slice(0, -1) + alphabet[alphabet.indexOf(signature.at(-1)!) + 1];
+      // Native decoding proves this is the same MAC, not a tampered-signature test.
+      expect(Buffer.from(alternate, 'base64url')).toEqual(Buffer.from(signature, 'base64url'));
+      expect(alternate).not.toBe(signature);
+      const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(mockEnv.JWT_SECRET), { name: 'HMAC', hash: 'SHA-256' }, false, ['verify']);
+      await expect(crypto.subtle.verify('HMAC', key, new Uint8Array(Buffer.from(alternate, 'base64url')), new TextEncoder().encode(`${header}.${payload}`))).resolves.toBe(true);
+      await expect(verifyJwtData(`${header}.${payload}`, signature, mockEnv.JWT_SECRET)).resolves.toBe(true);
+      await expect(verifyJwtData(`${header}.${payload}`, alternate, mockEnv.JWT_SECRET)).resolves.toBe(false);
+      await expect(verifyJWT(token, mockEnv.JWT_SECRET, mockEnv.WORKER_URL)).resolves.toMatchObject({ sub: '123456789' });
+      await expect(verifyJWTSignatureOnly(token, mockEnv.JWT_SECRET)).resolves.toMatchObject({ sub: '123456789' });
+      const aliasedToken = `${header}.${payload}.${alternate}`;
+      await expect(verifyJWT(aliasedToken, mockEnv.JWT_SECRET, mockEnv.WORKER_URL)).rejects.toThrow('Invalid JWT');
+      await expect(verifyJWTSignatureOnly(aliasedToken, mockEnv.JWT_SECRET)).resolves.toBeNull();
+    });
     it('should verify a valid JWT', async () => {
       const { token } = await mintToken(mockEnv);
       const payload = await verifyJWT(token, mockEnv.JWT_SECRET);
@@ -381,9 +400,8 @@ describe('JWT Service', () => {
 
     it('verifyJwtData rejects a tampered signature', async () => {
       // Flip the first character of the base64url string rather than the
-      // last one — the final base64 group's low-order bits are unused
-      // padding, so mutating only the last character can decode to the
-      // same bytes and produce a false negative here.
+      // last one: that changes the MAC bytes. Nonzero unused-bit aliases
+      // decode to the same bytes but are separately rejected as noncanonical.
       const tampered = 'X' + PINNED_SIGNATURE.slice(1);
       const isValid = await verifyJwtData(PINNED_DATA, tampered, PINNED_SECRET);
       expect(isValid).toBe(false);
