@@ -13,6 +13,11 @@ CPU-limit diagnostics. The proxy is stopped; 38 entries were not dispatched. See
 description below remains procedural history. Further hosted execution remains held; do not reuse
 the failed session, spend its reserved budget, or treat this exception as production approval.
 
+The subsequent [local CPU investigation](../../remediation-image-cpu-profile-2026-10-28.md)
+identifies crop/resize hotspots but leaves the effective numeric legacy-preview CPU budget
+unverified. Establish that applicable budget before proposing another hosted test; changing
+`limits.cpu_ms` in this configuration does not establish enforcement by the inspected preview path.
+
 ## Scope and controls
 
 `prepare-canary.mjs` requires an explicit source checkout, `--account-id` of exactly 32 lowercase

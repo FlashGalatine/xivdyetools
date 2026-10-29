@@ -4,6 +4,8 @@
 
 **Hosted follow-up:** the user subsequently authorized one temporary preview test only. The attempt failed closed after three matching responses and a fourth HTTP 503, with session-level CPU-limit diagnostics; 38 requests were not dispatched. The preview process is stopped and production remains held. See the [hosted attempt and remaining evidence](remediation-image-hosted-preview-2026-10-28.md). References below to a pending proposal or no hosted execution describe the preparation snapshot, not this later attempt.
 
+**Local CPU follow-up:** [paired CPU sampling](remediation-image-cpu-profile-2026-10-28.md) preserves eight expected outputs and unchanged source/artifact identities. Crop/resize dominate local weighted samples; the effective numeric preview budget remains unverified. This does not close the CPU/platform or aggregate-memory gate.
+
 ## Manual companion integration
 
 Integrate both [PR #349](https://github.com/FlashGalatine/xivdyetools/pull/349) source commits, `14f859af587cada27456239bd1835d589044b810` and `9e5e6b9208749facb1b6b6f3e71e7e52b158fec9`, as a scoped squash on the adoption tip. The original PR stays available for its separate review/release boundary. All six resulting locale blobs are byte-identical to the companion head. Keep bot-logic **4.12.0**, Discord **5.9.7** and image-worker **1.3.5** as pending versions; preserve the H logging tests and higher-version changelogs.

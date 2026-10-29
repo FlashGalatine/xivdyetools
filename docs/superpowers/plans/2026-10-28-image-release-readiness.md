@@ -4,6 +4,8 @@
 
 **Status:** source integration, validation and review complete in draft PR #363. The user authorized one temporary hosted-preview test; it failed closed after four responses with CPU-limit diagnostics. Aggregate-memory acceptance and production activation remain open. [Hosted evidence](../../audits/2026-10-26-security/evidence/remediation-image-hosted-preview-2026-10-28.md) and the readiness ledger retain the receipts.
 
+**CPU follow-up:** a bounded local pair passes eight responses and identifies crop/resize as the main sampled hotspots. Available primary-source and read-only account evidence does not establish the effective numeric legacy-preview CPU budget. [Investigation evidence](../../audits/2026-10-26-security/evidence/remediation-image-cpu-profile-2026-10-28.md) preserves that unresolved prerequisite; no new hosted run or production change is selected.
+
 **Goal:** integrate the approved PR #349 manual companion and settle the remaining image memory acceptance requirements with current-candidate evidence.
 
 **Architecture:** preserve the retained Photon ownership patch, actual worker entry and existing resource/format/caller contracts. Reuse evidence only with explicit source/artifact identity; new experiments use synthetic local fixtures. Separate local correctness/headroom from Cloudflare enforcement and release activation.
@@ -29,6 +31,7 @@
 4. [x] Produce current-candidate local runtime receipts and a concrete reviewed platform acceptance procedure if local enforcement cannot settle the gate. No live test or deployment without explicit authorization overriding the repository restriction.
 5. [x] Independent regression and security review, appropriate scoped/full integration gates, package/artifact/manual verification and secret scan. Keep pending versions; record publication, manual-delivery and image-activation order. Commit/push a reviewable feature branch/PR under the standing authorization.
 6. [x] Execute the specifically authorized temporary preview with the exact reviewed 42-request sequence and stop on the first failure. Three responses match; the fourth returns 503 with session-level CPU-limit diagnostics. Stop the process, retain the 38 undispatched entries and preserve the production hold. This is a completed bounded attempt, not a passing acceptance gate or authorization to retry.
+7. [x] Perform the authorized bounded local CPU profile and investigate the preview budget using available primary sources and read-only settings. Eight matching responses and exclusive sample attribution identify local hotspots. The investigation is recorded; the numeric server-side budget remains unverified, so this checkbox does not close the release gate.
 
 ## Review focus
 

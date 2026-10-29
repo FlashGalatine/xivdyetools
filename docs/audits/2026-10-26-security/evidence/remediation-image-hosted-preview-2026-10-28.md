@@ -2,6 +2,8 @@
 
 **Result: FAILED / STOPPED. Production activation remains held; FINDING-020 stays PARTIAL / OPEN.** The user explicitly authorized an exception to the repository's deployment restriction for this temporary preview and the reviewed 42 synthetic requests only. The attempt did not complete the workload and does not establish aggregate-memory acceptance.
 
+**Later local follow-up:** the [CPU profile and budget investigation](remediation-image-cpu-profile-2026-10-28.md) identifies crop/resize as local hotspots with eight matching control/profile responses. The effective numeric legacy-preview CPU budget remains unverified; no further hosted test or production change was made.
+
 ## Identity and bounded execution
 
 The tested source is draft [PR #363](https://github.com/FlashGalatine/xivdyetools/pull/363) at `777660935fd054f597cf5dd6ba3c075d7ce0cec6`. Before startup, read-only account access and account-wide name vacancy were reverified. A fresh ignored session pinned the same authorized account, the reviewed generator/template/driver, all 64 candidate source identities and the unchanged retained WASM. Its random token was supplied through ignored development variables, never printed or committed. Compatibility remains `2024-12-01` plus `enable_request_signal`; there is one product initializer and one WASM artifact.

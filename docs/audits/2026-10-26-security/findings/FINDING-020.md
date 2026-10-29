@@ -15,6 +15,9 @@
 
 ## Status
 
+PARTIAL / OPEN — the subsequent local CPU profile passes eight exact control/profile responses with unchanged source/WASM. Crop and Lanczos3 resize account for 88.87% of non-idle weighted samples in one bounded run; these are local attribution estimates, not charged CPU or proof of the hosted failure's stage. Installed preview upload code and available official/account evidence do not establish the effective numeric legacy-preview CPU budget. No further hosted test or production change was made. Aggregate-memory acceptance, verified manual delivery and activation remain held. [CPU and budget evidence](../evidence/remediation-image-cpu-profile-2026-10-28.md).
+
+Prior hosted-attempt snapshot:
 PARTIAL / OPEN — the explicitly authorized temporary hosted-preview attempt failed closed: three responses matched, then the fourth (valid at-cap BMP thumbnail) returned HTTP 503 without candidate diagnostic headers. Session logs report CPU-time-limit errors; their invocation/stage attribution and the numeric hosted CPU budget are unproven. The remaining 38 requests were not dispatched. No aggregate hosted memory measurement was obtained; production activation and verified manual delivery remain held. [Hosted attempt evidence](../evidence/remediation-image-hosted-preview-2026-10-28.md).
 
 Prior local release-readiness snapshot:
