@@ -59,6 +59,84 @@ import { PhotonImage, resize, SamplingFilter, crop } from './photon-runtime.js';
 import app from './index.js';
 import { imageInputReason } from '../../discord-worker/src/services/image-input-errors.js';
 
+// Tiny metadata-only cases: the constructor must never see these bytes.
+function allocationFixture(kind: string): Uint8Array {
+    const le = (n: number, count = 4): number[] => Array.from({ length: count }, (_, i) => (n >>> (8 * i)) & 255);
+    const ascii = (s: string): number[] => [...s].map(c => c.charCodeAt(0));
+    const chunk = (s: string, data: number[]): number[] => [
+        ...ascii(s), ...le(data.length), ...data, ...(data.length % 2 ? [0] : []),
+    ];
+    if (kind.startsWith('GIF')) {
+        return new Uint8Array([...ascii('GIF89a'), 1, 0, 1, 0, 0x80, 0, 0,
+            0, 0, 0, 255, 255, 255, 0x2c, 0, 0, 0, 0,
+            ...le(kind === 'GIF side' ? 4097 : 64, 2), 1, 0, 0, 2, 2, 0x44, 1, 0, 0x3b]);
+    }
+    const lossy = kind.includes('VP8 ') || kind.includes('ALPH');
+    const bitstreamWidth = kind.startsWith('chunk') ? 1 : 64;
+    const image = lossy
+        ? chunk('VP8 ', [0, 0, 0, 0x9d, 1, 0x2a, bitstreamWidth, 0, 1, 0])
+        : chunk('VP8L', [0x2f, bitstreamWidth - 1, 0, 0, 0]);
+    const payload = [...(kind.includes('ALPH') ? chunk('ALPH', [1, 0]) : []), ...image];
+    const animation = kind.includes('ANMF') || kind.includes('mixed');
+    const frameHeader = new Array<number>(16).fill(0);
+    if (kind.includes('mixed')) frameHeader[6] = 63;
+    const frame = chunk('ANMF', [...frameHeader, ...payload]);
+    const chunks = [
+        ...chunk('VP8X', [animation ? 2 : 0, 0, 0, 0, kind.includes('mixed') ? 63 : 0, 0, 0, 0, 0, 0]),
+        ...(animation ? chunk('ANIM', [0, 0, 0, 0, 0, 0]) : []),
+        ...(kind === 'mixed static first' ? [...payload, ...frame]
+            : kind === 'mixed animation first' ? [...frame, ...payload] : animation ? frame : payload),
+    ];
+    const result = new Uint8Array([...ascii('RIFF'), ...le(chunks.length + 4), ...ascii('WEBP'), ...chunks]);
+    if (kind === 'chunk length') result[34] = 255;
+    if (kind === 'chunk padding') result[result.length - 1] = 1;
+    return result;
+}
+
+describe('decoder allocation metadata admission', () => {
+    beforeEach(() => vi.clearAllMocks());
+    afterEach(() => vi.restoreAllMocks());
+
+    it.each(['GIF frame', 'GIF side', 'static VP8 ', 'static VP8L', 'static ALPH',
+        'ANMF VP8L', 'ANMF ALPH', 'mixed static first', 'mixed animation first',
+        'chunk length', 'chunk padding'])('rejects %s on both routes before Photon and recovers', async kind => {
+        const bytes = allocationFixture(kind);
+        vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(bytes));
+        const extraction = await app.request('https://image-worker/extract', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: 'https://cdn.discordapp.com/attachment.png' }),
+        }, {});
+        const thumbnail = await app.request('https://image-worker/thumbnail', {
+            method: 'POST', body: bytes,
+        }, {});
+        for (const response of [extraction, thumbnail]) {
+            expect(response.status).toBe(400);
+            const body = await response.json() as { error: string };
+            expect(imageInputReason(new Error(body.error))).toBe('format');
+        }
+        expect(PhotonImage.new_from_byteslice).not.toHaveBeenCalled();
+        expect(crop).not.toHaveBeenCalled();
+        expect(resize).not.toHaveBeenCalled();
+        const webpOutput = new Uint8Array([82, 73, 70, 70]);
+        vi.mocked(resize).mockReturnValueOnce({
+            ...createMockPhotonImage(640, 264), get_bytes_webp: () => webpOutput,
+        } as unknown as PhotonImage);
+        const recovery = await app.request('https://image-worker/thumbnail', {
+            method: 'POST', body: pngHeader(100, 100),
+        }, {});
+        expect(PhotonImage.new_from_byteslice).toHaveBeenCalledTimes(1);
+        expect(recovery.status).toBe(200);
+        expect(new Uint8Array(await recovery.arrayBuffer())).toEqual(webpOutput);
+        vi.mocked(globalThis.fetch).mockImplementation(async () => new Response(pngHeader(100, 100)));
+        const recovered = await app.request('https://image-worker/extract', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: 'https://cdn.discordapp.com/recovery.png' }),
+        }, {});
+        expect(recovered.status).toBe(200);
+        expect(recovered.headers.get('X-Image-Width')).toBe('100');
+    });
+});
+
 describe('16-bit PNG pre-decode rejection (FINDING-020)', () => {
     beforeEach(() => vi.clearAllMocks());
     afterEach(() => vi.restoreAllMocks());

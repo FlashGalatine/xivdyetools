@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.3.5] - 2026-10-28
 
+### Release-readiness follow-up
+
+- Validate GIF image descriptors against the logical screen and validate extended WebP
+  reconstruction chunks against their canvas/frame dimensions before Photon allocates pixels.
+  Checked chunk boundaries, padding and payload ordering reject malformed structures, including
+  mixed static/animated reconstruction paths. Valid contained subframes and animation retain
+  their output. File, pixel, side and output caps are unchanged.
+- Refresh retained-artifact parity across valid format boundaries and an unread 1 MiB output.
+  The observed 110.4375 MiB WASM plateau and post-response accounting samples remain local
+  evidence; a separate three-round valid-format sequence exceeds the numeric 128 MiB reference in
+  diagnostic accounting despite stable WASM. Cloudflare platform acceptance and the corrected
+  manual deployment are still required.
+
 ### Security
 
 - Reject 16-bit PNGs and invalid IHDR metadata before Photon decoding (FINDING-020).

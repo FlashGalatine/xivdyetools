@@ -50,6 +50,13 @@ The platform bounds post-disconnect `waitUntil`; runtime termination/noncooperat
 carry an unconditional cleanup guarantee. Outstanding responses and other isolates are not bounded
 by this guard. Health checks and the existing public-surface protections remain outside admission.
 
+Pre-decode validation also walks GIF descriptors and WebP reconstruction chunks. Every GIF
+image must fit its logical screen; extended WebP bitstream dimensions must match the static
+canvas or contained animation frame. Lengths, padding, alpha partners and payload ordering are
+checked before Photon, with constant auxiliary state. Malformed mixed/duplicate reconstruction
+paths are refused. These checks preserve the existing caps and caller error markers; they do
+not establish aggregate memory headroom or Cloudflare platform acceptance.
+
 ## Commands
 
 ```bash

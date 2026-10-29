@@ -53,8 +53,14 @@ function jpegHeader(width: number, height: number, opts: { progressive?: boolean
   return new Uint8Array(segments);
 }
 
-function gifHeader(width: number, height: number): Uint8Array {
-  return new Uint8Array([...ascii('GIF89a'), ...u16le(width), ...u16le(height), 0, 0, 0, 0x2c]);
+function gifFrame(width: number, height: number, x = 0, y = 0): number[] {
+  return [0x2c, ...u16le(x), ...u16le(y), ...u16le(width), ...u16le(height), 0,
+    2, 2, 0x44, 0x01, 0]; // minimal LZW sub-block; metadata tests never decode
+}
+
+function gifHeader(width: number, height: number, frames = gifFrame(width, height)): Uint8Array {
+  return new Uint8Array([...ascii('GIF89a'), ...u16le(width), ...u16le(height),
+    0x80, 0, 0, 0, 0, 0, 255, 255, 255, ...frames, 0x3b]);
 }
 
 function bmpHeader(width: number, height: number): Uint8Array {
@@ -76,16 +82,34 @@ function webpVp8l(width: number, height: number): Uint8Array {
   // signature 0x2f then 14 bits width-1, 14 bits height-1 (little-endian bitstream)
   const bits = ((width - 1) & 0x3fff) | (((height - 1) & 0x3fff) << 14);
   const payload = [0x2f, bits & 0xff, (bits >>> 8) & 0xff, (bits >>> 16) & 0xff, (bits >>> 24) & 0xff];
-  const chunk = [...ascii('VP8L'), ...u32le(payload.length), ...payload];
+  const chunk = webpChunk('VP8L', payload);
+  return new Uint8Array([...ascii('RIFF'), ...u32le(chunk.length + 4), ...ascii('WEBP'), ...chunk]);
+}
+
+function webpChunk(name: string, payload: number[]): number[] {
+  return [...ascii(name), ...u32le(payload.length), ...payload, ...(payload.length % 2 ? [0] : [])];
+}
+
+function webpExtended(width: number, height: number, chunks: number[], animated = false): Uint8Array {
+  const w = width - 1;
+  const h = height - 1;
+  const payload = [animated ? 2 : 0, 0, 0, 0, w & 0xff, (w >>> 8) & 0xff, (w >>> 16) & 0xff, h & 0xff, (h >>> 8) & 0xff, (h >>> 16) & 0xff];
+  const chunk = [...webpChunk('VP8X', payload), ...chunks];
   return new Uint8Array([...ascii('RIFF'), ...u32le(chunk.length + 4), ...ascii('WEBP'), ...chunk]);
 }
 
 function webpVp8x(width: number, height: number): Uint8Array {
-  const w = width - 1;
-  const h = height - 1;
-  const payload = [0, 0, 0, 0, w & 0xff, (w >>> 8) & 0xff, (w >>> 16) & 0xff, h & 0xff, (h >>> 8) & 0xff, (h >>> 16) & 0xff];
-  const chunk = [...ascii('VP8X'), ...u32le(payload.length), ...payload];
-  return new Uint8Array([...ascii('RIFF'), ...u32le(chunk.length + 4), ...ascii('WEBP'), ...chunk]);
+  return webpExtended(width, height, [...webpVp8l(width, height).subarray(12)]);
+}
+
+function webpFrame(width: number, height: number, payload: number[], x = 0, y = 0): number[] {
+  const u24 = (n: number): number[] => u32le(n).slice(0, 3);
+  return webpChunk('ANMF', [...u24(x / 2), ...u24(y / 2), ...u24(width - 1),
+    ...u24(height - 1), 10, 0, 0, 0, ...payload]);
+}
+
+function animatedWebp(frames: number[], width = 64, height = 64): Uint8Array {
+  return webpExtended(width, height, [...webpChunk('ANIM', [0, 0, 0, 0, 0, 0]), ...frames], true);
 }
 
 describe('readImageDimensions', () => {
@@ -157,6 +181,128 @@ describe('readImageDimensions', () => {
     expect(readImageDimensions(webpVp8(500, 300))).toEqual({ width: 500, height: 300 });
     expect(readImageDimensions(webpVp8l(1000, 2000))).toEqual({ width: 1000, height: 2000 });
     expect(readImageDimensions(webpVp8x(16383, 16383))).toEqual({ width: 16383, height: 16383 });
+  });
+
+  it('rejects GIF descriptors outside the logical screen, including a later frame', () => {
+    for (const frames of [gifFrame(64, 64), gifFrame(4097, 1),
+      [...gifFrame(1, 1), ...gifFrame(64, 64)], gifFrame(1, 1, 1, 0)]) {
+      expect(readImageDimensions(gifHeader(1, 1, frames))).toBeUndefined();
+    }
+  });
+
+  it('preserves GIF animation with contained subframes and offsets', () => {
+    const frames = [...gifFrame(32, 16, 32, 48), 0x21, 0xfe, 3, 0x2c, 0xff, 0x3b, 0,
+      ...gifFrame(1, 1, 63, 63)];
+    expect(readImageDimensions(gifHeader(64, 64, frames))).toEqual({ width: 64, height: 64 });
+  });
+
+  it('rejects incomplete GIF descriptors, palettes and sub-blocks', () => {
+    const gif = gifHeader(64, 64);
+    for (const length of [12, 18, 20, 28, 30, 32, gif.length - 1]) {
+      expect(readImageDimensions(gif.subarray(0, length))).toBeUndefined();
+    }
+    const localPalette = gifHeader(64, 64);
+    localPalette[28] = 0x87; // 256-entry local palette is absent
+    expect(readImageDimensions(localPalette)).toBeUndefined();
+  });
+
+  it.each(['VP8 ', 'VP8L'])('rejects extended static %s dimensions that disagree with the canvas', (kind) => {
+    const image = kind === 'VP8 ' ? webpVp8 : webpVp8l;
+    for (const [w, h] of [[64, 64], [4097, 1], [1, 2]]) {
+      expect(readImageDimensions(webpExtended(1, 1, [...image(w, h).subarray(12)]))).toBeUndefined();
+    }
+  });
+
+  it('checks nested animation bitstreams, including ALPH + VP8 and later frames', () => {
+    const lossless = [...webpVp8l(64, 64).subarray(12)];
+    const lossyAlpha = [...webpChunk('ALPH', [1, 0]), ...webpVp8(64, 64).subarray(12)];
+    for (const payload of [lossless, lossyAlpha]) {
+      expect(readImageDimensions(animatedWebp(webpFrame(1, 1, payload)))).toBeUndefined();
+      expect(readImageDimensions(animatedWebp([
+        ...webpFrame(1, 1, [...webpVp8l(1, 1).subarray(12)]), ...webpFrame(1, 1, payload),
+      ]))).toBeUndefined();
+    }
+  });
+
+  it('preserves animated WebP subframes, offsets, padding and alpha', () => {
+    const frames = [...webpFrame(32, 16, [...webpVp8l(32, 16).subarray(12)], 32, 48),
+      ...webpFrame(1, 1, [...webpChunk('ALPH', [1, 0]), ...webpVp8(1, 1).subarray(12)], 62, 62)];
+    expect(readImageDimensions(animatedWebp(frames))).toEqual({ width: 64, height: 64 });
+  });
+
+  it('rejects mixed or duplicate WebP allocation payloads in either order', () => {
+    const staticChunk = [...webpVp8l(64, 64).subarray(12)];
+    const frame = webpFrame(64, 64, staticChunk);
+    expect(readImageDimensions(webpExtended(64, 64, [...staticChunk, ...staticChunk]))).toBeUndefined();
+    for (const chunks of [[...frame, ...staticChunk], [...staticChunk, ...frame]]) {
+      expect(readImageDimensions(animatedWebp(chunks))).toBeUndefined();
+    }
+    expect(readImageDimensions(animatedWebp(webpFrame(64, 64, [...staticChunk, ...staticChunk])))).toBeUndefined();
+  });
+
+  it('preserves matching static extended VP8 and both alpha encodings', () => {
+    const lossy = [...webpVp8(1, 1).subarray(12)];
+    for (const payload of [lossy, [...webpChunk('ALPH', [0, 255]), ...lossy],
+      [...webpChunk('ALPH', [1, 0]), ...lossy]]) {
+      expect(readImageDimensions(webpExtended(1, 1, payload))).toEqual({ width: 1, height: 1 });
+    }
+  });
+
+  it('rejects alpha chunks with absent, duplicate, wrong-sized or lossless partners', () => {
+    const alpha = webpChunk('ALPH', [0, 255]);
+    const lossy = [...webpVp8(1, 1).subarray(12)];
+    const lossless = [...webpVp8l(1, 1).subarray(12)];
+    for (const payload of [alpha, [...alpha, ...alpha, ...lossy], [...lossy, ...alpha],
+      [...alpha, ...lossless], [...webpChunk('ALPH', [0]), ...lossy],
+      [...webpChunk('ALPH', [0, 255, 255]), ...lossy], [...webpChunk('ALPH', [2, 0]), ...lossy]]) {
+      expect(readImageDimensions(webpExtended(1, 1, payload))).toBeUndefined();
+      expect(readImageDimensions(animatedWebp(webpFrame(1, 1, payload)))).toBeUndefined();
+    }
+  });
+
+  it('requires animation metadata and contained frame rectangles', () => {
+    const bitstream = [...webpVp8l(32, 32).subarray(12)];
+    const frame = webpFrame(32, 32, bitstream);
+    expect(readImageDimensions(webpExtended(64, 64, frame, true))).toBeUndefined();
+    expect(readImageDimensions(webpExtended(64, 64, frame))).toBeUndefined();
+    expect(readImageDimensions(animatedWebp([]))).toBeUndefined();
+    expect(readImageDimensions(animatedWebp([
+      ...webpChunk('ANIM', [0, 0, 0, 0, 0, 0]), ...frame,
+    ]))).toBeUndefined();
+    expect(readImageDimensions(animatedWebp(webpFrame(32, 32, bitstream, 34, 0)))).toBeUndefined();
+    expect(readImageDimensions(animatedWebp(webpFrame(32, 32, bitstream, 0, 34)))).toBeUndefined();
+  });
+
+  it('checks chunk-local payload lengths and ignores length-delimited metadata safely', () => {
+    const lossless = [...webpVp8l(1, 1).subarray(12)];
+    const metadata = webpChunk('EXIF', ascii('VP8L\xff\xff\xff\xff'));
+    expect(readImageDimensions(webpExtended(1, 1, [...metadata, ...lossless])))
+      .toEqual({ width: 1, height: 1 });
+    for (const payload of [webpChunk('VP8L', [0x2f]), webpChunk('VP8 ', [0, 0, 0]),
+      webpChunk('VP8L', [0x2f, 0, 0, 0, 0xe0])]) {
+      expect(readImageDimensions(webpExtended(1, 1, payload))).toBeUndefined();
+      expect(readImageDimensions(animatedWebp(webpFrame(1, 1, payload)))).toBeUndefined();
+    }
+  });
+
+  it('rejects WebP chunk length, padding and nested truncation mutations', () => {
+    const valid = webpVp8x(64, 64);
+    for (const [offset, value] of [[4, 0], [16, 9], [34, 0xff], [43, 1]]) {
+      const bad = valid.slice();
+      bad[offset] = value;
+      expect(readImageDimensions(bad)).toBeUndefined();
+    }
+    for (let length = 12; length < valid.length; length++) {
+      expect(readImageDimensions(valid.subarray(0, length))).toBeUndefined();
+    }
+    const nested = animatedWebp(webpFrame(1, 1, [...webpVp8l(1, 1).subarray(12)]));
+    nested[72] = 0xff; // nested VP8L chunk size escapes ANMF
+    expect(readImageDimensions(nested)).toBeUndefined();
+    const sibling = animatedWebp([
+      ...webpFrame(1, 1, [...webpVp8l(1, 1).subarray(12)]), ...webpChunk('EXIF', [0, 0, 0, 0]),
+    ]);
+    sibling[72] = 8; // escapes ANMF but remains inside the outer RIFF
+    expect(readImageDimensions(sibling)).toBeUndefined();
   });
 
   it('returns undefined for unknown or truncated input instead of throwing', () => {

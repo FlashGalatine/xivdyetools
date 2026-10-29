@@ -4,9 +4,9 @@
  * FINDING-004 (2026-08-21 security audit): `PhotonImage.new_from_byteslice`
  * decodes the entire image to RGBA before any size check could run, so a
  * small decompression bomb (a few MB that decode to gigabytes) killed the
- * isolate. These parsers read ONLY the container header — PNG IHDR, JPEG SOFn,
- * GIF logical screen, WebP VP8/VP8L/VP8X, BMP info header — so the decode path
- * can reject oversized images before allocating a pixel buffer.
+ * isolate. These parsers read metadata without decoding pixels. GIF image
+ * descriptors and WebP bitstreams must fit their checked canvas: the decoder
+ * can allocate their buffers before applying its own generic size limits.
  *
  * Every parser returns `undefined` (never throws) for input it cannot read;
  * the caller treats that as a rejection (fail closed).
@@ -93,8 +93,46 @@ function readJpeg(b: Uint8Array): ImageDimensions | undefined {
 }
 
 function readGif(b: Uint8Array): ImageDimensions | undefined {
-  if (b.length < 10) return undefined;
-  return ok(u16le(b, 6), u16le(b, 8));
+  if (b.length < 13 || (!tag(b, 0, 'GIF87a') && !tag(b, 0, 'GIF89a'))) return undefined;
+  const canvas = ok(u16le(b, 6), u16le(b, 8));
+  if (!canvas) return undefined;
+  let i = 13 + ((b[10] & 0x80) ? 3 * (2 << (b[10] & 7)) : 0);
+  let seenImage = false;
+  while (i < b.length) {
+    const block = b[i++];
+    if (block === 0x3b) return seenImage && i === b.length ? canvas : undefined;
+    if (block === 0x21) {
+      if (i >= b.length) return undefined;
+      i++; // extension label; its contents are length-delimited sub-blocks
+    } else if (block === 0x2c) {
+      if (i + 9 > b.length) return undefined;
+      const x = u16le(b, i);
+      const y = u16le(b, i + 2);
+      const width = u16le(b, i + 4);
+      const height = u16le(b, i + 6);
+      // GIF89a section 20 requires each image to fit the logical screen.
+      // This permits smaller frames and offsets while bounding every decoder
+      // frame allocation by the canvas that validators.ts caps.
+      if (!width || !height || x + width > canvas.width || y + height > canvas.height) return undefined;
+      const packed = b[i + 8];
+      i += 9 + ((packed & 0x80) ? 3 * (2 << (packed & 7)) : 0);
+      if (i >= b.length || b[i] < 2 || b[i] > 8) return undefined;
+      i++; // LZW minimum code size; no compressed bytes are interpreted
+      seenImage = true;
+    } else {
+      return undefined;
+    }
+    // Skip image data or extension sub-blocks without searching compressed
+    // bytes for separators (which may also occur inside those bytes).
+    for (;;) {
+      if (i >= b.length) return undefined;
+      const length = b[i++];
+      if (length === 0) break;
+      if (length > b.length - i) return undefined;
+      i += length;
+    }
+  }
+  return undefined;
 }
 
 function readBmp(b: Uint8Array): ImageDimensions | undefined {
@@ -104,31 +142,129 @@ function readBmp(b: Uint8Array): ImageDimensions | undefined {
   return ok(Math.abs(w), Math.abs(h));
 }
 
-function readWebp(b: Uint8Array): ImageDimensions | undefined {
-  if (b.length < 16 || !tag(b, 8, 'WEBP')) return undefined;
-  if (tag(b, 12, 'VP8 ')) {
+interface WebpChunk {
+  data: number;
+  end: number;
+  next: number;
+}
+
+function webpChunk(b: Uint8Array, i: number, end: number): WebpChunk | undefined {
+  if (end - i < 8) return undefined;
+  const length = u32le(b, i + 4);
+  const data = i + 8;
+  if (length > end - data) return undefined;
+  const dataEnd = data + length;
+  const next = dataEnd + (length & 1);
+  if (next > end || ((length & 1) && b[dataEnd] !== 0)) return undefined;
+  return { data, end: dataEnd, next };
+}
+
+function webpBitstream(b: Uint8Array, i: number, chunk: WebpChunk): ImageDimensions | undefined {
+  const p = chunk.data;
+  if (tag(b, i, 'VP8 ')) {
     // frame tag(3) + start code 9d 01 2a + width(2, 14 bits) + height(2, 14 bits)
-    if (b.length < 30 || b[23] !== 0x9d || b[24] !== 0x01 || b[25] !== 0x2a) return undefined;
-    return ok(u16le(b, 26) & 0x3fff, u16le(b, 28) & 0x3fff);
+    if (chunk.end - p < 10 || (b[p] & 1) || !tag(b, p + 3, '\x9d\x01\x2a')) return undefined;
+    return ok(u16le(b, p + 6) & 0x3fff, u16le(b, p + 8) & 0x3fff);
   }
-  if (tag(b, 12, 'VP8L')) {
-    if (b.length < 25 || b[20] !== 0x2f) return undefined;
-    const bits = u32le(b, 21);
+  if (tag(b, i, 'VP8L')) {
+    if (chunk.end - p < 5 || b[p] !== 0x2f) return undefined;
+    const bits = u32le(b, p + 1);
+    if (bits >>> 29) return undefined; // unsupported lossless version
     return ok((bits & 0x3fff) + 1, ((bits >>> 14) & 0x3fff) + 1);
-  }
-  if (tag(b, 12, 'VP8X')) {
-    // flags(1) reserved(3) canvas width-1 (3) canvas height-1 (3)
-    if (b.length < 30) return undefined;
-    return ok(u24le(b, 24) + 1, u24le(b, 27) + 1);
   }
   return undefined;
 }
 
+function webpAlpha(b: Uint8Array, chunk: WebpChunk, dimensions: ImageDimensions): boolean {
+  const header = b[chunk.data];
+  if (chunk.end - chunk.data < 2 || (header & 0xc0) || (header & 3) > 1 || ((header >>> 4) & 3) > 1) return false;
+  // Compressed ALPH uses implicit frame dimensions; uncompressed ALPH is one
+  // byte per pixel. Neither has another independently sized pixel canvas.
+  return (header & 3) === 1 || chunk.end - chunk.data === 1 + dimensions.width * dimensions.height;
+}
+
+function sameDimensions(a: ImageDimensions, b: ImageDimensions): boolean {
+  return a.width === b.width && a.height === b.height;
+}
+
+function webpFrame(b: Uint8Array, chunk: WebpChunk, canvas: ImageDimensions): boolean {
+  const p = chunk.data;
+  if (chunk.end - p < 16) return false;
+  const frame = { width: u24le(b, p + 6) + 1, height: u24le(b, p + 9) + 1 };
+  if (2 * u24le(b, p) + frame.width > canvas.width ||
+      2 * u24le(b, p + 3) + frame.height > canvas.height) return false;
+  let alpha = false;
+  let image = false;
+  for (let i = p + 16; i < chunk.end;) {
+    const sub = webpChunk(b, i, chunk.end);
+    if (!sub) return false;
+    if (tag(b, i, 'ALPH')) {
+      if (alpha || image || !webpAlpha(b, sub, frame) || !tag(b, sub.next, 'VP8 ')) return false;
+      alpha = true;
+    } else if (tag(b, i, 'VP8 ') || tag(b, i, 'VP8L')) {
+      const dimensions = webpBitstream(b, i, sub);
+      if (image || !dimensions || !sameDimensions(dimensions, frame) || (alpha && tag(b, i, 'VP8L'))) return false;
+      image = true;
+    } else if (tag(b, i, 'VP8X') || tag(b, i, 'ANIM') || tag(b, i, 'ANMF')) {
+      return false;
+    }
+    i = sub.next;
+  }
+  return image;
+}
+
+function readWebp(b: Uint8Array): ImageDimensions | undefined {
+  if (b.length < 20 || !tag(b, 8, 'WEBP') || u32le(b, 4) !== b.length - 8) return undefined;
+  let canvas: ImageDimensions | undefined;
+  let extended = false;
+  let animated = false;
+  let animationHeader = false;
+  let frame = false;
+  let image = false;
+  let alpha = false;
+  for (let i = 12; i < b.length;) {
+    const chunk = webpChunk(b, i, b.length);
+    if (!chunk) return undefined;
+    if (i === 12 && tag(b, i, 'VP8X')) {
+      if (chunk.end - chunk.data !== 10) return undefined;
+      extended = true;
+      animated = (b[chunk.data] & 2) !== 0;
+      canvas = ok(u24le(b, chunk.data + 4) + 1, u24le(b, chunk.data + 7) + 1);
+    } else if (tag(b, i, 'ANIM')) {
+      if (!animated || animationHeader || frame || image || chunk.end - chunk.data !== 6) return undefined;
+      animationHeader = true;
+    } else if (tag(b, i, 'ANMF')) {
+      // image-0.24 can retain a decoded static payload AND its first animated
+      // frame while scanning. Refuse the malformed mixture in either order.
+      if (!animated || !animationHeader || image || !canvas || !webpFrame(b, chunk, canvas)) return undefined;
+      frame = true;
+    } else if (tag(b, i, 'ALPH')) {
+      if (!extended || animated || alpha || image || !canvas || !webpAlpha(b, chunk, canvas) ||
+          !tag(b, chunk.next, 'VP8 ')) return undefined;
+      alpha = true;
+    } else if (tag(b, i, 'VP8 ') || tag(b, i, 'VP8L')) {
+      const dimensions = webpBitstream(b, i, chunk);
+      if (animated || image || !dimensions || (alpha && tag(b, i, 'VP8L'))) return undefined;
+      if (canvas && !sameDimensions(dimensions, canvas)) return undefined;
+      canvas = dimensions;
+      image = true;
+    } else if (tag(b, i, 'VP8X') || i === 12) {
+      return undefined;
+    }
+    i = chunk.next;
+  }
+  if (animated ? animationHeader && frame && !image : image) return canvas;
+  return undefined;
+}
+
 /**
- * Read width × height from an image file's container header without decoding.
+ * Read canvas dimensions and validate allocation-bearing metadata without
+ * decoding. GIF descriptors must fit the logical screen; WebP bitstreams must
+ * match their static canvas or contained animation frame. Thus the caller's
+ * canvas caps also bound every independently declared frame dimension.
  *
  * @returns the dimensions, or `undefined` if the format is unknown, the
- * header is truncated, or the dimensions are not where the format says they
+ * metadata is truncated, or the dimensions are not where the format says they
  * are — callers must treat `undefined` as "reject".
  */
 export function readImageDimensions(buffer: Uint8Array): ImageDimensions | undefined {
