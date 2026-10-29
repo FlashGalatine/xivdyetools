@@ -176,7 +176,9 @@
       "includeEntryExports": true,
       "entry": ["src/index.ts!", "src/**/*.test.ts", "tests/**/*.ts", "scripts/**/*.{ts,js,mjs}!"],
       // env.d.ts is the `*.vue` shim tsconfig.docs.json includes; nothing imports it.
-      "project": ["src/**/*.ts", "tests/**/*.ts", "scripts/**", "docs/.vitepress/**", "!docs/.vitepress/env.d.ts", "*.ts"],
+      // VitePress creates transient JavaScript here while a concurrent build runs.
+      // Keep its source config/theme in the project; generated output is not source.
+      "project": ["src/**/*.ts", "tests/**/*.ts", "scripts/**", "docs/.vitepress/**", "!docs/.vitepress/.temp/**", "!docs/.vitepress/env.d.ts", "*.ts"],
       "vitepress": {
         "entry": ["docs/.vitepress/config.ts", "docs/.vitepress/theme/index.ts"],
       },

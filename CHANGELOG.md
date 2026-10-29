@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Exclude `codex/release-cut-*` preparation branches from automatic shared-beta deployments; pull-request CI remains available. Production activation remains on hold.
 - Keep the presets test loader's `.js` alias limited to relative source imports, so Windows dependency filenames remain intact when validating intermediate release cuts. No presets runtime behavior changes in this bootstrap.
 - Prepare moderation's initial test-module loading in setup before its request-gate assertions. Every behavioral test still resets and reevaluates the real app; request assertions and timeouts remain unchanged.
+- Keep generated VitePress temporary JavaScript out of Knip's source project during concurrent docs builds. API source, docs configuration and theme files remain analyzed.
 
 ## [2.3.3] - 2026-10-13
 
