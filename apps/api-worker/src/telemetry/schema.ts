@@ -58,8 +58,10 @@ const ENVS = ['production', 'beta'] as const;
 export type TelemetryEnv = (typeof ENVS)[number];
 const VIEWPORTS = ['m', 't', 'd'] as const;
 const DWELL_CAP_S = 1800;
-const VER_MAX_LENGTH = 16;
-const VER_PATTERN = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.]+)?$/;
+// Validate the complete input, then retain only the bounded numeric triple.
+// A negative lookahead for any character makes the end-of-input requirement explicit.
+// Each component keeps its literal digits.
+const VER_PATTERN = /^([0-9]{1,4}\.[0-9]{1,4}\.[0-9]{1,4})(?:-[0-9A-Za-z.]+)?(?![\s\S])/;
 const INVALID = 'invalid';
 
 type Props = Record<string, unknown>;
@@ -127,9 +129,7 @@ function envelopeField(value: unknown, allowed: readonly string[]): string {
 }
 
 function version(value: unknown): string {
-  return typeof value === 'string' && VER_PATTERN.test(value)
-    ? value.slice(0, VER_MAX_LENGTH)
-    : INVALID;
+  return typeof value === 'string' ? (VER_PATTERN.exec(value)?.[1] ?? INVALID) : INVALID;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

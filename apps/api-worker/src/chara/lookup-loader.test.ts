@@ -349,3 +349,95 @@ describe('pending chara lookup reuse', () => {
     }
   });
 });
+
+
+describe('owned-operation quota admission', () => {
+  afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
+  let sequence = 0;
+  function setup(cacheable = true) {
+    resetAllMocks();
+    const base = 'https://quota-owned-' + ++sequence + '.test';
+    const context = { base, version: V, schema: S, cacheNamespace: cacheable ? JSON.stringify([base, V, S]) : null };
+    const ctx = createMockExecutionContext();
+    const client = new XivapiClient({ XIVAPI_BASE: base });
+    const search = vi.spyOn(client, 'searchItems').mockResolvedValue({ rows: [], truncated: false, version: V, schema: S });
+    const glasses = vi.spyOn(client, 'getGlasses').mockResolvedValue({ row: null, version: V, schema: S });
+    const make = (admit: () => Promise<void>) => new CharaLookupLoader(client, context, null, ctx, admit);
+    const flush = () => (ctx as unknown as { _waitForAll(): Promise<unknown> })._waitForAll();
+    return { make, search, glasses, flush };
+  }
+  it('reserves rows and Glasses before asynchronous admission; waiters consume zero', async () => {
+    const { make, search, glasses, flush } = setup();
+    const gate = deferred<void>();
+    const owner = vi.fn(() => gate.promise);
+    const waiter = vi.fn(async () => { throw new Error('waiter must be free'); });
+    const requests = [make(owner).loadRows([A, B]), make(waiter).loadRows([A, B]), make(owner).loadGlasses(3), make(waiter).loadGlasses(3)];
+    expect(owner).toHaveBeenCalledTimes(2);
+    expect(waiter).not.toHaveBeenCalled();
+    expect(search).not.toHaveBeenCalled();
+    expect(glasses).not.toHaveBeenCalled();
+    gate.resolve();
+    await Promise.all(requests);
+    expect(search).toHaveBeenCalledOnce();
+    expect(glasses).toHaveBeenCalledOnce();
+    await flush();
+  });
+  it('charges exactly one newly owned batch for partial overlap', async () => {
+    const { make, search } = setup();
+    const gate = deferred<void>();
+    const admit = vi.fn(() => gate.promise);
+    const requests = [make(admit).loadRows([A, B]), make(admit).loadRows([B, C])];
+    expect(admit).toHaveBeenCalledTimes(2);
+    gate.resolve();
+    await Promise.all(requests);
+    expect(search.mock.calls.map(([lookups]) => lookups)).toEqual([[A, B], [C]]);
+  });
+  it('charges overflow independently while preserving existing waiters', async () => {
+    const { make, search, flush } = setup();
+    const gate = deferred<void>();
+    const admit = vi.fn(() => gate.promise);
+    const work: Promise<unknown>[] = Array.from({ length: 256 }, (_, i) => make(admit).loadRows([{ field: 'Head', key: String(i + 1) }]));
+    work.push(make(admit).loadRows([A]));
+    work.push(make(admit).loadRows([{ field: 'Head', key: '999' }]));
+    work.push(make(admit).loadRows([{ field: 'Head', key: '999' }]));
+    work.push(make(admit).loadGlasses(3));
+    work.push(make(admit).loadGlasses(3));
+    expect(admit).toHaveBeenCalledTimes(260);
+    gate.resolve();
+    await Promise.all(work);
+    expect(search).toHaveBeenCalledTimes(258);
+    await flush();
+  });
+  it('charges every uncached fallback operation', async () => {
+    const { make, search, glasses } = setup(false);
+    const admit = vi.fn(async () => undefined);
+    await Promise.all([make(admit).loadRows([A]), make(admit).loadRows([A]), make(admit).loadGlasses(3), make(admit).loadGlasses(3)]);
+    expect(admit).toHaveBeenCalledTimes(4);
+    expect(search).toHaveBeenCalledTimes(2);
+    expect(glasses).toHaveBeenCalledTimes(2);
+  });
+  it.each(['rows', 'glasses'] as const)('shares typed denials, performs no data fetch, and clears pending %s for retry', async (kind) => {
+    const { make, search, glasses, flush } = setup();
+    const gate = deferred<void>();
+    const deny = vi.fn(() => gate.promise);
+    const free = vi.fn(async () => undefined);
+    const run = (admit: () => Promise<void>) => kind === 'rows' ? make(admit).loadRows([A]) : make(admit).loadGlasses(3);
+    const work = [run(deny), run(free)];
+    const settled = Promise.allSettled(work);
+    expect(free).not.toHaveBeenCalled();
+    const { CharaQuotaError } = await import('./rate-limit');
+    const error = new CharaQuotaError({ allowed: false, remaining: 0, limit: 30, resetAt: new Date(), retryAfter: 10 });
+    gate.reject(error);
+    const results = await settled;
+    for (const result of results) {
+      expect(result.status).toBe('rejected');
+      if (result.status === 'rejected') expect(result.reason).toBe(error);
+    }
+    expect(search).not.toHaveBeenCalled();
+    expect(glasses).not.toHaveBeenCalled();
+    await flush();
+    await run(free);
+    expect(free).toHaveBeenCalledOnce();
+    expect(kind === 'rows' ? search : glasses).toHaveBeenCalledOnce();
+  });
+});

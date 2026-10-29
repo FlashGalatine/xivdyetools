@@ -17,7 +17,7 @@ import type { CacheConfig } from '../universalis/types.js';
 import type { GlassesRow, ItemRow, SlotLookup } from './types.js';
 import { lookupKey } from './types.js';
 
-/** ~7 days fresh, one day of stale-while-revalidate headroom. */
+/** ~7 days fresh, one day retained for stale serving; no background refresh. */
 export const CHARA_CACHE_CONFIG: CacheConfig = {
   cacheTtl: 7 * 24 * 60 * 60,
   swrWindow: 24 * 60 * 60,
@@ -31,9 +31,9 @@ const CACHE_NAME = 'chara-resolve';
  * Grand Company lock and no longer the job list. 4: equipment level permits
  * filtering unobtainable Dated rows at level 50 and below. 5: rows carry the
  * ItemUICategory row, which decides whether the main hand takes an off-hand in
- * the GPOSERS list.
+ * the GPOSERS list. 6: names pass the bounded shared Unicode cleaner.
  */
-export const CHARA_ROW_SHAPE_VERSION = 5;
+export const CHARA_ROW_SHAPE_VERSION = 6;
 
 export class CharaRowCache {
   private readonly service: CacheService;

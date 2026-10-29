@@ -25,6 +25,7 @@ import { successResponse } from '../lib/response.js';
 import { parseIntParam } from '../lib/validation.js';
 import { CharaIconCache } from './icon-cache.js';
 import { loadIcon } from './icons.js';
+import { CharaQuotaError, charaQuotaResponse, createCharaAdmission } from './rate-limit.js';
 import { CharaLookupLoader } from './lookup-loader.js';
 import { CharaRowCache } from './cache.js';
 import { lookupsFor, resolveCharaEquipment } from './resolver.js';
@@ -191,6 +192,7 @@ function upstreamDown(error: unknown): never {
 
 charaRouter.post('/resolve', async (c) => {
   const request = parseResolveBody(await readJsonBody(c.req.raw));
+  const admit = createCharaAdmission(c.env, c.req.raw);
   const client = new XivapiClient(c.env);
   // OPT-002: the ko/zh and acquisition tables load on first use. Start that
   // now so it overlaps the cache read and the upstream search instead of
@@ -199,15 +201,11 @@ charaRouter.post('/resolve', async (c) => {
   // fails earlier — the awaited promise below still rejects.
   const tablesReady = Promise.all([loadRegionalNames(), loadAcquisition()]);
   tablesReady.catch(() => undefined);
-  // Same cast as the Universalis router — Hono's ctx type lags workers-types.
-  // OPT-004 dropped the origin argument: `CacheService` builds its synthetic
-  // keys from a fixed host now, so which of the worker's domains a request
-  // arrived on no longer partitions the cache. `CACHE_NAME` was always the
-  // real namespace.
   // Capture the full snapshot once; no shared cache exists for an unresolved alias.
   const contextPending = client.resolveContext();
   c.executionCtx.waitUntil(contextPending.catch(() => undefined));
   const context = await contextPending;
+  // Hono's execution context type lags workers-types; cast at the cache boundary.
   const cache =
     context.cacheNamespace === null
       ? null
@@ -217,7 +215,7 @@ charaRouter.post('/resolve', async (c) => {
   const rows = cache ? await cache.getRows(lookups) : new Map<string, ItemRow[]>();
   const misses = lookups.filter((l) => !rows.has(lookupKey(l)));
 
-  const loader = new CharaLookupLoader(client, context, cache, c.executionCtx as ExecutionContext);
+  const loader = new CharaLookupLoader(client, context, cache, c.executionCtx as ExecutionContext, admit);
   let version: string | null = null;
   let upstreamCalls = 0;
   try {
@@ -280,6 +278,7 @@ charaRouter.post('/resolve', async (c) => {
     c.header('X-Cache', upstreamCalls === 0 ? 'HIT' : 'MISS');
     return successResponse(c, data);
   } catch (error) {
+    if (error instanceof CharaQuotaError) return charaQuotaResponse(c, error);
     return upstreamDown(error);
   }
 });
@@ -312,13 +311,14 @@ charaRouter.get('/icon/:iconId', async (c) => {
       400,
     );
   }
+  const admit = createCharaAdmission(c.env, c.req.raw);
   const client = new XivapiClient(c.env);
   const contextPending = client.resolveAssetContext(version);
   c.executionCtx.waitUntil(contextPending.catch(() => undefined));
   const context = await contextPending;
   const cache = new CharaIconCache();
   try {
-    const payload = await loadIcon(client, context, iconId, cache);
+    const payload = await loadIcon(client, context, iconId, cache, admit);
     if (payload.cacheUpdate) {
       c.executionCtx.waitUntil(cache.put(context, iconId, payload.cacheUpdate));
     }
@@ -336,6 +336,7 @@ charaRouter.get('/icon/:iconId', async (c) => {
       },
     });
   } catch (error) {
+    if (error instanceof CharaQuotaError) return charaQuotaResponse(c, error);
     return upstreamDown(error);
   }
 });

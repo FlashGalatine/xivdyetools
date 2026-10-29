@@ -253,6 +253,86 @@ describe('universalis router', () => {
     expect(key.startsWith('universalis:ip:203.0.113.9')).toBe(true);
   });
 
+  it.each(['native', 'KV'])('groups /64 cache misses through the %s backend', async (backend) => {
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(1_800_000_000_000);
+    const binding = fakeBinding(1);
+    const kv = createMockKV();
+    const e = {
+      ...env, RATE_LIMIT_REQUESTS: '1', RATE_LIMIT: kv,
+      ...(backend === 'native' ? { UNIVERSALIS_RATE_LIMITER: binding } : {}),
+    } as unknown as Env;
+    const ctx = ctxFor();
+    stubUpstream();
+    try {
+      const statuses = [];
+      const addresses = ['2001:db8:abcd:1234::1', '2001:0DB8:ABCD:1234:ffff::2', '2001:db8:abcd:1235::1'];
+      for (const [i, ip] of addresses.entries()) {
+        const res = await app.request(`/universalis/aggregated/Crystal/${7601 + i}`, {
+          headers: { 'CF-Connecting-IP': ip, 'X-Forwarded-For': `198.51.100.${i}` },
+        }, e, ctx);
+        statuses.push(res.status);
+      }
+      expect(statuses).toEqual([200, 429, 200]);
+      expect(fetch).toHaveBeenCalledTimes(2);
+      if (backend === 'native') {
+        expect(Object.keys(binding.counts)).toEqual([
+          'universalis:ip:2001:db8:abcd:1234:::t1_60',
+          'universalis:ip:2001:db8:abcd:1235:::t1_60',
+        ]);
+      } else {
+        const keys = (await kv.list()).keys.map((entry) => entry.name);
+        expect(keys).toHaveLength(2);
+        expect(keys.some((key) => key.startsWith('universalis:ip:2001:db8:abcd:1234::'))).toBe(true);
+        expect(keys.some((key) => key.startsWith('universalis:ip:2001:db8:abcd:1235::'))).toBe(true);
+      }
+      await waitAll(ctx);
+    } finally {
+      clock.mockRestore();
+    }
+  });
+
+  it.each(['native', 'KV'])('preserves IPv4 and service identity through the %s backend', async (backend) => {
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(1_800_000_000_000);
+    const binding = fakeBinding(1);
+    const service = fakeBinding(1);
+    const kv = createMockKV();
+    const e = {
+      ...env, RATE_LIMIT_REQUESTS: '1', RATE_LIMIT: kv,
+      ...(backend === 'native' ? { UNIVERSALIS_RATE_LIMITER: binding, UNIVERSALIS_SERVICE_RATE_LIMITER: service } : {}),
+    } as unknown as Env;
+    const ctx = ctxFor();
+    stubUpstream();
+    try {
+      const statuses = [];
+      for (const [i, ip] of ['203.0.113.9', '::ffff:203.0.113.9', '::ffff:cb00:7109', '203.0.113.10'].entries()) {
+        statuses.push((await app.request(`/universalis/aggregated/Crystal/${7701 + i}`, {
+          headers: { 'CF-Connecting-IP': ip, 'X-Forwarded-For': `198.51.100.${i}` },
+        }, e, ctx)).status);
+      }
+      expect(statuses).toEqual([200, 429, 429, 200]);
+      // Neither absent headers nor XFF-only callers become public clients.
+      expect((await app.request('/universalis/aggregated/Crystal/7710', {}, e, ctx)).status).toBe(200);
+      expect((await app.request('/universalis/aggregated/Crystal/7711', {
+        headers: { 'X-Forwarded-For': '2001:db8::1' },
+      }, e, ctx)).status).toBe(backend === 'native' ? 429 : 200);
+      if (backend === 'native') {
+        expect(Object.keys(binding.counts)).toEqual([
+          'universalis:ip:203.0.113.9:t1_60', 'universalis:ip:203.0.113.10:t1_60',
+        ]);
+        expect(service.counts).toEqual({ 'universalis:svc:svc:universalis:t20_60': 2 });
+      } else {
+        const keys = (await kv.list()).keys.map((entry) => entry.name);
+        expect(keys).toHaveLength(3);
+        expect(keys.filter((key) => key.startsWith('universalis:svc:svc:universalis'))).toHaveLength(1);
+        expect(keys.some((key) => key.includes('203.0.113.9'))).toBe(true);
+        expect(keys.some((key) => key.includes('203.0.113.10'))).toBe(true);
+      }
+      await waitAll(ctx);
+    } finally {
+      clock.mockRestore();
+    }
+  });
+
   /**
    * BUG-048: every IP-less caller shared one public-sized bucket. discord-worker
    * builds its sub-request with no `CF-Connecting-IP`, so `getClientIp`

@@ -32,7 +32,7 @@
 | **Moderation Bot** | v1.8.2 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.2.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.8.2 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
-| **Public REST API** | v0.21.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
+| **Public REST API** | v0.21.1 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
 | **OpenGraph Worker** | v2.12.0 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.3.3 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
@@ -658,6 +658,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v0.21.1 | Oct 2026 | A-API: bounded and sanitized upstream character data, dedicated cache-miss soft budgets, current-version-only icon overrides, IPv6 /64 adoption and numeric-only telemetry versions; pinned/checksummed item-name inputs and controlled ko/zh/ja refresh with 65 additional Korean names, using unchanged fonts |
 | v0.21.0 | Oct 2026 | Snapshot/schema-aware equipment caching, optional versioned icon URLs and conditional PNG refresh, isolate-local Item/Glasses miss coalescing |
 | v0.20.1 | Oct 2026 | Acquisition lines for 671 older tomestone items omit the redundant base-item upgrade exchange when a reachable vendor sells the item outright for Poetics |
 | v0.20.0 | Oct 2026 | `uiCategory` (the named item's ItemUICategory row) on each resolved item, so the GPOSERS list can tell which main hands take an Off Hand; row cache shape 5 (every cached row refetches once) |
@@ -722,6 +723,7 @@ and the [rollout runbook](operations/security-remediation-2026-09-15.md) for the
 
 | Consumer | Minimum Core Version | Notes |
 |----------|---------------------|-------|
+| xivdyetools-api-worker v0.21.1 | @xivdyetools/core v5.16.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
 | xivdyetools-discord-worker v5.9.7 | @xivdyetools/auth v3.0.0; @xivdyetools/bot-logic v4.12.0; @xivdyetools/svg v4.4.1; @xivdyetools/core v5.16.0; @xivdyetools/logger v2.4.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
 | xivdyetools-presets-api v2.8.1 | @xivdyetools/auth v3.0.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
 | xivdyetools-oauth-worker v3.2.0 | @xivdyetools/auth v3.0.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |

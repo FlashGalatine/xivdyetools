@@ -23,8 +23,8 @@ Sixteen `/v1` endpoints (14 `GET`, 2 `POST`) wrapping `@xivdyetools/core` with a
 | `GET` | `/v1/wheels/:id` | One wheel's `ringStops` (`?stops=` 3–360, default 72) plus every dye's `wheelHue` |
 | `GET` | `/v1/harmony/types` | The ten harmony types with their `offsets` and a localized `name` |
 | `GET` | `/v1/harmony?dye=\|hex=&type=&wheel=` | Harmony slots over the filtered dye database (core's `generateHarmonySlots`) |
-| `POST` | `/v1/chara/resolve` | `.chara` equipment-model resolution — body `{ gear: [...], glasses? }`; one XIVAPI search per file, edge-cached |
-| `GET` | `/v1/chara/icon/:iconId` | Item icon PNG proxied from XIVAPI, edge-cached 30 d immutable |
+| `POST` | `/v1/chara/resolve` | `.chara` equipment-model resolution — body `{ gear: [...], glasses? }`; cached Item/Glasses lookups, with one batched Item search when needed |
+| `GET` | `/v1/chara/icon/:iconId` | Validated PNG proxy; browser TTL 300 s unversioned or 30 d immutable for an accepted current game key |
 | `POST` | `/v1/telemetry` | **Internal and undocumented** — web-app opt-in usage telemetry → Analytics Engine. Origin-gated, own rate-limit bucket, always answers a bare `204`. Not part of the public contract and may change without notice |
 
 Outside `/v1` (no envelope, no locale, separate rate limit — see [Universalis Proxy](#universalis-proxy)):
@@ -184,28 +184,53 @@ tests/
 | `API_RATE_LIMITER` | Rate Limiting binding (`[[ratelimits]]`, 65 / 60 s) | The `/v1/*` per-IP limiter |
 | `TELEMETRY_RATE_LIMITER` | Rate Limiting binding (`[[ratelimits]]`, 240 / 60 s) | `POST /v1/telemetry`'s own bucket — fails **closed** |
 | `SERVICE_RATE_LIMITER` | Rate Limiting binding (`[[ratelimits]]`, 1300 / 60 s) | Our own workers on `/v1/*` over a service binding (no client IP, one shared key) |
-| `RATE_LIMIT` | KV Namespace | Fallback rate-limit counters when a binding is absent (`api:ip:` / `telemetry:ip:`) |
+| `UNIVERSALIS_RATE_LIMITER` | Rate Limiting binding (`[[ratelimits]]`, 30 / 60 s production, 60 development) | Universalis cache-miss budget |
+| `UNIVERSALIS_SERVICE_RATE_LIMITER` | Rate Limiting binding (`[[ratelimits]]`, 600 / 60 s production, 1200 development) | Separate shared service key for Universalis misses |
+| `CHARA_RATE_LIMITER` | Rate Limiting binding (`[[ratelimits]]`, 30 / 60 s production, 60 development) | Dedicated public Chara upstream-operation budget; cache hits and existing Item/Glasses waiters are free of this additional budget |
+| `CHARA_SERVICE_RATE_LIMITER` | Rate Limiting binding (`[[ratelimits]]`, 600 / 60 s production, 1200 development) | Separate shared service key, 20× the public Chara allowance |
+| `RATE_LIMIT` | KV Namespace | Fallback counters for API, telemetry, Universalis and Chara scopes, using isolated prefixes |
 | `ANALYTICS` | Analytics Engine dataset | `xivdyetools_web_analytics` (prod) / `_dev`; absent → telemetry accepts and discards |
 | `ASSETS` | Static Assets (production only) | `docs/.vitepress/dist`, served for the `developers.xivdyetools.app` host |
 | `ENVIRONMENT` | Variable | `development` or `production` |
 | `API_VERSION` | Variable | Currently `v1` |
 | `UNIVERSALIS_API_BASE` | Variable | `https://universalis.app/api/v2` |
 | `RATE_LIMIT_REQUESTS` / `RATE_LIMIT_WINDOW_SECONDS` | Variable | Proxy limiter — `30`/`60` production, `60`/`60` dev |
-| `XIVAPI_BASE` / `XIVAPI_VERSION` | Variable | `/v1/chara/*` upstream (`https://v2.xivapi.com`) and the game-version pin; the row cache is namespaced by the real key (a pinned key as is, `latest` resolved through `/api/version`) |
+| `XIVAPI_BASE` / `XIVAPI_VERSION` | Variable | `/v1/chara/*` upstream (`https://v2.xivapi.com`) and game selector; a bounded Item/1 metadata probe captures canonical game/schema identity for row caching |
 | `XIVAPI_SCHEMA` | Variable (optional) | `exdschema@2:rev:<sha>` pin so an upstream field rename cannot break parsing |
 
 Production routes: `data.xivdyetools.app`, `proxy.xivdyetools.app`, `developers.xivdyetools.app`. The retired `proxy.xivdyetools.projectgalatine.com` was removed on 2026-10-05.
 
 ## Deployment
 
-```bash
-pnpm --filter xivdyetools-api-worker run deploy              # DEV worker (xivdyetools-api-worker-dev, no routes)
-pnpm --filter xivdyetools-api-worker run deploy:production   # Production (data / proxy / developers domains) — run build:docs first
-```
+Local development uses `pnpm --filter xivdyetools-api-worker run dev`. The retired
+`xivdyetools-api-worker-dev` was deleted on 2026-10-26; the retained bare `deploy` script
+would recreate that routeless worker. There is no API beta or staging deployment in this sprint.
 
-Normally you don't run either: merging to `main` triggers `.github/workflows/deploy-api-worker.yml`, which builds, tests, builds the docs, deploys `--env production` and smoke-tests `/health` and the docs site.
+Merging to `main` triggers `.github/workflows/deploy-api-worker.yml`, which builds, tests,
+builds the docs, deploys `--env production` and smoke-tests `/health` and the docs site.
+See [`docs/operations/DEPLOY_ENVIRONMENTS.md`](../../docs/operations/DEPLOY_ENVIRONMENTS.md)
+for operator procedures. Source preparation and local dry runs do not deploy production.
 
-> ⚠️ A bare `wrangler deploy` does **not** mean "staging" across this monorepo — the target depends on each worker's `wrangler.toml`. Production always needs an explicit `--env production`. See [`docs/operations/DEPLOY_ENVIRONMENTS.md`](../../docs/operations/DEPLOY_ENVIRONMENTS.md).
+### Character-data safety and source provenance
+
+Search/Glasses JSON is streamed with 2 MiB / 32 KiB caps before parsing. Upstream and
+regional names share a 128-code-point cleaner; row shape 6 excludes old unnormalized
+entries. A dedicated Chara budget counts owned search batches, Glasses fetches and icon
+fetches/revalidations. It retains the documented public-read fail-open policy on runtime
+backend errors; explicit denial returns 429. Native limits are approximate per location.
+
+Explicit icon versions must match the configured canonical game pin or captured current
+game key. A game pin alone is enough for icons; otherwise bounded, memoized Item/1 discovery
+supplies the key. Unknown query parameters do not change storage identity.
+
+The item-name builder pins immutable Teamcraft/datamining inputs and records exact source-byte
+SHA256 hashes per affected language. Local CSVs use their pinned commit's content. The
+[controlled 2026-10-29 refresh](../../docs/audits/2026-10-26-security/evidence/remediation-item-name-provenance-2026-10-29.md)
+records current ko/zh/ja provenance and per-language counts; the legacy shared metadata fields
+remain a historical snapshot. It does not reconstruct older source provenance. Runtime
+normalization still protects the boundary independently of build-time validation. Verify
+Discord's actual item-name/regional-font gates after each refresh and re-cut only if the
+required drawable coverage changes.
 
 ## Documentation Site
 

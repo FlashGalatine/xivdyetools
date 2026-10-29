@@ -137,7 +137,7 @@ function resolveRateLimitScope(
   request: Request,
   config: RateLimitConfig
 ): { key: string; scope: ProxyRateLimitScope; config: RateLimitConfig } {
-  const clientIP = getClientIp(request);
+  const clientIP = getClientIp(request, { ipv6Prefix64: true });
   if (clientIP !== 'unknown') {
     return { key: clientIP, scope: 'ip', config };
   }

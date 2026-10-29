@@ -73,7 +73,7 @@ function selectServiceRateLimiter(env: Env): RateLimiter {
 
 /** A request from one of our own workers over a service binding (no client IP). */
 function isServiceBinding(c: Context): boolean {
-  return getClientIp(c.req.raw) === 'unknown';
+  return getClientIp(c.req.raw, { ipv6Prefix64: true }) === 'unknown';
 }
 
 /** `POST /v1/telemetry` — carved out of the API bucket, limited on its own (see below). */
@@ -114,7 +114,7 @@ export function createApiRateLimitMiddleware(
   });
   const publicLimiter = createRateLimitMiddleware({
     backend: (c: Context<{ Bindings: Env }>) => selectApiRateLimiter(c.env),
-    keyExtractor: (c) => getClientIp(c.req.raw),
+    keyExtractor: (c) => getClientIp(c.req.raw, { ipv6Prefix64: true }),
     config: API_LIMIT,
     onError: 'fail-open',
     formatError: (c: Context<{ Bindings: Env; Variables: Variables }>, retryAfter) =>
@@ -133,8 +133,23 @@ export function createApiRateLimitMiddleware(
         429,
       ),
   });
-  const limiter: MiddlewareHandler = (c, next) =>
-    isServiceBinding(c) ? service(c, next) : publicLimiter(c, next);
+  const limiter: MiddlewareHandler = async (c, next) => {
+    // A downstream miss budget owns its 429 headers. The shared middleware
+    // applies general admission headers after next(), so retain only an
+    // explicit downstream denial's values in this request-local snapshot.
+    const deniedHeaders = new Headers();
+    const captureDenial = async (): Promise<void> => {
+      await next();
+      if (c.res.status !== 429) return;
+      for (const name of ['X-RateLimit-Limit', 'X-RateLimit-Remaining', 'X-RateLimit-Reset']) {
+        const value = c.res.headers.get(name);
+        if (value !== null) deniedHeaders.set(name, value);
+      }
+    };
+    const result = await (isServiceBinding(c) ? service(c, captureDenial) : publicLimiter(c, captureDenial));
+    deniedHeaders.forEach((value, name) => c.header(name, value));
+    return result;
+  };
   if (!skipPath) return limiter;
   return async (c, next) => {
     if (skipPath(c.req.path)) {
@@ -196,7 +211,7 @@ export function selectTelemetryRateLimiter(env: Env): RateLimiter {
 export function createTelemetryRateLimitMiddleware(): MiddlewareHandler {
   return createRateLimitMiddleware({
     backend: (c: Context<{ Bindings: Env }>) => selectTelemetryRateLimiter(c.env),
-    keyExtractor: (c) => getClientIp(c.req.raw),
+    keyExtractor: (c) => getClientIp(c.req.raw, { ipv6Prefix64: true }),
     config: TELEMETRY_LIMIT,
     onError: 'fail-closed',
     formatError: (c: Context<{ Bindings: Env; Variables: Variables }>, retryAfter) =>

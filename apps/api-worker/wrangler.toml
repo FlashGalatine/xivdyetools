@@ -85,6 +85,17 @@ name = "UNIVERSALIS_SERVICE_RATE_LIMITER"
 namespace_id = "1010"
 simple = { limit = 1200, period = 60 }
 
+# Dedicated chara upstream-operation budgets (no burst).
+[[ratelimits]]
+name = "CHARA_RATE_LIMITER"
+namespace_id = "1062"
+simple = { limit = 60, period = 60 }
+
+[[ratelimits]]
+name = "CHARA_SERVICE_RATE_LIMITER"
+namespace_id = "1064"
+simple = { limit = 1200, period = 60 }
+
 # Web-app opt-in telemetry (POST /v1/telemetry → Analytics Engine). Separate
 # dev dataset so `pnpm dev` traffic never lands in the production series.
 [[analytics_engine_datasets]]
@@ -160,6 +171,16 @@ simple = { limit = 30, period = 60 }
 [[env.production.ratelimits]]
 name = "UNIVERSALIS_SERVICE_RATE_LIMITER"
 namespace_id = "1009"
+simple = { limit = 600, period = 60 }
+
+[[env.production.ratelimits]]
+name = "CHARA_RATE_LIMITER"
+namespace_id = "1061"
+simple = { limit = 30, period = 60 }
+
+[[env.production.ratelimits]]
+name = "CHARA_SERVICE_RATE_LIMITER"
+namespace_id = "1063"
 simple = { limit = 600, period = 60 }
 
 # Web-app telemetry — production dataset. Beta (beta.xivdyetools.app) also

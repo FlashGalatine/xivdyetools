@@ -45,6 +45,7 @@ export class CharaLookupLoader {
     private readonly context: XivapiContext,
     private readonly cache: CharaRowCache | null,
     private readonly executionCtx: ExecutionContext,
+    private readonly admit?: () => Promise<void>,
   ) {}
 
   private key(operation: string, id: string | number): string {
@@ -52,6 +53,7 @@ export class CharaLookupLoader {
   }
 
   private async fetchRows(misses: readonly SlotLookup[]): Promise<RowsResult> {
+    if (this.admit) await this.admit();
     const result = await this.client.searchItems(misses, this.context);
     const index = indexRows(result.rows);
     const rows = new Map<string, ItemRow[]>();
@@ -125,6 +127,7 @@ export class CharaLookupLoader {
   }
 
   private async fetchGlasses(id: number): Promise<GlassesResult> {
+    if (this.admit) await this.admit();
     const result = await this.client.getGlasses(id, this.context);
     if (this.context.cacheNamespace !== null) this.cache?.storeGlasses(id, result.row);
     return result;
