@@ -27,7 +27,7 @@
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
 | **Web Application** | v5.16.0 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v5.9.0 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
+| **Discord Bot** | v5.9.1 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.4 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.8.2 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.3 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
@@ -209,6 +209,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.9.1 | Oct 2026 | Prepared font readiness: preserve all existing Japanese/Simplified Chinese glyphs and add characters needed by the pending shared bot catalog; runtime handlers and bindings unchanged |
 | v5.9.0 | Oct 2026 | Core 5.15.0 + bot-logic 4.11.0: `/swatch` and `/glamour` pass the attachment's capped bytes to the `xivcharakit`-backed reader (invalid UTF-8 refused), `/glamour` opens gear-only files, unmatched or unreadable colors, gear and dyes get a fixed line; attachment guards unchanged; no command shape change; bundle 2,732.6 KiB gzip (88.9 % of the cap) |
 | v5.8.15 | Oct 2026 | Core 5.13.0 + 5.14.0, bot-logic 4.10.0 (2026-10-15 import review): `/swatch` and `/glamour` refuse an attachment not named `.chara` before deferring, and the cap is 8 KiB (was 1 MiB) on the reported size and the streamed download, with an 8 KB message; no command shape changes |
 | v5.8.14 | Oct 2026 | bot-logic 4.9.0 (no source change here): `/glamour`'s list leaves out invisible pieces and an Off Hand the main hand doesn't take; the card is unchanged; no command shape changes |
