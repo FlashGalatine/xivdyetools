@@ -164,27 +164,55 @@ describe('bounded identity continuity waits', () => {
 
   it('get and apply share one deadline, and a late rejection stays handled', async () => {
     const peer = boundary();
-    const entered = deferred<void>();
+    const getEntered = deferred<void>();
+    const applyEntered = deferred<void>();
+    const decodeEntered = deferred<void>();
+    const releaseDecode = deferred<void>();
     const held = deferred<unknown>();
+    const digest = crypto.subtle.digest.bind(crypto.subtle);
+    let delayDecode = true;
+    const digestSpy = vi
+      .spyOn(crypto.subtle, 'digest')
+      .mockImplementation(async (algorithm, data) => {
+        const result = await digest(algorithm, data);
+        if (delayDecode && journal().length === 1) {
+          delayDecode = false;
+          decodeEntered.resolve();
+          await releaseDecode.promise;
+        }
+        return result;
+      });
     peer.remote.getOperation = async (input) => {
-      await new Promise((resolve) => setTimeout(resolve, 4000));
+      const delay = new Promise((resolve) => setTimeout(resolve, 4000));
+      getEntered.resolve();
+      await delay;
       return { v: 1, ...input, status: 'missing' };
     };
     peer.remote.apply = async () => {
-      entered.resolve();
+      applyEntered.resolve();
       return held.promise;
     };
     const login = observe(findOrCreateUser(fixture.db, params, undefined, peer.config));
-    await vi.waitFor(() => expect(journal()).toHaveLength(1), { interval: 1 });
-    await vi.advanceTimersByTimeAsync(4000);
-    await entered.promise;
-    await vi.advanceTimersByTimeAsync(1000);
-    expect(login).toMatchObject({ status: 'rejected', error: { code: 'unavailable' } });
-    held.reject(new Error('late transport rejection'));
-    await vi.advanceTimersByTimeAsync(1);
-    expect(journal()[0]).toMatchObject({ state: 'pending', resolution: null });
-    expect(identities()).toHaveLength(1);
-    expect(locks()).toHaveLength(4);
+    try {
+      await decodeEntered.promise;
+      expect(journal()).toHaveLength(1);
+      await setImmediate();
+      // Journal persistence precedes async decode: wait for the actual remote timer installation.
+      releaseDecode.resolve();
+      await getEntered.promise;
+      await vi.advanceTimersByTimeAsync(4000);
+      await applyEntered.promise;
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(login).toMatchObject({ status: 'rejected', error: { code: 'unavailable' } });
+      held.reject(new Error('late transport rejection'));
+      await vi.advanceTimersByTimeAsync(1);
+      expect(journal()[0]).toMatchObject({ state: 'pending', resolution: null });
+      expect(identities()).toHaveLength(1);
+      expect(locks()).toHaveLength(4);
+    } finally {
+      releaseDecode.resolve();
+      digestSpy.mockRestore();
+    }
   });
 
   it.each(['applied', 'refused'] as const)(

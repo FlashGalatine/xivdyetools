@@ -46,6 +46,9 @@ identity splitting is disabled, and this release declares no outbound continuity
 
 ### Operations
 
+- Deadline regression tests wait for the actual continuity-call timer to start after asynchronous
+  journal decoding. A persisted journal alone is not that signal; slower CI crypto scheduling
+  no longer leaves the test waiting on an unadvanced fake clock. All deadline assertions remain.
 - Apply additive users migration `0002_identity_transitions.sql` before the dependent deployment,
   using `wrangler d1 execute --file` once. Never replay migrations with `d1 migrations apply`.
 - Verify the provider, then the later presets/moderation enforcement and disclosures, before a

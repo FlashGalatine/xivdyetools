@@ -126,3 +126,17 @@ The actual top-level OAuth production configuration bundles locally at **192.11 
 Configuration flags and bindings are unchanged. Filename-aware staged and outgoing-history
 secret scans are required before the feature push; the private support packet and XIVAuth
 report remain outside the tracked paths.
+
+### CI fixture follow-up
+
+The first [CI run 40874021209](https://github.com/FlashGalatine/xivdyetools/actions/runs/40874021209)
+at `f5b4b4f8` passes the security scan, production dependency audit and Chromium job, but the
+OAuth suite has **574 passes /one timeout**. The new shared-deadline test advances fake time
+after journal persistence, before asynchronous WebCrypto decoding necessarily starts the remote
+timer. It can then await a signal whose timer has not been advanced. Production code is unchanged.
+
+A controlled real-WebCrypto completion barrier reproduces that race with an ordinary assertion
+failure. The corrected fixture waits for an explicit timer-installed signal, retains the 4s + 1s
+shared-deadline assertions and restores its crypto spy in `finally`. The independent-apply-budget
+mutation still fails; exact production bytes are restored. Focused **18/18**, full OAuth
+**575/575**, unchanged coverage, types and lint/knip pass. No timeout or assertion is weakened.
