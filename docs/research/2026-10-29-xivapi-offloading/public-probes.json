@@ -1,0 +1,490 @@
+{
+  "capturedAtUtc": "2026-10-29T15:13:52.7087145Z",
+  "scope": "Public read-only sample probes; no player data, load test or production change",
+  "version": "0874aee069e1e7c4",
+  "schema": "exdschema@2:rev:e773c41a90aed788cf4c1c48469fa85618ef01fb",
+  "limitations": [
+    "Elapsed times are single local client observations, not performance guarantees.",
+    "Response-body hashes cover UTF-8 response text after HTTP decoding.",
+    "Samples do not certify all rows, regional mappings, vendor completeness or upstream availability."
+  ],
+  "requests": [
+    {
+      "label": "version-discovery",
+      "url": "https://v2.xivapi.com/api/version",
+      "status": 200,
+      "elapsedMs": 927,
+      "utf8BodySha256": "b9d65cb35b3c9c55b2f79db7939c43da875eef77aaafefd1ca3c578fc7ed07c5",
+      "cors": ["*"],
+      "data": {
+        "versions": [
+          {
+            "key": "f815390159effefd",
+            "names": ["7.0"]
+          },
+          {
+            "key": "2139246928a48a9a",
+            "names": ["7.0x1"]
+          },
+          {
+            "key": "9655898c640ad1ef",
+            "names": ["7.01"]
+          },
+          {
+            "key": "9f49c502be94f1cb",
+            "names": ["7.05"]
+          },
+          {
+            "key": "cb4adbbad896fd36",
+            "names": ["7.05x1"]
+          },
+          {
+            "key": "aa91b22d53e320e2",
+            "names": ["7.05x2"]
+          },
+          {
+            "key": "c5588cafa6193f5d",
+            "names": ["7.1"]
+          },
+          {
+            "key": "0dcbb177b45846dd",
+            "names": ["7.11"]
+          },
+          {
+            "key": "9304a94a499b09bd",
+            "names": ["7.15"]
+          },
+          {
+            "key": "c407ffcb5501cb05",
+            "names": ["7.16"]
+          },
+          {
+            "key": "b1cdf0cf781ca18f",
+            "names": ["7.16x1"]
+          },
+          {
+            "key": "d165865617b32007",
+            "names": ["7.18"]
+          },
+          {
+            "key": "ef196edd35f93b37",
+            "names": ["7.18x1"]
+          },
+          {
+            "key": "74f6e4449ea4d505",
+            "names": ["7.2"]
+          },
+          {
+            "key": "84fa1c82e217628b",
+            "names": ["7.2x1"]
+          },
+          {
+            "key": "b790445c5b50ac36",
+            "names": ["7.21"]
+          },
+          {
+            "key": "b5ca0769a630a7c4",
+            "names": ["7.25"]
+          },
+          {
+            "key": "11efa3262e72927a",
+            "names": ["7.25x1"]
+          },
+          {
+            "key": "e7c29057fb5d5300",
+            "names": ["7.25x2"]
+          },
+          {
+            "key": "3b97153049d1232d",
+            "names": ["7.25x3"]
+          },
+          {
+            "key": "994cabd497f33d52",
+            "names": ["7.3"]
+          },
+          {
+            "key": "f9b9d5bb37918ad6",
+            "names": ["7.3x1"]
+          },
+          {
+            "key": "c5c0a504f9fb8434",
+            "names": ["7.31"]
+          },
+          {
+            "key": "a7c064d464246124",
+            "names": ["7.31x1"]
+          },
+          {
+            "key": "bcb98a8d444ca9ca",
+            "names": ["7.35"]
+          },
+          {
+            "key": "d151ba652709a159",
+            "names": ["7.35x1"]
+          },
+          {
+            "key": "3309dd1cf84f989d",
+            "names": ["7.38"]
+          },
+          {
+            "key": "b0cc20faae7dd1a6",
+            "names": ["7.4"]
+          },
+          {
+            "key": "b8c6217fd8cf5074",
+            "names": ["7.4x1"]
+          },
+          {
+            "key": "309a1e90d28b6bc6",
+            "names": ["7.4x2"]
+          },
+          {
+            "key": "59d76de80e613d05",
+            "names": ["7.41"]
+          },
+          {
+            "key": "98ec9341db247bc3",
+            "names": ["7.41x1"]
+          },
+          {
+            "key": "d88a1cf841bc2ac8",
+            "names": ["7.45"]
+          },
+          {
+            "key": "b15bb2cbb4ab3f96",
+            "names": ["7.45x1"]
+          },
+          {
+            "key": "1710226608647fbb",
+            "names": ["7.45x2"]
+          },
+          {
+            "key": "b270c087356fb0ac",
+            "names": ["7.5"]
+          },
+          {
+            "key": "6621d5bc88409554",
+            "names": ["7.5x1"]
+          },
+          {
+            "key": "9183b12d5dfc05bf",
+            "names": ["7.51"]
+          },
+          {
+            "key": "9ed444e23f6a7217",
+            "names": ["7.51x1"]
+          },
+          {
+            "key": "f8764efd76cdb31a",
+            "names": ["7.51x2"]
+          },
+          {
+            "key": "7583112015aaef5d",
+            "names": ["7.55"]
+          },
+          {
+            "key": "c3f948214b90e498",
+            "names": ["7.55x1"]
+          },
+          {
+            "key": "284bb7f44b9c0976",
+            "names": ["7.55x2"]
+          },
+          {
+            "key": "f5af21155b99a524",
+            "names": ["7.56"]
+          },
+          {
+            "key": "541c0c12e07da325",
+            "names": ["7.56x1"]
+          },
+          {
+            "key": "5c744a8d8daafb25",
+            "names": ["7.57"]
+          },
+          {
+            "key": "0874aee069e1e7c4",
+            "names": ["latest", "7.57x1"]
+          }
+        ]
+      }
+    },
+    {
+      "label": "stain-discovery",
+      "url": "https://v2.xivapi.com/api/sheet/Stain/1?fields=Name,Color,Shade,SubOrder,IsMetallic&version=0874aee069e1e7c4",
+      "status": 200,
+      "elapsedMs": 318,
+      "utf8BodySha256": "3dac39b8471dd58c90903c9b9d6f42140859c1bcef62eb27ecb41f11283cdc31",
+      "cors": ["*"],
+      "data": {
+        "schema": "exdschema@2:rev:e773c41a90aed788cf4c1c48469fa85618ef01fb",
+        "version": "0874aee069e1e7c4",
+        "row_id": 1,
+        "fields": {
+          "Color": 14999504,
+          "IsMetallic": false,
+          "Name": "Snow White",
+          "Shade": 2,
+          "SubOrder": 2
+        }
+      }
+    },
+    {
+      "label": "stain-batch-four-locales",
+      "url": "https://v2.xivapi.com/api/sheet/Stain?rows=1,12&fields=Name,Name@ja,Name@de,Name@fr,Color,Shade,SubOrder,IsMetallic,IsHousingApplicable,Item[].Name&version=0874aee069e1e7c4&schema=exdschema%402%3Arev%3Ae773c41a90aed788cf4c1c48469fa85618ef01fb",
+      "status": 200,
+      "elapsedMs": 2832,
+      "utf8BodySha256": "2e0e6407bc3cc4b80456af9c6681150b1af2fac1df8cb4c511726eea949aa295",
+      "cors": ["*"],
+      "data": {
+        "schema": "exdschema@2:rev:e773c41a90aed788cf4c1c48469fa85618ef01fb",
+        "version": "0874aee069e1e7c4",
+        "rows": [
+          {
+            "row_id": 1,
+            "fields": {
+              "Color": 14999504,
+              "IsHousingApplicable": true,
+              "IsMetallic": false,
+              "Item": [
+                {
+                  "value": 52254,
+                  "sheet": "Item",
+                  "row_id": 52254,
+                  "fields": {
+                    "Name": "Standard Spectrum Dye"
+                  }
+                },
+                {
+                  "value": 0,
+                  "sheet": "Item",
+                  "row_id": 0,
+                  "fields": {
+                    "Name": ""
+                  }
+                }
+              ],
+              "Name": "Snow White",
+              "Name@de": "Schneeweiß",
+              "Name@fr": "Blanc neige",
+              "Name@ja": "スノウホワイト",
+              "Shade": 2,
+              "SubOrder": 2
+            }
+          },
+          {
+            "row_id": 12,
+            "fields": {
+              "Color": 4527377,
+              "IsHousingApplicable": true,
+              "IsMetallic": false,
+              "Item": [
+                {
+                  "value": 52254,
+                  "sheet": "Item",
+                  "row_id": 52254,
+                  "fields": {
+                    "Name": "Standard Spectrum Dye"
+                  }
+                },
+                {
+                  "value": 0,
+                  "sheet": "Item",
+                  "row_id": 0,
+                  "fields": {
+                    "Name": ""
+                  }
+                }
+              ],
+              "Name": "Wine Red",
+              "Name@de": "Weinrot",
+              "Name@fr": "Lie-de-vin",
+              "Name@ja": "ワインレッド",
+              "Shade": 4,
+              "SubOrder": 6
+            }
+          }
+        ]
+      }
+    },
+    {
+      "label": "item-metadata",
+      "url": "https://v2.xivapi.com/api/sheet/Item/42589?fields=Name,Name@ja,Name@de,Name@fr,Icon,ModelMain,ModelSub,EquipSlotCategory,ClassJobCategory,EquipRaceCategory,DyeCount,LevelEquip,ItemUICategory&version=0874aee069e1e7c4&schema=exdschema%402%3Arev%3Ae773c41a90aed788cf4c1c48469fa85618ef01fb",
+      "status": 200,
+      "elapsedMs": 606,
+      "utf8BodySha256": "b1f928b0592bd04c40b75a22b6815d8b5ce7c5da56918d3426c63682b59f542e",
+      "cors": ["*"],
+      "data": {
+        "schema": "exdschema@2:rev:e773c41a90aed788cf4c1c48469fa85618ef01fb",
+        "version": "0874aee069e1e7c4",
+        "row_id": 42589,
+        "fields": {
+          "ClassJobCategory": {
+            "value": 197,
+            "sheet": "ClassJobCategory",
+            "row_id": 197,
+            "fields": {
+              "ACN": false,
+              "ADV": false,
+              "ALC": false,
+              "ARC": false,
+              "ARM": false,
+              "AST": false,
+              "BLM": false,
+              "BLU": false,
+              "BRD": false,
+              "BSM": false,
+              "BTN": false,
+              "CNJ": false,
+              "CRP": false,
+              "CUL": false,
+              "DNC": false,
+              "DRG": false,
+              "DRK": false,
+              "FSH": false,
+              "GLA": false,
+              "GNB": false,
+              "GSM": false,
+              "LNC": false,
+              "LTW": false,
+              "MCH": false,
+              "MIN": false,
+              "MNK": false,
+              "MRD": false,
+              "NIN": false,
+              "Name": "PCT",
+              "PCT": true,
+              "PGL": false,
+              "PLD": false,
+              "RDM": false,
+              "ROG": false,
+              "RPR": false,
+              "SAM": false,
+              "SCH": false,
+              "SGE": false,
+              "SMN": false,
+              "THM": false,
+              "Unknown0": false,
+              "Unknown1": false,
+              "Unknown2": false,
+              "VPR": false,
+              "WAR": false,
+              "WHM": false,
+              "WVR": false
+            }
+          },
+          "DyeCount": 2,
+          "EquipSlotCategory": {
+            "value": 13,
+            "sheet": "EquipSlotCategory",
+            "row_id": 13,
+            "fields": {
+              "Body": 0,
+              "Ears": 0,
+              "Feet": 0,
+              "FingerL": 0,
+              "FingerR": 0,
+              "Gloves": 0,
+              "Head": 0,
+              "Legs": 0,
+              "MainHand": 1,
+              "Neck": 0,
+              "OffHand": -1,
+              "SoulCrystal": 0,
+              "Waist": 0,
+              "Wrists": 0
+            }
+          },
+          "Icon": {
+            "id": 37609,
+            "path": "ui/icon/037000/037609.tex",
+            "path_hr1": "ui/icon/037000/037609_hr1.tex"
+          },
+          "ItemUICategory": {
+            "value": 111,
+            "sheet": "ItemUICategory",
+            "row_id": 111,
+            "fields": {
+              "Icon": {
+                "id": 60188,
+                "path": "ui/icon/060000/060188.tex",
+                "path_hr1": "ui/icon/060000/060188_hr1.tex"
+              },
+              "Name": "Pictomancer's Arm",
+              "OrderMajor": 1,
+              "OrderMinor": 19
+            }
+          },
+          "LevelEquip": 99,
+          "ModelMain": 4295035733,
+          "ModelSub": 4295035783,
+          "Name": "Angel Brush",
+          "Name@de": "Engelspinsel",
+          "Name@fr": "Pinceau angélique",
+          "Name@ja": "天使の筆"
+        }
+      }
+    },
+    {
+      "label": "facewear-equipment",
+      "url": "https://v2.xivapi.com/api/sheet/Glasses/1?fields=Name,Name@ja,Name@de,Name@fr,Icon&version=0874aee069e1e7c4&schema=exdschema%402%3Arev%3Ae773c41a90aed788cf4c1c48469fa85618ef01fb",
+      "status": 200,
+      "elapsedMs": 9740,
+      "utf8BodySha256": "a08a1e049f607b57054fa97b2fcc4f39d492d6f807aaca5603a6efb369336520",
+      "cors": ["*"],
+      "data": {
+        "schema": "exdschema@2:rev:e773c41a90aed788cf4c1c48469fa85618ef01fb",
+        "version": "0874aee069e1e7c4",
+        "row_id": 1,
+        "fields": {
+          "Icon": {
+            "id": 200049,
+            "path": "ui/icon/200000/200049.tex",
+            "path_hr1": "ui/icon/200000/200049_hr1.tex"
+          },
+          "Name": "Oval Spectacles",
+          "Name@de": "Ovale Brille",
+          "Name@fr": "Lunettes ovales",
+          "Name@ja": "オーバルグラス"
+        }
+      }
+    },
+    {
+      "label": "world-metadata",
+      "url": "https://v2.xivapi.com/api/sheet/World/21?fields=Name,DataCenter.Name,IsPublic&version=0874aee069e1e7c4&schema=exdschema%402%3Arev%3Ae773c41a90aed788cf4c1c48469fa85618ef01fb",
+      "status": 200,
+      "elapsedMs": 16608,
+      "utf8BodySha256": "a448fa1dc4d59992573cebdfe06622d1c342abbc270ed653bbe6734cdba4c048",
+      "cors": ["*"],
+      "data": {
+        "schema": "exdschema@2:rev:e773c41a90aed788cf4c1c48469fa85618ef01fb",
+        "version": "0874aee069e1e7c4",
+        "row_id": 21,
+        "fields": {
+          "DataCenter": {
+            "value": 9,
+            "sheet": "WorldDCGroupType",
+            "row_id": 9,
+            "fields": {
+              "Name": "Materia"
+            }
+          },
+          "IsPublic": true,
+          "Name": "Ravana"
+        }
+      }
+    },
+    {
+      "label": "korean-negative",
+      "url": "https://v2.xivapi.com/api/sheet/Stain/1?fields=Name&language=kr&version=0874aee069e1e7c4&schema=exdschema%402%3Arev%3Ae773c41a90aed788cf4c1c48469fa85618ef01fb",
+      "status": 400,
+      "elapsedMs": 10041,
+      "utf8BodySha256": "f451edcd980aa5c965b04e6739bd798f65c1497c9d004229ed25b56743d80ee8",
+      "cors": ["*"],
+      "data": {
+        "code": 400,
+        "message": "invalid request: invalid or unsupported language \"kr\""
+      }
+    }
+  ]
+}

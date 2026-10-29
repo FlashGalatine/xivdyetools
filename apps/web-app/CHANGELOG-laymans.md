@@ -2,6 +2,11 @@
 
 ---
 
+## Web-App Version 5.16.1 — October 29, 2026
+
+### Easier scrolling
+- **The main scrollbar sits at the edge.** The empty gap beside it is gone, and long tool pages still scroll all the way to the bottom on desktop and mobile.
+
 ## Web-App Version 5.16.0 — October 26, 2026
 
 ### Swatch Matcher and Glamour Reader: a new character-file reader
