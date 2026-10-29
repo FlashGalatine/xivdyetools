@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import * as smoke from './smoke-test-pages.js';
 import {
   parseArgs,
   READER_NOTICE,
@@ -7,7 +8,14 @@ import {
   smokeTestPages,
 } from './smoke-test-pages.js';
 
-const ok = ['--deployment-url', 'https://abc.example.pages.dev', '--domain', 'https://site.test', '--expect-robots', 'noindex'];
+const ok = [
+  '--deployment-url',
+  'https://abc.example.pages.dev',
+  '--domain',
+  'https://site.test',
+  '--expect-robots',
+  'noindex',
+];
 
 describe('parseArgs', () => {
   it('accepts the three flags in space-separated form', () => {
@@ -36,14 +44,20 @@ describe('parseArgs', () => {
     // The realistic failure: wrangler-action's output is empty, so the workflow
     // interpolates nothing. Blaming the site here would send the operator to the
     // wrong system.
-    expect(() => parseArgs(['--domain', 'https://site.test', '--expect-robots', 'noindex'])).toThrow(
-      /deployment-url.*wrangler-action/is
-    );
+    expect(() =>
+      parseArgs(['--domain', 'https://site.test', '--expect-robots', 'noindex'])
+    ).toThrow(/deployment-url.*wrangler-action/is);
   });
 
   it('rejects an empty --deployment-url the same way', () => {
     expect(() =>
-      parseArgs(['--deployment-url=', '--domain', 'https://site.test', '--expect-robots', 'noindex'])
+      parseArgs([
+        '--deployment-url=',
+        '--domain',
+        'https://site.test',
+        '--expect-robots',
+        'noindex',
+      ])
     ).toThrow(/deployment-url.*wrangler-action/is);
   });
 
@@ -55,12 +69,21 @@ describe('parseArgs', () => {
 
   it('rejects an unrecognised --expect-robots value', () => {
     expect(() =>
-      parseArgs(['--deployment-url', 'https://a.test', '--domain', 'https://b.test', '--expect-robots', 'maybe'])
+      parseArgs([
+        '--deployment-url',
+        'https://a.test',
+        '--domain',
+        'https://b.test',
+        '--expect-robots',
+        'maybe',
+      ])
     ).toThrow(/--expect-robots.*noindex\|none.*maybe/s);
   });
 
   it('rejects a flag given no value', () => {
-    expect(() => parseArgs(['--deployment-url', '--domain', 'https://b.test'])).toThrow(/needs a value/);
+    expect(() => parseArgs(['--deployment-url', '--domain', 'https://b.test'])).toThrow(
+      /needs a value/
+    );
   });
 
   it('rejects a bare positional argument', () => {
@@ -73,25 +96,53 @@ describe('parseArgs', () => {
 
   it('rejects a malformed --deployment-url with an annotated error, not a raw TypeError', () => {
     expect(() =>
-      parseArgs(['--deployment-url', 'notaurl', '--domain', 'https://site.test', '--expect-robots', 'noindex'])
+      parseArgs([
+        '--deployment-url',
+        'notaurl',
+        '--domain',
+        'https://site.test',
+        '--expect-robots',
+        'noindex',
+      ])
     ).toThrow(/--deployment-url is not a valid absolute URL/);
   });
 
   it('rejects a malformed --domain with an annotated error', () => {
     expect(() =>
-      parseArgs(['--deployment-url', 'https://a.test', '--domain', 'notaurl', '--expect-robots', 'noindex'])
+      parseArgs([
+        '--deployment-url',
+        'https://a.test',
+        '--domain',
+        'notaurl',
+        '--expect-robots',
+        'noindex',
+      ])
     ).toThrow(/--domain is not a valid absolute URL/);
   });
 
   it('rejects a scheme-relative --domain, since new URL requires absolute', () => {
     expect(() =>
-      parseArgs(['--deployment-url', 'https://a.test', '--domain', '//example.com', '--expect-robots', 'noindex'])
+      parseArgs([
+        '--deployment-url',
+        'https://a.test',
+        '--domain',
+        '//example.com',
+        '--expect-robots',
+        'noindex',
+      ])
     ).toThrow(/--domain is not a valid absolute URL/);
   });
 
   it('rejects a path-only --domain, since new URL requires absolute', () => {
     expect(() =>
-      parseArgs(['--deployment-url', 'https://a.test', '--domain', '/foo', '--expect-robots', 'noindex'])
+      parseArgs([
+        '--deployment-url',
+        'https://a.test',
+        '--domain',
+        '/foo',
+        '--expect-robots',
+        'noindex',
+      ])
     ).toThrow(/--domain is not a valid absolute URL/);
   });
 });
@@ -147,6 +198,155 @@ const NOTICE_BODY = [
 const noticeResponse = (status = 200, body = NOTICE_BODY, headers = {}) =>
   response(status, body, { 'content-type': 'text/plain; charset=utf-8', ...headers });
 
+describe('FINDING-009 exact current and retired origin probes', () => {
+  const current = {
+    subdomain: 'xiv-colorexplorer.pages.dev',
+    domains: ['xiv-colorexplorer.pages.dev', 'xivdyetools.app'],
+    canonical: {
+      url: 'https://970e253a.xiv-colorexplorer.pages.dev',
+      aliases: ['https://xivdyetools.app', 'https://main.xiv-colorexplorer.pages.dev'],
+    },
+  };
+  const expectedCsp =
+    "default-src 'self'; script-src 'self'; connect-src 'self' https://api.xivdyetools.app; object-src 'none'; frame-src 'none'; frame-ancestors 'none';";
+  const originOptions = {
+    project: 'xivdyetools',
+    current,
+    expectedCsp,
+    expectedBody: new TextEncoder().encode(BODY),
+    sleep: async () => {},
+  };
+  const history = [
+    'https://v4-ui-migration.xiv-colorexplorer.pages.dev/',
+    'https://66496174.xiv-colorexplorer.pages.dev/',
+    'https://1c989934.xiv-colorexplorer.pages.dev/',
+  ];
+  function origins(overrides = {}) {
+    const seen = [];
+    return {
+      seen,
+      fetchImpl: async (url, init) => {
+        seen.push({ url, init });
+        if (overrides[url] instanceof Error) throw overrides[url];
+        return (
+          overrides[url] ??
+          (history.includes(url)
+            ? response(404, 'Not found')
+            : response(200, BODY, { 'content-security-policy': expectedCsp }))
+        );
+      },
+    };
+  }
+  it('provides exact origin verification', () =>
+    expect(smoke.checkPagesOrigins).toBeTypeOf('function'));
+  it('reads the CSP from the single built catch-all rule, rejecting duplicates or missing policy', () => {
+    expect(smoke.readBuiltCsp(`/*\n  Content-Security-Policy: ${expectedCsp}\n`)).toBe(expectedCsp);
+    for (const text of [
+      '/*\n  X-Frame-Options: DENY',
+      `/*\n  Content-Security-Policy: ${expectedCsp}\n/*\n  X-Robots-Tag: noindex`,
+      `/*\n  Content-Security-Policy: ${expectedCsp}\n  Content-Security-Policy: ${expectedCsp}`,
+    ]) {
+      expect(() => smoke.readBuiltCsp(text)).toThrow(/CSP|catch-all/i);
+    }
+  });
+  it('checks custom, canonical Pages, hash and every reported branch alias against the same build', async () => {
+    const service = origins();
+    expect(await smoke.checkPagesOrigins({ ...originOptions, ...service })).toEqual([]);
+    expect([...new Set(service.seen.map((c) => c.url))].sort()).toEqual(
+      [
+        ...history,
+        'https://xivdyetools.app/',
+        'https://xiv-colorexplorer.pages.dev/',
+        'https://970e253a.xiv-colorexplorer.pages.dev/',
+        'https://main.xiv-colorexplorer.pages.dev/',
+      ].sort()
+    );
+    expect(service.seen.every((c) => c.init.redirect === 'manual')).toBe(true);
+  });
+  it.each([
+    ['missing CSP', { 'content-security-policy': undefined }],
+    [
+      'weaker CSP',
+      {
+        'content-security-policy': expectedCsp.replace(
+          "connect-src 'self'",
+          "connect-src 'self' https://*.workers.dev"
+        ),
+      },
+    ],
+    ['duplicate directive', { 'content-security-policy': expectedCsp + 'connect-src *;' }],
+  ])('fails a hash origin with %s', async (_name, headers) => {
+    const service = origins({
+      'https://970e253a.xiv-colorexplorer.pages.dev/': response(200, BODY, headers),
+    });
+    expect((await smoke.checkPagesOrigins({ ...originOptions, ...service })).join('\n')).toMatch(
+      /970e253a.*CSP/i
+    );
+  });
+  it('accepts equivalent directive/token ordering but rejects added policy allowances', async () => {
+    const reordered = expectedCsp.split(';').filter(Boolean).reverse().join(';') + ';';
+    const service = origins({
+      'https://xiv-colorexplorer.pages.dev/': response(200, BODY, {
+        'content-security-policy': reordered,
+      }),
+    });
+    expect(await smoke.checkPagesOrigins({ ...originOptions, ...service })).toEqual([]);
+  });
+  it.each([200, 301, 302, 403, 500])(
+    'does not accept HTTP %s as retired-host closure',
+    async (status) => {
+      const service = origins({
+        [history[0]]: response(status, BODY, { location: 'https://xivdyetools.app/' }),
+      });
+      expect((await smoke.checkPagesOrigins({ ...originOptions, ...service })).join('\n')).toMatch(
+        /v4-ui-migration.*404/
+      );
+    }
+  );
+  it('does not accept DNS failure as retired-host closure', async () => {
+    const service = origins({ [history[0]]: new Error('ENOTFOUND') });
+    expect((await smoke.checkPagesOrigins({ ...originOptions, ...service })).join('\n')).toMatch(
+      /v4-ui-migration.*ENOTFOUND/
+    );
+  });
+  it('fails a current branch alias serving a different build or redirect', async () => {
+    for (const bad of [
+      response(200, OTHER, { 'content-security-policy': expectedCsp }),
+      response(302, '', { location: 'https://xivdyetools.app/' }),
+    ]) {
+      const service = origins({ 'https://main.xiv-colorexplorer.pages.dev/': bad });
+      expect((await smoke.checkPagesOrigins({ ...originOptions, ...service })).join('\n')).toMatch(
+        /main.*build|main.*HTTP 302/
+      );
+    }
+  });
+  it('checks the retired beta hash separately', async () => {
+    const beta = {
+      subdomain: 'xivdyetools-beta.pages.dev',
+      domains: ['xivdyetools-beta.pages.dev', 'beta.xivdyetools.app'],
+      canonical: {
+        url: 'https://5c880756.xivdyetools-beta.pages.dev',
+        aliases: ['https://beta.xivdyetools.app'],
+      },
+    };
+    const seen = [];
+    const failures = await smoke.checkPagesOrigins({
+      ...originOptions,
+      project: 'xivdyetools-beta',
+      current: beta,
+      fetchImpl: async (url) => {
+        seen.push(url);
+        return response(url.includes('ecc7fb76') ? 404 : 200, BODY, {
+          'content-security-policy': expectedCsp,
+        });
+      },
+    });
+    expect(failures).toEqual([]);
+    expect(seen).toContain('https://ecc7fb76.xivdyetools-beta.pages.dev/');
+    expect(seen).not.toContain(history[0]);
+  });
+});
+
 /** Queues responses per host. The final entry repeats once exhausted, so a test
  *  can describe "fails twice then succeeds" without listing 36 entries.
  *
@@ -190,6 +390,70 @@ const run = (overrides) =>
   });
 
 describe('smokeTestPages', () => {
+  it('integrates metadata, built CSP and exact retired-origin probes in project mode', async () => {
+    const id = '970e253a-083a-4d97-bdb2-8e8e2792dee4';
+    const sha = 'a'.repeat(40);
+    const deploymentUrl = 'https://970e253a.xiv-colorexplorer.pages.dev';
+    const d = {
+      id,
+      project_id: '1f8b22b8-5dc1-4294-acff-ac9bbaf3e697',
+      project_name: 'xivdyetools',
+      environment: 'production',
+      url: deploymentUrl,
+      aliases: ['https://xivdyetools.app'],
+      created_on: '2026-10-28T12:00:00Z',
+      latest_stage: { name: 'deploy', status: 'success' },
+      deployment_trigger: { metadata: { branch: 'main', commit_hash: sha, commit_dirty: false } },
+    };
+    const p = {
+      id: d.project_id,
+      name: 'xivdyetools',
+      subdomain: 'xiv-colorexplorer.pages.dev',
+      production_branch: 'main',
+      domains: ['xiv-colorexplorer.pages.dev', 'xivdyetools.app'],
+      canonical_deployment: d,
+      latest_deployment: d,
+    };
+    let apiReads = 0;
+    const apiFetchImpl = async () => {
+      apiReads++;
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ success: true, errors: [], messages: [], result: p }),
+      };
+    };
+    const seen = [];
+    const fetchImpl = async (url) => {
+      seen.push(url);
+      if (url.includes('/licenses/')) return noticeResponse();
+      return response(/v4-ui-migration|66496174|1c989934/.test(url) ? 404 : 200, BODY);
+    };
+    const options = {
+      deploymentUrl,
+      domain: 'https://xivdyetools.app',
+      project: 'xivdyetools',
+      commit: sha,
+      expectRobots: 'none',
+      expectedCsp: SECURITY_DEFAULTS['content-security-policy'],
+      accountId: '9390470022b5544dc04854638fdf8c51',
+      token: 'test',
+      sleep: async () => {},
+      fetchImpl,
+      apiFetchImpl,
+    };
+    const result = await smokeTestPages(options);
+    expect(result.failures).toEqual([]);
+    expect(apiReads).toBe(2);
+    expect(seen).toContain('https://xiv-colorexplorer.pages.dev/');
+    expect(seen).toContain('https://v4-ui-migration.xiv-colorexplorer.pages.dev/');
+    const wrongSha = await smokeTestPages({ ...options, commit: 'b'.repeat(40) });
+    expect(wrongSha.ok).toBe(false);
+    expect(wrongSha.failures.join(' ')).toMatch(/commit/);
+    const weakBuilt = await smokeTestPages({ ...options, expectedCsp: 'default-src *;' });
+    expect(weakBuilt.ok).toBe(false);
+    expect(weakBuilt.failures.join(' ')).toMatch(/CSP/);
+  });
   it('passes when the domain serves this build and carries noindex', async () => {
     const result = await run({
       fetchImpl: fakeFetch({
@@ -421,7 +685,11 @@ describe('smokeTestPages', () => {
     it('fails a beta domain missing CSP and X-Frame-Options, naming both and the cause', async () => {
       const result = await run({
         fetchImpl: fakeFetch(
-          pair({ 'x-robots-tag': 'noindex', 'content-security-policy': undefined, 'x-frame-options': undefined })
+          pair({
+            'x-robots-tag': 'noindex',
+            'content-security-policy': undefined,
+            'x-frame-options': undefined,
+          })
         ),
       });
       expect(result.ok).toBe(false);
@@ -464,7 +732,10 @@ describe('smokeTestPages', () => {
     it('fails a CSP that has no frame-ancestors directive', async () => {
       const result = await run({
         fetchImpl: fakeFetch(
-          pair({ 'x-robots-tag': 'noindex', 'content-security-policy': "default-src 'self'; script-src 'self'" })
+          pair({
+            'x-robots-tag': 'noindex',
+            'content-security-policy': "default-src 'self'; script-src 'self'",
+          })
         ),
       });
       expect(result.ok).toBe(false);
@@ -476,7 +747,8 @@ describe('smokeTestPages', () => {
         fetchImpl: fakeFetch(
           pair({
             'x-robots-tag': 'noindex',
-            'content-security-policy': "default-src 'self'; report-uri https://r.test/frame-ancestors; img-src frame-ancestors.test",
+            'content-security-policy':
+              "default-src 'self'; report-uri https://r.test/frame-ancestors; img-src frame-ancestors.test",
           })
         ),
       });
@@ -487,7 +759,10 @@ describe('smokeTestPages', () => {
     it('accepts frame-ancestors when it is the first directive', async () => {
       const result = await run({
         fetchImpl: fakeFetch(
-          pair({ 'x-robots-tag': 'noindex', 'content-security-policy': "frame-ancestors 'none'; default-src 'self'" })
+          pair({
+            'x-robots-tag': 'noindex',
+            'content-security-policy': "frame-ancestors 'none'; default-src 'self'",
+          })
         ),
       });
       expect(result.ok).toBe(true);
@@ -528,7 +803,10 @@ describe('smokeTestPages', () => {
         arrayBuffer: async () => new TextEncoder().encode(BODY).buffer,
       };
       const result = await run({
-        fetchImpl: fakeFetch({ 'abc.example.pages.dev': [response(200, BODY)], 'site.test': [real] }),
+        fetchImpl: fakeFetch({
+          'abc.example.pages.dev': [response(200, BODY)],
+          'site.test': [real],
+        }),
       });
       expect(result.failures).toEqual([]);
       expect(result.ok).toBe(true);
@@ -547,7 +825,10 @@ describe('smokeTestPages', () => {
 
     it('names the served path and the markers it requires', () => {
       expect(READER_NOTICE.path).toBe('/licenses/xivcharakit.txt');
-      expect(READER_NOTICE.markers).toEqual(['Permission is hereby granted', '# Third-party notices']);
+      expect(READER_NOTICE.markers).toEqual([
+        'Permission is hereby granted',
+        '# Third-party notices',
+      ]);
     });
 
     it('fetches the notice from the custom domain, not the deployment alias, and passes', async () => {
@@ -575,7 +856,9 @@ describe('smokeTestPages', () => {
     it('fails when the body lacks the third-party notices', async () => {
       const result = await run({
         fetchImpl: fakeFetch(
-          withNotice([noticeResponse(200, 'MIT License\n\nPermission is hereby granted, free of charge\n')])
+          withNotice([
+            noticeResponse(200, 'MIT License\n\nPermission is hereby granted, free of charge\n'),
+          ])
         ),
       });
       expect(result.ok).toBe(false);
@@ -594,7 +877,9 @@ describe('smokeTestPages', () => {
     it('fails when the notice is not served as text/plain', async () => {
       const result = await run({
         fetchImpl: fakeFetch(
-          withNotice([noticeResponse(200, NOTICE_BODY, { 'content-type': 'application/octet-stream' })])
+          withNotice([
+            noticeResponse(200, NOTICE_BODY, { 'content-type': 'application/octet-stream' }),
+          ])
         ),
       });
       expect(result.ok).toBe(false);

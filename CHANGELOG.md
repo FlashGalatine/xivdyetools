@@ -8,6 +8,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [Unreleased]
+
+### Security
+
+- Separate package build/test/packing from the main-only, production-approved OIDC publisher. Verify the selected same-run artifact, package identities, hashes and workspace pins before publishing without lifecycle scripts.
+- Require patched Vite 6.4.5 or newer below Vite 7 for VitePress's development server dependency.
+
+### Changed
+
+- Add guarded Pages retention and retained/retired-origin checks. Retention remains dry-run until both deletion controls are separately authorized.
+- Exclude `codex/release-cut-*` preparation branches from automatic shared-beta deployments; pull-request CI remains available. Production activation remains on hold.
+- Keep the presets test loader's `.js` alias limited to relative source imports, so Windows dependency filenames remain intact when validating intermediate release cuts. No presets runtime behavior changes in this bootstrap.
+- Prepare moderation's initial test-module loading in setup before its request-gate assertions. Every behavioral test still resets and reevaluates the real app; request assertions and timeouts remain unchanged.
+
 ## [2.3.3] - 2026-10-13
 
 The three beta deploys follow the branch's own changes. Patch: no workspace, package or worker code changes, and no
