@@ -33,7 +33,7 @@
 | **OAuth Worker** | v3.2.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.8.2 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
 | **Public REST API** | v0.21.1 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
-| **OpenGraph Worker** | v2.12.0 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
+| **OpenGraph Worker** | v2.12.2 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.3.3 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
 | **API Documentation** | — | merged into `xivdyetools-api-worker` (`docs/`, Workers Static Assets) | Cloudflare Workers | Merged 2026-07-31 |
@@ -443,6 +443,8 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v2.12.2 | Oct 2026 | A-OG-COPY: default Harmony subtitles say ten types in all six languages; new Worker cache version retires prior beta cards |
+| v2.12.1 | Oct 2026 | SVG 4.4.1: default-card text fitting is linear with unchanged content, font measurements, layout and routes |
 | v2.12.0 | Oct 2026 | 2026-10-04 remediation, Sprint 11: gradient previews follow the shared `interpolation` (new query key) and draw the page's own steps (6,682 / 6,682 share links match the page end to end); the extractor card follows `?algo=`; legacy `?algo=` spellings fixed on harmony; custom-color shares unfurl named; cache key splits only where a route reads the key; a repeated query key gets a 400; fr presets name and de Glamour Reader description fixed; resvg allocations freed |
 | v2.11.3 | Oct 2026 | Core 5.10.0 (2026-10-04 remediation, Sprint 13): CJK subsets re-cut for the new sheet names; de/fr swatch link descriptions reworded so no gendered word precedes the sheet name; the version retires cached HSL mixer cards with a gray input (BUG-035) |
 | v2.11.2 | Oct 2026 | CJK font subsets re-cut for core 5.8.1 (Korean / Chinese race and clan names from the game clients); cached cards retire with the version |
@@ -727,6 +729,7 @@ and the [rollout runbook](operations/security-remediation-2026-09-15.md) for the
 
 | Consumer | Minimum Core Version | Notes |
 |----------|---------------------|-------|
+| xivdyetools-og-worker v2.12.2 | @xivdyetools/core v5.16.0; @xivdyetools/svg v4.4.1; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
 | xivdyetools-web-app v5.16.4 | @xivdyetools/core v5.16.0; @xivdyetools/logger v2.4.0; @xivdyetools/svg v4.4.1; @xivdyetools/types v3.3.0 | Prepared source; publication and deployed acceptance remain pending |
 | xivdyetools-api-worker v0.21.1 | @xivdyetools/core v5.16.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
 | xivdyetools-discord-worker v5.9.7 | @xivdyetools/auth v3.0.0; @xivdyetools/bot-logic v4.12.0; @xivdyetools/svg v4.4.1; @xivdyetools/core v5.16.0; @xivdyetools/logger v2.4.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
