@@ -12,3 +12,8 @@ pnpm-lock.yaml text eol=lf
 apps/api-worker/src/chara/data/item-names.*.json linguist-generated=true -diff
 # Generated GPOSERS acquisition table (apps/api-worker/scripts/build-acquisition.ts)
 apps/api-worker/src/chara/data/acquisition.en.json linguist-generated=true -diff
+
+# Retained upstream legal text and unified-diff context keep their own whitespace.
+# LF normalization still applies; application source keeps the normal checks.
+apps/image-worker/vendor/photon/licenses/** whitespace=-blank-at-eol,-blank-at-eof
+apps/image-worker/vendor/photon/ownership.patch whitespace=-blank-at-eol

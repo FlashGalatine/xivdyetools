@@ -5,6 +5,48 @@ All notable changes to the XIV Dye Tools Image Worker will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.5] - 2026-10-28
+
+### Release-readiness follow-up
+
+- Validate GIF image descriptors against the logical screen and validate extended WebP
+  reconstruction chunks against their canvas/frame dimensions before Photon allocates pixels.
+  Checked chunk boundaries, padding and payload ordering reject malformed structures, including
+  mixed static/animated reconstruction paths. Valid contained subframes and animation retain
+  their output. File, pixel, side and output caps are unchanged.
+- Refresh retained-artifact parity across valid format boundaries and an unread 1 MiB output.
+  The observed 110.4375 MiB WASM plateau and post-response accounting samples remain local
+  evidence; a separate three-round valid-format sequence exceeds the numeric 128 MiB reference in
+  diagnostic accounting despite stable WASM. Cloudflare platform acceptance and the corrected
+  manual deployment are still required.
+
+### Security
+
+- Reject 16-bit PNGs and invalid IHDR metadata before Photon decoding (FINDING-020).
+  Legal lower-depth PNGs and the other supported image formats retain their paths.
+- Bound encoded input to **5 MiB**, total input pixels to **8,388,608** and extraction's
+  requested output side to **16–512**. Input sides may still reach **4096**, so ordinary
+  3840×2160 and 3440×1440 screenshots fit the pixel allowance. Default extraction remains
+  **256**; thumbnail dimensions remain **640×264**. Inputs between 5 and 10 MiB and internal
+  requests above 512 output pixels now receive the existing rejection envelope.
+- Remove the no-resize PNG encode/decode round trip, and release consumed thumbnail images
+  before allocating later stages. Each distinct Photon object is freed once, including
+  failure paths; successful pixel/WebP output semantics stay unchanged.
+- Use a pinned Photon ownership patch that transfers decoded RGBA storage and borrows crop/
+  resize inputs instead of cloning them. Retain source, lock, licenses, artifact hashes and
+  a verified rebuild recipe; the installed wrapper initializes only this WASM artifact.
+- Admit one image acquisition/processing operation per isolate with no waiting queue. Busy
+  requests receive a generic 503 before body/CDN work. Cancel abandoned I/O without waiting
+  on stalled cancellation, and preserve the complete dispatch lifetime for admission cleanup
+  after caller disconnects. Runtime termination and outstanding response bodies remain separate
+  limits; this does not establish a total-memory bound.
+
+The six-language bot-manual limit companion must be included in the complete reviewed
+bot-logic publication and the corrected manual deployed before this lower cap activates.
+Aggregate memory/platform acceptance remains unresolved; activation is held until that gate
+and the corrected manual deployment are verified. No image-worker deployment is selected
+by this source preparation.
+
 ## [1.3.4] - 2026-10-06
 
 Sprint 21 of the 2026-10-04 remediation plan (DEAD-038). Merging deploys production; the bundle is unchanged.

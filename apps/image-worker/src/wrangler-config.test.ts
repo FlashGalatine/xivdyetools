@@ -123,6 +123,12 @@ function serviceBinding(source: string, header: string, binding: string): string
 }
 
 describe('wrangler.toml', () => {
+  it('uses the entrypoint that preserves admission cleanup after caller cancellation', () => {
+    expect(topLevel).toMatch(/^main = "src\/worker\.ts"$/m);
+  });
+  it('enables incoming request cancellation with the narrow compatibility flag', () => {
+    expect(toml).toMatch(/^compatibility_flags = \["enable_request_signal"\]$/m);
+  });
   /**
    * Fix round 2 (S8-R11): wrangler resolves config in a fixed order —
    * wrangler.json, then wrangler.jsonc, then wrangler.toml — so either file
