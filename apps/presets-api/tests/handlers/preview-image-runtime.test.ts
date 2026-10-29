@@ -5,6 +5,7 @@ import { moderationRouter } from '../../src/handlers/moderation';
 import type { AuthContext, Env } from '../../src/types';
 import { createD1Runtime } from '../d1-runtime';
 import { createMockEnv } from '../test-utils';
+import { loggerMiddleware } from '@xivdyetools/worker-kit';
 
 const png = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 0]);
 function barrier() {
@@ -17,6 +18,7 @@ describe('preview ownership and attempt accounting on real D1', () => {
   let runtime: Awaited<ReturnType<typeof createD1Runtime>>;
   let db: D1Database; let env: Env;
   let app: Hono<{ Bindings: Env; Variables: { auth: AuthContext } }>;
+  let loggingEnabled: boolean; let errorCalls: unknown[][];
   let live: Set<string>; let deleted: string[]; let notifications: Record<string, unknown>[];
   let pending: Promise<unknown>[]; let decodes: number;
   let queryHook: undefined | ((query: string, execute: () => Promise<unknown>) => Promise<unknown>);
@@ -53,7 +55,7 @@ describe('preview ownership and attempt accounting on real D1', () => {
   beforeAll(async () => { runtime = await createD1Runtime(); db = runtime.db; }, 30000);
   afterAll(async () => { await runtime?.dispose(); });
   beforeEach(async () => {
-    queryHook = undefined; batchHook = undefined; decodes = 0;
+    queryHook = undefined; batchHook = undefined; decodes = 0; loggingEnabled = false; errorCalls = [];
     await db.batch(['votes', 'moderation_log', 'failed_notifications', 'presets', 'submission_events', 'banned_users'].map(t => db.prepare(`DELETE FROM ${t}`)));
     await db.prepare("INSERT INTO presets (id,name,description,category_id,dyes,tags,status,author_discord_id,preview_image_key,preview_image_status) VALUES ('p','Palette','Description','jobs','[1,2,3]','[]','approved','owner','p/old.webp','pending')").run();
     live = new Set(['p/old.webp']); deleted = []; notifications = []; pending = [];
@@ -64,7 +66,12 @@ describe('preview ownership and attempt accounting on real D1', () => {
     });
     app = new Hono();
     app.onError(() => new Response('Internal Server Error', { status: 500 }));
+    app.use('*', (c, next) => loggingEnabled ? loggerMiddleware({ serviceName: 'presets-logging-test' })(c, next) : next());
     app.use('*', async (c, next) => {
+      if (loggingEnabled) {
+        const logger = c.get('logger'); const error = logger.error.bind(logger);
+        vi.spyOn(logger, 'error').mockImplementation((...args) => { errorCalls.push(args); error(...args); });
+      }
       const moderator = c.req.header('X-Test-Moderator') === 'true';
       c.set('auth', { isAuthenticated: true, isModerator: moderator, userDiscordId: moderator ? 'moderator' : 'owner', userName: 'Author', authSource: 'bot' });
       await next();
@@ -92,6 +99,43 @@ describe('preview ownership and attempt accounting on real D1', () => {
     queryHook = async (query, execute) => { if (match.test(query) && !paused) { paused = true; entered.release(); await resume.promise; } return execute(); };
     return { entered: entered.promise, release: resume.release };
   }
+  it.each([
+    ['storage', 400, '[preview-image] cleanup of failed storage write failed'],
+    ['loser', 409, '[preview-image] cleanup of losing upload failed'],
+    ['unconfirmed', 503, '[preview-image] cleanup of unconfirmed upload failed'],
+    ['notification', 200, '[preview-image] notification state could not be confirmed'],
+  ] as const)('logs %s failure as structured context while preserving the public result', async (failure, status, message) => {
+    loggingEnabled = true;
+    const output = vi.spyOn(console, 'log').mockImplementation(() => {});
+    try {
+      if (failure !== 'notification') {
+        env.THUMBNAILS.delete = async () => { throw new Error('private-cleanup-detail'); };
+      }
+      if (failure === 'storage') {
+        env.THUMBNAILS.put = (async () => { throw new Error('private-storage-detail'); }) as R2Bucket['put'];
+      }
+      let attached = false;
+      queryHook = async (query, execute) => {
+        if (/UPDATE presets SET preview_image_key = \?/.test(query)) {
+          if (failure === 'loser') await db.prepare("UPDATE presets SET preview_image_status='approved' WHERE id='p'").run();
+          if (failure === 'unconfirmed') throw new Error('attachment unavailable');
+          const result = await execute(); attached = true; return result;
+        }
+        if (failure === 'notification' && attached && /SELECT author_discord_id/.test(query)) throw new Error('private-state-detail');
+        return execute();
+      };
+      expect((await request()).status).toBe(status);
+      expect(await sent()).toHaveLength(0);
+      expect(errorCalls).toContainEqual([message, undefined, { presetId: 'p' }]);
+      const entries = output.mock.calls.map(([line]) => JSON.parse(String(line)) as { message: string; context: Record<string, unknown>; error?: unknown });
+      const entry = entries.find(item => item.message === message);
+      expect(entry?.context).toMatchObject({ presetId: 'p' });
+      expect(entry?.error).toBeUndefined();
+      expect(JSON.stringify(entries)).not.toContain('private-');
+    } finally {
+      output.mockRestore();
+    }
+  });
   it.each(['existing', 'empty'])('admits exactly one simultaneous upload from %s captured state, cleans loser, refunds and notifies only winner', async initial => {
     if (initial === 'empty') { await db.prepare("UPDATE presets SET preview_image_key=NULL,preview_image_status='none' WHERE id='p'").run(); live.clear(); }
     const gate = pauseDecode(2); const a = request(); const b = request(); await gate.entered; gate.release();

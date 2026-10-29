@@ -12,12 +12,39 @@ import {
     _setTestPatterns,
 } from '../../src/services/moderation-service';
 import { createMockEnv } from '../test-utils';
+import { Hono } from 'hono';
+import { loggerMiddleware } from '@xivdyetools/worker-kit';
 
 // Mock fetch for external API calls
 const originalFetch = globalThis.fetch;
 let fetchMock: ReturnType<typeof vi.fn>;
 
 describe('ModerationService', () => {
+    it('retains upstream status in logger context without logging the credential or response body', async () => {
+        const output = vi.spyOn(console, 'log').mockImplementation(() => {});
+        try {
+            fetchMock.mockResolvedValue(new Response('private-provider-body', { status: 429 }));
+            const env = createMockEnv({ PERSPECTIVE_API_KEY: 'private-provider-key' });
+            const app = new Hono();
+            app.use('*', loggerMiddleware({ serviceName: 'moderation-logging-test' }));
+            const calls: unknown[][] = [];
+            app.get('/', async c => {
+                const logger = c.get('logger'); const error = logger.error.bind(logger);
+                vi.spyOn(logger, 'error').mockImplementation((...args) => { calls.push(args); error(...args); });
+                return c.json(await moderateContent('Normal palette', 'Normal description', env, logger));
+            });
+            const result = await (await app.request('/', {}, env)).json() as { method: string; passed: boolean };
+            expect(result.method).toBe('perspective_unavailable');
+            expect(result.passed).toBe(false);
+            expect(calls).toContainEqual(['Perspective API error', undefined, { status: 429 }]);
+            const entry = output.mock.calls.map(([line]) => JSON.parse(String(line))).find(item => item.message === 'Perspective API error');
+            expect(entry.context).toMatchObject({ status: 429 });
+            expect(entry.error).toBeUndefined();
+            expect(JSON.stringify(output.mock.calls)).not.toContain('private-provider');
+        } finally {
+            output.mockRestore();
+        }
+    });
     beforeEach(() => {
         fetchMock = vi.fn();
         globalThis.fetch = fetchMock as typeof globalThis.fetch;

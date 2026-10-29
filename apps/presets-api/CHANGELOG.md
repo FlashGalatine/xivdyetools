@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.8.1] - 2026-10-27
 
+### Hardening adoption
+
+- **H-PRESETS preparation:** retain structured diagnostic context in its third logger argument for preview-image and moderation failures. Adopt auth 3.0.0 and worker-kit 1.6.0/logger 2.4.0 in the pending release; upstream publication and all existing activation prerequisites remain required.
+
 ### Fixed
 
 - Return a generic 503 when preview-image processing is unavailable, including overload,

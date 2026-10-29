@@ -1279,7 +1279,7 @@ presetsRouter.post('/:id/preview-image', async (c) => {
   } catch (error) {
     if (error instanceof PreviewImageStoreError && error.stage === 'storage') {
       try { await deletePreviewImage(c.env, error.key ?? null, c.get('logger')); } catch {
-        c.get('logger')?.error('[preview-image] cleanup of failed storage write failed', { presetId });
+        c.get('logger')?.error('[preview-image] cleanup of failed storage write failed', undefined, { presetId });
       }
       await uploadReservation.release?.();
     }
@@ -1302,7 +1302,7 @@ presetsRouter.post('/:id/preview-image', async (c) => {
       // A returned zero-row CAS proves no attachment. Only our own unique new
       // object is ours to remove; the captured previous image may still be live.
       try { await deletePreviewImage(c.env, key, c.get('logger')); } catch {
-        c.get('logger')?.error('[preview-image] cleanup of losing upload failed', { presetId });
+        c.get('logger')?.error('[preview-image] cleanup of losing upload failed', undefined, { presetId });
       }
       await uploadReservation.release?.();
       const current = await getPresetImageState(c.env.DB, presetId);
@@ -1317,7 +1317,7 @@ presetsRouter.post('/:id/preview-image', async (c) => {
     if (current?.preview_image_key !== key) {
       if (current !== undefined) {
         try { await deletePreviewImage(c.env, key, c.get('logger')); } catch {
-          c.get('logger')?.error('[preview-image] cleanup of unconfirmed upload failed', { presetId });
+          c.get('logger')?.error('[preview-image] cleanup of unconfirmed upload failed', undefined, { presetId });
         }
       }
       return c.json({ success: false, error: ErrorCode.SERVICE_UNAVAILABLE, message: 'The upload result could not be confirmed. Please refresh the preset before retrying.' }, 503);
@@ -1343,7 +1343,7 @@ presetsRouter.post('/:id/preview-image', async (c) => {
     const current = await getPresetImageState(c.env.DB, presetId);
     notify = current?.preview_image_key === key && current.preview_image_status === 'pending';
   } catch {
-    c.get('logger')?.error('[preview-image] notification state could not be confirmed', { presetId });
+    c.get('logger')?.error('[preview-image] notification state could not be confirmed', undefined, { presetId });
   }
 
   // Same fire-and-forget notification path as a new submission: retries with
