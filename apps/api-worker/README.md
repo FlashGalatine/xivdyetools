@@ -223,11 +223,14 @@ Explicit icon versions must match the configured canonical game pin or captured 
 game key. A game pin alone is enough for icons; otherwise bounded, memoized Item/1 discovery
 supplies the key. Unknown query parameters do not change storage identity.
 
-The future item-name builder pins immutable Teamcraft/datamining inputs and records exact
-source-byte SHA256 hashes per affected language. Local CSVs use their pinned commit's
-content. Existing August/October game tables and metadata are retained; their historical
-provenance is unresolved pending a controlled refresh. Runtime normalization protects API
-output but does not authenticate those historical sources or independent font readers.
+The item-name builder pins immutable Teamcraft/datamining inputs and records exact source-byte
+SHA256 hashes per affected language. Local CSVs use their pinned commit's content. The
+[controlled 2026-10-29 refresh](../../docs/audits/2026-10-26-security/evidence/remediation-item-name-provenance-2026-10-29.md)
+records current ko/zh/ja provenance and per-language counts; the legacy shared metadata fields
+remain a historical snapshot. It does not reconstruct older source provenance. Runtime
+normalization still protects the boundary independently of build-time validation. Verify
+Discord's actual item-name/regional-font gates after each refresh and re-cut only if the
+required drawable coverage changes.
 
 ## Documentation Site
 

@@ -295,6 +295,16 @@ the receipt-only follow-up changes no runtime source. The actual source workflow
 contains CI only. No existing API beta is selected or new workflow added;
 the deleted API dev worker remains retired. Merge and production acceptance remain pending.
 
+**Controlled refresh follow-up 2026-10-29:** current ko/zh/ja tables now have per-language
+immutable source commits and raw-byte checksums from a cached, rejecting-network replay of the
+unchanged builder. Korean adds 65 equipment names and loses two invisible direction marks;
+Chinese/Japanese bytes stay unchanged. Existing regional fonts cover every refreshed name,
+so no font regeneration or terminal F sprint is needed for this candidate. The obsolete
+U+200F exception is removed while its stale-entry assertion remains; an explicit legacy-input
+fixture preserves runtime cleaning coverage. [Evidence](../2026-10-26-security/evidence/remediation-item-name-provenance-2026-10-29.md).
+API 0.21.1 and Discord 5.9.7 remain pending; FINDING-029 and fixed-ID counts are unchanged
+until release acceptance. No deployment or production activation is authorized here.
+
 | ID | Source | Sev/Pri | Action |
 |---|---|---|---|
 | [2026-10-26-security/FINDING-002](../2026-10-26-security/findings/FINDING-002.md) | 2026-10-26-security | LOW / INTERNET-UNAUTH · P2 | Read the search and Glasses bodies with the existing bounded reader (about 2 MiB / 32 KiB), map oversize to `UpstreamUnavailableError`; in `cleanName` strip C0/C1 controls and bidi, collapse whitespace, cap at about 128 code points before caching; same cleaner in the build scripts. The two quadratic sinks (core `chara-gposers.ts:120`, svg `fitText`) are hardened in A-CORE and A-SVG. |

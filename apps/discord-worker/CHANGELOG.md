@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Verify the controlled equipment-name refresh against the existing regional font faces and
+  remove the obsolete U+200F exception. Keep the stale-exception and glyph-coverage assertions;
+  the refreshed tables require no new font bytes.
 - Stabilize the cross-button throttle regression's clock inside its minute window. The
   existing German plural assertion and all dispatch/tracking/ephemeral checks are retained;
   a valid one-second singular reply no longer causes a CI-only fixture failure.

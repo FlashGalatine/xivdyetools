@@ -669,7 +669,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| v0.21.1 | Oct 2026 | A-API: bounded and sanitized upstream character data, dedicated cache-miss soft budgets, current-version-only icon overrides, IPv6 /64 adoption and numeric-only telemetry versions; future item-name builder pins/hashes sources, with historical table provenance still awaiting controlled refresh |
+| v0.21.1 | Oct 2026 | A-API: bounded and sanitized upstream character data, dedicated cache-miss soft budgets, current-version-only icon overrides, IPv6 /64 adoption and numeric-only telemetry versions; pinned/checksummed item-name inputs and controlled ko/zh/ja refresh with 65 additional Korean names, using unchanged fonts |
 | v0.21.0 | Oct 2026 | Snapshot/schema-aware equipment caching, optional versioned icon URLs and conditional PNG refresh, isolate-local Item/Glasses miss coalescing |
 | v0.20.1 | Oct 2026 | Acquisition lines for 671 older tomestone items omit the redundant base-item upgrade exchange when a reachable vendor sells the item outright for Poetics |
 | v0.20.0 | Oct 2026 | `uiCategory` (the named item's ItemUICategory row) on each resolved item, so the GPOSERS list can tell which main hands take an Off Hand; row cache shape 5 (every cached row refetches once) |

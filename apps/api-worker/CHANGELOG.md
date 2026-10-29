@@ -22,9 +22,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adopt worker-kit 1.6.0's IPv6 /64 key option across the existing API, telemetry and proxy
   paths and the new Chara budget, preserving IPv4 and service classification.
 - Store only bounded numeric version triples in telemetry, discarding valid prerelease text.
-- Pin future item-name builder inputs to immutable source commits and record exact-byte
-  SHA256 provenance. Local CSV inputs must match their pinned commit. Historical game tables
-  and metadata are retained; their unresolved provenance requires a controlled refresh.
+- Pin item-name builder inputs to immutable source commits and record exact-byte SHA256
+  provenance. Local CSV inputs must match their pinned commit. A controlled 2026-10-29 refresh
+  records per-language source provenance for ko/zh/ja, adds 65 Korean equipment names and strips
+  two invisible direction marks. Chinese/Japanese table bytes and all bundled fonts stay
+  unchanged; legacy shared metadata remains a historical snapshot.
 
 ### Changed
 
