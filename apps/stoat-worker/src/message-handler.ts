@@ -136,7 +136,7 @@ export function createMessageHandler(
       // `subcommand` — on every mistype, not just a registered handler's
       // bug. Same `loggableCommand` swap as the two log lines above.
       const errorCommand = loggableCommand(parsed.command, parsed.subcommand);
-      logger.error('Unhandled error in command handler', {
+      logger.error('Unhandled error in command handler', undefined, {
         command: errorCommand.command,
         subcommand: errorCommand.subcommand,
         error: error instanceof Error ? error.message : String(error),

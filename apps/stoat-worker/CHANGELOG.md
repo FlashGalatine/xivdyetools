@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.3.4] - 2026-10-27
 
+### Hardening adoption
+
+- **H-STOAT preparation:** place gateway/startup/message diagnostic fields in structured logger context and verify shared logger 2.4.0 redaction with bot-logic 4.12.0. The existing sanitizer mirror is retained. This remains parked verification, with no activation or deployment.
+
 ### Security
 
 - Mirror the added invisible/bidi/tag-control stripping before Revolt mention rewriting,
