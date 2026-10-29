@@ -246,12 +246,13 @@ export async function executeHarmony(input: HarmonyInput): Promise<HarmonyResult
     }
 
     // 11A: the ideal hue the maths asked for, beside the dye that exists. Each
-    // slot already carries its own ideal and the distance to it, so the card
-    // no longer has to re-derive "which ideal is this dye nearest to" — that
+    // slot already carries its own ideal, so the card no longer has to
+    // re-derive "which ideal is this dye nearest to" — that
     // pass is what used to let a spurious offset mislabel a row.
     //
-    // The distance runs in the CHOSEN method, not always ΔE2000: a tier is a
-    // property of the method, so the card prints which one produced it. Two
+    // Selector deviance can be hue degrees; recompute every displayed distance
+    // in the CHOSEN method, not always ΔE2000: a tier is a property of the
+    // method, so the card prints which one produced it. Two
     // players with different stored preferences get different dyes back, and
     // without the tag one of the two PNGs looks wrong.
     const stainLabel = t.t('card.stain');
@@ -272,7 +273,7 @@ export async function executeHarmony(input: HarmonyInput): Promise<HarmonyResult
       };
 
       return [
-        row(slot.dye, slot.deviance),
+        row(slot.dye, ColorService.getDistanceForMethod(slot.targetHex, slot.dye.hex, matchingMethod)),
         // A companion is measured against the SAME ideal as the slot it sits
         // in, so the numbers down a column are comparable.
         ...slot.companions.map((dye) =>

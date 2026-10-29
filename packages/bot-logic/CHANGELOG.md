@@ -5,6 +5,61 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.12.0] - 2026-10-27
+
+### Hardening adoption
+
+- **H-BOT-LOGIC-ADOPT preparation:** pack core 5.16.0 and SVG 4.4.1, carrying logger 2.4.0 transitively. Command APIs are unchanged. Publish only after both adopted upstream releases are available.
+- Add JSON import attributes to the six bot UI locale imports so the built /i18n subpath loads in Node 22 without a custom loader. Locale text and translation behavior are unchanged.
+
+### Release preparation
+
+- Retain three exact favorite-list locale reservations until the separately released Discord batch consumer lands; stale consumer-use checks remain enforced. Align existing Discord preview assertions with neutral shared outcomes while preserving private API actor attribution. Keep font scanning/subsetting limited to drawable text, excluding native command-picker options and choices.
+
+### Added
+
+- Export the existing `getLocalizedRace` and `getLocalizedClan` getters for consumer autocomplete
+  and validation. Call `initializeLocale` first, as for the other synchronous localized getters.
+
+### Fixed
+
+- Prepare the six-language image-extraction manual's **5 MB** limit for A-IMAGE.
+  This numeric-only companion must be included in the reviewed 4.12.0 publication
+  and the corrected manual deployed before image-worker's lower file cap activates.
+
+- Prepare six-language favorite-list availability, overflow and service-error messages, and
+  actor-free preview-image decision footers for A-DISCORD. Fold these into this still-unpublished
+  MINOR; publish the source including this companion before deploying its consumer.
+- Harmony's primary card row reports distance in the selected matching method after hue-first
+  selection, consistently with companion rows; selection and winning dyes are unchanged.
+- Swatch eye rows merge only when both eligible winning colors are equal. Different live colors
+  retain L/R labels even when palette indices match; the single-eye target preference is unchanged.
+- Glamour description budgeting bounds advisory notes before allocating body space, preserving
+  trusted help/share links and the existing 4,000-unit aggregate limit.
+
+### Security
+
+- Glamour resolver names/acquisition text use the shared bounded embed sanitizer, including
+  masked-link/angle-token escaping, mention defusing and single-line normalization.
+- The shared sanitizer escapes `<` and removes Arabic letter mark, bidi isolates and astral tag
+  controls before mention handling. Public helper signatures and ordinary emoji remain supported.
+
+### Deprecated
+
+- `SwatchResult.character` and `SwatchCharacter`, for removal in bot-logic 5.0.0 after the gates
+  in `DEPRECATIONS.md`. The required field, type shape, public exports and runtime mapping remain
+  in this MINOR; use the generated card/embed for presentation.
+
+### Changed
+
+- Prepare five order/sort choice labels in all six locales for A-DISCORD. They are metadata
+  prerequisites; the Discord schema/localizer does not consume them in this sprint.
+- Replace legacy swatch test oracles with literal/card/embed expectations, retain compatibility
+  and privacy tests, remove only internal helper export keywords, and exclude test fixtures
+  from production builds/coverage and package contents. Coverage thresholds remain 90%.
+- Refresh facade/error documentation. Core 5.16.0 and SVG 4.4.1 must be available on npm before
+  publishing this package; `workspace:*` dependencies resolve to those local versions when packed.
+
 ## [4.11.0] - 2026-10-26
 
 `/swatch` and `/glamour` read `.chara` files through core 5.15.0's `xivcharakit` facade (Task 6 of the
