@@ -1,0 +1,171 @@
+{
+  "status": "FAILED / STOPPED; production activation remains held",
+  "authorization": "Explicit user exception for this temporary preview and the reviewed 42 synthetic requests only; no production activation.",
+  "sourceHead": "777660935fd054f597cf5dd6ba3c075d7ce0cec6",
+  "previewName": "xivdyetools-image-acceptance-20261028",
+  "startedAt": "2026-10-29T03:29:44.331Z",
+  "finishedAt": "2026-10-29T03:29:47.510Z",
+  "wrapperAdmissionDeadline": "2026-10-29T03:43:34.016Z",
+  "compatibilityDate": "2024-12-01",
+  "compatibilityFlags": [
+    "enable_request_signal"
+  ],
+  "accountReverifiedAndPinned": true,
+  "sourceIdentityCount": 64,
+  "sourceAndArtifactsUnchangedAfterTest": true,
+  "artifacts": {
+    "entry.mjs": "6e808e53edecbc8fff1af35a6df79295958cfba6ec624f906e4a8d5c91e191e2",
+    "worker.mjs": "7ca7c63f7b784a7ca232e7f817229ce27e022705a233f78ac03011a57b6c34f4",
+    "photon.wasm": "f848bcd2a2794ef7dcea077ecdd3e4eaf06a2ace874a390d33800577968d2461",
+    "wrangler.json": "7b3945fb563a1439e9d512432a2e782d405cb5676c338544331b246771ade1e2"
+  },
+  "productInitializerCount": 1,
+  "wasmModuleCount": 1,
+  "sequenceSHA256": "e84a0b3d62bf4bbcbb3df0e00a8eecb71ea60be6898e7f11367b094fcc196eb0",
+  "plannedRequests": 42,
+  "reservedDriverBudget": 42,
+  "driverRequestsDispatched": 4,
+  "baselineMatches": 3,
+  "nonmatchingResponses": 1,
+  "requestsNotDispatched": 38,
+  "driverRetries": 0,
+  "fullSequencePassed": false,
+  "failure": {
+    "index": 3,
+    "fixtureDescription": "Valid 4096x2048 1-bpp BMP, within existing policy caps",
+    "route": "thumbnail",
+    "httpStatus": 503,
+    "proxyError": "Worker exceeded CPU time limit.",
+    "diagnosticAttribution": "Session-level log without invocation or processing-stage identifiers",
+    "matchingProxyLogLines": 3,
+    "logLineCountDoesNotEstablishAdditionalClientAttempts": true,
+    "exactNumericHostedCpuBudgetEstablished": false,
+    "phaseCpuProfileAvailable": false
+  },
+  "successfulResponsesShareBoot": true,
+  "failedResponseBootUnknown": true,
+  "cleanup": {
+    "localProxyStopped": true,
+    "localPort8787Listeners": 0,
+    "ownedPreviewNodeProcesses": 0,
+    "inventoryCheckedAt": "2026-10-29T03:30:47.436Z",
+    "normalWorkerCatalogEntriesBefore": 14,
+    "normalWorkerCatalogEntriesAfter": 14,
+    "normalNamedCanaryWorkerPresentAfter": false,
+    "allComparedScriptMetadataUnchanged": true,
+    "comparedCatalogSHA256": "cf5f1f66fa8650ca8327db4dcacf26700f8e275a06908f6a7ec435934cced39c",
+    "remoteArtifactDeletionClaimed": false
+  },
+  "limitations": [
+    "CPU-limit failure does not establish memory exhaustion or memory headroom.",
+    "The failed response has no candidate boot/capacity headers; zero parsed capacity is not a measurement.",
+    "Successful capacity headers are post-dispatch WASM capacity, not aggregate isolate memory or continuous peaks.",
+    "Preview and production resource-budget/telemetry equivalence remains unproven.",
+    "The added fixture/auth wrapper differs from the production JS allocation and CPU profile.",
+    "The test did not increase budgets, change a plan, reduce caps, alter production, retry the batch or send the remaining 38 entries."
+  ],
+  "rows": [
+    {
+      "index": 0,
+      "route": "extract",
+      "maxDimension": 512,
+      "inputBytes": 5862,
+      "inputSHA256": "5772100f4fda6f11df0b41cf8016b71798d29b39d2c01214a973852a1f652f12",
+      "expected": {
+        "status": 200,
+        "responseBytes": 524288,
+        "responseSHA256": "0aef2e210e22814777e43b9172a5b7af897684af6dd3025fd7cc2383c7f7d452",
+        "width": 512,
+        "height": 256
+      },
+      "actual": {
+        "status": 200,
+        "responseBytes": 524288,
+        "responseSHA256": "0aef2e210e22814777e43b9172a5b7af897684af6dd3025fd7cc2383c7f7d452",
+        "width": 512,
+        "height": 256,
+        "wasmCapacityBytes": 60358656,
+        "acceptanceHeadersPresent": true,
+        "durationMs": 1117.1055
+      },
+      "matchesBaseline": true
+    },
+    {
+      "index": 1,
+      "route": "thumbnail",
+      "inputBytes": 5101959,
+      "inputSHA256": "84607a30cb3017caaadedc96856c79af09281dd4484bd135a7c5b34e20905abf",
+      "expected": {
+        "status": 200,
+        "responseBytes": 20538,
+        "responseSHA256": "357e14588ea682e924a99ca41c99e53a6a046a4ddbb87d32171e1704be0a25b2",
+        "width": 640,
+        "height": 264
+      },
+      "actual": {
+        "status": 200,
+        "responseBytes": 20538,
+        "responseSHA256": "357e14588ea682e924a99ca41c99e53a6a046a4ddbb87d32171e1704be0a25b2",
+        "width": 640,
+        "height": 264,
+        "wasmCapacityBytes": 84738048,
+        "acceptanceHeadersPresent": true,
+        "durationMs": 1214.3511
+      },
+      "matchesBaseline": true
+    },
+    {
+      "index": 2,
+      "route": "extract",
+      "maxDimension": 512,
+      "inputBytes": 396,
+      "inputSHA256": "88d1a1b5daa1411bdaea50064f13a6384b1f6ebeb63bb4bb1084cddf879524c9",
+      "expected": {
+        "status": 200,
+        "responseBytes": 524288,
+        "responseSHA256": "0aef2e210e22814777e43b9172a5b7af897684af6dd3025fd7cc2383c7f7d452",
+        "width": 512,
+        "height": 256
+      },
+      "actual": {
+        "status": 200,
+        "responseBytes": 524288,
+        "responseSHA256": "0aef2e210e22814777e43b9172a5b7af897684af6dd3025fd7cc2383c7f7d452",
+        "width": 512,
+        "height": 256,
+        "wasmCapacityBytes": 84738048,
+        "acceptanceHeadersPresent": true,
+        "durationMs": 592.8505999999998
+      },
+      "matchesBaseline": true
+    },
+    {
+      "index": 3,
+      "route": "thumbnail",
+      "inputBytes": 1048638,
+      "inputSHA256": "0164cb3175462b77d3bd7222a7c54b9669f192b3ebc673ea7c6bccdedbe942ad",
+      "expected": {
+        "status": 200,
+        "responseBytes": 144,
+        "responseSHA256": "8642672045e9e14a7feab7f601f7fdbb40c680baa1c48d50fbfe192b80d1c8d9",
+        "width": 640,
+        "height": 264
+      },
+      "actual": {
+        "status": 503,
+        "responseBytes": 4773,
+        "responseSHA256": "0991a17c47b09e2da99eaf335c63618da674fda1050c9f0c63035ad8a5121211",
+        "wasmCapacityBytes": null,
+        "acceptanceHeadersPresent": false,
+        "durationMs": 243.01110000000017
+      },
+      "matchesBaseline": false
+    }
+  ],
+  "provenance": {
+    "driverReceiptSHA256": "6debb4e3ea2357909cb8a6c39efb960e2643d2180e332a1ae1a3607840557e58",
+    "proxyLogSHA256": "30eb4f291a9c7a1ba82bd55ef2e0479efca2988e36ca02ae0d4ed76b7452307d",
+    "preparationProofSHA256": "d80ce5dcaa919c9769beff3959ffd7bf56fdc0292684a78fca020bb1458fa63e",
+    "rawReceiptLocation": "Ignored readiness workspace; tokens, account identities and preview credentials excluded from this public receipt."
+  }
+}

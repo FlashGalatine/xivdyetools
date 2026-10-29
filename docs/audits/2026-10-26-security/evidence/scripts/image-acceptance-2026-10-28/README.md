@@ -6,6 +6,13 @@ resources, nor calls a cloud API. Remote startup below remains **HELD pending ex
 authorization** of that temporary code/fixture upload and the account to use. The production
 release and corrected bot manual still have their separate activation gates.
 
+**Later session result:** the user explicitly authorized one temporary preview test. The exact
+42-request driver stopped after three matching responses and a fourth HTTP 503, with session-level
+CPU-limit diagnostics. The proxy is stopped; 38 entries were not dispatched. See the
+[hosted attempt](../../remediation-image-hosted-preview-2026-10-28.md). The original preparation
+description below remains procedural history. Further hosted execution remains held; do not reuse
+the failed session, spend its reserved budget, or treat this exception as production approval.
+
 ## Scope and controls
 
 `prepare-canary.mjs` requires an explicit source checkout, `--account-id` of exactly 32 lowercase
@@ -154,7 +161,7 @@ reads, and has a per-request timeout of at most 60 seconds within the session de
 only numeric/hash receipts and boot IDs under the ignored session folder, never images or tokens.
 No whole-matrix, concurrency, or service-binding behavior claim follows from its sequential checks.
 
-## Remote command — HELD, do not execute without authorization
+## Remote command — HELD for any further session
 
 After approval, stop the local proxy, prepare a fresh named session with the approved account ID,
 repeat the read-only account preflight, verify its hashes/config, and

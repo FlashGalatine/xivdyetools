@@ -2,6 +2,8 @@
 
 **Status: local source integration and validation prepared; hosted aggregate-memory acceptance and production activation remain open.** Base is adoption PR #362 at `316513243bc18ac8e11670013a87b7140756e72c`. This work does not publish packages, merge main, deploy or activate image-worker, or change production callers, logging, policies or secrets.
 
+**Hosted follow-up:** the user subsequently authorized one temporary preview test only. The attempt failed closed after three matching responses and a fourth HTTP 503, with session-level CPU-limit diagnostics; 38 requests were not dispatched. The preview process is stopped and production remains held. See the [hosted attempt and remaining evidence](remediation-image-hosted-preview-2026-10-28.md). References below to a pending proposal or no hosted execution describe the preparation snapshot, not this later attempt.
+
 ## Manual companion integration
 
 Integrate both [PR #349](https://github.com/FlashGalatine/xivdyetools/pull/349) source commits, `14f859af587cada27456239bd1835d589044b810` and `9e5e6b9208749facb1b6b6f3e71e7e52b158fec9`, as a scoped squash on the adoption tip. The original PR stays available for its separate review/release boundary. All six resulting locale blobs are byte-identical to the companion head. Keep bot-logic **4.12.0**, Discord **5.9.7** and image-worker **1.3.5** as pending versions; preserve the H logging tests and higher-version changelogs.

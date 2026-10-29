@@ -15,6 +15,9 @@
 
 ## Status
 
+PARTIAL / OPEN — the explicitly authorized temporary hosted-preview attempt failed closed: three responses matched, then the fourth (valid at-cap BMP thumbnail) returned HTTP 503 without candidate diagnostic headers. Session logs report CPU-time-limit errors; their invocation/stage attribution and the numeric hosted CPU budget are unproven. The remaining 38 requests were not dispatched. No aggregate hosted memory measurement was obtained; production activation and verified manual delivery remain held. [Hosted attempt evidence](../evidence/remediation-image-hosted-preview-2026-10-28.md).
+
+Prior local release-readiness snapshot:
 PARTIAL / OPEN — release-readiness source follow-up integrates the six-language manual companion and closes the identified GIF/WebP canvas-versus-frame admission gaps. The current retained-artifact matrix passes 148 local responses, reaching 110.4375 MiB WASM on valid format boundaries and a 120,022,986-byte post-response diagnostic sum. A separate exact 42-request mixed valid sequence passes in both local modes, yet records a 146,092,141-byte diagnostic sum with stable 107.25 MiB WASM. These samples do not prove continuous peaks, hosted enforcement or production headroom. Hosted acceptance and verified manual delivery remain prerequisites; no activation is selected. [Current readiness evidence](../evidence/remediation-image-readiness-2026-10-28.md).
 
 Historical A-IMAGE preparation status follows:

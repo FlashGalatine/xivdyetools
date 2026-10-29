@@ -2,7 +2,7 @@
 
 > **For agentic workers:** follow project model routing and systematic debugging. Coordinator owns Git, release decisions, evidence/status and outward prose; assigned workers have disjoint files.
 
-**Local status:** source integration, validation and review complete; hosted evaluation remains pending an explicit exception. Git/PR receipts are retained in the readiness ledger.
+**Status:** source integration, validation and review complete in draft PR #363. The user authorized one temporary hosted-preview test; it failed closed after four responses with CPU-limit diagnostics. Aggregate-memory acceptance and production activation remain open. [Hosted evidence](../../audits/2026-10-26-security/evidence/remediation-image-hosted-preview-2026-10-28.md) and the readiness ledger retain the receipts.
 
 **Goal:** integrate the approved PR #349 manual companion and settle the remaining image memory acceptance requirements with current-candidate evidence.
 
@@ -28,6 +28,7 @@
 3. [x] Source and independent security review establish decoder canvas/frame allocation gaps. Close them with bounded metadata tests, refusal-before-constructor assertions, six mutations and actual retained-artifact valid-format compatibility. No resource-exhaustion probe is required or claimed.
 4. [x] Produce current-candidate local runtime receipts and a concrete reviewed platform acceptance procedure if local enforcement cannot settle the gate. No live test or deployment without explicit authorization overriding the repository restriction.
 5. [x] Independent regression and security review, appropriate scoped/full integration gates, package/artifact/manual verification and secret scan. Keep pending versions; record publication, manual-delivery and image-activation order. Commit/push a reviewable feature branch/PR under the standing authorization.
+6. [x] Execute the specifically authorized temporary preview with the exact reviewed 42-request sequence and stop on the first failure. Three responses match; the fourth returns 503 with session-level CPU-limit diagnostics. Stop the process, retain the 38 undispatched entries and preserve the production hold. This is a completed bounded attempt, not a passing acceptance gate or authorization to retry.
 
 ## Review focus
 
