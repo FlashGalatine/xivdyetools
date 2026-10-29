@@ -125,6 +125,7 @@ XIVAUTH_CLIENT_ID = "phx-..."     # XIVAuth application id (the second provider)
 FRONTEND_URL = "https://xivdyetools.app"
 WORKER_URL = "https://auth.xivdyetools.app"
 JWT_EXPIRY = "3600"               # Seconds (default: 1 hour)
+IDENTITY_SPLIT_ENABLED = "false"   # Both environments; separate verified activation required
 ```
 
 The redirect / CORS allowlist also carries `https://beta.xivdyetools.app`. Note `oauth`'s
@@ -135,6 +136,11 @@ other than `development` getting the production gates.
 
 Bindings: `DB` (D1 `xivdyetools-users`), `TOKEN_BLACKLIST` (KV — the revoked-jti list, shared
 with presets-api), and the `RL_AUTH_10` / `RL_AUTH_20` / `RL_AUTH_30` rate-limit bindings.
+
+The initial private identity-provider release declares no outbound `BAN_CONTINUITY` binding.
+Add that named service binding only after the presets target and all enforcement consumers
+are deployed and verified. Development explicitly uses `routes = []` and `workers_dev = false`.
+See [identity rollout and migration order](../architecture/identity-moderation.md).
 
 ### Secrets
 
@@ -252,7 +258,9 @@ no `PRICE_TTL`, `STATIC_TTL`, `MAX_ITEMS` or `MAX_RESPONSE_SIZE` variable.
 
 ### `/v1/chara/*` variables
 
-The `.chara` equipment-resolution routes (web-app Swatch Matcher 11a/11c) talk to XIVAPI v2 server-side — no secrets, plain vars in both `wrangler.toml` envs:
+The `.chara` equipment-resolution routes serve Glamour Reader, facewear links and bot
+`/glamour` enrichment through server-side XIVAPI v2 calls — no secrets, plain vars in both
+`wrangler.toml` environments:
 
 ```toml
 XIVAPI_BASE = "https://v2.xivapi.com"   # upstream origin
@@ -264,22 +272,33 @@ XIVAPI_VERSION = "latest"               # game-version selector; resolved togeth
 # XIVAPI_SCHEMA = "exdschema@2:rev:<sha>"  # optional schema pin (field renames land unannounced)
 ```
 
-No new bindings: the per-key row cache is the Cache API (store `chara-resolve`), not KV. Korean/Chinese item names are build-time JSON (`apps/api-worker/scripts/build-item-names.mjs`), not a runtime fetch.
+The per-key row cache uses the Cache API store `chara-resolve`. The dedicated
+`CHARA_RATE_LIMITER` / `CHARA_SERVICE_RATE_LIMITER` bindings budget upstream data operations,
+with KV counter fallback when absent. They are separate from generic admission. Korean/
+Chinese names are build-time JSON, normalized on runtime lookup; the builder records
+pinned-commit/exact-byte provenance. The controlled 2026-10-29 refresh records per-language
+source provenance, adds 65 Korean names and strips two direction marks while preserving
+Chinese/Japanese table bytes; legacy shared metadata remains historical. An explicit icon game key must match the configured canonical pin or captured
+current discovered key; an asset pin alone does not need schema discovery.
 
 ### Bindings
 
-`api-worker` binds **one** KV namespace, `RATE_LIMIT`, and it is only the fallback for the
-`/v1/*` rate limiter (see the rate-limit table below). The absorbed Universalis proxy caches
+`api-worker` binds **one** KV namespace, `RATE_LIMIT`, for fallback API, telemetry,
+Universalis and Chara rate counters (see the table below). The absorbed Universalis proxy caches
 in the **Cache API** — the second, KV-backed cache layer it once had was removed to stay clear
 of the free tier's KV write limits — so there is nothing to create with
 `wrangler kv namespace create` beyond `RATE_LIMIT`, which already exists in both environments.
 
 | Binding | Kind | Notes |
 |---------|------|-------|
-| `RATE_LIMIT` | KV | Fallback counters for `/v1/*` and `POST /v1/telemetry` |
+| `RATE_LIMIT` | KV | Fallback counters for API, telemetry, Universalis and Chara scopes, each with isolated prefixes |
 | `API_RATE_LIMITER` | Rate limit | 65 / 60 s per IP on `/v1/*` |
 | `TELEMETRY_RATE_LIMITER` | Rate limit | 240 / 60 s per IP on `POST /v1/telemetry` |
 | `SERVICE_RATE_LIMITER` | Rate limit | 1300 / 60 s on one key for our own workers on `/v1/*` (service binding, no client IP) |
+| `UNIVERSALIS_RATE_LIMITER` | Rate limit | 30 / 60 s production (60 development), cache misses on the absorbed market proxy |
+| `UNIVERSALIS_SERVICE_RATE_LIMITER` | Rate limit | 600 / 60 s production (1200 development), separate shared proxy service key |
+| `CHARA_RATE_LIMITER` | Rate limit | 30 / 60 s production (60 development) per public client for actual Chara upstream operations; cached data and existing row/Glasses waiters consume no additional unit |
+| `CHARA_SERVICE_RATE_LIMITER` | Rate limit | Separate 20× service budget: 600 / 60 s production, 1200 development |
 | `ANALYTICS` | Analytics Engine | `xivdyetools_web_analytics` (`_dev` on the dev worker); absent → telemetry is accepted and discarded |
 | `ASSETS` | Static assets | **Production only** — the VitePress developer docs on `developers.xivdyetools.app`; run `pnpm build:docs` before deploying |
 
@@ -377,12 +396,23 @@ Per-client abuse limiting uses the native **Workers Rate Limiting binding** (`[[
 | api-worker | `SERVICE_RATE_LIMITER` | 1300 / 60 s on ONE key: our own workers on `/v1/*` (discord-worker's `/glamour` resolve) carry no client IP, so they share it — 20x a public IP's, BUG-048's rule | 1005 / 1006 | KV `RATE_LIMIT` (`api:svc:` prefix) |
 | api-worker | `UNIVERSALIS_RATE_LIMITER` | 30 / 60 s per IP (dev 60) = `RATE_LIMIT_REQUESTS` / `RATE_LIMIT_WINDOW_SECONDS`, charged on cache misses only, on `/universalis/aggregated` and `/api/v2/aggregated` (FINDING-011) | 1007 / 1008 | KV `RATE_LIMIT` (`universalis:ip:` prefix) |
 | api-worker | `UNIVERSALIS_SERVICE_RATE_LIMITER` | 600 / 60 s (dev 1200) = 20x `RATE_LIMIT_REQUESTS` on ONE key: discord-worker's `/budget` over the service binding carries no client IP (BUG-048) | 1009 / 1010 | KV `RATE_LIMIT` (`universalis:svc:` prefix) |
+| api-worker | `CHARA_RATE_LIMITER` | 30 / 60 s production (dev 60), actual owned search/Glasses/icon operations; IPv6 /64 keys | 1061 / 1062 | KV `RATE_LIMIT` (`chara:ip:` prefix) |
+| api-worker | `CHARA_SERVICE_RATE_LIMITER` | 600 / 60 s production (dev 1200), separate fixed service key, 20× public allowance | 1063 / 1064 | KV `RATE_LIMIT` (`chara:svc:` prefix) |
 | presets-api | `RL_PUBLIC` | 100 / 60 s per IP on `/api/*` | 1011 / 1012 | per-isolate memory |
 | oauth | `RL_AUTH_10` / `RL_AUTH_20` / `RL_AUTH_30` | 10 / 20 / 30 per 60 s per IP+path (`OAUTH_LIMITS`) | 1021-1023 (top-level = prod), 1024-1026 (development) — the preview tier (1027-1029) went with the deleted `[env.preview]` block (FINDING-029) | KV `TOKEN_BLACKLIST` (`rl:` prefix), then memory |
 | moderation-worker | `RL_COMMAND` / `RL_AUTOCOMPLETE` | 25 / 70 per 60 s per Discord user | 1031-1032 / 1033-1034 | KV `KV` |
 | discord-worker | `RL_5` / `RL_10` / `RL_15` / `RL_20` / `RL_30` / `RL_70` | 5 / 10 / 15 / 20 / 30 / 70 per 60 s per Discord user + command — one tier per distinct effective limit in `DISCORD_COMMAND_LIMITS` (FINDING-007) | 1041-1046 (production), 1051-1056 (top-level beta) | KV `KV` — logs a one-time warning when no tier is bound |
 
 Why: KV allows one write per second per key and the read-modify-write counter swallows the resulting 429s, so a single fast client never reaches a 60 s threshold (FINDING-003). KV/memory remain only as fallbacks for environments without the binding.
+
+A-API opts the API, telemetry, Universalis and Chara client extractors into worker-kit
+1.6.0's IPv6 /64 normalization; dotted/mapped IPv4 and the no-client-IP service classification
+are preserved. Chara thresholds are approximate per Cloudflare location. Runtime backend
+failures retain the public-read fail-open policy; malformed configured bindings fail
+configuration validation, and explicit denial returns a request-local 429 with retry/budget
+headers and `no-store`. Metadata discovery remains bounded/memoized outside the data budget.
+The 1061–1064 allocation was checked against all 14 deployed workers on 2026-10-27 using
+GET-only inventory/settings calls; source configuration does not deploy or reserve live state.
 
 ## Shared Secrets
 
@@ -481,3 +511,17 @@ dataset = "xivdyetools_bot_analytics"   # og-worker: xivdyetools_og_analytics,
 - [Local Setup](local-setup.md) - Development environment
 - [Deployment](deployment.md) - Deployment procedures
 - [Troubleshooting](troubleshooting.md) - Common issues
+
+## Prepared identity-consumer flags
+
+| Unit | Variable | Prepared value and behavior |
+|---|---|---|
+| presets-api | `OAUTH_SESSION_CHECK_ENABLED` | `false` in both environments; exact `true` requires valid `OAUTH_IDENTITY.validateSession` and checks web sessions before authority |
+| moderation-worker | `LINKED_BAN_CONFIRMATION_ENABLED` | `false` in both environments; all new ban/unban/selection/button/modal paths refuse privately while inactive |
+
+Unset stays inactive; malformed values are configuration errors. `OAUTH_IDENTITY` is a private
+named service binding, not a secret or public endpoint. Enable consumers only after additive
+presets migration, deployed OAuth provider and all privacy disclosures are verified. Verify
+active consumers before a separate OAuth split activation, including its mandatory bounded
+RPC/cleanup correction before any outbound continuity binding is added. See
+[the staged identity contract](../architecture/identity-moderation.md).

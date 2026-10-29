@@ -56,13 +56,21 @@ wrangler secret delete PERSPECTIVE_API_KEY --env production
 - [ ] Confirm on the `…-dev` worker (no key set) that a new preset lands as `pending` (the
       `unscored` path, shipped in presets-api 2.4.0), or is scored by the replacement
 - [ ] Delete the `PERSPECTIVE_API_KEY` production secret **before 2026-12-31**
-- [ ] **Same day:** edit both privacy policies so neither names Perspective any more, all six
-      languages each:
-  - bot `apps/discord-worker/PRIVACY_POLICY.md` §6 (the Perspective API row of Third-Party
-    Services);
-  - web `apps/web-app/PRIVACY.md` item 3 (the Perspective sentence).
+- [ ] **Same day as key deletion:** update both privacy policies and both Terms of Service,
+      all six languages each:
+  - bot `apps/discord-worker/PRIVACY_POLICY.md` §6: remove the Perspective API row of Third-Party
+    Services;
+  - web `apps/web-app/PRIVACY.md` item 3: remove the Perspective sentence;
+  - bot `apps/discord-worker/TERMS_OF_SERVICE.md` §5, Content Moderation → Community Presets:
+    replace the "Those that clear it are published immediately" claim;
+  - web `apps/web-app/TERMS_OF_SERVICE.md`, Moderation:
+    replace the "A submission that clears them is published straight away and logged for audit" claim.
 
-  Bump every variant's `Last updated` and run
+  Without a replacement scorer, both Terms of Service must say that every new or text-edited
+  preset is held for moderator review. If a replacement scorer is used, describe its verified
+  behavior instead. Make these policy changes on key-deletion day, not before.
+
+  Bump every variant's `Last updated` to the same date and run
   `python .agents/skills/audit-shared/scripts/policy-locale-parity.py` (exit 0).
 - [ ] Remove `checkWithPerspective`, `PERSPECTIVE_ENDPOINT`, `moderationUnavailable()`, the
       `perspective_unavailable` method value and the `PERSPECTIVE_API_KEY` `Env` field once the
