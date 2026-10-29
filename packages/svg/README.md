@@ -149,6 +149,8 @@ const ratio = contrastRatio('#FFFFFF', '#000000');   // → 21
 - **No rendering** — outputs SVG strings only; consumers handle PNG rasterization.
 - **The PNG must be self-contained.** These get saved and reposted into servers that never ran the command, so never burn an instruction into an image — actionable, context-dependent lines belong in the embed.
 - **Never ellipsise to a character count.** Use `fitText` / `estimateTextWidth`: CJK counts 2× and German compounds run ~3× English.
+- **Text fitting stays linear.** `fitText` scans code-point prefixes with the same width
+  estimator and preserves the existing truncation, trimming and ellipsis behavior.
 - **Blanks, never inventions.** A missing price is an em dash; a ratio with no numerator is an empty cell.
 - **XML escaping is automatic** in `cardText` and `text()` — never concatenate user strings into raw `<text>` blocks.
 
