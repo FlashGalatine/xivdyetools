@@ -424,6 +424,77 @@ describe('HarmonyTool', () => {
   // Basic Rendering Tests
   // ============================================================================
 
+  describe('BUG-018 canonical harmony type and count', () => {
+    it('wins over legacy state and applies import/reset once across rail, wheel, cards and share', async () => {
+      const { ConfigController } = await import('@services/config-controller');
+      const { StorageService, getHarmonyTypes } = await import('@services/index');
+      ConfigController.resetInstance();
+      const controller = ConfigController.getInstance();
+      controller.setConfig('harmony', {
+        harmonyType: 'triadic',
+        companionDyesCount: 2,
+        preventDuplicates: false,
+      });
+      vi.mocked(StorageService.getItem).mockImplementation((key) =>
+        key === TYPE_KEY
+          ? ('tetradic' as never)
+          : key === 'v3_harmony_companions'
+            ? (5 as never)
+            : null
+      );
+      try {
+        tool = mount();
+        tool.selectDye(mockDyes[0]);
+        const assertType = (type: string, count: number) => {
+          const chips = [...container.querySelectorAll('[aria-pressed]')];
+          const types = getHarmonyTypes();
+          expect(chips.filter((chip) => chip.getAttribute('aria-pressed') === 'true')).toEqual([
+            chips[types.findIndex((entry) => entry.id === type)],
+          ]);
+          expect(container.querySelector('v4-color-wheel')?.getAttribute('harmony-type')).toBe(
+            type
+          );
+          expect(container.querySelector('v4-share-button')).toMatchObject({
+            shareParams: { harmony: type },
+          });
+          const cardCounts: Record<string, number> = { triadic: 3, tetradic: 4, complementary: 2 };
+          expect(container.querySelectorAll('v4-result-card')).toHaveLength(cardCounts[type]);
+          const cards = [...container.querySelectorAll('v4-result-card')].slice(1);
+          expect(cards.length).toBeGreaterThan(0);
+          expect(cards[0]).toMatchObject({ data: { alternates: expect.any(Array) } });
+          expect(
+            (cards[0] as unknown as { data: { alternates: unknown[] } }).data.alternates
+          ).toHaveLength(count);
+        };
+        assertType('triadic', 2);
+        const generate = vi.spyOn(
+          tool as unknown as { generateHarmonies(): void },
+          'generateHarmonies'
+        );
+        const pins = (tool as unknown as { swappedDyes: Map<number, unknown> }).swappedDyes;
+        pins.set(1, mockDyes[1]);
+        controller.importConfigs({
+          harmony: {
+            ...controller.getConfig('harmony'),
+            harmonyType: 'tetradic',
+            companionDyesCount: 1,
+          },
+        });
+        tool.setConfig({ harmonyType: 'tetradic' }); // v4 bridge echo
+        expect(generate).toHaveBeenCalledTimes(1);
+        expect(pins.size).toBe(0);
+        assertType('tetradic', 1);
+        generate.mockClear();
+        controller.resetAllConfigs();
+        assertType('complementary', controller.getConfig('harmony').companionDyesCount);
+      } finally {
+        tool?.destroy();
+        vi.mocked(StorageService.getItem).mockReturnValue(null);
+        ConfigController.resetInstance();
+      }
+    });
+  });
+
   describe('Basic Rendering', () => {
     it('should render harmony tool', () => {
       tool = new HarmonyTool(container, { leftPanel, rightPanel, drawerContent });

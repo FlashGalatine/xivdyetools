@@ -1184,17 +1184,17 @@ describe('dyes are attached on the page, after validation', () => {
     expect(unknown.dye).toBeNull();
   });
 
-  it('a well-formed dye the worker sends is replaced by the database dye', async () => {
-    // The page never trusts the worker's dye: it looks every badge up itself.
+  it('rejects even a well-formed offline dye object sent by the worker', async () => {
+    // Only null crosses the worker boundary; known stains are attached after validation.
     const forged = { ...new DyeService(dyeDatabase).getByStainId(86), name: 'FORGED-NAME' };
     const value = result();
     value.gearDyes = [{ slot: 'Body', channel: 1, stainId: 86, dye: forged as never }];
     const { call, worker } = await start();
     worker.emit('message', success(worker.requestId, value));
     await settle();
-    expect(call.status).toBe('resolved');
-    expect(call.value?.gearDyes[0].dye).toEqual(new DyeService(dyeDatabase).getByStainId(86));
-    expect(JSON.stringify(call.value)).not.toContain('FORGED-NAME');
+    expect(call.status).toBe('rejected');
+    expectFailure(call.error, 'workerFailed');
+    expect(call.value).toBeUndefined();
   });
 
   it.each<[string, (dye: Record<string, unknown>) => void]>([

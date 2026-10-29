@@ -361,6 +361,7 @@ export class PresetCard extends BaseLitComponent {
         aria-label="${presetName(preset)}"
         @click=${this.handleClick}
         @keydown=${(e: KeyboardEvent) => {
+          if (e.target !== e.currentTarget) return;
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
             this.handleClick();

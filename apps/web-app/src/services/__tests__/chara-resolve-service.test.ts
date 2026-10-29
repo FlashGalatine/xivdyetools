@@ -20,6 +20,29 @@ const GEAR = [
   { slot: 'MainHand' as const, set: 634, base: 19, variant: 1 },
 ];
 
+const NAMES = { en: 'Mask', ja: '仮面', de: 'Maske', fr: 'Masque', ko: '가면', zh: '面具' };
+const ITEM = {
+  itemId: 361,
+  names: NAMES,
+  iconId: 41716,
+  familySize: 53,
+  alternates: [{ itemId: 362, names: NAMES, acquisition: 'Crafted' }],
+  viaMainHand: false,
+  rules: [
+    {
+      itemIds: Array.from({ length: 53 }, (_, i) => 361 + i),
+      dyeCount: 2,
+      glamourable: true,
+      wearMask: 65535,
+      grandCompany: 0,
+    },
+  ],
+  acquisition: 'Vendor',
+  retired: true as const,
+  uiCategory: 1,
+};
+const GLASSES = { id: 40, names: NAMES, iconId: null, acquisition: 'Vendor' };
+
 const envelope = (data: unknown, status = 200) =>
   new Response(JSON.stringify({ success: status === 200, data }), {
     status,
@@ -29,6 +52,149 @@ const envelope = (data: unknown, status = 200) =>
 describe('chara-resolve-service', () => {
   beforeEach(() => clearCharaResolveCache());
   afterEach(() => vi.unstubAllGlobals());
+
+  describe('validated resolve DTOs', () => {
+    it('rebuilds valid extended consumer data and caches only the validated copy', async () => {
+      const raw = {
+        success: true,
+        data: { items: { HeadGear: ITEM }, glasses: GLASSES, version: 'v' },
+      };
+      const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => raw });
+      vi.stubGlobal('fetch', fetchMock);
+      const result = await resolveCharaEquipment(GEAR, 40);
+      expect(result).toEqual({
+        items: { HeadGear: ITEM, MainHand: null },
+        glasses: GLASSES,
+      });
+      const nodes = (value: unknown): object[] =>
+        typeof value === 'object' && value !== null
+          ? [value, ...Object.values(value).flatMap(nodes)]
+          : [];
+      const originals = new Set(nodes(raw));
+      expect(nodes(result).some((node) => originals.has(node))).toBe(false);
+      expect(await resolveCharaEquipment(GEAR, 40)).toBe(result);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('supports older absent optional fields, empty rules and regional fallbacks', async () => {
+      const old = {
+        itemId: 361,
+        names: { en: '', ja: '', de: '', fr: '' },
+        iconId: null,
+        familySize: 1,
+        alternates: [],
+        viaMainHand: false,
+      };
+      vi.stubGlobal(
+        'fetch',
+        vi
+          .fn()
+          .mockResolvedValue(
+            envelope({ items: { HeadGear: old, MainHand: { ...old, rules: [] } } })
+          )
+      );
+      expect(await resolveCharaEquipment(GEAR, null)).toEqual({
+        items: { HeadGear: old, MainHand: { ...old, rules: [] } },
+        glasses: null,
+      });
+    });
+
+    const badItems: Array<[string, unknown]> = [
+      ['array item', []],
+      ['unsafe item id', { ...ITEM, itemId: Number.MAX_SAFE_INTEGER + 1 }],
+      ['fractional icon', { ...ITEM, iconId: 1.5 }],
+      ['zero icon', { ...ITEM, iconId: 0 }],
+      ['missing locale', { ...ITEM, names: { en: 'Mask' } }],
+      ['array names', { ...ITEM, names: [] }],
+      ['bad optional locale', { ...ITEM, names: { ...NAMES, ko: 1 } }],
+      ['bad family size', { ...ITEM, familySize: 0 }],
+      ['bad viaMainHand', { ...ITEM, viaMainHand: 'false' }],
+      ['bad alternate names', { ...ITEM, alternates: [{ itemId: 2, names: { en: 'Only' } }] }],
+      ['bad alternate id', { ...ITEM, alternates: [{ itemId: -2, names: NAMES }] }],
+      [
+        'bad alternate acquisition',
+        { ...ITEM, alternates: [{ itemId: 2, names: NAMES, acquisition: [] }] },
+      ],
+      ['array rules group', { ...ITEM, rules: [[]] }],
+      ['bad rule ids', { ...ITEM, rules: [{ ...ITEM.rules[0], itemIds: [1, '2'] }] }],
+      ['empty rule ids', { ...ITEM, rules: [{ ...ITEM.rules[0], itemIds: [] }] }],
+      ['bad dye count', { ...ITEM, rules: [{ ...ITEM.rules[0], dyeCount: 3 }] }],
+      ['bad glamour flag', { ...ITEM, rules: [{ ...ITEM.rules[0], glamourable: 1 }] }],
+      ['bad wear mask', { ...ITEM, rules: [{ ...ITEM.rules[0], wearMask: 65536 }] }],
+      ['bad company', { ...ITEM, rules: [{ ...ITEM.rules[0], grandCompany: 4 }] }],
+      ['bad acquisition', { ...ITEM, acquisition: {} }],
+      ['bad retired', { ...ITEM, retired: false }],
+      ['bad category', { ...ITEM, uiCategory: Infinity }],
+    ];
+    it.each(badItems)(
+      'nulls %s while preserving a valid requested sibling',
+      async (_label, bad) => {
+        vi.stubGlobal(
+          'fetch',
+          vi
+            .fn()
+            .mockResolvedValue(
+              envelope({ items: { HeadGear: bad, MainHand: ITEM }, glasses: GLASSES })
+            )
+        );
+        const result = await resolveCharaEquipment(GEAR, 40);
+        expect(result.items.HeadGear).toBeNull();
+        expect(result.items.MainHand).toEqual(ITEM);
+        expect(result.glasses).toEqual(GLASSES);
+        expect(await resolveCharaEquipment(GEAR, 40)).toBe(result);
+        expect(fetch).toHaveBeenCalledTimes(1);
+      }
+    );
+
+    it.each([
+      [[]],
+      [{ ...GLASSES, id: 0 }],
+      [{ ...GLASSES, iconId: Number.MAX_SAFE_INTEGER + 1 }],
+      [{ ...GLASSES, names: { en: 'Only' } }],
+      [{ ...GLASSES, acquisition: false }],
+    ])('nulls malformed glasses %j', async (glasses) => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue(envelope({ items: { HeadGear: ITEM }, glasses }))
+      );
+      expect((await resolveCharaEquipment(GEAR, 40)).glasses).toBeNull();
+    });
+
+    it.each([[[]], [{ items: [] }], [{ items: {}, version: 123 }]])(
+      'rejects invalid envelope data %j without caching it',
+      async (data) => {
+        const fetchMock = vi
+          .fn()
+          .mockResolvedValueOnce(envelope(data))
+          .mockResolvedValueOnce(envelope({ items: { HeadGear: ITEM } }));
+        vi.stubGlobal('fetch', fetchMock);
+        await expect(resolveCharaEquipment(GEAR, null)).rejects.toBeInstanceOf(
+          CharaResolveUnavailableError
+        );
+        expect((await resolveCharaEquipment(GEAR, null)).items.HeadGear).toEqual(ITEM);
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+      }
+    );
+
+    it('ignores unrequested/unknown slots and glasses, preserving out-of-range nulls', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi
+          .fn()
+          .mockResolvedValue(
+            envelope({ items: { HeadGear: ITEM, Body: ITEM, Sneaky: ITEM }, glasses: GLASSES })
+          )
+      );
+      const result = await resolveCharaEquipment(
+        [GEAR[0], { slot: 'Body', base: 70000, variant: 1 }],
+        null
+      );
+      expect(result).toEqual({
+        items: { HeadGear: ITEM, Body: null },
+        glasses: null,
+      });
+    });
+  });
 
   it('posts the model keys (and glasses only when set) to /v1/chara/resolve', async () => {
     // The request CONTRACT with api-worker: URL, method, and body shape. Nothing
@@ -51,7 +217,6 @@ describe('chara-resolve-service', () => {
     expect(result).toEqual({
       items: { HeadGear: null, MainHand: null },
       glasses: null,
-      version: 'v',
     });
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
@@ -89,7 +254,7 @@ describe('chara-resolve-service', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(envelope({}, 503)));
     const down = await resolveCharaEquipment(GEAR, null).catch((e: unknown) => e);
     expect(down).toBeInstanceOf(CharaResolveUnavailableError);
-    expect((down as CharaResolveUnavailableError).status).toBe(503);
+    expect((down as Error).message).toBe('api-worker answered 503');
 
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
     await expect(resolveCharaEquipment(GEAR, null)).rejects.toBeInstanceOf(
@@ -119,7 +284,10 @@ describe('chara-resolve-service', () => {
     await expect(resolveCharaEquipment(GEAR, null)).rejects.toBeInstanceOf(
       CharaResolveUnavailableError
     );
-    expect((await resolveCharaEquipment(GEAR, null)).version).toBe('v');
+    expect((await resolveCharaEquipment(GEAR, null)).items).toEqual({
+      HeadGear: null,
+      MainHand: null,
+    });
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
@@ -139,10 +307,13 @@ describe('chara-resolve-service', () => {
           return Promise.resolve(envelope({}, 400));
         }
         const items = Object.fromEntries(
-          body.gear.map((g) => [g.slot, { itemId: g.base, names: { en: g.slot } }])
+          body.gear.map((g) => [g.slot, { ...ITEM, itemId: g.base }])
         );
         return Promise.resolve(
-          envelope({ items, glasses: body.glasses ? { id: body.glasses } : null, version: 'v' })
+          envelope({
+            items,
+            glasses: body.glasses ? { ...GLASSES, id: body.glasses } : null,
+          })
         );
       });
 
@@ -176,7 +347,7 @@ describe('chara-resolve-service', () => {
       );
 
       expect(fetchMock).not.toHaveBeenCalled();
-      expect(result).toEqual({ items: { Body: null }, glasses: null, version: null });
+      expect(result).toEqual({ items: { Body: null }, glasses: null });
     });
 
     it('still sends an in-range facewear row on its own', async () => {

@@ -20,7 +20,6 @@ const names = {
 const result: CharaResolveResult = {
   items: {},
   glasses: { id: 1, names, iconId: 51000 },
-  version: 'test',
 };
 const menu = () => document.querySelector<HTMLElement>('[data-role="item-links-menu"]');
 const submenu = () => document.querySelector<HTMLElement>('[data-role="item-links-lodestone"]');

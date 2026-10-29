@@ -133,7 +133,7 @@ src/
 │   ├── chara-file-loader.ts         # Reads a dropped .chara into the session: `*.chara` names only, core's 8 KiB MAX_CHARA_FILE_BYTES (both before reading), the capped read, the inspection service, chara_parse telemetry; returns a fixed failure code (`notChara`/`tooLarge`/`unreadable`/`workerFailed`/`timedOut`), the file card toasts it; a newer load or SWAP's `cancelCharaLoad()` supersedes an older one
 │   ├── chara-inspection-service.ts  # Runs one cancellable inspection in the Web Worker: transfers the bytes, answers the worker's palette requests from the page's own CharacterColorService, 5,000 ms deadline, terminates every worker once, validates the answer through the protocol, then attaches gearDyes[].dye from the offline dye database. `prefetchCharaPalettes()` warms the palettes from the drop zone (skipped under saveData)
 │   ├── chara-inspection-protocol.ts # The worker's message shapes and validators: rebuilds a fresh DTO from validated values (eight unique slots, 24 dye channels, 64 diagnostics, 256 KiB, the matchHex rule); the page never trusts a worker answer as received
-│   ├── chara-resolve-service.ts     # POST data.xivdyetools.app/v1/chara/resolve — .chara model keys → item names/icons (Swatch 11a/11c); session cache; any failure = CharaResolveUnavailableError
+│   ├── chara-resolve-service.ts     # POST data.xivdyetools.app/v1/chara/resolve — .chara model keys → Glamour Reader equipment names/icons; session cache; any failure = CharaResolveUnavailableError
 │   ├── dye-service-wrapper.ts       # Wraps core DyeService
 │   ├── harmony-generator.ts         # The harmony-type UI vocabulary only (ids, icons, names) —
 │   │                                # slot SELECTION is core's generateHarmonySlots
@@ -218,11 +218,14 @@ border-color: var(--theme-border);
 
 - `vendor-core` — `@xivdyetools/core` by name, but in practice only the race-specific character-color JSON (~1.8 MB raw) that `CharacterColorService` `import()`s on demand
 - `vendor-lit` — Lit framework
-- `vendor-spectral` — `spectral.js` (reached only through `@xivdyetools/core/blending`; core declares the dependency)
-- `vendor` — everything else from `node_modules`
+- `vendor` — reserved for other `node_modules` dependencies, with a retained 30 KB budget; the current build emits no such chunk
 - `modals` — named for the welcome + changelog modals, but Rolldown merges the shared color engine (ColorService, APIService, core utils) into it, so it is the app's core runtime and loads on every visit (budget 287 KB since web-app 5.15.4)
 
 Each tool component is its own dynamic import.
+
+Rolldown merges `spectral.js` (reached through `@xivdyetools/core/blending`) into
+the core runtime chunk named `modals`; the dye selector is shared through
+`collapsible-panel`. Neither has a separate chunk or named budget.
 
 ### Storage Keys
 
@@ -297,7 +300,7 @@ npx playwright test --project=mobile-chrome
 **Sibling apps it talks to:**
 - `xivdyetools-presets-api` — community presets (HTTPS)
 - `xivdyetools-oauth` — Discord login + JWT issuance
-- `xivdyetools-api-worker` — market-board pricing via its `/universalis` routes (absorbed CORS proxy), and `.chara` equipment identity via `POST /v1/chara/resolve` + `GET /v1/chara/icon/:id` (the Glamour Reader's DYES ON THIS GLAMOUR names/icons; the SPA never talks to XIVAPI — CSP `img-src` allows `data.xivdyetools.app` for the proxied icons, `connect-src` already covers `*.xivdyetools.app`). Local dev: `VITE_API_WORKER_URL` (default `http://localhost:8790`); when the worker is down the block degrades to slot-only rows by design; opt-in telemetry via `POST /v1/telemetry`
+- `xivdyetools-api-worker` — market-board pricing via its `/universalis` routes (absorbed CORS proxy), and `.chara` equipment identity via `POST /v1/chara/resolve` + `GET /v1/chara/icon/:id` (the Glamour Reader's DYES ON THIS GLAMOUR names/icons; the SPA never talks to XIVAPI — CSP `img-src` allows `data.xivdyetools.app` for the proxied icons, `connect-src` explicitly allows `api.xivdyetools.app`, `auth.xivdyetools.app` and `data.xivdyetools.app`, plus the site itself). Local dev: `VITE_API_WORKER_URL` (default `http://localhost:8790`); when the worker is down the block degrades to slot-only rows by design; opt-in telemetry via `POST /v1/telemetry`
 - `xivdyetools-og-worker` — dynamic OpenGraph images for share links
 
 ## Documentation

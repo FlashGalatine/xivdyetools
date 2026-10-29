@@ -171,6 +171,33 @@ test.describe('Preset gallery against a live-shaped API', () => {
     }
   });
 
+  for (const key of ['Enter', 'Space']) {
+    test(`focused Save and Vote retain native ${key} actions without opening details`, async ({
+      page,
+    }) => {
+      await openGallery(page);
+      const card = cards(page).filter({ hasText: 'Midnight Ceruleum' }).first();
+      await expect(card).toBeVisible();
+      const save = card.getByRole('button', { name: 'Save', exact: true });
+      await save.focus();
+      await page.keyboard.press(key);
+      await expect(card.getByRole('button', { name: 'Saved', exact: true })).toBeVisible();
+      await expect(page.locator('v4-preset-detail')).toHaveCount(0);
+      await expect(page).toHaveURL(/\/presets$/);
+
+      await card.locator('.face-btn').first().focus();
+      await page.keyboard.press(key);
+      await expect(page.locator('#signin-discord')).toBeVisible();
+      await expect(page.locator('v4-preset-detail')).toHaveCount(0);
+      await expect(page).toHaveURL(/\/presets$/);
+      await page.keyboard.press('Escape');
+      await expect(page.locator('#signin-discord')).toHaveCount(0);
+      await card.locator('article').focus();
+      await page.keyboard.press(key);
+      await expect(page.locator('v4-preset-detail')).toBeVisible();
+    });
+  }
+
   test('keeps a curated preset off the Community tab', async ({ page }) => {
     await openGallery(page);
     await expect(cards(page).first()).toBeVisible({ timeout: 20000 });

@@ -78,7 +78,10 @@ describe('GlamourBlock — palette naming never leaks the character name', () =>
   ): Promise<HTMLElement> {
     const glamour = createTestContainer('chara-glamour');
     hosts = [glamour];
-    block = new GlamourBlock(glamour, { onSubmitPalette });
+    const actionsHost = document.createElement('div');
+    const content = document.createElement('div');
+    glamour.append(actionsHost, content);
+    block = new GlamourBlock(content, { actionsHost, onSubmitPalette });
     block.init();
     const file = new File([text], fileName, { type: 'application/json' });
     if (typeof (file as Blob).text !== 'function') {

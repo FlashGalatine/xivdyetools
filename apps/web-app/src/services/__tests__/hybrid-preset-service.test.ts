@@ -24,6 +24,14 @@ vi.mock('../auth-service', () => ({
   authService: {
     isAuthenticated: vi.fn(() => false),
     getAuthHeaders: vi.fn(() => ({})),
+    getState: vi.fn(() => ({
+      isAuthenticated: false,
+      user: null,
+      token: null,
+      expiresAt: null,
+      provider: null,
+    })),
+    subscribe: vi.fn(() => () => {}),
   },
 }));
 

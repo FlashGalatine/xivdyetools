@@ -22,7 +22,7 @@ import {
 } from '@services/preset-submission-service';
 import { createCategorySelector, type CategorySelection } from './preset-category-selector';
 import { presetErrorMessage, presetValidationMessage } from '@shared/preset-i18n';
-import { exampleLinkError } from '@shared/example-link';
+import { exampleLinkError, sanitizePreviewImageUrl } from '@shared/example-link';
 import { dyeNameMatches, localizedDyeName } from '@shared/dye-name';
 import type { Dye } from '@xivdyetools/types';
 import type { CommunityPreset } from '@services/community-preset-service';
@@ -33,6 +33,7 @@ import type { EditResult, PresetEditRequest } from '@services/preset-submission-
 // ============================================
 
 interface FormState {
+  modalId: ReturnType<typeof ModalService.show> | null;
   name: string;
   description: string;
   /** Editable since 5.0 — was a locked read-only display */
@@ -120,6 +121,7 @@ export function showPresetEditForm(preset: CommunityPreset, onEdit?: OnEditCallb
 
   // Initialize form state with existing values
   const state: FormState = {
+    modalId: null,
     name: preset.name,
     description: preset.description,
     categories: {
@@ -132,14 +134,14 @@ export function showPresetEditForm(preset: CommunityPreset, onEdit?: OnEditCallb
     newPreviewImage: null,
     clearPreviewImage: false,
     previewImageStatus: preset.preview_image_status ?? 'none',
-    previewImageUrl: preset.preview_image_url ?? null,
+    previewImageUrl: sanitizePreviewImageUrl(preset.preview_image_url),
   };
 
   // Create form content
   const content = createFormContent(preset, state, onEdit);
 
   // Show modal using ModalService
-  ModalService.show({
+  state.modalId = ModalService.show({
     type: 'custom',
     title: LanguageService.t('preset.editTitle'),
     content,
@@ -649,7 +651,7 @@ function createSubmitButton(
   cancelBtn.textContent = LanguageService.t('common.cancel');
 
   cancelBtn.addEventListener('click', () => {
-    ModalService.dismissTop();
+    if (state.modalId) ModalService.dismiss(state.modalId);
   });
 
   cancelBtn.addEventListener('mouseenter', () => {
@@ -864,7 +866,9 @@ function createSubmitButton(
       // Deliberately no `else`: an image-only edit whose image call failed has
       // already shown its warning, and has nothing to report as a success.
 
-      ModalService.dismissTop();
+      if (state.modalId) ModalService.dismiss(state.modalId);
+      // A committed edit still refreshes its caller when the form was closed
+      // during the request; closing it must never dismiss a later modal.
       onEdit?.(result);
     } catch {
       ToastService.error(LanguageService.t('errors.saveChangesFailed'));

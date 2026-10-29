@@ -153,7 +153,6 @@ const RESOLVED: CharaResolveResult = {
     Body: null,
   },
   glasses: null,
-  version: 'test',
 };
 
 function deferred<T>() {
@@ -181,7 +180,10 @@ async function mount(pending: Promise<CharaResolveResult>, fixture: string = FIX
   // The file card carries SWAP; the block draws whatever the session holds.
   const card = new CharaFileCard(container);
   card.init();
-  const block = new GlamourBlock(glamour);
+  const actionsHost = document.createElement('div');
+  const content = document.createElement('div');
+  glamour.append(actionsHost, content);
+  const block = new GlamourBlock(content, { actionsHost, onSubmitPalette: vi.fn() });
   block.init();
   mounted.push(card, block);
   // loadCharaFile is the drop/choose handler's only job; drive it directly so
@@ -425,9 +427,14 @@ describe('GlamourBlock — DYES ON THIS GLAMOUR (Turn 11)', () => {
     const next = createTestContainer('chara-glamour-next');
     hosts.push(next);
 
-    block.moveTo(next);
+    const nextActions = document.createElement('div');
+    const nextContent = document.createElement('div');
+    next.append(nextActions, nextContent);
+    block.moveTo(nextContent, nextActions);
 
-    expect(glamour.childElementCount).toBe(0);
+    expect(glamour.textContent).toBe('');
+    expect(nextActions.querySelector('[data-role="copy-list"]')).not.toBeNull();
+    expect(nextContent.querySelector('[data-role="copy-list"]')).toBeNull();
     expect(next.querySelector<HTMLInputElement>('input[type="text"]')?.value).toBe('Sunset set');
     expect(next.querySelector('[data-slot="HeadGear"] [data-role="item-name"]')?.textContent).toBe(
       'Beech Mask of Casting'
@@ -746,9 +753,9 @@ describe('GlamourBlock — Copy list / Save .md', () => {
   };
 
   const copyBtn = (glamour: HTMLElement) =>
-    block(glamour).querySelector<HTMLButtonElement>('[data-role="copy-list"]')!;
+    glamour.querySelector<HTMLButtonElement>('[data-role="copy-list"]')!;
   const exportBtn = (glamour: HTMLElement) =>
-    block(glamour).querySelector<HTMLButtonElement>('[data-role="export-markdown"]')!;
+    glamour.querySelector<HTMLButtonElement>('[data-role="export-markdown"]')!;
   const sheetEl = () => document.querySelector<HTMLElement>('[data-role="glamour-sheet"]');
   /** Copy list opens the export sheet (design 2c); its own Copy list writes. */
   const copyVia = async (glamour: HTMLElement): Promise<void> => {
@@ -825,7 +832,7 @@ describe('GlamourBlock — Copy list / Save .md', () => {
     restore(document, 'execCommand', saved.execCommand);
   });
 
-  it('renders both actions in the block head, disabled until names have landed', async () => {
+  it('renders both actions in the supplied host, disabled until names have landed', async () => {
     const pending = deferred<CharaResolveResult>();
     const { container, glamour } = await mount(pending.promise);
     hosts = [container, glamour];
@@ -1152,7 +1159,6 @@ describe('GlamourBlock — IN THE GAME (the reader verdict) and twins', () => {
     const resolved: CharaResolveResult = {
       items: { HeadGear: COIF, Body: item(200, 'Casting Robe', { rules: [rules([200], 2)] }) },
       glasses: null,
-      version: 'test',
     };
     const { container, glamour } = await mount(Promise.resolve(resolved), MIDLANDER);
     hosts = [container, glamour];
@@ -1168,7 +1174,6 @@ describe('GlamourBlock — IN THE GAME (the reader verdict) and twins', () => {
     const resolved: CharaResolveResult = {
       items: { HeadGear: COIF, Body: item(200, 'Casting Robe', { rules: [rules([200], 2)] }) },
       glasses: null,
-      version: 'test',
     };
     const { container, glamour } = await mount(Promise.resolve(resolved), MIDLANDER);
     hosts = [container, glamour];
@@ -1198,7 +1203,6 @@ describe('GlamourBlock — IN THE GAME (the reader verdict) and twins', () => {
         Body: item(2967, "Lord's Yukata", { rules: [rules([2967], 1, { wearMask: 0x5555 })] }),
       },
       glasses: null,
-      version: 'test',
     };
     const { container, glamour } = await mount(Promise.resolve(resolved), MIDLANDER);
     hosts = [container, glamour];
@@ -1221,7 +1225,6 @@ describe('GlamourBlock — IN THE GAME (the reader verdict) and twins', () => {
         Body: item(2967, "Lord's Yukata", { rules: [rules([2967], 1, { wearMask: 0x5555 })] }),
       },
       glasses: null,
-      version: 'test',
     };
     const { container, glamour } = await mount(Promise.resolve(resolved), viera);
     hosts = [container, glamour];
@@ -1245,7 +1248,6 @@ describe('GlamourBlock — IN THE GAME (the reader verdict) and twins', () => {
         }),
       },
       glasses: null,
-      version: 'test',
     };
     const { container, glamour } = await mount(Promise.resolve(resolved), MIDLANDER);
     hosts = [container, glamour];
@@ -1264,7 +1266,6 @@ describe('GlamourBlock — IN THE GAME (the reader verdict) and twins', () => {
     const resolved: CharaResolveResult = {
       items: { HeadGear: COIF, Body: null },
       glasses: null,
-      version: 'test',
     };
     const { container, glamour } = await mount(Promise.resolve(resolved), MIDLANDER);
     hosts = [container, glamour];
@@ -1285,7 +1286,6 @@ describe('GlamourBlock — IN THE GAME (the reader verdict) and twins', () => {
         Body: item(1, 'Dated Robe', { retired: true, rules: [rules([1], 2)] }),
       },
       glasses: null,
-      version: 'test',
     };
     const { container, glamour } = await mount(Promise.resolve(resolved), MIDLANDER);
     hosts = [container, glamour];
@@ -1310,7 +1310,6 @@ describe('GlamourBlock — IN THE GAME (the reader verdict) and twins', () => {
         }),
       },
       glasses: null,
-      version: 'test',
     };
     const { container, glamour } = await mount(Promise.resolve(resolved), MIDLANDER);
     hosts = [container, glamour];
@@ -1326,7 +1325,6 @@ describe('GlamourBlock — IN THE GAME (the reader verdict) and twins', () => {
     const resolved: CharaResolveResult = {
       items: { HeadGear: COIF, Body: item(1, 'Aetherial Robe', { retired: true }) },
       glasses: null,
-      version: 'test',
     };
     const { container, glamour } = await mount(Promise.resolve(resolved), MIDLANDER);
     hosts = [container, glamour];
@@ -1347,7 +1345,6 @@ describe('GlamourBlock — IN THE GAME (the reader verdict) and twins', () => {
         }),
       },
       glasses: null,
-      version: 'test',
     };
     const { container, glamour } = await mount(Promise.resolve(resolved), MIDLANDER);
     hosts = [container, glamour];
@@ -1366,7 +1363,6 @@ describe('GlamourBlock — IN THE GAME (the reader verdict) and twins', () => {
     const resolved: CharaResolveResult = {
       items: { HeadGear: COIF },
       glasses: null,
-      version: 'test',
     };
     const { container, glamour } = await mount(Promise.resolve(resolved), MIDLANDER);
     hosts = [container, glamour];
@@ -1404,7 +1400,6 @@ describe('GlamourBlock — IN THE GAME (the reader verdict) and twins', () => {
         Feet: item(3000, 'Hempen Boots', { rules: [rules([3000], 1)] }),
       },
       glasses: null,
-      version: 'test',
     };
     const { container, glamour } = await mount(Promise.resolve(resolved), file);
     hosts = [container, glamour];
@@ -1422,7 +1417,6 @@ describe('GlamourBlock — IN THE GAME (the reader verdict) and twins', () => {
     const resolved: CharaResolveResult = {
       items: { HeadGear: COIF },
       glasses: null,
-      version: 'test',
     };
     const { container, glamour, block: first } = await mount(Promise.resolve(resolved), MIDLANDER);
     hosts = [container, glamour];
@@ -1434,7 +1428,10 @@ describe('GlamourBlock — IN THE GAME (the reader verdict) and twins', () => {
     first.destroy();
     const again = createTestContainer('chara-glamour-again');
     hosts.push(again);
-    const second = new GlamourBlock(again);
+    const actionsHost = document.createElement('div');
+    const content = document.createElement('div');
+    again.append(actionsHost, content);
+    const second = new GlamourBlock(content, { actionsHost, onSubmitPalette: vi.fn() });
     second.init();
     mounted.push(second);
     await vi.waitFor(() => expect(verdict(again)).not.toBeNull());
@@ -1460,7 +1457,6 @@ describe('GlamourBlock — IN THE GAME (the reader verdict) and twins', () => {
     const resolved: CharaResolveResult = {
       items: { MainHand: replica, OffHand: { ...replica, viaMainHand: true } },
       glasses: null,
-      version: 'test',
     };
     const { container, glamour } = await mount(Promise.resolve(resolved));
     hosts = [container, glamour];
@@ -1479,7 +1475,6 @@ describe('GlamourBlock — IN THE GAME (the reader verdict) and twins', () => {
     const resolved: CharaResolveResult = {
       items: { HeadGear: COIF },
       glasses: null,
-      version: 'test',
     };
     const open = vi.spyOn(window, 'open').mockReturnValue(null);
     const { container, glamour } = await mount(Promise.resolve(resolved), MIDLANDER);
@@ -1513,7 +1508,6 @@ describe('GlamourBlock — IN THE GAME (the reader verdict) and twins', () => {
     const resolved: CharaResolveResult = {
       items: { HeadGear: COIF },
       glasses: null,
-      version: 'test',
     };
     const { block: b, container, glamour } = await mount(Promise.resolve(resolved), MIDLANDER);
     hosts = [container, glamour];

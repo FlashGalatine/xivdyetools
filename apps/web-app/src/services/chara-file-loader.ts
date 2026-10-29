@@ -41,6 +41,18 @@ export type CharaLoadResult =
 /** The session's file-name limit, the same 256 UTF-16 units core gives the file's own labels. */
 const MAX_FILE_NAME_UNITS = 256;
 
+/** Keep the UTF-16 cap without cutting a valid astral character in half. */
+function boundedFileName(value: string): string {
+  if (value.length <= MAX_FILE_NAME_UNITS) return value;
+  const last = value.charCodeAt(MAX_FILE_NAME_UNITS - 1);
+  const next = value.charCodeAt(MAX_FILE_NAME_UNITS);
+  const end =
+    last >= 0xd800 && last <= 0xdbff && next >= 0xdc00 && next <= 0xdfff
+      ? MAX_FILE_NAME_UNITS - 1
+      : MAX_FILE_NAME_UNITS;
+  return value.slice(0, end);
+}
+
 /**
  * Bumped by every admitted load and by every clear. Only the newest load may publish: two drops
  * that overlap would otherwise finish in either order, and a slow earlier file could replace the
@@ -78,7 +90,7 @@ export async function loadCharaFile(file: File): Promise<CharaLoadResult> {
   // cancels a good file that is still loading.
   const generation = ++loadGeneration;
   const superseded = (): boolean => generation !== loadGeneration;
-  const fileName = file.name.slice(0, MAX_FILE_NAME_UNITS);
+  const fileName = boundedFileName(file.name);
 
   // One byte past the cap, so a file that grew after the size check is still refused. A stale
   // handle (the picker's File outliving the file on disk) fails here, before any inspection:

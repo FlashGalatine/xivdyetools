@@ -245,6 +245,40 @@ describe('loadCharaFile — the session', () => {
     expect(name.startsWith(fileName)).toBe(true);
   });
 
+  it('omits an emoji that would cross the 256-unit file-name cap', async () => {
+    const prefix = 'n'.repeat(255);
+
+    expect(await loadCharaFile(charaFile(`${prefix}😀.chara`))).toEqual({ ok: true });
+
+    expect(CharaSessionService.getSession()!.fileName).toBe(prefix);
+  });
+
+  it('keeps a complete emoji ending exactly at the 256-unit file-name cap', async () => {
+    const prefix = 'n'.repeat(254);
+
+    expect(await loadCharaFile(charaFile(`${prefix}😀.chara`))).toEqual({ ok: true });
+
+    expect(CharaSessionService.getSession()!.fileName).toBe(`${prefix}😀`);
+    expect(CharaSessionService.getSession()!.fileName).toHaveLength(256);
+  });
+
+  it('caps an emoji-only file-name prefix at 128 complete emoji', async () => {
+    expect(await loadCharaFile(charaFile(`${'😀'.repeat(200)}.chara`))).toEqual({ ok: true });
+
+    const fileName = CharaSessionService.getSession()!.fileName;
+    expect(fileName).toBe('😀'.repeat(128));
+    expect(fileName).toHaveLength(256);
+  });
+
+  it.each(['look.chara', '😀look😀.chara'])(
+    'keeps the short file name %s unchanged',
+    async (name) => {
+      expect(await loadCharaFile(charaFile(name))).toEqual({ ok: true });
+
+      expect(CharaSessionService.getSession()!.fileName).toBe(name);
+    }
+  );
+
   it("passes the adapter's 256-unit nickname through unchanged", async () => {
     const nickname = 'N'.repeat(256);
     inspect.mockResolvedValueOnce(makeImportedCharacter({ nickname }));
