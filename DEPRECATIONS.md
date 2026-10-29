@@ -381,6 +381,38 @@ re-verifying work that was already done.
 
 ---
 
+### Legacy character-file parser and resolver (`@xivdyetools/core`)
+
+| Field | Value |
+|---|---|
+| Deprecation prepared | 2026-10-27, core 5.16.0 MINOR; publication pending |
+| Remove in | Core 6.0.0, after the MINOR is published and beta/production consumer acceptance is recorded |
+| Severity | High — published npm API; removal requires a MAJOR |
+
+**Deprecated symbols:** `parseCharaFile`, `resolveCharaColors`, `OFF_GRID_DELTA_E2000`,
+`ParsedCharaFile`, `CharaColorSlotRaw`, and `CharaGearDye`. Their implementations, signatures,
+exports, tests and the host/library parity harness remain in the 5.x release. The shared
+`MAX_CHARA_FILE_BYTES` limit and the nine live slot/result/lookup types are retained APIs,
+relocated to independent modules; they are not deprecated.
+
+**Migration:** use `inspectCharaForTools` with `resolveCharaForTools`, or the palette-free
+`@xivdyetools/core/chara` reader and `resolveCharaWithProvider` with a host palette provider.
+Review the [integration notes](docs/research/2026-10-22-xivcharakit-integration.md): the new
+diagnostics and color eligibility are intentionally different from the legacy result contract.
+
+**Removal gates:**
+
+- [x] Prepare the 5.16.0 deprecation tags and migration documentation without removing legacy APIs.
+- [x] Relocate the shared limit and live types while preserving public names and declaration shapes.
+- [ ] Publish core 5.16.0 through **Publish Packages to npm** and verify registry availability.
+- [ ] Record beta and production acceptance for web/bot consumers of the current facade.
+- [ ] Prepare bot-logic's legacy test-oracle rewrite in A-BOT-LOGIC (DEAD-022); publication pending.
+- [ ] In core 6.0.0, remove the legacy pair, its legacy-only symbols and the parity harness's
+      host half only after the preceding gates pass (DEAD-024).
+
+---
+
+
 ## Process
 
 1. When deprecating something, add an entry here with a realistic removal date

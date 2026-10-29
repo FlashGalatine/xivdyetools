@@ -8,9 +8,8 @@
  * api.md / compatibility.md and the host source, never a snapshot of one implementation's output.
  * The register in docs/research/2026-10-22-xivcharakit-integration.md is built from this table.
  *
- * The library half uses the library's bundled palette provider, which is a test-only import: the
- * application bridge is Task 2, and the bundled provider matches it on all 26,496 creator and shader
- * requests.
+ * The library half uses the library's bundled palette provider, a test-only import that matches the
+ * application bridge on all 26,496 creator and shader requests.
  */
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';

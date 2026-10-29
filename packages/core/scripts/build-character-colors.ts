@@ -16,7 +16,8 @@
  *   `{ index, hex, rgb }` shape `CharacterColorService` serves. These are what
  *   the Swatch Matcher shows and matches dyes against.
  * - `shader/shared.json` and `shader/race_specific.json` ← the shader half, as
- *   bare hex lists. Only the `.chara` resolver reads them, to judge a float.
+ *   bare hex lists. The legacy `.chara` resolver and the live reader's palette
+ *   provider use them to judge stored float colors.
  *
  * File layout, in 4-byte RGBA colors: 9 shader blocks of 256 (Eyes,
  * HairHighlights, LipsDark 128 + FacePaintDark 128, Features, LipsLight 128 +

@@ -21,9 +21,9 @@ import {
   type AppearanceSlotInspection,
 } from 'xivcharakit/appearance';
 import type { Gender, Race, SubRace } from '@xivdyetools/types';
-import { MAX_CHARA_FILE_BYTES } from './chara-parser.js';
+import { MAX_CHARA_FILE_BYTES } from './chara-limits.js';
 import type { CharaGearModel } from './chara-models.js';
-import type { StainIdLookup, ResolvedGearDye } from './chara-resolver.js';
+import type { StainIdLookup, ResolvedGearDye } from './chara-types.js';
 import type {
   CharaPaletteProvider,
   CharaImportIssue,
@@ -145,7 +145,15 @@ export function inspectCharaForTools(input: string | Uint8Array): CharaInspectio
 
 function boundedLabel(value: string | number | undefined): string | null {
   if (typeof value !== 'string') return null;
-  return value.length > MAX_LABEL_UNITS ? value.slice(0, MAX_LABEL_UNITS) : value;
+  if (value.length <= MAX_LABEL_UNITS) return value;
+  const last = value.charCodeAt(MAX_LABEL_UNITS - 1);
+  const next = value.charCodeAt(MAX_LABEL_UNITS);
+  // Keep the UTF-16 cap without cutting a valid astral character in half.
+  const end =
+    last >= 0xd800 && last <= 0xdbff && next >= 0xdc00 && next <= 0xdfff
+      ? MAX_LABEL_UNITS - 1
+      : MAX_LABEL_UNITS;
+  return value.slice(0, end);
 }
 
 function safePath(path: readonly (string | number)[]): (string | number)[] {

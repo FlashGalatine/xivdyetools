@@ -7,9 +7,8 @@
  * functions are exported from `@xivdyetools/core`.
  *
  * @entrypoint Reached only through the package's "./chara" exports row, which a relative-import
- * scan cannot follow; its first consumer, the web app's inspection worker, lands in the web-app
- * change stacked on this one and imports it by that package specifier, and chara-entry.test.ts
- * pins what it may pull in.
+ * scan cannot follow. The web app's inspection worker imports this package specifier;
+ * the entry-point import-graph test pins its palette-free runtime closure.
  *
  * @module chara
  */
