@@ -44,7 +44,7 @@
 |---------|---------|--------------|----------|--------|
 | **Core** (incl. `/blending` + schema-v2 data) | v5.15.0 | `@xivdyetools/core` | npm | Active |
 | **Types** | v3.3.0 | `@xivdyetools/types` | npm | Active |
-| **Auth** (incl. `/encoding`) | v2.0.2 | `@xivdyetools/auth` | npm | Active |
+| **Auth** (incl. `/encoding`) | v3.0.0 | `@xivdyetools/auth` | npm | Active |
 | **Logger** | v2.4.0 | `@xivdyetools/logger` | npm | Active |
 | **Worker Kit** (middleware + `/rate-limiter`) | v1.5.0 | `@xivdyetools/worker-kit` | npm | Active |
 | **SVG** | v4.4.0 | `@xivdyetools/svg` | npm | Active |
@@ -496,6 +496,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v3.0.0 | Oct 2026 | H-AUTH source prepared: canonical unpadded Base64URL and lowercase 64-hex signatures; MAJOR because the exported hex verifier no longer accepts uppercase/mixed-case digests. Generic hex decoding and v2 signing bytes remain unchanged; publication/adoption pending |
 | v2.0.2 | Sep 2026 | Enforce Discord byte caps during streaming, cancel early, verify original bytes |
 | v2.0.1 | Sep 2026 | knip dead-code gate — 17 barrel exports tagged `@public` (the four encoding helpers are live via `@xivdyetools/auth/encoding`, only the root re-export is unreferenced) |
 | **v2.0.0** | **Aug 2026** | **BREAKING — 2026-08-29 security audit (FINDING-015): `verifyBotSignature` (v1 bot request signature, `timestamp:userId:userName`, no request binding) removed from `hmac.ts` and the barrel; `createBotSignatureV2`/`verifyBotSignatureV2` (1.4.0) are now the only signature scheme. No in-repo caller remained — `presets-api` 2.2.0, `discord-worker` 5.1.0 and `moderation-worker` 1.6.0 had already stopped accepting/sending v1** |

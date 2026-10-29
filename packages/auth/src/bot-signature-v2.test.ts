@@ -8,6 +8,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createBotSignatureV2, verifyBotSignatureV2, BOT_SIGNATURE_V2_MAX_AGE_MS } from './hmac.js';
+import { hexToBytes } from './encoding/hex.js';
 
 const secret = 'bot-signing-secret-that-is-at-least-32-bytes-long!!';
 
@@ -37,12 +38,55 @@ describe('bot signature v2', () => {
     await expect(verifyBotSignatureV2(sig, req, secret)).resolves.toBe(true);
   });
 
+  it.each(['upper', 'mixed'] as const)(
+    'rejects byte-equivalent %s-case signatures',
+    async (style) => {
+      const req = base();
+      const signature = await createBotSignatureV2(req, secret);
+      const alias =
+        style === 'upper'
+          ? signature.toUpperCase()
+          : signature.replace(/[a-f]/, (c) => c.toUpperCase());
+      expect(alias).not.toBe(signature);
+      expect(hexToBytes(alias)).toEqual(hexToBytes(signature));
+      await expect(verifyBotSignatureV2(signature, req, secret)).resolves.toBe(true);
+      await expect(verifyBotSignatureV2(alias, req, secret)).resolves.toBe(false);
+    },
+  );
+
+  it.each([
+    '',
+    'a'.repeat(63),
+    'a'.repeat(65),
+    'a'.repeat(66),
+    'g'.repeat(64),
+    'A'.repeat(64),
+    'a'.repeat(64) + '\n',
+    'a'.repeat(64) + '\r',
+    'a'.repeat(64) + '\u2028',
+    ' ' + 'a'.repeat(64),
+  ])('rejects malformed signatures before reading the request body: %j', async (signature) => {
+    const req = {
+      ...base(),
+      get body(): string {
+        throw new Error('body must not be read');
+      },
+    };
+    await expect(verifyBotSignatureV2(signature, req, secret)).resolves.toBe(false);
+  });
+
   it('binds method, path and body', async () => {
     const req = base();
     const sig = await createBotSignatureV2(req, secret);
-    await expect(verifyBotSignatureV2(sig, { ...req, method: 'DELETE' }, secret)).resolves.toBe(false);
-    await expect(verifyBotSignatureV2(sig, { ...req, path: '/api/v1/presets/other' }, secret)).resolves.toBe(false);
-    await expect(verifyBotSignatureV2(sig, { ...req, body: '{"name":"y"}' }, secret)).resolves.toBe(false);
+    await expect(verifyBotSignatureV2(sig, { ...req, method: 'DELETE' }, secret)).resolves.toBe(
+      false,
+    );
+    await expect(
+      verifyBotSignatureV2(sig, { ...req, path: '/api/v1/presets/other' }, secret),
+    ).resolves.toBe(false);
+    await expect(verifyBotSignatureV2(sig, { ...req, body: '{"name":"y"}' }, secret)).resolves.toBe(
+      false,
+    );
   });
 
   it('treats the method case-insensitively and the body as bytes', async () => {
@@ -54,8 +98,14 @@ describe('bot signature v2', () => {
   });
 
   it('is not ambiguous under the v1 delimiter collision (123,"a:b") vs ("123:a","b")', async () => {
-    const a = await createBotSignatureV2({ ...base(), userDiscordId: '123', userName: 'a:b' }, secret);
-    const b = await createBotSignatureV2({ ...base(), userDiscordId: '123:a', userName: 'b' }, secret);
+    const a = await createBotSignatureV2(
+      { ...base(), userDiscordId: '123', userName: 'a:b' },
+      secret,
+    );
+    const b = await createBotSignatureV2(
+      { ...base(), userDiscordId: '123:a', userName: 'b' },
+      secret,
+    );
     expect(a).not.toBe(b);
   });
 
@@ -73,12 +123,20 @@ describe('bot signature v2', () => {
   it('rejects missing signature, missing timestamp and non-numeric timestamps', async () => {
     const req = base();
     await expect(verifyBotSignatureV2(undefined, req, secret)).resolves.toBe(false);
-    await expect(verifyBotSignatureV2('00', { ...req, timestamp: undefined }, secret)).resolves.toBe(false);
-    await expect(verifyBotSignatureV2('00', { ...req, timestamp: 'abc' }, secret)).resolves.toBe(false);
+    await expect(
+      verifyBotSignatureV2('00', { ...req, timestamp: undefined }, secret),
+    ).resolves.toBe(false);
+    await expect(verifyBotSignatureV2('00', { ...req, timestamp: 'abc' }, secret)).resolves.toBe(
+      false,
+    );
   });
 
   it('signs an empty body and absent identity deterministically', async () => {
-    const req = { method: 'GET', path: '/api/v1/presets/mine', timestamp: String(Math.floor(Date.now() / 1000)) };
+    const req = {
+      method: 'GET',
+      path: '/api/v1/presets/mine',
+      timestamp: String(Math.floor(Date.now() / 1000)),
+    };
     const sig = await createBotSignatureV2(req, secret);
     await expect(verifyBotSignatureV2(sig, req, secret)).resolves.toBe(true);
     await expect(verifyBotSignatureV2(sig, { ...req, body: '' }, secret)).resolves.toBe(true);

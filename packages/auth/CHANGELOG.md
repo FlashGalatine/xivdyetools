@@ -5,13 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [3.0.0] - 2026-10-28
 
-Rides with the next auth release (Sprint 25 of the 2026-10-04 remediation plan, carried in Sprint 10's PR); a
-comment-only change needs no publish of its own.
+H-AUTH source preparation (FINDING-042); publication and separate consumer adoption remain
+pending. This release also carries the previously Unreleased documentation clarifications.
+
+### Breaking
+
+- `hmacVerifyHex` and `verifyBotSignatureV2` require exactly 64 lowercase hexadecimal
+  characters. Uppercase and mixed-case digests now return `false`, even when they decode
+  to the same digest. This narrows the published general hex-verifier contract and requires
+  a MAJOR release. External signature producers must emit lowercase; package signers already do.
+- Existing `^2` consumers need an explicit upgrade. All exports, v2 canonical signing bytes,
+  request fields and headers remain unchanged; this is not a v3 signing-protocol migration.
+  The general `hexToBytes` utility retains uppercase/mixed-case support.
+
+### Security
+
+- Enforce canonical unpadded Base64URL: reject whitespace, padding, standard Base64 alphabet,
+  impossible lengths and nonzero trailing bits. Codec helpers throw on invalid input;
+  HMAC verification returns `false` and JWT verification returns `null` as before.
+- Preserve canonical byte/string and empty codec round trips, JWT issuance compatibility,
+  and the debugging-only `decodeJWT` payload-decoding scope.
 
 ### Changed
 
+- Clarify that v2 bot signatures do not authenticate query values; callers must
+  authorize their effects independently against the signed identity (FINDING-046).
+  Documentation only; no wire-format, runtime or type change.
 - **The `JWTPayload` doc comment is accurate** (REFACTOR-006). It no longer claims a re-export from
   `@xivdyetools/types` (auth is Level 0 and declares its own, narrower verifier-side shape: `iss`, `username`,
   `global_name` and `avatar` are optional, and `auth_provider` and `discord_id` are absent), and `sub` is labeled as
