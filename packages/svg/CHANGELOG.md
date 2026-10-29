@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [4.4.1] - 2026-10-27
 
+### Hardening adoption
+
+- **H-SVG-ADOPT preparation:** pack core 5.16.0, carrying logger 2.4.0 transitively. Card generation APIs are unchanged. Publish only after the adopted core release is available.
+
 ### Security
 
 - **Fit long card text in linear time.** `fitText` scans code-point prefixes once using the
