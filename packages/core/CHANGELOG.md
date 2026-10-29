@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [5.16.0] - 2026-10-27
 
+### Hardening adoption
+
+- **H-CORE-ADOPT preparation:** pack logger 2.4.0 as the exact dependency, carrying guarded object-error redaction and Discord token-path sanitization for consumers that select a logger. The default remains NoOpLogger. Publish only after logger 2.4.0 is available.
+- Add JSON import attributes to character and shader palettes so actual built packages load in Node 22 without a custom loader, including the lazy hair, skin and shader tables. Palette values, APIs and lazy loading remain unchanged.
+
 ### Deprecated
 
 - **Legacy `.chara` parsing and resolution remain available but are deprecated.**
