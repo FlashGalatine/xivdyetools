@@ -281,10 +281,16 @@ Discord (beta app) ──► ...-dev.workers.dev ──┬─► own KV namespac
 Isolated where beta activity would corrupt real user state; shared where realistic data is the
 whole point of the test.
 
-**Accepted residual risk:** `/preset submit` from beta writes a genuine row into the live
-moderation queue. Do not exercise that path on beta, or delete the row afterward. Full isolation
-would require standing up a staging `presets-api` plus a migrated D1 database, which is
-deliberately out of scope (see below).
+**Credential boundary:** do not set `BOT_API_SECRET` or `BOT_SIGNING_SECRET` on the beta
+worker. Without the signing secret, authenticated preset operations are refused by the live
+presets API; beta is not a safe place to exercise writes. The signed favorite-batch lookup
+also requires that secret, so its success path is tested locally with a fake binding rather
+than by giving beta production credentials. Public preset reads remain available.
+
+**Residual risk if this boundary is broken:** giving beta production bot credentials can let
+`/preset submit` write a genuine row into the live moderation queue. A separate staging presets
+API and migrated D1 database would be needed for isolated authenticated testing; that remains
+outside this setup.
 
 ---
 
@@ -321,8 +327,9 @@ deliberately out of scope (see below).
    npx wrangler secret put DISCORD_TOKEN        # beta bot token
    npx wrangler secret put DISCORD_PUBLIC_KEY   # beta app public key
    ```
-   Optional secrets (`BOT_API_SECRET`, `INTERNAL_WEBHOOK_SECRET`) may be omitted. Rate limiting
-   needs no secret — it runs on the `[[ratelimits]]` bindings declared in `wrangler.toml`.
+   Do **not** set `BOT_API_SECRET` or `BOT_SIGNING_SECRET` on beta: they would authorize calls
+   against the live presets API. `INTERNAL_WEBHOOK_SECRET` is optional. Rate limiting needs no
+   secret — it runs on the `[[ratelimits]]` bindings declared in `wrangler.toml`.
 9. In the Discord portal, set **Interactions Endpoint URL** to the `workers.dev` URL from
    step 7. Discord sends a signed PING and refuses to save unless verification passes; a
    successful save confirms `DISCORD_PUBLIC_KEY` is correct.
@@ -466,6 +473,43 @@ redirect-URI error:
 - `apps/oauth/src/constants/oauth.ts` → `ALLOWED_REDIRECT_ORIGINS`
 - `apps/presets-api/wrangler.toml` → `env.production.ADDITIONAL_CORS_ORIGINS`
 
-Both workers deploy from `main` on push, but both expose `workflow_dispatch` and
-`actions/checkout` takes the dispatched ref — so allowlist changes can be
-released from a feature branch without merging.
+Both workers deploy from `main` on push and expose `workflow_dispatch`. The production
+environment now permits exactly `main`, requires maintainer review and disables administrator
+bypass. Select only an explicitly authorized main source/run after the release prerequisites;
+an arbitrary dispatched checkout ref is not an approved production release path. Production
+activation remains held during this preparation.
+
+## Update 2026-10-27 — OAuth identity prerequisites
+
+OAuth remains the exception: its top-level Wrangler block deploys production, while
+`[env.development]` now explicitly declares `routes = []` and `workers_dev = false`.
+The development D1 placeholder must not be replaced or deployed as part of this preparation.
+
+The provider release requires the additive users migration before its deployment. Use
+`wrangler d1 execute --file` once for the existing database; do not replay migrations with
+`d1 migrations apply`. It exports the named private identity service with splitting disabled
+and no outbound continuity binding. Verify the provider, then the later presets/moderation
+consumers and disclosures, before a separate OAuth activation change.
+
+[Identity contract and full release order](../architecture/identity-moderation.md).
+
+## A-MODERATION consumer preparation — 2026-10-27
+
+Preparation keeps API session checks and all new moderation ban/unban flows disabled in both
+environments. The presets wrapper preserves HTTP/cron and exports named `BanContinuity`.
+Both consumers declare OAuth `IdentityLookup` service bindings; the provider must be deployed
+and verified before either dependent deployment references it.
+
+Apply additive presets migration `0016_ban_identity_continuity.sql` once before either consumer
+deploys, using `wrangler d1 execute --file`; never `d1 migrations apply` or a fresh-schema replay.
+Membership-aware queries require the new tables even while feature flags are false. Deploy and
+verify both policy units before any new confirmation storage/display. Then prepare a separate
+consumer activation for `OAUTH_SESSION_CHECK_ENABLED` and `LINKED_BAN_CONFIRMATION_ENABLED`;
+verify sessions, explicit ban/expansion/unban scope and private replies in production.
+
+Keep OAuth splitting disabled and its outbound continuity binding absent until all consumers
+are verified and the mandatory bounded-RPC/global-cleanup fix is implemented and tested. A
+later OAuth activation-only change follows. Automatic workflows deploy units independently;
+one merge does not prove ordering. Changed moderation slash arguments register in its existing
+deployment workflow. No manual registration, migration, deployment, merge or activation is
+selected by this preparation. See [the full order](../architecture/identity-moderation.md).
