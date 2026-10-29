@@ -4,6 +4,10 @@ All notable changes to `@xivdyetools/worker-kit` (formerly `@xivdyetools/worker-
 
 ## [1.6.0] - 2026-10-27
 
+### Hardening adoption
+
+- **H-WORKER-KIT-ADOPT preparation:** pack logger 2.4.0 for request-scoped middleware logging, including guarded object-error redaction and Discord token-path sanitization. Publish only after logger 2.4.0 is available.
+
 ### Added
 
 - **Opt-in IPv6 /64 rate-limit keys (2026-10-26 security FINDING-004).**
