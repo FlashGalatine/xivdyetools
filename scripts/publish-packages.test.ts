@@ -315,15 +315,19 @@ test('rejects packed pnpm config and permits reviewed packed exports override', 
 
 test('rejects duplicate packed manifests', (t) => {
   const options = fixture(t, [name('types')]);
-  execFileSync('tar', [
-    '--format=ustar',
-    '-czf',
+  const manifest = JSON.stringify({ name: name('types'), version: '1.2.3' });
+  // GNU tar may encode a repeated filesystem path as a hardlink. Construct two
+  // regular members so this fixture reaches manifest uniqueness on every OS.
+  writeFileSync(
     join(options.artifactRoot, 'types.tgz'),
-    '-C',
-    join(options.sourceRoot, 'stage-types'),
-    'package/package.json',
-    'package/package.json',
-  ]);
+    gzipSync(
+      Buffer.concat([
+        tarMember('package/package.json', manifest, '0'),
+        tarMember('package/package.json', manifest, '0'),
+        Buffer.alloc(1024),
+      ]),
+    ),
+  );
   writeRelease(options);
   assert.throws(() => verifyRelease(options), /expected one normalized packed package.json/);
 });

@@ -120,6 +120,20 @@ offers no atomic conditional delete; an external rollback can race the final pro
 
 ## Release boundary
 
+### Linux CI fixture follow-up, 2026-10-28
+
+The first PR #351 CI run failed one script test: `rejects duplicate packed manifests`
+expected the manifest-count rejection but received `unsupported archive entry type`.
+GNU tar encoded the repeated filesystem path as a hardlink; Windows bsdtar emitted two
+regular members. The runtime correctly rejected the hardlink before reaching the intended
+guard. [Failed check](https://github.com/FlashGalatine/xivdyetools/actions/runs/40790334707/job/123173696058).
+
+The fixture now uses the existing USTAR member helper to construct two explicit regular
+manifest entries. The exact duplicate-count assertion and runtime validator are unchanged.
+An independent verifier confirmed the test-fixture classification. The complete local script
+suite passes **220/220**, zero skips; removing the uniqueness guard in an ignored scratch
+copy makes the repaired test fail. Linux CI must confirm the updated PR head independently.
+
 Repository tools/docs only; no new application runtime release or package API change.
 Auth JSDoc rides its existing Unreleased notes; Pages tooling notes fold into the prepared
 web-app release. No root player-facing changelog entry or public announcement is needed.
