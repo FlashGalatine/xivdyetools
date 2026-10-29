@@ -18,6 +18,16 @@ All version numbers are targets inherited from the accepted major path, not fres
 
 Each locale-owning release finalizes its text before checking/subsetting fonts. A missing drawable glyph blocks that release until its font update is ready; never ship a red glyph gate while waiting for the terminal phase. The final F-DISCORD/F-OG pass occurs only after the last rendered-text/item-name change.
 
+**Release/adoption preparation 2026-10-29:** the A/R/H source stack now has an
+[operational release runbook](../../operations/REMEDIATION_RELEASE_2026_10.md) and
+[dated observations/proof](../2026-10-26-security/evidence/remediation-release-adoption-2026-10-29.md).
+They record the current deployment fanout, proposed production approval control, package order,
+two presets configuration releases to break the Discord dependency cycle, migration/rollback
+dependencies and separate activation gates. The configuration split is an offline proposal;
+isolated release cuts and live acceptance remain pending. **Production activation remains on
+hold.** No finding status/count, package publication, app rollout or M/F prerequisite is closed
+by this preparation.
+
 ## Sprint OPS-API-DEV — Cloudflare stale dev worker — ✅ COMPLETED 2026-10-26 (live action; no code commit)
 
 The maintainer explicitly authorized deletion in chat. Rechecked all 16 workers' bindings, target domains/routes and the stale script before deleting it without force. Cloudflare confirmed deletion; the target is absent from inventory, its settings return 404 / 10007, and its public HEAD probe returns 404. [Execution evidence](../2026-10-26-security/evidence/remediation-finding-054-2026-10-26.md).

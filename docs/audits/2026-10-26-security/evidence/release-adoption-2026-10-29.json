@@ -1,0 +1,1465 @@
+{
+  "schema": 1,
+  "scope": "Read-only A/R/H release/adoption preparation; production activation held",
+  "recordedAt": "2026-10-29T13:53:33.745Z",
+  "source": {
+    "commit": "cea587fa276b502a246f6c5fe0d1cfe9a03ef55f",
+    "main": "13c386e5983fe58ff17ac08fb5712239feb2e696",
+    "changedFiles": 1252,
+    "rootAnnouncementChanged": false
+  },
+  "registry": [
+    {
+      "name": "@xivdyetools/types",
+      "targetVersion": "3.3.0",
+      "latest": "3.3.0",
+      "targetVersionExists": true,
+      "integrity": "sha512-7/GXcPeZJ53hadTebEsxYp6mO9hrQtTnMWSW4d/4ZmYd3WAlCMjfEBrJQpSBwU24/GF8mQgyqwGU61W+ny3frg==",
+      "gitHead": null,
+      "checkedAtUTC": "2026-10-29T13:33:51.5989698Z",
+      "requestExit": 0,
+      "url": "https://registry.npmjs.org/%40xivdyetools%2Ftypes"
+    },
+    {
+      "name": "@xivdyetools/logger",
+      "targetVersion": "2.4.0",
+      "latest": "2.3.0",
+      "targetVersionExists": false,
+      "integrity": null,
+      "gitHead": null,
+      "checkedAtUTC": "2026-10-29T13:33:52.024091Z",
+      "requestExit": 0,
+      "url": "https://registry.npmjs.org/%40xivdyetools%2Flogger"
+    },
+    {
+      "name": "@xivdyetools/auth",
+      "targetVersion": "3.0.0",
+      "latest": "2.0.2",
+      "targetVersionExists": false,
+      "integrity": null,
+      "gitHead": null,
+      "checkedAtUTC": "2026-10-29T13:33:52.4417042Z",
+      "requestExit": 0,
+      "url": "https://registry.npmjs.org/%40xivdyetools%2Fauth"
+    },
+    {
+      "name": "@xivdyetools/core",
+      "targetVersion": "5.16.0",
+      "latest": "5.15.0",
+      "targetVersionExists": false,
+      "integrity": null,
+      "gitHead": null,
+      "checkedAtUTC": "2026-10-29T13:33:52.8487828Z",
+      "requestExit": 0,
+      "url": "https://registry.npmjs.org/%40xivdyetools%2Fcore"
+    },
+    {
+      "name": "@xivdyetools/worker-kit",
+      "targetVersion": "1.6.0",
+      "latest": "1.5.0",
+      "targetVersionExists": false,
+      "integrity": null,
+      "gitHead": null,
+      "checkedAtUTC": "2026-10-29T13:33:53.5173884Z",
+      "requestExit": 0,
+      "url": "https://registry.npmjs.org/%40xivdyetools%2Fworker-kit"
+    },
+    {
+      "name": "@xivdyetools/svg",
+      "targetVersion": "4.4.1",
+      "latest": "4.4.0",
+      "targetVersionExists": false,
+      "integrity": null,
+      "gitHead": null,
+      "checkedAtUTC": "2026-10-29T13:33:53.9521129Z",
+      "requestExit": 0,
+      "url": "https://registry.npmjs.org/%40xivdyetools%2Fsvg"
+    },
+    {
+      "name": "@xivdyetools/bot-logic",
+      "targetVersion": "4.12.0",
+      "latest": "4.11.0",
+      "targetVersionExists": false,
+      "integrity": null,
+      "gitHead": null,
+      "checkedAtUTC": "2026-10-29T13:33:54.4193692Z",
+      "requestExit": 0,
+      "url": "https://registry.npmjs.org/%40xivdyetools%2Fbot-logic"
+    }
+  ],
+  "units": [
+    {
+      "path": "packages/types",
+      "current": {
+        "name": "@xivdyetools/types",
+        "version": "3.3.0",
+        "internalDeps": {}
+      },
+      "main": {
+        "name": "@xivdyetools/types",
+        "version": "3.3.0",
+        "internalDeps": {}
+      },
+      "sourceTree": "03346ef406241acfbb9b34c351c1e33912821bd7",
+      "mainTree": "03346ef406241acfbb9b34c351c1e33912821bd7"
+    },
+    {
+      "path": "packages/logger",
+      "current": {
+        "name": "@xivdyetools/logger",
+        "version": "2.4.0",
+        "internalDeps": {}
+      },
+      "main": {
+        "name": "@xivdyetools/logger",
+        "version": "2.3.0",
+        "internalDeps": {}
+      },
+      "sourceTree": "3df822bf707afbf7584aed2180d21ef89a70e648",
+      "mainTree": "587b3fb667ac72025304606bfb8d36f9e73a4979"
+    },
+    {
+      "path": "packages/auth",
+      "current": {
+        "name": "@xivdyetools/auth",
+        "version": "3.0.0",
+        "internalDeps": {}
+      },
+      "main": {
+        "name": "@xivdyetools/auth",
+        "version": "2.0.2",
+        "internalDeps": {}
+      },
+      "sourceTree": "718d478e40dfaad3ac1f79fac7ee552aaa64bec9",
+      "mainTree": "72c76876fe2d93f7aab2c4667a63939c5862ffc5"
+    },
+    {
+      "path": "packages/core",
+      "current": {
+        "name": "@xivdyetools/core",
+        "version": "5.16.0",
+        "internalDeps": {
+          "@xivdyetools/logger": "workspace:*",
+          "@xivdyetools/types": "workspace:*"
+        }
+      },
+      "main": {
+        "name": "@xivdyetools/core",
+        "version": "5.15.0",
+        "internalDeps": {
+          "@xivdyetools/logger": "workspace:*",
+          "@xivdyetools/types": "workspace:*"
+        }
+      },
+      "sourceTree": "8a4eab78553811858f06ad8c1cdb396bf1f39ca8",
+      "mainTree": "38c9c6afcc4cd06da6466a1d494d7a12ea748b3d"
+    },
+    {
+      "path": "packages/worker-kit",
+      "current": {
+        "name": "@xivdyetools/worker-kit",
+        "version": "1.6.0",
+        "internalDeps": {
+          "@xivdyetools/logger": "workspace:*"
+        }
+      },
+      "main": {
+        "name": "@xivdyetools/worker-kit",
+        "version": "1.5.0",
+        "internalDeps": {
+          "@xivdyetools/logger": "workspace:*"
+        }
+      },
+      "sourceTree": "842db56fa37e7acda8f592e31c779285b07d8b2f",
+      "mainTree": "e040ad78e2b406c672aa77f456e1a2186af413cd"
+    },
+    {
+      "path": "packages/svg",
+      "current": {
+        "name": "@xivdyetools/svg",
+        "version": "4.4.1",
+        "internalDeps": {
+          "@xivdyetools/types": "workspace:*",
+          "@xivdyetools/core": "workspace:*",
+          "@xivdyetools/test-utils": "workspace:*"
+        }
+      },
+      "main": {
+        "name": "@xivdyetools/svg",
+        "version": "4.4.0",
+        "internalDeps": {
+          "@xivdyetools/types": "workspace:*",
+          "@xivdyetools/core": "workspace:*",
+          "@xivdyetools/test-utils": "workspace:*"
+        }
+      },
+      "sourceTree": "332d583b62278524a4e80631b5fe63cc9148ae4d",
+      "mainTree": "45758b6820cdf62f82aff7b729b4a311a42e2d61"
+    },
+    {
+      "path": "packages/bot-logic",
+      "current": {
+        "name": "@xivdyetools/bot-logic",
+        "version": "4.12.0",
+        "internalDeps": {
+          "@xivdyetools/core": "workspace:*",
+          "@xivdyetools/svg": "workspace:*",
+          "@xivdyetools/types": "workspace:*"
+        }
+      },
+      "main": {
+        "name": "@xivdyetools/bot-logic",
+        "version": "4.11.0",
+        "internalDeps": {
+          "@xivdyetools/core": "workspace:*",
+          "@xivdyetools/svg": "workspace:*",
+          "@xivdyetools/types": "workspace:*"
+        }
+      },
+      "sourceTree": "ac2b9356d7a978ccec39322a91386d26c6cc068d",
+      "mainTree": "8d23a0f3cc67348fc323cd5640ec3e2817b23b81"
+    },
+    {
+      "path": "packages/test-utils",
+      "current": {
+        "name": "@xivdyetools/test-utils",
+        "version": "3.0.0",
+        "internalDeps": {
+          "@xivdyetools/auth": "workspace:*",
+          "@xivdyetools/types": "workspace:*"
+        }
+      },
+      "main": {
+        "name": "@xivdyetools/test-utils",
+        "version": "3.0.0",
+        "internalDeps": {
+          "@xivdyetools/auth": "workspace:*",
+          "@xivdyetools/types": "workspace:*"
+        }
+      },
+      "sourceTree": "bc0c58ec5ec0df20eb7463955f93106df0c4dd0a",
+      "mainTree": "c3de85770f4301f6d4c7a4e5422ba0c960cf1073"
+    },
+    {
+      "path": "apps/api-worker",
+      "current": {
+        "name": "xivdyetools-api-worker",
+        "version": "0.21.1",
+        "internalDeps": {
+          "@xivdyetools/types": "workspace:*",
+          "@xivdyetools/core": "workspace:*",
+          "@xivdyetools/worker-kit": "workspace:*",
+          "@xivdyetools/test-utils": "workspace:*",
+          "@xivdyetools/svg": "workspace:*"
+        }
+      },
+      "main": {
+        "name": "xivdyetools-api-worker",
+        "version": "0.21.0",
+        "internalDeps": {
+          "@xivdyetools/types": "workspace:*",
+          "@xivdyetools/core": "workspace:*",
+          "@xivdyetools/worker-kit": "workspace:*",
+          "@xivdyetools/test-utils": "workspace:*",
+          "@xivdyetools/svg": "workspace:*"
+        }
+      },
+      "sourceTree": "2fd2daa3c074e76fb119e111a535e6179e6fd6a1",
+      "mainTree": "bbfd651985a0a7189c877e17c5329da6d9bc1057"
+    },
+    {
+      "path": "apps/discord-worker",
+      "current": {
+        "name": "xivdyetools-discord-worker",
+        "version": "5.9.7",
+        "internalDeps": {
+          "@xivdyetools/types": "workspace:*",
+          "@xivdyetools/logger": "workspace:*",
+          "@xivdyetools/bot-logic": "workspace:*",
+          "@xivdyetools/auth": "workspace:*",
+          "@xivdyetools/svg": "workspace:*",
+          "@xivdyetools/worker-kit": "workspace:*",
+          "@xivdyetools/core": "workspace:*",
+          "@xivdyetools/test-utils": "workspace:*"
+        }
+      },
+      "main": {
+        "name": "xivdyetools-discord-worker",
+        "version": "5.9.0",
+        "internalDeps": {
+          "@xivdyetools/types": "workspace:*",
+          "@xivdyetools/logger": "workspace:*",
+          "@xivdyetools/bot-logic": "workspace:*",
+          "@xivdyetools/auth": "workspace:*",
+          "@xivdyetools/svg": "workspace:*",
+          "@xivdyetools/worker-kit": "workspace:*",
+          "@xivdyetools/core": "workspace:*",
+          "@xivdyetools/test-utils": "workspace:*"
+        }
+      },
+      "sourceTree": "9836e62852f2f1565a57df1ad4f586d144ff89fc",
+      "mainTree": "c511b586c3d5cd8c32262227e7f4ae5fb6278f63"
+    },
+    {
+      "path": "apps/image-worker",
+      "current": {
+        "name": "xivdyetools-image-worker",
+        "version": "1.3.5",
+        "internalDeps": {
+          "@xivdyetools/worker-kit": "workspace:*"
+        }
+      },
+      "main": {
+        "name": "xivdyetools-image-worker",
+        "version": "1.3.4",
+        "internalDeps": {
+          "@xivdyetools/worker-kit": "workspace:*"
+        }
+      },
+      "sourceTree": "5ff92de815d4c1e1b40d9f23bbeac590fe82d764",
+      "mainTree": "b34c49cc19ac1f46983604860f2917bd8b86d5ad"
+    },
+    {
+      "path": "apps/moderation-worker",
+      "current": {
+        "name": "xivdyetools-moderation-worker",
+        "version": "1.9.0",
+        "internalDeps": {
+          "@xivdyetools/types": "workspace:*",
+          "@xivdyetools/logger": "workspace:*",
+          "@xivdyetools/bot-logic": "workspace:*",
+          "@xivdyetools/auth": "workspace:*",
+          "@xivdyetools/worker-kit": "workspace:*",
+          "@xivdyetools/test-utils": "workspace:*"
+        }
+      },
+      "main": {
+        "name": "xivdyetools-moderation-worker",
+        "version": "1.8.2",
+        "internalDeps": {
+          "@xivdyetools/types": "workspace:*",
+          "@xivdyetools/logger": "workspace:*",
+          "@xivdyetools/bot-logic": "workspace:*",
+          "@xivdyetools/auth": "workspace:*",
+          "@xivdyetools/worker-kit": "workspace:*",
+          "@xivdyetools/test-utils": "workspace:*"
+        }
+      },
+      "sourceTree": "dc64fbd1c790e1acfb6c53db5cccf758ee0bf9e3",
+      "mainTree": "e972e2cc2fb5b16bbfe6cfc2a27c184a7e0170b2"
+    },
+    {
+      "path": "apps/oauth",
+      "current": {
+        "name": "xivdyetools-oauth-worker",
+        "version": "3.2.0",
+        "internalDeps": {
+          "@xivdyetools/types": "workspace:*",
+          "@xivdyetools/worker-kit": "workspace:*",
+          "@xivdyetools/auth": "workspace:*",
+          "@xivdyetools/test-utils": "workspace:*"
+        }
+      },
+      "main": {
+        "name": "xivdyetools-oauth-worker",
+        "version": "3.1.3",
+        "internalDeps": {
+          "@xivdyetools/types": "workspace:*",
+          "@xivdyetools/worker-kit": "workspace:*",
+          "@xivdyetools/auth": "workspace:*",
+          "@xivdyetools/test-utils": "workspace:*"
+        }
+      },
+      "sourceTree": "12aba685fd17f71541b3a4a6f4b4d95ee54ea17d",
+      "mainTree": "33e3951db36a23f8381181d6aa3fdf37a241fcb8"
+    },
+    {
+      "path": "apps/og-worker",
+      "current": {
+        "name": "xivdyetools-og-worker",
+        "version": "2.12.2",
+        "internalDeps": {
+          "@xivdyetools/core": "workspace:*",
+          "@xivdyetools/svg": "workspace:*",
+          "@xivdyetools/worker-kit": "workspace:*",
+          "@xivdyetools/types": "workspace:*"
+        }
+      },
+      "main": {
+        "name": "xivdyetools-og-worker",
+        "version": "2.12.0",
+        "internalDeps": {
+          "@xivdyetools/core": "workspace:*",
+          "@xivdyetools/svg": "workspace:*",
+          "@xivdyetools/worker-kit": "workspace:*",
+          "@xivdyetools/types": "workspace:*"
+        }
+      },
+      "sourceTree": "315ce5bd72ea73b43611e833523e8d57727cffe0",
+      "mainTree": "54df854268ae39a8238f4cbc2bf0f60288a7e25c"
+    },
+    {
+      "path": "apps/presets-api",
+      "current": {
+        "name": "xivdyetools-presets-api",
+        "version": "2.8.1",
+        "internalDeps": {
+          "@xivdyetools/types": "workspace:*",
+          "@xivdyetools/worker-kit": "workspace:*",
+          "@xivdyetools/auth": "workspace:*",
+          "@xivdyetools/test-utils": "workspace:*"
+        }
+      },
+      "main": {
+        "name": "xivdyetools-presets-api",
+        "version": "2.6.1",
+        "internalDeps": {
+          "@xivdyetools/types": "workspace:*",
+          "@xivdyetools/worker-kit": "workspace:*",
+          "@xivdyetools/auth": "workspace:*",
+          "@xivdyetools/test-utils": "workspace:*"
+        }
+      },
+      "sourceTree": "a26da0b69a980db2f4613ddbf13037e31d44d9e2",
+      "mainTree": "97c048687c4ed3fafaa6b1cbbe7d64aed990c648"
+    },
+    {
+      "path": "apps/stoat-worker",
+      "current": {
+        "name": "xivdyetools-stoat-worker",
+        "version": "0.3.4",
+        "internalDeps": {
+          "@xivdyetools/types": "workspace:*",
+          "@xivdyetools/bot-logic": "workspace:*",
+          "@xivdyetools/logger": "workspace:*"
+        }
+      },
+      "main": {
+        "name": "xivdyetools-stoat-worker",
+        "version": "0.3.3",
+        "internalDeps": {
+          "@xivdyetools/types": "workspace:*",
+          "@xivdyetools/bot-logic": "workspace:*",
+          "@xivdyetools/logger": "workspace:*"
+        }
+      },
+      "sourceTree": "e34c9a34cfe2882a3463e9de971a69fff92edf8f",
+      "mainTree": "90ba3edb08ba12243f5fcd8deef56af3c834669e"
+    },
+    {
+      "path": "apps/web-app",
+      "current": {
+        "name": "xivdyetools-web-app",
+        "version": "5.16.4",
+        "internalDeps": {
+          "@xivdyetools/core": "workspace:*",
+          "@xivdyetools/svg": "workspace:*",
+          "@xivdyetools/types": "workspace:*",
+          "@xivdyetools/logger": "workspace:*"
+        }
+      },
+      "main": {
+        "name": "xivdyetools-web-app",
+        "version": "5.16.0",
+        "internalDeps": {
+          "@xivdyetools/core": "workspace:*",
+          "@xivdyetools/svg": "workspace:*",
+          "@xivdyetools/types": "workspace:*",
+          "@xivdyetools/logger": "workspace:*"
+        }
+      },
+      "sourceTree": "8e45413adb6b90cacd7ed47c3d4bf94caa1a727a",
+      "mainTree": "5ff9b19413ac266fe7c7b345e6b73677e382dd4f"
+    }
+  ],
+  "prs": [
+    {
+      "number": 365,
+      "title": "Refresh item names with pinned source provenance",
+      "headRefName": "codex/api-item-name-provenance-20261029",
+      "headRefOid": "cea587fa276b502a246f6c5fe0d1cfe9a03ef55f",
+      "baseRefName": "codex/release-prerequisites-20261029",
+      "isDraft": true,
+      "checkCount": 6,
+      "nonGreen": []
+    },
+    {
+      "number": 364,
+      "title": "Bound OAuth continuity waits before activation",
+      "headRefName": "codex/release-prerequisites-20261029",
+      "headRefOid": "8554872195c96601e8d30c4b0420aad0417cef36",
+      "baseRefName": "codex/release-image-readiness-20261028",
+      "isDraft": true,
+      "checkCount": 4,
+      "nonGreen": []
+    },
+    {
+      "number": 363,
+      "title": "A-IMAGE: integrate manual companion and harden decoder admission",
+      "headRefName": "codex/release-image-readiness-20261028",
+      "headRefOid": "d132dc5e554473c67e5b7c5cc5e2e2846ad740ab",
+      "baseRefName": "codex/h-adoption-verification-20261028",
+      "isDraft": true,
+      "checkCount": 4,
+      "nonGreen": []
+    },
+    {
+      "number": 362,
+      "title": "H adoption: record private and application verification gates",
+      "headRefName": "codex/h-adoption-verification-20261028",
+      "headRefOid": "316513243bc18ac8e11670013a87b7140756e72c",
+      "baseRefName": "codex/h-stoat-adopt-20261028",
+      "isDraft": true,
+      "checkCount": 4,
+      "nonGreen": []
+    },
+    {
+      "number": 361,
+      "title": "H-STOAT: verify parked adapter logging adoption",
+      "headRefName": "codex/h-stoat-adopt-20261028",
+      "headRefOid": "db815ac6e07dff8a881297af35760ecb46bc6fcc",
+      "baseRefName": "codex/h-moderation-adopt-20261028",
+      "isDraft": true,
+      "checkCount": 4,
+      "nonGreen": []
+    },
+    {
+      "number": 360,
+      "title": "H-MODERATION: retain structured dispatch diagnostics",
+      "headRefName": "codex/h-moderation-adopt-20261028",
+      "headRefOid": "78e2dfc44591e6bd90af99773b045f6df9c489f4",
+      "baseRefName": "codex/h-discord-adopt-20261028",
+      "isDraft": true,
+      "checkCount": 4,
+      "nonGreen": []
+    },
+    {
+      "number": 359,
+      "title": "H-DISCORD: retain structured diagnostic context",
+      "headRefName": "codex/h-discord-adopt-20261028",
+      "headRefOid": "7405f18f7d9320a63f135f1037951fc7677fb381",
+      "baseRefName": "codex/h-oauth-adopt-20261028",
+      "isDraft": true,
+      "checkCount": 4,
+      "nonGreen": []
+    },
+    {
+      "number": 358,
+      "title": "H-OAUTH: verify canonical auth adoption at consumer boundaries",
+      "headRefName": "codex/h-oauth-adopt-20261028",
+      "headRefOid": "4b13944fc34e96ddf7d58c66df63bbdc8c633d39",
+      "baseRefName": "codex/h-presets-adopt-20261028",
+      "isDraft": true,
+      "checkCount": 4,
+      "nonGreen": []
+    },
+    {
+      "number": 357,
+      "title": "H-PRESETS: preserve structured error context and verify canonical auth",
+      "headRefName": "codex/h-presets-adopt-20261028",
+      "headRefOid": "234fa03b50c22f76dc89e93cfd1258b0cba50e3a",
+      "baseRefName": "codex/h-bot-logic-adopt-20261028",
+      "isDraft": true,
+      "checkCount": 4,
+      "nonGreen": []
+    },
+    {
+      "number": 356,
+      "title": "H-BOT-LOGIC-ADOPT: prepare hardened dependencies and native locale imports",
+      "headRefName": "codex/h-bot-logic-adopt-20261028",
+      "headRefOid": "e270ee273dc841759bf1fd5544e33a0db3bf5dcb",
+      "baseRefName": "codex/h-svg-adopt-20261028",
+      "isDraft": true,
+      "checkCount": 4,
+      "nonGreen": []
+    },
+    {
+      "number": 355,
+      "title": "H-SVG-ADOPT: verify packed core and logger closure",
+      "headRefName": "codex/h-svg-adopt-20261028",
+      "headRefOid": "96124c57ec375762daaeeea71184b3076b59ab90",
+      "baseRefName": "codex/h-worker-kit-adopt-20261028",
+      "isDraft": true,
+      "checkCount": 4,
+      "nonGreen": []
+    },
+    {
+      "number": 354,
+      "title": "H-WORKER-KIT-ADOPT: verify packed logger dependency",
+      "headRefName": "codex/h-worker-kit-adopt-20261028",
+      "headRefOid": "8aaaad5f6db139783a34a62140f8c145b8e3b0e7",
+      "baseRefName": "codex/h-core-adopt-20261028",
+      "isDraft": true,
+      "checkCount": 4,
+      "nonGreen": []
+    },
+    {
+      "number": 353,
+      "title": "H-CORE-ADOPT: prepare logger adoption and native palette imports",
+      "headRefName": "codex/h-core-adopt-20261028",
+      "headRefOid": "598c9c1bc1b8c3faa4677108bdf94222ef62afc9",
+      "baseRefName": "codex/sprint13-logger-auth-20261028",
+      "isDraft": true,
+      "checkCount": 4,
+      "nonGreen": []
+    },
+    {
+      "number": 352,
+      "title": "H-LOGGER/H-AUTH: harden error redaction and canonical auth encodings",
+      "headRefName": "codex/sprint13-logger-auth-20261028",
+      "headRefOid": "9ff21e17ebad3a0fe5041bf31dfca9cd28864591",
+      "baseRefName": "codex/sprint12-repository-20261028",
+      "isDraft": true,
+      "checkCount": 10,
+      "nonGreen": []
+    },
+    {
+      "number": 351,
+      "title": "fix(repo): implement R-CI and R-DOCS-DECISIONS",
+      "headRefName": "codex/sprint12-repository-20261028",
+      "headRefOid": "e5795c48772586c2a20434bdba595f39856824fa",
+      "baseRefName": "codex/sprint11-image-20261028",
+      "isDraft": true,
+      "checkCount": 4,
+      "nonGreen": []
+    },
+    {
+      "number": 350,
+      "title": "fix(image-worker): reduce decode memory and bound requests",
+      "headRefName": "codex/sprint11-image-20261028",
+      "headRefOid": "b109d9d9c1a6bf1fe9bf8b5f9cbe3c652c9da11b",
+      "baseRefName": "codex/sprint10-og-copy-20261028",
+      "isDraft": true,
+      "checkCount": 10,
+      "nonGreen": []
+    },
+    {
+      "number": 349,
+      "title": "docs(bot-logic): prepare the image limit manual companion",
+      "headRefName": "codex/sprint11-image-manual-20261028",
+      "headRefOid": "9e5e6b9208749facb1b6b6f3e71e7e52b158fec9",
+      "baseRefName": "codex/sprint10-og-copy-20261028",
+      "isDraft": true,
+      "checkCount": 6,
+      "nonGreen": []
+    },
+    {
+      "number": 348,
+      "title": "fix(og-worker): correct Harmony counts in six locales",
+      "headRefName": "codex/sprint10-og-copy-20261028",
+      "headRefOid": "e66c67a937436a951331789207c57817ffdd0a50",
+      "baseRefName": "codex/sprint9-web-security-20261028",
+      "isDraft": true,
+      "checkCount": 6,
+      "nonGreen": []
+    },
+    {
+      "number": 347,
+      "title": "fix(web-app): complete Sprint A-WEB remediation",
+      "headRefName": "codex/sprint9-web-security-20261028",
+      "headRefOid": "b14a6fd5e10b9537b3a2a013966ceb77075c6ea1",
+      "baseRefName": "codex/sprint8-discord-binding-20261027",
+      "isDraft": true,
+      "checkCount": 6,
+      "nonGreen": []
+    },
+    {
+      "number": 346,
+      "title": "fix(presets-api): select private notification entrypoint",
+      "headRefName": "codex/sprint8-discord-binding-20261027",
+      "headRefOid": "cf22202d27e4fbea44c1007fcd0de7a53d59834a",
+      "baseRefName": "codex/sprint8-discord-20261027",
+      "isDraft": true,
+      "checkCount": 4,
+      "nonGreen": []
+    },
+    {
+      "number": 345,
+      "title": "fix(discord-worker): harden favorites and notification boundaries",
+      "headRefName": "codex/sprint8-discord-20261027",
+      "headRefOid": "f13e826678b89a13cc651edb3dae6fecf5d187fb",
+      "baseRefName": "codex/sprint7-moderation-20261027",
+      "isDraft": true,
+      "checkCount": 4,
+      "nonGreen": []
+    },
+    {
+      "number": 344,
+      "title": "feat(moderation-worker): prepare confirmed bans",
+      "headRefName": "codex/sprint7-moderation-20261027",
+      "headRefOid": "0a7ef240cb70cf57ab15c3a57e22a7449a898fc6",
+      "baseRefName": "codex/sprint7-oauth-20261027",
+      "isDraft": true,
+      "checkCount": 4,
+      "nonGreen": []
+    },
+    {
+      "number": 343,
+      "title": "feat(oauth): prepare private identity checks",
+      "headRefName": "codex/sprint7-oauth-20261027",
+      "headRefOid": "88b00a5b7b3f7efbd812c3f492399502c19aef7b",
+      "baseRefName": "codex/sprint6-presets-20261027",
+      "isDraft": true,
+      "checkCount": 4,
+      "nonGreen": []
+    },
+    {
+      "number": 342,
+      "title": "fix(presets-api): harden quotas, images and preset reviews",
+      "headRefName": "codex/sprint6-presets-20261027",
+      "headRefOid": "db34eaad1620f7ad4baa783781c7f6c7361260d4",
+      "baseRefName": "codex/sprint5-api-20261027",
+      "isDraft": true,
+      "checkCount": 4,
+      "nonGreen": []
+    },
+    {
+      "number": 341,
+      "title": "fix(api-worker): bound character data and budget upstream work",
+      "headRefName": "codex/sprint5-api-20261027",
+      "headRefOid": "239cac2b3ef1e2b229815b8ecfec0f3d7a9b5cc8",
+      "baseRefName": "codex/sprint4-bot-logic-20261027",
+      "isDraft": true,
+      "checkCount": 4,
+      "nonGreen": []
+    },
+    {
+      "number": 340,
+      "title": "fix(bot-logic): correct color results and harden embed text",
+      "headRefName": "codex/sprint4-bot-logic-20261027",
+      "headRefOid": "3e2213600de7f270091d4f523be1fdd5681582ad",
+      "baseRefName": "codex/sprint3-svg-20261027",
+      "isDraft": true,
+      "checkCount": 4,
+      "nonGreen": []
+    },
+    {
+      "number": 339,
+      "title": "fix(svg): fit card text in linear time",
+      "headRefName": "codex/sprint3-svg-20261027",
+      "headRefOid": "8e0c406bf0702a759beb37ac6aea58fd580ee13d",
+      "baseRefName": "codex/sprint2-core-20261027",
+      "isDraft": true,
+      "checkCount": 4,
+      "nonGreen": []
+    },
+    {
+      "number": 338,
+      "title": "feat(core): deprecate legacy chara APIs and harden text",
+      "headRefName": "codex/sprint2-core-20261027",
+      "headRefOid": "f8e16740ce0222a2dd9493d42ee90bd9b8303ae7",
+      "baseRefName": "codex/sprint1-worker-kit-20261027",
+      "isDraft": true,
+      "checkCount": 4,
+      "nonGreen": []
+    },
+    {
+      "number": 337,
+      "title": "feat(worker-kit): add IPv6 prefix keys and glamour tier",
+      "headRefName": "codex/sprint1-worker-kit-20261027",
+      "headRefOid": "ab44be6438f5f8b5f14a76a2007507e427db6faf",
+      "baseRefName": "codex/sprint0-api-dev-20261026",
+      "isDraft": true,
+      "checkCount": 4,
+      "nonGreen": []
+    },
+    {
+      "number": 336,
+      "title": "docs(audits): record Sprint 0 and worker-kit prep",
+      "headRefName": "codex/sprint0-api-dev-20261026",
+      "headRefOid": "39e477d93a25d1a8215af7cd6655f612ec5b4b5c",
+      "baseRefName": "codex/deep-i18n-audits-20261026",
+      "isDraft": false,
+      "checkCount": 4,
+      "nonGreen": []
+    },
+    {
+      "number": 335,
+      "title": "docs(audits): append deep-dive and i18n audits to #333/#334",
+      "headRefName": "codex/deep-i18n-audits-20261026",
+      "headRefOid": "3c53aa2cdf7b22e5cac93683bb7510f86174d401",
+      "baseRefName": "claude/xivcharakit-dead-code-audit",
+      "isDraft": false,
+      "checkCount": 4,
+      "nonGreen": []
+    },
+    {
+      "number": 334,
+      "title": "docs(audits): 2026-10-26 dead-code audit of the XIVCharaKit-facing code — 47 findings (stacked on #333)",
+      "headRefName": "claude/xivcharakit-dead-code-audit",
+      "headRefOid": "6da3ff5b047188e6f8c08be2ea47f99f02e7a8d1",
+      "baseRefName": "claude/project-security-audit-3b5195",
+      "isDraft": false,
+      "checkCount": 4,
+      "nonGreen": []
+    },
+    {
+      "number": 333,
+      "title": "docs(audits): 2026-10-26 whole-monorepo security audit — 56 findings, none exploitable now",
+      "headRefName": "claude/project-security-audit-3b5195",
+      "headRefOid": "88189ee8eeed180a6a946b10dffba8a8c3b797fa",
+      "baseRefName": "main",
+      "isDraft": false,
+      "checkCount": 4,
+      "nonGreen": []
+    }
+  ],
+  "configuredProductionWorkflows": [
+    {
+      "app": "api-worker",
+      "path": ".github/workflows/deploy-api-worker.yml",
+      "branches": [
+        "main",
+        "master"
+      ],
+      "paths": [
+        "apps/api-worker/**",
+        "packages/core/**",
+        "packages/svg/**",
+        "packages/types/**",
+        "packages/logger/**",
+        "packages/worker-kit/**",
+        ".github/workflows/deploy-api-worker.yml",
+        "pnpm-lock.yaml",
+        "pnpm-workspace.yaml",
+        "turbo.json",
+        "tsconfig.base.json"
+      ],
+      "manualDispatch": true,
+      "jobs": [
+        {
+          "name": "deploy",
+          "environment": "production",
+          "condition": null
+        }
+      ],
+      "sha256": "179879577ca467e6d9e7e7e2c523698ee25bf13eee73711332a7dbed13f75a68"
+    },
+    {
+      "app": "discord-worker",
+      "path": ".github/workflows/deploy-discord-worker.yml",
+      "branches": [
+        "main",
+        "master"
+      ],
+      "paths": [
+        "apps/discord-worker/**",
+        "packages/core/**",
+        "packages/types/**",
+        "packages/logger/**",
+        "packages/auth/**",
+        "packages/bot-logic/**",
+        "packages/svg/**",
+        "packages/worker-kit/**",
+        "pnpm-lock.yaml",
+        "pnpm-workspace.yaml",
+        "turbo.json",
+        "tsconfig.base.json"
+      ],
+      "manualDispatch": true,
+      "jobs": [
+        {
+          "name": "deploy",
+          "environment": "production",
+          "condition": null
+        }
+      ],
+      "sha256": "8a42d74fe37f6e1a34db6c24b7138022c6b0b9c4d13e6839435448c1f92c50fb"
+    },
+    {
+      "app": "image-worker",
+      "path": ".github/workflows/deploy-image-worker.yml",
+      "branches": [
+        "main",
+        "master"
+      ],
+      "paths": [
+        "apps/image-worker/**",
+        "packages/logger/**",
+        "packages/worker-kit/**",
+        "pnpm-lock.yaml",
+        "pnpm-workspace.yaml",
+        "turbo.json",
+        "tsconfig.base.json"
+      ],
+      "manualDispatch": true,
+      "jobs": [
+        {
+          "name": "deploy",
+          "environment": "production",
+          "condition": null
+        }
+      ],
+      "sha256": "0761c865065b7a898109f89e5cf9cdb5e3f921748e501ccd38127b0d0ec22ea7"
+    },
+    {
+      "app": "moderation-worker",
+      "path": ".github/workflows/deploy-moderation-worker.yml",
+      "branches": [
+        "main",
+        "master"
+      ],
+      "paths": [
+        "apps/moderation-worker/**",
+        "packages/types/**",
+        "packages/logger/**",
+        "packages/auth/**",
+        "packages/worker-kit/**",
+        "packages/bot-logic/**",
+        "packages/core/**",
+        "packages/svg/**",
+        "pnpm-lock.yaml",
+        "pnpm-workspace.yaml",
+        "turbo.json",
+        "tsconfig.base.json"
+      ],
+      "manualDispatch": true,
+      "jobs": [
+        {
+          "name": "deploy",
+          "environment": "production",
+          "condition": null
+        }
+      ],
+      "sha256": "eb1272103b901fe50048385d70292b2cc2fc7c22ec69d4f186bf286270eeb4d9"
+    },
+    {
+      "app": "oauth",
+      "path": ".github/workflows/deploy-oauth.yml",
+      "branches": [
+        "main",
+        "master"
+      ],
+      "paths": [
+        "apps/oauth/**",
+        "packages/types/**",
+        "packages/logger/**",
+        "packages/auth/**",
+        "packages/worker-kit/**",
+        "pnpm-lock.yaml",
+        "pnpm-workspace.yaml",
+        "turbo.json",
+        "tsconfig.base.json"
+      ],
+      "manualDispatch": true,
+      "jobs": [
+        {
+          "name": "deploy",
+          "environment": "production",
+          "condition": null
+        }
+      ],
+      "sha256": "a31a19ae70673dfc5aa26cf9cceaa8af57329d5a979a9961c125c5577818bb2e"
+    },
+    {
+      "app": "og-worker",
+      "path": ".github/workflows/deploy-og-worker.yml",
+      "branches": [
+        "main",
+        "master"
+      ],
+      "paths": [
+        "apps/og-worker/**",
+        "packages/core/**",
+        "packages/types/**",
+        "packages/logger/**",
+        "packages/svg/**",
+        "packages/worker-kit/**",
+        "pnpm-lock.yaml",
+        "pnpm-workspace.yaml",
+        "turbo.json",
+        "tsconfig.base.json"
+      ],
+      "manualDispatch": true,
+      "jobs": [
+        {
+          "name": "deploy",
+          "environment": "production",
+          "condition": null
+        }
+      ],
+      "sha256": "ca746d6f980403edc56e00f88b3865b6b62b28214e72100d36bd67ace4856618"
+    },
+    {
+      "app": "presets-api",
+      "path": ".github/workflows/deploy-presets-api.yml",
+      "branches": [
+        "main",
+        "master"
+      ],
+      "paths": [
+        "apps/presets-api/**",
+        "packages/types/**",
+        "packages/logger/**",
+        "packages/auth/**",
+        "packages/worker-kit/**",
+        "pnpm-lock.yaml",
+        "pnpm-workspace.yaml",
+        "turbo.json",
+        "tsconfig.base.json"
+      ],
+      "manualDispatch": true,
+      "jobs": [
+        {
+          "name": "deploy",
+          "environment": "production",
+          "condition": null
+        }
+      ],
+      "sha256": "512e4cd9a1a277b9215293083114afde2bf2ccb59decdb50cd56dc50833f7f92"
+    },
+    {
+      "app": "web-app",
+      "path": ".github/workflows/deploy-web-app.yml",
+      "branches": [
+        "main",
+        "master"
+      ],
+      "paths": [
+        "apps/web-app/**",
+        "packages/core/**",
+        "packages/types/**",
+        "packages/logger/**",
+        "packages/svg/**",
+        "pnpm-lock.yaml",
+        "pnpm-workspace.yaml",
+        "turbo.json",
+        "tsconfig.base.json"
+      ],
+      "manualDispatch": true,
+      "jobs": [
+        {
+          "name": "deploy",
+          "environment": "production",
+          "condition": null
+        }
+      ],
+      "sha256": "b8bd23dbb8d219ed1657b9e6862efc0e373d7620d41cdeaa85396f50d6184f24"
+    }
+  ],
+  "staticTriggerProof": {
+    "yamlVersion": "2.9.1",
+    "picomatchVersion": "4.0.7",
+    "checks": 51,
+    "packageFanout": {
+      "logger": [
+        "api-worker",
+        "discord-worker",
+        "image-worker",
+        "moderation-worker",
+        "oauth",
+        "og-worker",
+        "presets-api",
+        "web-app"
+      ],
+      "auth": [
+        "discord-worker",
+        "moderation-worker",
+        "oauth",
+        "presets-api"
+      ],
+      "core": [
+        "api-worker",
+        "discord-worker",
+        "moderation-worker",
+        "og-worker",
+        "web-app"
+      ],
+      "svg": [
+        "api-worker",
+        "discord-worker",
+        "moderation-worker",
+        "og-worker",
+        "web-app"
+      ],
+      "worker-kit": [
+        "api-worker",
+        "discord-worker",
+        "image-worker",
+        "moderation-worker",
+        "oauth",
+        "og-worker",
+        "presets-api"
+      ],
+      "bot-logic": [
+        "discord-worker",
+        "moderation-worker"
+      ]
+    },
+    "globalPaths": [
+      "pnpm-lock.yaml",
+      "pnpm-workspace.yaml",
+      "turbo.json",
+      "tsconfig.base.json"
+    ],
+    "fullStackFanout": [
+      "api-worker",
+      "discord-worker",
+      "image-worker",
+      "moderation-worker",
+      "oauth",
+      "og-worker",
+      "presets-api",
+      "web-app"
+    ],
+    "limits": "Offline source-path simulation, not platform execution or an approval gate"
+  },
+  "liveMetadata": {
+    "collectedDuring": "2026-10-29 preparation session; exact request timestamp not retained",
+    "production": {
+      "protectionRuleTypes": [
+        "branch_policy"
+      ],
+      "branchPolicy": {
+        "protected_branches": false,
+        "custom_branch_policies": true
+      },
+      "allowedBranches": [
+        "main"
+      ],
+      "requiredReviewerRulePresent": false
+    },
+    "beta": {
+      "protectionRuleTypes": [],
+      "branchPolicy": null
+    },
+    "workflows": [
+      {
+        "id": 345001226,
+        "name": "Deploy API Worker",
+        "path": ".github/workflows/deploy-api-worker.yml",
+        "state": "active"
+      },
+      {
+        "id": 330809112,
+        "name": "Deploy Beta Discord Worker",
+        "path": ".github/workflows/deploy-discord-worker-beta.yml",
+        "state": "active"
+      },
+      {
+        "id": 235911481,
+        "name": "Deploy Discord Worker",
+        "path": ".github/workflows/deploy-discord-worker.yml",
+        "state": "active"
+      },
+      {
+        "id": 345001228,
+        "name": "Deploy Image Worker",
+        "path": ".github/workflows/deploy-image-worker.yml",
+        "state": "active"
+      },
+      {
+        "id": 235911482,
+        "name": "Deploy Moderation Worker",
+        "path": ".github/workflows/deploy-moderation-worker.yml",
+        "state": "active"
+      },
+      {
+        "id": 235911484,
+        "name": "Deploy OAuth Worker",
+        "path": ".github/workflows/deploy-oauth.yml",
+        "state": "active"
+      },
+      {
+        "id": 332848111,
+        "name": "Deploy Beta OG Worker",
+        "path": ".github/workflows/deploy-og-worker-beta.yml",
+        "state": "active"
+      },
+      {
+        "id": 235911485,
+        "name": "Deploy OG Worker",
+        "path": ".github/workflows/deploy-og-worker.yml",
+        "state": "active"
+      },
+      {
+        "id": 235911486,
+        "name": "Deploy Presets API",
+        "path": ".github/workflows/deploy-presets-api.yml",
+        "state": "active"
+      },
+      {
+        "id": 330809113,
+        "name": "Deploy Beta Web App",
+        "path": ".github/workflows/deploy-web-app-beta.yml",
+        "state": "active"
+      },
+      {
+        "id": 235911488,
+        "name": "Deploy Web App",
+        "path": ".github/workflows/deploy-web-app.yml",
+        "state": "active"
+      },
+      {
+        "id": 235911489,
+        "name": "Publish Packages to npm",
+        "path": ".github/workflows/publish-packages.yml",
+        "state": "active"
+      }
+    ]
+  },
+  "presetsPhaseProof": {
+    "status": "OFFLINE PROPOSAL ONLY; not production tested or a validated release candidate",
+    "recordedAt": "2026-10-29T13:46:17.333Z",
+    "parser": {
+      "name": "smol-toml",
+      "version": "1.9.1",
+      "lockedPath": "node_modules\\.pnpm\\smol-toml@1.9.1\\node_modules\\smol-toml"
+    },
+    "trackedConfig": {
+      "path": "apps/presets-api/wrangler.toml",
+      "sha256Before": "cc353f9bc5c77d73c3fc39507c6c3d4460d1073341c4982d5be0b97382d03468",
+      "sha256After": "cc353f9bc5c77d73c3fc39507c6c3d4460d1073341c4982d5be0b97382d03468",
+      "unchanged": true
+    },
+    "phases": {
+      "A": {
+        "file": "presets-phase-a-default-binding.toml",
+        "sha256": "2c5e3acfb677b4ed8707ea3e4e4178990554fb8b2c135f0a5e6dabdfef5d7569",
+        "purpose": "default Discord binding; only two named-entrypoint fields removed"
+      },
+      "B": {
+        "file": "presets-phase-b-named-binding.toml",
+        "sha256": "cc353f9bc5c77d73c3fc39507c6c3d4460d1073341c4982d5be0b97382d03468",
+        "purpose": "exact current configuration; named entrypoint companion"
+      }
+    },
+    "parseCount": 4,
+    "checkCount": 21,
+    "passedChecks": [
+      "locked parser version",
+      "exactly two named-entrypoint lines removed",
+      "top-level: exactly one selected Discord binding",
+      "top-level: original named-entrypoint identity",
+      "top-level: phase A default binding has no entrypoint",
+      "top-level: service target preserved",
+      "top-level: phase B named binding retained",
+      "top-level: OAUTH_SESSION_CHECK_ENABLED false in every phase",
+      "top-level: PRESET_METADATA_MODERATION_ENABLED false in every phase",
+      "production: exactly one selected Discord binding",
+      "production: original named-entrypoint identity",
+      "production: phase A default binding has no entrypoint",
+      "production: service target preserved",
+      "production: phase B named binding retained",
+      "production: OAUTH_SESSION_CHECK_ENABLED false in every phase",
+      "production: PRESET_METADATA_MODERATION_ENABLED false in every phase",
+      "all remaining configuration/resources structurally identical",
+      "phase B exact original parsed structure",
+      "phase B byte identity",
+      "phase A exact byte deletion transformation",
+      "tracked configuration hash unchanged"
+    ],
+    "fieldDifferenceCount": 2,
+    "differences": [
+      {
+        "path": "services[0].entrypoint",
+        "original": "PresetNotifications",
+        "phaseA": "absent",
+        "phaseB": "PresetNotifications"
+      },
+      {
+        "path": "env.production.services[0].entrypoint",
+        "original": "PresetNotifications",
+        "phaseA": "absent",
+        "phaseB": "PresetNotifications"
+      }
+    ],
+    "byteChange": "Only two complete original entrypoint lines deleted; all other bytes retained",
+    "versionFacts": [
+      {
+        "label": "local origin/main snapshot",
+        "ref": "origin/main",
+        "commit": "13c386e5983fe58ff17ac08fb5712239feb2e696",
+        "packageVersion": "2.6.1",
+        "packageVersionSource": "13c386e5983fe58ff17ac08fb5712239feb2e696:apps/presets-api/package.json:3",
+        "namedDiscordEntrypointCount": 0
+      },
+      {
+        "label": "PR342 associated cached branch head",
+        "ref": "refs/remotes/origin/codex/sprint6-presets-20261027",
+        "commit": "db34eaad1620f7ad4baa783781c7f6c7361260d4",
+        "packageVersion": "2.7.0",
+        "packageVersionSource": "db34eaad1620f7ad4baa783781c7f6c7361260d4:apps/presets-api/package.json:3",
+        "namedDiscordEntrypointCount": 0
+      },
+      {
+        "label": "binding companion cached branch head",
+        "ref": "refs/remotes/origin/codex/sprint8-discord-binding-20261027",
+        "commit": "cf22202d27e4fbea44c1007fcd0de7a53d59834a",
+        "packageVersion": "2.8.1",
+        "packageVersionSource": "cf22202d27e4fbea44c1007fcd0de7a53d59834a:apps/presets-api/package.json:3",
+        "namedDiscordEntrypointCount": 2
+      },
+      {
+        "label": "current candidate",
+        "ref": "HEAD",
+        "commit": "cea587fa276b502a246f6c5fe0d1cfe9a03ef55f",
+        "packageVersion": "2.8.1",
+        "packageVersionSource": "cea587fa276b502a246f6c5fe0d1cfe9a03ef55f:apps/presets-api/package.json:3",
+        "namedDiscordEntrypointCount": 2
+      }
+    ],
+    "rehearsalCorrection": "Initial scratch comparison used structuredClone, which discarded smol-toml null prototypes and failed strict equality; compare two independently parsed structures instead. No config change or weakened comparison.",
+    "limitations": [
+      "No fetch: origin/main and PR branch refs are cached local snapshots, not freshly checked remote heads.",
+      "PR342 association is local branch/evidence context, not a new API lookup.",
+      "No semver recommendation; phase A 2.8.1 and later phase B 2.8.2 are a provisional coordinator decision, not implemented.",
+      "Existing named-config test apps/presets-api/tests/wrangler-config.test.ts:38-52 travels with phase B; phase A requires its own reviewed default-compatibility check.",
+      "No full-candidate gate/test selection, real provider delivery, production validation, Wrangler, network or deployment performed."
+    ]
+  },
+  "migrationHashes": [
+    {
+      "path": "apps/oauth/migrations/0002_identity_transitions.sql",
+      "sha256": "86aaf4c19ab98d86383621d54749e5c2429b435eb4aded7392119377fbe49882"
+    },
+    {
+      "path": "apps/presets-api/migrations/0016_ban_identity_continuity.sql",
+      "sha256": "c1928eb57427a7c231ac74bfb1265e9eb69730089c42b0baf1ea828dfeda9be0"
+    }
+  ],
+  "inputHashes": [
+    {
+      "path": "packages/types/package.json",
+      "sha256": "8f16501a5dbbd82e9799207fd9c69d93ab01d6ccca9b1f94dd1aa2f012ae4d8f"
+    },
+    {
+      "path": "packages/logger/package.json",
+      "sha256": "cdfd5a80e5f38204d03cf69b4a8c1aaf5927393d47d7df502068b86ee4d35a2d"
+    },
+    {
+      "path": "packages/auth/package.json",
+      "sha256": "3a2139154bbd75c7fb08b7a65368097c07a2aea3125e86061b696b86f3b0298d"
+    },
+    {
+      "path": "packages/core/package.json",
+      "sha256": "628ce31dff8fca16d838d1d7bb55121998183878382e9c808dc3e51104b91d9c"
+    },
+    {
+      "path": "packages/worker-kit/package.json",
+      "sha256": "99c856494c38907ef0ab4149783fce9eb3d023728e108f1a7813c434e40a85f5"
+    },
+    {
+      "path": "packages/svg/package.json",
+      "sha256": "eb9c7c477199615cd09a59e623d9dcdc7430e71333d2fc48756f9d028caa9592"
+    },
+    {
+      "path": "packages/bot-logic/package.json",
+      "sha256": "79bc5340f07314be39b68a4caae05add3ea42483583b43fd43f9826027d20da3"
+    },
+    {
+      "path": "packages/test-utils/package.json",
+      "sha256": "c3f21ae5928c5417c368baa091b293364c92bad74f36ac5e61e021f55e5a3851"
+    },
+    {
+      "path": "apps/api-worker/package.json",
+      "sha256": "58569d29f5f85ab5525fcff6ba7d9bb6e2a4b996dbfa1f5e2bb695a40cb7443f"
+    },
+    {
+      "path": "apps/discord-worker/package.json",
+      "sha256": "0c966d6b3d51404c34bd0fa919df1f05b42cd4432bd7e580be8ea38e65812b5b"
+    },
+    {
+      "path": "apps/image-worker/package.json",
+      "sha256": "317e7dea8d59ca196ed0151603e6c8c5bf2bbe5facacca40e9d4870cd77d8a3a"
+    },
+    {
+      "path": "apps/moderation-worker/package.json",
+      "sha256": "1474ffab89f32a1615b3aee45d6ca2caba907047e5d0cb011e5f7be26f1e2dce"
+    },
+    {
+      "path": "apps/oauth/package.json",
+      "sha256": "cffd2933d9a5116e7c6fa0f8c8cc685967fb78b128b1a549d8a54efcc77ffafd"
+    },
+    {
+      "path": "apps/og-worker/package.json",
+      "sha256": "230a785dba04ddf7e0ed2a2487063d2ac6441e074a6a5488461a33c3ab1775e6"
+    },
+    {
+      "path": "apps/presets-api/package.json",
+      "sha256": "931885f1e59a4d240d27963ad9fde93d27032e5838eeafea63d1e4899bfc45f2"
+    },
+    {
+      "path": "apps/stoat-worker/package.json",
+      "sha256": "728ee403a19fdc66df6f145b83f5a85e23965a9059c2f5509d18c3cad8c43fc6"
+    },
+    {
+      "path": "apps/web-app/package.json",
+      "sha256": "d3226a59718f12c953d422ede3828aa6f754820d4469ba84771bde15b03af291"
+    },
+    {
+      "path": ".github/workflows\\ci.yml",
+      "sha256": "595833e3a51d25d2de88e7b3bf61426276cbc91e122d69ea65ea613ee314ed66"
+    },
+    {
+      "path": ".github/workflows\\deploy-api-worker.yml",
+      "sha256": "179879577ca467e6d9e7e7e2c523698ee25bf13eee73711332a7dbed13f75a68"
+    },
+    {
+      "path": ".github/workflows\\deploy-discord-worker-beta.yml",
+      "sha256": "67d9caa1c7acba670cdb1b352ed411b63b48413b0772d8fea68c6f23a9ab7dce"
+    },
+    {
+      "path": ".github/workflows\\deploy-discord-worker.yml",
+      "sha256": "8a42d74fe37f6e1a34db6c24b7138022c6b0b9c4d13e6839435448c1f92c50fb"
+    },
+    {
+      "path": ".github/workflows\\deploy-image-worker.yml",
+      "sha256": "0761c865065b7a898109f89e5cf9cdb5e3f921748e501ccd38127b0d0ec22ea7"
+    },
+    {
+      "path": ".github/workflows\\deploy-moderation-worker.yml",
+      "sha256": "eb1272103b901fe50048385d70292b2cc2fc7c22ec69d4f186bf286270eeb4d9"
+    },
+    {
+      "path": ".github/workflows\\deploy-oauth.yml",
+      "sha256": "a31a19ae70673dfc5aa26cf9cceaa8af57329d5a979a9961c125c5577818bb2e"
+    },
+    {
+      "path": ".github/workflows\\deploy-og-worker-beta.yml",
+      "sha256": "aa0fcaccc346ab204a6f1cf1638198ba487bb3ee6ef56129212a18d022f4afb1"
+    },
+    {
+      "path": ".github/workflows\\deploy-og-worker.yml",
+      "sha256": "ca746d6f980403edc56e00f88b3865b6b62b28214e72100d36bd67ace4856618"
+    },
+    {
+      "path": ".github/workflows\\deploy-presets-api.yml",
+      "sha256": "512e4cd9a1a277b9215293083114afde2bf2ccb59decdb50cd56dc50833f7f92"
+    },
+    {
+      "path": ".github/workflows\\deploy-web-app-beta.yml",
+      "sha256": "a375a7f9865579a8fe272ed9fa3a8897cafa49add24696cc4950c3a671f95843"
+    },
+    {
+      "path": ".github/workflows\\deploy-web-app.yml",
+      "sha256": "b8bd23dbb8d219ed1657b9e6862efc0e373d7620d41cdeaa85396f50d6184f24"
+    },
+    {
+      "path": ".github/workflows\\publish-packages.yml",
+      "sha256": "9252b0e82a3b6fac4a5f8f8f98b7fff2047699894d1b078818b08081775f2638"
+    },
+    {
+      "path": ".github/workflows\\sync-dye-emojis.yml",
+      "sha256": "52c39520cb2d02b1949d2873db848e240ab5f8f8c322532982d8bb68a8886e42"
+    },
+    {
+      "path": "scripts/publish-packages.ts",
+      "sha256": "c1b6adb969ca22180069f1c0347ebed3c619b97548236d4af0bf917f92e58ff7"
+    }
+  ],
+  "proofHashes": {
+    "facts": "4714dd92cb4f725cfa4099216dcaa4ae1584d015ce5ac0667a2a7c2bcd9371bf",
+    "script": "b3cacbab5e691c3dc405b6393343327f31db2daad64e4bb93396f3b0b4146ce6",
+    "productionMetadata": "f27ebab4e2b321642d92ef407fcc76bbee40be7916fb4a6203bd1b2ea6112df5",
+    "branchPolicies": "d0f58f81edce64ea324375c404e9a6d406e7a4090eb03ffb7061a1fd604db6b1",
+    "workflowStates": "c42a7f6913c13c81bd45e6bbb33a9f9466d52b54d129f7f323826d503f6e456b"
+  },
+  "limitations": [
+    "No release candidate source cut was promoted or validated in isolation",
+    "All six pending package versions remain unpublished at the recorded lookup times",
+    "No reviewer gate, workflow state, source activation flag, policy or secret was changed",
+    "No main merge, package publication, remote migration, deployment or hosted test was performed",
+    "Cached PR-associated historical refs in the phase proof are local observations, not refreshed PR-head claims"
+  ]
+}
