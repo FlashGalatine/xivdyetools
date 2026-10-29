@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0] - 2026-10-28
+
+H-LOGGER source preparation (FINDING-044 and FINDING-047). Publication and consumer adoption
+are separate steps. MINOR follows the 2.3.0/2.2.0 precedent: consumers can observe changed
+redaction and diagnostic output, although public exports and call signatures are unchanged.
+
+### Security
+
+- Apply the existing guarded field/value redaction pipeline to non-Error object and array
+  error arguments before adapter/console serialization. Cookie, session, authorization and nested secret
+  fields now receive the same protection as context values. Preserve the `Unknown` error
+  label, primitive handling, ordinary Error behavior and source nonmutation.
+- Redact Discord webhook/follow-up and interaction callback token path shapes in messages,
+  error messages and nested context/array values. Context value-shape redaction remains
+  active when `sanitizeErrors` is false; free-text sanitization retains its existing opt-out.
+- Retain cycle, serializer depth/fan-out and stringify budgets. The documented pre-existing
+  function/class-value `toJSON` exception remains; this release does not promise complete
+  sanitization of arbitrary executable serializers.
+
+The optional browser `errorTracker` forwarding path retains its existing free-text-only
+handling for non-Error values; this formatter change does not add field redaction to that sink.
+
+The app context-as-error call-site corrections remain in their own adoption sprints.
+
 ## [2.3.0] - 2026-10-06
 
 Sprint 12 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-deep-dive`): BUG-140, BUG-141, OPT-010,

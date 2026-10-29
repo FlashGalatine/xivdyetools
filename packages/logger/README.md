@@ -282,6 +282,30 @@ never replaced. Keys are matched case-insensitively with `_`/`-` collapsed
 (`jwtSecret` hits `jwt_secret`), and any key ending in `token` / `secret` /
 `password` / `apikey` is redacted whether or not it is on the list.
 
+In console/adapter output, non-`Error` objects passed to
+`logger.error(message, error, context)` receive
+the same field and value redaction before they are serialized into
+`error.message`. This preserves arrays, `Date`/`URL` values and root `toJSON`
+results, redacts serializer results, and handles cycles without changing the
+source. Throwing serializers fall back to redacted enumerable fields;
+unreadable values and callable serializer results become `[Unserializable]`.
+Array copies use plain arrays, preserving holes without retaining subclass
+serializer hooks. Existing serializer-depth,
+fan-out and output-size bounds still apply. Function/class values with their
+own `toJSON`, when supplied directly as values, retain the existing
+unsupported-hook limitation: their serializer results are not walked for field
+redaction. The optional browser `errorTracker` forwarding path also retains its
+existing free-text-only handling of non-`Error` arguments; these object-field
+protections describe console/adapter output.
+
+Discord `/webhooks/<numeric-id>/<token>` and
+`/interactions/<numeric-id>/<token>` path shapes are secret-shaped values,
+including full URLs, follow-up message URLs and relative paths. Context values
+and array items containing them become `[REDACTED]`; messages and error messages
+keep the URL prefix/suffix and replace the token. Matching uses the path shape,
+regardless of host. With `sanitizeErrors: false`, field/value redaction remains
+active, while free-text message/error sanitization and stack suppression are off.
+
 ## Migration Guide
 
 ### From xivdyetools-core Logger

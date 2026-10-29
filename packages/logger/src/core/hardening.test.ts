@@ -30,6 +30,378 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+describe('FINDING-044: non-Error values use field redaction before serialization', () => {
+  it.each([true, false])(
+    'redacts objects, arrays, aliases and cycles without mutation (sanitizeErrors=%s)',
+    (sanitizeErrors) => {
+      const { logger, lines } = capture();
+      // Configure through the public constructor, not protected implementation state.
+      const configured = sanitizeErrors
+        ? logger
+        : new JsonAdapter({ level: 'debug', sanitizeErrors });
+      const shared = Object.freeze({
+        cookie: 'cookie-value',
+        session_id: 'session-value',
+        safe: 'keep',
+      });
+      const source: Record<string, unknown> = {
+        set_cookie: 'set-cookie-value',
+        auth_header: 'header-value',
+        webhook_url: 'webhook-value',
+        nested: shared,
+        alias: shared,
+        items: [[shared, 'Bearer opaque']],
+        note: 'upstream password=embedded failed',
+        n: 123n,
+      };
+      source.self = source;
+      Object.freeze(source);
+      expect(() => configured.error('failed', source)).not.toThrow();
+      const entry = JSON.parse(lines()[0]);
+      const value = JSON.parse(entry.error.message);
+      expect(value).toMatchObject({
+        set_cookie: '[REDACTED]',
+        auth_header: '[REDACTED]',
+        webhook_url: '[REDACTED]',
+        nested: { cookie: '[REDACTED]', session_id: '[REDACTED]', safe: 'keep' },
+        alias: { cookie: '[REDACTED]', session_id: '[REDACTED]', safe: 'keep' },
+        self: '[Circular]',
+        n: '123',
+        note: sanitizeErrors
+          ? 'upstream password=[REDACTED] failed'
+          : 'upstream password=embedded failed',
+      });
+      expect(value.items).toEqual([[value.nested, '[REDACTED]']]);
+      for (const secret of [
+        'cookie-value',
+        'session-value',
+        'set-cookie-value',
+        'header-value',
+        'webhook-value',
+      ]) {
+        expect(lines()[0]).not.toContain(secret);
+      }
+      expect(shared.cookie).toBe('cookie-value');
+      expect(source.self).toBe(source);
+      expect(source.items).toEqual([[shared, 'Bearer opaque']]);
+    },
+  );
+
+  it('preserves root arrays and serializable root values, redacting serializer results', () => {
+    const { logger, lines } = capture();
+    const at = new Date('2026-10-28T00:00:00Z');
+    const key = vi.fn((_key: string) => ({ cookie: 'serializer-cookie', keep: 1 }));
+    for (const value of [
+      [{ cookie: 'array-cookie' }],
+      at,
+      new URL('https://example.com/safe'),
+      { toJSON: key },
+    ]) {
+      logger.error('failed', value);
+    }
+    const values = lines().map((line) => JSON.parse(JSON.parse(line).error.message));
+    expect(values).toEqual([
+      [{ cookie: '[REDACTED]' }],
+      at.toISOString(),
+      'https://example.com/safe',
+      { cookie: '[REDACTED]', keep: 1 },
+    ]);
+    expect(key).toHaveBeenCalledExactlyOnceWith('');
+  });
+
+  it('honors a root array serializer without letting its result bypass redaction', () => {
+    const { logger, lines } = capture();
+    const source = Object.assign([1, 2], {
+      toJSON: () => ({ session_id: 'array-hook', keep: true }),
+    });
+    logger.error('failed', source);
+    expect(JSON.parse(JSON.parse(lines()[0]).error.message)).toEqual({
+      session_id: '[REDACTED]',
+      keep: true,
+    });
+    expect(source).toHaveLength(2);
+  });
+
+  it('guards root serializer failures and back-references, including inherited hooks', () => {
+    const { logger, lines } = capture();
+    const self = {
+      cookie: 'self-cookie',
+      toJSON(): unknown {
+        return this;
+      },
+    };
+    const back = {
+      toJSON(): unknown {
+        return { back: this, auth_header: 'back-header' };
+      },
+    };
+    const inherited = Object.create({ toJSON: () => ({ session_id: 'inherited-session' }) });
+    const throwing = {
+      cookie: 'throw-cookie',
+      toJSON(): never {
+        throw new Error('serializer failed');
+      },
+    };
+    const hostile = {
+      toJSON: () =>
+        new Proxy(
+          {},
+          {
+            ownKeys(): never {
+              throw new Error('ownKeys');
+            },
+          },
+        ),
+    };
+    for (const value of [self, back, inherited, throwing, hostile])
+      expect(() => logger.error('failed', value)).not.toThrow();
+    expect(lines().map((line) => JSON.parse(JSON.parse(line).error.message))).toEqual([
+      { cookie: '[REDACTED]' },
+      { back: '[Circular]', auth_header: '[REDACTED]' },
+      { session_id: '[REDACTED]' },
+      { cookie: '[REDACTED]' },
+      '[Unserializable]',
+    ]);
+  });
+
+  it('bounds root serializer fan-out and aliased serialization', () => {
+    const { logger, lines } = capture();
+    let calls = 0;
+    class Fanout {
+      toJSON(): unknown {
+        calls++;
+        return { cookie: 'fanout-cookie', a: new Fanout(), b: new Fanout() };
+      }
+    }
+    logger.error('failed', new Fanout());
+    expect(calls).toBeLessThanOrEqual(4096);
+    expect(lines()[0]).toContain('[Truncated]');
+    expect(lines()[0]).not.toContain('fanout-cookie');
+    let shared: unknown = { cookie: 'aliased-cookie' };
+    for (let i = 0; i < 17; i++) shared = { a: shared, b: shared };
+    logger.error('failed', shared);
+    expect(lines()[1]).toContain('[Truncated]');
+    expect(lines()[1]).not.toContain('aliased-cookie');
+  });
+});
+
+describe('FINDING-044: array copies cannot retain unguarded serializer hooks', () => {
+  it.each(['self', 'throw'] as const)(
+    'drops subclass hooks after a root %s serializer fallback',
+    (mode) => {
+      const { logger, lines } = capture();
+      let calls = 0;
+      class Payload extends Array<unknown> {
+        toJSON(): unknown {
+          calls++;
+          if (calls > 1) return { cookie: 'post-walk-cookie' };
+          if (mode === 'throw') throw new Error('first hook failed');
+          return this;
+        }
+      }
+      const source = new Payload({ cookie: 'source-cookie', keep: 1 });
+      logger.error('failed', source);
+      expect(JSON.parse(JSON.parse(lines()[0]).error.message)).toEqual([
+        { cookie: '[REDACTED]', keep: 1 },
+      ]);
+      expect(calls).toBe(1);
+      expect(lines()[0]).not.toContain('post-walk-cookie');
+      expect(source[0]).toEqual({ cookie: 'source-cookie', keep: 1 });
+    },
+  );
+
+  it('drops inherited hooks from a root serializer-result array subclass', () => {
+    const { logger, lines } = capture();
+    const hook = vi.fn(() => ({ session_id: 'result-hook-session' }));
+    class Result extends Array<unknown> {
+      toJSON(): unknown {
+        return hook();
+      }
+    }
+    const result = new Result({ auth_header: 'result-header', keep: true });
+    logger.error('failed', { toJSON: () => result });
+    expect(JSON.parse(JSON.parse(lines()[0]).error.message)).toEqual([
+      { auth_header: '[REDACTED]', keep: true },
+    ]);
+    expect(hook).not.toHaveBeenCalled();
+    expect(lines()[0]).not.toContain('result-hook-session');
+  });
+
+  it.each([true, false])(
+    'copies context subclasses into plain arrays with holes, aliases and cycles (sanitizeErrors=%s)',
+    (sanitizeErrors) => {
+      const { lines } = capture();
+      const logger = new JsonAdapter({ level: 'debug', sanitizeErrors });
+      const hook = vi.fn(() => ({ cookie: 'context-hook-cookie' }));
+      class Payload extends Array<unknown> {
+        toJSON(): unknown {
+          return hook();
+        }
+      }
+      const source = new Payload(4);
+      source[1] = { session_id: 'context-session', keep: 1 };
+      source[3] = source;
+      logger.info('context', { a: source, b: source, nested: [source] });
+      const context = JSON.parse(lines()[0]).context;
+      const expected = [null, { session_id: '[REDACTED]', keep: 1 }, null, '[Circular]'];
+      expect(context).toEqual({ a: expected, b: expected, nested: [expected] });
+      expect(hook).not.toHaveBeenCalled();
+      expect(0 in source).toBe(false);
+      expect(source[3]).toBe(source);
+      expect(lines()[0]).not.toContain('context-hook-cookie');
+    },
+  );
+
+  it('does not consult custom map or Symbol.species while copying an array', () => {
+    const { logger, lines } = capture();
+    const species = vi.fn((): never => {
+      throw new Error('species must not run');
+    });
+    class Payload extends Array<unknown> {
+      static get [Symbol.species](): ArrayConstructor {
+        return species();
+      }
+    }
+    const source = new Payload({ cookie: 'species-cookie', keep: 1 });
+    Object.defineProperty(source, 'map', {
+      value: (): never => {
+        throw new Error('map must not run');
+      },
+    });
+    expect(() => logger.info('context', { source })).not.toThrow();
+    expect(JSON.parse(lines()[0]).context.source).toEqual([{ cookie: '[REDACTED]', keep: 1 }]);
+    expect(species).not.toHaveBeenCalled();
+  });
+});
+
+describe('FINDING-044: serializer results cannot execute a second hook', () => {
+  it.each([true, false])(
+    'blocks callable root and nested results (sanitizeErrors=%s)',
+    (sanitizeErrors) => {
+      const { lines } = capture();
+      const logger = new JsonAdapter({ level: 'debug', sanitizeErrors });
+      const second = vi.fn(() => ({ cookie: 'callable-result-cookie' }));
+      const callable = Object.assign(() => undefined, { toJSON: second });
+      const object = { toJSON: () => callable };
+      const array = Object.assign([1], { toJSON: () => callable });
+      logger.error('object', object);
+      logger.error('array', array);
+      logger.error('nested', { detail: object, items: [object] });
+      logger.info('context', { detail: object, items: [object] });
+      const entries = lines().map((line) => JSON.parse(line));
+      expect(JSON.parse(entries[0].error.message)).toBe('[Unserializable]');
+      expect(JSON.parse(entries[1].error.message)).toBe('[Unserializable]');
+      expect(JSON.parse(entries[2].error.message)).toEqual({
+        detail: '[Unserializable]',
+        items: ['[Unserializable]'],
+      });
+      expect(entries[3].context).toEqual({
+        detail: '[Unserializable]',
+        items: ['[Unserializable]'],
+      });
+      expect(second).not.toHaveBeenCalled();
+      expect(lines().join('')).not.toContain('callable-result-cookie');
+    },
+  );
+
+  it('strips a serializer result object own hook before the final serialization', () => {
+    const { logger, lines } = capture();
+    const second = vi.fn(() => ({ cookie: 'second-object-hook-cookie' }));
+    const source = { toJSON: () => ({ cookie: 'first-object-cookie', keep: 1, toJSON: second }) };
+    logger.error('root', source);
+    logger.error('nested', { detail: source });
+    expect(JSON.parse(JSON.parse(lines()[0]).error.message)).toEqual({
+      cookie: '[REDACTED]',
+      keep: 1,
+    });
+    expect(JSON.parse(JSON.parse(lines()[1]).error.message)).toEqual({
+      detail: { cookie: '[REDACTED]', keep: 1 },
+    });
+    expect(second).not.toHaveBeenCalled();
+    expect(lines().join('')).not.toContain('second-object-hook-cookie');
+  });
+});
+
+describe('FINDING-047: Discord webhook and interaction URL shapes', () => {
+  // Synthetic URL-safe credentials, not real Discord tokens.
+  const credential = ['synthetic', 'interaction', 'value'].join('_');
+  const paths = [
+    `https://discord.com/api/webhooks/123456789/${credential}`,
+    `https://discord.com/api/v10/webhooks/123456789/${credential}/messages/@original?wait=true`,
+    `https://canary.discord.com/api/v10/webhooks/123456789/${credential}`,
+    `/webhooks/123456789/${credential}`,
+    `/api/v10/webhooks/123456789/${credential}/messages/987654321`,
+    `/api/v10/interactions/123456789/${credential}/callback`,
+  ];
+
+  it.each(paths)('redacts free text across message, Error and thrown-string slots: %s', (url) => {
+    const { logger, lines } = capture();
+    const message = `failed ${url} then ${url}; retry`;
+    logger.info(message);
+    logger.error('failed', new Error(message));
+    logger.error('failed', message);
+    expect(lines()).toHaveLength(3);
+    for (const line of lines()) {
+      expect(line).not.toContain(credential);
+      expect(line).toContain('[REDACTED]');
+      expect(line).toContain('; retry');
+    }
+    const sanitized = JSON.parse(lines()[0]).message;
+    logger.info(sanitized);
+    expect(JSON.parse(lines()[3]).message).toBe(sanitized);
+  });
+
+  it.each([true, false])(
+    'redacts values in context arrays and non-Error arrays (sanitizeErrors=%s)',
+    (sanitizeErrors) => {
+      const { lines } = capture();
+      const logger = new JsonAdapter({ level: 'debug', sanitizeErrors });
+      logger.info('context', {
+        note: paths[0],
+        items: [paths[1], [paths[3]], { detail: paths[5] }],
+      });
+      logger.error('failed', [{ url: paths[0], items: [[paths[4]]] }]);
+      const context = JSON.parse(lines()[0]).context;
+      expect(context).toEqual({
+        note: '[REDACTED]',
+        items: ['[REDACTED]', ['[REDACTED]'], { detail: '[REDACTED]' }],
+      });
+      expect(JSON.parse(JSON.parse(lines()[1]).error.message)).toEqual([
+        { url: '[REDACTED]', items: [['[REDACTED]']] },
+      ]);
+      expect(lines().join('')).not.toContain(credential);
+    },
+  );
+
+  it('preserves suffixes and ordinary URL negatives, respecting free-text opt-out', () => {
+    const { logger, lines } = capture();
+    const negatives = [
+      'https://example.com/articles/123/title',
+      '/webhooks/not-numeric/value',
+      '/webhooks/123/',
+      '/interactions/not-numeric/value/callback',
+      'https://discord.com/api/webhooks/123',
+    ];
+    for (const url of negatives) logger.info(url, { url });
+    for (let i = 0; i < negatives.length; i++) {
+      expect(JSON.parse(lines()[i])).toMatchObject({
+        message: negatives[i],
+        context: { url: negatives[i] },
+      });
+    }
+    logger.info(`request ${paths[1]}`);
+    expect(JSON.parse(lines()[negatives.length]).message).toBe(
+      'request https://discord.com/api/v10/webhooks/123456789/[REDACTED]/messages/@original?wait=true',
+    );
+    const raw = new JsonAdapter({ level: 'debug', sanitizeErrors: false });
+    raw.error(paths[0], new Error(paths[0]));
+    expect(JSON.parse(lines().at(-1)!)).toMatchObject({
+      message: paths[0],
+      error: { message: paths[0] },
+    });
+  });
+});
+
 describe('logger hardening', () => {
   it('does not throw on a circular context and marks the back-reference', () => {
     const { logger, lines } = capture();
@@ -79,7 +451,9 @@ describe('logger hardening', () => {
     // Assembled at runtime on purpose: a token-shaped literal trips secret
     // scanners (GitHub push protection flags it as a Discord bot token) even
     // though every part is synthetic.
-    const discordish = ['MTIzNDU2Nzg5MDEyMzQ1Njc4', 'GabcDe', 'abcdefghijklmnopqrstuvwxyz012'].join('.');
+    const discordish = ['MTIzNDU2Nzg5MDEyMzQ1Njc4', 'GabcDe', 'abcdefghijklmnopqrstuvwxyz012'].join(
+      '.',
+    );
     logger.info('ctx', {
       note: 'Bearer abc.def.ghi',
       jwt: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjMifQ.c2lnbmF0dXJlLXNpZ25hdHVyZS1zaWduYXR1cmU',
@@ -176,7 +550,10 @@ describe('FINDING-025 (2026-08-29 audit): array items and free text', () => {
         'GabcDe',
         'abcdefghijklmnopqrstuvwxyz012',
       ].join('.');
-      logger.error('upstream call failed', new Error(`Discord API rejected credentials ${discordish}`));
+      logger.error(
+        'upstream call failed',
+        new Error(`Discord API rejected credentials ${discordish}`),
+      );
       const out = lines()[0];
       expect(out).not.toContain(discordish);
       expect(out).toContain('[REDACTED]');
@@ -670,7 +1047,9 @@ describe('BUG-141 review follow-ups (2026-10-06)', () => {
       constructor(private readonly depth: number) {}
       toJSON(): unknown {
         calls++;
-        return this.depth >= 16 ?{ leaf: 1 } : { a: new Fan(this.depth + 1), b: new Fan(this.depth + 1) };
+        return this.depth >= 16
+          ? { leaf: 1 }
+          : { a: new Fan(this.depth + 1), b: new Fan(this.depth + 1) };
       }
     }
     const start = Date.now();
@@ -797,6 +1176,11 @@ describe('Sprint 12 release blockers (2026-10-06)', () => {
       ['"a." runs', rep('a.')],
       ['"a://:" then x', 'a://:' + rep('x')],
       ['"eyJ-" runs', rep('eyJ-')],
+      ['incomplete webhook prefixes', rep('/webhooks/')],
+      ['webhook ID without token separator', '/webhooks/' + rep('1')],
+      ['webhook token run', '/webhooks/123/' + rep('x')],
+      ['interaction ID without token separator', '/interactions/' + rep('1')],
+      ['interaction token run', '/interactions/123/' + rep('x') + '/callback'],
     ];
 
     it.each(inputs)(
@@ -947,7 +1331,7 @@ describe('Sprint 12 final guards (2026-10-06): a hostile value never throws out 
         getPrototypeOf() {
           throw new Error('proto trap');
         },
-      }
+      },
     );
     expect(() => logger.info('m', { a: { b: hostile }, list: [hostile] })).not.toThrow();
     expect(lines()).toHaveLength(1);
@@ -962,7 +1346,7 @@ describe('Sprint 12 final guards (2026-10-06): a hostile value never throws out 
         ownKeys() {
           throw new Error('ownKeys trap');
         },
-      }
+      },
     );
     const value = { toJSON: () => hostileResult };
     expect(() => logger.info('m', { a: { v: value } })).not.toThrow();
