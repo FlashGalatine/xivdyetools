@@ -34,7 +34,7 @@
 | **Presets API** | v2.8.2 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
 | **Public REST API** | v0.21.1 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
 | **OpenGraph Worker** | v2.12.2 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
-| **Stoat Bot** | v0.3.3 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
+| **Stoat Bot** | v0.3.4 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
 | **API Documentation** | — | merged into `xivdyetools-api-worker` (`docs/`, Workers Static Assets) | Cloudflare Workers | Merged 2026-07-31 |
 
@@ -650,6 +650,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v0.3.4 | Oct 2026 | Bot-logic 4.12.0: mirrored invisible-control stripping and shared sanitizer hardening; parked, no deployment |
 | v0.3.3 | Oct 2026 | 2026-10-04 remediation Sprint 24 (parked, no deploy) — `!xd about` no longer advertises `!xd random`, a ❓ reaction or capabilities the bot lacks (BUG-070); `!xd info` resolves a broad name (`white`, `Blue`) to each matching dye or a capped list instead of one arbitrary dye (BUG-073); the resolver honors `locale` and help no longer promises localized names (BUG-072); resolver tests rewritten against the real database (BUG-071) |
 | v0.3.2 | Oct 2026 | 2026-10-03 security audit Sprint 12 (parked, no deploy) — echoed text no longer carries Stoat's `@online` mass mention (`<%…>` tokens now rewritten explicitly) (FINDING-026) |
 | v0.3.1 | Sep 2026 | 2026-09-16 deep-dive Sprint 12 (parked, no deploy) — `!xd ping` measures the round-trip after the send and edits it in (BUG-031); the dye-info test asserts embed title/color/description (BUG-042) |
@@ -733,6 +734,7 @@ and the [rollout runbook](operations/security-remediation-2026-09-15.md) for the
 
 | Consumer | Minimum Core Version | Notes |
 |----------|---------------------|-------|
+| xivdyetools-stoat-worker v0.3.4 | @xivdyetools/bot-logic v4.12.0; @xivdyetools/logger v2.4.0; @xivdyetools/types v3.3.0 | Prepared source; publication and deployed acceptance remain pending |
 | xivdyetools-image-worker v1.3.5 | @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
 | xivdyetools-moderation-worker v1.9.0 | @xivdyetools/auth v3.0.0; @xivdyetools/bot-logic v4.12.0; @xivdyetools/logger v2.4.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
 | xivdyetools-og-worker v2.12.2 | @xivdyetools/core v5.16.0; @xivdyetools/svg v4.4.1; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |

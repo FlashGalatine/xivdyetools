@@ -67,7 +67,7 @@ async function main(): Promise<void> {
   // very auto-reconnect revolt.js would have performed on `disconnect()`.
   // A listener is all it takes to restore the backoff path.
   client.on('error', (error: unknown) => {
-    logger.error('Gateway error', {
+    logger.error('Gateway error', undefined, {
       error: error instanceof Error ? error.message : String(error),
     });
   });
@@ -94,7 +94,7 @@ async function main(): Promise<void> {
 
 // ── Entry point ────────────────────────────────────────────────────────
 main().catch((error) => {
-  logger.error('Fatal error during startup', {
+  logger.error('Fatal error during startup', undefined, {
     error: error instanceof Error ? error.message : String(error),
   });
   process.exit(1);

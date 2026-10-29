@@ -90,6 +90,16 @@ describe('Stoat mass and role mentions are defused (FINDING-026)', () => {
   const ZWJ = '\u200d';
   const ROLE = '<%01ARZ3NDEKTSV4RRFFQ69G5FAV>';
 
+  it.each([0x061c, 0x2066, 0x2067, 0x2068, 0x2069, 0xe0000, 0xe007f])(
+    'removes U+%i before rewriting obscured user/role and online mentions', (codePoint) => {
+      const hidden = String.fromCodePoint(codePoint);
+      const id = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
+      expect(sanitizeEcho(`<${hidden}@${id}>`, 256)).toBe(`@${id}`);
+      expect(sanitizeEcho(`<${hidden}%${id}>`, 256)).toBe(`%${id}`);
+      expect(sanitizeEcho(`@on${hidden}line 🎨`, 256)).toBe(`@${ZWJ}online 🎨`);
+    },
+  );
+
   it('sanitizeEcho puts a ZWJ after @ for every mass-mention keyword, any case', () => {
     expect(sanitizeEcho('@online')).toBe(`@${ZWJ}online`);
     expect(sanitizeEcho('@ONLINE')).toBe(`@${ZWJ}ONLINE`);
