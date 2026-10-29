@@ -181,7 +181,8 @@ export { SOCIAL_LINKS, PRODUCT_LINKS } from './config/product-links.js';
 export type { /** @public */ ProductLink } from './config/product-links.js';
 
 // .chara character-file import (5.0 Swatch Matcher; parse rules live in core)
-export { parseCharaFile, MAX_CHARA_FILE_BYTES } from './services/chara/chara-parser.js';
+export { parseCharaFile } from './services/chara/chara-parser.js';
+export { MAX_CHARA_FILE_BYTES } from './services/chara/chara-limits.js';
 export type {
   /** @public */
   ParsedCharaFile,
@@ -189,18 +190,21 @@ export type {
   CharaColorSlotRaw,
   /** @public */
   CharaGearDye,
+} from './services/chara/chara-parser.js';
+export type {
   CharaSlotId,
   /** @public */
   CharaGearSlotId,
   /** @public */
   CharaSlotInertReason,
-} from './services/chara/chara-parser.js';
+} from './services/chara/chara-types.js';
 export {
   resolveCharaColors,
   /** @public */ OFF_GRID_DELTA_E2000,
 } from './services/chara/chara-resolver.js';
 // Equipment model identity (packing helpers shared by api-worker's resolver
-// and the web-app client; the parser emits the keys, nothing in core resolves)
+// and the web-app client; the live facade and legacy parser emit the keys,
+// while item resolution stays outside core)
 export {
   /** @public */ gearModelKey,
   /** @public */ weaponModelKey,
@@ -268,19 +272,19 @@ export type {
   CharaSlotErrorCode,
   /** @public */
   StainIdLookup,
-} from './services/chara/chara-resolver.js';
+} from './services/chara/chara-types.js';
 // xivcharakit-backed import: bounded reader, host-palette interpretation, application projection
 export {
-  /** @public */ inspectCharaForTools,
+  inspectCharaForTools,
   /** @public */ resolveCharaWithProvider,
 } from './services/chara/chara-library.js';
-export { /** @public */ resolveCharaForTools } from './services/chara/chara-library-resolve.js';
-export { /** @public */ createCharaPaletteProvider } from './services/chara/chara-palette-provider.js';
+export { resolveCharaForTools } from './services/chara/chara-library-resolve.js';
+export { createCharaPaletteProvider } from './services/chara/chara-palette-provider.js';
 export type {
-  /** @public */ ImportedCharaCharacter,
-  /** @public */ ImportedCharaSlot,
-  /** @public */ CharaImportIssue,
-  /** @public */ CharaPaletteProvider,
+  ImportedCharaCharacter,
+  ImportedCharaSlot,
+  CharaImportIssue,
+  CharaPaletteProvider,
 } from './services/chara/chara-library-types.js';
 
 // /manual topics + learn-more links (shared data for web, bot, og-worker)

@@ -72,6 +72,20 @@ describe('inspectCharaForTools byte admission', () => {
     );
   });
 
+  it('admits the exact multibyte UTF-8 boundary as text or bytes and refuses one byte more', () => {
+    const exact = JSON.stringify({ Hair: 1, Nickname: 'é'.repeat(4084) });
+    const encoder = new TextEncoder();
+    expect(encoder.encode(exact)).toHaveLength(8192);
+    for (const input of [exact, encoder.encode(exact)]) {
+      expect(() => inspectCharaForTools(input)).not.toThrow();
+    }
+    for (const input of [`${exact} `, encoder.encode(`${exact} `)]) {
+      expect(() => inspectCharaForTools(input)).toThrowError(
+        expect.objectContaining({ code: 'INPUT_TOO_LARGE' }),
+      );
+    }
+  });
+
   it('accepts bytes and refuses invalid UTF-8', () => {
     expect(() => inspectCharaForTools(new TextEncoder().encode(base))).not.toThrow();
     expect(() => inspectCharaForTools(new Uint8Array([0x7b, 0xff, 0x7d]))).toThrowError(
@@ -203,6 +217,24 @@ describe('projection shape', () => {
     });
     expect(c.nickname).toHaveLength(256);
     expect(c.producer).toHaveLength(256);
+  });
+
+  describe.each(['TypeName', 'Nickname'] as const)('BUG-003: bounded %s label', (field) => {
+    it.each([
+      ['pair crossing cutoff', `${'a'.repeat(255)}😀suffix`, 'a'.repeat(255), 255],
+      ['pair ending at cutoff', `${'a'.repeat(254)}😀suffix`, `${'a'.repeat(254)}😀`, 256],
+      ['all astral characters', `${'😀'.repeat(128)}suffix`, '😀'.repeat(128), 256],
+      ['ASCII characters', 'a'.repeat(400), 'a'.repeat(256), 256],
+    ] as const)('keeps intact characters for %s', async (_case, input, expected, units) => {
+      const character = await importChara({
+        Tribe: 'Midlander',
+        Gender: 'Masculine',
+        [field]: input,
+      });
+      const label = field === 'TypeName' ? character.producer : character.nickname;
+      expect(label).toBe(expected);
+      expect(label).toHaveLength(units);
+    });
   });
 
   it('carries no raw document, image or unknown field into the result', async () => {

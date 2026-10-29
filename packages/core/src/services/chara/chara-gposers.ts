@@ -117,7 +117,7 @@ export function gposersSlotLabel(slot: GposersSlot): string {
 
 /** One line: a value never breaks, whatever a field held (a pasted note). */
 function text(value: string | null | undefined): string {
-  return value?.replace(/\s*[\r\n]+\s*/g, ' ').trim() ?? '';
+  return value?.replace(/\s+/g, (run) => (/[\r\n]/.test(run) ? ' ' : run)).trim() ?? '';
 }
 
 /** Both rings worn with one name — a ring whose name never arrived is not known to match. */

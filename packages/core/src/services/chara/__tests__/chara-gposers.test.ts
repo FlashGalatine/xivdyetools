@@ -18,6 +18,46 @@ const flat = (input: Parameters<typeof gposersGroups>[0]) =>
   gposersGroups(input).map((g) => g.map((l) => (l.value ? `${l.label} ${l.value}` : l.label)));
 
 describe('gposersGroups', () => {
+  it.each([
+    [null, ''],
+    [undefined, ''],
+    [' \t\r\n ', ''],
+    [' alpha\rbeta ', 'alpha beta'],
+    [' alpha\nbeta ', 'alpha beta'],
+    ['alpha \t\r\n\u2028\u2029\u00a0\tbeta', 'alpha beta'],
+    ['alpha\n \t\n beta', 'alpha beta'],
+    ['alpha  beta', 'alpha  beta'],
+    ['alpha\t\tbeta', 'alpha\t\tbeta'],
+    ['alpha\u2028\u2029beta', 'alpha\u2028\u2029beta'],
+    ['alpha \t\u2028\u2029\u00a0\ufeff\v\fbeta', 'alpha \t\u2028\u2029\u00a0\ufeff\v\fbeta'],
+    [' \u2028alpha\u2029 ', 'alpha'],
+  ])('preserves the newline-only joining contract for %j', (input, expected) => {
+    expect(gposersGroups({ Body: { name: input, dye1: input, dye2: input, acquisition: input } })).toEqual([
+      [
+        { label: 'Body:', value: expected, bold: true },
+        ...(expected ? [
+          { label: 'Dye 1:', value: expected, bold: false },
+          { label: 'Dye 2:', value: expected, bold: false },
+        ] : []),
+        { label: 'Acquisition:', value: expected, bold: false },
+      ],
+    ]);
+  });
+
+  it('merges ring names equivalent after CR/LF joining but preserves internal tabs and spaces', () => {
+    const joined = {
+      RightRing: { name: ' Silver \t\r\n Ring ', acquisition: ' Vendor\nGridania ' },
+      LeftRing: { name: 'Silver Ring' },
+    };
+    expect(gposersSameRings(joined)).toBe(true);
+    expect(gposersGroups(joined)).toEqual([[
+      { label: 'Rings:', value: 'Silver Ring', bold: true },
+      { label: 'Acquisition:', value: 'Vendor Gridania', bold: false },
+    ]]);
+    expect(gposersSameRings({ RightRing: { name: 'Silver\tRing' }, LeftRing: { name: 'Silver Ring' } })).toBe(false);
+    expect(gposersSameRings({ RightRing: { name: 'Silver  Ring' }, LeftRing: { name: 'Silver Ring' } })).toBe(false);
+  });
+
   it('writes worn slots in the form order: name, dyed channels only, then Acquisition', () => {
     expect(
       flat({
