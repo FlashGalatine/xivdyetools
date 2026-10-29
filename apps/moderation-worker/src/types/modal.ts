@@ -93,17 +93,3 @@ export function extractTextInputValue(
 export function getModalUserId(interaction: ModalInteraction): string | undefined {
   return interaction.member?.user?.id ?? interaction.user?.id;
 }
-
-/**
- * Get the username from a modal interaction
- *
- * @param interaction - The modal interaction
- * @param defaultName - Default name if not found
- * @returns The username or the default name
- */
-export function getModalUsername(
-  interaction: ModalInteraction,
-  defaultName: string = 'Moderator'
-): string {
-  return interaction.member?.user?.username ?? interaction.user?.username ?? defaultName;
-}

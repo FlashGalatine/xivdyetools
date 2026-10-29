@@ -34,6 +34,13 @@ import { sanitizeDescription, sanitizeName, sanitizeUserName } from '../utils/em
 import { buildReviewCustomId } from '@xivdyetools/types';
 import type { ReviewAction, ReviewBinding } from '@xivdyetools/types';
 import * as presetApi from '../services/preset-api.js';
+import {
+  CURRENT_LINK_FIELD,
+  REVERT_LINK_FIELD,
+  INCOMPLETE_LINK_REVIEW,
+  projectReviewLink,
+  linkChangeSummary,
+} from '../utils/preset-link-review.js';
 
 /**
  * The part of a button or modal interaction this module reads. Structural, so
@@ -132,6 +139,7 @@ export function withoutTransientFields(
 /** What the embed says about a snapshot (see `buildReviewEmbed`'s `revertOffered`). */
 function savedVersionLines(preset: ModerationPresetView, revertOffered: boolean): string[] {
   if (!preset.previous_values) return [];
+  if (!projectReviewLink(preset.previous_values, true).safe) return [INCOMPLETE_LINK_REVIEW];
   if (revertOffered) return [revertLine(preset.previous_values)];
   return preset.status === 'pending' ? [SAVED_VERSION_LINE] : [];
 }
@@ -157,9 +165,14 @@ export function buildReviewEmbed(
   // author name only — the bot privacy policy promises they show no Discord
   // User ID, and no moderation control needs it (bans search by username).
   // Tags are author-controlled; cap them so the description stays well under Discord's limit
-  const tags = (preset.tags ?? []).map((tag) => sanitizeName(tag)).join(', ').slice(0, 300);
+  const tags = (preset.tags ?? [])
+    .map((tag) => sanitizeName(tag))
+    .join(', ')
+    .slice(0, 300);
 
-  return {
+  const currentLink = projectReviewLink(preset);
+  const targetLink = projectReviewLink(preset.previous_values, true);
+  const embed: DiscordEmbed = {
     title: `${display.icon} Preset Review`,
     description: [
       `**Name:** ${sanitizeName(preset.name)}`,
@@ -170,11 +183,104 @@ export function buildReviewEmbed(
       ...(tags ? [`**Tags:** ${tags}`] : []),
       `**Dyes:** ${preset.dyes.length} colors`,
       ...savedVersionLines(preset, revertOffered),
+      ...(preset.previous_values ? linkChangeSummary(preset, preset.previous_values) : []),
     ].join('\n'),
     color: display.color,
-    ...(notice ? { fields: [{ name: 'Review', value: notice, inline: false }] } : {}),
+    fields: [
+      { name: CURRENT_LINK_FIELD, value: currentLink.value, inline: false },
+      ...(revertOffered && preset.previous_values
+        ? [{ name: REVERT_LINK_FIELD, value: targetLink.value, inline: false }]
+        : []),
+      ...(notice ? [{ name: 'Review', value: notice, inline: false }] : []),
+    ],
     footer: { text: `ID: ${preset.id} • Revision ${revision}` },
   };
+  if (!reviewEmbedFits(embed)) {
+    // Never shorten required paths. A corrupt legacy envelope gets a bounded
+    // refusal instead, and the same completeness guard withholds publishing.
+    return {
+      title: 'Preset Review',
+      description: INCOMPLETE_LINK_REVIEW,
+      fields: [
+        { name: CURRENT_LINK_FIELD, value: INCOMPLETE_LINK_REVIEW, inline: false },
+        ...(revertOffered
+          ? [{ name: REVERT_LINK_FIELD, value: INCOMPLETE_LINK_REVIEW, inline: false }]
+          : []),
+      ],
+    };
+  }
+  return embed;
+}
+
+function reviewEmbedFits(embed: DiscordEmbed): boolean {
+  const fields = embed.fields ?? [];
+  return (
+    (embed.title?.length ?? 0) <= 256 &&
+    (embed.description?.length ?? 0) <= 4096 &&
+    (embed.footer?.text.length ?? 0) <= 2048 &&
+    fields.length <= 25 &&
+    fields.every((field) => field.name.length <= 256 && field.value.length <= 1024) &&
+    (embed.title?.length ?? 0) +
+      (embed.description?.length ?? 0) +
+      (embed.footer?.text.length ?? 0) +
+      fields.reduce((total, field) => total + field.name.length + field.value.length, 0) <=
+      6000
+  );
+}
+
+/** Apply rendering completeness at every publishing entry point as well. */
+export function safeReviewActions(
+  preset: ModerationPresetView,
+  revision: number,
+  actions: ReviewAction[],
+): ReviewAction[] {
+  const embed = buildReviewEmbed(preset, revision, undefined, actions.includes('revert'));
+  const incomplete = (name: string): boolean =>
+    embed.fields?.some((field) => field.name === name && field.value === INCOMPLETE_LINK_REVIEW) ??
+    false;
+  return actions.filter(
+    (action) =>
+      action === 'reject' ||
+      (!incomplete(CURRENT_LINK_FIELD) &&
+        (action !== 'revert' || (!!preset.previous_values && !incomplete(REVERT_LINK_FIELD)))),
+  );
+}
+
+/** Fresh revision/status plus exact stable link fields bind old controls to a reviewed view. */
+export async function isReviewedPublishAction(
+  interaction: ReviewInteraction,
+  env: Env,
+  presetId: string,
+  moderatorId: string,
+  binding: ReviewBinding,
+  action: 'approve' | 'revert',
+): Promise<boolean> {
+  const current = await presetApi.getModerationPreset(env, presetId, moderatorId);
+  if (
+    !current ||
+    current.revision !== binding.revision ||
+    current.preset.status !== binding.status ||
+    !safeReviewActions(current.preset, current.revision, [action]).includes(action)
+  )
+    return false;
+  const next = projectReviewLink(current.preset);
+  const target = projectReviewLink(current.preset.previous_values, true);
+  const fields = interaction.message?.embeds?.[0]?.fields ?? [];
+  const matches = (name: string, value: string): boolean => {
+    const found = fields.filter((field) => field.name === name);
+    return found.length === 1 && found[0].value === value;
+  };
+  // Old APIs may omit all link metadata. Preserve that compatibility without
+  // claiming those old messages displayed any known current/target path.
+  const marked =
+    next.known ||
+    target.known ||
+    fields.some((field) => field.name === CURRENT_LINK_FIELD);
+  if (!marked) return true;
+  return (
+    matches(CURRENT_LINK_FIELD, next.value) &&
+    (action !== 'revert' || matches(REVERT_LINK_FIELD, target.value))
+  );
 }
 
 const BUTTONS: Record<ReviewAction, Pick<DiscordButton, 'style' | 'label' | 'emoji'>> = {
@@ -273,7 +379,11 @@ export async function refreshReview(
         components: [],
       };
     } else {
-      const actions = actionsFor(current.preset);
+      const actions = safeReviewActions(
+        current.preset,
+        current.revision,
+        actionsFor(current.preset),
+      );
       if (actions.length === 0) {
         const { status } = current.preset;
         notice = `This preset is now ${status}, so there is nothing left to review.`;

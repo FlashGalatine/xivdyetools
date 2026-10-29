@@ -1,263 +1,86 @@
-/**
- * Ban Reason Modal Handler
- *
- * Handles the modal submission when a moderator provides a ban reason.
- *
- * Modal custom_id pattern: ban_reason_modal_{targetId} — a Discord snowflake or
- * an XIVAuth UUID (`isBanTargetId`); the username is resolved from D1.
- */
-
 import type { Env } from '../../types/env.js';
-import {
-  errorEmbed,
-  ephemeralResponse,
-  updateMessageResponse,
-  sanitizeErrorMessage,
-  isBanTargetId,
-  type DiscordEmbed,
-} from '../../utils/response.js';
-import { sanitizeUserName, sanitizeReason } from '../../utils/embed-text.js';
-import type { ExtendedLogger } from '@xivdyetools/logger';
-import { safeSendMessage, safeEditOriginalResponse } from '../../utils/discord-api.js';
-import * as presetApi from '../../services/preset-api.js';
-import * as banService from '../../services/ban-service.js';
-import { MIN_REJECTION_REASON_LENGTH } from '../commands/preset.js';
-// MOD-REF-002 FIX: Use shared modal types and helpers
 import type { ModalInteraction } from '../../types/modal.js';
-import { extractTextInputValue, getModalUserId, getModalUsername } from '../../types/modal.js';
-
-// ============================================================================
-// Handlers
-// ============================================================================
-
-/**
- * Handle the ban reason modal submission
- */
-/** Shown in place of a name when the target has no author name on record (FINDING-008). */
-const UNNAMED_TARGET_LABEL = 'an account with no author name';
+import { extractTextInputValue, getModalUserId } from '../../types/modal.js';
+import type { ExtendedLogger } from '@xivdyetools/logger';
+import { ephemeralResponse, updateMessageResponse, errorEmbed } from '../../utils/response.js';
+import { sanitizeUserName, sanitizeReason } from '../../utils/embed-text.js';
+import { safeSendMessage } from '../../utils/discord-api.js';
+import { parseModeratorIds } from '@xivdyetools/bot-logic';
+import { getPresetAuthorName, banUser } from '../../services/ban-service.js';
+import {
+  loadBanReview,
+  INACTIVE_BANS,
+  REVIEW_UNAVAILABLE,
+} from '../../services/ban-confirmation-service.js';
+import { linkedBansEnabled } from '../../services/identity-lookup.js';
 
 export async function handleBanReasonModal(
   interaction: ModalInteraction,
   env: Env,
   ctx: ExecutionContext,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<Response> {
-  const customId = interaction.data?.custom_id || '';
-  const moderatorId = getModalUserId(interaction);
-  const moderatorName = getModalUsername(interaction);
-
-  if (!moderatorId) {
-    return ephemeralResponse({ embeds: [errorEmbed('Error', 'Invalid modal submission.')] });
-  }
-
-  if (!presetApi.isModerator(env, moderatorId)) {
-    return ephemeralResponse({ embeds: [errorEmbed('Error', 'You do not have permission to ban users.')] });
-  }
-
-  // Parse custom_id: ban_reason_modal_{targetId}
-  // FINDING-007 (2026-08-21 audit): the id is all the modal carries; the
-  // username is resolved from D1 here. The pre-FINDING-007 base64-username
-  // suffix is no longer parsed (DEAD-029, 2026-10-04): nothing has emitted it
-  // since, and a suffixed id fails `isBanTargetId` below, so it bans nobody.
-  const targetUserId = customId.replace('ban_reason_modal_', '');
-
-  if (!targetUserId) {
-    return ephemeralResponse({ embeds: [errorEmbed('Error', 'Invalid target user.')] });
-  }
-  // MOD-5: the id must be a Discord snowflake OR an XIVAuth UUID before it
-  // reaches D1 or the API (BUG-001 path (a), 2026-09-16 deep-dive — this is
-  // the last gate in the ban_user flow, after the confirm button re-parses
-  // the same id out of a new custom_id, so it has to accept the same shapes
-  // preset.ts and ban-confirmation.ts do or a UUID target would be refused
-  // here even though it passed every earlier step).
-  if (!isBanTargetId(targetUserId)) {
-    logger?.warn('Ban reason modal with a malformed target id', { customId });
-    return ephemeralResponse({ embeds: [errorEmbed('Error', 'Invalid modal data.')] });
-  }
-
-  let targetUsername: string | null = null;
-  try {
-    targetUsername = await banService.getPresetAuthorName(env.DB, targetUserId);
-  } catch (error) {
-    logger?.error('Failed to resolve target username', error instanceof Error ? error : undefined);
-  }
-  // FINDING-008: no post shows an account id. With no author name to find, the
-  // STORED name still falls back to the id (banned_users.username is NOT NULL
-  // and moderators search it), but everything rendered uses a neutral label.
-  const postedName = targetUsername ?? UNNAMED_TARGET_LABEL;
-  if (!targetUsername) {
-    targetUsername = targetUserId;
-  }
-
-  // BUG-051 (2026-10-04 deep-dive): the modal's min_length counts spaces, so
-  // the floor is checked on the trimmed text — and the trimmed text is what is
-  // stored, posted and logged, as the reject / revert modals already measure it
+  if (!linkedBansEnabled(env)) return ephemeralResponse(INACTIVE_BANS);
+  const actorId = getModalUserId(interaction);
+  if (!actorId || !parseModeratorIds(env.MODERATOR_IDS).has(actorId))
+    return ephemeralResponse('You do not have permission to ban users.');
   const reason = extractTextInputValue(interaction.data?.components, 'ban_reason')?.trim();
-
-  if (!reason || reason.length < MIN_REJECTION_REASON_LENGTH) {
-    return ephemeralResponse({ embeds: [errorEmbed('Error', 'Please provide a valid ban reason (at least 10 characters).')] });
-  }
-
-  ctx.waitUntil(
-    processBan(
-      interaction,
-      env,
-      targetUserId,
-      targetUsername,
-      postedName,
-      moderatorId,
-      moderatorName,
-      reason,
-      logger
-    )
-  );
-
-  return updateMessageResponse({
-    embeds: [
-      {
-        title: '\u23F3 Processing Ban...',
-        // FINDING-019: the username comes from D1 (author-controlled)
-        description: `Banning **${sanitizeUserName(postedName)}** and hiding their presets...`,
-        color: 0xfee75c,
-      },
-    ],
-    components: [],
-  });
-}
-
-async function processBan(
-  interaction: ModalInteraction,
-  env: Env,
-  targetUserId: string,
-  targetUsername: string,
-  postedName: string,
-  moderatorId: string,
-  moderatorName: string,
-  reason: string,
-  logger?: ExtendedLogger
-): Promise<void> {
-  /**
-   * moderation-worker-09: replace the "⏳ Processing Ban…" acknowledgement
-   * with the outcome.
-   *
-   * This handler answered with that spinner embed and then reported success
-   * AND failure solely through `safeSendMessage` to MODERATION_CHANNEL_ID — it
-   * never touched `interaction.token`, and the parameter was literally named
-   * `_interaction`. If the channel post was refused (missing permission, wrong
-   * id) `safeSendMessage` returned false and nobody checked it, so the
-   * moderator's only feedback was a permanent spinner giving no clue whether
-   * the ban had landed. The channel post stays as the public record; this is
-   * the private answer to the person who asked.
-   */
-  const resolveSpinner = async (embed: DiscordEmbed): Promise<void> => {
-    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-      embeds: [embed],
-      components: [],
+  if (!reason || reason.length < 10 || reason.length > 500)
+    return ephemeralResponse({
+      embeds: [
+        errorEmbed(
+          'Error',
+          'Please provide a valid ban reason (at least 10 characters; at most 500).',
+        ),
+      ],
     });
-  };
-  // FINDING-019: everything rendered below is user-sourced — D1 username,
-  // the moderator's Discord name, the typed reason
-  const safeTarget = sanitizeUserName(postedName);
-  const safeModerator = sanitizeUserName(moderatorName);
-  const safeReason = sanitizeReason(reason);
-
+  const id = interaction.data?.custom_id ?? '';
+  if (!id.startsWith('ban_reason_modal_') || id.length > 100)
+    return ephemeralResponse(REVIEW_UNAVAILABLE);
+  const nonce = id.slice('ban_reason_modal_'.length);
   try {
-    const result = await banService.banUser(env.DB, targetUserId, targetUsername, moderatorId, reason);
-
-    if (!result.success) {
-      // MOD-8 (FINDING-034): `result.error` is channel-safe by contract; the
-      // raw D1 error (if any) goes to the structured log only
-      if (result.cause !== undefined) {
-        logger?.error(
-          `Ban failed for ${targetUserId}`,
-          result.cause instanceof Error ? result.cause : undefined
-        );
-      }
-      if (env.MODERATION_CHANNEL_ID) {
-        await safeSendMessage(env.DISCORD_TOKEN, env.MODERATION_CHANNEL_ID, {
-          embeds: [
-            errorEmbed('Ban Failed', result.error || 'Unknown error occurred.'),
-          ],
-        });
-      }
-      await resolveSpinner(errorEmbed('Ban Failed', result.error || 'Unknown error occurred.'));
-      return;
-    }
-
-    if (env.MODERATION_CHANNEL_ID) {
-      await safeSendMessage(env.DISCORD_TOKEN, env.MODERATION_CHANNEL_ID, {
-        embeds: [
-          {
-            title: '\uD83D\uDD28 User Banned',
-            description: `**${safeTarget}** has been banned from Preset Palettes.`,
-            color: 0xed4245,
-            // No `User ID` field (2026-10-03 FINDING-008): this post stays in the
-            // channel's history, and both privacy policies promise moderation posts
-            // show no Discord User ID. The ban record holds the id; unbanning goes
-            // through the username picker, so moderators never need it here.
-            fields: [
-              { name: 'Presets Hidden', value: String(result.presetsHidden), inline: true },
-              { name: 'Banned By', value: safeModerator, inline: true },
-              { name: 'Reason', value: safeReason, inline: false },
-            ],
-            footer: { text: 'Use /preset unban_user to restore access' },
-            timestamp: new Date().toISOString(),
-          },
-        ],
+    const review = await loadBanReview(env, nonce, actorId, 'review');
+    if (review.proposal.action !== 'ban') return ephemeralResponse(REVIEW_UNAVAILABLE);
+    const target = review.proposal.inputs[0];
+    const username = await getPresetAuthorName(env.DB, target);
+    const result = await banUser(env, nonce, actorId, reason, username ?? target);
+    if (!result.success)
+      return ephemeralResponse({
+        embeds: [errorEmbed('Ban Failed', result.error ?? REVIEW_UNAVAILABLE)],
       });
-    }
-
-    await resolveSpinner({
+    const safeTarget = sanitizeUserName(username ?? 'an account with no author name');
+    const embed = {
       title: '🔨 User Banned',
       description: `**${safeTarget}** has been banned from Preset Palettes.`,
       color: 0xed4245,
-      fields: [
-        { name: 'Presets Hidden', value: String(result.presetsHidden), inline: true },
-      ],
+      fields: [{ name: 'Presets Hidden', value: String(result.presetsHidden), inline: true }],
       footer: { text: 'Use /preset unban_user to restore access' },
+    };
+    // Only the count, target display name and sanitized reason enter a channel post.
+    if (env.MODERATION_CHANNEL_ID)
+      ctx.waitUntil(
+        safeSendMessage(env.DISCORD_TOKEN, env.MODERATION_CHANNEL_ID, {
+          embeds: [
+            {
+              ...embed,
+              fields: [
+                ...embed.fields,
+                { name: 'Reason', value: sanitizeReason(reason), inline: false },
+              ],
+            },
+          ],
+        }),
+      );
+    logger?.info('Account ban applied', {
+      presetsHidden: result.presetsHidden,
+      reasonLength: reason.length,
     });
-
-    if (logger) {
-      // FINDING-011 (2026-08-29 security audit): ids, counts and lengths only.
-      // This line used to carry the banned user's Discord display name and the
-      // moderator's free-text reason — commentary about a person, in a log
-      // nobody promised to retain or protect. The accountability copy lives in
-      // `moderation_log` (FINDING-018) and the moderation channel post, both of
-      // which are the record of record; the log line only needs to say that a
-      // ban happened and how big it was.
-      logger.info('User banned', {
-        targetUserId,
-        moderatorId,
-        presetsHidden: result.presetsHidden,
-        reasonLength: reason.length,
-      });
-    }
-  } catch (error) {
-    if (logger) {
-      logger.error('Failed to ban user', error instanceof Error ? error : undefined);
-    }
-
-    const failure = errorEmbed(
-      'Ban Failed',
-      `Failed to ban **${safeTarget}**: ${sanitizeErrorMessage(error, 'An unexpected error occurred while processing the ban.')}`
-    );
-
-    if (env.MODERATION_CHANNEL_ID) {
-      await safeSendMessage(env.DISCORD_TOKEN, env.MODERATION_CHANNEL_ID, {
-        embeds: [failure],
-      });
-    }
-    await resolveSpinner(failure);
+    return updateMessageResponse({ embeds: [embed], components: [] });
+  } catch {
+    return ephemeralResponse(REVIEW_UNAVAILABLE);
   }
 }
 
-// ============================================================================
-// Helpers
-// ============================================================================
-
-/**
- * Check if a custom_id is a ban reason modal
- */
 export function isBanReasonModal(customId: string): boolean {
   return customId.startsWith('ban_reason_modal_');
 }

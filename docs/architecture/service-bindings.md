@@ -98,6 +98,7 @@ database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 [[services]]
 binding = "DISCORD_WORKER"
 service = "xivdyetools-discord-worker"
+entrypoint = "PresetNotifications"
 
 [[services]]
 binding = "IMAGE_WORKER"
@@ -125,7 +126,7 @@ interface Env {
   DB: D1Database;
 
   // Service Bindings
-  DISCORD_WORKER?: Fetcher;       // For notifications
+  DISCORD_WORKER?: Fetcher;       // Private PresetNotifications entrypoint, same Fetch protocol
   IMAGE_WORKER: Fetcher;          // POST /thumbnail — preview-image encoding
 
   // R2
@@ -376,3 +377,21 @@ const env = {
 - [API Contracts](api-contracts.md) - Headers and payloads for inter-service calls
 - [Data Flow](data-flow.md) - Sequence diagrams showing service interactions
 - [Dependency Graph](dependency-graph.md) - Package dependencies
+
+## Prepared OAuth identity entrypoint
+
+OAuth additionally exports the named private `IdentityLookup` RPC entrypoint. This is not a
+public HTTP endpoint or an additional declared outbound binding. The initial provider release
+keeps identity splitting disabled and declares no `BAN_CONTINUITY` target. Later consumers
+must bind only after the named provider is deployed, with migrations and session/membership
+enforcement verified before activation. See [the staged contract](identity-moderation.md).
+
+## Prepared identity consumers
+
+Presets and moderation declare `OAUTH_IDENTITY` targeting OAuth's named `IdentityLookup`, with
+environment-specific service names. Presets uses `validateSession`; moderation uses
+`lookupStoredIdentity`. Their `OAUTH_SESSION_CHECK_ENABLED` and
+`LINKED_BAN_CONFIRMATION_ENABLED` flags remain false. The named provider must exist before
+consumer deployment, and schema/disclosures must be live before a separate activation.
+Presets exports named `BanContinuity`; OAuth still declares no outbound binding to it.
+See [the full protocol and gates](identity-moderation.md).

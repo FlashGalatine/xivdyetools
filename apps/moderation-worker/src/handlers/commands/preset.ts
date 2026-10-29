@@ -10,8 +10,7 @@
  */
 
 import type { ExtendedLogger } from '@xivdyetools/logger';
-import { sanitizeEmbedText } from '@xivdyetools/bot-logic';
-import { isValidSnowflake } from '@xivdyetools/types';
+import { parseModeratorIds, sanitizeEmbedText } from '@xivdyetools/bot-logic';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 import type { Translator } from '../../services/bot-i18n.js';
 import {
@@ -28,16 +27,13 @@ import { sanitizeName, sanitizeUserName } from '../../utils/embed-text.js';
 import { safeEditOriginalResponse } from '../../utils/discord-api.js';
 import * as presetApi from '../../services/preset-api.js';
 import * as banService from '../../services/ban-service.js';
-import { buildReviewButtons, buildReviewEmbed } from '../review-message.js';
+import { createBanReview, reviewMessage, INACTIVE_BANS, REVIEW_UNAVAILABLE } from '../../services/ban-confirmation-service.js';
+import { linkedBansEnabled } from '../../services/identity-lookup.js';
+import { buildReviewButtons, buildReviewEmbed, safeReviewActions } from '../review-message.js';
 
 // ============================================================================
 // Constants
 // ============================================================================
-
-// FINDING-023 (2026-08-21 security audit): the canonical web host. The old
-// `xivdyetools.com` does not resolve and is not known to be project-owned —
-// bot-authored links to it would have been a registrable phishing target.
-const PRESETS_WEB_URL = 'https://xivdyetools.app';
 
 /**
  * Minimum rejection reason, shared by the modal and the slash command.
@@ -261,7 +257,8 @@ async function sendConfirmation(
           'The decision applies to this exact version.'
       ),
     ],
-    components: buildReviewButtons(presetId, { revision, status: preset.status }, [action]),
+    components: buildReviewButtons(presetId, { revision, status: preset.status },
+      safeReviewActions(preset, revision, [action]).length ? [action] : ['reject']),
   });
 }
 
@@ -468,234 +465,39 @@ const INVALID_USER_ID_MESSAGE = 'Invalid user ID. Pick a user from the suggestio
 // ============================================================================
 
 async function handleBanUserSubcommand(
-  interaction: DiscordInteraction,
-  env: Env,
-  _ctx: ExecutionContext,
-  t: Translator,
-  userId: string,
-  options?: Array<{ name: string; value?: string | number | boolean }>,
+  interaction: DiscordInteraction, env: Env, _ctx: ExecutionContext, t: Translator,
+  userId: string, options?: Array<{name:string;value?:string|number|boolean}>,
   _logger?: ExtendedLogger
 ): Promise<Response> {
-  // Check channel restriction
-  if (!isInModerationChannel(interaction, env)) {
-    return ephemeralResponse(t.t('ban.channelRestricted'));
-  }
-
-  // Check moderator status
-  if (!presetApi.isModerator(env, userId)) {
-    return ephemeralResponse(t.t('ban.permissionDenied'));
-  }
-
-  // Get target user from options
-  const targetUserId = options?.find((opt) => opt.name === 'user')?.value as string | undefined;
-  if (!targetUserId) {
-    return ephemeralResponse('Please specify a user to ban.');
-  }
-  if (!isBanTargetId(targetUserId)) {
-    return ephemeralResponse(INVALID_USER_ID_MESSAGE);
-  }
-
-  // Get user details for confirmation
-  const confirmationData = await banService.getUserForBanConfirmation(
-    env.DB,
-    targetUserId,
-    PRESETS_WEB_URL
-  );
-
-  if (!confirmationData) {
-    return ephemeralResponse(t.t('ban.userNotFound'));
-  }
-
-  const { user, recentPresets } = confirmationData;
-
-  // FINDING-019 / MOD-6: the preset name is the masked-link LABEL — escaped, a
-  // name like `x](https://evil.example) [y` can no longer close the link and
-  // open its own; the target is always our own share URL.
-  const presetLinks =
-    recentPresets.length > 0
-      ? recentPresets.map((p) => `\u2022 [${sanitizeName(p.name)}](${p.shareUrl})`).join('\n')
-      : '_No presets found_';
-
-  return messageResponse({
-    embeds: [
-      {
-        title: `\u26A0\uFE0F ${t.t('ban.confirmTitle')}`,
-        description: t.t('ban.confirmDesc'),
-        color: 0xed4245,
-        fields: [
-          { name: t.t('ban.username'), value: sanitizeUserName(user.username), inline: true },
-          {
-            // A4-style shape label (2026-09-16 fix wave, index.ts autocomplete
-            // choices): `user.discordId` can carry a BUG-001 path (a) XIVAuth
-            // `sub` UUID instead of a real Discord snowflake — label the
-            // field accordingly rather than always calling it "Discord ID".
-            name: isValidSnowflake(user.discordId) ? t.t('ban.discordId') : t.t('ban.xivauthId'),
-            value: user.discordId || 'N/A',
-            inline: true,
-          },
-          { name: t.t('ban.totalPresets'), value: String(user.presetCount), inline: true },
-          { name: t.t('ban.recentPresets'), value: presetLinks, inline: false },
-        ],
-        footer: {
-          text: t.t('ban.confirmFooter'),
-        },
-      },
-    ],
-    components: [
-      {
-        type: 1, // Action Row
-        components: [
-          {
-            type: 2, // Button
-            style: 4, // Danger (red)
-            label: t.t('ban.yesBan'),
-            emoji: { name: '\uD83D\uDD28' },
-            // FINDING-007: id only — the username used to ride along base64url-
-            // encoded and overflowed Discord's 100-char custom_id cap for long
-            // CJK/emoji names, which made those users un-bannable. The reason
-            // modal resolves the name from D1 at submit time. `ban_confirm_`
-            // (12 chars) + a 36-char UUID target = 48 chars, still well under
-            // the cap even for the longer of the two id shapes (BUG-001 path (a)).
-            custom_id: `ban_confirm_${targetUserId}`,
-          },
-          {
-            type: 2, // Button
-            style: 2, // Secondary (gray)
-            label: t.t('ban.cancel'),
-            emoji: { name: '\u274C' },
-            custom_id: `ban_cancel_${targetUserId}`,
-          },
-        ],
-      },
-    ],
-    flags: 64, // Ephemeral
-  });
+  return accountReview(interaction,env,t,userId,'ban',options);
 }
 
-// ============================================================================
-// /preset unban_user
-// ============================================================================
-
-// eslint-disable-next-line @typescript-eslint/require-await
 async function handleUnbanUserSubcommand(
-  interaction: DiscordInteraction,
-  env: Env,
-  ctx: ExecutionContext,
-  t: Translator,
-  userId: string,
-  options?: Array<{ name: string; value?: string | number | boolean }>,
-  logger?: ExtendedLogger
+  interaction: DiscordInteraction, env: Env, _ctx: ExecutionContext, t: Translator,
+  userId: string, options?: Array<{name:string;value?:string|number|boolean}>,
+  _logger?: ExtendedLogger
 ): Promise<Response> {
-  // Check channel restriction
-  if (!isInModerationChannel(interaction, env)) {
-    return ephemeralResponse(t.t('ban.channelRestricted'));
-  }
-
-  // Check moderator status
-  if (!presetApi.isModerator(env, userId)) {
-    return ephemeralResponse(t.t('ban.permissionDenied'));
-  }
-
-  // Get target user from options
-  const targetUserId = options?.find((opt) => opt.name === 'user')?.value as string | undefined;
-  if (!targetUserId) {
-    return ephemeralResponse('Please specify a user to unban.');
-  }
-  if (!isBanTargetId(targetUserId)) {
-    return ephemeralResponse(INVALID_USER_ID_MESSAGE);
-  }
-
-  // Defer response for async processing
-  const deferResponse = deferredResponse(true); // Ephemeral
-
-  ctx.waitUntil(
-    processUnban(interaction, env, t, userId, targetUserId, logger).catch((err) => {
-      logger?.error('Unhandled error in processUnban', err instanceof Error ? err : undefined);
-    })
-  );
-
-  return deferResponse;
+  return accountReview(interaction,env,t,userId,'unban',options);
 }
 
-async function processUnban(
-  interaction: DiscordInteraction,
-  env: Env,
-  t: Translator,
-  moderatorId: string,
-  targetUserId: string,
-  logger?: ExtendedLogger
-): Promise<void> {
+async function accountReview(
+  interaction: DiscordInteraction, env: Env, t: Translator, actorId: string,
+  action: 'ban'|'unban', options?: Array<{name:string;value?:string|number|boolean}>
+): Promise<Response> {
+  if (!linkedBansEnabled(env)) return ephemeralResponse(INACTIVE_BANS);
+  if (!isInModerationChannel(interaction,env)) return ephemeralResponse(t.t('ban.channelRestricted'));
+  if (!parseModeratorIds(env.MODERATOR_IDS).has(actorId)) return ephemeralResponse(t.t('ban.permissionDenied'));
+  const target = options?.find(option => option.name === 'user')?.value;
+  const additional = options?.find(option => option.name === 'additional_user')?.value;
+  if (typeof target !== 'string' || !isBanTargetId(target) ||
+      (additional !== undefined && (action !== 'ban' || typeof additional !== 'string' || !isBanTargetId(additional)))) {
+    return ephemeralResponse(INVALID_USER_ID_MESSAGE);
+  }
   try {
-    // Get ban info before unbanning (for username in response)
-    const activeBan = await banService.getActiveBan(env.DB, targetUserId);
-
-    if (!activeBan) {
-      await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-        embeds: [errorEmbed(t.t('common.error'), t.t('ban.notBanned'))],
-      });
-      return;
-    }
-
-    // Unban the user
-    const result = await banService.unbanUser(env.DB, targetUserId, moderatorId);
-
-    if (!result.success) {
-      // MOD-8: `result.error` is channel-safe; the raw cause goes to the log only
-      if (result.cause !== undefined) {
-        logger?.error(
-          `Unban failed for ${targetUserId}`,
-          result.cause instanceof Error ? result.cause : undefined
-        );
-      }
-      await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-        embeds: [errorEmbed(t.t('common.error'), result.error || 'Failed to unban user.')],
-      });
-      return;
-    }
-
-    // Success response
-    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-      embeds: [
-        {
-          title: `\u2705 ${t.t('ban.userUnbanned')}`,
-          // FINDING-019: the stored username is author-controlled
-          description: `Successfully unbanned **${sanitizeUserName(activeBan.username)}**.`,
-          color: 0x57f287, // Green
-          fields: [
-            { name: 'User ID', value: targetUserId, inline: true },
-            { name: t.t('ban.presetsRestored'), value: String(result.presetsRestored), inline: true },
-            // FINDING-021: hidden presets the restore skipped because another
-            // approved or pending preset already holds their dye combination.
-            ...(result.presetsStillHidden
-              ? [
-                  {
-                    name: t.t('ban.presetsStillHidden'),
-                    value: `${result.presetsStillHidden} — ${t.t('ban.presetsStillHiddenWhy')}`,
-                    inline: false,
-                  },
-                ]
-              : []),
-          ],
-          footer: { text: `Unbanned by moderator` },
-          timestamp: new Date().toISOString(),
-        },
-      ],
-    });
-
-    if (logger) {
-      logger.info('User unbanned', {
-        targetUserId,
-        moderatorId,
-        presetsRestored: result.presetsRestored,
-        presetsStillHidden: result.presetsStillHidden ?? 0,
-      });
-    }
+    const review = await createBanReview(env,actorId,action,[target,...(typeof additional === 'string'?[additional]:[])]);
+    return Response.json({type:4,data:reviewMessage(review)});
   } catch (error) {
-    if (logger) {
-      logger.error('Failed to unban user', error instanceof Error ? error : undefined);
-    }
-    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-      embeds: [errorEmbed(t.t('common.error'), 'An unexpected error occurred while unbanning the user.')],
-    });
+    const overflow = 'Too many active bans match. Manual review is required.';
+    return ephemeralResponse(error instanceof Error && error.message === overflow ? overflow : REVIEW_UNAVAILABLE);
   }
 }

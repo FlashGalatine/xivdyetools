@@ -5,6 +5,49 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] - 2026-10-27
+
+### Hardening adoption
+
+- **H-MODERATION preparation:** retain dispatch diagnostic fields in structured logger context instead of a synthetic error. The pending release adopts auth 3.0.0, bot-logic 4.12.0, worker-kit 1.6.0 and logger 2.4.0 after upstream publication; moderation activation prerequisites remain unchanged.
+
+### Added
+
+- Prepare private stored-ID lookup and exact-scope ban review, with optional `additional_user`,
+  explicit choice of one parent ban and confirmation of partial-ban expansion. One-use actor-bound
+  nonces, current authorization, provider re-resolution and transactional scope/parent comparisons
+  reject stale, replayed, expired and legacy target-only controls.
+- Recorded-scope unban preserves other active bans, scrubs the selected parent's name/reason,
+  retains its memberships and restores one eligible hidden signature twin across the scope.
+  Audit-derived preset counts exclude writes made by the content-revision trigger.
+
+### Changed
+
+- Newly generated approval, rejection, Revert and ban channel/log text omits moderator attribution;
+  actor IDs remain in the accountable database audit. Existing historical posts are unchanged.
+- `LINKED_BAN_CONFIRMATION_ENABLED` remains false in both environments. All new ban/unban paths
+  refuse privately until separate activation after provider, additive presets migration and
+  disclosures are live. The optional slash argument registers through the existing deploy workflow.
+
+## [1.8.4] - 2026-10-27
+
+### Security
+
+- Render complete example-link paths and effective Revert targets in refreshed and typed-ID
+  reviews. Approval and Revert re-check fresh revision-bound link details, refreshing stale or
+  pre-upgrade messages before a decision. Unsafe or oversized required content withholds the
+  relevant action; Reject stays available. No command-registration change is required.
+- Companion for presets-api 2.7.0's default-off metadata moderation. Production verification of
+  both review consumers is required before a later activation-only API change.
+
+## [1.8.3] - 2026-10-27
+
+### Security
+
+- Adopt bot-logic 4.12.0's embed sanitizer for live review fields and reasons: escape angle
+  tokens and strip the added bidi/invisible controls before mention handling. Moderation
+  decisions, permissions, routes and command registration are unchanged.
+
 ## [1.8.2] - 2026-10-06
 
 Sprint 26 of the 2026-10-04 remediation plan: deep-dive REFACTOR-001. Internal refactor; nothing a

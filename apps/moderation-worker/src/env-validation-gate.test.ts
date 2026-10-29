@@ -69,11 +69,8 @@ function interactionRequest(): [string, RequestInit] {
 describe('FINDING-013: production refuses requests while a rate-limit binding is missing', () => {
   let consoleError: ReturnType<typeof vi.spyOn>;
 
-  // Prepare the runner's initial module loading in setup. Discard this instance:
-  // freshApp still resets and reevaluates the app for every request-gate test.
-  beforeAll(async () => {
-    await import('./index.js');
-  });
+  // Prepare initial runner module loading; every test still resets and reevaluates the app.
+  beforeAll(async () => { await import('./index.js'); });
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -173,4 +170,11 @@ describe('FINDING-013: production refuses requests while a rate-limit binding is
     expect(res.status).toBe(200);
     expect(consoleError).toHaveBeenCalled();
   });
+});
+
+it('malformed/enabled-missing linked identity config gates health on every request',async()=>{
+ const app=await freshApp();
+ for(const override of [{LINKED_BAN_CONFIRMATION_ENABLED:'TRUE'},{LINKED_BAN_CONFIRMATION_ENABLED:'true'}]){
+  const env=validEnv(override);for(let i=0;i<2;i++){const response=await app.request('http://localhost/health',undefined,env,ctx);expect(response.status).toBe(500);expect(await response.json()).toEqual({error:'Service misconfigured'});}
+ }
 });

@@ -23,6 +23,8 @@ export interface EnvValidationResult {
  * string — and because these errors cannot be raised outside production, the
  * match is inherently production-scoped.
  */
+export const LINKED_BAN_ENV_ERROR_PREFIX = 'Invalid linked ban configuration: ';
+
 export const PRODUCTION_ENV_ERROR_PREFIX = 'Missing required env var in production: ';
 
 /**
@@ -48,6 +50,9 @@ export const PRODUCTION_ENV_ERROR_PREFIX = 'Missing required env var in producti
  */
 export function validateEnv(env: Env): EnvValidationResult {
   const errors: string[] = [];
+
+  if (env.LINKED_BAN_CONFIRMATION_ENABLED !== undefined && !['true','false'].includes(env.LINKED_BAN_CONFIRMATION_ENABLED)) errors.push(`${LINKED_BAN_ENV_ERROR_PREFIX}LINKED_BAN_CONFIRMATION_ENABLED must be true or false`);
+  if (env.LINKED_BAN_CONFIRMATION_ENABLED === 'true' && typeof env.OAUTH_IDENTITY?.lookupStoredIdentity !== 'function') errors.push(`${LINKED_BAN_ENV_ERROR_PREFIX}OAUTH_IDENTITY binding is required`);
 
   // Check required secrets
   const requiredSecrets: Array<keyof Env> = [

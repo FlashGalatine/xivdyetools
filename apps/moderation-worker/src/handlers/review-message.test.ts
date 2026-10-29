@@ -154,6 +154,7 @@ describe('refreshReview', () => {
       expect(edit.embeds[0].description).toContain('**Status:** approved');
       expect(edit.embeds[0].footer.text).toBe(`ID: ${ID} • Revision 7`);
       expect(edit.embeds[0].fields).toEqual([
+        { name: 'Links', value: 'Link details unavailable.', inline: false },
         {
           name: 'Review',
           value: 'This preset is now approved, so there is nothing left to review.',
@@ -380,6 +381,111 @@ describe('refreshReview', () => {
 });
 
 describe('buildReviewEmbed', () => {
+  it('shows the complete decoded current path and effective target without omitted URL parts', () => {
+    const view = preset({ example_link: 'https://secret.example/a%20b?token=hidden#private',
+      previous_values: { ...SNAPSHOT, example_link: 'https://old.example/restored' } as any });
+    const embed = buildReviewEmbed(view, 3, undefined, true);
+    expect(embed.fields).toEqual(expect.arrayContaining([
+      { name: 'Links', value: '`/a b`', inline: false },
+      { name: 'Revert link', value: '`/restored`', inline: false },
+    ]));
+    expect(JSON.stringify(embed)).not.toMatch(/secret\.example|old\.example|hidden|private/);
+  });
+
+  it('recognizes query-only changes even when both path projections match', () => {
+    const embed = buildReviewEmbed(preset({ example_link: 'https://example.com/path?new=secret', previous_values: { ...SNAPSHOT, example_link: 'https://example.com/path?old=hidden' } as any }), 1, undefined, true);
+    expect(embed.description).toContain('Link path is unchanged; other URL parts changed and are not shown.');
+    expect(JSON.stringify(embed)).not.toMatch(/new=secret|old=hidden/);
+  });
+
+  it.each([
+    [null, 'No example link.'],
+    [undefined, 'Link details unavailable for this older snapshot.'],
+  ])('preserves null versus missing snapshot metadata (%s)', (link, value) => {
+    const snapshot = { ...SNAPSHOT, ...(link === undefined ? {} : { example_link: link }) };
+    expect(buildReviewEmbed(preset({ previous_values: snapshot }), 2, undefined, true).fields)
+      .toContainEqual({ name: 'Revert link', value, inline: false });
+  });
+
+  it('escapes dangerous path characters visibly inside exactly one code pair', () => {
+    const embed = buildReviewEmbed(preset({ example_link: 'https://example.com/%60%0A%E2%80%AE@everyone/[x](https://hidden)' }), 1);
+    expect(embed.fields).toContainEqual({ name: 'Links', value: '`/\\u0060\\u000a\\u202e@everyone/[x](https://hidden)`', inline: false });
+  });
+
+  it.each([
+    ['https://example.com/%ZZ%20ok%FF', '`/%ZZ ok�`'],
+    ['https://user:password@example.com/p%61th?secret=x#private', '`/path`'],
+    ['https://example.com/%E7%8C%AB/%F0%9F%90%88', '`/猫/🐈`'],
+  ])('matches producer decoding without leaking URL components (%s)', (link, value) => {
+    expect(buildReviewEmbed(preset({ example_link: link }), 1).fields).toContainEqual({ name: 'Links', value, inline: false });
+  });
+
+  it('refuses oversized metadata instead of silently truncating the path', async () => {
+    vi.mocked(presetApi.getModerationPreset).mockResolvedValue({ preset: preset({ example_link: `https://example.com/${'x'.repeat(1200)}` }), revision: 5 });
+    await refreshReview(interaction(), env, ID, 'mod-2');
+    const edit = lastEdit();
+    expect(edit.embeds[0].fields).toContainEqual({ name: 'Links', value: 'Link details do not fit safely in this review. Ask the author to shorten the link before approval.', inline: false });
+    expect(customIds(edit)).toEqual([`preset_reject_${ID}:5:pending`]);
+  });
+
+  it.each([undefined, 7, {}, false, '', 'not a URL', 'javascript:alert(1)', 'https://example.com/a\nb', `https://example.com/path?${'x'.repeat(301)}`])('explicit malformed current link %s withholds publishing but preserves Reject', async (example_link) => {
+    vi.mocked(presetApi.getModerationPreset).mockResolvedValue({ preset: preset({ example_link } as any), revision: 5 });
+    await refreshReview(interaction(), env, ID, 'mod-2');
+    expect(lastEdit().embeds[0].fields).toContainEqual({ name: 'Links', value: 'Link details do not fit safely in this review. Ask the author to shorten the link before approval.', inline: false });
+    expect(customIds(lastEdit())).toEqual([`preset_reject_${ID}:5:pending`]);
+  });
+
+  it('measures complete path fields after escaping, keeping a short safe URL intact and refusing expansion', async () => {
+    for (const [path, safe] of [['x'.repeat(279), true], ['\u200b'.repeat(279), false]] as const) {
+      vi.mocked(presetApi.getModerationPreset).mockResolvedValue({ preset: preset({ example_link: `https://example.com/${path}`, previous_values: { ...SNAPSHOT, example_link: null } }), revision: 5 });
+      await refreshReview(interaction(), env, ID, 'mod-2');
+      const embed = lastEdit().embeds[0];
+      const fields = embed.fields as Array<{ name: string; value: string }>;
+      expect(fields.every((field) => field.value.length <= 1024)).toBe(true);
+      expect(embed.description.length).toBeLessThanOrEqual(4096);
+      expect((embed.title?.length ?? 0) + (embed.description?.length ?? 0) + (embed.footer?.text?.length ?? 0) + fields.reduce((n, field) => n + field.name.length + field.value.length, 0)).toBeLessThanOrEqual(6000);
+      expect(customIds(lastEdit()).includes(`preset_approve_${ID}:5:pending`)).toBe(safe);
+      if (safe) expect(fields.find((field) => field.name === 'Links')?.value).toBe(`\`/${path}\``);
+      else expect(fields.find((field) => field.name === 'Links')?.value).not.toContain('…');
+    }
+  });
+
+  it('refuses corrupt aggregate envelopes rather than publishing an over-budget embed', async () => {
+    vi.mocked(presetApi.getModerationPreset).mockResolvedValue({ preset: preset({ id: 'x'.repeat(6500), example_link: 'https://example.com/path' }), revision: 5 });
+    await refreshReview(interaction(), env, ID, 'mod-2');
+    const embed = lastEdit().embeds[0];
+    expect(embed.description).toContain('Link details do not fit safely');
+    expect(customIds(lastEdit())).toEqual([`preset_reject_${ID}:5:pending`]);
+  });
+
+  it('explains an incomplete target while keeping safe current approval and Reject available', async () => {
+    vi.mocked(presetApi.getModerationPreset).mockResolvedValue({ preset: preset({ example_link: null, previous_values: { ...SNAPSHOT, example_link: 7 } as any }), revision: 5 });
+    await refreshReview(interaction(), env, ID, 'mod-2');
+    expect(JSON.stringify(lastEdit().embeds)).toContain('Link details do not fit safely in this review. Ask the author to shorten the link before approval.');
+    expect(customIds(lastEdit())).toEqual([`preset_approve_${ID}:5:pending`, `preset_reject_${ID}:5:pending`]);
+  });
+
+  it('delivers the safe path in actual Discord PATCH JSON with mentions disabled', async () => {
+    const actual = await vi.importActual<typeof discordApi>('../utils/discord-api.js');
+    vi.mocked(discordApi.safeEditMessage).mockImplementationOnce(actual.safeEditMessage);
+    vi.mocked(presetApi.getModerationPreset).mockResolvedValue({ preset: preset({ example_link: 'https://secret.example/%60@everyone%0A?token=hidden#private' }), revision: 5 });
+    const fetchMock = vi.fn(async () => Response.json({ id: 'msg-1' }));
+    vi.stubGlobal('fetch', fetchMock);
+    try {
+      await refreshReview(interaction(), env, ID, 'mod-2');
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const request = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+      expect(request[0]).toBe('https://discord.com/api/v10/channels/channel-mod/messages/msg-1');
+      expect(request[1].method).toBe('PATCH');
+      const payload = JSON.parse(request[1].body as string);
+      expect(payload.allowed_mentions).toEqual({ parse: [] });
+      expect(payload.embeds[0].fields).toContainEqual({ name: 'Links', value: '`/\\u0060@everyone\\u000a`', inline: false });
+      expect(JSON.stringify(payload)).not.toMatch(/secret\.example|hidden|private/);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it('describes Revert only when the caller offers it', () => {
     const withSnapshot = preset({ previous_values: SNAPSHOT });
 
