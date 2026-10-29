@@ -503,7 +503,7 @@
     "supportedFormats": "対応フォーマット",
     "supportedFormatsContent": "• PNG\n• JPG/JPEG\n• GIF\n• WebP\n• BMP",
     "fileLimits": "ファイル制限",
-    "fileLimitsContent": "• 最大サイズ：10MB",
+    "fileLimitsContent": "• 最大サイズ：5MB",
     "matchQualityRatings": "マッチ距離",
     "matchQualityRatingsContent": "一覧の各マッチには色からの距離が表示されます - 数値が低いほど近い色です。\n\n6つのマッチング方式とその帯の仕組み：`/manual` トピック {topic}",
     "poweredBy": "Photon WASM画像処理を使用"

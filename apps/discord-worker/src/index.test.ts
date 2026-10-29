@@ -3618,6 +3618,8 @@ describe('index.ts', () => {
             return { success: count <= 30 };
           }),
         };
+        // Fix the clock mid-window so the German retry notice uses the plural.
+        const dateNow = vi.spyOn(Date, 'now').mockReturnValue(90_000);
         try {
           for (let i = 0; i < 31; i++) {
             vi.mocked(verifyDiscordRequest).mockResolvedValue({
@@ -3653,6 +3655,7 @@ describe('index.ts', () => {
           expect(trackCommandWithKV).toHaveBeenCalledTimes(30);
           expect([...counts.keys()]).toEqual(['ratelimit:user:button-user:button:t30_60']);
         } finally {
+          dateNow.mockRestore();
           vi.mocked(resolveUserLocale).mockResolvedValue('en');
         }
       });

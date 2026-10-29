@@ -503,7 +503,7 @@
     "supportedFormats": "支持的格式",
     "supportedFormatsContent": "• PNG\n• JPG/JPEG\n• GIF\n• WebP\n• BMP",
     "fileLimits": "文件限制",
-    "fileLimitsContent": "• 最大大小：10MB",
+    "fileLimitsContent": "• 最大大小：5MB",
     "matchQualityRatings": "匹配距离",
     "matchQualityRatingsContent": "列出的每个匹配结果都会显示与您颜色的距离 - 数值越低越接近。\n\n六种匹配方式及其分档的运作方式：`/manual` 主题 {topic}",
     "poweredBy": "由 Photon WASM 图像处理驱动"

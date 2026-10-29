@@ -503,7 +503,7 @@
     "supportedFormats": "지원 형식",
     "supportedFormatsContent": "• PNG\n• JPG/JPEG\n• GIF\n• WebP\n• BMP",
     "fileLimits": "파일 제한",
-    "fileLimitsContent": "• 최대 크기: 10MB",
+    "fileLimitsContent": "• 최대 크기: 5MB",
     "matchQualityRatings": "매칭 거리",
     "matchQualityRatingsContent": "목록의 모든 매칭은 입력 색상과의 거리를 함께 표시합니다 - 값이 낮을수록 더 가깝습니다.\n\n여섯 가지 매칭 방식과 밴드 판정 방식: `/manual` 주제 {topic}",
     "poweredBy": "Photon WASM 이미지 처리 기반"

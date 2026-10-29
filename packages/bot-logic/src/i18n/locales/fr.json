@@ -503,7 +503,7 @@
     "supportedFormats": "Formats pris en charge",
     "supportedFormatsContent": "• PNG\n• JPG/JPEG\n• GIF\n• WebP\n• BMP",
     "fileLimits": "Limites de fichier",
-    "fileLimitsContent": "• Taille maximale : 10 Mo",
+    "fileLimitsContent": "• Taille maximale : 5 Mo",
     "matchQualityRatings": "Distance de correspondance",
     "matchQualityRatingsContent": "Chaque correspondance listée indique sa distance par rapport à votre couleur - plus c'est bas, plus c'est proche.\n\nLes six méthodes de correspondance et le fonctionnement de leurs bandes : sujet {topic} de `/manual`",
     "poweredBy": "Propulsé par le traitement d'image Photon WASM"
