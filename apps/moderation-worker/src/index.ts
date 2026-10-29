@@ -240,7 +240,7 @@ async function handleCommand(
   const userId = interaction.member?.user?.id ?? interaction.user?.id;
 
   if (!userId) {
-    logger.error('Unable to identify user from interaction', { commandName });
+    logger.error('Unable to identify user from interaction', undefined, { commandName });
     return ephemeralResponse('Unable to identify user. Please try again.');
   }
 
@@ -356,7 +356,7 @@ export async function handleAutocomplete(
     });
 
   if (!userId) {
-    logger.error('Unable to identify user from autocomplete interaction', { commandName });
+    logger.error('Unable to identify user from autocomplete interaction', undefined, { commandName });
     return noChoices();
   }
 
@@ -542,7 +542,7 @@ export async function handleComponent(
   logger.info('Handling component', { customId, componentType });
 
   if (!userId) {
-    logger.error('Unable to identify user from component interaction', { customId });
+    logger.error('Unable to identify user from component interaction', undefined, { customId });
     return ephemeralResponse('Unable to identify user. Please try again.');
   }
 
@@ -579,7 +579,7 @@ export async function handleModal(
   logger.info('Handling modal', { customId });
 
   if (!userId) {
-    logger.error('Unable to identify user from modal interaction', { customId });
+    logger.error('Unable to identify user from modal interaction', undefined, { customId });
     return ephemeralResponse('Unable to identify user. Please try again.');
   }
 

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.9.0] - 2026-10-27
 
+### Hardening adoption
+
+- **H-MODERATION preparation:** retain dispatch diagnostic fields in structured logger context instead of a synthetic error. The pending release adopts auth 3.0.0, bot-logic 4.12.0, worker-kit 1.6.0 and logger 2.4.0 after upstream publication; moderation activation prerequisites remain unchanged.
+
 ### Added
 
 - Prepare private stored-ID lookup and exact-scope ban review, with optional `additional_user`,
