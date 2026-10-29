@@ -1,0 +1,64 @@
+{
+  "packages": [
+    {
+      "name": "@xivdyetools/logger",
+      "local": "2.4.0",
+      "latest": "2.3.0",
+      "localPublished": false,
+      "publishedDependencies": null
+    },
+    {
+      "name": "@xivdyetools/auth",
+      "local": "3.0.0",
+      "latest": "2.0.2",
+      "localPublished": false,
+      "publishedDependencies": {
+        "discord-interactions": "^4.4.0"
+      }
+    },
+    {
+      "name": "@xivdyetools/core",
+      "local": "5.16.0",
+      "latest": "5.15.0",
+      "localPublished": false,
+      "publishedDependencies": {
+        "spectral.js": "^3.0.0",
+        "xivcharakit": "0.1.0-beta.4",
+        "@xivdyetools/types": "3.3.0",
+        "@xivdyetools/logger": "2.3.0"
+      }
+    },
+    {
+      "name": "@xivdyetools/worker-kit",
+      "local": "1.6.0",
+      "latest": "1.5.0",
+      "localPublished": false,
+      "publishedDependencies": {
+        "@upstash/redis": "^1.39.0",
+        "@xivdyetools/logger": "2.3.0"
+      }
+    },
+    {
+      "name": "@xivdyetools/svg",
+      "local": "4.4.1",
+      "latest": "4.4.0",
+      "localPublished": false,
+      "publishedDependencies": {
+        "@xivdyetools/core": "5.10.0",
+        "@xivdyetools/types": "3.3.0"
+      }
+    },
+    {
+      "name": "@xivdyetools/bot-logic",
+      "local": "4.12.0",
+      "latest": "4.11.0",
+      "localPublished": false,
+      "publishedDependencies": {
+        "@xivdyetools/svg": "4.4.0",
+        "@xivdyetools/core": "5.15.0",
+        "@xivdyetools/types": "3.3.0"
+      }
+    }
+  ],
+  "checkedUtc": "2026-10-29T01:22:19.9422273Z"
+}

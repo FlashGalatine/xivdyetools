@@ -569,6 +569,8 @@ Publish canonical-encoding hardening. Run private test-utils verification, then 
 
 ## Required hardening adoption sprints
 
+**Execution update 2026-10-28 — local preparation, publication/rollout pending:** all fourteen rows have local source or verification preparation. Fifteen actual context calls are corrected across their owning apps; retention-job keeps its custom signature. Real tarball checks also exposed and verified narrow Node JSON import-attribute repairs in core and bot-logic. Pending versions and each unit's publication/deployment boundary remain. [Evidence and release matrix](../2026-10-26-security/evidence/remediation-hardening-adoption-2026-10-28.md).
+
 Each row below is a **separate sprint** ending in the named unit publish/deploy/verification. Package adoption is explicit because packed dependency pins can otherwise retain old versions. Resolve compatible bump sizes against the actual published manifests at execution. The five context-as-error call-site corrections ride their owning apps, not the logger package sprint.
 
 | Sprint | Unit | Depends on / action | Ends with |

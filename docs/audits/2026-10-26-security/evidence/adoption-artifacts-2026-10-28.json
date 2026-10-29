@@ -1,0 +1,127 @@
+{
+  "scope": "Local hardening adoption artifacts; no registry adoption, CI provenance or deployment",
+  "date": "2026-10-28",
+  "sourceBase": "9ff21e17ebad3a0fe5041bf31dfca9cd28864591",
+  "sourceState": "Working tree includes the reviewed core and bot-logic JSON import attribute fixes",
+  "node": "22.21.0",
+  "packages": [
+    {
+      "name": "@xivdyetools/types",
+      "version": "3.3.0",
+      "sha256": "10861b839a080a74994365ed3e77226b9c7a44a0eb05cbc48a618e085ca28965",
+      "internalDependencies": {}
+    },
+    {
+      "name": "@xivdyetools/logger",
+      "version": "2.4.0",
+      "sha256": "13055dc40bad9e4780deacb165bd11b52346f6bf7cd4547752f9b1024ae19265",
+      "internalDependencies": {}
+    },
+    {
+      "name": "@xivdyetools/auth",
+      "version": "3.0.0",
+      "sha256": "e5b67734e419fc036a6db0ee2792f88e1d3c559efa50a8b2e4914b57159e0a4a",
+      "internalDependencies": {}
+    },
+    {
+      "name": "@xivdyetools/core",
+      "version": "5.16.0",
+      "sha256": "8de0e5d16199a2d57ce73570053ed18b935d229cc884b7dcac489be4a12274c9",
+      "internalDependencies": {
+        "@xivdyetools/logger": "2.4.0",
+        "@xivdyetools/types": "3.3.0"
+      }
+    },
+    {
+      "name": "@xivdyetools/worker-kit",
+      "version": "1.6.0",
+      "sha256": "769284216c94b8057677aef27005b53b44d32fad195e95822b77206f6e8477f4",
+      "internalDependencies": {
+        "@xivdyetools/logger": "2.4.0"
+      }
+    },
+    {
+      "name": "@xivdyetools/svg",
+      "version": "4.4.1",
+      "sha256": "2c545784f2ad1c1a5f9ecf13f81b9f26a4352484028d916e85f4eacae00e48c2",
+      "internalDependencies": {
+        "@xivdyetools/core": "5.16.0",
+        "@xivdyetools/types": "3.3.0"
+      }
+    },
+    {
+      "name": "@xivdyetools/bot-logic",
+      "version": "4.12.0",
+      "sha256": "688aad3a117711cefdb5a98d7a946d0469c8959aaad865649ed8da4ccdc22517",
+      "internalDependencies": {
+        "@xivdyetools/core": "5.16.0",
+        "@xivdyetools/svg": "4.4.1",
+        "@xivdyetools/types": "3.3.0"
+      }
+    }
+  ],
+  "nativeConsumerChecks": 44,
+  "needsJsonLoader": false,
+  "negativeControls": {
+    "stalePinRejected": true,
+    "loggerMutationExit": 1,
+    "restoredExit": 0,
+    "restoredHash": "516975d2ed6e48d7187e1741e835bd63ac71f2693871726f7f6ad97ca13b32d4",
+    "attributeMutations": [
+      {
+        "label": "core-static",
+        "exit": 1
+      },
+      {
+        "label": "core-lazy-hair",
+        "exit": 1
+      },
+      {
+        "label": "core-lazy-skin",
+        "exit": 1
+      },
+      {
+        "label": "core-shader-shared",
+        "exit": 1
+      },
+      {
+        "label": "core-shader-race",
+        "exit": 1
+      },
+      {
+        "label": "bot-static",
+        "exit": 1
+      }
+    ],
+    "nativeRestoredExit": 0
+  },
+  "publishedCoreBaseline": {
+    "nativeExit": 1,
+    "sha256": "bb9165517e8f497256b47721a6a485ddf4e48152666a5bc45badc206e8a3c320",
+    "errorCode": "ERR_IMPORT_ATTRIBUTE_MISSING",
+    "integrity": "sha512-cCFdvxZbv94vzaUc+rlhSAgOFnaaJIIEt/S95XRi9kAJjKT0K7DubVIoDGIOkJT4qsjxu679DCsW3JLH+fw21g==",
+    "version": "5.15.0"
+  },
+  "restoration": {
+    "packages": 7,
+    "files": 765,
+    "counts": {
+      "@xivdyetools/types": 131,
+      "@xivdyetools/logger": 55,
+      "@xivdyetools/auth": 58,
+      "@xivdyetools/core": 250,
+      "@xivdyetools/worker-kit": 95,
+      "@xivdyetools/svg": 79,
+      "@xivdyetools/bot-logic": 97
+    },
+    "allTarballHashesMatch": true,
+    "allExtractedBytesMatch": true
+  },
+  "limits": [
+    "Local tarballs and builds only; no registry adoption, CI provenance or deployment claims.",
+    "External runtime dependencies linked from existing installation; no registry install or lifecycle execution.",
+    "Private JWT producer copied from actual built dist/auth rather than private-package root (root requires Vitest runtime).",
+    "No-Hono condition enforced by Node resolve hook, including ancestor fallback.",
+    "Initial native import failure preserved separately; core and bot-logic rebuilt/repacked after coordinator source changes."
+  ]
+}
