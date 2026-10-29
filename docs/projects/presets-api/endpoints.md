@@ -80,6 +80,18 @@ Every preset leaving this Worker over HTTP passes through `toPublicPreset()`
 `author_name` is the author identity the gallery shows and is sent to everyone. The moderation
 routes and the server-to-bot notification payloads keep the id.
 
+### `POST /api/v1/presets/batch`
+
+Signed v2 bot authentication with a configured signing secret and verified acting user is required,
+including in development. JWT and anonymous callers are refused. This is a logical read outside
+the mutation-ban middleware, so banned users can read; common body and acting-user limits apply.
+JSON body: `{ "ids": ["preset-id"] }`, one to fifty raw nonempty string IDs, at most 128 characters
+each, validated before deduplication. Parameterized approved-only lookup returns
+`{ "success": true, "presets": [], "missing_ids": [] }`. Results and missing IDs each preserve
+first-occurrence request order. Public serialization omits author IDs, revision, raw image keys
+and snapshots. Hidden/pending/rejected/nonexistent IDs are missing; auth, validation, rate-limit
+and database errors are request failures, never silently missing presets.
+
 ### `GET /api/v1/presets`
 
 List approved presets with pagination.
@@ -88,7 +100,7 @@ List approved presets with pagination.
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `page` | number | `1` | Page number (clamped to ≥ 1) |
+| `page` | number | `1` | Page number (clamped to 1–10,000 before offset arithmetic) |
 | `limit` | number | `20` | Results per page (clamped to 1–50) |
 | `category` | string | — | Filter by category |
 | `sort` | string | — | Sort order: `popular`, `recent`, or `name` |
@@ -136,7 +148,7 @@ below is shorthand for "authenticated"; the bots reach all of these over their S
 
 Submit a new preset.
 
-**Rate Limit:** 10 submissions per day per user (UTC reset).
+**Rate Limit:** 10 admitted moderation attempts per day per user (UTC reset); creation failures after moderation remain counted.
 
 **Request Body:**
 
@@ -177,11 +189,16 @@ Edit an owned preset. Validates that the authenticated user owns the preset.
 - If `name` or `description` **differs from the stored value**, the edit is charged to a per-user
   daily cap of 30 (`DAILY_TEXT_EDIT_LIMIT`, `submission_events` kind `text_edit`) **before** content
   moderation is called, for every preset status; over the cap the edit is refused with
-  `429 RATE_LIMITED` ("You've reached your daily limit of name and description edits (30 per day).
+  `429 RATE_LIMITED` ("You've reached your daily limit of text edits (30 per day).
   Try again tomorrow.", plus `remaining: 0` and `reset_at`) and nothing is moderated or written.
   Text re-sent unchanged is neither charged nor moderated again (BUG-065).
 - If `name` or `description` are changed, runs content moderation on the pair as it will read
   after the edit.
+- Only exact `PRESET_METADATA_MODERATION_ENABLED=true` extends these checks, text-edit charging
+  and status handling to changed tags/example links. Scoring receives tags and decoded link path
+  text, excluding hostname, credentials, query and fragment; links are never fetched. The flag
+  remains explicitly false until both review consumers are verified in production and a later
+  activation-only PR is prepared. Identical values remain free, including unchanged tags/links.
 - If the edit is flagged by moderation **and the preset is `approved`**, the approved text is
   stored in `previous_values` (write-once — an existing snapshot is kept). A pending, rejected or
   flagged preset's edit never creates or overwrites a snapshot, because a revert approves it
@@ -189,8 +206,9 @@ Edit an owned preset. Validates that the authenticated user owns the preset.
 - Status (FINDING-004): a `pending` preset stays pending; an `approved` one drops to `pending` only
   if the new text tripped moderation; a **`rejected`** one returns to `pending` when its text is
   edited — that edit *is* the resubmission the web app's "Resubmit" button performs; a `flagged` one
-  never moves and never notifies; `hidden` is 403. Tag / dye / category edits and text re-sent
-  unchanged change no status and notify nobody. Every notifying edit is charged to a second daily
+  never moves and never notifies; `hidden` is 403. Dye/category edits and text re-sent unchanged
+  change no status and notify nobody; tag/link-only edits follow this behavior while extended
+  checks are disabled. Every notifying edit is charged to a second daily
   cap of 10 (`DAILY_FLAGGED_EDIT_LIMIT`, kind `flagged_edit`, its own `429 RATE_LIMITED`).
 
 The update is conditional on the `content_revision` read at the start of the request (optimistic
@@ -468,10 +486,10 @@ Full detail in [rate-limiting.md](rate-limiting.md); the shape callers need is:
 
 | Kind | Cap | Scope |
 |------|-----|-------|
-| `submission` | 10 / day | `POST /api/v1/presets` |
+| `submission` | 10 / day | Atomic admission before moderation, including spent failed attempts |
 | `flagged_edit` | 10 / day | A `PATCH /api/v1/presets/:id` that notifies a moderator |
 | `preview_upload` | 20 / day | `POST /api/v1/presets/:id/preview-image` |
-| `text_edit` | 30 / day | `PATCH /api/v1/presets/:id` whose `name` or `description` differs from the stored value (text re-sent unchanged is free, BUG-065) |
+| `text_edit` | 30 / day | Changed name/description, plus changed tags/example links only when extended checks are enabled; identical values are free |
 
 ### Response Headers
 

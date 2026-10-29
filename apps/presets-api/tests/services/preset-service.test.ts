@@ -25,6 +25,7 @@ import {
     createMockSubmission,
 } from '../test-utils';
 import type { AuthContext, PresetRow } from '../../src/types';
+import { presetSnapshotView } from '../../src/services/preset-moderation-input';
 
 describe('PresetService', () => {
     beforeEach(() => {
@@ -80,6 +81,22 @@ describe('PresetService', () => {
     // ============================================
 
     describe('rowToPreset', () => {
+        it('adds an explicit absent legacy snapshot link only to the serialized view', () => {
+            const previous = { name: 'Original', description: 'Original description', dyes: [1, 2, 3], tags: ['original'] };
+            const raw = JSON.stringify(previous);
+            const row = createMockPresetRow({ previous_values: raw });
+            expect(presetSnapshotView(rowToPreset(row), true).previous_values).toEqual({ ...previous, example_link: null });
+            expect(row.previous_values).toBe(raw);
+        });
+        it.each([42, {}, 'https://evil.example/untrusted'])('does not coerce an explicitly malformed snapshot link %j to null', link => {
+            const previous = { name: 'Original', description: 'Original description', dyes: [1, 2, 3], tags: ['original'], example_link: link };
+            const row = createMockPresetRow({ previous_values: JSON.stringify(previous) });
+            expect(presetSnapshotView(rowToPreset(row), true).previous_values).toEqual(previous);
+        });
+        it.each([{ name: 'Incomplete' }, { name: 'Original', description: 'Original description', tags: ['original'], dyes: 'not an array' }])('does not invent a trustworthy link target for malformed legacy snapshot %j', previous => {
+            const row = createMockPresetRow({ previous_values: JSON.stringify(previous) });
+            expect(presetSnapshotView(rowToPreset(row), true).previous_values).toEqual(previous);
+        });
         it('should convert database row to domain object', () => {
             const row = createMockPresetRow({
                 id: 'test-id',

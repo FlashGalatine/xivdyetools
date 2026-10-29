@@ -6,7 +6,6 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import {
     checkSubmissionRateLimit,
     getRemainingSubmissions,
-    getSubmissionCountToday,
     reserveDailyEvent,
     DAILY_FLAGGED_EDIT_LIMIT,
 } from '../../src/services/rate-limit-service';
@@ -254,30 +253,6 @@ describe('RateLimitService', () => {
             const deniedResult = await checkSubmissionRateLimit(db, 'user-123');
             expect(deniedResult.allowed).toBe(false);
             expect(deniedResult.remaining).toBe(0);
-        });
-    });
-
-    // ============================================
-    // getSubmissionCountToday (BUG-049)
-    // ============================================
-
-    describe('getSubmissionCountToday', () => {
-        it('should return the raw count for the current UTC day', async () => {
-            const db = createMockD1Database();
-            db._setupMock(() => ({ count: 11 }));
-
-            const count = await getSubmissionCountToday(db, 'user-123');
-
-            expect(count).toBe(11);
-        });
-
-        it('should return 0 when the query yields no row', async () => {
-            const db = createMockD1Database();
-            db._setupMock(() => null);
-
-            const count = await getSubmissionCountToday(db, 'user-123');
-
-            expect(count).toBe(0);
         });
     });
 

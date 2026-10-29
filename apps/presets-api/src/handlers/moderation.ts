@@ -31,7 +31,10 @@ import {
   validateModerationStatus,
   validateModerationReason,
   validatePresetDyes,
+  validateExampleLink,
+  normalizeExampleLink,
 } from '../services/validation-service.js';
+import { presetSnapshotView, metadataModerationEnabled, type PresetSnapshot } from '../services/preset-moderation-input.js';
 import {
   listFailedNotifications,
   resolveFailedNotification,
@@ -150,7 +153,7 @@ moderationRouter.get('/pending', async (c) => {
   const modError = requireModerator(c);
   if (modError) return modError;
 
-  const presets = await getPendingPresets(c.env.DB, c.get('logger'));
+  const presets = (await getPendingPresets(c.env.DB, c.get('logger'))).map(preset => presetSnapshotView(preset, metadataModerationEnabled(c.env)));
   return c.json({ presets, total: presets.length });
 });
 
@@ -247,7 +250,7 @@ moderationRouter.patch('/:presetId/status', async (c) => {
 
   return c.json({
     success: true,
-    preset: rowToPreset(updatedRow, c.get('logger')),
+    preset: presetSnapshotView(rowToPreset(updatedRow, c.get('logger')), metadataModerationEnabled(c.env)),
   });
 });
 
@@ -315,6 +318,20 @@ moderationRouter.patch('/:presetId/revert', async (c) => {
     );
   }
 
+  // Persisted JSON is untrusted. Explicit targets always retain validation;
+  // a missing legacy link follows the temporary activation mode below.
+  const previous: PresetSnapshot = { ...preset.previous_values };
+  if (Object.hasOwn(previous, 'example_link')) {
+    // Recorded targets retain validation/restoration even after flag rollback.
+    const snapshotLinkError = validateExampleLink(previous.example_link);
+    if (snapshotLinkError) {
+      return validationErrorResponse(c, `The previous values cannot be restored: ${snapshotLinkError}`);
+    }
+    previous.example_link = normalizeExampleLink(previous.example_link);
+  } else {
+    previous.example_link = metadataModerationEnabled(c.env) ? null : (preset.example_link ?? null);
+  }
+
   // BUG-020 (2026-07-18 audit): revert + audit log in one atomic batch — the
   // old ordering (revert first, log after) could lose the audit trail for a
   // revert that did happen. changes() gates the log on the revert applying.
@@ -327,7 +344,7 @@ moderationRouter.patch('/:presetId/revert', async (c) => {
   let revertResult: D1Result<PresetRow>;
   try {
     [revertResult] = await c.env.DB.batch<PresetRow>([
-      prepareRevert(c.env.DB, presetId, preset.previous_values, {
+      prepareRevert(c.env.DB, presetId, previous, {
         contentRevision: binding.revision,
         status: binding.status,
         previousValuesRaw: presetRow.previous_values,
@@ -355,7 +372,7 @@ moderationRouter.patch('/:presetId/revert', async (c) => {
 
   return c.json({
     success: true,
-    preset: rowToPreset(revertedRow, c.get('logger')),
+    preset: presetSnapshotView(rowToPreset(revertedRow, c.get('logger')), metadataModerationEnabled(c.env)),
     message: 'Preset reverted to previous values',
   });
 });
@@ -574,7 +591,7 @@ moderationRouter.get('/:presetId', async (c) => {
   return c.json({
     success: true,
     preset: {
-      ...rowToPreset(row, c.get('logger')),
+      ...presetSnapshotView(rowToPreset(row, c.get('logger')), metadataModerationEnabled(c.env)),
       // The filter verdict is not stored, only the status. A pending row may
       // have been queued by the filter, by a missing key, or by a plain
       // resubmission, so anything but 'flagged' is honestly 'unknown' — never
