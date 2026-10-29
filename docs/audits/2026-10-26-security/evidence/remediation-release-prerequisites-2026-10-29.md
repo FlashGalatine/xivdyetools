@@ -102,7 +102,7 @@ integrity and compatible pins immediately before each real release.
 | Image manual | All six corrected manual locales are integrated in #363. Publication and verified deployed delivery must precede lower-cap activation. |
 | Image resource acceptance | Effective preview CPU policy and aggregate-memory acceptance remain unresolved. The previous hosted attempt failed and stopped; local CPU samples do not close this gate. |
 | Private notification cutover | Verify Discord named provider, then presets binding companion, then real submission/edit/preview delivery and external callers before any binding-only activation. |
-| API item-name provenance | Historical tables remain unproven; a controlled data/font refresh has its own review and acceptance boundary. No historical commit/checksum is fabricated. |
+| API item-name provenance | The [controlled current-data refresh](remediation-item-name-provenance-2026-10-29.md) is prepared with per-language pins/checksums and unchanged-font acceptance. Release acceptance remains pending; older provenance is not reconstructed. |
 | Repository operations | Pages-retention live acceptance/activation, default-branch Dependabot closure and scanner eligibility remain separate operational gates. |
 | Major/font sequence | M sprints still require shipped/adopted deprecations and explicit beta acceptance. Terminal F sprints remain after final major/text adoption. |
 

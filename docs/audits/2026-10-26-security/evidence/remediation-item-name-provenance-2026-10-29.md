@@ -85,3 +85,22 @@ verification accepts the prepared scope. Final combined-stack verification and s
 remain separate handoff checks. Production deployment/activation and upstream package
 availability remain held release gates; preparation does not change finding counts or claim
 live acceptance.
+
+## Combined release-stack handoff
+
+Integrate OAuth [PR #364](https://github.com/FlashGalatine/xivdyetools/pull/364) at
+`8554872195c96601e8d30c4b0420aad0417cef36` with the controlled refresh. The merge is clean;
+pending API 0.21.1, Discord 5.9.7 and OAuth 3.2.0 remain intact. OAuth's corrected head passes
+all four CI checks, including Chromium; its original fake-clock failure remains documented.
+
+The combined serialized build/type-check/lint/test graph passes **62/62 tasks**, **zero cached**,
+with **17,873 tests /612 files /17 test workspaces**. The shared-cache attempt does not reuse
+entries across these worktrees, so this is a fresh execution. Root self-tests pass **220/220**;
+script types, reachability (**648 production /651 test files**), **34** version claims,
+**1,144** relative links across **266** living documents and **seven** Workers Logs pins pass.
+No assertion, timeout, budget or threshold changes follow the successful combined run.
+
+Final filename-aware staged/outgoing-history secret scans gate the feature push. The private
+support packet and XIVAuth report stay outside Git. Both release drafts remain source
+preparation: no main merge, publication, remote migration, live deployment, new hosted request
+or production activation is performed.
