@@ -1,310 +1,119 @@
-/**
- * User Service
- * Manages user creation, lookup, and account linking for multi-provider auth
- */
+/** Provider assertions are fresh only for this invocation; journals contain no profiles or tokens. */
+import type { AuthProvider, Env, UserRow } from '../types.js';
+import { IdentityError, continuityBinding } from './identity-contract.js';
+import { hasIdentityLock, identityResources } from './identity-service.js';
+import {
+  cleanupIdentityOperations,
+  resumeIdentityOperation,
+  transitionIdentity,
+} from './identity-transition-service.js';
 
-import type { AuthProvider, UserRow } from '../types.js';
-
-/**
- * Parameters for creating or updating a user.
- *
- * FINDING-002 (2026-08-29 security audit): no `avatar_url`. The column was
- * written on every Discord sign-in and never read back — `/auth/me`, both
- * callbacks and the web app all recompute the CDN URL from the Discord id and
- * the `avatar` hash (`getAvatarUrl`).
- */
 export interface CreateUserParams {
   discord_id?: string | null;
   xivauth_id?: string | null;
   username: string;
   auth_provider: AuthProvider;
 }
-
-/**
- * Minimal structured-logger surface used for account-link audit events.
- * The request-scoped `ExtendedLogger` from @xivdyetools/worker-kit satisfies
- * it; callers without a request context may omit it.
- *
- * FINDING-013 / OAUTH-7: events are logged WITHOUT identifiers — the request
- * ID the logger already carries is the correlation handle.
- */
 export interface UserServiceLogger {
   info(message: string, context?: Record<string, unknown>): void;
   warn(message: string, context?: Record<string, unknown>): void;
 }
-
-/**
- * Find existing user or create new one.
- * Handles account linking when the same Discord ID is seen from different providers.
- *
- * Linking logic:
- * 1. If logging in via XIVAuth, first try to find by xivauth_id
- * 2. If not found and Discord ID is available (from XIVAuth social link), try to find by discord_id
- * 3. If found, attach the identities this login asserts (see attachIdentities)
- * 4. If still not found, create a new user
- *
- * Race condition handling:
- * Uses INSERT with ON CONFLICT to handle concurrent requests for the same user.
- * If a duplicate key error occurs during insert, retry the lookup.
- */
-/**
- * `YYYY-MM-DD HH:MM:SS` — the shape SQLite's `datetime('now')` writes, which is
- * what every other row in `users` carries (oauth-06).
- *
- * Deliberately not ISO-8601: matching the column's existing format matters more
- * than the format itself, because half the rows are already written by the
- * default and a consumer comparing or sorting the two would be comparing
- * `'2026-09-02T…Z'` against `'2026-09-02 …'` lexicographically.
- */
-function sqliteTimestamp(date: Date = new Date()): string {
-  return date.toISOString().replace('T', ' ').slice(0, 19);
-}
+type TransitionEnv = Pick<Env, 'IDENTITY_SPLIT_ENABLED' | 'BAN_CONTINUITY'>;
 
 export async function findOrCreateUser(
   db: D1Database,
   params: CreateUserParams,
-  logger?: UserServiceLogger
+  logger?: UserServiceLogger,
+  env?: TransitionEnv,
 ): Promise<UserRow> {
-  const { discord_id, xivauth_id, username, auth_provider } = params;
-
-  // 1. Try to find by provider-specific ID first
-  let existingUser: UserRow | null = null;
-
-  if (xivauth_id) {
-    existingUser = await db
-      .prepare('SELECT * FROM users WHERE xivauth_id = ?')
-      .bind(xivauth_id)
-      .first<UserRow>();
-  }
-
-  // 2. If not found by xivauth_id, try by discord_id
-  if (!existingUser && discord_id) {
-    existingUser = await db
-      .prepare('SELECT * FROM users WHERE discord_id = ?')
-      .bind(discord_id)
-      .first<UserRow>();
-  }
-
-  if (existingUser) {
-    return attachIdentities(db, existingUser, params, logger);
-  }
-
-  // 3. No existing user - create new one with conflict handling
-  const newId = crypto.randomUUID();
-
-  // oauth-06: the INSERT used to rely on the column defaults
-  // (`datetime('now')`, `schema/users.sql`) and then SYNTHESIZE the returned
-  // row with `new Date().toISOString()`. SQLite writes that default
-  // space-separated, to second precision, with no `Z` — so a first sign-in
-  // returned `2026-09-02T12:00:00.000Z` while the row actually said
-  // `2026-09-02 12:00:00`, and the same user's SECOND sign-in (which re-reads
-  // the row) returned the SQLite form. Two formats from one API, and the D1
-  // mock stored ISO too, so mock and code agreed on the wrong thing.
-  //
-  // Binding the timestamps explicitly means the value written and the value
-  // returned are the same string, by construction.
-  const now = sqliteTimestamp();
-
   try {
-    await db
-      .prepare(
-        `INSERT INTO users (id, discord_id, xivauth_id, auth_provider, username, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`
-      )
-      .bind(newId, discord_id || null, xivauth_id || null, auth_provider, username, now, now)
-      .run();
-
-    return {
-      id: newId,
-      discord_id: discord_id || null,
-      xivauth_id: xivauth_id || null,
-      auth_provider,
-      username,
-      created_at: now,
-      updated_at: now,
-    };
+    return await resolveUser(db, params, logger, env);
   } catch (error) {
-    // Race condition: another request created the user while we were processing
-    // Retry the lookup and update instead
-    const isConstraintError =
-      error instanceof Error && (error.message.includes('UNIQUE constraint') || error.message.includes('UNIQUE_VIOLATION'));
-
-    if (isConstraintError) {
-      // Re-lookup the user that was just created by another request
-      let raceUser: UserRow | null = null;
-
-      if (xivauth_id) {
-        raceUser = await db.prepare('SELECT * FROM users WHERE xivauth_id = ?').bind(xivauth_id).first<UserRow>();
-      }
-      if (!raceUser && discord_id) {
-        raceUser = await db.prepare('SELECT * FROM users WHERE discord_id = ?').bind(discord_id).first<UserRow>();
-      }
-
-      if (raceUser) {
-        // Update the existing user with our data
-        return attachIdentities(db, raceUser, params, logger);
-      }
-    }
-
-    // Not a constraint error or couldn't find user - rethrow
-    throw error;
+    if (error instanceof IdentityError) throw error;
+    throw new IdentityError('unavailable');
   }
 }
-
-/**
- * Update an existing row with the identities this login asserts.
- *
- * FINDING-013 / OAUTH-9 (2026-08-21 security audit): the previous merge was
- * driven solely by the Discord link XIVAuth asserts — when the XIVAuth user's
- * row lacked a Discord ID but another local row already owned it, the other
- * row was deleted and its Discord ID (the presets-api identity and moderator
- * key) claimed by this one, and a re-linked account kept a stale xivauth_id.
- *
- * Now:
- * - A Discord ID that another local account already owns is NOT claimed and
- *   nothing is deleted — linking two existing local accounts needs an explicit,
- *   signed-in confirmation step, which does not exist yet, so it simply does
- *   not happen. The event is audit-logged (no identifiers).
- * - A Discord ID nobody owns is linked (the XIVAuth social link is
- *   OAuth-verified upstream; there is no competing local identity).
- * - An existing Discord link is never overwritten from an XIVAuth assertion.
- * - The XIVAuth ID of the account that is actually logging in wins over a
- *   stale one left by an earlier link (the Discord account is the anchor).
- */
-async function attachIdentities(
+async function resolveUser(
   db: D1Database,
-  existing: UserRow,
   params: CreateUserParams,
-  logger?: UserServiceLogger
+  logger?: UserServiceLogger,
+  env?: TransitionEnv,
 ): Promise<UserRow> {
-  const { discord_id, xivauth_id, username, auth_provider } = params;
-
-  let discordId = existing.discord_id;
-  if (!existing.discord_id && discord_id) {
-    // BUG-004 (2026-07-18 audit): stamping a Discord ID another row already
-    // owns would hit the partial UNIQUE(discord_id) index and 500 every login.
-    const owner = await db
-      .prepare('SELECT id FROM users WHERE discord_id = ? AND id != ?')
-      .bind(discord_id, existing.id)
-      .first<{ id: string }>();
-
-    if (owner) {
-      logger?.warn(
-        'Discord identity is already linked to another account; not linked (explicit account linking required)',
-        { provider: auth_provider }
-      );
-    } else {
-      discordId = discord_id;
-      logger?.info('Linked Discord identity to existing account', { provider: auth_provider });
+  const discordId = params.discord_id || null;
+  const xivauthId = params.auth_provider === 'xivauth' ? params.xivauth_id || null : null;
+  if (params.auth_provider === 'xivauth' ? !xivauthId : !discordId)
+    throw new IdentityError('unavailable');
+  await cleanupIdentityOperations(
+    db,
+    continuityBinding(env?.BAN_CONTINUITY) ? env.BAN_CONTINUITY : undefined,
+  );
+  const fresh = { xivauthId: xivauthId ?? '', discordId };
+  let resumed: UserRow | null = null;
+  if (xivauthId) resumed = await resumeIdentityOperation(db, `xivauth:${xivauthId}`, fresh, env);
+  if (resumed && discordId && !resumed.discord_id) throw new IdentityError('retry');
+  const xUser = xivauthId
+    ? (resumed ??
+      (await db.prepare('SELECT * FROM users WHERE xivauth_id=?').bind(xivauthId).first<UserRow>()))
+    : null;
+  const dUser = discordId
+    ? await db.prepare('SELECT * FROM users WHERE discord_id=?').bind(discordId).first<UserRow>()
+    : null;
+  let existing = xUser ?? dUser;
+  if (existing && (await hasIdentityLock(db, identityResources(existing))))
+    throw new IdentityError('unavailable');
+  if (xUser && xUser.discord_id !== discordId) {
+    if (xUser.discord_id) {
+      existing = await transitionIdentity(db, xUser, 'detach', fresh, env);
+      if (discordId) throw new IdentityError('retry');
+    } else if (discordId) {
+      if (dUser) {
+        logger?.warn('Existing identities require explicit review');
+        throw new IdentityError('unavailable');
+      }
+      existing = await transitionIdentity(db, xUser, 'attach', fresh, env);
     }
-  }
-
-  let xivauthId = existing.xivauth_id;
-  if (xivauth_id && xivauth_id !== existing.xivauth_id) {
-    if (existing.xivauth_id) {
-      logger?.info('Replaced stale XIVAuth link on account', { provider: auth_provider });
+  } else if (!xUser && dUser && xivauthId && dUser.xivauth_id !== xivauthId) {
+    if (dUser.xivauth_id) {
+      await transitionIdentity(db, dUser, 'detach', fresh, env);
+      throw new IdentityError('retry');
     }
-    xivauthId = xivauth_id;
+    existing = await transitionIdentity(db, dUser, 'attach', fresh, env);
   }
-
-  try {
-    return await updateUser(db, existing.id, {
-      discord_id: discordId,
-      xivauth_id: xivauthId,
-      username,
-      auth_provider,
-    });
-  } catch (error) {
-    // oauth-07: the owner lookup above is check-then-update against the partial
-    // UNIQUE(discord_id) index, not an atomic write. Two overlapping callbacks
-    // that each resolve to a different local row and both assert the same
-    // unowned Discord id will both see `owner === null`, and the second UPDATE
-    // then violates the index — surfacing as `500 Authentication failed`, the
-    // exact failure BUG-004's guard was added to avoid. Narrow window (one
-    // person, two providers, simultaneous) and no data corruption, but the
-    // INSERT path has had this recovery since BUG-004 and this one did not.
-    //
-    // Losing the race means someone else now owns that Discord id, which is
-    // the same situation the guard above handles: keep the account, skip the
-    // link.
-    const isConstraintError =
-      error instanceof Error &&
-      (error.message.includes('UNIQUE constraint') ||
-        error.message.includes('UNIQUE_VIOLATION'));
-
-    if (!isConstraintError || discordId === existing.discord_id) {
-      throw error;
-    }
-
-    logger?.warn('Discord identity was claimed concurrently; not linked', {
-      provider: auth_provider,
-    });
-    return updateUser(db, existing.id, {
-      discord_id: existing.discord_id,
-      xivauth_id: xivauthId,
-      username,
-      auth_provider,
-    });
+  if (existing) {
+    const resources = identityResources(existing);
+    const updated = await db
+      .prepare(
+        `UPDATE users SET username=?,auth_provider=?,updated_at=datetime('now') WHERE id=? AND identity_revision=? AND discord_id IS ? AND xivauth_id IS ? AND NOT EXISTS (SELECT 1 FROM identity_operation_locks WHERE resource_key IN (${resources.map(() => '?').join(',')})) RETURNING *`,
+      )
+      .bind(
+        params.username,
+        params.auth_provider,
+        existing.id,
+        existing.identity_revision ?? 0,
+        existing.discord_id,
+        existing.xivauth_id,
+        ...resources,
+      )
+      .first<UserRow>();
+    if (!updated) throw new IdentityError('unavailable');
+    return updated;
   }
+  const id = crypto.randomUUID();
+  const resources = identityResources({ id, discord_id: discordId, xivauth_id: xivauthId });
+  const now = new Date().toISOString().replace('T', ' ').slice(0, 19);
+  const created = await db
+    .prepare(
+      `INSERT INTO users (id,discord_id,xivauth_id,auth_provider,username,created_at,updated_at) SELECT ?,?,?,?,?,?,? WHERE NOT EXISTS (SELECT 1 FROM identity_operation_locks WHERE resource_key IN (${resources.map(() => '?').join(',')})) ON CONFLICT DO NOTHING RETURNING *`,
+    )
+    .bind(id, discordId, xivauthId, params.auth_provider, params.username, now, now, ...resources)
+    .first<UserRow>();
+  if (created) return created;
+  // A concurrent callback may have created a matching row. Never replay a link assertion.
+  const winner = await db
+    .prepare('SELECT * FROM users WHERE discord_id IS ? AND xivauth_id IS ?')
+    .bind(discordId, xivauthId)
+    .first<UserRow>();
+  if (!winner || (await hasIdentityLock(db, identityResources(winner))))
+    throw new IdentityError('unavailable');
+  return winner;
 }
-
-/**
- * Update an existing user's information
- */
-async function updateUser(
-  db: D1Database,
-  userId: string,
-  updates: Partial<CreateUserParams>
-): Promise<UserRow> {
-  const fields: string[] = [];
-  const values: (string | null)[] = [];
-
-  if (updates.discord_id !== undefined) {
-    fields.push('discord_id = ?');
-    values.push(updates.discord_id || null);
-  }
-  if (updates.xivauth_id !== undefined) {
-    fields.push('xivauth_id = ?');
-    values.push(updates.xivauth_id || null);
-  }
-  if (updates.username) {
-    fields.push('username = ?');
-    values.push(updates.username);
-  }
-  if (updates.auth_provider) {
-    fields.push('auth_provider = ?');
-    values.push(updates.auth_provider);
-  }
-
-  fields.push("updated_at = datetime('now')");
-
-  // oauth-10 (`UPDATE … RETURNING *` to collapse these two round trips) is
-  // deliberately NOT applied. It is a latency optimisation on an already
-  // multi-hop path, and the hand-rolled D1 mock
-  // (`__tests__/mocks/cloudflare-test.ts`) answers `.first()` from a scripted
-  // queue without regard to the statement — so a RETURNING clause silently
-  // consumes the response meant for the SELECT and the change ships with its
-  // behaviour unverifiable. Worth doing alongside a statement-aware mock, not
-  // before one.
-  await db.prepare(`UPDATE users SET ${fields.join(', ')} WHERE id = ?`).bind(...values, userId).run();
-
-  const updated = await db.prepare('SELECT * FROM users WHERE id = ?').bind(userId).first<UserRow>();
-
-  if (!updated) {
-    throw new Error(`User ${userId} not found after update`);
-  }
-
-  return updated;
-}
-
-/**
- * FINDING-001 (2026-08-29 security audit): `storeCharacters` / `getCharacters`
- * and the `xivauth_characters` table are gone. Every XIVAuth sign-in used to
- * persist the caller's whole FFXIV roster — Lodestone id, character name and
- * home world, unverified registrations included — "for future features" that
- * never arrived: nothing read the table, there was no retention or purge, and
- * the web privacy guide never disclosed it. The handler still reads the roster
- * in memory to pick the verified character that becomes the display name; it
- * writes none of it. If a feature ever needs the roster, collect it then,
- * minimally, and disclose it first.
- */

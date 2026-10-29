@@ -5,6 +5,58 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.0] - 2026-10-27
+
+### Hardening adoption
+
+- **H-OAUTH preparation:** verify auth 3.0.0 canonical signing round trips and equivalent noncanonical signature rejection through the OAuth verifier boundaries. Adopt worker-kit 1.6.0/logger 2.4.0 with unchanged issuance, sessions and v2 protocol. Deploy only after upstream publication and existing provider prerequisites.
+
+Sprint A-OAUTH provider prerequisites for the 2026-10-26 remediation plan. Preparation only:
+identity splitting is disabled, and this release declares no outbound continuity binding.
+
+### Added
+
+- A named private `IdentityLookup` service entrypoint for minimal stored associations and current
+  session-revision validation. No public lookup route, upstream XIVAuth ID, name or token is returned.
+- A local `identity_revision` JWT claim and current-relationship checks on `/auth/me`, including
+  revision-zero compatibility for unchanged legacy sessions and denial during pending recovery.
+- Conditional, durable identity-transition preparation with resource locks, exact receipts,
+  idempotent recovery and terminal cleanup in batches of up to eight records. The prepared split
+  retains the Discord anchor, preserves the displaced XIVAuth account, and requires a ban-specific handoff before
+  changing identities. An attachment cannot silently expand an existing ban.
+
+### Security
+
+- Bound the prepared ban-continuity lookup/apply pair to one five-second deadline. Unknown
+  timeouts preserve the operation and locks for an unchanged retry; late replies cannot resume
+  local identity writes or token issuance. Terminal acknowledgement is best-effort within one
+  second, and cleanup shares that one-second remote budget across at most eight concurrent
+  acknowledgements, rotating candidates within the isolate/D1 handle and deleting at most
+  eight retention-eligible terminal records. This does not cancel remote effects or bound D1
+  execution; production binding and activation remain separate gates.
+- Refuse detected existing relationship changes while `IDENTITY_SPLIT_ENABLED` is false, without
+  changing the association or minting its stale Discord identity. Matching sign-ins and new
+  accounts continue. Safe automatic splitting remains pending consumer rollout and activation.
+- Sign OAuth state over `oauth-state-v1:` plus its encoded payload, separate from JWT input.
+  The two-part wire shape is unchanged. Legacy issuance ends 2026-10-28 00:00:00 UTC and legacy
+  acceptance ends at 00:10:00 UTC; a deployment afterward requires old in-flight sign-ins to retry.
+- Explicitly remove development routes and disable development workers.dev, preserving the
+  top-level production auth domain.
+- Opt into IPv6 /64 rate-limit keys while preserving IPv4, mapped-address and header behavior.
+
+### Operations
+
+- Deadline regression tests wait for the actual continuity-call timer to start after asynchronous
+  journal decoding. A persisted journal alone is not that signal; slower CI crypto scheduling
+  no longer leaves the test waiting on an unadvanced fake clock. All deadline assertions remain.
+- Apply additive users migration `0002_identity_transitions.sql` before the dependent deployment,
+  using `wrangler d1 execute --file` once. Never replay migrations with `d1 migrations apply`.
+- Verify the provider, then the later presets/moderation enforcement and disclosures, before a
+  separate activation adds the continuity binding and enables splitting. No production migration,
+  deployment or activation is performed by preparing this release.
+- Document the [identity and moderation contract](../../docs/architecture/identity-moderation.md)
+  and test the private entrypoint with the actual local Workers runtime and transactional SQLite.
+
 ## [3.1.3] - 2026-10-06
 
 Sprint 10 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-deep-dive/`, `docs/audits/2026-10-04-dead-code/`),

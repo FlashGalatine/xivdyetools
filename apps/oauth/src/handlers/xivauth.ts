@@ -15,6 +15,7 @@ import type {
 } from '../types.js';
 import { createJWTForUser } from '../services/jwt-service.js';
 import { findOrCreateUser } from '../services/user-service.js';
+import { IdentityError } from '../services/identity-contract.js';
 import {
   REQUEST_TIMEOUT_MS,
   USER_INFO_TIMEOUT_MS,
@@ -391,7 +392,8 @@ xivauthRouter.post('/xivauth/callback', async (c) => {
         username,
         auth_provider: 'xivauth',
       },
-      logger
+      logger,
+      c.env
     );
 
     // Create JWT with user info
@@ -414,6 +416,9 @@ xivauthRouter.post('/xivauth/callback', async (c) => {
       expires_at,
     });
   } catch (err) {
+    if (err instanceof IdentityError) {
+      return c.json<AuthResponse>({ success: false, error: 'Authentication temporarily unavailable. Sign in again.' }, 503);
+    }
     // The structured logger sanitises error objects (no stack in production)
     logger?.error('XIVAuth callback error', err);
 

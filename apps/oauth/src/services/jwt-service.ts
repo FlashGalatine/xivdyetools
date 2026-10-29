@@ -12,6 +12,7 @@
  */
 
 import type { JWTPayload, Env, UserRow, AuthProvider } from '../types.js';
+import { assertMintableUser } from './identity-service.js';
 import {
   base64UrlEncode as base64UrlEncodeString,
   base64UrlEncodeBytes,
@@ -116,6 +117,8 @@ export async function createJWTForUser(
   env: Env,
   options?: CreateJWTForUserOptions,
 ): Promise<{ token: string; expires_at: number; jti: string }> {
+  const provider = options?.auth_provider ?? (user.auth_provider as AuthProvider);
+  await assertMintableUser(env.DB, user, provider);
   const now = Math.floor(Date.now() / 1000);
   const expirySeconds = parseInt(env.JWT_EXPIRY, 10) || 3600;
   const expiresAt = now + expirySeconds;
@@ -137,7 +140,8 @@ export async function createJWTForUser(
     avatar: options?.avatar ?? null,
 
     // Multi-provider support
-    auth_provider: options?.auth_provider ?? (user.auth_provider as AuthProvider),
+    auth_provider: provider,
+    identity_revision: user.identity_revision ?? 0,
     discord_id: user.discord_id ?? undefined,
   };
 
