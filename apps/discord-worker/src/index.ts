@@ -336,7 +336,7 @@ app.post('/webhooks/preset-submission', async (c) => {
     env.ENVIRONMENT === 'production' &&
     env.INTERNAL_WEBHOOK_SECRET.length < MIN_WEBHOOK_SECRET_LENGTH
   ) {
-    logger.error('Webhook secret is shorter than the production minimum', {
+    logger.error('Webhook secret is shorter than the production minimum', undefined, {
       minimum: MIN_WEBHOOK_SECRET_LENGTH,
     });
     return c.json({ error: 'Webhook misconfigured' }, 503);
@@ -733,7 +733,7 @@ app.post('/webhooks/github', async (c) => {
   const changelogResponse = await fetch(changelogUrl, { signal: AbortSignal.timeout(10_000) });
 
   if (!changelogResponse.ok) {
-    logger.error('Failed to fetch changelog', { status: changelogResponse.status });
+    logger.error('Failed to fetch changelog', undefined, { status: changelogResponse.status });
     return c.json({ error: 'Failed to fetch changelog' }, 502);
   }
 
@@ -933,7 +933,7 @@ async function handleCommand(
 
   // DISCORD-HIGH-003: Guard against missing userId to prevent rate limit bypass
   if (!userId) {
-    logger.error('Unable to identify user from interaction', { commandName });
+    logger.error('Unable to identify user from interaction', undefined, { commandName });
     return ephemeralResponse(
       (await routerTranslator(env, interaction, logger)).t('errors.unknownUser'),
     );

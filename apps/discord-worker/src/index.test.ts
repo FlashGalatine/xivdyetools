@@ -12,6 +12,24 @@ import {
 import type { Env } from './types/env.js';
 import type { CommunityPreset } from '@xivdyetools/types/preset';
 
+// Observe dispatch while preserving the real shared logger and its output.
+const contextErrorCalls = vi.hoisted(() => vi.fn());
+vi.mock('@xivdyetools/logger/worker', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@xivdyetools/logger/worker')>();
+  return {
+    ...actual,
+    createRequestLogger: (...args: Parameters<typeof actual.createRequestLogger>) => {
+      const logger = actual.createRequestLogger(...args);
+      const error = logger.error.bind(logger);
+      logger.error = (...params) => {
+        contextErrorCalls(...params);
+        error(...params);
+      };
+      return logger;
+    },
+  };
+});
+
 // Mock dependencies
 vi.mock('@xivdyetools/auth', () => ({
   verifyDiscordRequest: vi.fn(),
@@ -213,6 +231,111 @@ describe('index.ts', () => {
       });
       expect((data as any).timestamp).toBeDefined();
     });
+  });
+
+  describe('H-DISCORD context-only errors', () => {
+    let lines: string[];
+    beforeEach(() => {
+      lines = [];
+      vi.spyOn(console, 'log').mockImplementation((line: unknown) => lines.push(String(line)));
+    });
+    afterEach(() => vi.restoreAllMocks());
+
+    function expectContext(message: string, context: Record<string, unknown>) {
+      expect(contextErrorCalls).toHaveBeenCalledWith(message, undefined, context);
+      const entry = lines.map((line) => JSON.parse(line)).find((row) => row.message === message);
+      expect(entry).toBeDefined();
+      expect(entry.error).toBeUndefined();
+      expect(entry.context).toMatchObject(context);
+      expect(entry.context.requestId).toEqual(expect.any(String));
+    }
+
+    it('retains the production webhook minimum as context without a fake error', async () => {
+      const env: Env = {
+        ...mockEnv,
+        ENVIRONMENT: 'production',
+        RL_5: { limit: vi.fn() },
+        RL_10: { limit: vi.fn() },
+        RL_15: { limit: vi.fn() },
+        RL_20: { limit: vi.fn() },
+        RL_30: { limit: vi.fn() },
+        RL_70: { limit: vi.fn() },
+      };
+      const response = await app.fetch(
+        new Request('http://localhost/webhooks/preset-submission', {
+          method: 'POST',
+          body: '{}',
+        }),
+        env,
+        mockCtx,
+      );
+      expect(response.status).toBe(503);
+      expectContext('Webhook secret is shorter than the production minimum', { minimum: 32 });
+    });
+
+    it('retains a failed changelog fetch status as context without a fake error', async () => {
+      const { verifyGitHubSignature } = await import('./utils/github-verify.js');
+      vi.mocked(verifyGitHubSignature).mockResolvedValue(true);
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('', { status: 503 }));
+      const response = await app.fetch(
+        new Request('http://localhost/webhooks/github', {
+          method: 'POST',
+          headers: { 'X-Hub-Signature-256': 'sha256=mock', 'X-GitHub-Event': 'push' },
+          body: JSON.stringify({
+            repository: { full_name: 'FlashGalatine/xivdyetools' },
+            ref: 'refs/heads/main',
+            commits: [{ added: [], modified: ['CHANGELOG-laymans.md'] }],
+            head_commit: null,
+          }),
+        }),
+        {
+          ...mockEnv,
+          GITHUB_WEBHOOK_SECRET: 'synthetic-github-secret',
+          ANNOUNCEMENT_CHANNEL_ID: 'channel',
+        },
+        mockCtx,
+      );
+      expect(response.status).toBe(502);
+      expectContext('Failed to fetch changelog', { status: 503 });
+    });
+
+    it.each([
+      'diagnostic',
+      'Bearer synthetic-bearer',
+      'https://discord.com/api/webhooks/123/synthetic-webhook',
+      'https://discord.com/api/interactions/456/synthetic-interaction/callback',
+    ])(
+      'preserves safe context and redacts credentials for missing-user commands (%s)',
+      async (commandName) => {
+        const { verifyDiscordRequest } = await import('@xivdyetools/auth');
+        vi.mocked(verifyDiscordRequest).mockResolvedValue({
+          isValid: true,
+          error: '',
+          body: JSON.stringify({ type: 2, data: { name: commandName } }),
+        });
+        const response = await app.fetch(
+          new Request('http://localhost/', { method: 'POST' }),
+          mockEnv,
+          mockCtx,
+        );
+        expect(response.status).toBe(200);
+        expect(contextErrorCalls).toHaveBeenCalledWith(
+          'Unable to identify user from interaction',
+          undefined,
+          { commandName },
+        );
+        const entry = lines
+          .map((line) => JSON.parse(line))
+          .find((row) => row.message === 'Unable to identify user from interaction');
+        expect(entry.error).toBeUndefined();
+        expect(entry.context.commandName).toBe(
+          commandName === 'diagnostic' ? 'diagnostic' : '[REDACTED]',
+        );
+        for (const secret of ['synthetic-bearer', 'synthetic-webhook', 'synthetic-interaction']) {
+          expect(lines.join('\n')).not.toContain(secret);
+        }
+      },
+    );
   });
 
   /**

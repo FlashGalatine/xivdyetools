@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [5.9.7] - 2026-10-27
 
+### Hardening adoption
+
+- **H-DISCORD preparation:** record interaction dispatch diagnostics as structured logger context instead of a synthetic error. The pending release adopts auth 3.0.0, bot-logic 4.12.0, SVG 4.4.1, core 5.16.0, worker-kit 1.6.0 and logger 2.4.0 after their upstream publication; existing activation holds remain.
+
 ### Fixed
 
 - Favorite lists use one signed, acting-user batch lookup for up to 50 saved IDs, preserve
