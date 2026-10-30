@@ -835,17 +835,7 @@
           "passed": 2,
           "failed": 0,
           "flaky": 0,
-          "skipped": 0,
-          "tail": [
-            "[WebServer] 11:13:26 AM [vite] (client) [console.warn] Element dye-palette-drawer scheduled an update (generally because a property was set) after an update completed, causing a new update to be scheduled. This is inefficient and should be avoided unless the next update can only be scheduled as a side effect of the previous update. See https://lit.dev/msg/change-in-update for more information.",
-            "[WebServer] 11:13:26 AM [vite] (client) [console.warn] Element v4-toggle-switch scheduled an update (generally because a property was set) after an update completed, causing a new update to be scheduled. This is inefficient and should be avoided unless the next update can only be scheduled as a side effect of the previous update. See https://lit.dev/msg/change-in-update for more information.",
-            "[WebServer] 11:13:26 AM [vite] (client) [console.warn] Element v4-range-slider scheduled an update (generally because a property was set) after an update completed, causing a new update to be scheduled. This is inefficient and should be avoided unless the next update can only be scheduled as a side effect of the previous update. See https://lit.dev/msg/change-in-update for more information.",
-            "[WebServer] 11:13:26 AM [vite] (client) [console.warn] Element v4-display-options scheduled an update (generally because a property was set) after an update completed, causing a new update to be scheduled. This is inefficient and should be avoided unless the next update can only be scheduled as a side effect of the previous update. See https://lit.dev/msg/change-in-update for more information.",
-            "[WebServer] 11:13:26 AM [vite] (client) [console.warn] Element v4-dye-filters scheduled an update (generally because a property was set) after an update completed, causing a new update to be scheduled. This is inefficient and should be avoided unless the next update can only be scheduled as a side effect of the previous update. See https://lit.dev/msg/change-in-update for more information.",
-            "[WebServer] 11:13:26 AM [vite] (client) [console.warn] Element v4-share-button scheduled an update (generally because a property was set) after an update completed, causing a new update to be scheduled. This is inefficient and should be avoided unless the next update can only be scheduled as a side effect of the previous update. See https://lit.dev/msg/change-in-update for more information.",
-            "  ok 2 [chromium] › e2e\\swatch-json-palettes.spec.ts:10:3 › loads the Skin palette through the dev server without module errors (847ms)",
-            "  2 passed (5.7s)"
-          ]
+          "skipped": 0
         },
         "existingSwatchSpec": {
           "label": "existing-swatch-spec",
@@ -855,17 +845,7 @@
           "passed": 10,
           "failed": 0,
           "flaky": 0,
-          "skipped": 0,
-          "tail": [
-            "[WebServer] 11:13:47 AM [vite] (client) [console.warn] Element dye-palette-drawer scheduled an update (generally because a property was set) after an update completed, causing a new update to be scheduled. This is inefficient and should be avoided unless the next update can only be scheduled as a side effect of the previous update. See https://lit.dev/msg/change-in-update for more information.",
-            "[WebServer] 11:13:47 AM [vite] (client) [console.warn] Element v4-toggle-switch scheduled an update (generally because a property was set) after an update completed, causing a new update to be scheduled. This is inefficient and should be avoided unless the next update can only be scheduled as a side effect of the previous update. See https://lit.dev/msg/change-in-update for more information.",
-            "[WebServer] 11:13:47 AM [vite] (client) [console.warn] Element v4-range-slider scheduled an update (generally because a property was set) after an update completed, causing a new update to be scheduled. This is inefficient and should be avoided unless the next update can only be scheduled as a side effect of the previous update. See https://lit.dev/msg/change-in-update for more information.",
-            "[WebServer] 11:13:47 AM [vite] (client) [console.warn] Element v4-display-options scheduled an update (generally because a property was set) after an update completed, causing a new update to be scheduled. This is inefficient and should be avoided unless the next update can only be scheduled as a side effect of the previous update. See https://lit.dev/msg/change-in-update for more information.",
-            "[WebServer] 11:13:47 AM [vite] (client) [console.warn] Element v4-dye-filters scheduled an update (generally because a property was set) after an update completed, causing a new update to be scheduled. This is inefficient and should be avoided unless the next update can only be scheduled as a side effect of the previous update. See https://lit.dev/msg/change-in-update for more information.",
-            "[WebServer] 11:13:47 AM [vite] (client) [console.warn] Element v4-share-button scheduled an update (generally because a property was set) after an update completed, causing a new update to be scheduled. This is inefficient and should be avoided unless the next update can only be scheduled as a side effect of the previous update. See https://lit.dev/msg/change-in-update for more information.",
-            "  ok 10 [chromium] › e2e\\swatch-chara-session.spec.ts:226:1 › ignores a lock that a build before 5.12.7 left in storage (1.5s)",
-            "  10 passed (18.8s)"
-          ]
+          "skipped": 0
         },
         "mutationPluginRemoved": {
           "label": "mutation-plugin-removed",
@@ -875,17 +855,7 @@
           "passed": 0,
           "failed": 2,
           "flaky": 0,
-          "skipped": 0,
-          "tail": [
-            "    ────────────────────────────────────────────────────────────────────────────────────────────────",
-            "    Error Context: test-results\\swatch-json-palettes-loads-4b75c-erver-without-module-errors-chromium-retry2\\error-context.md",
-            "  2 failed",
-            "    [chromium] › e2e\\swatch-json-palettes.spec.ts:10:3 › loads the Hair palette through the dev server without module errors ",
-            "    [chromium] › e2e\\swatch-json-palettes.spec.ts:10:3 › loads the Skin palette through the dev server without module errors ",
-            "undefined",
-            "C:\\dev\\XIVProjects\\xivdyetools\\.claude\\worktrees\\xivdyetools-release-tasks-0832b0\\apps\\web-app:\r",
-            "[ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL] Command failed with exit code 1: playwright test \"--project=chromium\" \"--reporter=list\" e2e/swatch-json-palettes.spec.ts"
-          ]
+          "skipped": 0
         },
         "treeRestoredAfterMutation": true,
         "productionBundle": {
