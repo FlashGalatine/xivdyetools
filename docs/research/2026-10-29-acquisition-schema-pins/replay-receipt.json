@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-29",
+  "baseline": "13c386e5983fe58ff17ac08fb5712239feb2e696",
+  "teamcraftCommit": "acc77d406cc50a78caf0210f805ec7b069607af0",
+  "xivapiVersion": "0874aee069e1e7c4",
+  "xivapiSchema": "exdschema@2:rev:e773c41a90aed788cf4c1c48469fa85618ef01fb",
+  "equippableItems": 29058,
+  "acquisitionLines": 24922,
+  "facewearVariants": 732,
+  "outputs": [
+    {
+      "file": "acquisition.en.json",
+      "bytes": 1329924,
+      "sha256": "82d84db1641e7b15b9a27637378c129df337e61365039418163348d51f30dbe8",
+      "baseSourceCaptureReplayEqual": true
+    },
+    {
+      "file": "facewear-unlocks.json",
+      "bytes": 8678,
+      "sha256": "3cbfe509b79ad340ad28fa5acecf0ae52def06958eac3595299c2f02ed5a464d",
+      "baseSourceCaptureReplayEqual": true
+    }
+  ],
+  "metadataOnlyAddsVerifiedSchema": true,
+  "cache": {
+    "entries": 430,
+    "xivapi": 411,
+    "teamcraft": 19,
+    "cursors": 58,
+    "allImmutableRequestsAndResponsePinsValidated": true
+  },
+  "offlineReplayWithFetchForbidden": true,
+  "lateReviewSchemaConflict": {
+    "actualCliExit": 1,
+    "allSentinelOutputsPreserved": true,
+    "cacheRestored": true
+  },
+  "limits": [
+    "Full raw inputs remain local temporary artifacts, not committed.",
+    "Metadata schema describes this verified regeneration, not proof of the historical schema.",
+    "Upstream failures are guarded; filesystem writes are not transactional."
+  ]
+}
