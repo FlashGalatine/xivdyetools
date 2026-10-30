@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.16.5] - 2026-10-29
+
+### Changed
+
+- Conditional Core 6/SVG adoption; preserve inspection-worker protocol, matching and bundle budget.
+- Source preparation only: preserve the earlier release, registry and consumer-acceptance gates.
+  Merging waits until October 30 or later, satisfied prerequisites and new explicit authorization; publication, deployment and activation remain held.
+
 ## [5.16.4] - 2026-10-28
 
 ### Fixed
