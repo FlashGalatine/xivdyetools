@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Source preparation only: preserve the earlier release, registry and consumer-acceptance gates.
   Merging waits until October 30 or later, satisfied prerequisites and new explicit authorization; publication, deployment and activation remain held.
 
+### Fixed
+
+- Restore Hair and Skin palette loading in Vite development after Core adopted native JSON import attributes. A client-only transform adapts two compiled Core modules during `vite dev`, retaining native Node imports, lazy loading, source maps and production chunking. Regression tests assert actual race-specific colors and reject live module errors.
+
 ## [5.16.4] - 2026-10-28
 
 ### Fixed
