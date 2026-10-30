@@ -4,7 +4,7 @@
 
 **Single source of truth for all XIV Dye Tools project versions**
 
-*Last Updated: October 29, 2026*
+*Last Updated: October 30, 2026*
 
 > **Versions below match each project's `package.json` in this checkout** and are checked
 > against it by `pnpm docs:check-versions` (`scripts/check-doc-versions.ts`, run in CI), so
@@ -33,7 +33,7 @@
 | **OAuth Worker** | v3.2.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.8.2 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
 | **Public REST API** | v0.21.2 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
-| **OpenGraph Worker** | v2.12.3 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
+| **OpenGraph Worker** | v2.12.4 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.3.5 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
 | **API Documentation** | — | merged into `xivdyetools-api-worker` (`docs/`, Workers Static Assets) | Cloudflare Workers | Merged 2026-07-31 |
@@ -450,6 +450,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v2.12.4 | Oct 2026 | Conditional F-OG source: locale-aware regional glyph selection, real route/font regression tests and new cache identity; release and deployed acceptance held |
 | v2.12.3 | Oct 2026 | Conditional Core 6/SVG adoption; preserve card rendering and advance the app-version cache identity; registry/publication/consumer acceptance held |
 | v2.12.2 | Oct 2026 | A-OG-COPY: default Harmony subtitles say ten types in all six languages; new Worker cache version retires prior beta cards |
 | v2.12.1 | Oct 2026 | SVG 4.4.1: default-card text fitting is linear with unchanged content, font measurements, layout and routes |
@@ -746,7 +747,7 @@ and the [rollout runbook](operations/security-remediation-2026-09-15.md) for the
 | xivdyetools-stoat-worker v0.3.5 | @xivdyetools/bot-logic v5.0.0; @xivdyetools/logger v2.4.0; @xivdyetools/types v3.3.0 | Conditional M source; not dependency isolation; publication, acceptance and activation held |
 | xivdyetools-moderation-worker v1.9.1 | @xivdyetools/auth v3.0.0; @xivdyetools/bot-logic v5.0.0; @xivdyetools/logger v2.4.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Conditional M source; not dependency isolation; publication, acceptance and activation held |
 | xivdyetools-discord-worker v5.9.8 | @xivdyetools/auth v3.0.0; @xivdyetools/bot-logic v5.0.0; @xivdyetools/svg v4.4.2; @xivdyetools/core v6.0.0; @xivdyetools/logger v2.4.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Conditional M source; not dependency isolation; publication, acceptance and activation held |
-| xivdyetools-og-worker v2.12.3 | @xivdyetools/core v6.0.0; @xivdyetools/svg v4.4.2; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Conditional M source; not dependency isolation; publication, acceptance and activation held |
+| xivdyetools-og-worker v2.12.4 | @xivdyetools/core v6.0.0; @xivdyetools/svg v4.4.2; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Conditional M source; not dependency isolation; publication, acceptance and activation held |
 | xivdyetools-web-app v5.16.5 | @xivdyetools/core v6.0.0; @xivdyetools/logger v2.4.0; @xivdyetools/svg v4.4.2; @xivdyetools/types v3.3.0 | Conditional M source; not dependency isolation; publication, acceptance and activation held |
 | xivdyetools-api-worker v0.21.2 | @xivdyetools/core v6.0.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Conditional M source; not dependency isolation; publication, acceptance and activation held |
 | @xivdyetools/bot-logic v5.0.0 | @xivdyetools/core v6.0.0; @xivdyetools/svg v4.4.2; @xivdyetools/types v3.3.0 | Conditional M source; not dependency isolation; publication, acceptance and activation held |
