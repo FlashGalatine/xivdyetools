@@ -2,6 +2,12 @@
 
 ---
 
+## Web-App Version 5.16.1 — October 29, 2026
+
+### Easier scrolling
+- **The main scrollbar sits at the edge.** The empty gap beside it is gone, and long tool pages still scroll all the way to the bottom on desktop and mobile.
+- **The Dye Mixer's extra scrollbar is gone.** Matching dyes scroll with the page, while Options and the Color Palette keep their own scrolling.
+
 ## Web-App Version 5.16.0 — October 26, 2026
 
 ### Swatch Matcher and Glamour Reader: a new character-file reader

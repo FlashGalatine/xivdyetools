@@ -31,6 +31,11 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.12.1] - 2026-10-29
+### Easier scrolling
+- Web app: the main scrollbar now sits against the edge of the content area, removing the empty gap beside it.
+- Web app: the Dye Mixer shows one main scrollbar, with Options and the Color Palette still scrolling independently.
+
 ## [5.12.0] - 2026-10-26
 ### 🗂️ A new character-file reader
 - Web app and Discord bot: a character file that only holds gear, with no appearance colors, now opens in the Glamour Reader and with `/glamour`.

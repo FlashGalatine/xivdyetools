@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.16.1] - 2026-10-29
+
+### Fixed
+
+- Main-content scrollbars sat inside the shell's 24px padding because each tool panel, including Community Presets, created a second scroll container (#368). Let the shell own scrolling and let the tool wrapper grow with its content. The scrollbar now meets the content-pane edge, including the window edge when the palette is closed. Preserve content padding and print expansion.
+- The Dye Mixer restored an inner `height: 100%` / `overflow-y: auto` panel after shell layout, producing a second scrollbar from just 3–5px of overflow. Let the panel grow in the shell, keeping all matching results reachable and Options/Color Palette scrolling independent.
+- Add browser regression checks for desktop palette states, mobile scrolling, bottom-content reachability, the Mixer's single scroll owner with all result details enabled, and the sidebar-free reader's print layout.
+
 ## [5.16.0] - 2026-10-26
 
 The web half of the `xivcharakit` integration (Tasks 4-5 of the 2026-10-22 plan), on core 5.15.0.
