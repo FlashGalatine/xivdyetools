@@ -300,6 +300,10 @@ an earlier minor candidate require refreshed artifact/consumer verification ther
 
 Cut 01, then e-00; cut 02; cut 03, then #393; cuts 04, 05, 05a and 06, then #401; retarget e-02 to `main` (its diff is then the text selection alone); the app cuts; cut 12, then e-03. e-01 is verification evidence and is not merged. Hold every package-triggered production run and approve nothing implicitly.
 
+### #390 after this reconciliation
+
+[#390](https://github.com/FlashGalatine/xivdyetools/pull/390) is still open, ready for review (not a draft) and targets `main`, and it carries a Core 5.15.1 bump and a root `CHANGELOG-laymans.md` entry. Its content is now carried by [#409](https://github.com/FlashGalatine/xivdyetools/pull/409) for the earlier minors and by [#404](https://github.com/FlashGalatine/xivdyetools/pull/404) for the Core 6 line, so it is superseded. Merged as it stands it would start the production workflows its paths match (held only by the environment approval), send the root announcement (which that approval does not hold) and collide with the 5.16.0 chain. Converting it to a draft or closing it as superseded is the maintainer's decision; this reconciliation did not touch it.
+
 ### Image hold
 
 The Cloudflare Community inquiry on the preview CPU ceiling (topic 974619) had one post and no replies when read on 2026-10-30 at 13:00 UTC. The Image CPU, memory and manual gates are unchanged and remain open.
