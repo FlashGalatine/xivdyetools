@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Manual Stain discovery/comparison (`audit:dyes`, issue #322).** Enumerates the complete XIVAPI sheet with canonical pins and bounded requests, then saves raw evidence and review-only JSON/Markdown reports. Verified offline replay preserves all six local locale sources and existing identity mappings. Builds and runtime dye access keep their existing offline behavior. The private scripts are covered by dedicated type/lint checks and fixture/subprocess tests. No dye values or public exports change.
 
+## [5.15.1] - 2026-10-29
+
+### Fixed
+
+- **Authoritative dye names from XIVAPI `Stain.Name` (issue #322).** Correct 118 German names and capitalize all 125 French names to match the game. Refresh the four global-language CSV columns from a complete pinned capture, retaining the generator's whitespace normalization. Japanese and English display names, regional Korean/Chinese names, stable identities, colors and Facewear are unchanged. The dated capture and per-cell adoption receipt are saved under `docs/research/2026-10-29-dye-name-translations/`.
+
 ## [5.15.0] - 2026-10-26
 
 The first half of the `xivcharakit` integration (Tasks 1-3 of the 2026-10-22 plan). MINOR: new
