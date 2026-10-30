@@ -180,17 +180,8 @@ export type {
 export { SOCIAL_LINKS, PRODUCT_LINKS } from './config/product-links.js';
 export type { /** @public */ ProductLink } from './config/product-links.js';
 
-// .chara character-file import (5.0 Swatch Matcher; parse rules live in core)
-export { parseCharaFile } from './services/chara/chara-parser.js';
+// .chara character-file import: shared live contracts and admission limit
 export { MAX_CHARA_FILE_BYTES } from './services/chara/chara-limits.js';
-export type {
-  /** @public */
-  ParsedCharaFile,
-  /** @public */
-  CharaColorSlotRaw,
-  /** @public */
-  CharaGearDye,
-} from './services/chara/chara-parser.js';
 export type {
   CharaSlotId,
   /** @public */
@@ -198,12 +189,8 @@ export type {
   /** @public */
   CharaSlotInertReason,
 } from './services/chara/chara-types.js';
-export {
-  resolveCharaColors,
-  /** @public */ OFF_GRID_DELTA_E2000,
-} from './services/chara/chara-resolver.js';
 // Equipment model identity (packing helpers shared by api-worker's resolver
-// and the web-app client; the live facade and legacy parser emit the keys,
+// and the web-app client; the live facade emits the keys,
 // while item resolution stays outside core)
 export {
   /** @public */ gearModelKey,

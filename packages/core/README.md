@@ -465,9 +465,11 @@ character result. A palette-free worker can import the reader and
 `resolveCharaWithProvider(inspection, provider, dyeLookup?)` from `@xivdyetools/core/chara`.
 Producer and nickname labels retain a 256 UTF-16-unit cap without splitting a surrogate pair.
 
-The legacy `parseCharaFile` / `resolveCharaColors` pair and its legacy-only types are deprecated
-in 5.16.0, with removal reserved for 6.0.0 after the migration gates in
-[DEPRECATIONS.md](../../DEPRECATIONS.md). Existing exports and legacy behavior remain available.
+This conditional Core 6 source removes `parseCharaFile`, `resolveCharaColors`,
+`OFF_GRID_DELTA_E2000`, `ParsedCharaFile`, `CharaColorSlotRaw` and `CharaGearDye`.
+Migrate to the current reader/facade/provider APIs above. The earlier 5.16.0 deprecation
+release, external consumer review and acceptance gates in [DEPRECATIONS.md](../../DEPRECATIONS.md)
+remain open; this source preparation does not authorize publication or deployment.
 The shared size limit and live slot/result types keep their public names; callers do not need
 new import paths. See the [integration notes](../../docs/research/2026-10-22-xivcharakit-integration.md)
 when migrating between the legacy and current result/diagnostic contracts.

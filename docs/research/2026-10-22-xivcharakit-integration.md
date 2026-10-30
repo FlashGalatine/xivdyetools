@@ -9,6 +9,10 @@ expectation changed), and the corpus aggregate is recorded below. The
 plan this register serves is
 `docs/superpowers/plans/2026-10-22-xivdyetools-integration.md` in the XIVCharaKit repository.
 
+**Status (2026-10-29, conditional M preparation):** Core 6 source retires the executable host
+comparison half and preserves all 261 library cases. Publication and consumer acceptance remain held.
+The measurements below remain the historical Task 1 register.
+
 ## Baseline
 
 | Item | Value |

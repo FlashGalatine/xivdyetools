@@ -1,15 +1,13 @@
 /**
- * Compatibility parity between the legacy .chara import (`parseCharaFile` + `resolveCharaColors`) and
- * XIVCharaKit (`readChara` → `inspectChara` → `resolveAppearance`), case by case.
+ * Library regression cases for XIVCharaKit (readChara -> inspectChara -> resolveAppearance).
  *
- * Each case carries a hand-written expectation for BOTH sides and a classification: `preserved` (the
- * new import reads the document the way the host does today) or `intentional` (a decided change; the
- * library side is the new behavior). Expected values are literals derived from the plan, the library's
- * api.md / compatibility.md and the host source, never a snapshot of one implementation's output.
- * The register in docs/research/2026-10-22-xivcharakit-integration.md is built from this table.
+ * This corpus began as a comparison with the retired host parser and resolver. Case titles,
+ * classifications and notes retain that historical comparison and its source references; only the
+ * library expectations execute now. The hand-written document and library expectation for every
+ * case remain the compatibility register in docs/research/2026-10-22-xivcharakit-integration.md.
  *
- * The library half uses the library's bundled palette provider, a test-only import that matches the
- * application bridge on all 26,496 creator and shader requests.
+ * The library uses its bundled palette provider, a test-only import that matches the application
+ * bridge on all 26,496 creator and shader requests.
  */
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -23,54 +21,11 @@ import {
   type PaletteRequest,
 } from 'xivcharakit/palettes';
 import { resolveAppearance } from 'xivcharakit/appearance';
-import { AppError } from '@xivdyetools/types';
-import { parseCharaFile, type CharaSlotId, type CharaGearSlotId } from '../chara-parser.js';
-import { resolveCharaColors } from '../chara-resolver.js';
-import { CharacterColorService } from '../../CharacterColorService.js';
-import { DyeService } from '../../DyeService.js';
-import dyeData from '../../../data/dyes.json' with { type: 'json' };
+import type { CharaSlotId, CharaGearSlotId } from '../chara-types.js';
 
 // ---------------------------------------------------------------- case schema
 
 type Classification = 'preserved' | 'intentional';
-
-interface HostSlotExpect {
-  verdict?: 'index' | 'offGrid' | 'floatOnly' | 'inert' | 'error';
-  /** Use `null` to assert that no inert reason is set. */
-  inertReason?: 'highlightsDisabled' | 'facePaintNone' | 'furPattern' | 'noLip' | null;
-  errorCode?: 'midRangeIndex' | 'indexOutOfRange' | 'noTribe';
-  index?: number | null;
-  sheetIndex?: number | null;
-  sheetVariant?: 'dark' | 'light' | null;
-  kind?: string;
-  indexHex?: string | null;
-  floatHex?: string | null;
-  alpha?: number | null;
-  blendHex?: string | null;
-  indexWinNote?: 'extendedMissing' | null;
-  /** `null` = no delta was computed; `{ max }` = computed and at most `max`; `{ min }` = at least `min`. */
-  deltaE?: null | { max: number } | { min: number };
-}
-
-interface HostExpect {
-  /** The legacy parser refuses the whole file; the message must match. */
-  refused?: string | RegExp;
-  race?: string | null;
-  tribe?: string | null;
-  gender?: string | null;
-  producer?: string | null;
-  /** The tribe string exactly as the file spelled it. */
-  tribeRaw?: string | null;
-  extendedValid?: boolean;
-  extendedDeclared?: boolean;
-  eyesShareIndex?: boolean;
-  glassesId?: number | null;
-  slots?: Partial<Record<CharaSlotId, HostSlotExpect>>;
-  /** Exact list, in the parser's emission order. */
-  gearDyes?: { slot: CharaGearSlotId; channel: 1 | 2; stainId: number }[];
-  /** Exact list, in the parser's emission order. */
-  gearModels?: { slot: CharaGearSlotId; set?: number; base: number; variant: number }[];
-}
 
 type FieldExpect = {
   state: 'absent' | 'null' | 'valid' | 'invalid' | 'unsupported';
@@ -176,7 +131,6 @@ interface ParityCase {
   provider?: 'bundled' | 'gray' | 'noShader' | 'noCreator' | 'tagged';
   /** Library appearance policy overrides. */
   policy?: { historicalEyeCorrection?: boolean; offGridDeltaE?: number; eyeMatchDeltaE?: number };
-  host: HostExpect;
   lib: LibExpect;
 }
 
@@ -228,79 +182,7 @@ const squared = (hex: string, alpha?: number): string => {
 const upper = (v: string | null | undefined): string | null | undefined =>
   typeof v === 'string' ? v.toUpperCase() : v;
 
-// ------------------------------------------------------------------ host runner
-
-const colors = new CharacterColorService();
-const dyes = new DyeService(dyeData);
-
 const text = (c: ParityCase): string => (typeof c.doc === 'string' ? c.doc : JSON.stringify(c.doc));
-
-async function runHost(c: ParityCase) {
-  try {
-    const parsed = parseCharaFile(text(c));
-    const resolved = await resolveCharaColors(parsed, colors, dyes);
-    return { ok: true as const, parsed, resolved };
-  } catch (error) {
-    return { ok: false as const, error };
-  }
-}
-
-function assertHost(c: ParityCase, result: Awaited<ReturnType<typeof runHost>>): void {
-  const want = c.host;
-  if (want.refused !== undefined) {
-    expect(result.ok, `${c.id}: the legacy parser should refuse this file`).toBe(false);
-    if (result.ok) return;
-    expect(result.error).toBeInstanceOf(AppError);
-    const message = (result.error as Error).message;
-    if (typeof want.refused === 'string') expect(message).toContain(want.refused);
-    else expect(message).toMatch(want.refused);
-    return;
-  }
-  if (!result.ok) throw result.error;
-  const { parsed, resolved } = result;
-  if (want.race !== undefined) expect(resolved.race).toBe(want.race);
-  if (want.tribe !== undefined) expect(resolved.tribe).toBe(want.tribe);
-  if (want.gender !== undefined) expect(resolved.gender).toBe(want.gender);
-  if (want.producer !== undefined) expect(resolved.producer).toBe(want.producer);
-  if (want.tribeRaw !== undefined) expect(parsed.tribeRaw).toBe(want.tribeRaw);
-  if (want.extendedValid !== undefined) expect(resolved.extendedValid).toBe(want.extendedValid);
-  if (want.extendedDeclared !== undefined)
-    expect(resolved.extendedDeclared).toBe(want.extendedDeclared);
-  if (want.eyesShareIndex !== undefined) expect(resolved.eyesShareIndex).toBe(want.eyesShareIndex);
-  if (want.glassesId !== undefined) expect(resolved.glassesId).toBe(want.glassesId);
-  if (want.gearDyes !== undefined) expect(parsed.gearDyes).toEqual(want.gearDyes);
-  if (want.gearModels !== undefined) expect(parsed.gearModels).toEqual(want.gearModels);
-  for (const [slotId, slotWant] of Object.entries(want.slots ?? {}) as [
-    CharaSlotId,
-    HostSlotExpect,
-  ][]) {
-    const got = resolved.slots.find((s) => s.slot === slotId);
-    expect(got, `${c.id}: slot ${slotId} missing from the resolved character`).toBeDefined();
-    if (!got) continue;
-    const at = `${c.id} host ${slotId}`;
-    if (slotWant.verdict !== undefined) expect(got.verdict, `${at} verdict`).toBe(slotWant.verdict);
-    if (slotWant.inertReason !== undefined)
-      expect(got.inertReason ?? null, `${at} inertReason`).toBe(slotWant.inertReason);
-    if (slotWant.errorCode !== undefined)
-      expect(got.error?.code, `${at} error`).toBe(slotWant.errorCode);
-    if (slotWant.index !== undefined) expect(got.index, `${at} index`).toBe(slotWant.index);
-    if (slotWant.sheetIndex !== undefined)
-      expect(got.sheetIndex, `${at} sheetIndex`).toBe(slotWant.sheetIndex);
-    if (slotWant.sheetVariant !== undefined)
-      expect(got.sheetVariant, `${at} sheetVariant`).toBe(slotWant.sheetVariant);
-    if (slotWant.kind !== undefined) expect(got.kind, `${at} kind`).toBe(slotWant.kind);
-    if (slotWant.indexHex !== undefined)
-      expect(upper(got.indexHex), `${at} indexHex`).toBe(upper(slotWant.indexHex));
-    if (slotWant.floatHex !== undefined)
-      expect(upper(got.floatHex), `${at} floatHex`).toBe(upper(slotWant.floatHex));
-    if (slotWant.alpha !== undefined) expect(got.alpha, `${at} alpha`).toBe(slotWant.alpha);
-    if (slotWant.blendHex !== undefined)
-      expect(upper(got.blendHex), `${at} blendHex`).toBe(upper(slotWant.blendHex));
-    if (slotWant.indexWinNote !== undefined)
-      expect(got.indexWinNote ?? null, `${at} indexWinNote`).toBe(slotWant.indexWinNote);
-    if (slotWant.deltaE !== undefined) assertDelta(got.deltaE, slotWant.deltaE, `${at} deltaE`);
-  }
-}
 
 function assertDelta(
   got: number | null,
@@ -316,7 +198,7 @@ function assertDelta(
 
 // ----------------------------------------------------------------- registration
 
-/** Case-table sanity: unique ids, both sides asserted, no vacuous case. */
+/** Case-table sanity: unique ids and a non-vacuous library expectation for every case. */
 function registerIntegrityTests(cases: ParityCase[]): void {
   describe('[register] case table', () => {
     it('has unique ids of the form AREA-NN', () => {
@@ -324,20 +206,11 @@ function registerIntegrityTests(cases: ParityCase[]): void {
       expect(new Set(ids).size).toBe(ids.length);
       for (const id of ids) expect(id).toMatch(/^[A-Z]{2,5}-\d{2}$/);
     });
-    it('asserts something on both sides of every case', () => {
+    it('asserts something on the library side of every case', () => {
       for (const c of cases) {
-        expect(Object.keys(c.host).length, `${c.id} host`).toBeGreaterThan(0);
         expect(Object.keys(c.lib).length, `${c.id} lib`).toBeGreaterThan(0);
         expect(c.note.length, `${c.id} note`).toBeGreaterThan(20);
       }
-    });
-  });
-}
-
-function registerHostTests(cases: ParityCase[]): void {
-  describe('[host] legacy parseCharaFile + resolveCharaColors', () => {
-    it.each(cases.map((c) => [`${c.id} ${c.title}`, c] as const))('%s', async (_name, c) => {
-      assertHost(c, await runHost(c));
     });
   });
 }
@@ -542,13 +415,6 @@ const idnCasesSection: ParityCase[] = (() => {
       classification: 'preserved',
       blocksIfDiverges: true,
       note: 'Host TRIBE_MAP maps Helion to Helions and keeps tribeRaw "Helion"; library tribeAliases maps Helion to Helions with raw "Helion" kept (compatibility.md "Legacy Helion alias"). Canonical race Hrothgar must then reach the lip: host inerts it as furPattern, library sets indexMeaning furPattern/inactive. A missing alias blocks adoption. This is the one Hrothgar fur-pattern lip case of the IDN section (ACT-25..27 own the rest).',
-      host: {
-        tribe: 'Helions',
-        tribeRaw: 'Helion',
-        race: 'Hrothgar',
-        gender: 'Male',
-        slots: { lip: { verdict: 'inert', inertReason: 'furPattern' } },
-      },
       lib: {
         identity: {
           tribe: { state: 'valid', value: 'Helions', raw: 'Helion' },
@@ -574,12 +440,6 @@ const idnCasesSection: ParityCase[] = (() => {
       classification: 'preserved',
       blocksIfDiverges: true,
       note: 'Tribe determines race on both sides (host SUBRACE_TO_RACE; library RACES[floor(TRIBES.indexOf/2)]). Skin 20 Midlander Masculine is #AB8C71 (Feminine #AE9174, Highlander Masculine #A1846B), so the hex pins tribe AND gender reaching the palette. Wrong tribe-to-race mapping breaks skin/hair, hence blocking.',
-      host: {
-        race: 'Hyur',
-        tribe: 'Midlander',
-        gender: 'Male',
-        slots: { skin: { verdict: 'index', indexHex: '#AB8C71' } },
-      },
       lib: {
         identity: {
           canonicalRace: 'Hyur',
@@ -606,12 +466,6 @@ const idnCasesSection: ParityCase[] = (() => {
       classification: 'preserved',
       blocksIfDiverges: true,
       note: 'Duskwight is TRIBES[3], race index 1 = Elezen on the library side; host SUBRACE_TO_RACE agrees. Skin 20 Duskwight Feminine is #A09E86 (Masculine #9F9984, Wildwood Feminine #AF8D71).',
-      host: {
-        race: 'Elezen',
-        tribe: 'Duskwight',
-        gender: 'Female',
-        slots: { skin: { verdict: 'index', indexHex: '#A09E86' } },
-      },
       lib: {
         identity: {
           canonicalRace: 'Elezen',
@@ -630,12 +484,6 @@ const idnCasesSection: ParityCase[] = (() => {
       doc: { Race: 'Lalafel', Tribe: 'Dunesfolk', Gender: 'Feminine', Skintone: 20 },
       classification: 'preserved',
       note: 'Host derives Lalafell from the tribe and never reads Race. Library raceAliases maps Lalafel to Lalafell (raw "Lalafel" kept), so Race is valid and equals the tribe race: no RACE_TRIBE_MISMATCH. Skin 20 Dunesfolk Feminine is #AB8D70 (Dunesfolk/Plainsfolk Masculine #A69371). Non-blocking: the Race alias beside a valid Tribe only decides the mismatch diagnostic, never canonicalRace.',
-      host: {
-        race: 'Lalafell',
-        tribe: 'Dunesfolk',
-        gender: 'Female',
-        slots: { skin: { verdict: 'index', indexHex: '#AB8D70' } },
-      },
       lib: {
         identity: {
           canonicalRace: 'Lalafell',
@@ -654,12 +502,6 @@ const idnCasesSection: ParityCase[] = (() => {
       doc: { Race: 'Miqote', Tribe: 'KeeperOfTheMoon', Gender: 'Masculine', Skintone: 20 },
       classification: 'preserved',
       note: 'Library raceAliases maps Miqote to Miqo\'te (valid, raw "Miqote" kept, equal to the tribe race, so no mismatch); host derives Miqo\'te from the tribe. Skin 20 KeeperOfTheMoon Masculine is #A79F9A (Feminine #A8A69F, SeekerOfTheSun Masculine #A47D63). Non-blocking: the Race alias beside a valid Tribe only decides the mismatch diagnostic.',
-      host: {
-        race: "Miqo'te",
-        tribe: 'KeeperOfTheMoon',
-        gender: 'Male',
-        slots: { skin: { verdict: 'index', indexHex: '#A79F9A' } },
-      },
       lib: {
         identity: {
           canonicalRace: "Miqo'te",
@@ -679,12 +521,6 @@ const idnCasesSection: ParityCase[] = (() => {
       classification: 'preserved',
       blocksIfDiverges: true,
       note: 'Hellsguard is TRIBES[9], race index 4 = Roegadyn; host agrees. Skin 20 Hellsguard Feminine is #8D7771 (Masculine #937C74, SeaWolf Feminine #909F7E).',
-      host: {
-        race: 'Roegadyn',
-        tribe: 'Hellsguard',
-        gender: 'Female',
-        slots: { skin: { verdict: 'index', indexHex: '#8D7771' } },
-      },
       lib: {
         identity: {
           canonicalRace: 'Roegadyn',
@@ -702,15 +538,6 @@ const idnCasesSection: ParityCase[] = (() => {
       doc: { Race: 'AuRa', Tribe: 'Xaela', Gender: 'Masculine', Skintone: 20, LimbalEyes: 3 },
       classification: 'preserved',
       note: 'Host race type is AuRa; library canonical race is "Au Ra" (the adapter maps it back, plan contract). raceAliases maps AuRa to Au Ra (raw "AuRa" kept), so no mismatch. Au Ra makes LimbalEyes a limbal ring on both sides (host kind via race AuRa, library via canonicalRace Au Ra). Skin 20 Xaela Masculine is #575266 (Feminine #7A4544, Raen Masculine #6B3E3A). Non-blocking: the Race alias beside a valid Tribe only decides the mismatch diagnostic.',
-      host: {
-        race: 'AuRa',
-        tribe: 'Xaela',
-        gender: 'Male',
-        slots: {
-          skin: { verdict: 'index', indexHex: '#575266' },
-          limbal: { kind: 'limbal', verdict: 'index', indexHex: '#B3B3B3' },
-        },
-      },
       lib: {
         identity: {
           canonicalRace: 'Au Ra',
@@ -733,13 +560,6 @@ const idnCasesSection: ParityCase[] = (() => {
       classification: 'preserved',
       blocksIfDiverges: true,
       note: 'The plural Helions is the canonical spelling (TRIBES[12], race index 6 = Hrothgar), so the alias of IDN-01 must not swallow it: tribe raw stays "Helions" on both sides. Skin 20 Helions is #473523 (TheLost #6C6C6C). The fur-pattern lip is pinned once, in IDN-01.',
-      host: {
-        race: 'Hrothgar',
-        tribe: 'Helions',
-        tribeRaw: 'Helions',
-        gender: 'Male',
-        slots: { skin: { verdict: 'index', indexHex: '#473523' } },
-      },
       lib: {
         identity: {
           canonicalRace: 'Hrothgar',
@@ -757,12 +577,6 @@ const idnCasesSection: ParityCase[] = (() => {
       classification: 'preserved',
       blocksIfDiverges: true,
       note: 'TheLost is TRIBES[13], race index 6 = Hrothgar. Skin 20 TheLost is #6C6C6C (Helions #473523), so the hex pins the tribe reaching the palette. Tribe-to-race/palette mapping for the sixteen tribes is a required contract, hence blocking.',
-      host: {
-        race: 'Hrothgar',
-        tribe: 'TheLost',
-        gender: 'Female',
-        slots: { skin: { verdict: 'index', indexHex: '#6C6C6C' } },
-      },
       lib: {
         identity: {
           canonicalRace: 'Hrothgar',
@@ -786,15 +600,6 @@ const idnCasesSection: ParityCase[] = (() => {
       classification: 'preserved',
       blocksIfDiverges: true,
       note: 'Rava is TRIBES[14], race index 7 = Viera. Skin 20 Rava is #694B3D (Veena #DAAA8C). A non-Hrothgar race keeps the lip a colour index (host lip not inert; library indexMeaning color, lipsDark[2] #CCCCCC). Lip activation (no Mouth key) is owned by ACT and deliberately not asserted here.',
-      host: {
-        race: 'Viera',
-        tribe: 'Rava',
-        gender: 'Female',
-        slots: {
-          skin: { verdict: 'index', indexHex: '#694B3D' },
-          lip: { verdict: 'index', inertReason: null, indexHex: '#CCCCCC' },
-        },
-      },
       lib: {
         identity: {
           canonicalRace: 'Viera',
@@ -815,12 +620,6 @@ const idnCasesSection: ParityCase[] = (() => {
       classification: 'preserved',
       blocksIfDiverges: true,
       note: 'Veena is TRIBES[15] (the last entry), race index 7 = Viera; an off-by-one in the tribe table would fall off the end. Skin 20 Veena is #DAAA8C (Rava #694B3D).',
-      host: {
-        race: 'Viera',
-        tribe: 'Veena',
-        gender: 'Male',
-        slots: { skin: { verdict: 'index', indexHex: '#DAAA8C' } },
-      },
       lib: {
         identity: {
           canonicalRace: 'Viera',
@@ -838,7 +637,6 @@ const idnCasesSection: ParityCase[] = (() => {
       doc: { Race: 'Hyur', Tribe: 'midlander', Gender: 'Masculine', LEyeColor: 0 },
       classification: 'intentional',
       note: 'Host mapNamed refuses an unrecognised Tribe (exact own-key lookup). Library matching is case-sensitive, so "midlander" is a string with no match = unsupported (UNSUPPORTED_VALUE); compatibility.md: an unsupported Tribe does not permit Race fallback, so canonicalRace stays null although Race "Hyur" is valid. A bad identity does not discard a race-independent colour: eye 0 still resolves to #F7F7F7.',
-      host: { refused: /field Tribe: unrecognised value/ },
       lib: {
         identity: {
           tribe: { state: 'unsupported', raw: 'midlander' },
@@ -860,7 +658,6 @@ const idnCasesSection: ParityCase[] = (() => {
       doc: { Tribe: 12, Gender: 0, Skintone: 20 },
       classification: 'intentional',
       note: 'Host refuses any non-string Tribe (checked before Gender). Library enumeration: Tribe is 1-based (values[12-1] = Xaela), Gender 0-based (values[0] = Masculine). Skin 20 Xaela Masculine #575266 pins both bases: 0-based Tribe would give Helions (#473523), 1-based Gender would give Feminine (#7A4544).',
-      host: { refused: '.chara field Tribe: expected a string, got number' },
       lib: {
         identity: {
           tribe: { state: 'valid', value: 'Xaela', raw: 12 },
@@ -881,7 +678,6 @@ const idnCasesSection: ParityCase[] = (() => {
       doc: { Race: 'Elezen', Tribe: 'Wildwood', Gender: 1, Skintone: 20 },
       classification: 'intentional',
       note: 'Host mapNamed refuses a non-string Gender. Library Gender is 0-based, so 1 = Feminine and skin 20 Wildwood Feminine resolves to #AF8D71 (Masculine #AE876E).',
-      host: { refused: '.chara field Gender: expected a string, got number' },
       lib: {
         identity: {
           gender: { state: 'valid', value: 'Feminine', raw: 1 },
@@ -899,14 +695,6 @@ const idnCasesSection: ParityCase[] = (() => {
       doc: char({ Gender: 'Male', Skintone: 20, HairTone: 5 }),
       classification: 'intentional',
       note: 'REGISTER QUESTION (plan row): host GENDER_MAP accepts "Male"; the library knows only Masculine/Feminine, so "Male" is a string with no match = unsupported, current(gender) is null and resolve.ts gives skin/hair missingTribeGender (MISSING_PALETTE_CONTEXT). Host resolves Wildwood Masculine skin 20 #AE876E and hair 5 #515151.',
-      host: {
-        gender: 'Male',
-        tribe: 'Wildwood',
-        slots: {
-          skin: { verdict: 'index', indexHex: '#AE876E' },
-          hair: { verdict: 'index', indexHex: '#515151' },
-        },
-      },
       lib: {
         identity: {
           gender: { state: 'unsupported', raw: 'Male' },
@@ -936,11 +724,6 @@ const idnCasesSection: ParityCase[] = (() => {
       doc: { Race: 'AuRa', Tribe: 'Xaela', Gender: 'Female', Skintone: 20 },
       classification: 'intentional',
       note: 'REGISTER QUESTION, second spelling: host GENDER_MAP maps "Female" to Female (Xaela Feminine skin 20 #7A4544); library "Female" has no match = unsupported, so skin is missingTribeGender while tribe and canonical race stay valid.',
-      host: {
-        gender: 'Female',
-        race: 'AuRa',
-        slots: { skin: { verdict: 'index', indexHex: '#7A4544' } },
-      },
       lib: {
         identity: {
           gender: { state: 'unsupported', raw: 'Female' },
@@ -963,12 +746,6 @@ const idnCasesSection: ParityCase[] = (() => {
       doc: { Race: 'Lalafel', Gender: 'Feminine', Skintone: 20 },
       classification: 'preserved',
       note: 'No Tribe key: host RACE_FALLBACK_MAP maps Lalafel to Lalafell; library raceAliases does too and raceSource is "race" (Tribe absent permits fallback). Skin needs a tribe on both: host error noTribe, library missingTribeGender with the sheet index kept.',
-      host: {
-        race: 'Lalafell',
-        tribe: null,
-        tribeRaw: null,
-        slots: { skin: { verdict: 'error', errorCode: 'noTribe' } },
-      },
       lib: {
         identity: {
           canonicalRace: 'Lalafell',
@@ -994,7 +771,6 @@ const idnCasesSection: ParityCase[] = (() => {
       doc: { Race: 'Miqote', Gender: 'Masculine', LEyeColor: 0 },
       classification: 'preserved',
       note: "Game enum spelling without the apostrophe: host fallback map Miqote → Miqo'te; library raceAliases Miqote → Miqo'te, raceSource race.",
-      host: { race: "Miqo'te", tribe: null },
       lib: {
         identity: {
           canonicalRace: "Miqo'te",
@@ -1011,11 +787,6 @@ const idnCasesSection: ParityCase[] = (() => {
       doc: { Race: 'AuRa', Gender: 'Feminine', LimbalEyes: 3 },
       classification: 'preserved',
       note: 'Host fallback AuRa → AuRa; library raceAliases AuRa → "Au Ra" (raceSource race). The race alone decides limbal vs tattoo: kind limbal on both, features 3 = #B3B3B3 (no tribe needed). Without the alias the library would report limbalOrTattoo.',
-      host: {
-        race: 'AuRa',
-        tribe: null,
-        slots: { limbal: { kind: 'limbal', verdict: 'index', indexHex: '#B3B3B3' } },
-      },
       lib: {
         identity: {
           canonicalRace: 'Au Ra',
@@ -1033,11 +804,6 @@ const idnCasesSection: ParityCase[] = (() => {
       classification: 'preserved',
       blocksIfDiverges: true,
       note: 'Plan: use the canonical race, not a contradictory declared race. Host never reads Race beside a tribe; library canonicalRace comes from the tribe and, since Race is valid and differs, adds RACE_TRIBE_MISMATCH while keeping declared race Hyur visible. Raen Feminine skin 20 #BB856D; Au Ra makes LimbalEyes a limbal ring.',
-      host: {
-        race: 'AuRa',
-        tribe: 'Raen',
-        slots: { skin: { verdict: 'index', indexHex: '#BB856D' }, limbal: { kind: 'limbal' } },
-      },
       lib: {
         identity: {
           canonicalRace: 'Au Ra',
@@ -1060,11 +826,6 @@ const idnCasesSection: ParityCase[] = (() => {
       doc: { Race: 'Hyuran', Tribe: 'Midlander', Gender: 'Masculine', Skintone: 20 },
       classification: 'preserved',
       note: 'Plan row: an unknown Race never refuses the host file. Library Race "Hyuran" has no match = unsupported (UNSUPPORTED_VALUE), canonicalRace still Hyur from the tribe, and no RACE_TRIBE_MISMATCH because that check requires a valid Race. Skin 20 Midlander Masculine #AB8C71 still resolves.',
-      host: {
-        race: 'Hyur',
-        tribe: 'Midlander',
-        slots: { skin: { verdict: 'index', indexHex: '#AB8C71' } },
-      },
       lib: {
         identity: {
           race: { state: 'unsupported', raw: 'Hyuran' },
@@ -1083,12 +844,6 @@ const idnCasesSection: ParityCase[] = (() => {
       doc: { Race: 'Viera', Tribe: null, Gender: 'Feminine', Skintone: 20 },
       classification: 'preserved',
       note: 'Host mapNamed treats null Tribe as no tribe and reads the Race fallback (Viera). Library Tribe state null permits Race fallback (raceSource race). Skin: host error noTribe, library missingTribeGender.',
-      host: {
-        race: 'Viera',
-        tribe: null,
-        tribeRaw: null,
-        slots: { skin: { verdict: 'error', errorCode: 'noTribe' } },
-      },
       lib: {
         identity: {
           tribe: { state: 'null', raw: null },
@@ -1106,7 +861,6 @@ const idnCasesSection: ParityCase[] = (() => {
       doc: { Race: 'Viera', Tribe: { Name: 'Rava' }, Gender: 'Feminine', LEyeColor: 0 },
       classification: 'intentional',
       note: 'Host mapNamed refuses a non-string Tribe. Library: an object is neither a string nor a 0-255 integer, so the state is invalid (INVALID_FIELD, not UNSUPPORTED_VALUE), and an invalid Tribe does not permit the Race fallback: canonicalRace null.',
-      host: { refused: '.chara field Tribe: expected a string, got object' },
       lib: {
         identity: {
           tribe: { state: 'invalid', raw: { Name: 'Rava' } },
@@ -1125,7 +879,6 @@ const idnCasesSection: ParityCase[] = (() => {
       doc: { Tribe: 'constructor', Gender: 'Feminine', LEyeColor: 0 },
       classification: 'intentional',
       note: 'Host mapNamed uses Object.hasOwn (FINDING-027), so an inherited key is unrecognised and refused. Library looks the string up in a Map and an array, so it never resolves to a prototype member: unsupported, canonicalRace null.',
-      host: { refused: /field Tribe: unrecognised value/ },
       lib: {
         identity: {
           tribe: { state: 'unsupported', raw: 'constructor' },
@@ -1142,7 +895,6 @@ const idnCasesSection: ParityCase[] = (() => {
       doc: { Tribe: '__proto__', Gender: 'Masculine', LEyeColor: 0 },
       classification: 'intentional',
       note: 'Host own-key lookup rejects "__proto__" (no own property on TRIBE_MAP). Library: no alias or TRIBES entry matches, so unsupported and canonicalRace null; it must not resolve to Object.prototype.',
-      host: { refused: /field Tribe: unrecognised value/ },
       lib: {
         identity: {
           tribe: { state: 'unsupported', raw: '__proto__' },
@@ -1160,7 +912,6 @@ const idnCasesSection: ParityCase[] = (() => {
       doc: char({ Mouth: 128, FacePaint: 1, EnableHighlights: true }),
       classification: 'intentional',
       note: 'Plan row: the host needs one of the 15 colour keys and Mouth/FacePaint/EnableHighlights do not count. The library admits any CHARACTER_FIELDS key; every index is absent so each slot stays interpretation unresolved, reason missingColor (no fabricated colour). The controls make highlights/facePaint/lip active true, so none turns inactive.',
-      host: { refused: 'carries no character colour fields' },
       lib: {
         identity: { canonicalRace: 'Elezen', raceSource: 'tribe' },
         slots: {
@@ -1182,7 +933,6 @@ const idnCasesSection: ParityCase[] = (() => {
       doc: { Body: armor(6100, 1, 36, 0) },
       classification: 'intentional',
       note: 'THE equipment-only case of the register (GEA-32 / ENV-07 duplicated it). Plan row: accept a supported character document, keep valid gear usable, and keep unresolved appearance explicit. Body is a CHARACTER_FIELDS key, so readChara admits it; a complete uint16 armor model (no set lane) with base > 0 is worn. No identity: canonicalRace null, limbal kind limbalOrTattoo, lip indexMeaning unknown. Every index is absent, so each slot returns missingColor at resolve.ts before any palette request or context check: no colour is fabricated and MISSING_PALETTE_CONTEXT is never raised.',
-      host: { refused: 'carries no character colour fields' },
       lib: {
         identity: {
           canonicalRace: null,
@@ -1218,7 +968,6 @@ const idnCasesSection: ParityCase[] = (() => {
       doc: { Race: 'Viera', Tribe: 0, Gender: 'Feminine', LEyeColor: 0 },
       classification: 'intentional',
       note: 'Host refuses any non-string Tribe. Library Tribe is 1-based, so 0 reads values[-1] = undefined; 0 is a 0-255 integer, so the state is unsupported (UNSUPPORTED_VALUE, not INVALID_FIELD) and an unsupported Tribe permits no Race fallback: canonicalRace null although Race Viera is valid. A 0-based reader would call it Midlander/Hyur. Plan row: preserve valid independent appearance, do not guess missing context.',
-      host: { refused: '.chara field Tribe: expected a string, got number' },
       lib: {
         identity: {
           tribe: { state: 'unsupported', raw: 0 },
@@ -1237,7 +986,6 @@ const idnCasesSection: ParityCase[] = (() => {
       doc: { Tribe: 16, Gender: 0, Skintone: 20 },
       classification: 'intentional',
       note: 'Host refuses a numeric Tribe. Library: values[16-1] = TRIBES[15] = Veena, race index 7 = Viera; a 0-based reader would fall off the table (unsupported). Skin 20 Veena Masculine is #DAAA8C (Rava #694B3D). The plan row approves the library accepting numeric enums.',
-      host: { refused: '.chara field Tribe: expected a string, got number' },
       lib: {
         identity: {
           tribe: { state: 'valid', value: 'Veena', raw: 16 },
@@ -1256,7 +1004,6 @@ const idnCasesSection: ParityCase[] = (() => {
       doc: { Race: 'Viera', Tribe: 17, Gender: 'Feminine', LEyeColor: 0 },
       classification: 'intentional',
       note: 'Host refuses a numeric Tribe. Library: values[16] is undefined and 17 is a 0-255 integer, so unsupported (UNSUPPORTED_VALUE); no Race fallback, canonicalRace null. Catches a reader that clamps or wraps the index.',
-      host: { refused: '.chara field Tribe: expected a string, got number' },
       lib: {
         identity: {
           tribe: { state: 'unsupported', raw: 17 },
@@ -1274,7 +1021,6 @@ const idnCasesSection: ParityCase[] = (() => {
       doc: { Race: 'Viera', Tribe: 256, Gender: 'Feminine', LEyeColor: 0 },
       classification: 'intentional',
       note: 'Host refuses a numeric Tribe. Library: no table entry and isUint(256, 255) is false, so the value cannot be a producer byte: state invalid with INVALID_FIELD (inspect.ts field(): unsupported only for a string or 0-255 integer). No Race fallback.',
-      host: { refused: '.chara field Tribe: expected a string, got number' },
       lib: {
         identity: { tribe: { state: 'invalid', raw: 256 }, canonicalRace: null, raceSource: null },
         issues: [{ code: 'INVALID_FIELD', path: ['Tribe'] }],
@@ -1288,7 +1034,6 @@ const idnCasesSection: ParityCase[] = (() => {
       doc: { Race: 'Viera', Tribe: 1.5, Gender: 'Feminine', LEyeColor: 0 },
       classification: 'intentional',
       note: 'Host refuses a numeric Tribe. Library enumeration decodes numbers only when Number.isInteger, and isUint rejects a fraction, so 1.5 is invalid (INVALID_FIELD), not floored to values[0] = Midlander; no Race fallback. Plan row: do not silently coerce invalid values.',
-      host: { refused: '.chara field Tribe: expected a string, got number' },
       lib: {
         identity: { tribe: { state: 'invalid', raw: 1.5 }, canonicalRace: null, raceSource: null },
         issues: [{ code: 'INVALID_FIELD', path: ['Tribe'] }],
@@ -1302,7 +1047,6 @@ const idnCasesSection: ParityCase[] = (() => {
       doc: { Race: 'Elezen', Tribe: 'Wildwood', Gender: 2, Skintone: 20 },
       classification: 'intentional',
       note: 'Host refuses a non-string Gender. Library Gender is 0-based over [Masculine, Feminine]: values[2] is undefined and 2 is a byte, so unsupported (UNSUPPORTED_VALUE); current(gender) is null, so skin is missingTribeGender with MISSING_PALETTE_CONTEXT while tribe and canonical race stay valid. A 1-based Gender reader would give Feminine and resolve #AF8D71.',
-      host: { refused: '.chara field Gender: expected a string, got number' },
       lib: {
         identity: {
           gender: { state: 'unsupported', raw: 2 },
@@ -1330,15 +1074,6 @@ const idnCasesSection: ParityCase[] = (() => {
       doc: char({ Gender: null, Skintone: 20, HairTone: 5 }),
       classification: 'preserved',
       note: 'Host mapNamed treats null as no gender (no refusal), so skin and hair give error noTribe while tribe/race stay Wildwood/Elezen. Library Gender state null (no issue for null), current(gender) null, so skin/hair are missingTribeGender with MISSING_PALETTE_CONTEXT. Preserved = no colour and no refusal on either side; the adapter maps noTribe to missingTribeGender. Gender ABSENT beside a Tribe is COL-25.',
-      host: {
-        tribe: 'Wildwood',
-        race: 'Elezen',
-        gender: null,
-        slots: {
-          skin: { verdict: 'error', errorCode: 'noTribe' },
-          hair: { verdict: 'error', errorCode: 'noTribe' },
-        },
-      },
       lib: {
         identity: {
           gender: { state: 'null', raw: null },
@@ -1364,11 +1099,6 @@ const idnCasesSection: ParityCase[] = (() => {
       doc: { Race: 6, Gender: 'Feminine', LimbalEyes: 3 },
       classification: 'intentional',
       note: 'UNPLANNED: the plan row approves numeric enums in the library but does not mention that the host silently ignores a numeric Race (plan row 101 is the nearest basis). Host lookupOptional returns null for a non-string Race (no refusal), so race is null and the limbal slot defaults to kind tattoo. Library Race is 1-based: values[6-1] = "Au Ra", valid, and with Tribe absent raceSource is race, so LimbalEyes is a limbal ring. Colour features[3] = #B3B3B3 on both. The plan row approves numeric enums in the library; the adapter must map canonicalRace back to AuRa and accept the kind change.',
-      host: {
-        race: null,
-        tribe: null,
-        slots: { limbal: { kind: 'tattoo', verdict: 'index', indexHex: '#B3B3B3' } },
-      },
       lib: {
         identity: {
           race: { state: 'valid', value: 'Au Ra', raw: 6 },
@@ -1387,11 +1117,6 @@ const idnCasesSection: ParityCase[] = (() => {
       doc: { Race: 'Hyuran', Gender: 'Masculine', LimbalEyes: 3 },
       classification: 'intentional',
       note: 'Host: an unknown Race never refuses; race is null and the limbal kind defaults to tattoo. Library: "Hyuran" matches no alias or RACES entry, so unsupported (UNSUPPORTED_VALUE at Race), canonicalRace null, and the limbal kind is limbalOrTattoo (race unknown). The colour is race-independent: features[3] = #B3B3B3 on both. Plan row: do not guess missing context; the new kind value is approved by the shared interface contract (kind adds limbalOrTattoo when the race is unknown), as in COL-06. Sibling of IDN-24, where a valid Tribe still decides the race.',
-      host: {
-        race: null,
-        tribe: null,
-        slots: { limbal: { kind: 'tattoo', verdict: 'index', indexHex: '#B3B3B3' } },
-      },
       lib: {
         identity: {
           race: { state: 'unsupported', raw: 'Hyuran' },
@@ -1411,7 +1136,6 @@ const idnCasesSection: ParityCase[] = (() => {
       doc: { Race: 'Elezen', Tribe: 'Wildwood', Gender: 'masculine', Skintone: 20 },
       classification: 'intentional',
       note: 'Host GENDER_MAP is an exact own-key lookup, so "masculine" is unrecognised and the file is refused. Library matching is case-sensitive with no Gender alias map: unsupported (UNSUPPORTED_VALUE), skin missingTribeGender, tribe and canonical race still valid. Gender sibling of IDN-12.',
-      host: { refused: /field Gender: unrecognised value/ },
       lib: {
         identity: {
           gender: { state: 'unsupported', raw: 'masculine' },
@@ -1434,7 +1158,6 @@ const idnCasesSection: ParityCase[] = (() => {
       doc: { Race: 'Viera', Tribe: '', Gender: 'Feminine', LEyeColor: 0 },
       classification: 'intentional',
       note: 'Host mapNamed refuses "" as an unrecognised value (only null/undefined count as no tribe). Library: "" is a string with no match, so unsupported, and an unsupported Tribe permits no Race fallback: canonicalRace null although Race Viera is valid. A reader treating "" as absent would fall back to Viera. Eye 0 still resolves to #F7F7F7.',
-      host: { refused: /field Tribe: unrecognised value/ },
       lib: {
         identity: {
           tribe: { state: 'unsupported', raw: '' },
@@ -1454,12 +1177,6 @@ const idnCasesSection: ParityCase[] = (() => {
       classification: 'preserved',
       blocksIfDiverges: true,
       note: 'Highlander is TRIBES[1], race index 0 = Hyur; host SUBRACE_TO_RACE agrees. Skin 20 Highlander Masculine is #A1846B (Midlander Masculine #AB8C71; Highlander Feminine #AE9174 equals Midlander Feminine, hence Masculine here). Tribe-to-race/palette mapping for the sixteen tribes is a required contract.',
-      host: {
-        race: 'Hyur',
-        tribe: 'Highlander',
-        gender: 'Male',
-        slots: { skin: { verdict: 'index', indexHex: '#A1846B' } },
-      },
       lib: {
         identity: {
           canonicalRace: 'Hyur',
@@ -1480,12 +1197,6 @@ const idnCasesSection: ParityCase[] = (() => {
       classification: 'preserved',
       blocksIfDiverges: true,
       note: 'Plainsfolk is TRIBES[4], race index 2 = Lalafell. Index 60 because at 20 Plainsfolk equals Dunesfolk Masculine: skin 60 Plainsfolk Feminine is #9A815E (Dunesfolk Feminine #A17D5D). Dunesfolk Masculine shares the creator hex #9A815E, so the library half also pins the shader entry #9A9575 (Dunesfolk Masculine #A09173). Sixteen-tribe contract, blocking.',
-      host: {
-        race: 'Lalafell',
-        tribe: 'Plainsfolk',
-        gender: 'Female',
-        slots: { skin: { verdict: 'index', indexHex: '#9A815E' } },
-      },
       lib: {
         identity: {
           canonicalRace: 'Lalafell',
@@ -1511,12 +1222,6 @@ const idnCasesSection: ParityCase[] = (() => {
       classification: 'preserved',
       blocksIfDiverges: true,
       note: "SeekerOfTheSun is TRIBES[6], race index 3 = Miqo'te. Skin 20 SeekerOfTheSun Feminine is #A78366 (Masculine #A47D63, KeeperOfTheMoon Feminine #A8A69F). Sixteen-tribe contract, blocking.",
-      host: {
-        race: "Miqo'te",
-        tribe: 'SeekerOfTheSun',
-        gender: 'Female',
-        slots: { skin: { verdict: 'index', indexHex: '#A78366' } },
-      },
       lib: {
         identity: {
           canonicalRace: "Miqo'te",
@@ -1537,12 +1242,6 @@ const idnCasesSection: ParityCase[] = (() => {
       classification: 'preserved',
       blocksIfDiverges: true,
       note: 'SeaWolf is TRIBES[8], race index 4 = Roegadyn. Skin 20 SeaWolf Masculine is #96A784 (Feminine #909F7E, Hellsguard Masculine #937C74). Sixteen-tribe contract, blocking.',
-      host: {
-        race: 'Roegadyn',
-        tribe: 'SeaWolf',
-        gender: 'Male',
-        slots: { skin: { verdict: 'index', indexHex: '#96A784' } },
-      },
       lib: {
         identity: {
           canonicalRace: 'Roegadyn',
@@ -1562,7 +1261,6 @@ const idnCasesSection: ParityCase[] = (() => {
       doc: { Race: 'Elezen', Tribe: 'Wildwood', Gender: {}, Skintone: 20 },
       classification: 'intentional',
       note: 'Host mapNamed refuses a non-string Gender (expected a string, got object). Library: an object matches neither the numeric nor the string branch of enumeration(), so gender is invalid with INVALID_FIELD at the Gender path, and skin cannot resolve for lack of a gender (missingTribeGender). The tribe still resolves.',
-      host: { refused: 'expected a string, got object' },
       lib: {
         identity: {
           gender: { state: 'invalid' },
@@ -1582,39 +1280,6 @@ const idnCasesSection: ParityCase[] = (() => {
 
 // ---- section COL
 const colCasesSection: ParityCase[] = (() => {
-  /**
-   * COL: palette indices to colours, per slot. Every hex below is a literal read off the host's
-   * creator/shader sheets with lookup.ts; the bundled library provider carries the same data.
-   *
-   * Controls are pinned on purpose so activation never decides a COL expectation: `EnableHighlights:
-   * true`, `FacePaint: 1` and `Mouth: 128` give the library `active: true` (resolve.ts lines 192-226),
-   * and the host either ignores them (`Mouth`) or reads them the same way. Unknown activation is the
-   * ACT section's subject.
-   *
-   * The host's dark and light creator sheets for lips and face paint are byte-identical (all four
-   * 96-entry sheets hold the same hexes), so on the host dark vs light is proven only by
-   * `sheetIndex`/`sheetVariant`. On the library side the cases that pin WHICH palette was requested
-   * (COL-11, COL-12, COL-26, COL-27) use `provider: 'tagged'`, whose hex is '#' + palette ordinal +
-   * table (00 creator / FF shader) + in-sheet index: 04 lipsDark, 05 lipsLight, 06 facePaintDark,
-   * 07 facePaintLight. The lip's shader reference is always lipsDark (resolve.ts shader request
-   * `slot === 'lip' ? 'lipsDark' : palette`), and face paint never requests a shader colour.
-   */
-
-  /** Host: a resolved index with no float. */
-  const hostIndex = (
-    index: number,
-    sheetIndex: number,
-    indexHex: string,
-    sheetVariant: 'dark' | 'light' | null = null,
-  ): HostSlotExpect => ({
-    verdict: 'index',
-    index,
-    sheetIndex,
-    sheetVariant,
-    indexHex,
-    floatHex: null,
-    deltaE: null,
-  });
 
   /** Library: an active slot whose valid index resolves on the creator palette with no extended data. */
   const libPalette = (
@@ -1658,20 +1323,6 @@ const colCasesSection: ParityCase[] = (() => {
       }),
       classification: 'preserved',
       note: 'Distinct indices per slot (eyes 17/42, lip 40 vs face paint 12 on identical sheets) so a crossed key fails. Both sides read creator hex = display hex; Elezen limbal is a tattoo; resolve.ts gives paletteOnly with no extended data. Library shader refs: hair/skin Wildwood F 30, lipsDark 40, none for face paint.',
-      host: {
-        race: 'Elezen',
-        eyesShareIndex: false,
-        slots: {
-          leftEye: hostIndex(17, 17, '#F7F0CF'),
-          rightEye: hostIndex(42, 42, '#DCBA6C'),
-          hair: hostIndex(30, 30, '#665C43'),
-          highlights: { ...hostIndex(60, 60, '#9F692E'), inertReason: null },
-          skin: hostIndex(30, 30, '#654F41'),
-          limbal: { ...hostIndex(40, 40, '#EFE1C0'), kind: 'tattoo' },
-          lip: { ...hostIndex(40, 40, '#E0B2AE', 'dark'), alpha: null, blendHex: null },
-          facePaint: { ...hostIndex(12, 12, '#B4A987', 'dark'), inertReason: null },
-        },
-      },
       lib: {
         eyesShareIndex: false,
         slots: {
@@ -1698,10 +1349,6 @@ const colCasesSection: ParityCase[] = (() => {
       doc: char({ LEyeColor: 42, REyeColor: 42 }),
       classification: 'preserved',
       note: 'Host: eyesShareIndex = both indices non-null and equal. Library: both storedIndex fields valid and equal (resolve.ts eyesShareIndex). Both eyes read eyes[42] = #DCBA6C.',
-      host: {
-        eyesShareIndex: true,
-        slots: { leftEye: hostIndex(42, 42, '#DCBA6C'), rightEye: hostIndex(42, 42, '#DCBA6C') },
-      },
       lib: {
         eyesShareIndex: true,
         slots: { leftEye: libPalette(42, '#DCBA6C'), rightEye: libPalette(42, '#DCBA6C') },
@@ -1714,11 +1361,6 @@ const colCasesSection: ParityCase[] = (() => {
       doc: char({ HairTone: 12, Skintone: 12 }),
       classification: 'preserved',
       note: 'Skin 12 differs across all four of Wildwood M/F and Raen M/F (#AF886F/#B18D73/#70443E/#815E64), so a wrong tribe or gender mapping fails; hair 12 is gender-independent in the data and discriminates tribe only (#C0B793 vs Raen #C4BB99). Library requests use tribe Wildwood, gender Feminine.',
-      host: {
-        tribe: 'Wildwood',
-        gender: 'Female',
-        slots: { hair: hostIndex(12, 12, '#C0B793'), skin: hostIndex(12, 12, '#B18D73') },
-      },
       lib: {
         identity: { gender: { state: 'valid', value: 'Feminine' } },
         slots: {
@@ -1734,12 +1376,6 @@ const colCasesSection: ParityCase[] = (() => {
       doc: { Race: 'AuRa', Tribe: 'Raen', Gender: 'Masculine', HairTone: 12, Skintone: 12 },
       classification: 'preserved',
       note: 'Second tribe+gender pair: Raen Masculine hair 12 = #C4BB99, skin 12 = #70443E (Raen Feminine skin would be #815E64, Wildwood Masculine #AF886F). The library maps Masculine to the provider Male column (default-provider.ts).',
-      host: {
-        tribe: 'Raen',
-        gender: 'Male',
-        race: 'AuRa',
-        slots: { hair: hostIndex(12, 12, '#C4BB99'), skin: hostIndex(12, 12, '#70443E') },
-      },
       lib: {
         identity: { gender: { state: 'valid', value: 'Masculine' }, canonicalRace: 'Au Ra' },
         slots: {
@@ -1755,7 +1391,6 @@ const colCasesSection: ParityCase[] = (() => {
       doc: { Race: 'AuRa', Tribe: 'Raen', Gender: 'Feminine', LimbalEyes: 30 },
       classification: 'preserved',
       note: 'Host kind = limbal when race is AuRa; library kind = limbal when canonicalRace is "Au Ra" (resolve.ts). Both read features[30] = #746040; the library shader ref is #634F2E.',
-      host: { slots: { limbal: { ...hostIndex(30, 30, '#746040'), kind: 'limbal' } } },
       lib: {
         slots: { limbal: libPalette(30, '#746040', { kind: 'limbal', shaderHex: '#634F2E' }) },
       },
@@ -1767,7 +1402,6 @@ const colCasesSection: ParityCase[] = (() => {
       doc: { LimbalEyes: 30 },
       classification: 'intentional',
       note: 'With neither Tribe nor Race the host defaults the kind to tattoo; the library reports limbalOrTattoo (race === null). The colour is race-independent, so both still resolve features[30] = #746040; consumers switching on kind must handle the new value.',
-      host: { race: null, slots: { limbal: { ...hostIndex(30, 30, '#746040'), kind: 'tattoo' } } },
       lib: {
         identity: { canonicalRace: null, raceSource: null },
         slots: {
@@ -1782,12 +1416,6 @@ const colCasesSection: ParityCase[] = (() => {
       doc: split(0),
       classification: 'preserved',
       note: 'Both sides split 0-95 dark. Lip and face paint dark[0] = #F8F8F8. The library lip shader ref is lipsDark[0] = #ADADAD; face paint never requests a shader colour.',
-      host: {
-        slots: {
-          lip: hostIndex(0, 0, '#F8F8F8', 'dark'),
-          facePaint: hostIndex(0, 0, '#F8F8F8', 'dark'),
-        },
-      },
       lib: {
         slots: {
           lip: libPalette(0, '#F8F8F8', { variant: 'dark', shaderHex: '#ADADAD' }),
@@ -1802,12 +1430,6 @@ const colCasesSection: ParityCase[] = (() => {
       doc: split(95),
       classification: 'preserved',
       note: 'Upper dark bound on both sides (index <= 95). dark[95] = #393F21; the library lip shader ref is lipsDark[95] = #1D240C.',
-      host: {
-        slots: {
-          lip: hostIndex(95, 95, '#393F21', 'dark'),
-          facePaint: hostIndex(95, 95, '#393F21', 'dark'),
-        },
-      },
       lib: {
         slots: {
           lip: libPalette(95, '#393F21', { variant: 'dark', shaderHex: '#1D240C' }),
@@ -1822,24 +1444,6 @@ const colCasesSection: ParityCase[] = (() => {
       doc: split(96),
       classification: 'intentional',
       note: "UNPLANNED: the host names the 96-127 gap (error midRangeIndex, user-visible); the library folds it into indexOutOfRange with PALETTE_INDEX_OUT_OF_RANGE (resolve.ts split branch: neither <= 95 nor 128-223) and leaves sheetIndex/variant null. Neither side clamps or fabricates a colour. Adapter obligation: derive the host's midRangeIndex message from storedIndex.value 96-127; web-app chara-ui.ts maps it to swatch.slotError.midRangeIndex.",
-      host: {
-        slots: {
-          lip: {
-            verdict: 'error',
-            errorCode: 'midRangeIndex',
-            sheetIndex: null,
-            sheetVariant: null,
-            indexHex: null,
-          },
-          facePaint: {
-            verdict: 'error',
-            errorCode: 'midRangeIndex',
-            sheetIndex: null,
-            sheetVariant: null,
-            indexHex: null,
-          },
-        },
-      },
       lib: {
         issues: [
           { code: 'PALETTE_INDEX_OUT_OF_RANGE', path: ['LipsToneFurPattern'] },
@@ -1877,17 +1481,6 @@ const colCasesSection: ParityCase[] = (() => {
       doc: split(127),
       classification: 'intentional',
       note: "UNPLANNED: upper gap bound. Host midRangeIndex (96 <= i <= 127, user-visible), library indexOutOfRange (neither <= 95 nor 128-223); no colour on either side. Adapter obligation: derive the host's midRangeIndex message from storedIndex.value 96-127; web-app chara-ui.ts maps it to swatch.slotError.midRangeIndex.",
-      host: {
-        slots: {
-          lip: { verdict: 'error', errorCode: 'midRangeIndex', sheetIndex: null, indexHex: null },
-          facePaint: {
-            verdict: 'error',
-            errorCode: 'midRangeIndex',
-            sheetIndex: null,
-            indexHex: null,
-          },
-        },
-      },
       lib: {
         issues: [
           { code: 'PALETTE_INDEX_OUT_OF_RANGE', path: ['LipsToneFurPattern'] },
@@ -1924,12 +1517,6 @@ const colCasesSection: ParityCase[] = (() => {
       classification: 'preserved',
       provider: 'tagged',
       note: 'File index minus 128 on both sides. Host: light[0] = #F8F8F8 (same hex as dark[0], so sheetIndex/sheetVariant carry the proof). Library, tagged provider: lip creator lipsLight[0] = #050000 and shader lipsDark[0] = #04FF00; face paint creator facePaintLight[0] = #070000, no shader request. A dark-sheet request would read #040000/#060000; a file-index request would read ...80.',
-      host: {
-        slots: {
-          lip: hostIndex(128, 0, '#F8F8F8', 'light'),
-          facePaint: hostIndex(128, 0, '#F8F8F8', 'light'),
-        },
-      },
       lib: {
         slots: {
           lip: libPalette(0, '#050000', { variant: 'light', shaderHex: '#04FF00' }),
@@ -1945,12 +1532,6 @@ const colCasesSection: ParityCase[] = (() => {
       classification: 'preserved',
       provider: 'tagged',
       note: 'Upper light bound, in-sheet 95 (0x5F). Host: light[95] = #393F21. Library, tagged provider: lip creator lipsLight[95] = #05005F, shader lipsDark[95] = #04FF5F (a light lip compares against its dark shader entry); face paint facePaintLight[95] = #07005F with no shader request.',
-      host: {
-        slots: {
-          lip: hostIndex(223, 95, '#393F21', 'light'),
-          facePaint: hostIndex(223, 95, '#393F21', 'light'),
-        },
-      },
       lib: {
         slots: {
           lip: libPalette(95, '#05005F', { variant: 'light', shaderHex: '#04FF5F' }),
@@ -1965,17 +1546,6 @@ const colCasesSection: ParityCase[] = (() => {
       doc: split(224),
       classification: 'preserved',
       note: 'Above 223 both sides report out of range (host indexOutOfRange, not midRangeIndex; library indexOutOfRange since 224 is a valid uint8). No colour, no clamping.',
-      host: {
-        slots: {
-          lip: { verdict: 'error', errorCode: 'indexOutOfRange', sheetIndex: null, indexHex: null },
-          facePaint: {
-            verdict: 'error',
-            errorCode: 'indexOutOfRange',
-            sheetIndex: null,
-            indexHex: null,
-          },
-        },
-      },
       lib: {
         issues: [
           { code: 'PALETTE_INDEX_OUT_OF_RANGE', path: ['LipsToneFurPattern'] },
@@ -2008,12 +1578,6 @@ const colCasesSection: ParityCase[] = (() => {
       doc: char({ LEyeColor: 191, Highlights: 191, EnableHighlights: true }),
       classification: 'preserved',
       note: 'Eyes and highlights have 192 entries on both sides; 191 is the last. eyes[191] = #3D4025, highlights[191] = #3E4223 (shader #414024). No split rule: variant null.',
-      host: {
-        slots: {
-          leftEye: hostIndex(191, 191, '#3D4025'),
-          highlights: hostIndex(191, 191, '#3E4223'),
-        },
-      },
       lib: {
         slots: {
           leftEye: libPalette(191, '#3D4025', { shaderHex: '#3D4025' }),
@@ -2029,22 +1593,6 @@ const colCasesSection: ParityCase[] = (() => {
       doc: char({ LEyeColor: 192, Highlights: 192, EnableHighlights: true }),
       classification: 'preserved',
       note: 'HOST QUIRK: on a sheet miss the host keeps the raw value as sheetIndex (192) beside error indexOutOfRange. Library: 192 is a valid uint8 but index >= 192 gives indexOutOfRange with PALETTE_INDEX_OUT_OF_RANGE before sheetIndex is set (resolve.ts).',
-      host: {
-        slots: {
-          leftEye: {
-            verdict: 'error',
-            errorCode: 'indexOutOfRange',
-            sheetIndex: 192,
-            indexHex: null,
-          },
-          highlights: {
-            verdict: 'error',
-            errorCode: 'indexOutOfRange',
-            sheetIndex: 192,
-            indexHex: null,
-          },
-        },
-      },
       lib: {
         issues: [
           { code: 'PALETTE_INDEX_OUT_OF_RANGE', path: ['LEyeColor'] },
@@ -2078,18 +1626,6 @@ const colCasesSection: ParityCase[] = (() => {
       doc: char({ LEyeColor: -1, REyeColor: 5 }),
       classification: 'preserved',
       note: 'HOST QUIRK: the host accepts any finite number, misses the sheet lookup and keeps the raw value as sheetIndex (-1). Neither side refuses the file or invents a colour. The library index is uint8, so -1 is invalid (INVALID_FIELD) and the slot is unresolved/invalidIndex; the other eye still resolves eyes[5] = #5C5C5C.',
-      host: {
-        slots: {
-          leftEye: {
-            verdict: 'error',
-            errorCode: 'indexOutOfRange',
-            index: -1,
-            sheetIndex: -1,
-            indexHex: null,
-          },
-          rightEye: hostIndex(5, 5, '#5C5C5C'),
-        },
-      },
       lib: {
         issues: [{ code: 'INVALID_FIELD', path: ['LEyeColor'] }],
         noIssueCodes: ['PALETTE_INDEX_OUT_OF_RANGE'],
@@ -2112,18 +1648,6 @@ const colCasesSection: ParityCase[] = (() => {
       doc: char({ LEyeColor: 5, REyeColor: 4.5 }),
       classification: 'preserved',
       note: 'HOST QUIRK: the host never floors an index and keeps the raw value as sheetIndex on a miss: 4.5 matches no sheet entry, error indexOutOfRange with sheetIndex 4.5. The library requires a safe integer (isUint), so 4.5 is invalid and the slot unresolved/invalidIndex; the left eye resolves #5C5C5C.',
-      host: {
-        slots: {
-          leftEye: hostIndex(5, 5, '#5C5C5C'),
-          rightEye: {
-            verdict: 'error',
-            errorCode: 'indexOutOfRange',
-            index: 4.5,
-            sheetIndex: 4.5,
-            indexHex: null,
-          },
-        },
-      },
       lib: {
         issues: [{ code: 'INVALID_FIELD', path: ['REyeColor'] }],
         slots: {
@@ -2145,16 +1669,6 @@ const colCasesSection: ParityCase[] = (() => {
       doc: char({ LEyeColor: 256 }),
       classification: 'preserved',
       note: 'HOST QUIRK: the host errors on the lookup and keeps the raw value as sheetIndex (indexOutOfRange, sheetIndex 256). The library field is a byte (max 255), so 256 is invalid/invalidIndex with INVALID_FIELD, not indexOutOfRange: a library reading indices as uint16 would fail here.',
-      host: {
-        slots: {
-          leftEye: {
-            verdict: 'error',
-            errorCode: 'indexOutOfRange',
-            sheetIndex: 256,
-            indexHex: null,
-          },
-        },
-      },
       lib: {
         issues: [{ code: 'INVALID_FIELD', path: ['LEyeColor'] }],
         noIssueCodes: ['PALETTE_INDEX_OUT_OF_RANGE'],
@@ -2177,13 +1691,6 @@ const colCasesSection: ParityCase[] = (() => {
       doc: char({ LEyeColor: -1, REyeColor: -1 }),
       classification: 'intentional',
       note: 'UNPLANNED: host eyesShareIndex is true (chara-resolver.ts only checks both indices non-null and equal, so two -1 indices "share" one failing badge); the library reports false (resolve.ts eyesShareIndex requires both storedIndex fields valid). HOST QUIRK: a shared badge for two failing indices. No plan row covers it: the maintainer must approve the difference and decide which eyesShareIndex the Task 3 adapter projects into the inherited ResolvedCharaCharacter field.',
-      host: {
-        eyesShareIndex: true,
-        slots: {
-          leftEye: { verdict: 'error', errorCode: 'indexOutOfRange' },
-          rightEye: { verdict: 'error', errorCode: 'indexOutOfRange' },
-        },
-      },
       lib: {
         eyesShareIndex: false,
         issues: [
@@ -2213,7 +1720,6 @@ const colCasesSection: ParityCase[] = (() => {
       doc: char({ LEyeColor: '5', REyeColor: 5 }),
       classification: 'intentional',
       note: 'The host refuses the whole file for a non-null non-numeric index (readIndex). The library marks only that field invalid (INVALID_FIELD, invalidIndex) and still resolves the right eye eyes[5] = #5C5C5C; eyesShareIndex is false.',
-      host: { refused: /LEyeColor: expected a numeric palette index/ },
       lib: {
         issues: [{ code: 'INVALID_FIELD', path: ['LEyeColor'] }],
         eyesShareIndex: false,
@@ -2235,12 +1741,6 @@ const colCasesSection: ParityCase[] = (() => {
       doc: char({ HairTone: null, LEyeColor: 5 }),
       classification: 'preserved',
       note: 'Host: a null index reads as an absent key; with no live float the slot is inert with no reason. Library: storedIndex null vs absent stay distinct, but both end unresolved/missingColor with no display colour (resolve.ts returns before any palette request).',
-      host: {
-        slots: {
-          hair: { verdict: 'inert', inertReason: null, index: null, indexHex: null },
-          skin: { verdict: 'inert', inertReason: null, index: null, indexHex: null },
-        },
-      },
       lib: {
         slots: {
           hair: {
@@ -2269,17 +1769,6 @@ const colCasesSection: ParityCase[] = (() => {
       doc: { Race: 'Hrothgar', Tribe: 'Helions', Gender: 'Masculine', LipsToneFurPattern: 3 },
       classification: 'preserved',
       note: 'Host: on Hrothgar the key is a fur-pattern enum, inert furPattern. Library: indexMeaning furPattern; with no live extended colour the slot is active false, inactive, reason furPattern, and no palette is requested (sheetIndex null).',
-      host: {
-        slots: {
-          lip: {
-            verdict: 'inert',
-            inertReason: 'furPattern',
-            index: 3,
-            indexHex: null,
-            sheetIndex: null,
-          },
-        },
-      },
       lib: {
         slots: {
           lip: {
@@ -2301,7 +1790,6 @@ const colCasesSection: ParityCase[] = (() => {
       doc: { LipsToneFurPattern: 20 },
       classification: 'intentional',
       note: 'Without Tribe/Race the host still resolves lipsDark[20] = #AC9660. The library cannot know whether the byte is a lip colour or a Hrothgar fur pattern: indexMeaning unknown, unresolved/missingRace, and with Mouth absent activation is null (bitSet || null).',
-      host: { race: null, slots: { lip: hostIndex(20, 20, '#AC9660', 'dark') } },
       lib: {
         slots: {
           lip: {
@@ -2324,13 +1812,6 @@ const colCasesSection: ParityCase[] = (() => {
       doc: { Tribe: 'Wildwood', HairTone: 12, Skintone: 12 },
       classification: 'preserved',
       note: 'Neither side guesses a gender. Host: noTribe with sheetIndex null. Library: sheetIndex is set before the context check (resolve.ts lines 319-321), then missingTribeGender with MISSING_PALETTE_CONTEXT and no colour.',
-      host: {
-        gender: null,
-        slots: {
-          hair: { verdict: 'error', errorCode: 'noTribe', sheetIndex: null, indexHex: null },
-          skin: { verdict: 'error', errorCode: 'noTribe', sheetIndex: null, indexHex: null },
-        },
-      },
       lib: {
         identity: { gender: { state: 'absent' }, tribe: { state: 'valid', value: 'Wildwood' } },
         issues: [
@@ -2365,12 +1846,6 @@ const colCasesSection: ParityCase[] = (() => {
       classification: 'preserved',
       provider: 'tagged',
       note: 'Host: lip 140 -> light sheet, sheetIndex 12; face paint 12 -> dark sheet, sheetIndex 12; all four sheets hold #B4A987 at 12. Library, tagged provider: lip creator lipsLight[12] = #05000C with shader lipsDark[12] = #04FF0C; face paint creator facePaintDark[12] = #06000C, no shader request. Fails a library that reads dark for light, uses the file index (8C), crosses the two slots, or asks lipsLight/face paint for a shader colour.',
-      host: {
-        slots: {
-          lip: hostIndex(140, 12, '#B4A987', 'light'),
-          facePaint: hostIndex(12, 12, '#B4A987', 'dark'),
-        },
-      },
       lib: {
         slots: {
           lip: libPalette(12, '#05000C', {
@@ -2390,12 +1865,6 @@ const colCasesSection: ParityCase[] = (() => {
       classification: 'preserved',
       provider: 'tagged',
       note: 'Mirror of COL-26 so every one of the four creator palettes is requested once across the pair. Host: lip dark sheetIndex 12, face paint light sheetIndex 12, both #B4A987. Library, tagged: lip lipsDark[12] = #04000C, shader lipsDark[12] = #04FF0C; face paint facePaintLight[12] = #07000C, no shader.',
-      host: {
-        slots: {
-          lip: hostIndex(12, 12, '#B4A987', 'dark'),
-          facePaint: hostIndex(140, 12, '#B4A987', 'light'),
-        },
-      },
       lib: {
         slots: {
           lip: libPalette(12, '#04000C', {
@@ -2416,12 +1885,6 @@ const colCasesSection: ParityCase[] = (() => {
       doc: { Tribe: 'Wildwood', HairTone: 200 },
       classification: 'intentional',
       note: 'UNPLANNED: precedence differs. Host resolveSheet checks Tribe+Gender first, so hair is noTribe (sheetIndex null). Library resolve.ts runs the >= 192 range check before the context check, so hair is indexOutOfRange with PALETTE_INDEX_OUT_OF_RANGE at HairTone and no MISSING_PALETTE_CONTEXT. Neither shows a colour; the adapter must choose which message the host UI shows (the library reason, or noTribe when context is also missing).',
-      host: {
-        gender: null,
-        slots: {
-          hair: { verdict: 'error', errorCode: 'noTribe', sheetIndex: null, indexHex: null },
-        },
-      },
       lib: {
         issues: [{ code: 'PALETTE_INDEX_OUT_OF_RANGE', path: ['HairTone'] }],
         noIssueCodes: ['MISSING_PALETTE_CONTEXT', 'INVALID_FIELD'],
@@ -2445,13 +1908,6 @@ const colCasesSection: ParityCase[] = (() => {
       doc: char({ HairTone: 191, Skintone: 191, LimbalEyes: 191 }),
       classification: 'preserved',
       note: 'Wildwood Feminine hair[191] = #2E381A (shader #1E321D), skin[191] = #553423 (shader #533A2A); features[191] = #3B3E26 (shader #32351C), an Elezen tattoo. 191 is the last entry on both sides, so an off-by-one bound (> 190 or >= 191) fails here.',
-      host: {
-        slots: {
-          hair: hostIndex(191, 191, '#2E381A'),
-          skin: hostIndex(191, 191, '#553423'),
-          limbal: { ...hostIndex(191, 191, '#3B3E26'), kind: 'tattoo' },
-        },
-      },
       lib: {
         noIssueCodes: ['MISSING_PALETTE_CONTEXT', 'PALETTE_INDEX_OUT_OF_RANGE'],
         slots: {
@@ -2469,18 +1925,6 @@ const colCasesSection: ParityCase[] = (() => {
       doc: char({ HairTone: 192, Skintone: 192, LimbalEyes: 192 }),
       classification: 'preserved',
       note: 'HOST QUIRK: with Tribe+Gender present the host finds the sheet, the lookup misses, and it reports indexOutOfRange keeping the raw value as sheetIndex 192 (unlike COL-28, where context is checked first). Library: 192 is a valid uint8 but >= 192 gives indexOutOfRange with PALETTE_INDEX_OUT_OF_RANGE at each key, sheetIndex null, before any palette request.',
-      host: {
-        slots: {
-          hair: { verdict: 'error', errorCode: 'indexOutOfRange', sheetIndex: 192, indexHex: null },
-          skin: { verdict: 'error', errorCode: 'indexOutOfRange', sheetIndex: 192, indexHex: null },
-          limbal: {
-            verdict: 'error',
-            errorCode: 'indexOutOfRange',
-            sheetIndex: 192,
-            indexHex: null,
-          },
-        },
-      },
       lib: {
         issues: [
           { code: 'PALETTE_INDEX_OUT_OF_RANGE', path: ['HairTone'] },
@@ -2524,26 +1968,6 @@ const colCasesSection: ParityCase[] = (() => {
       doc: char({ LipsToneFurPattern: 4.5, Mouth: 128, FacePaintColor: -1, FacePaint: 1 }),
       classification: 'preserved',
       note: 'HOST QUIRK: the host split accepts 4.5 as dark (0 <= i <= 95), keeps sheetIndex 4.5 and sheetVariant dark, then misses the lookup (indexOutOfRange); -1 fails the split itself, so sheetIndex/variant stay null. The library requires a uint8 (isUint: safe integer 0-255), so both fields are invalid (INVALID_FIELD, raw kept) and both slots unresolved/invalidIndex with variant null. No colour, no refusal on either side.',
-      host: {
-        slots: {
-          lip: {
-            verdict: 'error',
-            errorCode: 'indexOutOfRange',
-            index: 4.5,
-            sheetIndex: 4.5,
-            sheetVariant: 'dark',
-            indexHex: null,
-          },
-          facePaint: {
-            verdict: 'error',
-            errorCode: 'indexOutOfRange',
-            index: -1,
-            sheetIndex: null,
-            sheetVariant: null,
-            indexHex: null,
-          },
-        },
-      },
       lib: {
         issues: [
           { code: 'INVALID_FIELD', path: ['LipsToneFurPattern'] },
@@ -2579,24 +2003,6 @@ const colCasesSection: ParityCase[] = (() => {
       doc: char({ LipsToneFurPattern: 95.5, Mouth: 128, FacePaintColor: 127.5, FacePaint: 1 }),
       classification: 'preserved',
       note: 'HOST QUIRK: 95.5 is above 95 and below 96, and 127.5 is above 127 and below 128, so the host split falls through to indexOutOfRange (not midRangeIndex) with sheetIndex null. The library marks both invalid (not uint8): INVALID_FIELD, invalidIndex, raw kept. No colour on either side.',
-      host: {
-        slots: {
-          lip: {
-            verdict: 'error',
-            errorCode: 'indexOutOfRange',
-            sheetIndex: null,
-            sheetVariant: null,
-            indexHex: null,
-          },
-          facePaint: {
-            verdict: 'error',
-            errorCode: 'indexOutOfRange',
-            sheetIndex: null,
-            sheetVariant: null,
-            indexHex: null,
-          },
-        },
-      },
       lib: {
         issues: [
           { code: 'INVALID_FIELD', path: ['LipsToneFurPattern'] },
@@ -2630,15 +2036,6 @@ const colCasesSection: ParityCase[] = (() => {
       doc: { Race: 'Elezen', Gender: 'Feminine', LipsToneFurPattern: 20, Mouth: 128, HairTone: 12 },
       classification: 'preserved',
       note: 'With no Tribe, both sides take the race from Race (host RACE_FALLBACK_MAP; library raceSource race, inspect.ts) so the lip is a colour: lipsDark[20] = #AC9660, library shader lipsDark[20] = #54431B. Hair needs a tribe: host noTribe, library sheetIndex 12 then missingTribeGender with MISSING_PALETTE_CONTEXT at HairTone. No guessed tribe on either side.',
-      host: {
-        race: 'Elezen',
-        tribe: null,
-        gender: 'Female',
-        slots: {
-          lip: hostIndex(20, 20, '#AC9660', 'dark'),
-          hair: { verdict: 'error', errorCode: 'noTribe', sheetIndex: null, indexHex: null },
-        },
-      },
       lib: {
         identity: {
           canonicalRace: 'Elezen',
@@ -2671,14 +2068,6 @@ const colCasesSection: ParityCase[] = (() => {
       doc: { Gender: 'Feminine', HairTone: 12, Skintone: 12 },
       classification: 'preserved',
       note: 'Converse of COL-25. Neither side guesses a tribe. Host: tribe null, noTribe with sheetIndex null. Library: tribe absent, sheetIndex 12 set before the context check, then missingTribeGender with MISSING_PALETTE_CONTEXT at each key and no colour.',
-      host: {
-        tribe: null,
-        gender: 'Female',
-        slots: {
-          hair: { verdict: 'error', errorCode: 'noTribe', sheetIndex: null, indexHex: null },
-          skin: { verdict: 'error', errorCode: 'noTribe', sheetIndex: null, indexHex: null },
-        },
-      },
       lib: {
         identity: {
           tribe: { state: 'absent' },
@@ -2716,24 +2105,6 @@ const colCasesSection: ParityCase[] = (() => {
       doc: split(96.5),
       classification: 'intentional',
       note: 'UNPLANNED: 96.5 lies inside the host 96-127 gap test, so the host shows midRangeIndex (HOST QUIRK: the gap test also catches non-integers); the library field is invalid (not uint8), so the slot is invalidIndex with INVALID_FIELD and storedIndex has no value (raw 96.5). The ruling-2 adapter obligation keyed on storedIndex.value 96-127 does not fire here: the maintainer decides whether the adapter also reads storedIndex.raw or accepts the invalid-index message.',
-      host: {
-        slots: {
-          lip: {
-            verdict: 'error',
-            errorCode: 'midRangeIndex',
-            sheetIndex: null,
-            sheetVariant: null,
-            indexHex: null,
-          },
-          facePaint: {
-            verdict: 'error',
-            errorCode: 'midRangeIndex',
-            sheetIndex: null,
-            sheetVariant: null,
-            indexHex: null,
-          },
-        },
-      },
       lib: {
         issues: [
           { code: 'INVALID_FIELD', path: ['LipsToneFurPattern'] },
@@ -2800,13 +2171,6 @@ const geaCasesSection: ParityCase[] = (() => {
       classification: 'preserved',
       blocksIfDiverges: true,
       note: 'Host: base 361 > 0 is worn, both channels > 0 are emitted. Library: all lanes uint16 so model {361,3}, base > 0 is worn, DyeId/DyeId2 uint16 are valid; an untouched slot stays absent. The adapter needs this model + channels for badges (plan "Worn-slot filtering").',
-      host: {
-        gearModels: [{ slot: 'Body', base: 361, variant: 3 }],
-        gearDyes: [
-          { slot: 'Body', channel: 1, stainId: 12 },
-          { slot: 'Body', channel: 2, stainId: 34 },
-        ],
-      },
       lib: {
         equipment: {
           Body: {
@@ -2827,10 +2191,6 @@ const geaCasesSection: ParityCase[] = (() => {
       doc: doc({ Legs: armor(361, 3, 0, 45) }),
       classification: 'preserved',
       note: 'Host drops the zero channel 1 and emits channel 2 (35% of dyed channels are the second one). Library: zero is a valid uint16 stain ("zero stains remain valid evidence", api.md), so dye1 is valid 0, not absent; the projection omits it as undyed.',
-      host: {
-        gearModels: [{ slot: 'Legs', base: 361, variant: 3 }],
-        gearDyes: [{ slot: 'Legs', channel: 2, stainId: 45 }],
-      },
       lib: {
         equipment: {
           Legs: {
@@ -2849,10 +2209,6 @@ const geaCasesSection: ParityCase[] = (() => {
       doc: doc({ Hands: armor(361, 3, 7, 0) }),
       classification: 'preserved',
       note: 'Host emits channel 1 only. Library: dye1 valid 7, dye2 valid 0 (zero is valid evidence, never absent); the projection keeps only valid nonzero channels, so the badge list matches.',
-      host: {
-        gearModels: [{ slot: 'Hands', base: 361, variant: 3 }],
-        gearDyes: [{ slot: 'Hands', channel: 1, stainId: 7 }],
-      },
       lib: {
         equipment: {
           Hands: {
@@ -2871,7 +2227,6 @@ const geaCasesSection: ParityCase[] = (() => {
       doc: doc({ HeadGear: armor(0, 4, 254, 255) }),
       classification: 'preserved',
       note: 'Host: base 0 is not worn, so neither the model nor the stains are emitted. Library: lanes are complete uint16, base 0 is `empty` keeping the stored variant 4 (compatibility.md "A ModelBase of 0 with a non-zero ModelVariant is empty"); the stains stay valid evidence that the worn-slot projection filters out.',
-      host: { gearModels: [], gearDyes: [] },
       lib: {
         equipment: {
           HeadGear: {
@@ -2892,10 +2247,6 @@ const geaCasesSection: ParityCase[] = (() => {
       classification: 'preserved',
       blocksIfDiverges: true,
       note: 'Host: weapon is worn when set > 0 OR base > 0, model carries set 0. Library: ModelSet 0 is a valid uint16 lane, model {set 0, base 19, variant 1}, worn because base > 0 (compatibility.md "Weapons with a positive set or base are worn").',
-      host: {
-        gearModels: [{ slot: 'MainHand', set: 0, base: 19, variant: 1 }],
-        gearDyes: [{ slot: 'MainHand', channel: 1, stainId: 5 }],
-      },
       lib: {
         equipment: {
           MainHand: {
@@ -2914,10 +2265,6 @@ const geaCasesSection: ParityCase[] = (() => {
       doc: doc({ OffHand: weapon(201, 0, 1, 0, 6) }),
       classification: 'preserved',
       note: 'Host: set 201 > 0 makes the weapon worn although base is 0. Library: complete triple, weapon worn because set > 0, model keeps base 0. An implementation applying the armor rule (base > 0) to weapons fails here on either side.',
-      host: {
-        gearModels: [{ slot: 'OffHand', set: 201, base: 0, variant: 1 }],
-        gearDyes: [{ slot: 'OffHand', channel: 2, stainId: 6 }],
-      },
       lib: {
         equipment: {
           OffHand: {
@@ -2935,7 +2282,6 @@ const geaCasesSection: ParityCase[] = (() => {
       doc: doc({ MainHand: weapon(0, 0, 0, 254, 255) }),
       classification: 'preserved',
       note: 'Host: set 0 and base 0 is empty, so the 254/255 stains (Anamnesis hidden weapon) colour nothing and are not emitted. Library: complete all-zero triple is `empty` ("All-zero valid models are empty"), stains valid evidence for the projection to drop.',
-      host: { gearModels: [], gearDyes: [] },
       lib: {
         equipment: {
           MainHand: {
@@ -2954,7 +2300,6 @@ const geaCasesSection: ParityCase[] = (() => {
       doc: doc({ MainHand: null, OffHand: null }),
       classification: 'preserved',
       note: 'Host: a null record is skipped like an empty slot (one Anamnesis file). Library: the slot field state is `null`, so status is `null` and no model is returned (inspect.ts copies a non-valid stored state into status). Neither side emits a worn piece.',
-      host: { gearModels: [], gearDyes: [] },
       lib: {
         equipment: {
           MainHand: { status: 'null', model: null },
@@ -2970,7 +2315,6 @@ const geaCasesSection: ParityCase[] = (() => {
       doc: doc({ Body: '361' }),
       classification: 'intentional',
       note: 'Host: `typeof gear !== "object"` silently skips the slot, indistinguishable from no gear. Library: the slot decoder requires a record, so the field is invalid (INVALID_FIELD) and status `invalid`, model null — a bounded diagnostic instead of a silent empty slot (plan row "Unknown tribe/gender or malformed color": invalid gear never refuses and is not coerced). inspect.ts `equipment` returns before reading any lane when the slot is not a record, so the lanes stay absent and no INCOMPLETE_MODEL is raised.',
-      host: { gearModels: [], gearDyes: [] },
       lib: {
         equipment: { Body: { status: 'invalid', model: null, base: { state: 'absent' } } },
         issues: [{ code: 'INVALID_FIELD', path: ['Body'] }],
@@ -2989,7 +2333,6 @@ const geaCasesSection: ParityCase[] = (() => {
       }),
       classification: 'intentional',
       note: 'Host defaults a missing or null lane to 0, so both pieces read as empty and the Feet dye is dropped. Library: an absent or null ModelBase is not valid, so INCOMPLETE_MODEL, status invalid, model null ("Missing/null lanes are incomplete; they never default to zero"); absent and null states raise no INVALID_FIELD, and the dye read before the lane check stays valid.',
-      host: { gearModels: [], gearDyes: [] },
       lib: {
         equipment: {
           Feet: {
@@ -3020,10 +2363,6 @@ const geaCasesSection: ParityCase[] = (() => {
       doc: doc({ MainHand: { ModelBase: 19, ModelVariant: 1, DyeId: 3, DyeId2: 0 } }),
       classification: 'intentional',
       note: 'HOST QUIRK: the plan row says the old parser coerces missing lanes to zero (empty), but a coerced ModelSet beside a positive base gives a WORN weapon with an invented 0 lane, {set 0, base 19, variant 1}, plus its dye (chara-parser.ts:561-570, readModelLane :599-603; isWornCharaModel is set > 0 || base > 0 for weapons). Library: weapons need ModelSet (inspect.ts:188-193), so the set lane is absent, INCOMPLETE_MODEL at [MainHand], status invalid, model null (plan: "Do not invent or floor lanes"); the dye stays valid evidence.',
-      host: {
-        gearModels: [{ slot: 'MainHand', set: 0, base: 19, variant: 1 }],
-        gearDyes: [{ slot: 'MainHand', channel: 1, stainId: 3 }],
-      },
       lib: {
         equipment: {
           MainHand: {
@@ -3046,10 +2385,6 @@ const geaCasesSection: ParityCase[] = (() => {
       doc: doc({ Body: { ModelBase: 5.7, ModelVariant: 1, DyeId: 9, DyeId2: 0 } }),
       classification: 'intentional',
       note: 'Host floors a positive fraction (5.7 -> 5) and treats the piece as worn, dye included. Library: 5.7 is not a safe integer, so ModelBase is invalid (INVALID_FIELD) and the model incomplete (INCOMPLETE_MODEL), status invalid, model null; the dye stays valid.',
-      host: {
-        gearModels: [{ slot: 'Body', base: 5, variant: 1 }],
-        gearDyes: [{ slot: 'Body', channel: 1, stainId: 9 }],
-      },
       lib: {
         equipment: {
           Body: {
@@ -3073,7 +2408,6 @@ const geaCasesSection: ParityCase[] = (() => {
       doc: doc({ Ears: armor(65535, 65535) }),
       classification: 'preserved',
       note: 'Host keeps any positive finite lane. Library: 65535 is the uint16 maximum (`isUint(raw, 65535)` is inclusive), so the model is complete and worn. Pins the upper bound from below; GEA-14 pins it from above.',
-      host: { gearModels: [{ slot: 'Ears', base: 65535, variant: 65535 }], gearDyes: [] },
       lib: {
         equipment: { Ears: { status: 'worn', model: { base: 65535, variant: 65535 } } },
         noIssueCodes: ['INCOMPLETE_MODEL', 'INVALID_FIELD'],
@@ -3086,7 +2420,6 @@ const geaCasesSection: ParityCase[] = (() => {
       doc: doc({ Neck: armor(65536, 1) }),
       classification: 'intentional',
       note: 'Host emits 65536 unchanged as a worn base. Library: above the uint16 maximum the lane is invalid (INVALID_FIELD) and the model incomplete (INCOMPLETE_MODEL), status invalid, model null (plan: "Require complete uint16 models").',
-      host: { gearModels: [{ slot: 'Neck', base: 65536, variant: 1 }], gearDyes: [] },
       lib: {
         equipment: {
           Neck: {
@@ -3112,7 +2445,6 @@ const geaCasesSection: ParityCase[] = (() => {
       }),
       classification: 'intentional',
       note: 'Host coerces a negative or non-numeric lane to 0, so both pieces read as empty and Wrists loses its dye. Library: neither is a uint, so both lanes are invalid, both models incomplete, status invalid, model null — never an empty slot (review focus 1: no fabricated empty equipment slot).',
-      host: { gearModels: [], gearDyes: [] },
       lib: {
         equipment: {
           Wrists: {
@@ -3144,7 +2476,6 @@ const geaCasesSection: ParityCase[] = (() => {
       doc: doc({ LeftRing: { ModelBase: 50, ModelVariant: -1, DyeId: 0, DyeId2: 0 } }),
       classification: 'intentional',
       note: 'HOST QUIRK: the plan row says coerced lanes read as empty, but a coerced ModelVariant beside a positive base gives a WORN ring with an invented 0 lane, {50, 0}, that does not exist in the file (chara-parser.ts:563-569). Library: ModelVariant is not a uint, so INVALID_FIELD at [LeftRing, ModelVariant] + INCOMPLETE_MODEL at [LeftRing], status invalid, model null.',
-      host: { gearModels: [{ slot: 'LeftRing', base: 50, variant: 0 }], gearDyes: [] },
       lib: {
         equipment: {
           LeftRing: {
@@ -3169,10 +2500,6 @@ const geaCasesSection: ParityCase[] = (() => {
       doc: doc({ Body: armor(361, 3, 2.5, 0) }),
       classification: 'intentional',
       note: 'Host emits any positive finite dye as stored, so stainId 2.5 reaches the badge list. Library: 2.5 is not a uint16, dye1 invalid (INVALID_FIELD); dyes are independent so the model stays complete and worn (api.md "missing/invalid dyes cannot invalidate a supported model").',
-      host: {
-        gearModels: [{ slot: 'Body', base: 361, variant: 3 }],
-        gearDyes: [{ slot: 'Body', channel: 1, stainId: 2.5 }],
-      },
       lib: {
         equipment: {
           Body: {
@@ -3193,7 +2520,6 @@ const geaCasesSection: ParityCase[] = (() => {
       doc: doc({ Body: { ModelBase: 361, ModelVariant: 3, DyeId: -5, DyeId2: null } }),
       classification: 'intentional',
       note: 'Host silently drops both (not a positive finite number), as if undyed. Library: -5 is invalid (INVALID_FIELD at [Body, DyeId]) and null is the `null` state, neither one called undyed; the model stays worn. The badge projection (valid nonzero channels only) is unchanged, an empty list; the difference is the diagnostic that plan row "Invalid dye or zero dye" adopts ("retain a diagnostic for invalid channels, without calling them undyed").',
-      host: { gearModels: [{ slot: 'Body', base: 361, variant: 3 }], gearDyes: [] },
       lib: {
         equipment: {
           Body: {
@@ -3215,13 +2541,6 @@ const geaCasesSection: ParityCase[] = (() => {
       classification: 'intentional',
       blocksIfDiverges: true,
       note: 'Host emits both values as stored. Library: 65535 is the inclusive uint16 maximum (valid), 65536 is invalid (INVALID_FIELD), and the invalid channel does not invalidate the model, still worn {6026,2} (api.md "Dyes are independent"). Blocking: the plan needs valid models usable beside invalid channels.',
-      host: {
-        gearModels: [{ slot: 'Feet', base: 6026, variant: 2 }],
-        gearDyes: [
-          { slot: 'Feet', channel: 1, stainId: 65535 },
-          { slot: 'Feet', channel: 2, stainId: 65536 },
-        ],
-      },
       lib: {
         equipment: {
           Feet: {
@@ -3257,33 +2576,6 @@ const geaCasesSection: ParityCase[] = (() => {
       }),
       classification: 'preserved',
       note: 'HOST QUIRK: the ParsedCharaFile docstrings say gearDyes/gearModels are "in file slot order" (chara-parser.ts:148,150), but the code walks the fixed GEAR_SLOTS order (chara-parser.ts:557: MainHand, OffHand, HeadGear, Body, Hands, Legs, Feet, Ears, Neck, Wrists, LeftRing, RightRing), not document order, for models and dyes alike; the adapter projection must emit that fixed order. Library inspects every EQUIPMENT_SLOTS entry by name, so every slot is worn with its own lanes; order lives in the projection.',
-      host: {
-        gearModels: [
-          { slot: 'MainHand', set: 201, base: 19, variant: 1 },
-          { slot: 'OffHand', set: 251, base: 3, variant: 2 },
-          { slot: 'HeadGear', base: 6025, variant: 1 },
-          { slot: 'Body', base: 361, variant: 3 },
-          { slot: 'Hands', base: 361, variant: 3 },
-          { slot: 'Legs', base: 361, variant: 3 },
-          { slot: 'Feet', base: 6026, variant: 2 },
-          { slot: 'Ears', base: 53, variant: 1 },
-          { slot: 'Neck', base: 54, variant: 1 },
-          { slot: 'Wrists', base: 55, variant: 1 },
-          { slot: 'LeftRing', base: 56, variant: 1 },
-          { slot: 'RightRing', base: 57, variant: 2 },
-        ],
-        gearDyes: [
-          { slot: 'MainHand', channel: 1, stainId: 5 },
-          { slot: 'OffHand', channel: 2, stainId: 6 },
-          { slot: 'HeadGear', channel: 1, stainId: 7 },
-          { slot: 'Body', channel: 1, stainId: 12 },
-          { slot: 'Body', channel: 2, stainId: 34 },
-          { slot: 'Hands', channel: 2, stainId: 8 },
-          { slot: 'Feet', channel: 1, stainId: 9 },
-          { slot: 'Feet', channel: 2, stainId: 10 },
-          { slot: 'RightRing', channel: 1, stainId: 1 },
-        ],
-      },
       lib: {
         equipment: {
           MainHand: {
@@ -3340,7 +2632,6 @@ const geaCasesSection: ParityCase[] = (() => {
       classification: 'preserved',
       blocksIfDiverges: true,
       note: 'Host reads the object\'s GlassesId (Anamnesis, Ktisis). Library facewear decoder accepts a record with an own uint16 GlassesId (compatibility.md "Facewear"), valid 12. Losing the current object shape would drop facewear for every modern export.',
-      host: { glassesId: 12 },
       lib: { facewear: { state: 'valid', value: 12 }, noIssueCodes: ['INVALID_FIELD'] },
     },
     {
@@ -3351,7 +2642,6 @@ const geaCasesSection: ParityCase[] = (() => {
       classification: 'preserved',
       blocksIfDiverges: true,
       note: 'Host accepts the Brio-era bare integer. Library facewear decoder accepts `isUint(raw)` directly ("legacy numeric and current object representations", api.md), valid 12.',
-      host: { glassesId: 12 },
       lib: { facewear: { state: 'valid', value: 12 }, noIssueCodes: ['INVALID_FIELD'] },
     },
     {
@@ -3361,7 +2651,6 @@ const geaCasesSection: ParityCase[] = (() => {
       doc: doc({ Glasses: { GlassesId: 0 } }),
       classification: 'preserved',
       note: 'Host: row 0 is "none", read as null. Library: zero is a valid uint ("zero remains valid"), so facewear is valid 0; the contract maps glassesId 0 to null in the projection, so the visible result is preserved.',
-      host: { glassesId: null },
       lib: { facewear: { state: 'valid', value: 0 }, noIssueCodes: ['INVALID_FIELD'] },
     },
     {
@@ -3371,7 +2660,6 @@ const geaCasesSection: ParityCase[] = (() => {
       doc: doc({ Glasses: null }),
       classification: 'preserved',
       note: 'Host: null is not a number, so glassesId null. Library: a present null key is the `null` field state (no issue), distinct from absent; both project to no facewear.',
-      host: { glassesId: null },
       lib: { facewear: { state: 'null' }, noIssueCodes: ['INVALID_FIELD'] },
     },
     {
@@ -3381,7 +2669,6 @@ const geaCasesSection: ParityCase[] = (() => {
       doc: doc({ Glasses: '12' }),
       classification: 'intentional',
       note: 'Host ignores a string silently (glassesId null, same as none). Library: neither a uint nor a record, so facewear is invalid with INVALID_FIELD ("Missing/invalid nested IDs never default to zero"); not coerced to 12 either.',
-      host: { glassesId: null },
       lib: { facewear: { state: 'invalid' }, issueCodes: ['INVALID_FIELD'] },
     },
     {
@@ -3391,7 +2678,6 @@ const geaCasesSection: ParityCase[] = (() => {
       doc: doc({ Glasses: -4 }),
       classification: 'intentional',
       note: 'Host: not > 0, so silently null. Library: -4 fails `isUint` (value >= 0), facewear invalid with INVALID_FIELD instead of reading as no facewear.',
-      host: { glassesId: null },
       lib: { facewear: { state: 'invalid' }, issueCodes: ['INVALID_FIELD'] },
     },
     {
@@ -3402,7 +2688,6 @@ const geaCasesSection: ParityCase[] = (() => {
       doc: doc({ Glasses: 12.5 }),
       classification: 'intentional',
       note: 'Host floors a positive fraction to 12 and would look up a real facewear row. Library: 12.5 is not a safe integer, facewear invalid (INVALID_FIELD); the plan contract names this difference explicitly.',
-      host: { glassesId: 12 },
       lib: { facewear: { state: 'invalid' }, issueCodes: ['INVALID_FIELD'] },
     },
     {
@@ -3412,7 +2697,6 @@ const geaCasesSection: ParityCase[] = (() => {
       doc: doc({ Glasses: {} }),
       classification: 'intentional',
       note: 'Host reads the missing nested key as undefined, so null (no facewear). Library: a record without an own GlassesId is invalid, not absent and not 0 ("Missing/invalid nested IDs never default to zero").',
-      host: { glassesId: null },
       lib: { facewear: { state: 'invalid' }, issueCodes: ['INVALID_FIELD'] },
     },
     {
@@ -3422,7 +2706,6 @@ const geaCasesSection: ParityCase[] = (() => {
       doc: doc({ Glasses: 65536 }),
       classification: 'intentional',
       note: 'Host emits any positive finite integer (65536). Library: `isUint(raw)` defaults to max 65535 (models.ts), so facewear is invalid with INVALID_FIELD (compatibility.md "Facewear: uint16").',
-      host: { glassesId: 65536 },
       lib: { facewear: { state: 'invalid' }, issueCodes: ['INVALID_FIELD'] },
     },
     {
@@ -3432,7 +2715,6 @@ const geaCasesSection: ParityCase[] = (() => {
       doc: doc({ Glasses: 9007199254740992 }),
       classification: 'intentional',
       note: 'Plan row 114 (accept the library\'s bounded refusal): an unsafe integer is not a field state in the library, so this is the one Glasses value that refuses the WHOLE document instead of marking facewear invalid. Host: finite and > 0, so glassesId 9007199254740992. Library reader: an integer that is not a safe integer fails INVALID_NUMBER for the whole document (read.ts `value`), before inspection (plan row "unsafe numbers": accept the bounded refusal).',
-      host: { glassesId: 9007199254740992 },
       lib: { refused: 'INVALID_NUMBER' },
     },
     {
@@ -3443,7 +2725,6 @@ const geaCasesSection: ParityCase[] = (() => {
       doc: doc({ Glasses: { GlassesId: 2.5 } }),
       classification: 'intentional',
       note: 'Host floors the nested value too (2.5 -> 2). Library: the nested GlassesId must be `isUint`, so facewear is invalid with INVALID_FIELD; pins that the object shape gets the same uint rule as the bare shape (GEA-27).',
-      host: { glassesId: 2 },
       lib: { facewear: { state: 'invalid' }, issueCodes: ['INVALID_FIELD'] },
     },
 
@@ -3455,7 +2736,6 @@ const geaCasesSection: ParityCase[] = (() => {
       doc: { Body: armor(361, 3, 12, 0), Glasses: { GlassesId: 12 } },
       classification: 'intentional',
       note: 'Bare document, no identity keys; the Glasses + Body variant (IDN owns the plain Body-only document). Host refuses a file with none of the 15 colour keys; gear and Glasses do not count (chara-parser.ts:472). Library: equipment slots and Glasses are CHARACTER_FIELDS, so readChara admits it (no NOT_CHARACTER); the gear reads worn with its dye and facewear valid ("valid gear remains useful"), and the appearance stays explicitly unresolved ("unresolved appearance stays explicit"): every index is absent, so each slot keeps its unresolved/missingColor default (resolve.ts:264-277) before any palette request, hence no MISSING_PALETTE_CONTEXT (raised later, at :321). Both halves of plan row "Partial equipment-only document", an intentional app change.',
-      host: { refused: /no character colour fields/ },
       lib: {
         equipment: {
           Body: {
@@ -3482,7 +2762,6 @@ const geaCasesSection: ParityCase[] = (() => {
       doc: doc({ Body: [] }),
       classification: 'intentional',
       note: 'Host: `typeof [] === "object"` passes the slot gate (chara-parser.ts:559), every lane reads as 0, so the slot is silently skipped as empty. Library: isRecord excludes arrays (field-spec.ts:89), so the slot is invalid with INVALID_FIELD at [Body], status invalid, and inspect.ts returns before the lane check (no INCOMPLETE_MODEL). Sibling of GEA-09: an implementation that admits arrays as records fails here only.',
-      host: { gearModels: [], gearDyes: [] },
       lib: {
         equipment: { Body: { status: 'invalid', model: null, base: { state: 'absent' } } },
         issues: [{ code: 'INVALID_FIELD', path: ['Body'] }],
@@ -3496,7 +2775,6 @@ const geaCasesSection: ParityCase[] = (() => {
       doc: doc({ Glasses: [] }),
       classification: 'intentional',
       note: 'Host: an array is an object, `[]["GlassesId"]` is undefined, so glassesId null, the same as no facewear (chara-parser.ts:609-615). Library: neither `isUint` nor a record (isRecord excludes arrays), so facewear is invalid with INVALID_FIELD at [Glasses] (inspect.ts:327-336) and keeps the raw [].',
-      host: { glassesId: null },
       lib: {
         facewear: { state: 'invalid', raw: [] },
         issues: [{ code: 'INVALID_FIELD', path: ['Glasses'] }],
@@ -3509,7 +2787,6 @@ const geaCasesSection: ParityCase[] = (() => {
       doc: doc({ Body: { ModelSet: 5, ModelBase: 0, ModelVariant: 1, DyeId: 7, DyeId2: 0 } }),
       classification: 'preserved',
       note: 'Host: the armor rule is base > 0 (isWornCharaModel, chara-models.ts:111), so set 5 does not make Body worn and its dye is not emitted. Library: ModelSet is read only for MainHand/OffHand (inspect.ts:188), so the set lane stays absent and the complete armor model {base 0, variant 1} is empty. Mirror of GEA-06: catches the weapon rule applied to armor on either side.',
-      host: { gearModels: [], gearDyes: [] },
       lib: {
         equipment: {
           Body: {
@@ -3529,7 +2806,6 @@ const geaCasesSection: ParityCase[] = (() => {
       doc: doc({ Body: { ModelBase: 361, ModelVariant: 3 } }),
       classification: 'preserved',
       note: 'Host: emits the worn model and no dyes (an undefined channel is not a positive number). Library: dye1/dye2 are absent with no issue and the complete model stays worn (inspect.ts:107, 186-187; api.md "missing/invalid dyes cannot invalidate a supported model"). Catches an implementation that makes dye keys part of model completeness.',
-      host: { gearModels: [{ slot: 'Body', base: 361, variant: 3 }], gearDyes: [] },
       lib: {
         equipment: {
           Body: {
@@ -3549,7 +2825,6 @@ const geaCasesSection: ParityCase[] = (() => {
       doc: doc({ MainHand: { ModelBase: 0, ModelVariant: 1, DyeId: 3, DyeId2: 0 } }),
       classification: 'intentional',
       note: 'Host: the missing set reads as 0, and set 0 with base 0 is not worn, so the weapon and its dye are skipped as an empty slot. Library: weapons need ModelSet (inspect.ts:188-193), so the set lane is absent, INCOMPLETE_MODEL at [MainHand], status invalid, model null, never empty (plan: "omit incomplete/invalid models from lookup and show a bounded warning"). Sibling of GEA-11 (positive base); the visible badge list is the same, the bounded warning is new.',
-      host: { gearModels: [], gearDyes: [] },
       lib: {
         equipment: {
           MainHand: {
@@ -3571,7 +2846,6 @@ const geaCasesSection: ParityCase[] = (() => {
       doc: doc({ Glasses: { GlassesId: null } }),
       classification: 'intentional',
       note: 'Host: the nested null is not a number, so glassesId null. Library: the outer Glasses value is a non-null record, so the field is not the `null` state; its own GlassesId exists but `isUint(null)` is false, so facewear is invalid with INVALID_FIELD at [Glasses] (inspect.ts:327-336). Distinguishes a nested null from a top-level null (GEA-24, state null).',
-      host: { glassesId: null },
       lib: {
         facewear: { state: 'invalid', raw: { GlassesId: null } },
         issues: [{ code: 'INVALID_FIELD', path: ['Glasses'] }],
@@ -3584,7 +2858,6 @@ const geaCasesSection: ParityCase[] = (() => {
       doc: doc({ Glasses: { GlassesId: '12' } }),
       classification: 'intentional',
       note: 'Host: the nested string is not a number, so glassesId null (silently, as no facewear). Library: the nested GlassesId must be `isUint`, so facewear is invalid with INVALID_FIELD at [Glasses], never coerced to 12. Object-shape twin of GEA-25.',
-      host: { glassesId: null },
       lib: {
         facewear: { state: 'invalid', raw: { GlassesId: '12' } },
         issues: [{ code: 'INVALID_FIELD', path: ['Glasses'] }],
@@ -3597,7 +2870,6 @@ const geaCasesSection: ParityCase[] = (() => {
       doc: doc({ Glasses: { GlassesId: 65536 } }),
       classification: 'intentional',
       note: 'Host: any positive finite nested number is kept, glassesId 65536. Library: the nested GlassesId uses the same `isUint` default maximum 65535 as the bare shape, so facewear is invalid with INVALID_FIELD at [Glasses]. Object-shape twin of GEA-29: catches a decoder that range-checks only the bare integer.',
-      host: { glassesId: 65536 },
       lib: {
         facewear: { state: 'invalid', raw: { GlassesId: 65536 } },
         issues: [{ code: 'INVALID_FIELD', path: ['Glasses'] }],
@@ -3610,7 +2882,6 @@ const geaCasesSection: ParityCase[] = (() => {
       doc: doc({ Body: { ModelBase: 361, ModelVariant: 3, DyeId: '5', DyeId2: 0 } }),
       classification: 'intentional',
       note: 'Host silently drops the non-numeric channel as if undyed (typeof check, chara-parser.ts:576). Library: "5" is not a uint16, so dye1 is invalid with INVALID_FIELD at [Body, DyeId], keeping the raw string, and the model stays worn. Plan row "Invalid dye or zero dye" names non-numeric dyes explicitly: retain a diagnostic, never coerce to 5.',
-      host: { gearModels: [{ slot: 'Body', base: 361, variant: 3 }], gearDyes: [] },
       lib: {
         equipment: {
           Body: {
@@ -3631,7 +2902,6 @@ const geaCasesSection: ParityCase[] = (() => {
       doc: doc(),
       classification: 'preserved',
       note: 'Host: record.Glasses is undefined, so glassesId null. Library: no own Glasses key gives facewear state `absent` (inspect.ts:107), distinct from a present null (GEA-24) and raising no issue; both project to no facewear.',
-      host: { glassesId: null },
       lib: { facewear: { state: 'absent' }, noIssueCodes: ['INVALID_FIELD'] },
     },
     {
@@ -3645,10 +2915,6 @@ const geaCasesSection: ParityCase[] = (() => {
       classification: 'intentional',
       blocksIfDiverges: true,
       note: 'Host: Body is emitted worn with its dye; the negative Hands base is coerced to 0, so Hands is silently skipped. Library: Hands is invalid (INVALID_FIELD at [Hands, ModelBase], INCOMPLETE_MODEL at [Hands]), while Body stays worn {361,3} with dye1 12 (plan row: "omit incomplete/invalid models ... while retaining valid other slots"). Blocking: the Body half is the required contract that one bad slot never takes valid gear down with it; the Hands half is the intentional new warning.',
-      host: {
-        gearModels: [{ slot: 'Body', base: 361, variant: 3 }],
-        gearDyes: [{ slot: 'Body', channel: 1, stainId: 12 }],
-      },
       lib: {
         equipment: {
           Body: {
@@ -3676,10 +2942,6 @@ const geaCasesSection: ParityCase[] = (() => {
       doc: doc({ Body: { ModelBase: 361, DyeId: 4, DyeId2: 0 } }),
       classification: 'intentional',
       note: 'HOST QUIRK: the missing variant is coerced to 0 and, base 361 being > 0, the host emits a WORN piece {361, 0} that the file never named, plus its dye (chara-parser.ts:563-577). Library: ModelVariant absent, so INCOMPLETE_MODEL at [Body], status invalid, model null, base valid 361 and the dye kept as evidence; an absent lane raises no INVALID_FIELD (plan: "Do not invent or floor lanes").',
-      host: {
-        gearModels: [{ slot: 'Body', base: 361, variant: 0 }],
-        gearDyes: [{ slot: 'Body', channel: 1, stainId: 4 }],
-      },
       lib: {
         equipment: {
           Body: {
@@ -3750,19 +3012,6 @@ const actCasesSection: ParityCase[] = (() => {
       provider: 'gray',
       classification: 'intentional',
       note: 'Shared interface contract, verbatim synthetic tuple {"Highlights":0,"FacePaintColor":0} with a #808080 provider: EnableHighlights absent → active null; FacePaint absent → paint null → active null; both palettes are shared (no tribe/gender needed), so palette / #808080 / activityUnknown for both slots. The host treats a missing flag as enabled and a missing FacePaint as painted (#F7F7F7, #F8F8F8). Colour evidence is preserved; the intentional change is host matchHex: null (Task 3). The only FacePaint-absent case in the register.',
-      host: {
-        race: null,
-        slots: {
-          highlights: { verdict: 'index', inertReason: null, index: 0, indexHex: '#F7F7F7' },
-          facePaint: {
-            verdict: 'index',
-            inertReason: null,
-            index: 0,
-            indexHex: '#F8F8F8',
-            sheetVariant: 'dark',
-          },
-        },
-      },
       lib: {
         identity: { canonicalRace: null },
         noIssueCodes: ['INVALID_FIELD'],
@@ -3791,7 +3040,6 @@ const actCasesSection: ParityCase[] = (() => {
       provider: 'gray',
       classification: 'preserved',
       note: 'A valid true flag makes the library slot active (resolve.ts: active = EnableHighlights value); with no extended color the reason is paletteOnly, which separates it from the activityUnknown of a missing flag. The host resolves index 10 to #F4EACD.',
-      host: { slots: { highlights: { verdict: 'index', inertReason: null, indexHex: '#F4EACD' } } },
       lib: {
         slots: {
           highlights: {
@@ -3812,11 +3060,6 @@ const actCasesSection: ParityCase[] = (() => {
       classification: 'preserved',
       blocksIfDiverges: true,
       note: 'Plan row: the host inerts EnableHighlights false (highlightsDisabled) and the library must give active false, inactive, highlightsDisabled with no display color (resolve.ts final loop, active === false branch).',
-      host: {
-        slots: {
-          highlights: { verdict: 'inert', inertReason: 'highlightsDisabled', indexHex: null },
-        },
-      },
       lib: {
         slots: {
           highlights: {
@@ -3837,7 +3080,6 @@ const actCasesSection: ParityCase[] = (() => {
       provider: 'gray',
       classification: 'intentional',
       note: 'The host inerts only a literal false (`!== false`), so null shows the highlight. The library field is state null with no issue (inspect.ts field(): null returns before decode), current() gives null, so active null; with no extended color the reason is activityUnknown and the palette preview is kept. Colour evidence is preserved; the intentional change is host matchHex: null (Task 3).',
-      host: { slots: { highlights: { verdict: 'index', inertReason: null, indexHex: '#F4EACD' } } },
       lib: {
         noIssueCodes: ['INVALID_FIELD'],
         slots: {
@@ -3860,7 +3102,6 @@ const actCasesSection: ParityCase[] = (() => {
       provider: 'gray',
       classification: 'intentional',
       note: 'The host treats any non-false value as enabled and never refuses the file for it. inspect.ts accepts only a boolean, so "yes" is an invalid field (INVALID_FIELD at ["EnableHighlights"]) and the slot is active null / activityUnknown, not true. Colour evidence is preserved; the intentional change is host matchHex: null (Task 3).',
-      host: { slots: { highlights: { verdict: 'index', inertReason: null, indexHex: '#F4EACD' } } },
       lib: {
         issueCodes: ['INVALID_FIELD'],
         issues: [{ code: 'INVALID_FIELD', path: ['EnableHighlights'] }],
@@ -3887,11 +3128,6 @@ const actCasesSection: ParityCase[] = (() => {
       classification: 'preserved',
       blocksIfDiverges: true,
       note: 'Plan row: disabled "whatever the extended data" (the same required contract as ACT-03/07). The library sets extendedActive false and inactive/highlightsDisabled for active false even when the float is live, but keeps the decoded extendedHex and the creator color as evidence; the host makes it inert with the float hex kept.',
-      host: {
-        slots: {
-          highlights: { verdict: 'inert', inertReason: 'highlightsDisabled', floatHex: '#00FF00' },
-        },
-      },
       lib: {
         slots: {
           highlights: {
@@ -3916,9 +3152,6 @@ const actCasesSection: ParityCase[] = (() => {
       classification: 'preserved',
       blocksIfDiverges: true,
       note: 'Plan row: the host inerts FacePaint 0 (facePaintNone) and the library gives active false (0 & ~0x80 === 0), inactive, facePaintNone.',
-      host: {
-        slots: { facePaint: { verdict: 'inert', inertReason: 'facePaintNone', indexHex: null } },
-      },
       lib: {
         slots: {
           facePaint: {
@@ -3938,7 +3171,6 @@ const actCasesSection: ParityCase[] = (() => {
       provider: 'gray',
       classification: 'intentional',
       note: 'Plan row: only 0 inerts on the host, so 128 shows #484848. The library masks the mirror bit (128 & ~0x80 === 0) and gives active false, inactive, facePaintNone.',
-      host: { slots: { facePaint: { verdict: 'index', inertReason: null, indexHex: '#484848' } } },
       lib: {
         slots: {
           facePaint: {
@@ -3958,7 +3190,6 @@ const actCasesSection: ParityCase[] = (() => {
       provider: 'gray',
       classification: 'preserved',
       note: 'Plan row: a value with non-zero low bits stays active. 129 & ~0x80 = 1, so library active true with reason paletteOnly (no extended color for face paint); host shows #484848.',
-      host: { slots: { facePaint: { verdict: 'index', inertReason: null, indexHex: '#484848' } } },
       lib: {
         slots: {
           facePaint: {
@@ -3978,7 +3209,6 @@ const actCasesSection: ParityCase[] = (() => {
       provider: 'gray',
       classification: 'preserved',
       note: 'A valid style without the mirror bit: library active true (4 & ~0x80 = 4), paletteOnly; host shows #484848. Rules out an implementation that reads only bit 0x80 or only the value 1.',
-      host: { slots: { facePaint: { verdict: 'index', inertReason: null, indexHex: '#484848' } } },
       lib: {
         slots: {
           facePaint: {
@@ -3999,7 +3229,6 @@ const actCasesSection: ParityCase[] = (() => {
       provider: 'gray',
       classification: 'intentional',
       note: 'Host readIndex gives null, which is not 0, so the paint shows. Library FacePaint field state null (no issue) → paint null → active null; reason activityUnknown with the palette preview kept. Colour evidence is preserved; the intentional change is host matchHex: null (Task 3).',
-      host: { slots: { facePaint: { verdict: 'index', inertReason: null, indexHex: '#484848' } } },
       lib: {
         noIssueCodes: ['INVALID_FIELD'],
         slots: {
@@ -4021,7 +3250,6 @@ const actCasesSection: ParityCase[] = (() => {
       provider: 'gray',
       classification: 'intentional',
       note: 'Plan row: a non-numeric FacePaint refuses the host file (readIndex). The library keeps the document: FacePaint is an invalid uint8 field (INVALID_FIELD), so face paint is active null / activityUnknown with its palette preview. Colour evidence is kept; the intentional change is host matchHex: null (Task 3).',
-      host: { refused: /FacePaint: expected a numeric palette index/ },
       lib: {
         issueCodes: ['INVALID_FIELD'],
         issues: [{ code: 'INVALID_FIELD', path: ['FacePaint'] }],
@@ -4044,7 +3272,6 @@ const actCasesSection: ParityCase[] = (() => {
       provider: 'gray',
       classification: 'intentional',
       note: 'The host paints any non-zero number. inspect.ts reads FacePaint with integer(…, 255), so 256 is invalid (not masked to 0, which would wrongly give facePaintNone): active null, activityUnknown, INVALID_FIELD at ["FacePaint"]. Colour evidence is preserved; the intentional change is host matchHex: null (Task 3).',
-      host: { slots: { facePaint: { verdict: 'index', inertReason: null, indexHex: '#484848' } } },
       lib: {
         issueCodes: ['INVALID_FIELD'],
         issues: [{ code: 'INVALID_FIELD', path: ['FacePaint'] }],
@@ -4067,11 +3294,6 @@ const actCasesSection: ParityCase[] = (() => {
       provider: 'gray',
       classification: 'preserved',
       note: 'Known non-Hrothgar race with bit 0x80 set: library lipEnabled true → active true, paletteOnly. The host never reads Mouth and shows lipsDark 53 (#621C33).',
-      host: {
-        slots: {
-          lip: { verdict: 'index', inertReason: null, indexHex: '#621C33', sheetVariant: 'dark' },
-        },
-      },
       lib: {
         slots: {
           lip: {
@@ -4092,7 +3314,6 @@ const actCasesSection: ParityCase[] = (() => {
       provider: 'gray',
       classification: 'preserved',
       note: '131 & 0x80 is non-zero, so library active true / paletteOnly: the bit is tested, not the whole value compared to 128. Host shows #621C33.',
-      host: { slots: { lip: { verdict: 'index', inertReason: null, indexHex: '#621C33' } } },
       lib: {
         slots: {
           lip: {
@@ -4113,7 +3334,6 @@ const actCasesSection: ParityCase[] = (() => {
       classification: 'intentional',
       blocksIfDiverges: true,
       note: 'Plan row: follow library activation (required contract: lip-bit-clear stays inactive). Bit clear on a known non-Hrothgar race → lipEnabled false → active false, inactive, lipDisabled. The host never reads Mouth and shows #621C33 (the committed Ktisis export case).',
-      host: { slots: { lip: { verdict: 'index', inertReason: null, indexHex: '#621C33' } } },
       lib: {
         slots: {
           lip: {
@@ -4134,7 +3354,6 @@ const actCasesSection: ParityCase[] = (() => {
       classification: 'intentional',
       blocksIfDiverges: true,
       note: 'A valid Mouth 0 has the bit clear, so the library gives lipDisabled (not activityUnknown: 0 is a value, not a missing control). Host shows #621C33.',
-      host: { slots: { lip: { verdict: 'index', inertReason: null, indexHex: '#621C33' } } },
       lib: {
         slots: {
           lip: {
@@ -4155,11 +3374,6 @@ const actCasesSection: ParityCase[] = (() => {
       provider: 'gray',
       classification: 'intentional',
       note: 'Shared interface contract, verbatim synthetic tuple: {"Tribe":"Wildwood","LipsToneFurPattern":53} with a #808080 provider yields lip active null, palette, #808080, activityUnknown (Mouth absent on a known race → lipEnabled null). The host shows lipsDark 53. Colour evidence is preserved; the intentional change is host matchHex: null (Task 3). Not blocking: activity-unknown is not on ruling 8\'s required-contract list.',
-      host: {
-        tribe: 'Wildwood',
-        gender: null,
-        slots: { lip: { verdict: 'index', indexHex: '#621C33' } },
-      },
       lib: {
         identity: { canonicalRace: 'Elezen', gender: { state: 'absent' } },
         slots: {
@@ -4181,7 +3395,6 @@ const actCasesSection: ParityCase[] = (() => {
       provider: 'gray',
       classification: 'intentional',
       note: 'Mouth field state null (no issue) → current() null → lipEnabled null on a known race: active null, palette preview, activityUnknown. Host ignores Mouth and shows #621C33. Colour evidence is preserved; the intentional change is host matchHex: null (Task 3).',
-      host: { slots: { lip: { verdict: 'index', indexHex: '#621C33' } } },
       lib: {
         noIssueCodes: ['INVALID_FIELD'],
         slots: {
@@ -4203,7 +3416,6 @@ const actCasesSection: ParityCase[] = (() => {
       provider: 'gray',
       classification: 'intentional',
       note: 'The host never reads Mouth, so an invalid value neither refuses the file nor changes the lip. The library reads it as an invalid uint8 (INVALID_FIELD at ["Mouth"]) → lipEnabled null → active null / activityUnknown. Colour evidence is preserved; the intentional change is host matchHex: null (Task 3).',
-      host: { slots: { lip: { verdict: 'index', indexHex: '#621C33' } } },
       lib: {
         issueCodes: ['INVALID_FIELD'],
         issues: [{ code: 'INVALID_FIELD', path: ['Mouth'] }],
@@ -4231,17 +3443,6 @@ const actCasesSection: ParityCase[] = (() => {
       classification: 'intentional',
       blocksIfDiverges: true,
       note: 'Plan row: lipDisabled "also overrides a live non-zero opacity". Library: active false → extendedActive false, inactive, no display and no lip composite, but the decoded extendedHex is kept. Host: the float matches the lipsDark 53 shader (#340A1C) so the index wins and alpha 1 blends to the creator #621C33.',
-      host: {
-        slots: {
-          lip: {
-            verdict: 'index',
-            indexHex: '#621C33',
-            alpha: 1,
-            blendHex: '#621C33',
-            deltaE: { max: 6 },
-          },
-        },
-      },
       lib: {
         slots: {
           lip: {
@@ -4265,7 +3466,6 @@ const actCasesSection: ParityCase[] = (() => {
       provider: 'gray',
       classification: 'intentional',
       note: 'No Tribe and no Race: library lipEnabled = bitSet || null = true, but the lip index meaning is unknown (Hrothgar fur pattern or color), so unresolved / missingRace with no display. The host assumes a color index and shows #621C33.',
-      host: { race: null, slots: { lip: { verdict: 'index', indexHex: '#621C33' } } },
       lib: {
         identity: { canonicalRace: null },
         slots: {
@@ -4287,7 +3487,6 @@ const actCasesSection: ParityCase[] = (() => {
       provider: 'gray',
       classification: 'intentional',
       note: 'With no race a clear bit cannot be told from a Hrothgar (which ignores it): bitSet || null = false || null = null, so active null, and the index stays unresolved / missingRace. The host shows #621C33.',
-      host: { race: null, slots: { lip: { verdict: 'index', indexHex: '#621C33' } } },
       lib: {
         slots: {
           lip: {
@@ -4314,10 +3513,6 @@ const actCasesSection: ParityCase[] = (() => {
       },
       classification: 'preserved',
       note: 'Hrothgar ignores the bit (lipEnabled true), so Mouth 0 does not give lipDisabled. The index is a fur pattern, so the live float shows: library extendedOnly, active true, reason floatOnly, displayHex the float; host floatOnly with the float hex. HOST QUIRK: the host floatOnly lip still carries inertReason furPattern (chara-resolver.ts spreads raw.inertReason into every verdict); the Task 3 adapter must not read that field as inactivity.',
-      host: {
-        race: 'Hrothgar',
-        slots: { lip: { verdict: 'floatOnly', floatHex: '#A03040', inertReason: 'furPattern' } },
-      },
       lib: {
         slots: {
           lip: {
@@ -4337,7 +3532,6 @@ const actCasesSection: ParityCase[] = (() => {
       doc: { ...HROTHGAR, LipsToneFurPattern: 3, Mouth: 0, MouthColor: squared('#A03040', 1) },
       classification: 'preserved',
       note: 'Without IsExtendedAppearanceValid the float is not live: library inactive, active false, reason furPattern (not lipDisabled — the bit is ignored on Hrothgar); host inert furPattern.',
-      host: { slots: { lip: { verdict: 'inert', inertReason: 'furPattern' } } },
       lib: {
         slots: {
           lip: {
@@ -4357,7 +3551,6 @@ const actCasesSection: ParityCase[] = (() => {
       doc: { ...HROTHGAR, LipsToneFurPattern: 3, Mouth: 0, MouthColor: squared('#A03040', 0) },
       classification: 'intentional',
       note: 'Host: stored alpha 0 → noLip regardless of flags or race. Library: the noLip check needs extendedActive, which is false without the flag, so the fur-pattern branch gives inactive / furPattern.',
-      host: { slots: { lip: { verdict: 'inert', inertReason: 'noLip', alpha: 0 } } },
       lib: {
         slots: {
           lip: { active: false, interpretation: 'inactive', reason: 'furPattern', alpha: 0 },
@@ -4378,9 +3571,6 @@ const actCasesSection: ParityCase[] = (() => {
       }),
       classification: 'intentional',
       note: 'Contract: live extended colors may carry another reason while activation stays unknown. extendedActive = live && hex && active !== false = true; the float equals the shader #F4EACD so reason paletteAgreement, display the creator color, active still null. Host: index wins. Colour evidence is preserved; the intentional change is host matchHex: null (Task 3).',
-      host: {
-        slots: { highlights: { verdict: 'index', indexHex: '#F4EACD', deltaE: { max: 6 } } },
-      },
       lib: {
         slots: {
           highlights: {
@@ -4406,9 +3596,6 @@ const actCasesSection: ParityCase[] = (() => {
       }),
       classification: 'intentional',
       note: 'Same rule as ACT-28 with a float far from the shader: library offGrid, reason offGrid, displayHex the float, active null, extendedActive true. Host offGrid with the float hex. Colour evidence is preserved; the intentional change is host matchHex: null (Task 3).',
-      host: {
-        slots: { highlights: { verdict: 'offGrid', floatHex: '#00FF00', deltaE: { min: 6 } } },
-      },
       lib: {
         slots: {
           highlights: {
@@ -4431,11 +3618,6 @@ const actCasesSection: ParityCase[] = (() => {
       doc: char({ Highlights: 10, HairHighlight: squared('#00FF00') }),
       classification: 'intentional',
       note: 'The library reason chain tests extendedHex before active === null, so an unknown-activation slot with a stored but non-live float reads extendedInactive (active still null, palette preview kept). Host: index wins with indexWinNote extendedMissing. Adapter obligation: the Task 3 activity-unknown warning must key on active === null, never on reason (see ACT-42). Colour evidence is preserved; the intentional change is host matchHex: null (Task 3).',
-      host: {
-        slots: {
-          highlights: { verdict: 'index', indexHex: '#F4EACD', indexWinNote: 'extendedMissing' },
-        },
-      },
       lib: {
         slots: {
           highlights: {
@@ -4461,7 +3643,6 @@ const actCasesSection: ParityCase[] = (() => {
       }),
       classification: 'preserved',
       note: 'Live extended data with stored alpha 0 and the lip enabled: library extendedActive && alpha <= 0 → active false, inactive, noLip; host noLip.',
-      host: { slots: { lip: { verdict: 'inert', inertReason: 'noLip', alpha: 0 } } },
       lib: {
         slots: {
           lip: {
@@ -4482,7 +3663,6 @@ const actCasesSection: ParityCase[] = (() => {
       doc: char({ LipsToneFurPattern: 53, Mouth: 128, MouthColor: squared('#340A1C', 0) }),
       classification: 'intentional',
       note: 'Plan "corrected behavior": with the bit set, inactive stored alpha must not suppress an indexed lip. Library extendedActive false → no noLip; palette, creator #621C33, reason extendedInactive. Host: alpha 0 → noLip regardless of flags.',
-      host: { slots: { lip: { verdict: 'inert', inertReason: 'noLip' } } },
       lib: {
         slots: {
           lip: {
@@ -4509,7 +3689,6 @@ const actCasesSection: ParityCase[] = (() => {
       classification: 'intentional',
       blocksIfDiverges: true,
       note: 'Both hide the lip but for different reasons (required contract: lip-bit-clear stays inactive): the library checks active === false before the noLip test, so the reason is lipDisabled; the host reports noLip.',
-      host: { slots: { lip: { verdict: 'inert', inertReason: 'noLip' } } },
       lib: { slots: { lip: { active: false, interpretation: 'inactive', reason: 'lipDisabled' } } },
     },
     {
@@ -4523,7 +3702,6 @@ const actCasesSection: ParityCase[] = (() => {
       }),
       classification: 'preserved',
       note: 'The extended data is live, so plan row "Lip alpha zero with extended data inactive" does not apply (ACT-38 is that row\'s Mouth-missing case). Mouth absent → active null, but extendedActive (live && hex && active !== false) is true and alpha <= 0, so the library sets active false, inactive, noLip (resolve.ts noLip check) — the same answer as the host. Live stored opacity is colour evidence, not fabricated inactivity.',
-      host: { slots: { lip: { verdict: 'inert', inertReason: 'noLip' } } },
       lib: {
         slots: {
           lip: { active: false, interpretation: 'inactive', reason: 'noLip', extendedActive: true },
@@ -4544,9 +3722,6 @@ const actCasesSection: ParityCase[] = (() => {
       }),
       classification: 'preserved',
       note: 'The float equals the lipsDark 53 shader, so both display the creator #621C33; skin 12 shows #B18D73. Both composite in linear sRGB at alpha 0.5: #90685A (hand-computed; library lipComposite.hex vs host blendHex).',
-      host: {
-        slots: { lip: { verdict: 'index', indexHex: '#621C33', alpha: 0.5, blendHex: '#90685A' } },
-      },
       lib: {
         slots: {
           lip: {
@@ -4575,7 +3750,6 @@ const actCasesSection: ParityCase[] = (() => {
       }),
       classification: 'preserved',
       note: 'Both keep the stored alpha 1.5 and clamp to 1 for the composite, which therefore equals the lip creator #621C33; the library also reports ALPHA_CLAMPED (resolve.ts: alpha outside 0–1).',
-      host: { slots: { lip: { verdict: 'index', alpha: 1.5, blendHex: '#621C33' } } },
       lib: {
         issueCodes: ['ALPHA_CLAMPED'],
         noIssueCodes: ['EXTENDED_CLAMPED'],
@@ -4596,18 +3770,6 @@ const actCasesSection: ParityCase[] = (() => {
       }),
       classification: 'intentional',
       note: 'UNPLANNED: the host composites whenever lip.alpha > 0 without checking IsExtendedAppearanceValid (chara-resolver.ts lip blend), giving blendHex #90685A; the library composes only when lip.extendedActive (resolve.ts lipComposite guard), so lipComposite is null and the lip shows the palette creator #621C33 with reason extendedInactive. The maintainer must decide whether a non-live stored opacity may still drive the host lip preview; the Task 3 adapter must not fabricate a composite from non-live data. HOST QUIRK: the host blend ignores liveness although its index/float verdict honours it (indexWinNote extendedMissing on the same slot). ACT-35 is the live counterpart.',
-      host: {
-        slots: {
-          lip: {
-            verdict: 'index',
-            indexHex: '#621C33',
-            indexWinNote: 'extendedMissing',
-            alpha: 0.5,
-            blendHex: '#90685A',
-          },
-          skin: { verdict: 'index', indexHex: '#B18D73' },
-        },
-      },
       lib: {
         slots: {
           lip: {
@@ -4632,7 +3794,6 @@ const actCasesSection: ParityCase[] = (() => {
       doc: char({ LipsToneFurPattern: 53, MouthColor: squared('#340A1C', 0) }),
       classification: 'intentional',
       note: 'Plan row: a missing/null/invalid Mouth gives active null and inactive stored alpha must not suppress the indexed lip. Library: Mouth absent on a known race → lipEnabled null; not live → extendedActive false, so no noLip; palette creator #621C33; the reason chain tests extendedHex before active === null, so reason extendedInactive, not activityUnknown (adapter must key on active === null). Host: alpha 0 → noLip regardless of flags. ACT-44/45 are the Mouth null/invalid variants. Colour evidence is preserved; the intentional change is host matchHex: null (Task 3).',
-      host: { slots: { lip: { verdict: 'inert', inertReason: 'noLip', alpha: 0 } } },
       lib: {
         noIssueCodes: ['AMBIGUOUS_ZERO_BLOCK'],
         slots: {
@@ -4656,7 +3817,6 @@ const actCasesSection: ParityCase[] = (() => {
       classification: 'intentional',
       blocksIfDiverges: true,
       note: 'Plan row: a clear bit gives lipDisabled (the shape the plan attributes to the committed Anamnesis/Brio exports: Mouth 2, stored alpha 0; none of the five repo fixtures has it, so this case is synthetic; the real-producer shape is the XIVCharaKit repo export fixtures/producer-exports/anamnesis-default.chara). Library: active false is checked first in the final loop → inactive, lipDisabled, extendedActive false, no display. Host: alpha 0 → noLip. Same visible outcome, different reason; required contract (lip-bit-clear stays inactive). ACT-33 is the live version.',
-      host: { slots: { lip: { verdict: 'inert', inertReason: 'noLip', alpha: 0 } } },
       lib: {
         slots: {
           lip: {
@@ -4682,10 +3842,6 @@ const actCasesSection: ParityCase[] = (() => {
       },
       classification: 'preserved',
       note: 'Live sibling of ACT-27. Library: Hrothgar → lipEnabled true → extendedActive true; the noLip check (extendedActive && alpha <= 0) runs before the fur-pattern branch, so active false, inactive, noLip (not floatOnly, not furPattern). Host: alpha 0 → noLip regardless of race.',
-      host: {
-        race: 'Hrothgar',
-        slots: { lip: { verdict: 'inert', inertReason: 'noLip', alpha: 0 } },
-      },
       lib: {
         slots: {
           lip: {
@@ -4714,17 +3870,6 @@ const actCasesSection: ParityCase[] = (() => {
       }),
       classification: 'intentional',
       note: 'Contract: live extended colours may carry another reason while activation stays unknown. Mouth absent → active null; extendedActive = live && hex && active !== false = true; the float equals the lipsDark 53 shader → paletteAgreement, display #621C33; the composite guard needs only extendedActive, so lipComposite #90685A is kept while active stays null. Host: index #621C33, blendHex #90685A. Colour evidence is preserved; the intentional change is host matchHex: null (Task 3).',
-      host: {
-        slots: {
-          lip: {
-            verdict: 'index',
-            indexHex: '#621C33',
-            alpha: 0.5,
-            blendHex: '#90685A',
-            deltaE: { max: 6 },
-          },
-        },
-      },
       lib: {
         slots: {
           lip: {
@@ -4754,13 +3899,6 @@ const actCasesSection: ParityCase[] = (() => {
       }),
       classification: 'intentional',
       note: 'EnableHighlights and Mouth are absent, so both slots have active null, but the stored all-zero block makes the reason ambiguousZeroBlock (resolve.ts reason chain: ambiguous && extendedHex first). The Task 3 adapter must therefore key its activity-unknown warning on active === null, never on reason === activityUnknown. Host: uncaptured block → no floats, both indices win with no note and lip alpha null. Colour evidence is preserved; the intentional change is host matchHex: null (Task 3).',
-      host: {
-        extendedValid: true,
-        slots: {
-          highlights: { verdict: 'index', indexHex: '#F4EACD', floatHex: null, indexWinNote: null },
-          lip: { verdict: 'index', indexHex: '#621C33', alpha: null, inertReason: null },
-        },
-      },
       lib: {
         issueCodes: ['AMBIGUOUS_ZERO_BLOCK'],
         slots: {
@@ -4794,7 +3932,6 @@ const actCasesSection: ParityCase[] = (() => {
       provider: 'gray',
       classification: 'intentional',
       note: 'Replaces the deleted ACT-11 as the sharper FacePaint discriminator. The host paints any non-zero number (#484848). inspect.ts integer(…, 255) rejects a non-integer, so FacePaint is invalid (INVALID_FIELD at ["FacePaint"]) → active null, activityUnknown; a build that truncated 0.5 to 0 would wrongly give facePaintNone. Colour evidence is preserved; the intentional change is host matchHex: null (Task 3).',
-      host: { slots: { facePaint: { verdict: 'index', inertReason: null, indexHex: '#484848' } } },
       lib: {
         issues: [{ code: 'INVALID_FIELD', path: ['FacePaint'] }],
         slots: {
@@ -4815,7 +3952,6 @@ const actCasesSection: ParityCase[] = (() => {
       doc: char({ LipsToneFurPattern: 53, Mouth: null, MouthColor: squared('#340A1C', 0) }),
       classification: 'intentional',
       note: 'Null variant of ACT-38. Mouth state null (no issue) → current() null → lipEnabled null; not live → no noLip; palette #621C33, reason extendedInactive (extendedHex precedes active === null). Host: alpha 0 → noLip. Colour evidence is preserved; the intentional change is host matchHex: null (Task 3).',
-      host: { slots: { lip: { verdict: 'inert', inertReason: 'noLip', alpha: 0 } } },
       lib: {
         noIssueCodes: ['INVALID_FIELD'],
         slots: {
@@ -4838,7 +3974,6 @@ const actCasesSection: ParityCase[] = (() => {
       doc: char({ LipsToneFurPattern: 53, Mouth: 'open', MouthColor: squared('#340A1C', 0) }),
       classification: 'intentional',
       note: 'Invalid variant of ACT-38. Mouth "open" is an invalid uint8 (INVALID_FIELD at ["Mouth"]) → current() null → lipEnabled null; not live → no noLip; palette #621C33, reason extendedInactive. Host never reads Mouth and makes alpha 0 noLip. Colour evidence is preserved; the intentional change is host matchHex: null (Task 3).',
-      host: { slots: { lip: { verdict: 'inert', inertReason: 'noLip', alpha: 0 } } },
       lib: {
         issues: [{ code: 'INVALID_FIELD', path: ['Mouth'] }],
         slots: {
@@ -4948,12 +4083,6 @@ const extCasesSection: ParityCase[] = (() => {
       doc: char({ LEyeColor: 42, LeftEyeColor: squared(LEFT), IsExtendedAppearanceValid: true }),
       classification: 'preserved',
       note: 'Both decode round(sqrt(c)*255) (parser squaredToSrgb255, color-math gamma2Hex), so squared(#DCBA6C) reads back #DCBA6C at ΔE 0 against the eye shader; a wrong decode (sRGB curve) lands ~3 ΔE off and a missing decode far off.',
-      host: {
-        extendedValid: true,
-        slots: {
-          leftEye: { verdict: 'index', floatHex: LEFT, indexHex: LEFT, deltaE: { max: 1 } },
-        },
-      },
       lib: {
         slots: {
           leftEye: {
@@ -4976,11 +4105,6 @@ const extCasesSection: ParityCase[] = (() => {
       doc: char({ LEyeColor: 42, LeftEyeColor: `${squared(CUSTOM)}, 1`, ...liveRight }),
       classification: 'intentional',
       note: 'Host parseFloatColor accepts 3 or 4 parts for every field and keeps the alpha only on the lip, so the left float is a live #1030F0 (offGrid). Library inspect.ts vector(raw, 3) demands exactly 3 parts for every colour but MouthColor → INVALID_FIELD, extendedHex null, the index wins (paletteOnly); "do not silently coerce invalid values".',
-      host: {
-        slots: {
-          leftEye: { verdict: 'offGrid', floatHex: CUSTOM, alpha: null, deltaE: { min: 6 } },
-        },
-      },
       lib: { issueCodes: ['INVALID_FIELD'], slots: { ...leftInvalid, ...rightStillRead } },
     },
     {
@@ -4990,7 +4114,6 @@ const extCasesSection: ParityCase[] = (() => {
       doc: char({ LEyeColor: 42, LeftEyeColor: `${squared(CUSTOM)}, `, ...liveRight }),
       classification: 'intentional',
       note: 'UNPLANNED: the host drops one empty fourth segment on an rgb-stored field (chara-parser.ts:334-336; plan row 101 lists this only as CURRENT host behavior and plans nothing for the shape) and reads #1030F0 offGrid; the library splits on "," into 4 parts, parts.length !== 3 → INVALID_FIELD (inspect.ts:76-77), extendedHex null, the index wins. No producer writes this shape (hand edits only; Anamnesis/Brio drop empty entries on read). The maintainer must decide: adopt the stricter library reader, or ask the library for one-trailing-separator tolerance.',
-      host: { slots: { leftEye: { verdict: 'offGrid', floatHex: CUSTOM } } },
       lib: { issueCodes: ['INVALID_FIELD'], slots: { ...leftInvalid, ...rightStillRead } },
     },
     {
@@ -5000,7 +4123,6 @@ const extCasesSection: ParityCase[] = (() => {
       doc: char({ LEyeColor: 42, LeftEyeColor: 'Infinity, 0.25, 0.25', ...liveRight }),
       classification: 'intentional',
       note: 'Host DOTNET_FLOAT rejects "Infinity" and throws for the whole file. Library numericToken rejects it too, but only LeftEyeColor becomes INVALID_FIELD; the right eye still reads and agrees (plan: preserve valid independent appearance).',
-      host: { refused: 'LeftEyeColor: unparseable float colour' },
       lib: { issueCodes: ['INVALID_FIELD'], slots: { ...leftInvalid, ...rightStillRead } },
     },
     {
@@ -5010,7 +4132,6 @@ const extCasesSection: ParityCase[] = (() => {
       doc: char({ LEyeColor: 42, LeftEyeColor: '0x10, 0.25, 0.25', ...liveRight }),
       classification: 'intentional',
       note: 'Number("0x10") is 16, so both sides use a .NET-float pattern: host refuses the file, library numericToken fails → INVALID_FIELD on LeftEyeColor only, never a clamped white channel.',
-      host: { refused: 'LeftEyeColor: unparseable float colour "0x10, 0.25, 0.25"' },
       lib: { issueCodes: ['INVALID_FIELD'], slots: { ...leftInvalid, ...rightStillRead } },
     },
     {
@@ -5020,7 +4141,6 @@ const extCasesSection: ParityCase[] = (() => {
       doc: char({ LEyeColor: 42, LeftEyeColor: '0.25,, 0.25', ...liveRight }),
       classification: 'intentional',
       note: 'Number("") is 0; host (BUG-133) refuses the empty segment for the whole file. Library: 3 parts but "" fails numericToken → INVALID_FIELD, extendedHex null, no black channel fabricated.',
-      host: { refused: 'LeftEyeColor: unparseable float colour' },
       lib: { issueCodes: ['INVALID_FIELD'], slots: { ...leftInvalid, ...rightStillRead } },
     },
     {
@@ -5030,7 +4150,6 @@ const extCasesSection: ParityCase[] = (() => {
       doc: char({ LEyeColor: 42, LeftEyeColor: PADDED_70, ...liveRight }),
       classification: 'intentional',
       note: 'Host MAX_FLOAT_COLOR_LENGTH 128 refuses the file before splitting (message names the length only). Library vector() rejects any part longer than 64 characters → INVALID_FIELD on that field alone.',
-      host: { refused: 'LeftEyeColor: unparseable float colour a string of 214 characters' },
       lib: { issueCodes: ['INVALID_FIELD'], slots: { ...leftInvalid, ...rightStillRead } },
     },
     {
@@ -5040,7 +4159,6 @@ const extCasesSection: ParityCase[] = (() => {
       doc: char({ LEyeColor: 42, LeftEyeColor: PADDED_46, ...liveRight }),
       classification: 'intentional',
       note: 'Zero-padded squared(#DCBA6C): host refuses anything over 128 characters; library caps each part at 64 characters but not the whole string, so the same numbers decode to #DCBA6C and agree (paletteAgreement). A library that copied the host 128 cap fails here.',
-      host: { refused: 'a string of 142 characters' },
       lib: {
         noIssueCodes: ['INVALID_FIELD'],
         slots: {
@@ -5064,7 +4182,6 @@ const extCasesSection: ParityCase[] = (() => {
       }),
       classification: 'intentional',
       note: 'Host parseFloatColor throws for any non-string ("got object"). Library vector() takes a 3-element finite array: sqrt → 64, 128, 191 = #4080BF, far from #DCBA6C → offGrid.',
-      host: { refused: 'LeftEyeColor: expected a comma-separated float string, got object' },
       lib: {
         noIssueCodes: ['INVALID_FIELD'],
         slots: {
@@ -5089,7 +4206,6 @@ const extCasesSection: ParityCase[] = (() => {
       }),
       classification: 'intentional',
       note: 'Host refuses ("got object"). Library vector() reads an object with an R key as R,G,B (A only for size 4): the same #4080BF as EXT-09, offGrid against eye 42.',
-      host: { refused: 'LeftEyeColor: expected a comma-separated float string, got object' },
       lib: {
         noIssueCodes: ['INVALID_FIELD'],
         slots: {
@@ -5110,7 +4226,6 @@ const extCasesSection: ParityCase[] = (() => {
       }),
       classification: 'preserved',
       note: 'Both clamp each channel to [0,1] before sqrt: 255, round(0.7071*255)=180, 0 → #FFB400 (ΔE2000 11.5 from #DCBA6C, offGrid). The library additionally reports EXTENDED_CLAMPED (resolve.ts: a channel < 0 or > 1); the host has no issue list.',
-      host: { slots: { leftEye: { verdict: 'offGrid', floatHex: '#FFB400', deltaE: { min: 6 } } } },
       lib: {
         issueCodes: ['EXTENDED_CLAMPED'],
         slots: {
@@ -5131,19 +4246,6 @@ const extCasesSection: ParityCase[] = (() => {
       doc: char({ LEyeColor: 42, LeftEyeColor: squared(CUSTOM), IsExtendedAppearanceValid: true }),
       classification: 'preserved',
       note: 'Flag true + ΔE2000 73 > 6 against the eye shader: host verdict offGrid (float wins, both hexes named); library extendedActive, interpretation/reason offGrid, displayHex the decoded float.',
-      host: {
-        extendedValid: true,
-        extendedDeclared: true,
-        slots: {
-          leftEye: {
-            verdict: 'offGrid',
-            floatHex: CUSTOM,
-            indexHex: LEFT,
-            deltaE: { min: 6 },
-            indexWinNote: null,
-          },
-        },
-      },
       lib: {
         slots: {
           leftEye: {
@@ -5165,18 +4267,6 @@ const extCasesSection: ParityCase[] = (() => {
       doc: char({ LEyeColor: 42, LeftEyeColor: squared(CUSTOM) }),
       classification: 'preserved',
       note: 'Host: floats live only when the flag is present and true → index, indexWinNote extendedMissing, no ΔE. Library: valid flag required for live → extendedActive false, palette, reason extendedInactive (extendedHex still decoded as evidence).',
-      host: {
-        extendedValid: false,
-        extendedDeclared: false,
-        slots: {
-          leftEye: {
-            verdict: 'index',
-            indexWinNote: 'extendedMissing',
-            floatHex: CUSTOM,
-            deltaE: null,
-          },
-        },
-      },
       lib: {
         slots: {
           leftEye: {
@@ -5197,11 +4287,6 @@ const extCasesSection: ParityCase[] = (() => {
       doc: char({ LEyeColor: 42, LeftEyeColor: squared(CUSTOM), IsExtendedAppearanceValid: false }),
       classification: 'preserved',
       note: 'Flag false is declared but not true: host index + extendedMissing (extendedDeclared true); library valid false → extendedInactive, displayHex the creator entry.',
-      host: {
-        extendedValid: false,
-        extendedDeclared: true,
-        slots: { leftEye: { verdict: 'index', indexWinNote: 'extendedMissing', deltaE: null } },
-      },
       lib: {
         slots: {
           leftEye: {
@@ -5226,11 +4311,6 @@ const extCasesSection: ParityCase[] = (() => {
       }),
       classification: 'preserved',
       note: 'Host: === true is false for a string, file not refused → index + extendedMissing. Library: the boolean decoder fails → INVALID_FIELD, current() null → not live → extendedInactive. Neither coerces "true".',
-      host: {
-        extendedValid: false,
-        extendedDeclared: true,
-        slots: { leftEye: { verdict: 'index', indexWinNote: 'extendedMissing' } },
-      },
       lib: {
         issueCodes: ['INVALID_FIELD'],
         slots: {
@@ -5250,11 +4330,6 @@ const extCasesSection: ParityCase[] = (() => {
       }),
       classification: 'preserved',
       note: '#D8BC70 is ΔE2000 1.77 from #DCBA6C: ≤ 6 so host verdict index (deltaE computed) and library palette/paletteAgreement with displayHex the creator entry, not the float.',
-      host: {
-        slots: {
-          leftEye: { verdict: 'index', floatHex: '#D8BC70', indexHex: LEFT, deltaE: { max: 6 } },
-        },
-      },
       lib: {
         slots: {
           leftEye: {
@@ -5281,16 +4356,6 @@ const extCasesSection: ParityCase[] = (() => {
       }),
       classification: 'preserved',
       note: 'Highlights 42: creator #E1BA70, shader #FFBA56 (ΔE2000 7.6 apart). Both compare a float with the shader half, so ΔE 0 → host index, library paletteAgreement showing the creator swatch; an implementation comparing with the creator would call it offGrid.',
-      host: {
-        slots: {
-          highlights: {
-            verdict: 'index',
-            floatHex: '#FFBA56',
-            indexHex: '#E1BA70',
-            deltaE: { max: 1 },
-          },
-        },
-      },
       lib: {
         slots: {
           highlights: {
@@ -5312,7 +4377,6 @@ const extCasesSection: ParityCase[] = (() => {
       doc: char({ LeftEyeColor: squared(CUSTOM), IsExtendedAppearanceValid: true }),
       classification: 'preserved',
       note: 'No LEyeColor key: host verdict floatOnly with the float hex; library storedIndex absent + extendedActive → extendedOnly, reason floatOnly, displayHex the decoded float.',
-      host: { slots: { leftEye: { verdict: 'floatOnly', index: null, floatHex: CUSTOM } } },
       lib: {
         slots: {
           leftEye: {
@@ -5332,7 +4396,6 @@ const extCasesSection: ParityCase[] = (() => {
       doc: char({ LeftEyeColor: squared(CUSTOM) }),
       classification: 'preserved',
       note: 'Host: index null and float not live → verdict inert with no inertReason. Library: storedIndex absent, extendedActive false → stays unresolved/missingColor, displayHex null. Different vocabulary, same outcome: no colour is fabricated from a non-live float.',
-      host: { slots: { leftEye: { verdict: 'inert', inertReason: null, floatHex: CUSTOM } } },
       lib: {
         slots: {
           leftEye: {
@@ -5360,19 +4423,6 @@ const extCasesSection: ParityCase[] = (() => {
       }),
       classification: 'preserved',
       note: 'Host parser nulls an every-channel-zero block (alpha included) → no float, index wins with no note, lip alpha null so the indexed lip stays. Library: AMBIGUOUS_ZERO_BLOCK, live false; floats still decode (#000000, lip alpha 0) but reason ambiguousZeroBlock and the palette shows; Mouth 0x80 set keeps the lip active, and alpha 0 cannot suppress it because the lip is not extendedActive. Same visible outcome.',
-      host: {
-        extendedValid: true,
-        slots: {
-          leftEye: {
-            verdict: 'index',
-            floatHex: null,
-            indexHex: LEFT,
-            deltaE: null,
-            indexWinNote: null,
-          },
-          lip: { verdict: 'index', alpha: null, indexHex: '#EBE4BF', inertReason: null },
-        },
-      },
       lib: {
         issueCodes: ['AMBIGUOUS_ZERO_BLOCK'],
         slots: {
@@ -5414,23 +4464,6 @@ const extCasesSection: ParityCase[] = (() => {
       }),
       classification: 'preserved',
       note: 'The block is not zero everywhere, so neither side treats it as uncaptured: the black left-eye float is live and ΔE2000 70 from #DCBA6C → offGrid #000000 on both sides; the right eye agrees. Hair, highlights, skin, limbal and lip carry no index, so each shows its own float (host floatOnly, library extendedOnly/floatOnly, resolve.ts:394-403) with seven distinct colours: swapping any two keys (HairColor↔SkinColor, LimbalRingColor↔HairHighlight) fails. Lip alpha 1 composites to the lip colour itself on both sides; the library lip is active null (Mouth absent on a known race, resolve.ts:199-200) but still extendedActive.',
-      host: {
-        slots: {
-          leftEye: { verdict: 'offGrid', floatHex: '#000000', deltaE: { min: 6 } },
-          rightEye: { verdict: 'index', floatHex: RIGHT },
-          hair: { verdict: 'floatOnly', index: null, floatHex: '#515151' },
-          highlights: { verdict: 'floatOnly', index: null, floatHex: '#A0B0C0' },
-          skin: { verdict: 'floatOnly', index: null, floatHex: '#867A6E' },
-          limbal: { verdict: 'floatOnly', index: null, kind: 'tattoo', floatHex: '#405060' },
-          lip: {
-            verdict: 'floatOnly',
-            index: null,
-            floatHex: '#888467',
-            alpha: 1,
-            blendHex: '#888467',
-          },
-        },
-      },
       lib: {
         noIssueCodes: ['AMBIGUOUS_ZERO_BLOCK', 'INVALID_FIELD'],
         slots: {
@@ -5493,7 +4526,6 @@ const extCasesSection: ParityCase[] = (() => {
       }),
       classification: 'preserved',
       note: 'Host checks (alpha ?? 0) === 0 and the library checks every MouthColor component (4 of them), so a non-zero alpha makes the block real: the black eye float is live → offGrid #000000 on both sides, no AMBIGUOUS_ZERO_BLOCK. An implementation that tested only RGB would call it uncaptured.',
-      host: { slots: { leftEye: { verdict: 'offGrid', floatHex: '#000000' } } },
       lib: {
         noIssueCodes: ['AMBIGUOUS_ZERO_BLOCK'],
         slots: {
@@ -5514,7 +4546,6 @@ const extCasesSection: ParityCase[] = (() => {
       }), // undefined → key dropped by JSON.stringify
       classification: 'preserved',
       note: 'Host requires every one of the seven floats non-null to call the block uncaptured; library ZERO_KEYS.every needs a valid value per key (absent → false). Six zeros therefore stay live: offGrid #000000, no AMBIGUOUS_ZERO_BLOCK.',
-      host: { slots: { leftEye: { verdict: 'offGrid', floatHex: '#000000' } } },
       lib: {
         noIssueCodes: ['AMBIGUOUS_ZERO_BLOCK'],
         slots: {
@@ -5531,13 +4562,6 @@ const extCasesSection: ParityCase[] = (() => {
       doc: eyes(RIGHT, LEFT),
       classification: 'preserved',
       note: 'Each float lands (ΔE ≤ 1) on the other eye entry and neither on its own: host uncrossEyeFloats swaps → both index at ΔE 0. Library pairEyes bothCrossed → effectiveExtendedHex swapped, extendedHex unchanged (original vs effective), correction historicalEyePairSwap, one HISTORICAL_EYE_PAIR_SWAP record, no warning (the exact crossing is silent).',
-      host: {
-        eyesShareIndex: false,
-        slots: {
-          leftEye: { verdict: 'index', floatHex: LEFT, deltaE: { max: 1 } },
-          rightEye: { verdict: 'index', floatHex: RIGHT, deltaE: { max: 1 } },
-        },
-      },
       lib: {
         corrections: 1,
         noIssueCodes: ['EYE_PAIRING_INFERRED', 'EYE_PAIRING_UNCONFIRMED'],
@@ -5569,12 +4593,6 @@ const extCasesSection: ParityCase[] = (() => {
       doc: eyes(LEFT, RIGHT),
       classification: 'preserved',
       note: 'Each float lands on its own entry: host straight → no swap; library crossedLeft/Right require !lands(own) → false, no correction. A swap-on-any-difference implementation fails here.',
-      host: {
-        slots: {
-          leftEye: { verdict: 'index', floatHex: LEFT },
-          rightEye: { verdict: 'index', floatHex: RIGHT },
-        },
-      },
       lib: {
         corrections: 0,
         noIssueCodes: ['EYE_PAIRING_INFERRED', 'EYE_PAIRING_UNCONFIRMED'],
@@ -5601,12 +4619,6 @@ const extCasesSection: ParityCase[] = (() => {
       doc: eyes(RIGHT, CUSTOM),
       classification: 'intentional',
       note: 'Left float = the right entry, right float = custom #1030F0. Host needs both floats on the other entry → no swap: left #87C0A3 offGrid (ΔE 26.5) and right #1030F0 offGrid. Library: crossedLeft && custom(right) → oneSided swap: left effective #1030F0 offGrid, right effective #87C0A3 agrees; EYE_PAIRING_INFERRED, one correction (plan: adopt the one-sided inference with its warning).',
-      host: {
-        slots: {
-          leftEye: { verdict: 'offGrid', floatHex: RIGHT, deltaE: { min: 6 } },
-          rightEye: { verdict: 'offGrid', floatHex: CUSTOM, deltaE: { min: 6 } },
-        },
-      },
       lib: {
         corrections: 1,
         issueCodes: ['EYE_PAIRING_INFERRED'],
@@ -5638,12 +4650,6 @@ const extCasesSection: ParityCase[] = (() => {
       doc: eyes(CUSTOM, CUSTOM2),
       classification: 'preserved',
       note: 'Neither float lands on either entry: host crossed false; library crossedLeft/Right false and oneSided needs one crossed match → nothing. Both eyes offGrid with their own floats; no correction, no EYE_PAIRING_* issue.',
-      host: {
-        slots: {
-          leftEye: { verdict: 'offGrid', floatHex: CUSTOM },
-          rightEye: { verdict: 'offGrid', floatHex: CUSTOM2 },
-        },
-      },
       lib: {
         corrections: 0,
         noIssueCodes: ['EYE_PAIRING_INFERRED', 'EYE_PAIRING_UNCONFIRMED'],
@@ -5670,13 +4676,6 @@ const extCasesSection: ParityCase[] = (() => {
       doc: eyes(RIGHT, LEFT, { REyeColor: 42 }),
       classification: 'preserved',
       note: 'Both indices 42: host returns early on equal indices; library pairEyes requires differing stored indices. Left #87C0A3 stays offGrid on entry 42, right #DCBA6C agrees; eyesShareIndex true on both sides.',
-      host: {
-        eyesShareIndex: true,
-        slots: {
-          leftEye: { verdict: 'offGrid', floatHex: RIGHT },
-          rightEye: { verdict: 'index', floatHex: LEFT },
-        },
-      },
       lib: {
         eyesShareIndex: true,
         corrections: 0,
@@ -5694,13 +4693,6 @@ const extCasesSection: ParityCase[] = (() => {
       doc: eyes(RIGHT, LEFT, { IsExtendedAppearanceValid: undefined }),
       classification: 'intentional',
       note: 'Plan row: uncrossEyeFloats never checks liveness, so the host swaps the floats (floatHex reads swapped) and the index wins with extendedMissing. Library pairEyes needs both eyes extendedActive → no swap: extendedHex = effectiveExtendedHex = stored order, no correction, reason extendedInactive.',
-      host: {
-        extendedDeclared: false,
-        slots: {
-          leftEye: { verdict: 'index', floatHex: LEFT, indexWinNote: 'extendedMissing' },
-          rightEye: { verdict: 'index', floatHex: RIGHT, indexWinNote: 'extendedMissing' },
-        },
-      },
       lib: {
         corrections: 0,
         noIssueCodes: ['EYE_PAIRING_INFERRED', 'EYE_PAIRING_UNCONFIRMED'],
@@ -5732,12 +4724,6 @@ const extCasesSection: ParityCase[] = (() => {
       policy: { historicalEyeCorrection: false },
       classification: 'intentional',
       note: 'Pins the NON-default historicalEyeCorrection:false pending the plan row-111 decision ("decide explicitly whether the host keeps historicalEyeCorrection at its default"); it is not an adopted host change, and if the host keeps the default EXT-24 governs. The host has no toggle and swaps (both eyes index at ΔE 0). With the policy off the library records no correction and raises EYE_PAIRING_UNCONFIRMED (resolve.ts:158-164); each eye then compares its stored float with its own shader → offGrid (ΔE 26.5) showing the uncorrected colour.',
-      host: {
-        slots: {
-          leftEye: { verdict: 'index', floatHex: LEFT },
-          rightEye: { verdict: 'index', floatHex: RIGHT },
-        },
-      },
       lib: {
         corrections: 0,
         issueCodes: ['EYE_PAIRING_UNCONFIRMED'],
@@ -5774,12 +4760,6 @@ const extCasesSection: ParityCase[] = (() => {
       provider: 'noShader',
       classification: 'intentional',
       note: 'provider noShader: creator #808080, every shader request null. The live float equals the creator colour, so a library that used the creator as a pretend shader reference would report paletteAgreement; resolve.ts:405-414 instead leaves the slot unresolved/missingShaderReference, displayHex null, with MISSING_SHADER_REFERENCE at path [slot] (not the float key). The right eye has no float and still shows its creator colour (paletteOnly). The provider mode cannot reach the host, which always compares with its own shader table (chara-resolver.ts:398-405; its creator fallback is unreachable with the shipped tables), so the host reads offGrid against #DCBA6C.',
-      host: {
-        slots: {
-          leftEye: { verdict: 'offGrid', floatHex: '#808080', indexHex: LEFT, deltaE: { min: 6 } },
-          rightEye: { verdict: 'index', indexHex: RIGHT, floatHex: null },
-        },
-      },
       lib: {
         corrections: 0,
         issues: [{ code: 'MISSING_SHADER_REFERENCE', path: ['leftEye'] }],
@@ -5819,11 +4799,6 @@ const extCasesSection: ParityCase[] = (() => {
       provider: 'noCreator',
       classification: 'intentional',
       note: 'provider noCreator: creator null, shader #808080 (= the live float). resolve.ts:353 sets missingPaletteEntry and the final loop stops at :405 (no creator) before any comparison, so the slot stays unresolved with displayHex null and deltaE null: neither the shader colour nor the float is shown as a stand-in, and a null provider result raises no issue (paletteHex returns at :71). The host never lacks a creator entry for an in-range index and is unaffected by the provider mode: offGrid against #DCBA6C.',
-      host: {
-        slots: {
-          leftEye: { verdict: 'offGrid', floatHex: '#808080', indexHex: LEFT, deltaE: { min: 6 } },
-        },
-      },
       lib: {
         noIssueCodes: [
           'MISSING_SHADER_REFERENCE',
@@ -5855,17 +4830,6 @@ const extCasesSection: ParityCase[] = (() => {
       }),
       classification: 'preserved',
       note: 'Features 3: creator #B3B3B3, shader #8F8F8F (about ΔE2000 11 apart). LimbalRingColor pairs with LimbalEyes and the features shader on both sides (SHADER_PALETTE limbal → features; resolve.ts DEFINITIONS), so ΔE 0 → host index, library paletteAgreement showing the creator swatch; kind tattoo for an Elezen. Reading the float from another key, or comparing with the creator, gives offGrid.',
-      host: {
-        slots: {
-          limbal: {
-            verdict: 'index',
-            kind: 'tattoo',
-            indexHex: '#B3B3B3',
-            floatHex: '#8F8F8F',
-            deltaE: { max: 1 },
-          },
-        },
-      },
       lib: {
         slots: {
           limbal: {
@@ -5896,18 +4860,6 @@ const extCasesSection: ParityCase[] = (() => {
       }),
       classification: 'intentional',
       note: 'UNPLANNED: the host reads a 3-part MouthColor with alpha null, so (alpha ?? 0) === 0 holds and the block is uncaptured (chara-parser.ts:501-503): no floats, the eye shows palette #DCBA6C. The library vector(raw, 4) rejects it (INVALID_FIELD at MouthColor, inspect.ts:311), ZERO_KEYS.every fails on the invalid field (resolve.ts:174-177), the block is live and the black eye float goes offGrid #000000. A visible flip neither plan row covers: the maintainer must accept it or the adapter must treat an invalid MouthColor beside six zero floats as uncaptured. HOST QUIRK: the host counts an alpha-less 3-part MouthColor as alpha 0 ((alpha ?? 0) === 0, chara-parser.ts:501-503) toward an uncaptured block.',
-      host: {
-        extendedValid: true,
-        slots: {
-          leftEye: {
-            verdict: 'index',
-            floatHex: null,
-            indexHex: LEFT,
-            deltaE: null,
-            indexWinNote: null,
-          },
-        },
-      },
       lib: {
         issues: [{ code: 'INVALID_FIELD', path: ['MouthColor'] }],
         noIssueCodes: ['AMBIGUOUS_ZERO_BLOCK'],
@@ -5935,18 +4887,6 @@ const extCasesSection: ParityCase[] = (() => {
       }),
       classification: 'intentional',
       note: 'Mirror of EXT-02. Host parseFloatColor accepts 3 parts on the rgba field (alpha null), so the lip float #1030F0 is live and offGrid against the lipsDark shader #888467, with no blend (alpha null). Library vector(raw, 4) demands 4 parts for MouthColor → INVALID_FIELD, extendedHex and alpha null, the lip shows its palette colour (paletteOnly; Mouth 0x80 set keeps it active). "Do not silently coerce invalid values".',
-      host: {
-        slots: {
-          lip: {
-            verdict: 'offGrid',
-            floatHex: CUSTOM,
-            alpha: null,
-            blendHex: null,
-            indexHex: '#EBE4BF',
-            deltaE: { min: 6 },
-          },
-        },
-      },
       lib: {
         issues: [{ code: 'INVALID_FIELD', path: ['MouthColor'] }],
         slots: {
@@ -5976,7 +4916,6 @@ const extCasesSection: ParityCase[] = (() => {
       }),
       classification: 'intentional',
       note: 'On the rgba field the host does not pop an empty fourth segment (that tolerance is rgb-only, chara-parser.ts:334), "" fails DOTNET_FLOAT and the whole file is refused. Library: 4 parts, "" fails numericToken → INVALID_FIELD on MouthColor alone; the lip falls back to its palette colour and the right eye still reads (plan: preserve valid independent appearance).',
-      host: { refused: 'MouthColor: unparseable float colour' },
       lib: {
         issues: [{ code: 'INVALID_FIELD', path: ['MouthColor'] }],
         slots: {
@@ -6000,12 +4939,6 @@ const extCasesSection: ParityCase[] = (() => {
       doc: eyes(CUSTOM, LEFT),
       classification: 'intentional',
       note: 'The crossedRight && custom(left) branch (resolve.ts:139), the mirror of EXT-26: the right float #DCBA6C lands on the left entry and not its own, the left float #1030F0 fits neither shader → oneSided swap with EYE_PAIRING_INFERRED and one correction: left effective #DCBA6C agrees, right effective #1030F0 offGrid. Host needs both floats on the other entry → no swap: left #1030F0 offGrid, right #DCBA6C offGrid (ΔE 26.5 from #87C0A3). Plan: adopt the one-sided inference with its warning.',
-      host: {
-        slots: {
-          leftEye: { verdict: 'offGrid', floatHex: CUSTOM, deltaE: { min: 6 } },
-          rightEye: { verdict: 'offGrid', floatHex: LEFT, deltaE: { min: 6 } },
-        },
-      },
       lib: {
         corrections: 1,
         issueCodes: ['EYE_PAIRING_INFERRED'],
@@ -6039,12 +4972,6 @@ const extCasesSection: ParityCase[] = (() => {
       policy: { historicalEyeCorrection: false },
       classification: 'intentional',
       note: 'Pins the NON-default historicalEyeCorrection:false pending the plan row-111 decision; not an adopted host change. Same document as EXT-26: with the policy off the library takes the second EYE_PAIRING_UNCONFIRMED branch (resolve.ts:158-163, one-sided wording), records no correction and each eye keeps its stored float (left #87C0A3 offGrid against #DCBA6C, right #1030F0 offGrid). The host never swaps here either, so the previews agree; only the library warning differs.',
-      host: {
-        slots: {
-          leftEye: { verdict: 'offGrid', floatHex: RIGHT, deltaE: { min: 6 } },
-          rightEye: { verdict: 'offGrid', floatHex: CUSTOM, deltaE: { min: 6 } },
-        },
-      },
       lib: {
         corrections: 0,
         issueCodes: ['EYE_PAIRING_UNCONFIRMED'],
@@ -6076,7 +5003,6 @@ const extCasesSection: ParityCase[] = (() => {
       doc: char({ LEyeColor: 42, LeftEyeColor: '1e999, 0.25, 0.25', ...liveRight }),
       classification: 'intentional',
       note: 'The token matches both float patterns but Number("1e999") is Infinity: the host Number.isFinite check refuses the whole file (chara-parser.ts:342); the library numericToken passes and the finite check fails (inspect.ts:92) → INVALID_FIELD on LeftEyeColor only, never a clamped white channel; the right eye still reads.',
-      host: { refused: 'LeftEyeColor: unparseable float colour' },
       lib: {
         issues: [{ code: 'INVALID_FIELD', path: ['LeftEyeColor'] }],
         slots: { ...leftInvalid, ...rightStillRead },
@@ -6096,9 +5022,6 @@ const extCasesSection: ParityCase[] = (() => {
       }),
       classification: 'intentional',
       note: 'Host: the block is uncaptured, the lip alpha is null and the indexed lip shows #EBE4BF. Library: Mouth absent on a known race → lip active null (resolve.ts:199-200), not live, palette #EBE4BF, but reason ambiguousZeroBlock, not activityUnknown, because :429 tests the zero block before active === null. Adapter obligation (Task 3): key the activity-unknown warning and matchHex null on active === null, never on the reason.',
-      host: {
-        slots: { lip: { verdict: 'index', alpha: null, indexHex: '#EBE4BF', inertReason: null } },
-      },
       lib: {
         issueCodes: ['AMBIGUOUS_ZERO_BLOCK'],
         slots: {
@@ -6126,7 +5049,6 @@ const extCasesSection: ParityCase[] = (() => {
       }),
       classification: 'preserved',
       note: 'Sibling of EXT-23 with the key present as null: host requires f !== null for every float (chara-parser.ts:501-503) and the library current(null) is null so ZERO_KEYS.every is false; a null field raises no issue. The black eye float stays live → offGrid #000000 on both sides.',
-      host: { slots: { leftEye: { verdict: 'offGrid', floatHex: '#000000', deltaE: { min: 6 } } } },
       lib: {
         noIssueCodes: ['AMBIGUOUS_ZERO_BLOCK', 'INVALID_FIELD'],
         slots: {
@@ -6148,19 +5070,6 @@ const extCasesSection: ParityCase[] = (() => {
       doc: char({ LEyeColor: 42, IsExtendedAppearanceValid: false, ...ZERO_BLOCK }),
       classification: 'preserved',
       note: 'Neither side gates the zero-block test on the flag. Host nulls the floats first, so floatHex is null and there is no extendedMissing note (it needs a float). Library raises AMBIGUOUS_ZERO_BLOCK anyway (resolve.ts:174-183) and the reason is ambiguousZeroBlock, not extendedInactive (:429 precedes :431). Same visible outcome: the palette eye. The flag-absent document takes the same paths. HOST QUIRK: the host nulls the all-zero block in the parser before liveness is considered, so the slot carries no extendedMissing note.',
-      host: {
-        extendedValid: false,
-        extendedDeclared: true,
-        slots: {
-          leftEye: {
-            verdict: 'index',
-            floatHex: null,
-            indexHex: LEFT,
-            indexWinNote: null,
-            deltaE: null,
-          },
-        },
-      },
       lib: {
         issueCodes: ['AMBIGUOUS_ZERO_BLOCK'],
         slots: {
@@ -6184,17 +5093,6 @@ const extCasesSection: ParityCase[] = (() => {
       doc: eyes(RIGHT, LEFT, { REyeColor: 192 }),
       classification: 'preserved',
       note: 'Eye index 192 is valid uint8 but past the 192-entry sheet: the library returns indexOutOfRange before any palette request, so the right shaderHex is null and pairEyes returns (resolve.ts:114-115). An implementation that treated the missing shader as "does not land" would see crossedRight plus a custom left and swap one-sidedly. Host: sheet.find(192) fails, so lands() is false and uncrossEyeFloats does not swap; the right eye errors indexOutOfRange.',
-      host: {
-        slots: {
-          leftEye: { verdict: 'offGrid', floatHex: RIGHT, deltaE: { min: 6 } },
-          rightEye: {
-            verdict: 'error',
-            errorCode: 'indexOutOfRange',
-            sheetIndex: 192,
-            floatHex: LEFT,
-          },
-        },
-      },
       lib: {
         corrections: 0,
         issues: [{ code: 'PALETTE_INDEX_OUT_OF_RANGE', path: ['REyeColor'] }],
@@ -6227,17 +5125,6 @@ const extCasesSection: ParityCase[] = (() => {
       doc: eyes(RIGHT, LEFT, { REyeColor: 4.5 }),
       classification: 'preserved',
       note: 'A fractional index is invalid in the library (isUint, INVALID_FIELD at REyeColor) → invalidIndex, no palette request, and pairEyes requires both storedIndex fields valid → no swap. Host keeps 4.5 as the index, finds no sheet entry (error indexOutOfRange, sheetIndex 4.5) and lands() is false → no swap. Same outcome; the library keeps the raw 4.5.',
-      host: {
-        slots: {
-          leftEye: { verdict: 'offGrid', floatHex: RIGHT, deltaE: { min: 6 } },
-          rightEye: {
-            verdict: 'error',
-            errorCode: 'indexOutOfRange',
-            sheetIndex: 4.5,
-            floatHex: LEFT,
-          },
-        },
-      },
       lib: {
         corrections: 0,
         issues: [{ code: 'INVALID_FIELD', path: ['REyeColor'] }],
@@ -6275,21 +5162,6 @@ const extCasesSection: ParityCase[] = (() => {
       }),
       classification: 'preserved',
       note: 'File index 138 = light sheet entry 10 (creator #EBE4BF); the stored float is the lipsDark shader entry 10 (#888467) on both sides (host SHADER_PALETTE lip → lipsDark at sheetIndex; resolve.ts:345), so ΔE 0 → host index, library paletteAgreement. A shader request to lipsLight (none bundled) or at file index 138 returns null and would give missingShaderReference. Alpha 0.5 composites #EBE4BF over skin #B18D73 in linear light → #D1BF9F (hand-computed with the color-math compositeHex formula, which the host shares).',
-      host: {
-        slots: {
-          lip: {
-            verdict: 'index',
-            sheetIndex: 10,
-            sheetVariant: 'light',
-            indexHex: '#EBE4BF',
-            floatHex: '#888467',
-            alpha: 0.5,
-            deltaE: { max: 1 },
-            blendHex: '#D1BF9F',
-          },
-          skin: { verdict: 'index', indexHex: '#B18D73' },
-        },
-      },
       lib: {
         noIssueCodes: ['MISSING_SHADER_REFERENCE', 'ALPHA_CLAMPED'],
         slots: {
@@ -6373,8 +5245,6 @@ const envCasesSection: ParityCase[] = (() => {
 
   const PNG_1X1 =
     'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
-
-  const LEFT_EYE_3_HOST = { verdict: 'index', index: 3, indexHex: '#B3B3B3' } as const;
   const LEFT_EYE_3_LIB = {
     active: true,
     interpretation: 'palette',
@@ -6403,7 +5273,6 @@ const envCasesSection: ParityCase[] = (() => {
       doc: 'Tribe: Wildwood\nLEyeColor: 3',
       classification: 'preserved',
       note: 'Host JSON.parse throws and parseCharaFile rethrows "not valid JSON". Library read.ts Reader.value finds no string/object/array/literal/digit at "T" and fails INVALID_JSON.',
-      host: { refused: '.chara file is not valid JSON' },
       lib: { refused: 'INVALID_JSON' },
     },
     {
@@ -6413,7 +5282,6 @@ const envCasesSection: ParityCase[] = (() => {
       doc: `[{${BASE},"LEyeColor":3}]`,
       classification: 'preserved',
       note: 'Host refuses a non-object root ("not a JSON object") even when the array holds a character. Library readChara: isRecord(fields) is false for an array, so NOT_CHARACTER; neither unwraps the first element.',
-      host: { refused: '.chara file is not a JSON object' },
       lib: { refused: 'NOT_CHARACTER' },
     },
     {
@@ -6423,7 +5291,6 @@ const envCasesSection: ParityCase[] = (() => {
       doc: '42',
       classification: 'preserved',
       note: 'Host: typeof 42 is not "object", so "not a JSON object". Library: the Reader admits the scalar token, then readChara fails NOT_CHARACTER because the root is not a record (not INVALID_JSON).',
-      host: { refused: '.chara file is not a JSON object' },
       lib: { refused: 'NOT_CHARACTER' },
     },
     {
@@ -6433,7 +5300,6 @@ const envCasesSection: ParityCase[] = (() => {
       doc: {},
       classification: 'preserved',
       note: 'Host: no COLOR_KEYS key present, so "carries no character colour fields". Library: Object.keys({}) has no CHARACTER_FIELDS key, so NOT_CHARACTER.',
-      host: { refused: 'carries no character colour fields' },
       lib: { refused: 'NOT_CHARACTER' },
     },
     {
@@ -6443,7 +5309,6 @@ const envCasesSection: ParityCase[] = (() => {
       doc: { TypeName: 'Anamnesis Character File', Nickname: 'Parity Test' },
       classification: 'preserved',
       note: 'Host: neither key is a colour key. Library: TypeName and Nickname are METADATA_FIELDS, which are KNOWN_FIELDS but not CHARACTER_FIELDS, so readChara fails NOT_CHARACTER.',
-      host: { refused: 'carries no character colour fields' },
       lib: { refused: 'NOT_CHARACTER' },
     },
     {
@@ -6457,7 +5322,6 @@ const envCasesSection: ParityCase[] = (() => {
       },
       classification: 'preserved',
       note: 'Host: no colour key, refused. Library: Position and Bones are not CHARACTER_FIELDS (TypeName is metadata), so NOT_CHARACTER; unknown keys never make a document a character.',
-      host: { refused: 'carries no character colour fields' },
       lib: { refused: 'NOT_CHARACTER' },
     },
 
@@ -6470,7 +5334,6 @@ const envCasesSection: ParityCase[] = (() => {
       doc: { Glasses: { GlassesId: 3 } },
       classification: 'intentional',
       note: 'Host: Glasses is not one of the 15 colour keys, so refused. Library: Glasses is in CHARACTER_FIELDS; inspect.ts facewear decodes { GlassesId: uint } as valid 3.',
-      host: { refused: 'carries no character colour fields' },
       lib: {
         facewear: { state: 'valid', value: 3 },
         slots: { leftEye: UNRESOLVED_ABSENT },
@@ -6484,7 +5347,6 @@ const envCasesSection: ParityCase[] = (() => {
       doc: { Race: 'Elezen' },
       classification: 'intentional',
       note: 'Host: Race is not a colour key, so refused. Library: Race is in CHARACTER_FIELDS; with Tribe absent and Race valid, inspect.ts sets canonicalRace Elezen with raceSource race, which makes the limbal slot kind tattoo (not limbalOrTattoo).',
-      host: { refused: 'carries no character colour fields' },
       lib: {
         identity: {
           race: { state: 'valid', value: 'Elezen' },
@@ -6503,7 +5365,6 @@ const envCasesSection: ParityCase[] = (() => {
       doc: { Mouth: 130, FacePaint: 0, EnableHighlights: true },
       classification: 'intentional',
       note: 'Plan row: Mouth, FacePaint and EnableHighlights do not count for the host. Library: all three are CHARACTER_FIELDS. resolve.ts: highlights active = EnableHighlights true; facePaint (0 & ~0x80) = 0 so inactive/facePaintNone; with no race the lip is on only if bit 0x80 is set, and 130 has it, so active true with indexMeaning unknown; absent indices stay unresolved/missingColor.',
-      host: { refused: 'carries no character colour fields' },
       lib: {
         slots: {
           highlights: { active: true, ...UNRESOLVED_ABSENT },
@@ -6524,12 +5385,6 @@ const envCasesSection: ParityCase[] = (() => {
       doc: { LEyeColor: null },
       classification: 'preserved',
       note: 'Plan row: the host counts a colour key "even as null" (key presence, `in`), and resolves the null index as inert. Library readChara tests Object.keys, so a null supported field also admits the document; inspect.ts gives state null, and resolve.ts leaves it unresolved/missingColor.',
-      host: {
-        race: null,
-        tribe: null,
-        gender: null,
-        slots: { leftEye: { verdict: 'inert', index: null, inertReason: null } },
-      },
       lib: {
         identity: { canonicalRace: null },
         slots: {
@@ -6552,10 +5407,6 @@ const envCasesSection: ParityCase[] = (() => {
       doc: `{${BASE},"LEyeColor":3,"LEyeColor":7}`,
       classification: 'intentional',
       note: 'Native JSON.parse keeps the last member, so the host reads LEyeColor 7 (eyes 7 = #262626). read.ts Reader.object keeps a per-object key Set and fails DUPLICATE_KEY on the repeat; plan row accepts the bounded refusal.',
-      host: {
-        tribe: 'Wildwood',
-        slots: { leftEye: { verdict: 'index', index: 7, indexHex: '#262626' } },
-      },
       lib: { refused: 'DUPLICATE_KEY' },
     },
     {
@@ -6565,7 +5416,6 @@ const envCasesSection: ParityCase[] = (() => {
       doc: `{${BASE},"LEyeColor":3,"L\\u0045yeColor":7}`,
       classification: 'intentional',
       note: 'JSON.parse decodes \\u0045 to "E", so the host sees one key and keeps the last value, 7. read.ts decodes each key with JSON.parse before the Set lookup, so the escaped spelling collides and fails DUPLICATE_KEY (a raw-token comparison would miss it).',
-      host: { slots: { leftEye: { verdict: 'index', index: 7, indexHex: '#262626' } } },
       lib: { refused: 'DUPLICATE_KEY' },
     },
     {
@@ -6575,7 +5425,6 @@ const envCasesSection: ParityCase[] = (() => {
       doc: withLeftEye3('"Revision":9007199254740993'),
       classification: 'intentional',
       note: 'The host never reads the unknown key and resolves left eye 3 (#B3B3B3). read.ts: Number("9007199254740993") is an integer that fails Number.isSafeInteger, so INVALID_NUMBER, even under a key the library would only flag as unsupported.',
-      host: { slots: { leftEye: LEFT_EYE_3_HOST } },
       lib: { refused: 'INVALID_NUMBER' },
     },
     {
@@ -6586,7 +5435,6 @@ const envCasesSection: ParityCase[] = (() => {
       doc: withLeftEye3('"Scale":1e999'),
       classification: 'intentional',
       note: 'JSON.parse yields Infinity under a key the host never reads, so left eye 3 resolves. read.ts: Number("1e999") is not finite, so INVALID_NUMBER.',
-      host: { slots: { leftEye: LEFT_EYE_3_HOST } },
       lib: { refused: 'INVALID_NUMBER' },
     },
     {
@@ -6596,7 +5444,6 @@ const envCasesSection: ParityCase[] = (() => {
       doc: withLeftEye3(`"Pose":${nested(31)}`),
       classification: 'preserved',
       note: 'Root object is depth 1 and Pose is depth 2, so 31 nested empty arrays put the innermost at depth 32, which read.ts admits (fails only when depth > 32). Pose is outside KNOWN_FIELDS, so UNSUPPORTED_FIELD at ["Pose"]; left eye 3 still resolves on both sides.',
-      host: { slots: { leftEye: LEFT_EYE_3_HOST } },
       lib: {
         slots: { leftEye: LEFT_EYE_3_LIB },
         issues: [{ code: 'UNSUPPORTED_FIELD', path: ['Pose'] }],
@@ -6610,7 +5457,6 @@ const envCasesSection: ParityCase[] = (() => {
       doc: withLeftEye3(`"Pose":${nested(32)}`),
       classification: 'intentional',
       note: 'Native JSON.parse has no depth bound and the host ignores Pose. With 32 nested arrays the innermost sits at depth 33 > maxDepth 32, so read.ts fails MAX_DEPTH before building the graph; the depth check covers unknown keys too.',
-      host: { slots: { leftEye: LEFT_EYE_3_HOST } },
       lib: { refused: 'MAX_DEPTH' },
     },
 
@@ -6623,7 +5469,6 @@ const envCasesSection: ParityCase[] = (() => {
       classification: 'preserved',
       blocksIfDiverges: true,
       note: 'Plan row: preserve omission, no blanket image rejection. The host never reads Base64Image. read.ts drops the key from fields (so no UNSUPPORTED_FIELD), sets hasEmbeddedImage, records type string, and adds IMAGE_OMITTED at ["Base64Image"]; left eye 3 still resolves.',
-      host: { slots: { leftEye: LEFT_EYE_3_HOST } },
       lib: {
         slots: { leftEye: LEFT_EYE_3_LIB },
         hasEmbeddedImage: true,
@@ -6640,7 +5485,6 @@ const envCasesSection: ParityCase[] = (() => {
       classification: 'preserved',
       blocksIfDiverges: true,
       note: 'Plan row: null placeholders included. read.ts classifies a value starting with "n" as type null and adds IMAGE_OMITTED (info) at ["Base64Image"], never INVALID_IMAGE_TYPE, and does not store the key; the host ignores it.',
-      host: { slots: { leftEye: LEFT_EYE_3_HOST } },
       lib: {
         slots: { leftEye: LEFT_EYE_3_LIB },
         hasEmbeddedImage: true,
@@ -6657,7 +5501,6 @@ const envCasesSection: ParityCase[] = (() => {
       classification: 'preserved',
       blocksIfDiverges: true,
       note: 'Plan row: empty placeholders included. read.ts sees a string token (initial ") and adds IMAGE_OMITTED at ["Base64Image"]; the key never reaches fields. The host ignores the key; left eye 3 resolves on both sides.',
-      host: { slots: { leftEye: LEFT_EYE_3_HOST } },
       lib: {
         slots: { leftEye: LEFT_EYE_3_LIB },
         hasEmbeddedImage: true,
@@ -6676,7 +5519,6 @@ const envCasesSection: ParityCase[] = (() => {
       doc: char({ LEyeColor: 3, Bones: { Root: { Position: '0, 0, 0' } }, ExtraFlag: true }),
       classification: 'preserved',
       note: 'The host reads only the keys it knows. Library readChara stores the unknown keys but reports each as UNSUPPORTED_FIELD at its own path (outside KNOWN_FIELDS) without refusing, and no image is involved; left eye 3 resolves unchanged.',
-      host: { tribe: 'Wildwood', slots: { leftEye: LEFT_EYE_3_HOST } },
       lib: {
         slots: { leftEye: LEFT_EYE_3_LIB },
         hasEmbeddedImage: false,
@@ -6694,7 +5536,6 @@ const envCasesSection: ParityCase[] = (() => {
       doc: '\uFEFF' + `{${BASE},"LEyeColor":3}`,
       classification: 'intentional',
       note: 'UNPLANNED: the library skips one leading U+FEFF while the host refuses; the maintainer must add this row to the plan compatibility table (API-level only, non-blocking). Native JSON.parse does not treat U+FEFF as whitespace, so parseCharaFile reports "not valid JSON" for a string that still carries it. read.ts Reader.read skips one leading U+FEFF (charCodeAt(0) === 0xfeff, api.md), so the library reads the character. The library is the more lenient side; in production the web app (File.text) and the bot (Response.text / TextDecoder) strip the BOM before the host parser, so users do not see the difference.',
-      host: { refused: '.chara file is not valid JSON' },
       lib: {
         identity: { tribe: { state: 'valid', value: 'Wildwood' } },
         slots: { leftEye: LEFT_EYE_3_LIB },
@@ -6707,13 +5548,6 @@ const envCasesSection: ParityCase[] = (() => {
       doc: `{"__proto__":{"LEyeColor":3,"Tribe":"Raen"},${BASE},"REyeColor":2}`,
       classification: 'preserved',
       note: 'JSON.parse defines "__proto__" as an own data property, so the host does not inherit LEyeColor 3: left eye stays null/inert (a host pollution or setter bug would surface it; the nested Tribe is shadowed by the own Tribe either way). Library records are Object.create(null) and inspect.ts uses Object.hasOwn, so the nested values could not surface even under a pollution bug; the library-side discriminator is the own key itself, reported as UNSUPPORTED_FIELD at ["__proto__"].',
-      host: {
-        tribe: 'Wildwood',
-        slots: {
-          leftEye: { verdict: 'inert', index: null },
-          rightEye: { verdict: 'index', index: 2, indexHex: '#D3D3D3' },
-        },
-      },
       lib: {
         identity: { tribe: { state: 'valid', value: 'Wildwood' }, canonicalRace: 'Elezen' },
         slots: {
@@ -6734,13 +5568,6 @@ const envCasesSection: ParityCase[] = (() => {
       doc: `{"constructor":{"prototype":{"LEyeColor":3}},"hasOwnProperty":0,"toString":"x",${BASE},"REyeColor":2}`,
       classification: 'preserved',
       note: 'The host uses `in` and Object.hasOwn on its own tables, never record.hasOwnProperty, so shadowing it is harmless and left eye stays absent. The library reads own keys of null-prototype records; each of the three keys is only UNSUPPORTED_FIELD at its own path, and the right eye resolves on both sides.',
-      host: {
-        tribe: 'Wildwood',
-        slots: {
-          leftEye: { verdict: 'inert', index: null },
-          rightEye: { verdict: 'index', index: 2, indexHex: '#D3D3D3' },
-        },
-      },
       lib: {
         identity: { tribe: { state: 'valid', value: 'Wildwood' } },
         slots: {
@@ -6768,7 +5595,6 @@ const envCasesSection: ParityCase[] = (() => {
       doc: leftEye3({ Pose: new Array<number>(100_001).fill(0) }),
       classification: 'intentional',
       note: 'Native JSON.parse has no node bound and the host never reads Pose, so left eye 3 resolves. read.ts counts one node per value and per key: the 100,001 array elements alone pass maxNodes 100,000, so MAX_NODES (the text is about 200 KB, far under the 16 MiB maxBytes, so INPUT_TOO_LARGE cannot fire first).',
-      host: { slots: { leftEye: LEFT_EYE_3_HOST } },
       lib: { refused: 'MAX_NODES' },
     },
     {
@@ -6779,7 +5605,6 @@ const envCasesSection: ParityCase[] = (() => {
       classification: 'preserved',
       blocksIfDiverges: true,
       note: 'Plan row: no blanket image-field rejection. The host ignores the key. read.ts classifies the initial digit as type number, adds INVALID_IMAGE_TYPE (warning) at ["Base64Image"] instead of IMAGE_OMITTED, still sets hasEmbeddedImage and never stores the key (so no UNSUPPORTED_FIELD); left eye 3 resolves.',
-      host: { slots: { leftEye: LEFT_EYE_3_HOST } },
       lib: {
         slots: { leftEye: LEFT_EYE_3_LIB },
         hasEmbeddedImage: true,
@@ -6796,7 +5621,6 @@ const envCasesSection: ParityCase[] = (() => {
       classification: 'preserved',
       blocksIfDiverges: true,
       note: 'Plan row: no blanket image-field rejection. The host ignores the key. read.ts classifies the initial "{" as type object, adds INVALID_IMAGE_TYPE at ["Base64Image"], walks the value in discard mode (nothing stored, the nested Data never becomes a field), and adds no UNSUPPORTED_FIELD; left eye 3 resolves.',
-      host: { slots: { leftEye: LEFT_EYE_3_HOST } },
       lib: {
         slots: { leftEye: LEFT_EYE_3_LIB },
         hasEmbeddedImage: true,
@@ -6813,10 +5637,6 @@ const envCasesSection: ParityCase[] = (() => {
       doc: `{${BASE},"LEyeColor":3,"Body":{"ModelBase":6016,"ModelVariant":1,"DyeId":1,"DyeId":2}}`,
       classification: 'intentional',
       note: 'Native JSON.parse keeps the last nested member, so the host emits Body dye channel 1 = stain 2 and resolves left eye 3. read.ts Reader.object creates a fresh key Set for every object, nested ones included, so the repeated DyeId inside Body fails DUPLICATE_KEY for the whole document.',
-      host: {
-        gearDyes: [{ slot: 'Body', channel: 1, stainId: 2 }],
-        slots: { leftEye: LEFT_EYE_3_HOST },
-      },
       lib: { refused: 'DUPLICATE_KEY' },
     },
     {
@@ -6826,7 +5646,6 @@ const envCasesSection: ParityCase[] = (() => {
       doc: { Base64Image: PNG_1X1 },
       classification: 'preserved',
       note: 'Host: Base64Image is not a colour key, so "carries no character colour fields". Library: read.ts never stores the image key, so fields is an empty record and readChara fails NOT_CHARACTER; the image does not make a document a character.',
-      host: { refused: 'carries no character colour fields' },
       lib: { refused: 'NOT_CHARACTER' },
     },
     {
@@ -6837,16 +5656,6 @@ const envCasesSection: ParityCase[] = (() => {
       doc: `{${BASE},"LEyeColor":9007199254740993}`,
       classification: 'intentional',
       note: 'JSON.parse rounds 9007199254740993 to 9007199254740992, a finite number the host readIndex accepts; the resolver then gives the left eye a slot verdict (no eyes entry, so error indexOutOfRange) instead of refusing. read.ts: the integer fails Number.isSafeInteger, so INVALID_NUMBER for the whole document. Sibling of ENV-14, which uses an unknown key.',
-      host: {
-        slots: {
-          leftEye: {
-            verdict: 'error',
-            errorCode: 'indexOutOfRange',
-            index: 9007199254740992,
-            indexHex: null,
-          },
-        },
-      },
       lib: { refused: 'INVALID_NUMBER' },
     },
     {
@@ -6857,7 +5666,6 @@ const envCasesSection: ParityCase[] = (() => {
       doc: leftEye3({ Nickname: 'x'.repeat(65_537) }),
       classification: 'intentional',
       note: "Native JSON.parse has no string bound and the host never reads Nickname, so left eye 3 resolves. read.ts Reader.string counts decoded characters and fails when ++length > maxStringLength 65,536, so 65,537 characters fail MAX_STRING_LENGTH. Plan row 114 names depth/node limits; row 114's planned behavior (accept the library's bounded refusal) covers every READ_DEFAULTS bound, string length included; in production the 8 KiB byte cap refuses such a file first.",
-      host: { slots: { leftEye: LEFT_EYE_3_HOST } },
       lib: { refused: 'MAX_STRING_LENGTH' },
     },
     {
@@ -6867,7 +5675,6 @@ const envCasesSection: ParityCase[] = (() => {
       doc: leftEye3({ ['K'.repeat(1_025)]: 0 }),
       classification: 'intentional',
       note: "The host never reads the unknown key, so left eye 3 resolves. read.ts reads every object key with limit maxKeyLength 1,024 and code MAX_KEY_LENGTH, so a 1,025-character key refuses the document. Plan row 114 names depth/node limits; row 114's planned behavior (accept the library's bounded refusal) covers every READ_DEFAULTS bound, key length included; in production the 8 KiB byte cap refuses such a file first.",
-      host: { slots: { leftEye: LEFT_EYE_3_HOST } },
       lib: { refused: 'MAX_KEY_LENGTH' },
     },
     {
@@ -6877,7 +5684,6 @@ const envCasesSection: ParityCase[] = (() => {
       doc: `{${BASE},"LEyeColor":3} x`,
       classification: 'preserved',
       note: 'Host: JSON.parse rejects trailing content, so "not valid JSON". Library read.ts Reader.read skips trailing whitespace only, then pos !== text.length fails INVALID_JSON (a reader that stopped after the first value would admit it).',
-      host: { refused: '.chara file is not valid JSON' },
       lib: { refused: 'INVALID_JSON' },
     },
     {
@@ -6887,7 +5693,6 @@ const envCasesSection: ParityCase[] = (() => {
       doc: 'null',
       classification: 'preserved',
       note: 'Host: data === null, so "not a JSON object" (typeof null is "object", the explicit null check catches it). Library: the Reader admits the null literal, then isRecord(null) is false, so NOT_CHARACTER (not INVALID_JSON).',
-      host: { refused: '.chara file is not a JSON object' },
       lib: { refused: 'NOT_CHARACTER' },
     },
     {
@@ -6898,7 +5703,6 @@ const envCasesSection: ParityCase[] = (() => {
       classification: 'preserved',
       blocksIfDiverges: true,
       note: 'The host ignores the key under any spelling. read.ts matches key.toLowerCase() === "base64image", so the lowercase spelling is omitted like Base64Image: hasEmbeddedImage, IMAGE_OMITTED at ["base64image"], not stored and not UNSUPPORTED_FIELD. Blocking: embedded-image omission is a required contract whatever the key spelling, since a library that stored the payload would retain it.',
-      host: { slots: { leftEye: LEFT_EYE_3_HOST } },
       lib: {
         slots: { leftEye: LEFT_EYE_3_LIB },
         hasEmbeddedImage: true,
@@ -6968,38 +5772,6 @@ const fixCasesSection: ParityCase[] = (() => {
       classification: 'preserved',
       blocksIfDiverges: true,
       note: 'Producer shape: no TypeName, Brio-shaped (null glosses/BustScale, flag true). Tribe Duskwight gives canonical Elezen on both sides (required tribe -> race/palette contract). Gear walks GEAR_SLOTS on the host; the library keeps every lane as uint16 evidence, the empty off-hand is status empty with a zero model, and dye 0 is a valid 0 (inspect.ts:186-210). Glasses {GlassesId:0}: host null, library valid 0, mapped to null by the contract (plan line 169). Real-producer evidence: "Tags": null is not a known field (UNSUPPORTED_FIELD at ["Tags"], read.ts:330-336) and "Base64Image": null is omitted with IMAGE_OMITTED (read.ts:246-274).',
-      host: {
-        race: 'Elezen',
-        tribe: 'Duskwight',
-        tribeRaw: 'Duskwight',
-        gender: 'Female',
-        producer: null,
-        extendedDeclared: true,
-        extendedValid: true,
-        glassesId: null,
-        gearModels: [
-          { slot: 'MainHand', set: 5603, base: 9, variant: 3 },
-          { slot: 'HeadGear', base: 813, variant: 2 },
-          { slot: 'Body', base: 876, variant: 1 },
-          { slot: 'Hands', base: 835, variant: 2 },
-          { slot: 'Legs', base: 835, variant: 2 },
-          { slot: 'Feet', base: 6135, variant: 1 },
-          { slot: 'Ears', base: 124, variant: 6 },
-          { slot: 'Neck', base: 111, variant: 2 },
-          { slot: 'Wrists', base: 134, variant: 6 },
-          { slot: 'LeftRing', base: 53, variant: 1 },
-          { slot: 'RightRing', base: 53, variant: 1 },
-        ],
-        gearDyes: [
-          { slot: 'HeadGear', channel: 1, stainId: 92 },
-          { slot: 'HeadGear', channel: 2, stainId: 1 },
-          { slot: 'Body', channel: 1, stainId: 97 },
-          { slot: 'Body', channel: 2, stainId: 92 },
-          { slot: 'Hands', channel: 1, stainId: 97 },
-          { slot: 'Legs', channel: 1, stainId: 97 },
-          { slot: 'Feet', channel: 1, stainId: 97 },
-        ],
-      },
       lib: {
         identity: {
           canonicalRace: 'Elezen',
@@ -7052,25 +5824,6 @@ const fixCasesSection: ParityCase[] = (() => {
       doc: DUSK,
       classification: 'preserved',
       note: 'The fixture DOES carry IsExtendedAppearanceValid true and its block is not all zero, so the library eyes are live. LeftEyeColor decodes to #DCBA6C (eye 42) beside LEyeColor 169 (#87C0A3), RightEyeColor to #87C0A3 beside REyeColor 42: each lands on the other eye at dE 0 and on its own at dE 26.5. Host uncrossEyeFloats swaps the floats (chara-resolver.ts:173-202); library pairEyes sees bothCrossed, swaps effectiveExtendedHex silently with one HISTORICAL_EYE_PAIR_SWAP and no warning, and keeps extendedHex original (resolve.ts:100-157, api.md:124). The effective preview matches the host floatHex; the adapter must read effectiveExtendedHex, not extendedHex.',
-      host: {
-        eyesShareIndex: false,
-        slots: {
-          leftEye: {
-            verdict: 'index',
-            index: 169,
-            indexHex: '#87C0A3',
-            floatHex: '#87C0A3',
-            deltaE: { max: 1 },
-          },
-          rightEye: {
-            verdict: 'index',
-            index: 42,
-            indexHex: '#DCBA6C',
-            floatHex: '#DCBA6C',
-            deltaE: { max: 1 },
-          },
-        },
-      },
       lib: {
         eyesShareIndex: false,
         corrections: 1,
@@ -7113,40 +5866,6 @@ const fixCasesSection: ParityCase[] = (() => {
       classification: 'preserved',
       blocksIfDiverges: true,
       note: 'Live floats far from the shader entry go off grid on both sides (threshold 6): hair #BF6F69 vs shader #302620 (dE 37.4), highlights #7F4367 vs #B69458 (45.8), skin #F0D5DE vs shader #FCFCFD (13.5; the creator swatch is #FEE6D4), limbal #5A1322 vs #000000 (25.6); the displayed color is the float (resolve.ts:416-424, chara-resolver.ts:398-407). Limbal is a tattoo on an Elezen. FacePaint 0 inerts FacePaintColor 55 on both sides whatever else is stored (resolve.ts:359-368); the library keeps the creator evidence #41111C. Blocking: FacePaint 0 staying inactive is a required contract.',
-      host: {
-        slots: {
-          hair: {
-            verdict: 'offGrid',
-            index: 71,
-            indexHex: '#4A2B12',
-            floatHex: '#BF6F69',
-            deltaE: { min: 6 },
-          },
-          highlights: {
-            verdict: 'offGrid',
-            index: 36,
-            indexHex: '#B69458',
-            floatHex: '#7F4367',
-            deltaE: { min: 6 },
-          },
-          skin: {
-            verdict: 'offGrid',
-            index: 0,
-            indexHex: '#FEE6D4',
-            floatHex: '#F0D5DE',
-            deltaE: { min: 6 },
-          },
-          limbal: {
-            kind: 'tattoo',
-            verdict: 'offGrid',
-            index: 7,
-            indexHex: '#262626',
-            floatHex: '#5A1322',
-            deltaE: { min: 6 },
-          },
-          facePaint: { verdict: 'inert', inertReason: 'facePaintNone', index: 55, indexHex: null },
-        },
-      },
       lib: {
         slots: {
           hair: {
@@ -7200,22 +5919,6 @@ const fixCasesSection: ParityCase[] = (() => {
       classification: 'intentional',
       blocksIfDiverges: true,
       note: 'Plan row 107, in the "overrides a live non-zero opacity" clause: Mouth 2 has bit 0x80 clear on an Elezen, so lipEnabled is false and the library lip is inactive/lipDisabled with no display and no composite (resolve.ts:192-201, 359-368), keeping creatorHex #621C33 and alpha 0.6 as evidence. The host never reads Mouth: index 53 wins (float #340A1C equals the lipsDark shader entry) and composites #621C33 over the off-grid skin float #F0D5DE at 0.6 = #AE8F98. Blocking: lip-bit-clear staying inactive is a required contract.',
-      host: {
-        slots: {
-          lip: {
-            verdict: 'index',
-            inertReason: null,
-            index: 53,
-            sheetVariant: 'dark',
-            sheetIndex: 53,
-            indexHex: '#621C33',
-            floatHex: '#340A1C',
-            alpha: 0.6,
-            deltaE: { max: 1 },
-            blendHex: '#AE8F98',
-          },
-        },
-      },
       lib: {
         slots: {
           lip: {
@@ -7246,29 +5949,6 @@ const fixCasesSection: ParityCase[] = (() => {
       classification: 'preserved',
       blocksIfDiverges: true,
       note: 'Producer shape: no TypeName (unlabeled), flag true, gloss vectors written. The file writes the plural "Helions" (not the legacy Helion alias): both read Hrothgar with no RACE_TRIBE_MISMATCH against Race "Hrothgar" (required tribe -> race contract). Both weapons are worn triples; Hands and the five accessories are 0/0, which the host skips (isWornCharaModel) and the library keeps as status empty with valid zero lanes and dyes (inspect.ts:202-210). Same Tags / Base64Image placeholders as the duskwight export.',
-      host: {
-        race: 'Hrothgar',
-        tribe: 'Helions',
-        tribeRaw: 'Helions',
-        gender: 'Female',
-        producer: null,
-        extendedValid: true,
-        glassesId: null,
-        gearModels: [
-          { slot: 'MainHand', set: 301, base: 31, variant: 1 },
-          { slot: 'OffHand', set: 351, base: 31, variant: 1 },
-          { slot: 'HeadGear', base: 6229, variant: 1 },
-          { slot: 'Body', base: 436, variant: 1 },
-          { slot: 'Legs', base: 6223, variant: 2 },
-          { slot: 'Feet', base: 6221, variant: 2 },
-        ],
-        gearDyes: [
-          { slot: 'HeadGear', channel: 1, stainId: 33 },
-          { slot: 'Body', channel: 1, stainId: 105 },
-          { slot: 'Legs', channel: 1, stainId: 72 },
-          { slot: 'Feet', channel: 1, stainId: 33 },
-        ],
-      },
       lib: {
         identity: {
           canonicalRace: 'Hrothgar',
@@ -7309,25 +5989,6 @@ const fixCasesSection: ParityCase[] = (() => {
       classification: 'preserved',
       blocksIfDiverges: true,
       note: 'Lip: LipsToneFurPattern 35 is a fur pattern on Hrothgar. The live MouthColor "0, 0, 0, 0" (block not all zero, flag true) gives alpha 0: the host noLip check runs first (chara-resolver.ts:345); the library lip is active (Hrothgar ignores the bit, so Mouth 131 here does NOT count as bit-set coverage), extendedActive true, and the noLip branch runs before the furPattern branch (resolve.ts:370-380), so reason noLip, never furPattern, with no creator request (resolve.ts:282-285). Highlights: EnableHighlights false inerts index 1 on both; the library keeps creator #E7E7E7 / shader #E4E4E4 and the float #BA989E as evidence. Blocking: EnableHighlights false staying inactive is a required contract.',
-      host: {
-        slots: {
-          lip: {
-            verdict: 'inert',
-            inertReason: 'noLip',
-            index: 35,
-            alpha: 0,
-            floatHex: '#000000',
-            blendHex: null,
-          },
-          highlights: {
-            verdict: 'inert',
-            inertReason: 'highlightsDisabled',
-            index: 1,
-            indexHex: null,
-            floatHex: '#BA989E',
-          },
-        },
-      },
       lib: {
         slots: {
           lip: {
@@ -7363,55 +6024,6 @@ const fixCasesSection: ParityCase[] = (() => {
       doc: HROTH,
       classification: 'preserved',
       note: 'Every live float equals its SHADER entry (dE 0), so both sides keep the palette and show the creator swatch. Limbal is the verdict discriminator (creator #976632 against float #85521C is dE 7.2, so a float judged against the creator would land off grid); skin discriminates only through the deltaE max 1 assertion (creator #6A4D45 against float #74544B is dE 2.9, under the threshold of 6). Eyes share index 165. FacePaint 106 has non-zero low bits, so face paint is active (resolve.ts:217-223); FacePaintColor 171 is light, in-sheet 43, #A14138, with no shader request.',
-      host: {
-        eyesShareIndex: true,
-        slots: {
-          leftEye: {
-            verdict: 'index',
-            index: 165,
-            indexHex: '#1F4F43',
-            floatHex: '#1F4F43',
-            deltaE: { max: 1 },
-          },
-          rightEye: {
-            verdict: 'index',
-            index: 165,
-            indexHex: '#1F4F43',
-            floatHex: '#1F4F43',
-            deltaE: { max: 1 },
-          },
-          hair: {
-            verdict: 'index',
-            index: 152,
-            indexHex: '#BA989E',
-            floatHex: '#BA989E',
-            deltaE: { max: 1 },
-          },
-          skin: {
-            verdict: 'index',
-            index: 104,
-            indexHex: '#6A4D45',
-            floatHex: '#74544B',
-            deltaE: { max: 1 },
-          },
-          limbal: {
-            kind: 'tattoo',
-            verdict: 'index',
-            index: 60,
-            indexHex: '#976632',
-            floatHex: '#85521C',
-            deltaE: { max: 1 },
-          },
-          facePaint: {
-            verdict: 'index',
-            index: 171,
-            sheetVariant: 'light',
-            sheetIndex: 43,
-            indexHex: '#A14138',
-            floatHex: null,
-          },
-        },
-      },
       lib: {
         eyesShareIndex: true,
         corrections: 0,
@@ -7474,38 +6086,6 @@ const fixCasesSection: ParityCase[] = (() => {
       classification: 'preserved',
       blocksIfDiverges: true,
       note: 'Producer shape: TypeName "Anamnesis Character File", no IsExtendedAppearanceValid (Anamnesis never writes it, api.md:118). The tribe decides the race on both sides (required tribe -> race contract); the drifted "Lalafel" is the library alias for Lalafell (inspect.ts:61-65) with the raw kept and no RACE_TRIBE_MISMATCH. No Tags or Base64Image key, so no UNSUPPORTED_FIELD and no image. Gear: weapon with both dye channels, empty off-hand and LeftRing (status empty), RightRing worn.',
-      host: {
-        race: 'Lalafell',
-        tribe: 'Dunesfolk',
-        tribeRaw: 'Dunesfolk',
-        gender: 'Female',
-        producer: 'Anamnesis Character File',
-        extendedDeclared: false,
-        extendedValid: false,
-        glassesId: null,
-        gearModels: [
-          { slot: 'MainHand', set: 801, base: 89, variant: 1 },
-          { slot: 'HeadGear', base: 964, variant: 1 },
-          { slot: 'Body', base: 6208, variant: 1 },
-          { slot: 'Hands', base: 778, variant: 1 },
-          { slot: 'Legs', base: 366, variant: 2 },
-          { slot: 'Feet', base: 6029, variant: 1 },
-          { slot: 'Ears', base: 186, variant: 1 },
-          { slot: 'Neck', base: 121, variant: 1 },
-          { slot: 'Wrists', base: 53, variant: 1 },
-          { slot: 'RightRing', base: 58, variant: 2 },
-        ],
-        gearDyes: [
-          { slot: 'MainHand', channel: 1, stainId: 86 },
-          { slot: 'MainHand', channel: 2, stainId: 6 },
-          { slot: 'Body', channel: 1, stainId: 102 },
-          { slot: 'Body', channel: 2, stainId: 64 },
-          { slot: 'Hands', channel: 1, stainId: 70 },
-          { slot: 'Hands', channel: 2, stainId: 6 },
-          { slot: 'Legs', channel: 1, stainId: 102 },
-          { slot: 'Feet', channel: 1, stainId: 102 },
-        ],
-      },
       lib: {
         identity: {
           canonicalRace: 'Lalafell',
@@ -7550,61 +6130,6 @@ const fixCasesSection: ParityCase[] = (() => {
       doc: LALA,
       classification: 'preserved',
       note: 'No IsExtendedAppearanceValid: the host keeps the index and flags indexWinNote extendedMissing (chara-resolver.ts:408-413); the library keeps the stored block as inactive evidence, interpretation palette, reason extendedInactive, displayHex = creator (resolve.ts:425-432). The stored floats equal the shader entries (hair #853D53 vs creator #822C3C, skin #CDB7A1 vs #CE9E81, limbal #C6C6C6 vs #F7F7F7) but are never compared. FacePaint 129 = mirror bit + style 1, active on both (plan row 108); FacePaintColor 187 is light, in-sheet 59, #682668. Limbal is a tattoo on a Lalafell. The lip is FIX-10.',
-      host: {
-        eyesShareIndex: true,
-        slots: {
-          leftEye: {
-            verdict: 'index',
-            index: 68,
-            indexHex: '#985726',
-            floatHex: '#985726',
-            indexWinNote: 'extendedMissing',
-            deltaE: null,
-          },
-          rightEye: {
-            verdict: 'index',
-            index: 68,
-            indexHex: '#985726',
-            indexWinNote: 'extendedMissing',
-          },
-          hair: {
-            verdict: 'index',
-            index: 108,
-            indexHex: '#822C3C',
-            floatHex: '#853D53',
-            indexWinNote: 'extendedMissing',
-          },
-          highlights: {
-            verdict: 'index',
-            inertReason: null,
-            index: 106,
-            indexHex: '#984154',
-            indexWinNote: 'extendedMissing',
-          },
-          skin: {
-            verdict: 'index',
-            index: 122,
-            indexHex: '#CE9E81',
-            floatHex: '#CDB7A1',
-            indexWinNote: 'extendedMissing',
-          },
-          limbal: {
-            kind: 'tattoo',
-            verdict: 'index',
-            index: 0,
-            indexHex: '#F7F7F7',
-            floatHex: '#C6C6C6',
-            indexWinNote: 'extendedMissing',
-          },
-          facePaint: {
-            verdict: 'index',
-            index: 187,
-            sheetVariant: 'light',
-            sheetIndex: 59,
-            indexHex: '#682668',
-          },
-        },
-      },
       lib: {
         eyesShareIndex: true,
         corrections: 0,
@@ -7668,23 +6193,6 @@ const fixCasesSection: ParityCase[] = (() => {
       doc: LALA,
       classification: 'intentional',
       note: 'UNPLANNED: on a real Anamnesis export the host composites the lip although the float is not live (chara-resolver.ts:422 tests only alpha > 0): #804995 over skin #CE9E81 at 0.2509804 = #BE8F86; the library composes only from live extended data (resolve.ts:440-445), so lipComposite is null while alpha stays as evidence. The maintainer must decide whether non-live Anamnesis opacity may tint the preview; the Task 3 adapter must not invent blendHex. Preserved part: Mouth 128 sets bit 0x80, so the light lip (186, in-sheet 58, #804995) stays active on both (plan row 110), shown from the creator with reason extendedInactive.',
-      host: {
-        slots: {
-          lip: {
-            verdict: 'index',
-            inertReason: null,
-            index: 186,
-            sheetVariant: 'light',
-            sheetIndex: 58,
-            indexHex: '#804995',
-            floatHex: '#4A2F60',
-            alpha: 0.2509804,
-            indexWinNote: 'extendedMissing',
-            deltaE: null,
-            blendHex: '#BE8F86',
-          },
-        },
-      },
       lib: {
         slots: {
           lip: {
@@ -7714,12 +6222,6 @@ const fixCasesSection: ParityCase[] = (() => {
       provider: 'tagged',
       classification: 'preserved',
       note: 'The host light and dark lip/face-paint sheets hold identical colors, so only a tagged provider shows which palette was asked for. Lip 186 is light, in-sheet 58 (0x3A): creator lipsLight #05003A, shader reference always lipsDark #04FF3A (resolve.ts:288-349). Face paint 187 is light, in-sheet 59 (0x3B): creator facePaintLight #07003B, no shader request. The host picks the same light sheets (chara-resolver.ts:237-289) at the same in-sheet indices. The non-live block keeps both on the creator.',
-      host: {
-        slots: {
-          lip: { verdict: 'index', sheetVariant: 'light', sheetIndex: 58 },
-          facePaint: { verdict: 'index', sheetVariant: 'light', sheetIndex: 59 },
-        },
-      },
       lib: {
         slots: {
           lip: {
@@ -7752,31 +6254,6 @@ const fixCasesSection: ParityCase[] = (() => {
       classification: 'preserved',
       blocksIfDiverges: true,
       note: 'Producer shape: no TypeName (unlabeled), flag true, gloss vectors written. Tribe Wildwood gives canonical Elezen on both sides (required tribe -> race contract). Eleven worn pieces, only HeadGear and Feet dyed (102); the library keeps undyed channels as valid 0, never invalid (inspect.ts:186-187). Same Tags / Base64Image placeholders as the duskwight export.',
-      host: {
-        race: 'Elezen',
-        tribe: 'Wildwood',
-        gender: 'Female',
-        producer: null,
-        extendedValid: true,
-        glassesId: null,
-        gearModels: [
-          { slot: 'MainHand', set: 501, base: 78, variant: 2 },
-          { slot: 'HeadGear', base: 633, variant: 5 },
-          { slot: 'Body', base: 686, variant: 1 },
-          { slot: 'Hands', base: 885, variant: 3 },
-          { slot: 'Legs', base: 712, variant: 1 },
-          { slot: 'Feet', base: 686, variant: 1 },
-          { slot: 'Ears', base: 136, variant: 6 },
-          { slot: 'Neck', base: 142, variant: 1 },
-          { slot: 'Wrists', base: 53, variant: 1 },
-          { slot: 'LeftRing', base: 53, variant: 1 },
-          { slot: 'RightRing', base: 53, variant: 1 },
-        ],
-        gearDyes: [
-          { slot: 'HeadGear', channel: 1, stainId: 102 },
-          { slot: 'Feet', channel: 1, stainId: 102 },
-        ],
-      },
       lib: {
         identity: {
           canonicalRace: 'Elezen',
@@ -7814,55 +6291,6 @@ const fixCasesSection: ParityCase[] = (() => {
       doc: WILD,
       classification: 'preserved',
       note: 'Every live float equals its shader entry (dE 0): eyes #477C8F, hair #3E2B22 (creator #552813), highlights #E4E4E4 (creator #E7E7E7, enabled), skin #E9E3D9 (creator #F0CDB4), limbal #85521C (creator #976632). Both keep the palette and show the creator. FacePaint 4 (bit clear, style 4) is active on both (resolve.ts:217-223); FacePaintColor 171 is light, in-sheet 43, #A14138.',
-      host: {
-        eyesShareIndex: true,
-        slots: {
-          leftEye: {
-            verdict: 'index',
-            index: 154,
-            indexHex: '#477C8F',
-            floatHex: '#477C8F',
-            deltaE: { max: 1 },
-          },
-          rightEye: { verdict: 'index', index: 154, indexHex: '#477C8F', deltaE: { max: 1 } },
-          hair: {
-            verdict: 'index',
-            index: 86,
-            indexHex: '#552813',
-            floatHex: '#3E2B22',
-            deltaE: { max: 1 },
-          },
-          highlights: {
-            verdict: 'index',
-            inertReason: null,
-            index: 1,
-            indexHex: '#E7E7E7',
-            floatHex: '#E4E4E4',
-            deltaE: { max: 1 },
-          },
-          skin: {
-            verdict: 'index',
-            index: 104,
-            indexHex: '#F0CDB4',
-            floatHex: '#E9E3D9',
-            deltaE: { max: 1 },
-          },
-          limbal: {
-            kind: 'tattoo',
-            verdict: 'index',
-            index: 60,
-            indexHex: '#976632',
-            deltaE: { max: 1 },
-          },
-          facePaint: {
-            verdict: 'index',
-            index: 171,
-            sheetVariant: 'light',
-            sheetIndex: 43,
-            indexHex: '#A14138',
-          },
-        },
-      },
       lib: {
         eyesShareIndex: true,
         corrections: 0,
@@ -7923,21 +6351,6 @@ const fixCasesSection: ParityCase[] = (() => {
       doc: WILD,
       classification: 'preserved',
       note: 'Mouth 131 has bit 0x80 set on an Elezen, so the library lip is active (resolve.ts:192-201); the host never reads Mouth. Index 43 (#A14138) agrees with the live float #612827 = lipsDark shader 43 (dE 0), so the lip shows the creator, and both composite it over the skin creator #F0CDB4 at 0.6 = #C68F7D (resolve.ts:438-453; chara-resolver.ts:419-430; the two formulas agree here because every channel is in range).',
-      host: {
-        slots: {
-          lip: {
-            verdict: 'index',
-            index: 43,
-            sheetVariant: 'dark',
-            sheetIndex: 43,
-            indexHex: '#A14138',
-            floatHex: '#612827',
-            alpha: 0.6,
-            deltaE: { max: 1 },
-            blendHex: '#C68F7D',
-          },
-        },
-      },
       lib: {
         slots: {
           lip: {
@@ -7968,38 +6381,6 @@ const fixCasesSection: ParityCase[] = (() => {
       classification: 'preserved',
       blocksIfDiverges: true,
       note: 'Producer shape: TypeName "Anamnesis Character File", no IsExtendedAppearanceValid. Tribe Xaela gives the race on both sides (required tribe -> race contract): host AuRa, library canonical "Au Ra", mapped to AuRa by the contract (plan line 167); Race "AuRa" is the library alias (inspect.ts:61-65), raw kept, no RACE_TRIBE_MISMATCH. Body and Feet carry dye 113 on channel 2. No Tags or Base64Image key.',
-      host: {
-        race: 'AuRa',
-        tribe: 'Xaela',
-        tribeRaw: 'Xaela',
-        gender: 'Female',
-        producer: 'Anamnesis Character File',
-        extendedDeclared: false,
-        extendedValid: false,
-        glassesId: null,
-        gearModels: [
-          { slot: 'MainHand', set: 801, base: 30, variant: 2 },
-          { slot: 'HeadGear', base: 910, variant: 1 },
-          { slot: 'Body', base: 6244, variant: 1 },
-          { slot: 'Hands', base: 6135, variant: 1 },
-          { slot: 'Legs', base: 410, variant: 1 },
-          { slot: 'Feet', base: 6195, variant: 1 },
-          { slot: 'Ears', base: 112, variant: 1 },
-          { slot: 'Neck', base: 53, variant: 1 },
-          { slot: 'Wrists', base: 183, variant: 1 },
-          { slot: 'LeftRing', base: 53, variant: 1 },
-          { slot: 'RightRing', base: 53, variant: 1 },
-        ],
-        gearDyes: [
-          { slot: 'MainHand', channel: 1, stainId: 6 },
-          { slot: 'Body', channel: 1, stainId: 102 },
-          { slot: 'Body', channel: 2, stainId: 113 },
-          { slot: 'Hands', channel: 1, stainId: 6 },
-          { slot: 'Legs', channel: 1, stainId: 102 },
-          { slot: 'Feet', channel: 1, stainId: 6 },
-          { slot: 'Feet', channel: 2, stainId: 113 },
-        ],
-      },
       lib: {
         identity: {
           canonicalRace: 'Au Ra',
@@ -8041,53 +6422,6 @@ const fixCasesSection: ParityCase[] = (() => {
       classification: 'preserved',
       blocksIfDiverges: true,
       note: 'EnableHighlights false inerts Highlights 84 on both (plan row 106); the library keeps creator #893C21 and the stored float #121212 as evidence (resolve.ts:359-368). Without the flag the other slots keep the index (host extendedMissing, library extendedInactive): eyes #8C87B9, hair #121212, skin #886250 (float #87776D unused). LimbalEyes is a limbal ring on an Au Ra on both sides (kind limbal), #262626 with a black stored float. LimbalRingColor "0, 0, 0" alone is not an all-zero block. FacePaint 3 is active; FacePaintColor 7 is dark #000000. Blocking: EnableHighlights false staying inactive is a required contract.',
-      host: {
-        eyesShareIndex: true,
-        slots: {
-          highlights: {
-            verdict: 'inert',
-            inertReason: 'highlightsDisabled',
-            index: 84,
-            indexHex: null,
-            floatHex: '#121212',
-          },
-          leftEye: {
-            verdict: 'index',
-            index: 137,
-            indexHex: '#8C87B9',
-            floatHex: '#8C87B9',
-            indexWinNote: 'extendedMissing',
-          },
-          hair: {
-            verdict: 'index',
-            index: 7,
-            indexHex: '#121212',
-            indexWinNote: 'extendedMissing',
-          },
-          skin: {
-            verdict: 'index',
-            index: 69,
-            indexHex: '#886250',
-            floatHex: '#87776D',
-            indexWinNote: 'extendedMissing',
-          },
-          limbal: {
-            kind: 'limbal',
-            verdict: 'index',
-            index: 7,
-            indexHex: '#262626',
-            floatHex: '#000000',
-            indexWinNote: 'extendedMissing',
-          },
-          facePaint: {
-            verdict: 'index',
-            index: 7,
-            sheetVariant: 'dark',
-            sheetIndex: 7,
-            indexHex: '#000000',
-          },
-        },
-      },
       lib: {
         eyesShareIndex: true,
         noIssueCodes: ['AMBIGUOUS_ZERO_BLOCK'],
@@ -8131,21 +6465,6 @@ const fixCasesSection: ParityCase[] = (() => {
       doc: XAELA,
       classification: 'intentional',
       note: 'UNPLANNED: the same non-live composite difference as FIX-10 on the second Anamnesis export: the host composites lip #000000 over skin #886250 at 0.7058824 = #4C352A (chara-resolver.ts:422); the library gives no lipComposite without live extended data (resolve.ts:440-445). Same maintainer decision. Preserved part: Mouth 129 has bit 0x80 set with low bit 1 (a mask test, not == 128), so the lip stays active and shows the dark entry 7 #000000 from the creator, reason extendedInactive.',
-      host: {
-        slots: {
-          lip: {
-            verdict: 'index',
-            index: 7,
-            sheetVariant: 'dark',
-            sheetIndex: 7,
-            indexHex: '#000000',
-            floatHex: '#000000',
-            alpha: 0.7058824,
-            indexWinNote: 'extendedMissing',
-            blendHex: '#4C352A',
-          },
-        },
-      },
       lib: {
         slots: {
           lip: {
@@ -8181,5 +6500,4 @@ const CASES: ParityCase[] = [
 ];
 
 registerIntegrityTests(CASES);
-registerHostTests(CASES);
 registerLibraryTests(CASES);
