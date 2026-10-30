@@ -34,6 +34,7 @@ Rules:
 ## [5.12.1] - 2026-10-29
 ### Easier scrolling
 - Web app: the main scrollbar now sits against the edge of the content area, removing the empty gap beside it.
+- Web app: the Dye Mixer shows one main scrollbar, with Options and the Color Palette still scrolling independently.
 
 ## [5.12.0] - 2026-10-26
 ### 🗂️ A new character-file reader
