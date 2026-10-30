@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.21.2] - 2026-10-29
+
+### Changed
+
+- Conditional Core 6 adoption; preserve public v1 Chara response and family-size contracts.
+- Source preparation only: preserve the earlier release, registry and consumer-acceptance gates.
+  Merging waits until October 30 or later, satisfied prerequisites and new explicit authorization; publication, deployment and activation remain held.
+
 ## [0.21.1] - 2026-10-27
 
 ### Security
