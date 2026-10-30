@@ -68,6 +68,13 @@ palette-free `/chara` entry, provider, shader behavior and retained library orac
 `fileText`, `fileBytes`, `NO_INPUT`, `familySize`, errors and all card/embed semantics. No optional
 KEEP removal or terminal F-DISCORD/F-OG work is included.
 
+The later [conditional F preparation](REMEDIATION_F_RELEASE_2026_10.md) now selects the pending
+final dye-name inputs, verifies Discord fonts and prepares OG regional glyph selection. Its
+fresh native Core archive identifies those different locale bytes; the original M receipts
+remain historical. Final package selection must include the intended F text before publication,
+and terminal deployed acceptance still follows eligible major/text adoption. All release holds
+and the corrected earlier minor/deprecation sequence remain in force.
+
 Each source cut needs its whole graph, applicable coverage and bundle gates, root checks,
 secret scan and exact-head CI. The major packages additionally need clean built/packed
 artifacts, retired-export/type checks, exact internal dependency pins and native consumer proof.
