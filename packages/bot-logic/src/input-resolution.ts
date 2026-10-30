@@ -199,7 +199,6 @@ export interface ResolvedColor {
 
 /**
  * Options for resolving color input.
- * @internal
  */
 export interface ResolveColorOptions {
   /** If true, excludes Facewear dyes from name search. Default: true */

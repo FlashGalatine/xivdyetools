@@ -237,12 +237,12 @@ describe('executeSwatch', () => {
       expect(result.embed.title).toBe('Character swatch');
     });
 
-    it('never returns the Ktisis nickname on result.character', async () => {
+    it('never returns the Ktisis nickname anywhere in the result', async () => {
       const result = await executeSwatch({ fileText: WITH_NICKNAME, locale: 'en' });
 
       expect(result.ok).toBe(true);
       if (!result.ok) return;
-      expect('nickname' in result.character).toBe(false);
+      expect(JSON.stringify(result)).not.toContain('Real Name');
     });
 
     it('takes no filename — the attachment name cannot reach the renderer', () => {
@@ -302,13 +302,12 @@ describe('executeSwatch', () => {
       expect(result.ok).toBe(true);
       if (!result.ok) return;
 
-      // Sanity: both eyes really did resolve off grid with distinct indices
-      // (the bug can't be observed otherwise).
-      const leftEye = result.character.slots.find((s) => s.slot === 'leftEye');
-      const rightEye = result.character.slots.find((s) => s.slot === 'rightEye');
-      expect(leftEye?.verdict).toBe('offGrid');
-      expect(rightEye?.verdict).toBe('offGrid');
-      expect(result.character.eyesShareIndex).toBe(false);
+      // Independent card inputs pin both winning colours and separate rows.
+      const card = vi.mocked(generateSwatchCard).mock.calls.at(-1)![0];
+      expect(card.rows).toHaveLength(2);
+      expect(card.rows[0]).toMatchObject({ slotLabel: 'EYES·L', sourceHex: '#0000FF', addrWarn: true });
+      expect(card.rows[1]).toMatchObject({ slotLabel: 'EYES·R', sourceHex: '#FF0000', addrWarn: true });
+      expect(card.stripHexes).toEqual(['#0000FF', '#FF0000']);
 
       // The label carries the marker — the `<` confirms it is the full,
       // un-ellipsised text-node content.
@@ -350,9 +349,10 @@ describe('executeSwatch', () => {
       expect(result.ok).toBe(true);
       if (!result.ok) return;
 
-      expect(result.character.eyesShareIndex).toBe(true);
-      const leftEye = result.character.slots.find((s) => s.slot === 'leftEye');
-      expect(leftEye?.verdict).toBe('offGrid');
+      const card = vi.mocked(generateSwatchCard).mock.calls.at(-1)![0];
+      expect(card.rows).toHaveLength(1);
+      expect(card.rows[0]).toMatchObject({ slotLabel: 'EYES·LR', sourceHex: '#0000FF', addrWarn: true });
+      expect(card.stripHexes).toEqual(['#0000FF']);
 
       // Now visible directly (no locale/width workaround needed for ·LR).
       expect(result.svgString).toContain('EYES·LR<');
@@ -414,8 +414,10 @@ describe('slots the file leaves without an index', () => {
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    const leftEye = result.character.slots.find((s) => s.slot === 'leftEye');
-    expect(leftEye).toMatchObject({ verdict: 'floatOnly', indexHex: null, floatHex: '#0000FF' });
+    const card = vi.mocked(generateSwatchCard).mock.calls.at(-1)![0];
+    expect(card.rows).toHaveLength(1);
+    expect(card.rows[0]).toMatchObject({ slotLabel: 'EYES·L', sourceHex: '#0000FF', addr: 'OFF GRID', addrWarn: true });
+    expect(card.stripHexes).toEqual(['#0000FF']);
     expect(result.svgString).toContain('OFF GRID<');
     expect(result.embed.description).toMatch(/off grid — index —, live #0000FF/);
     expect(result.embed.description).not.toContain('null');
