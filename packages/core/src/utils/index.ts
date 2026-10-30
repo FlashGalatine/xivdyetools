@@ -129,7 +129,6 @@ export class LRUCache<K, V> {
 // ============================================================================
 
 /**
- * @internal
  * Clamp a number between min and max values
  *
  * @param value - The value to clamp
@@ -157,7 +156,6 @@ export function clamp(value: number, min: number, max: number): number {
 }
 
 /**
- * @internal
  * Round a number to a specific decimal place
  *
  * @param value - The number to round
@@ -227,7 +225,6 @@ export function isValidHexColor(hex: string): boolean {
 }
 
 /**
- * @internal
  * Validate RGB color values
  *
  * @param r - Red value
@@ -262,7 +259,6 @@ export function isValidRGB(r: number, g: number, b: number): boolean {
 }
 
 /**
- * @internal
  * Validate HSV color values
  *
  * @param h - Hue value (0-360)
@@ -330,7 +326,6 @@ export function sleep(ms: number): Promise<void> {
 }
 
 /**
- * @internal
  * Check if an error is an AbortError (from AbortController timeout)
  *
  * @param error - Error to check
