@@ -2,6 +2,13 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { parseAst } from 'vite';
 import { coreJsonCompatibility } from '../../vite-plugin-core-json';
 
+// Exercise Linux path handling on every host; Vite only replaces backslashes on Windows.
+vi.mock('vite', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('vite')>();
+  const { posix } = await import('node:path');
+  return { ...actual, normalizePath: (id: string) => posix.normalize(id) };
+});
+
 // jsdom's Uint8Array is a different realm from Node's TextEncoder output.
 // esbuild checks this invariant when its real Node API loads.
 beforeAll(() => vi.stubGlobal('Uint8Array', new TextEncoder().encode('').constructor));

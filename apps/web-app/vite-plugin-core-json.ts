@@ -14,7 +14,7 @@ export function coreJsonCompatibility(): Plugin {
     enforce: 'pre',
     applyToEnvironment: (environment) => environment.config.consumer === 'client',
     transform(code, id, options) {
-      const cleanId = normalizePath(id.split('?')[0]);
+      const cleanId = normalizePath(id.split('?')[0].replaceAll('\\', '/'));
       if (
         options?.ssr ||
         this.environment.config.consumer !== 'client' ||
