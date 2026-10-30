@@ -27,6 +27,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Localize every fatal startup sentence without requiring LanguageService, correct five
   Korean Hue terms, and truncate file names without splitting surrogate pairs within the
   existing 256 UTF-16-unit limit.
+- Restore Hair and Skin palette loading in Vite development after Core adopted native
+  JSON import attributes. A client-only transform adapts two compiled Core modules during
+  `vite dev`, retaining native Node imports, lazy loading, source maps and production
+  chunking. Regression tests assert actual race-specific colors and reject live module
+  errors.
 
 ### Maintenance
 
