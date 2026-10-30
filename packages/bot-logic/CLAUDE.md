@@ -167,10 +167,10 @@ executeAccessibility(input: AccessibilityInput): Promise<AccessibilityResult>
 ### Discriminated-union result contract
 `{ ok: true, ... } | { ok: false, error: <code>, errorMessage }`. Adapters branch on `result.ok` — on the failure path `errorMessage` is already localized and ready to render, and `error` is a short string literal that adapters can use to set embed colors or log levels (e.g., `'NO_MATCHES' → yellow warn`, `'GENERATION_FAILED' → red error`).
 
-`SwatchResult.character` and `SwatchCharacter` are deprecated in the prepared 4.12.0 minor.
-Use `svgString`/`embed` for presentation. Keep the required field, both success returns,
-legacy shape/back-mapping and compatibility/privacy tests until the bot-logic 5.0.0 removal
-gates in root `DEPRECATIONS.md` pass; tags alone do not harden the legacy producer metadata.
+Conditional Bot Logic 5 removes `SwatchResult.character`, `SwatchCharacter` and legacy
+back-mapping. Both success routes expose exactly `ok`, `svgString`, `embed`; producer tokens
+remain allowlisted and nickname stripping remains in place. Retain all input/error/card/embed
+contracts. Earlier release and acceptance gates in root `DEPRECATIONS.md` still block shipping.
 
 ### Failure logging (BUG-125)
 Every `*Input` takes an optional `logger?: TranslatorLogger` (`{ warn(msg) }`). It hears the Translator's missing-key warnings, harmony's `[harmony] unknown colour wheel "<wheel>" — using rgb` (which echoes the caller's value, the one line that does), and one line per caught failure, written by `failureKind(error)` in `commands/failure-kind.ts` (internal, not exported):
@@ -230,7 +230,7 @@ Every resolver trims its input once at the top, so surrounding whitespace never 
 `/** @public */` on the specifier (knip always ignores `@public`; the `"tags": ["-public"]` line in `knip.jsonc` is inert) — that is
 the `*Input`/`*Result` contract types (all but `GlamourInput` and `SwatchInput`) and their
 companions `GradientStepResult`, `GlamourResolvedItem`/`GlamourItemNames`/`GlamourResolver`,
-`SwatchCharacter`, `EmbedData`/`EmbedField`, `ResolveColorOptions`, `LocaleCode`, plus
+`EmbedData`/`EmbedField`, `ResolveColorOptions`, `LocaleCode`, plus
 `HARMONY_TYPES`, `getHarmonyTypeChoices`, `VISION_TYPES`, `isValidDiscordSnowflake`,
 `isValidHex`/`normalizeHex`, `resolveDyeInput`, `getLocalizedCurrency`,
 `escapeDiscordMarkdown`/`sanitizeEmbedText`/`ALLOWED_MENTIONS_NONE`, and on `/i18n`
