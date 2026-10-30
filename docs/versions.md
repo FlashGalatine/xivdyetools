@@ -27,7 +27,7 @@
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
 | **Web Application** | v5.16.5 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v5.9.7 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
+| **Discord Bot** | v5.9.8 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.5 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.9.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.2.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
@@ -215,6 +215,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.9.8 | Oct 2026 | Conditional Core 6/SVG/Bot Logic 5 adoption; preserve original-byte guards and card/embed adapters; registry/publication/consumer acceptance held |
 | v5.9.7 | Oct 2026 | A-DISCORD: one-request favorite lists, bounded/checkable delivery, localized choices/clan labels, byte-only attachments, preview attribution removal and native request guards; bot-logic 4.12.0 locale companion must publish first |
 | v5.9.6 | Oct 2026 | Six-language identity-review, particular-ban continuity and recovery-retention privacy disclosures |
 | v5.9.5 | Oct 2026 | Complete path-only preset reviews and Revert targets; six-language privacy alignment for optional metadata moderation and attempt/refund accounting |
@@ -740,6 +741,7 @@ and the [rollout runbook](operations/security-remediation-2026-09-15.md) for the
 
 | Consumer | Minimum Core Version | Notes |
 |----------|---------------------|-------|
+| xivdyetools-discord-worker v5.9.8 | @xivdyetools/auth v3.0.0; @xivdyetools/bot-logic v5.0.0; @xivdyetools/svg v4.4.2; @xivdyetools/core v6.0.0; @xivdyetools/logger v2.4.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Conditional M source; not dependency isolation; publication, acceptance and activation held |
 | xivdyetools-og-worker v2.12.3 | @xivdyetools/core v6.0.0; @xivdyetools/svg v4.4.2; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Conditional M source; not dependency isolation; publication, acceptance and activation held |
 | xivdyetools-web-app v5.16.5 | @xivdyetools/core v6.0.0; @xivdyetools/logger v2.4.0; @xivdyetools/svg v4.4.2; @xivdyetools/types v3.3.0 | Conditional M source; not dependency isolation; publication, acceptance and activation held |
 | xivdyetools-api-worker v0.21.2 | @xivdyetools/core v6.0.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Conditional M source; not dependency isolation; publication, acceptance and activation held |
