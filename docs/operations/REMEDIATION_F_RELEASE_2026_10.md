@@ -21,6 +21,8 @@ payloads, dye identity/order/color/acquisition data and all Facewear inputs rema
 Core generation must reproduce only the selected German/French changes. This is conditional
 source integration, not a merge or deployed adoption of #390.
 
+**Earlier-minor decision (2026-10-30).** The maintainer decided that #390's corrections also enter the earlier minors. [#409](https://github.com/FlashGalatine/xivdyetools/pull/409) carries the same file selection on the Core 5.16.0 line without a version bump, and Core 6 then ships no text change. Where the baseline is identical, its blobs are #404's blobs, so the two lines converge; the whole M and F wave merges onto it without conflict. Merge approval is not given.
+
 ## F-DISCORD — verification-only source boundary
 
 The post-reconciliation required codepoint sets are identical to the prior candidate. Both
@@ -44,7 +46,8 @@ Prepared in [PR #405](https://github.com/FlashGalatine/xivdyetools/pull/405), af
 Every image route passes its resolved locale through the renderer. Japanese uses JP-first;
 Chinese and the other/default locales use SC-first, matching Discord's intended fallback.
 The two cached arrays share the existing font bytes. The app-version bump selects a fresh
-Worker cache namespace; old social-platform/browser copies are not purged.
+Worker cache namespace; old social-platform/browser copies are not purged. The reserved app version is
+**2.12.4** (`apps/og-worker/package.json`; `versionReservation.ogTarget` in the F adoption receipt), separate from M-OG 2.12.3.
 
 The 14 route scenarios and actual bundled-font renders cover regional normalization, invalid
 locale fallback and the real Japanese/Chinese accessibility routes. Eight representative

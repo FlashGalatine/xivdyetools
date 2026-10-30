@@ -109,6 +109,8 @@ The corrected Bot minor native proof selects the corrected Core minor archive an
 Do not use an earlier historical receipt as strict declaration acceptance. Old refs and receipts
 remain immutable; refresh/revalidate later cuts when integrating these companions.
 
+A third companion was found on 2026-10-30: `@xivdyetools/logger` 2.4.0, and the published 2.3.0, re-export six symbols that `stripInternal` removes from the emitted declarations. Unlike the Core and Bot Logic repairs, it is not present in the major candidates (the F tip ships the unrepaired logger source). A repair ([#407](https://github.com/FlashGalatine/xivdyetools/pull/407)) is prepared and recommended before P1 and merges cleanly onto this tree; whether to require it is the maintainer's decision. The M-wave strict-declaration receipts covered Core, SVG and Bot Logic only. See [section 9 of the A/R/H runbook](REMEDIATION_RELEASE_2026_10.md#9-earlier-minor-reconciliation--2026-10-30).
+
 ## Browser compatibility acceptance
 
 A controlled live development page found that native JSON import attributes reject Vite's

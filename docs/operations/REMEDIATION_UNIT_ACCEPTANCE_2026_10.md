@@ -1,0 +1,330 @@
+# Per-unit release acceptance checklists and approvals register — October 2026
+
+**PREPARATION ONLY — production activation is on hold.** This document authorizes no merge, package publication, remote database access, hosted request, deployment, workflow dispatch, command registration or announcement.
+
+Prepared 2026-10-30 against the reference tree, branch `codex/release-cut-f-03-readiness-20261030` at `2ac97b6fb37c12640a70af0aebac42d4086912e0`. Every `file:line` citation below is to that tree. This is a companion to the [October 2026 A/R/H release and adoption runbook](REMEDIATION_RELEASE_2026_10.md).
+
+## Sources and conventions
+
+| Short name | Document |
+|---|---|
+| `A` | [A/R/H release runbook](REMEDIATION_RELEASE_2026_10.md) (`docs/operations/REMEDIATION_RELEASE_2026_10.md`) |
+| `M` | [Conditional M release preparation](REMEDIATION_M_RELEASE_2026_10.md) |
+| `F` | [Conditional F preparation and adoption gates](REMEDIATION_F_RELEASE_2026_10.md) |
+| `DEP` | [Deploy environments](DEPLOY_ENVIRONMENTS.md) |
+| `PRET` | [Pages deployment retention](PAGES_RETENTION.md) |
+| `RP` | [Release process](../developer-guides/release-process.md) |
+| `DEPR` | [Deprecations](../../DEPRECATIONS.md) |
+| `IRC` | [Isolated-cut receipt](../audits/2026-10-26-security/evidence/isolated-release-cuts-2026-10-29.json) |
+| `MR` | [M preparation receipt](../audits/2026-10-26-security/evidence/m-sprint-preparation-2026-10-29.json) |
+| `FR` | [F source/adoption receipt](../audits/2026-10-26-i18n/evidence/f-adoption-preparation-2026-10-30.json) |
+| `FD` | [F-DISCORD font receipt](../audits/2026-10-26-i18n/evidence/f-discord-preparation-2026-10-30.json) |
+| `PUB` | `.github/workflows/publish-packages.yml` |
+| `DW-discord` | `.github/workflows/deploy-discord-worker.yml` |
+| `DW-moderation` | `.github/workflows/deploy-moderation-worker.yml` |
+| `DW-oauth` | `.github/workflows/deploy-oauth.yml` |
+| `DW-presets` | `.github/workflows/deploy-presets-api.yml` |
+| `DW-api` | `.github/workflows/deploy-api-worker.yml` |
+| `DW-web` | `.github/workflows/deploy-web-app.yml` |
+| `DW-og` | `.github/workflows/deploy-og-worker.yml` |
+| `DW-image` | `.github/workflows/deploy-image-worker.yml` |
+| `ER` | `docs/audits/2026-10-26-security/evidence/earlier-minor-reconciliation-2026-10-30.json` (added in the same pull request; not in the reference tree) |
+
+The four 2026-10-30 companion cuts (`e-00` to `e-03`) are cited by commit and tree id. Their PR numbers are placeholders: #407, #408, #409 and #410. Facts about them that git cannot show (a native proof result, a maintainer decision) come from the 2026-10-30 preparation-session record and `ER`.
+
+Evidence tags map to the receipt fields of `A` section 8 (`A:254-264`): `[AUTH]` authorization/hold, `[SRC]` source, `[BUILD]` build, `[PUB]` publish, `[SCHEMA]` schema, `[PROV]` provider, `[DEPLOY]` deploy, `[ACC]` acceptance, `[STOP]` stop/recovery. A blank or mismatched required field blocks the release (`A:252`). Successful local tests or HTTP health alone never close an acceptance gate (`A:268`).
+
+Every action marked `[GATE AP-xx, NOT GIVEN]` needs the named row of the approvals register (section 3) first. No such row is given.
+
+## 1. Units in release order
+
+Candidate heads are the frozen isolated-cut heads (`A:64-83`), M heads (`M:88-99`) and F heads (`FR:11`, `FR:19`). Cuts are built cumulatively from release-cut baseline `13c386e5` (`A:8`, `A:56-57`), so a cut head is a review identity. It is not necessarily the SHA that will be published or deployed (G4, G5). Every A cut's hosted CI is recorded as passed (`A:66-83`). For each M and F run listed, the receipt records all four jobs as `success` (`MR` and `FR` at the cited lines). The e-00 to e-03 companions (rows 1 and 12, E1, E2) are not frozen receipts at the reference tree: their heads and trees were read from git on 2026-10-30, and their hosted CI is UNKNOWN here.
+
+| # | Unit | Version | Cut / PR | Candidate head | Tree | Hosted CI run | Gate before it | Status |
+|---|---|---|---|---|---|---|---|---|
+| 0 | bootstrap: production hold, flat beta exclusion, split publisher | n/a | 00 / #369 | `9e6341ddc9cf` | `c4b0adbe9141` (`IRC:183`) | `40898033080` (`A:66`) | `A:90-95` | Prerequisite to any real publication |
+| 1 | logger | 2.4.0 | 01 / #370; repair e-00 / #407 | cut `c2410fa919d2`; repair `f461b94578c7` (parent `c2410fa919d2`) | cut `07ddb6741186` (`IRC:328`); repair `d9533007ceb9` | cut `40898690789` (`A:67`); repair UNKNOWN | P1, no upstream (`A:112`) | HELD; repair prepared and recommended before P1, not a gate (AP-30) |
+| 2 | auth | 3.0.0 (MAJOR) | 02 / #371 | `9958553e11a3` | `3a8739010ac5` (`IRC:536`) | `40899976140` (`A:68`) | P2, no upstream (`A:113`) | HELD |
+| 3 | core | 5.16.0 | 03 / #373; repair #393 | cut `0fed2b3744c2`; repair `e0e8c3eccf44` (`MR:1459`) | cut `61d47fe8cfb6` (`IRC:740`); repair `d22d8941c5b9` (`MR:1460`) | cut `40902784155` (`A:69`); repair `40990710698` (`MR:1586`) | logger 2.4.0, types 3.3.0 (`A:114`) | HELD |
+| 4 | worker-kit | 1.6.0 | 04 / #374 | `489b9c5e9282` | `50241a4b8c5c` (`IRC:989`) | `40902809507` (`A:70`) | logger 2.4.0 (`A:115`) | HELD |
+| 5 | svg | 4.4.1 | 05 / #375 | `f42786596cf1` | `0e4b490d1f9c` (`IRC:1190`) | `40904626927` (`A:71`) | core 5.16.0, types 3.3.0 (`A:116`) | HELD |
+| 5a | discord font prerequisite | 5.9.1 | 05a / #376 | `c2d6231190d6` | `7fe1b0985885` (`IRC:1401`) | `40911743491` (`A:72`) | No runbook acceptance slot (G6) | HELD |
+| 6 | bot-logic | 4.12.0 | 06 / #377; repair #401 | cut `ebba1baaa08a`; repair `698b7cefa2fb` (`MR:1620`) | cut `e441cb1e61af` (`IRC:1540`); repair `b9f1e1eb600f` (`MR:1621`) | cut `40914423702` (`A:73`); repair `40992858538` (`MR:1752`) | core 5.16.0, svg 4.4.1, types 3.3.0; complete manual source (`A:117`) | HELD |
+| E1 | earlier-minor verification tip (cut 06 + e-00 + #393 + #401) | none (verification only) | e-01 / #408 | `71ed0595ccf9` | `7491501c58f8` | UNKNOWN | not meant to merge in this form | Verification only; merge NOT GIVEN (AP-31) |
+| E2 | core 5.16.0 German/French dye names (#390 text) | 5.16.0, no bump (`git show b0efa0f26518:packages/core/package.json`, line 3) | e-02 / #409 | `b0efa0f26518` (parent `71ed0595ccf9`) | `c95faa82f9e3` | UNKNOWN | E1 | Prepared; merge NOT GIVEN (AP-31) |
+| 7 | oauth (C1) | 3.2.0 | 07 / #378 | `cb728e14ebd0` | `050c45a395ac` (`IRC:1795`) | `40915136281` (`A:74`) | migration 0002; auth 3.0.0 registry artifact verified (`A:129-131`, `A:142`, `A:167`) | HELD |
+| 8 | presets base (C2) | 2.8.1 | 08 / #379 | `ca352abc7c7f` | `7a8c5a969907` (`IRC:2096`) | `40915830404` (`A:75`) | C1 accepted; migration 0016 (`A:143`, `A:168`) | HELD |
+| 9 | discord (C3) | 5.9.7 | 09 / #380 | `47e297d1893f` | `10702e4d284f` (`IRC:2443`) | `40917240469` (`A:76`) | C2 accepted (`A:144`) | HELD |
+| 10 | presets named (C4) | 2.8.2 | 10 / #381 | `f54c8d832ba2` | `6ef815a90498` (`IRC:2756`) | `40917430325` (`A:77`) | C3 accepted (`A:145`) | HELD |
+| 11 | api | 0.21.1 | 11 / #382 | `c0985720f9e7` | `5296e494b824` (`IRC:2963`) | `40920237972` (`A:78`) | upstream package verification (`A:188`) | HELD |
+| 12 | web | 5.16.4 | 12 / #383; development bridge e-03 / #410 | cut `0e5c660bda76`; bridge `e1293ba5e069` (parent `0e5c660bda76`) | cut `0b60350c05e7` (`IRC:3259`); bridge `da12c3ea9c7d` | cut `40920869184` (`A:79`); bridge UNKNOWN | `A:189` | HELD |
+| 13 | og | 2.12.2 | 13 / #384 | `d81fece2ed6c` | `d58c568bb0df` (`IRC:3627`) | `40921201682` (`A:80`) | `A:190` | HELD |
+| 14 | moderation | 1.9.0 | 14 / #385 | `99a7ae4dd7da` | `22ff6b4b09a9` (`IRC:3841`) | `40921843268` (`A:81`) | 0016, OAuth, presets compatibility, both disclosure units (`A:191`) | HELD |
+| 15 | image | 1.3.5 | 15 / #386 | `fe087b42348b` | `50be204a1fad` (`IRC:4137`) | `40922146681` (`A:82`) | **independent hard hold** (`A:192`) | HARD HOLD |
+| 16 | stoat | 0.3.4 | 16 / #387 | `315f40075dae` | `39d456f674d2` (`IRC:4957`) | `40922169825` (`A:83`) | private/parked only (`A:193`) | PARKED, no deploy |
+| M1 | core | 6.0.0 | #391 | `cf54ecfd6670` (`M:90`) | `21d0c41e5f3a` (`MR:41`) | `40988990426` (`MR:173`) | P1-P6 published and registry-verified; beta and production acceptance of the current facade and deprecated result contract; external-consumer review (`M:34-40`, `F:96-97`) | HELD |
+| M2 | svg | 4.4.2 | #392 | `ebeb016e8437` (`M:91`) | `a948aa519c90` (`MR:227`) | `40989282185` (`MR:319`) | core 6.0.0 verified (`M:41-42`) | HELD |
+| M3 | bot-logic | 5.0.0 | #394 | `7215c3660ade` (`M:92`) | `072a0bac9e9e` (`MR:371`) | `40990890108` (`MR:487`) | core 6.0.0 and svg 4.4.2 verified (`M:41-42`) | HELD |
+| M4 | api | 0.21.2 | #395 | `ac6fd77d79e8` (`M:93`) | `99be45a4614a` (`MR:540`) | `40991179241` (`MR:638`) | M1-M3; separate selection (`M:43-44`) | HELD |
+| M5 | web | 5.16.5 | #396 + #402 | `4ed3ad35a28b` (`M:94`) / `179b2ebbb31b` (`M:99`) | `13794456de29` (`MR:675`) / `dd124a3d61d0` (`MR:1324`) | `40991771994` (`MR:773`) / `40995967640` (`MR:1423`) | M1-M3; separate selection | HELD |
+| M6 | og | 2.12.3 | #397 | `f95dd83798a3` (`M:95`) | `7f59c118a8be` (`MR:809`) | `40991926431` (`MR:901`) | M1-M3; separate selection | HELD |
+| M7 | discord | 5.9.8 | #398 | `929f8f6c1cf9` (`M:96`) | `3f21b71cf1c6` (`MR:938`) | `40992156810` (`MR:1036`) | M1-M3; separate selection | HELD |
+| M8 | moderation | 1.9.1 | #399 | `c79d2b24180d` (`M:97`) | `66067ce652b0` (`MR:1073`) | `40992182240` (`MR:1165`) | M1-M3; separate selection | HELD |
+| M9 | stoat | 0.3.5 | #400 | `876dadb33bbe` (`M:98`) | `77d43ca9ece6` (`MR:1202`) | `40992400675` (`MR:1288`) | parked (`M:25`) | PARKED |
+| F1 | F-DISCORD (terminal) | no release (`F:34-35`) | #404 | `ae7991ac9481` (`FR:11`) | `bb85d1c8231a` (`FR:6`) | `41053391560` (`FR:919`) | deployed M/text adoption (`F:35-37`) | Verification only |
+| F2 | F-OG (terminal) | 2.12.4 (`apps/og-worker/package.json:3`; `FR:824`) | #405 | `b9b51f6b0b7d` (`FR:19`) | `a9972b84c7fc` (`FR:20`) | `41053660491` (`FR:954`) | after #404 (`F:42-43`); terminal (`F:96-98`) | HELD |
+
+Release sequence (`F:96-98`): logger/auth, corrected core minor/worker-kit, svg minor, bot-logic minor, accepted consumers/deprecations, then core major, svg compatibility, bot-logic major, separately selected M consumers and terminal F acceptance.
+
+## 2. Per-unit checklist blocks
+
+### COMMON (applies to every unit)
+
+- `[AUTH]` Read back the effective hold before and after each action. The `production` environment requires reviewer `FlashGalatine`, administrator bypass is off and the branch policy allows exactly `main` (`A:17-21`; `IRC:26-41`). The approval UI was never exercised (`A:20-21`, `A:30-31`; `IRC:170`). Approving the publisher approves no app deployment (`A:34-35`, `M:56-57`).
+- `[SRC]` Reconcile current main, the selected delta, dependency publications and provider/schema gates, and rerun affected checks after any rebase (`A:8`, `A:85-88`). Select final package content, not an early A snapshot (`A:96-100`).
+- `[BUILD]` Fresh gate, coverage, bundle, font and secret-scan receipts at the exact head, with exact-head hosted CI (`A:56-60`, `A:258`, `M:78-79`).
+- Merge fanout: a logger-only merge matches all eight production workflows. Auth matches four, core/svg five, worker-kit seven and bot-logic two, and lock/workspace/Turbo/base-TypeScript changes match all eight (`A:24-26`). Record every started run, leave stale runs unapproved or cancel them, and approve only the selected run (`A:33-35`, `M:54-57`) [GATE AP-06, NOT GIVEN].
+- `[DEPLOY]` Record workflow, run id, head SHA, Cloudflare deployment identity and command-registration result (`A:262`). Each deploy workflow runs `pnpm turbo run test` for its unit before deploying (for example `DW-oauth:60-61`).
+- Announcement: the root `CHANGELOG-laymans.md` webhook is independent of environment approval. Keep main's file unchanged and never send a test (`A:37-41`, `M:61-62`) [GATE AP-22, NOT GIVEN].
+- `[STOP]` On a missing registry version, unexpected source or configuration, provider absence, resource error, wrong delivery or unknown identity outcome, stop dependents and preserve receipts (`A:266-267`).
+
+### Packages (units 1-6, M1-M3)
+
+COMMON-PKG, which applies to every package block:
+
+- [GATE AP-03/AP-04, NOT GIVEN] Dispatch one package per run and never `all-modified` (`A:104-105`). Single-package input skips detection (`PUB:45-50`). Publication runs only on `refs/heads/main` (`PUB:161`) under `environment: production` (`PUB:164`).
+- The publish job checks out `github.sha` (`PUB:172`), so the run SHA must equal the approved SHA. The artifact is this run's own, downloaded with `digest-mismatch: error` (`PUB:184-189`; `A:106-107`).
+- Refresh exact-version npm metadata before each dispatch (`A:119-120`). In single-package mode every shipped `@xivdyetools/*` dependency must already be on npm at its local version, or the package is skipped (`RP:72-73`).
+- Post-publish record: version, tarball integrity, packed internal pins, real attestation, source/run/artifact identities and native consumer result (`A:120-121`). Never overwrite or blindly republish (`A:126-127`). Each package needs a trusted publisher (`RP:80-126`; per-package state UNKNOWN, see section 5).
+- Strict-declaration acceptance (units 1-6): one consumer compiles with `skipLibCheck:false` against **every** public entry point of the six pending packages together: logger (`packages/logger/package.json:10-25`), auth (`packages/auth/package.json:9-35`), core (`packages/core/package.json:9-19`), worker-kit (`packages/worker-kit/package.json:11-49`), svg (`packages/svg/package.json:12-13`) and bot-logic (`packages/bot-logic/package.json:12-17`). Covering only the repaired Core and Bot symbols is not enough (G13). worker-kit reaches logger's root declarations transitively (`packages/worker-kit/src/middleware/types.ts:12`; `packages/worker-kit/package.json:71`). Core imports logger only through the `/library` subpath (`packages/core/src/services/APIService.ts:12`), which the M/F receipts did not show reaching the failing files (G13). Auth has no logger dependency at the reference tree (`packages/auth/package.json:53-55`), and its own `src/` imports nothing from logger, so its declarations do not reach logger's. Auth is still in the consumer, because every pending package's entry points must compile.
+
+**0. bootstrap (cut 00)**
+- Prereq: none. It carries the split publisher (`IRC:194`, `IRC:5713`), and main still has the combined credential-bearing job (`A:90-92`) [GATE AP-02, NOT GIVEN].
+- Pre: it changes lock/workspace files, so it fans out to production; verify the hold first (`A:92-93`).
+- Flags: none beyond COMMON. Pages retention stays dry-run (`A:93-94`). Stop: COMMON (`A:266-267`). Evidence: `[AUTH][SRC][BUILD][DEPLOY][STOP]`.
+
+**1. logger 2.4.0**
+- Prereq: unit 0 live on main (`A:90-92`); no package upstream (`A:112`).
+- Defect: the build sets `stripInternal` (`packages/logger/tsconfig.build.json:5`), yet six declarations that the barrels re-export carry an `@internal` tag: `ConsoleAdapter` (`packages/logger/src/adapters/console-adapter.ts:19`), `JsonAdapter` (`packages/logger/src/adapters/json-adapter.ts:20`), `NoopAdapter` (`packages/logger/src/adapters/noop-adapter.ts:22`), `BaseLogger` (`packages/logger/src/core/base-logger.ts:163`), `createWorkerLogger` (`packages/logger/src/presets/worker.ts:40`) and `LogEntry` (`packages/logger/src/types.ts:45`). The root barrel records `BaseLogger`, the three adapters and the preset factories as an adjudicated KEEP and re-exports `LogEntry` as public API (`packages/logger/src/index.ts:56-68`, `:79`), and `packages/logger/CLAUDE.md:57-110` lists them under Public API. The emitted declarations are deleted while the re-exports stay, so a consumer compiling with `skipLibCheck:false` meets six TS2305 errors in `adapters/index.d.ts`, `core/index.d.ts`, `index.d.ts` and `presets/index.d.ts` (preparation-session record).
+- Published impact: the published logger 2.3.0 has the same defect. Its registry tarball's `dist/index.d.ts` re-exports `LogEntry` (line 61) while `dist/types.d.ts` declares none, and `ConsoleAdapter` and `createWorkerLogger` are missing from their module declarations (registry tarball `logger-2.3.0.tgz`, read 2026-10-30).
+- Source: the repair e-00 (#407; commit `f461b94578c7fef10e7a860d862d513b05e095c8`, tree `d9533007ceb9c3b10e95562d0db75648db9a709f`, parent cut 01 `c2410fa919d2`) drops only the `@internal` tag word on the six declarations and keeps the guidance text. It adds a "Fixed" entry inside the pending 2.4.0, with no new version, and adds `packages/logger/src/__tests__/package-declarations.test.ts` (`git diff --stat c2410fa919d2 f461b94578c7`: 8 files). That test emits declarations with the real `stripInternal` build, asserts the six survive, and type-checks the emitted entry points with `skipLibCheck:false`. On the unrepaired source it fails with the same six TS2305 errors (preparation-session record). The repair is **prepared and recommended before P1**. Whether to require it before the logger publisher runs is the maintainer's release-policy decision [AP-30, NOT GIVEN]. It is not an approved or mandatory gate. Merging it needs AP-31.
+- Pre: a logger-only merge fans out to all eight production deploys (`A:24`); hold them. Run a strict consumer compile with `skipLibCheck:false` over every logger entry point (root, `/browser`, `/worker`, `/library`; `packages/logger/package.json:10-25`) from the packed artifact. On the unrepaired source this fails with the six errors above. Whether a failing result on the unrepaired logger stops P1 is the AP-30 decision.
+- Post: COMMON-PKG registry record, plus the same strict consumer compile against the registry artifact.
+- Flags: none beyond COMMON. Stop: COMMON; also on an unexplained existing 2.4.0 (`A:126-127`). Evidence: `[AUTH][SRC][BUILD][PUB][STOP]`.
+
+**2. auth 3.0.0 (MAJOR)**
+- Prereq: no package upstream; the MAJOR stays because accepted encoding inputs narrow (`A:113`).
+- Pre: COMMON-PKG strict-declaration acceptance across all seven auth entry points (`packages/auth/package.json:9-35`). Auth does not reach logger's declarations (`packages/auth/package.json:53-55`). Peer range observation: G14.
+- Post: rerun the private test-utils producer against the actual registry artifact (valid, wrong-secret and expired JWT) (`A:129-130`, `F:69`). test-utils 3.0.0 is private and is never published (`A:130`).
+- Flags: none beyond COMMON. Stop: COMMON; also on any failed producer case. Evidence: `[SRC][BUILD][PUB][ACC][STOP]`.
+
+**3. core 5.16.0**
+- Prereq: logger 2.4.0 and types 3.3.0 on npm (`A:114`). types 3.3.0 is already published and unchanged, so it is not republished (`A:111`); re-verify it.
+- Source: integrate and revalidate repair head `e0e8c3eccf44` (#393; `MR:1459`), based on cut 03 (`MR:1461`), before publication. It restores five public helper declarations without a new version (`M:103`, `M:106`; `A:243-245`). Native JSON import attributes must survive (`A:96-98`).
+- Integrated tip: the expected content of the main SHA after #393, #401 and the logger repair is the verification tip e-01 (#408; commit `71ed0595ccf94182dadd391c1bdb6e70d10ef0f4`, tree `7491501c58f8eb51021405c7e16e3ef59479654c`). Its tree equals merging the three companions onto cut 06: `git merge-tree --write-tree` gives the same tree for #393 then #401 (either order, tree `bcc7c526661e`, equal to the tree of the earlier tip `c4ba5d5571c6`) followed by e-00, and for #401 then e-00 followed by #393 (`7491501c58f8` each time). It is a verification tip, not a replacement for #393 or #401, and is not meant to merge in that form [AP-31, NOT GIVEN]. The earlier tip `c4ba5d5571c660bfcfe3f7abe49ec34d30984318` (without the logger repair) is its first parent. Its first native proof failed only on logger (preparation-session record).
+- Text decision (#390): the maintainer decided on 2026-10-30, in chat with the preparation session, that #390's German/French dye-name corrections also enter the earlier minors. e-02 (#409; commit `b0efa0f26518d15fa3f23869e52b72128858f6d6`, tree `c95faa82f9e3e4223e83da41ab0edabb7db39575`) stacks on e-01. Its `dyenames.csv`, `de.json`, `fr.json` and `fetch_dye_names.py` blobs equal #404's (`ae7991ac9481`), and core stays 5.16.0. If e-02 is adopted, unit 3's frozen archive is the e-02 refresh, and Core 6 ships no text change. Refresh artifacts and the consumer proof (`F:78-79`). Merge approval is NOT GIVEN (AP-31).
+- Pre: strict declarations with `skipLibCheck:false` on the integrated source (`F:65`), as the COMMON-PKG all-entry-point consumer (root, `/blending`, `/chara`; `packages/core/package.json:9-19`), not only the five repaired helpers. Old receipts are not strict-declaration acceptance (`M:108-109`).
+- Post: native consumer imports of the public exports; the six locale payloads match the source (`F:67`).
+- Flags: none beyond COMMON. Stop: COMMON. Evidence: `[SRC][BUILD][PUB][ACC]`.
+
+**4. worker-kit 1.6.0**
+- Prereq: logger 2.4.0 (`A:115`).
+- Pre: worker-kit changes match seven production workflows (`A:25`); record which runs were held. COMMON-PKG strict-declaration acceptance across all ten worker-kit entry points (`packages/worker-kit/package.json:11-49`). worker-kit's declarations import logger's root types (`packages/worker-kit/src/middleware/types.ts:12`), so they reach the unrepaired logger declarations transitively unless e-00 is integrated (unit 1).
+- Post: COMMON-PKG registry record.
+- Flags: none beyond COMMON. Stop: COMMON (`A:266-267`). Evidence: `[AUTH][SRC][BUILD][PUB]`.
+
+**5. svg 4.4.1**
+- Prereq: core 5.16.0 and types 3.3.0 on npm (`A:116`).
+- Pre: COMMON-PKG strict-declaration acceptance (`packages/svg/package.json:12-13`).
+- Post: packed pins resolve to registry core 5.16.0 (`A:120-121`).
+- Flags: none beyond COMMON. Stop: COMMON (`A:266-267`). Evidence: `[SRC][BUILD][PUB]`.
+
+**6. bot-logic 4.12.0**
+- Prereq: core 5.16.0, svg 4.4.1 and types 3.3.0 on npm, plus the complete manual source (`A:117`).
+- Source: integrate repair head `698b7cefa2fb` (#401; `MR:1620`), based on cut 06 (`MR:1622`), first (`M:104`, `M:106-108`). Locale import attributes and the six corrected image-manual locales must survive (`A:97-98`).
+- Integrated tip: as unit 3, the expected main content after #393, #401 and the logger repair is e-01 (#408; commit `71ed0595ccf9`, tree `7491501c58f8`), verification only [AP-31, NOT GIVEN].
+- Pre: COMMON-PKG strict-declaration acceptance over root and `/i18n` (`packages/bot-logic/package.json:12-17`), not only the five repaired declarations (`M:106-107`).
+- Post: native consumer proof that the successful result shape keeps its legacy fields; manual strings per locale (`F:68`).
+- Flags: none beyond COMMON. Stop: COMMON (`A:266-267`). Evidence: `[SRC][BUILD][PUB][ACC]`.
+
+**M1 core 6.0.0 / M2 svg 4.4.2 / M3 bot-logic 5.0.0**
+- Prereq: the A/R/H prerequisite packages are published and registry-verified (`M:34-35`), with accepted consumers/deprecations (`F:96-97`). The image hard hold and stoat parking are not stated prerequisites. Also required: recorded beta and production acceptance of the current facade and deprecated result contract (`M:36-37`; G2), and an external npm-consumer recheck (`M:38-40`) [GATE AP-26, NOT GIVEN]. Verify core 6 before svg 4.4.2, and both before bot-logic 5 (`M:41-42`).
+- Source: the core major must contain #404's final text (`F:73`, `F:10-14`). The fresh F core archive replaces the older M archive as evidence (`F:73-74`).
+- Pre: exact internal pins, retired-export/type checks, a clean packed artifact and a native consumer (`M:79-80`). Local proofs are not registry proof (`F:65`, `F:88-89`).
+- Post: registry artifact, attestation, native installs and the private producer against published auth (`F:88-89`).
+- Preserve: the 8,192-byte cap, 261 library cases, `fileText`, `fileBytes`, `NO_INPUT` and `familySize` (`M:17`, `M:66-68`).
+- Flags: none beyond COMMON. Stop: never republish a used version or substitute a locally packed archive (`M:125-127`). Evidence: `[AUTH][SRC][BUILD][PUB][ACC][STOP]`.
+
+### Applications (units 5a and 7-16, M4-M9)
+
+COMMON-APP: [GATE AP-05, NOT GIVEN] Approve exactly the selected app, source and run (`A:34-35`, `M:55-56`).
+
+**5a. discord 5.9.1 (font prerequisite)**
+- Source: additive font union that keeps baseline glyphs (`IRC:5721`). Later cuts descend from it: cut 06 is based on the 05a head (`IRC:1541`), and cut 09 preserves the additive fonts (`IRC:5733`).
+- Deploy side effect: any production discord run also runs `register-commands` (`DW-discord:90-95`) [GATE AP-15, NOT GIVEN].
+- Flags: none beyond COMMON. Stop: COMMON (`A:266-267`). Evidence: `[SRC][BUILD][DEPLOY]`. Release slot open (G6).
+
+**7. oauth 3.2.0 (C1)**
+- Prereq: auth 3.0.0 verified from the registry artifact (`A:129-131`). [GATE AP-07, NOT GIVEN] Read-only schema preflight on `xivdyetools-users` (top-level production): `PRAGMA table_info(users)` and the definitions of `identity_operations` and `identity_operation_locks` with their constraints/index (`A:167`). [GATE AP-09, NOT GIVEN] Apply `0002_identity_transitions.sql` once with `wrangler d1 execute --file`, never `d1 migrations apply` (`A:167`, `A:170-171`; `DEP:488-490`). If objects partially exist, stop and reconcile (`A:171-173`).
+- Trap: `DW-oauth:63-69` deploys with bare `deploy`, which is production (`DEP:484`). The `[env.development]` D1 placeholder must not be deployed (`DEP:485-486`).
+- Approval: [GATE AP-28, NOT GIVEN] Availability/sign-in impact (`A:195-198`). The raw-HMAC window ended 2026-10-28; expect one sign-in retry (`A:197-198`).
+- Flags: `IDENTITY_SPLIT_ENABLED=false`, with no outbound `BAN_CONTINUITY` binding (`A:142`, `A:204`).
+- Post: the `DW-oauth:73-78` health smoke is necessary but not sufficient. Check the deployed private `IdentityLookup`, current-session/revision behavior and ordinary logins (`A:142`).
+- Stop: keep the additive schema, pending operations and locks through code rollback (`A:178-179`). [GATE AP-29, NOT GIVEN] After activation, a code rollback or independent database restore needs a coordinated recovery decision (`A:180-182`). Keep `IdentityLookup` exported while presets and moderation select it (`A:220-221`).
+- Evidence: `[AUTH][SCHEMA][PROV][DEPLOY][ACC][STOP]`.
+
+**8. presets 2.8.1 (C2)**
+- Prereq: C1 accepted (`A:143`). [GATE AP-08, NOT GIVEN] Preflight the definitions of `ban_identity_memberships`, `ban_continuity_operations`, `moderation_ban_confirmations`, capacity triggers and indexes (`A:168`). [GATE AP-10, NOT GIVEN] Apply `0016_ban_identity_continuity.sql` once to `xivdyetools-presets` with `--env production`, before presets **and** moderation (`A:168`, `A:173-174`; `DEP:503-504`).
+- Source: removes exactly the two named-entrypoint fields and keeps the default Discord binding, targets, resources and false flags (`A:143`, `A:147-149`).
+- Flags: `OAUTH_SESSION_CHECK_ENABLED=false`, `PRESET_METADATA_MODERATION_ENABLED=false` (`A:202`).
+- Deploy: `DW-presets:63-70` (`--env production`); smoke `DW-presets:73-78`.
+- Post: OAuth provider dependency, legacy notification compatibility, capped acting-user batch lookup and quota/image/session-disabled behavior (`A:143`). Image caller compatibility applies to whichever image version is deployed (`A:216-217`; G8).
+- Stop: restore and verify public/default notification compatibility before moving the binding back. Failed-notification records do not imply redelivery (`A:221-223`).
+- Evidence: `[SCHEMA][PROV][DEPLOY][ACC][STOP]`.
+
+**9. discord 5.9.7 (C3)**
+- Prereq: C2 accepted (`A:144`). Inventory external/manual notification callers first (`A:219`).
+- Source: `PresetNotifications` exported, public compatibility retained (`A:144`). Bundle check `DW-discord:78-79`; the F check recorded 2,737.62 KiB gzip, below 3,072 KiB (`F:55`).
+- Flags: `PRESET_WEBHOOK_BINDING_ONLY=false`, with no binding-only activation (`A:144`, `A:205`).
+- Deploy side effect: [GATE AP-05+AP-15, NOT GIVEN] Approving the run deploys (`DW-discord:81-88`) and runs `register-commands` for app `1447108133020369048` (`DW-discord:90-95`). Registration cannot be approved separately (G1). Smoke: `DW-discord:97-103`.
+- Post: default and named notification paths, real manual delivery and capped favorites (`A:144`). The six bot privacy variants are deployed before any new confirmation storage or display (`A:207`).
+- Stop: before moving presets below the batch provider, deploy and verify a reviewed compatible Discord rollback (`A:225-228`).
+- Evidence: `[PROV][DEPLOY][ACC][STOP]`.
+
+**10. presets 2.8.2 (C4)**
+- Prereq: C3 accepted (`A:145`). Recheck registry versions and intervening releases for 2.8.2 (`A:154-157`).
+- Source: restores the two named-entrypoint fields; assertions require the named provider (`A:150-152`).
+- Flags: none beyond COMMON; C2's false flags unchanged (`A:202`).
+- Post: actual submission, edit and preview delivery; the default/public rollback path remains (`A:145`, `A:223`).
+- Stop: COMMON (`A:266-267`) plus the C2 rollback order (`A:221-223`). Evidence: `[PROV][DEPLOY][ACC][STOP]`.
+
+**11. api 0.21.1**
+- Prereq: upstream package verification (`A:188`).
+- Deploy: `DW-api:71-78` (`--env production`); smoke `DW-api:80-86` and `DW-api:88-93`.
+- Post: real response budgets and cache behavior, canonical icons, controlled item-name data and limiter behavior (`A:188`).
+- Flags: none beyond COMMON. Stop: COMMON (`A:266-267`). Evidence: `[SRC][DEPLOY][ACC]`.
+
+**12. web 5.16.4**
+- Pre: bundle check (`DW-web:65-67`). Disclose new identity uses before they run (`A:189`).
+- Deploy: Pages `pages deploy dist --project-name=xivdyetools` (`DW-web:69-77`). Smoke with `--expect-robots none` and `--commit` (`DW-web:88-106`).
+- Flags: none beyond COMMON. Pages retention stays dry-run: no `--apply`, and `PAGES_RETENTION_APPLY` is not `true` (`DW-web:108-125`; `PRET:9-11`; `A:232-235`).
+- Development check: e-03 (#410; commit `e1293ba5e0695b50bc5713528a98f9d93651fe44`, tree `da12c3ea9c7d`, parent cut 12 `0e5c660bda76`) prepares the Hair/Skin check for 5.16.4. It carries the same client-only Vite `serve` plugin (`apply: 'serve'`, line 13 of `apps/web-app/vite-plugin-core-json.ts` at `e1293ba5`), unit test and Hair/Skin e2e spec as #402: the plugin, `vite.config.ts`, unit-test and `e2e/swatch-json-palettes.spec.ts` blobs equal #402's (`179b2ebbb31b`). The version stays 5.16.4 (`git show e1293ba5:apps/web-app/package.json`, line 3), and the plugin is development only, absent from production builds. Merge approval is NOT GIVEN (AP-31).
+- Post: actual policy/modal/tool behavior (`A:189`). Six web privacy variants (`A:207`). Hair/Skin palette load (G9).
+- Stop: COMMON (`A:266-267`). Evidence: `[SRC][DEPLOY][ACC]`.
+
+**13. og 2.12.2**
+- Post: real card/copy/cache behavior; later F-OG work is retained (`A:190`). Smoke `DW-og:74-80`.
+- Flags: none beyond COMMON. Stop: COMMON (`A:266-267`). Evidence: `[SRC][DEPLOY][ACC]`.
+
+**14. moderation 1.9.0**
+- Prereq: 0016 applied, OAuth provider live, presets compatibility (C2) accepted, both deployed disclosure units, command registration and explicit private review acceptance (`A:191`). The disclosure units are identified here as web 5.16.4 and discord 5.9.7 by inference from `A:191` and `A:207`; confirm at execution.
+- Approval: [GATE AP-28, NOT GIVEN] Inactive confirmation mode refuses new ban/unban paths (`A:195-197`).
+- Flags: `LINKED_BAN_CONFIRMATION_ENABLED=false` (`A:203`).
+- Deploy side effect: [GATE AP-05+AP-15, NOT GIVEN] The same run registers commands globally for app `1453806659708129374` (`DW-moderation:83-88`). Smoke `DW-moderation:90-96`.
+- Post: [GATE AP-16, NOT GIVEN] Approved test identities only, with private-response checks for stale/pending sessions and ban expansion/unban scope (`A:209-210`).
+- Stop: COMMON, plus a coordinated recovery decision after activation (`A:180-182`). Evidence: `[SCHEMA][PROV][DEPLOY][ACC][STOP]`.
+
+**15. image 1.3.5 (HARD HOLD)**
+- Prereq (all open): Cloudflare CPU-policy/resource acceptance, a conservative aggregate-memory assessment and the deployed corrected manual before lower caps (`A:192`, `A:213-217`).
+- [GATE AP-13/AP-14, NOT GIVEN] `DW-image` has a push trigger (`DW-image:3-4`) and `environment: production` (`DW-image:38`). Leave every run unapproved (`A:213-214`). There is no smoke test (`DW-image:69-72`).
+- Flags: none. The caps are effective constants, not a false flag (`A:213`).
+- Stop: the stopped 42-request proposal failed after three matched responses and a fourth 503. It does not authorize another hosted run (`A:214-216`). Evidence: `[AUTH][SRC][STOP]`.
+
+**16. stoat 0.3.4 (PARKED)**
+- No `deploy-stoat*` workflow exists in `.github/workflows/`. There is no deployment or activation (`A:193`; `M:46`).
+- Flags: none beyond COMMON. Stop: COMMON. Evidence: `[SRC][BUILD]` only.
+
+**M4-M9 consumers.** For each, select and accept separately and keep the original schema, provider, disclosure, identity, notification and rollback gates (`M:43-44`). Hold or cancel stale runs (`M:54-56`). Rollback: keep the earlier accepted artifacts with matching package identities, and verify the selected source's package/API compatibility (`M:125-130`). Unless a block below says otherwise: Flags: none beyond COMMON; Stop: COMMON (`A:266-267`); Evidence: `[SRC][DEPLOY][ACC]`.
+- **M4 api 0.21.2**: the public v1 contract and `familySize` are preserved (`M:20`). Unit 11 deploy and smoke steps apply.
+- **M5 web 5.16.5**: inspection-worker protocol, eight slots and bundle budget (`M:21`). The #402 development plugin is absent from production builds. Independent Hair/Skin checks cover 192 cells with no page errors (`M:116-119`). Flags: Pages retention dry-run (`M:46`).
+- **M6 og 2.12.3**: card output preserved; the app version advances cache identity (`M:22`).
+- **M7 discord 5.9.8**: original-byte attachment guards, cards and embeds (`M:23`). [GATE AP-05+AP-15, NOT GIVEN] Commands are re-registered (`DW-discord:90-95`). Flags: `PRESET_WEBHOOK_BINDING_ONLY=false` (`M:45`).
+- **M8 moderation 1.9.1**: shared sanitization, private replies and disabled confirmation paths (`M:24`). [GATE AP-05+AP-15, NOT GIVEN] Commands are re-registered (`DW-moderation:83-88`). Flags: `LINKED_BAN_CONFIRMATION_ENABLED=false` (`M:45`).
+- **M9 stoat 0.3.5**: parked verification only (`M:25`). Evidence: `[SRC][BUILD]`.
+
+### Terminal F
+
+**F1 F-DISCORD (#404)**
+- Prereq: deployed M/text adoption (`F:35-36`, `F:85-86`).
+- Source: no empty release (`F:34-35`). Six tracked subset hashes unchanged, 50 tests (`F:33-34`). Rerun the font proof after any rendered-text or item-name change (`F:36-37`). Font receipt: `FD` (`F:37-38`).
+- Flags: none beyond COMMON. Stop: COMMON. Evidence: `[SRC][BUILD][ACC]`.
+
+**F2 F-OG (#405), og 2.12.4**
+- Version: og 2.12.4 is reserved (`FR:822-824`; `apps/og-worker/package.json:3`), separate from M-OG 2.12.3 (`M:22`).
+- Source: 14 route scenarios, 889 OG tests, bundle 1,953.97 KiB gzip (`F:49-55`). Japanese uses JP-first; Chinese and other locales use SC-first (`F:44-45`).
+- Post: [GATE AP-05, NOT GIVEN] COMMON-APP applies to the deploy run. The deployed check of real Japanese/Chinese routes; the version bump selects a fresh cache namespace, and old social copies are not purged (`F:46-47`).
+- Flags: none beyond COMMON. Stop: COMMON (`A:266-267`). Evidence: `[SRC][BUILD][DEPLOY][ACC]`.
+
+Unchanged-font acceptance is not terminal-sprint completion (`A:246-247`) [GATE AP-27, NOT GIVEN].
+
+## 3. Approvals register
+
+Every row is **NOT GIVEN** unless stated otherwise. The only approver the runbooks name is the maintainer (`FlashGalatine`, the sole environment reviewer, `A:17-20`). No date, green test, draft PR or local package authorizes a release (`F:6`; `M:133-134`).
+
+| ID | Authorization | Who | Exact scope required | Status |
+|---|---|---|---|---|
+| AP-00a | Prepare A/R/H, M and F sources | Maintainer | Preparation only (`A:3-5`, `M:3-7`, `F:3-4`) | GIVEN (preparation only) |
+| AP-00b | Production environment reviewer gate | Maintainer | Reviewer `FlashGalatine`, bypass off, main-only; configured 2026-10-29 (`A:17-21`) | GIVEN (configured; approval UI untested, `A:30-31`) |
+| AP-01 | Merge to main, per selected cut or set | Maintainer | Named PR/SHA after reconciling with main; never stack PRs #333-#365 or PR-number order (`A:52-54`, `A:85-88`); M only on or after 2026-10-30 with new explicit approval and satisfied prerequisites (`M:4-6`, `M:133-134`) | NOT GIVEN |
+| AP-02 | Promote the split publisher and repository hardening | Maintainer | Cut 00 content; fanout hold verified first (`A:90-95`) | NOT GIVEN |
+| AP-03 | Environment approval of the publisher, per package | Maintainer | One run per package in the section 1 order (`A:104-105`; `M:41-42`); run SHA verified; no app deploy approved (`A:34-35`) | NOT GIVEN (x9) |
+| AP-04 | Dispatch "Publish Packages to npm" | Maintainer | `workflow_dispatch` on `main`, single-package input (`PUB:4-11`, `PUB:161`) | NOT GIVEN |
+| AP-05 | Environment approval of each app deployment run | Maintainer | Exactly the selected app/source/run (units 5a, 7-14, M4-M8, F2); image excluded (`A:34-35`, `A:213-214`; `M:54-57`) | NOT GIVEN |
+| AP-06 | Hold or cancel stale fanout runs | Maintainer | Leave unapproved or cancel; none canceled so far (`A:33-35`) | NOT GIVEN |
+| AP-07 | Read-only schema preflight, `xivdyetools-users` | Maintainer | Account, database/environment, definitions at `A:167`; none executed (`A:161-163`) | NOT GIVEN |
+| AP-08 | Read-only schema preflight, `xivdyetools-presets` | Maintainer | Definitions at `A:168` | NOT GIVEN |
+| AP-09 | Apply oauth migration 0002 | Maintainer | Once with `wrangler d1 execute --file`; exact account, database, file SHA, recovery owner (`A:161-162`, `A:170-173`) | NOT GIVEN |
+| AP-10 | Apply presets migration 0016 | Maintainer | Once, `--env production`, before presets and moderation (`A:168`, `A:173-174`) | NOT GIVEN |
+| AP-11 | Backup/export destination and recovery ownership | Maintainer | Exact destination, access and retention; data and private receipts kept out of Git (`A:162`, `A:177-178`); destination UNKNOWN | NOT GIVEN |
+| AP-12 | Beta dispatch or beta acceptance | Maintainer | None authorized (`A:46-48`); `M:36-37` requires beta acceptance (G2) | NOT GIVEN |
+| AP-13 | Any hosted Image request | Maintainer | The earlier 42-request exception authorizes nothing further (`A:214-216`; `F:93`) | NOT GIVEN |
+| AP-14 | Image deploy run approval | Maintainer | Only after the CPU-policy, memory and corrected-manual gates (`A:192`, `A:213-214`) | NOT GIVEN |
+| AP-15 | Discord command registration (bot app `1447108133020369048`; moderation app `1453806659708129374`) | Maintainer | Runs inside the deploy runs (`DW-discord:90-95`; `DW-moderation:83-88`; `DEP:381-387`); no separate approval path (G1) | NOT GIVEN |
+| AP-16 | Test identities and private-response review | Maintainer | Approved test identities only, never arbitrary users (`A:209-210`) | NOT GIVEN |
+| AP-17 | Any flag activation or the continuity binding | Maintainer | Each its own later activation change and acceptance (`A:200-205`, `A:208-211`) | NOT GIVEN |
+| AP-18 | Disclosure units live before confirmation storage | Maintainer | Six web and six bot variants deployed (`A:207`) | NOT GIVEN |
+| AP-19 | Perspective key deletion | Maintainer | `wrangler secret delete PERSPECTIVE_API_KEY --env production`, separately authorized, before 2026-12-31 (`A:237-239`; `DEPR:47-50`) | NOT GIVEN |
+| AP-20 | Same-day privacy and Terms checklist | Maintainer | Scorer decision, both privacy policies and both Terms in six languages, one `Last updated` date, `policy-locale-parity.py` exit 0 (`DEPR:53-74`) | NOT GIVEN |
+| AP-21 | Pages retention apply | Maintainer | Reviewed `--apply` edit plus `PAGES_RETENTION_APPLY=true`, serialized execution, protected current IDs, receipts (`A:232-235`; `PRET:48-55`); Pages Write token (`PRET:20`) | NOT GIVEN |
+| AP-22 | Root announcement (`CHANGELOG-laymans.md` webhook) | Maintainer | Separate selection; not suppressed by the environment gate; never a test send (`A:37-41`; `M:61-62`) | NOT GIVEN |
+| AP-23 | GitHub scanner eligibility; default-branch Dependabot closure | Maintainer | Named as open gates only (`A:239-240`); scope UNKNOWN | NOT GIVEN |
+| AP-24 | Cloudflare account items | Maintainer | Image CPU/resource acceptance (`A:192`, `A:215-216`); Pages Read/Write scopes (`PRET:20`); Workers deploy token scope UNKNOWN | NOT GIVEN |
+| AP-25 | npm trusted-publisher configuration per package | Maintainer | Existing setup (`RP:80-126`); no new package this wave; per-package state UNKNOWN | NOT GIVEN |
+| AP-26 | External npm consumer review before removing public APIs or the result field | Maintainer | `M:38-40`; `F:88-89`; revisit removal if an active consumer exists | NOT GIVEN |
+| AP-27 | Terminal F acceptance | Maintainer | After the actual M/text stack is deployed; rerun the font proof after a text change (`F:35-37`, `F:96-98`; `A:246-247`) | NOT GIVEN |
+| AP-28 | Availability/sign-in impact for oauth 3.2.0 and moderation 1.9.0 | Maintainer | Approve before shipping these cuts; one sign-in retry expected; inactive confirmation refuses new ban/unban (`A:195-198`) | NOT GIVEN |
+| AP-29 | Coordinated recovery decision for a code rollback or independent database restore after activation | Maintainer | `A:179-182` | NOT GIVEN |
+| AP-30 | Whether to require the logger declaration repair (e-00, `f461b94578c7`) before P1 | Maintainer | Release-policy decision. The repair is prepared and recommended before P1; it is not an approved or mandatory gate (unit 1; G13) | NOT GIVEN |
+| AP-31 | Merge approval for the 2026-10-30 companion cuts, each separately | Maintainer | e-00 #407 (`f461b94578c7`); e-01 #408 (`71ed0595ccf9`, verification only, not meant to merge in that form); e-02 #409 (`b0efa0f26518`); e-03 #410 (`e1293ba5e069`) | NOT GIVEN (x4) |
+
+## 4. Contradictions and gaps across the three runbooks
+
+- **G1 Command registration cannot be separated.** `A:191`, `A:262` and `F:90-91` treat registration as a held item with its own result. But `DW-discord:90-95` and `DW-moderation:83-88` register on every approved production run, and `DEP:381-387` says production registration is automatic. `RP:178` still lists `register-commands` as a manual step. Approving a unit 5a, 9, 14, M7 or M8 run is therefore also the registration approval.
+- **G2 Beta acceptance conflict.** `M:36-37` (and `F:88-89`) require recorded beta and production acceptance. `A:46-48` says beta is not isolated and authorizes no beta dispatch or live acceptance. No safe beta route is defined.
+- **G3 Where #390 text lands (settled by decision; merge open).** `F:73` selects the core major containing #404's text, and `F:78-79` says integrating #390 into an earlier minor requires refreshed artifacts. On 2026-10-30 the maintainer decided, in chat with the preparation session, that #390's German/French corrections also enter the earlier minors. e-02 (#409; `b0efa0f26518`, tree `c95faa82f9e3`) carries #404's file selection on top of e-01, with core still 5.16.0. If e-02 is adopted, unit 3's frozen archive is the e-02 refresh and Core 6 ships no text change. Merge approval stays NOT GIVEN (AP-31).
+- **G4 Source identity drift.** The three runbooks do not name the corrected heads, but `MR` records them: core `e0e8c3eccf44` (`MR:1459`) and bot-logic `698b7cefa2fb` (`MR:1620`). A third companion now exists: the logger repair e-00 (`f461b94578c7`, unit 1). The verification tip e-01 (`71ed0595ccf9`, tree `7491501c58f8`) shows the expected main content after all three; its tree equals merging them onto cut 06 (unit 3). The integrated main SHA after reconciliation remains to be recorded at execution. Later cuts need refresh and revalidation when these companions are integrated (`M:109-110`).
+- **G5 Cumulative cuts against "selected delta".** Cuts are built cumulatively (`A:56-57`), yet `A:85-88` calls them review boundaries and asks for reconciliation of "the selected delta". How one cut is integrated without the earlier cuts is not specified. PR #372 is not a cut: it is an unrelated open PR, "Fix nested tool and Mixer scrollbars and reconcile XIVAPI research" (https://api.github.com/repos/FlashGalatine/xivdyetools/pulls/372, retrieved 2026-10-30T13:16:22Z).
+- **G6 Cut 05a has no acceptance slot.** discord 5.9.1 appears in the cut table (`A:72`) but in none of `A` sections 3-6. Its changelog keeps this font-readiness deployment separate from the later bot-logic/provider adoption (`apps/discord-worker/CHANGELOG.md:100-105`). Later cuts descend from it (`IRC:1541`, `IRC:5733`). Whether 5.9.1 is deployed on its own before unit 9 is undecided.
+- **G7 F-OG version (settled).** F-OG reserves og 2.12.4 (`FR:824`; `apps/og-worker/package.json:3`), separate from M-OG 2.12.3 (`M:22`). The F runbook text (`F:46-47`) names no number, so cite the receipt. #404 is a verification-only boundary with no Discord release (`F:34-35`).
+- **G8 Presets against the held image-worker.** `A:216-217` requires caller compatibility with whichever image version is deployed, but image 1.3.5 is on hard hold. Baseline main carries image-worker 1.3.4 (`git show 13c386e5:apps/image-worker/package.json`, line 3). The deployed version is UNKNOWN, because this preparation makes no hosted request.
+- **G9 web 5.16.4 and native JSON attributes.** `A:97` requires native JSON import attributes in core. `M:114-121` found that Vite development rejects them, and only #402 (web 5.16.5) fixes this; "no production failure was established" (`M:119-120`). No runbook states a Hair/Skin check for web 5.16.4. e-03 (#410; `e1293ba5e069`) now prepares that development check for 5.16.4 with #402's plugin, unit test and Hair/Skin spec (identical blobs), keeping 5.16.4. The plugin applies only to `serve` (line 13 of `apps/web-app/vite-plugin-core-json.ts` at `e1293ba5`) and is absent from production builds, so the deployed 5.16.4 build is unchanged by it (unit 12).
+- **G10 Ordering text.** `RP:62` puts core and worker-kit in one tier, `RP:48-49` offers `all-modified`, and `RP:172-179` merges before publication. `A:104-105` and `A:109-117` require individual dispatch in a fixed order. These are compatible only if the RP generic guidance yields to `A` for this wave.
+- **G11 Account-level items undefined.** Several gates are named with no specified scope: the backup destination (`A:177-178`), scanner eligibility and Dependabot closure (`A:239-240`; also `docs/audits/2026-10-26-security/evidence/remediation-release-prerequisites-2026-10-29.md:106`), npm trusted-publisher state and Workers deploy token scope. Only the Pages token scopes are stated (`PRET:20`).
+- **G12 Date wording.** `M:4-6` (no merge before 2026-10-30) sits beside F dated 2026-10-30. The date triggers nothing (`M:6`; `F:6`), but an operator could misread it as clearance.
+- **G13 Strict-declaration coverage.** The `skipLibCheck:false` receipts of the M and F waves (`F:65`) did not cover logger: their consumer contracts imported Core, SVG and Bot Logic entry points, none of which reaches logger's broken declaration files (per the preparation-session record; Core imports logger only through `@xivdyetools/logger/library`, `packages/core/src/services/APIService.ts:12`). The F tip still ships the unrepaired logger source (`packages/logger/src/types.ts:45` and the five other tag sites, unit 1). e-00 merges cleanly onto the F tip (`git merge-tree --write-tree 2ac97b6fb37c f461b94578c7`, exit 0, tree `959e9fa9a118`) and onto cut 17 (`2b95c0df`, exit 0, tree `479804eb9fa4`).
+- **G14 auth peer range (observation).** auth 3.0.0 declares peer `@cloudflare/workers-types` `^4.0.0` (`packages/auth/package.json:61-62`), while its own devDependency and the builder lock resolve 5.20261023.1 (`packages/auth/package.json:57`; `pnpm-lock.yaml:438-441`). A consumer on 5.x sees a peer warning. It is not a failure.
+
+## 5. Open items that remain UNKNOWN
+
+| Item | Why it cannot be settled from the reference tree |
+|---|---|
+| Whether e-02 (#390 text in core 5.16.0) is merged | The text decision is made (G3); merge approval is AP-31 |
+| Whether the logger repair is required before P1 | A maintainer release-policy decision (AP-30) |
+| Hosted CI for e-00 to e-03 | Not recorded in the reference tree; see `ER` |
+| Integrated main SHA for each unit | Exists only after an authorized reconciliation (`A:85-88`) |
+| Release slot for discord 5.9.1 | No runbook gate (G6) |
+| Deployed image-worker version | Needs a hosted or account query, which is out of scope (G8) |
+| Backup destination and recovery owner | Requires approval (`A:177-178`) |
+| Scanner eligibility and Dependabot closure scope | Named without scope (`A:239-240`) |
+| npm trusted-publisher state per package; Workers deploy token scope | Account settings that are not in the tree |
+| Safe beta acceptance route | Conflict G2 |

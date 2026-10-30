@@ -126,6 +126,8 @@ pnpm 10.27 and installed strictly offline after controlled exact public dependen
 This is local validation, not CI provenance or an actual registry-release artifact. Stop on identity/pin mismatch or an
 unexplained existing version. Do not overwrite or blindly republish immutable versions.
 
+The declaration companions for P3 and P6 ([#393](https://github.com/FlashGalatine/xivdyetools/pull/393), [#401](https://github.com/FlashGalatine/xivdyetools/pull/401)) were combined with cut 06 into a verification tip ([#408](https://github.com/FlashGalatine/xivdyetools/pull/408)) that passed a fresh local native proof, and that proof found a third declaration defect in logger 2.4.0 itself, which the published 2.3.0 shares. A repair ([#407](https://github.com/FlashGalatine/xivdyetools/pull/407)) is prepared and recommended before P1; whether to require it is the maintainer's decision. See [section 9](#9-earlier-minor-reconciliation--2026-10-30).
+
 After auth publication, rerun the private test-utils producer against the actual registry
 artifact. Test-utils 3.0.0 is private and must never be published. After each other publication,
 verify the actual registry artifact before moving to its dependent package or app.
@@ -241,7 +243,8 @@ default-branch Dependabot closure remain their own open operational gates.
 
 Conditional M source and draft PRs are now prepared in the [M release runbook](REMEDIATION_M_RELEASE_2026_10.md).
 Shipping still waits for corrected prerequisite artifacts, external-consumer review and deployed
-acceptance. The Core and Bot declaration companions must precede P3 and P6 publication; historical
+acceptance. The Core and Bot declaration companions must precede P3 and P6 publication, and the logger
+declaration companion is prepared and recommended before P1 (section 9); historical
 receipts remain unchanged. No merge before October 30 or later and new explicit approval with
 satisfied prerequisites. F-DISCORD/F-OG remain terminal after major/text adoption; unchanged-font
 acceptance is not terminal-sprint completion.
@@ -273,3 +276,34 @@ native major artifacts. It supplements source preparation only. This runbook's e
 publication, provider/schema/disclosure/manual and separately authorized deployment/activation
 requirements remain open. Use each receipt only for its frozen source; changes integrated into
 an earlier minor candidate require refreshed artifact/consumer verification there too.
+
+## 9. Earlier-minor reconciliation — 2026-10-30
+
+**PREPARATION ONLY.** This records the reconciliation of the earlier minors (logger 2.4.0 through bot-logic 4.12.0, and web 5.16.4) with the corrective companions prepared after the isolated cuts. It authorizes no merge, package publication, deployment or activation. Every cut below is a draft pull request on a flat `codex/release-cut-*` ref (excluded from all three automatic beta workflows) and changes no version number. Heads, trees, gate results and archive hashes are in the [reconciliation receipt](../audits/2026-10-26-security/evidence/earlier-minor-reconciliation-2026-10-30.json); the narrative and reproduction recipe are in the [evidence note](../audits/2026-10-26-security/evidence/remediation-earlier-minor-reconciliation-2026-10-30.md).
+
+| Cut | Draft PR | Head | Based on | Role |
+|---|---|---|---|---|
+| e-00 | [#407](https://github.com/FlashGalatine/xivdyetools/pull/407) | `f461b94578c7` | cut 01 | Logger 2.4.0 declaration repair. Prepared; recommended before P1 |
+| e-01 | [#408](https://github.com/FlashGalatine/xivdyetools/pull/408) | `71ed0595ccf9` | cut 06 | **Verification tip, not for merge in this form.** Cut 06 plus the logger repair, [#393](https://github.com/FlashGalatine/xivdyetools/pull/393) and [#401](https://github.com/FlashGalatine/xivdyetools/pull/401); its tree equals merging them |
+| e-02 | [#409](https://github.com/FlashGalatine/xivdyetools/pull/409) | `b0efa0f26518` | e-01 | PR #390's German and French dye-name corrections, as the maintainer decided on 2026-10-30; Core stays 5.16.0 |
+| e-03 | [#410](https://github.com/FlashGalatine/xivdyetools/pull/410) | `e1293ba5e069` | cut 12 | Web 5.16.4 Vite development bridge for Core's native JSON import attributes (development only) |
+
+### What was found
+
+1. **A third declaration defect: logger.** `@xivdyetools/logger` builds with `stripInternal`, yet six declarations that its barrels re-export as published API (`ConsoleAdapter`, `JsonAdapter`, `NoopAdapter`, `BaseLogger`, `LogEntry`, `createWorkerLogger`) carry an `@internal` tag. The emitted declarations are deleted while the re-exports stay, so a consumer compiling with `skipLibCheck: false` meets TS2305 errors inside the package's own `.d.ts` files. **The already-published logger 2.3.0 has the same defect** (read from its registry tarball on 2026-10-30). The first native proof of the integrated tip found it: the ten Core and Bot Logic repairs compiled clean and only logger failed. e-00 repairs it inside the pending 2.4.0 with no new version. It is **prepared and recommended before P1**; whether to require it before the logger publisher runs is the maintainer's release-policy decision, not an approved gate.
+2. **Earlier strict-declaration receipts do not cover logger.** The M and F wave receipts recorded strict acceptance for Core, SVG and Bot Logic entry points only, and the F tip still ships the unrepaired logger source. e-00 merges cleanly onto the A/R/H end state and onto the F tip.
+3. **The companions combine cleanly.** e-01's tree equals merging the logger repair, #393 and #401 onto cut 06 in any order. Core's and Bot Logic's `dist` are byte-identical to the backport archives; the tarballs differ only in the key order that `pnpm pack` writes into `package.json`.
+4. **Text selection converges.** e-02 takes #404's blobs unchanged wherever the baseline is identical, so the Core 6 line later merges as a no-op for those files. The generator reproduced the committed German and French payloads exactly. If e-02 is adopted, the frozen Core 5.16.0 archive is the e-02 refresh and Core 6 ships no text change.
+5. **Web 5.16.4 now has the development check.** e-03 carries the plugin, unit test and Hair/Skin e2e spec that #402 carries (identical blobs) and leaves `docs/versions.md` untouched so it cannot collide with #402's row when both merge.
+
+### Intended merge order, when a merge is separately authorized
+
+Cut 01, then e-00; cut 02; cut 03, then #393; cuts 04, 05, 05a and 06, then #401; retarget e-02 to `main` (its diff is then the text selection alone); the app cuts; cut 12, then e-03. e-01 is verification evidence and is not merged. Hold every package-triggered production run and approve nothing implicitly.
+
+### Image hold
+
+The Cloudflare Community inquiry on the preview CPU ceiling (topic 974619) had one post and no replies when read on 2026-10-30 at 13:00 UTC. The Image CPU, memory and manual gates are unchanged and remain open.
+
+### Preparation checklists
+
+The read-only preparation documents that accompany this section are listed in the [operations index](index.md): the [unit acceptance checklists and approvals register](REMEDIATION_UNIT_ACCEPTANCE_2026_10.md), the [held-migration preflight and recovery checklist](REMEDIATION_SCHEMA_RECOVERY_2026_10.md), the [notification-caller inventory](REMEDIATION_NOTIFICATION_CALLERS_2026_10.md) and the [external-consumer inventory](REMEDIATION_EXTERNAL_CONSUMERS_2026_10.md).
