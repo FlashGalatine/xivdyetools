@@ -39,6 +39,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Preserve emitted declarations for the five existing public utility helpers when building with `stripInternal`; their runtime signatures and all legacy character APIs remain unchanged.
 
+- **German and French dye names follow the authoritative XIVAPI `Stain.Name` values (PR #390).**
+  German wording and French capitalization are corrected from a pinned, complete capture of
+  the 125 bundled dyes. English, Japanese, Korean and Chinese display names, dye identities,
+  colors, acquisition data and the separate Facewear collection are unchanged; only
+  `dyenames.csv` and the generated `de`/`fr` locale payloads change.
+
 - **Long imported nicknames and producer labels keep surrogate pairs intact.** Their cap
   remains 256 UTF-16 code units with no ellipsis; a pair crossing that boundary is omitted
   as a whole rather than leaving a broken character (BUG-003).
