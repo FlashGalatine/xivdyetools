@@ -1486,18 +1486,17 @@ export class MixerTool extends BaseComponent {
     // Clear to remove leftPanel content (V4 uses ConfigSidebar instead).
     clearContainer(right);
 
-    // Apply flex styling to the right panel for proper layout
+    // The shell owns scrolling; let this panel grow with the full mixer content.
     right.setAttribute(
       'style',
       `
       display: flex;
       flex-direction: column;
       width: 100%;
-      height: 100%;
+      flex: 1;
       padding: 32px;
       gap: 32px;
       box-sizing: border-box;
-      overflow-y: auto;
     `
     );
 
