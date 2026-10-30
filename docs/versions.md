@@ -47,7 +47,7 @@
 | **Auth** (incl. `/encoding`) | v3.0.0 | `@xivdyetools/auth` | npm | Active |
 | **Logger** | v2.4.0 | `@xivdyetools/logger` | npm | Active |
 | **Worker Kit** (middleware + `/rate-limiter`) | v1.6.0 | `@xivdyetools/worker-kit` | npm | Active |
-| **SVG** | v4.4.1 | `@xivdyetools/svg` | npm | Active |
+| **SVG** | v4.4.2 | `@xivdyetools/svg` | npm | Active |
 | **Bot Logic** (incl. `/i18n`) | v4.12.0 | `@xivdyetools/bot-logic` | npm | Active |
 | **Test Utils** | v3.0.0 | `@xivdyetools/test-utils` | workspace-private | Active (never published) |
 
@@ -575,6 +575,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v4.4.2 | Oct 2026 | Conditional SVG compatibility patch for Core 6; retained APIs and rendered output unchanged; registry/publication/consumer acceptance held |
 | v4.4.1 | Oct 2026 | A-SVG security companion: `fitText` scans code-point prefixes in linear time with identical legacy output, numeric behavior, widths and public API; core 5.16.0 publication precedes this publish |
 | v4.4.0 | Oct 2026 | 2026-10-04 remediation, Sprints 14+28 — `formatContrastRatio`, one floored printer for card, embed and `/compare` (BUG-142); whole gradient step ranges (BUG-146); glamour footer wraps at clauses with an 11 px look label (I18N-015, BUG-145); the frame-budget gate covers every card (BUG-144); `scanEmittedGlyphs` fails closed (BUG-143); `LEDGER_GROUP_H` / `LEDGER_ROW_H` back in the barrel (REFACTOR-003) |
 | v4.3.0 | Sep 2026 | `generateGlamourCard` — the /glamour card (2a): pieces in slot order, a second row kind beside measuredRow |
@@ -735,6 +736,7 @@ and the [rollout runbook](operations/security-remediation-2026-09-15.md) for the
 
 | Consumer | Minimum Core Version | Notes |
 |----------|---------------------|-------|
+| @xivdyetools/svg v4.4.2 | @xivdyetools/core v6.0.0; @xivdyetools/types v3.3.0 | Conditional M source; not dependency isolation; publication, acceptance and activation held |
 | @xivdyetools/core v6.0.0 | @xivdyetools/logger v2.4.0; @xivdyetools/types v3.3.0 | Conditional M source; not dependency isolation; publication, acceptance and activation held |
 | xivdyetools-stoat-worker v0.3.4 | @xivdyetools/bot-logic v4.12.0; @xivdyetools/logger v2.4.0; @xivdyetools/types v3.3.0 | Prepared source; publication and deployed acceptance remain pending |
 | xivdyetools-image-worker v1.3.5 | @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
