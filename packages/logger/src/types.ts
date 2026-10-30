@@ -42,7 +42,7 @@ export interface LogContext {
  *
  * Represents a single log message with all metadata.
  *
- * @internal Part of the internal write pipeline. Consumers interact
+ * Part of the internal write pipeline. Consumers interact
  * with loggers via the {@link Logger} and {@link ExtendedLogger} interfaces.
  */
 export interface LogEntry {
