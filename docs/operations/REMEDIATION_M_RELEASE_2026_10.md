@@ -73,3 +73,55 @@ secret scan and exact-head CI. The major packages additionally need clean built/
 artifacts, retired-export/type checks, exact internal dependency pins and native consumer proof.
 Revalidate after any future rebase or content change. A green conditional PR is not a shipped
 release and does not close any gate above.
+
+## Prepared source and acceptance receipts
+
+[Redacted preparation receipt](../audits/2026-10-26-security/evidence/m-sprint-preparation-2026-10-29.json) records the immutable heads, gates, native archive hashes and exact-head CI. It covers twelve source PRs; the documentation companion verifies its own CI separately.
+
+| Source | Version | Draft PR | Head |
+|---|---|---|---|
+| M-CORE | 6.0.0 | [#391](https://github.com/FlashGalatine/xivdyetools/pull/391) | `cf54ecfd6670bc3a30dbe7d74d49e2969b9abf69` |
+| M-SVG | 4.4.2 | [#392](https://github.com/FlashGalatine/xivdyetools/pull/392) | `ebeb016e8437e714ddf706aacbabdce4636cf406` |
+| M-BOT-LOGIC | 5.0.0 | [#394](https://github.com/FlashGalatine/xivdyetools/pull/394) | `7215c3660ade7b2adb1a0c53f6129034390a50c0` |
+| M-API | 0.21.2 | [#395](https://github.com/FlashGalatine/xivdyetools/pull/395) | `ac6fd77d79e8d0e5af98845f06a72772fbb95102` |
+| M-WEB | 5.16.5 | [#396](https://github.com/FlashGalatine/xivdyetools/pull/396) | `4ed3ad35a28b3c618aad664deba17512771711f6` |
+| M-OG | 2.12.3 | [#397](https://github.com/FlashGalatine/xivdyetools/pull/397) | `f95dd83798a37aa943223b6c0b31d707054a2211` |
+| M-DISCORD | 5.9.8 | [#398](https://github.com/FlashGalatine/xivdyetools/pull/398) | `929f8f6c1cf98bdfe1ae2b8c9525c51e82af6db6` |
+| M-MODERATION | 1.9.1 | [#399](https://github.com/FlashGalatine/xivdyetools/pull/399) | `c79d2b24180d84865950e9b8ea2030cc4e9789c9` |
+| M-STOAT | 0.3.5 | [#400](https://github.com/FlashGalatine/xivdyetools/pull/400) | `876dadb33bbefdaa0dc12d982e539eddd13cf1d0` |
+| Web development compatibility companion | 5.16.5 | [#402](https://github.com/FlashGalatine/xivdyetools/pull/402) | `179b2ebbb31b43e044eae88467e92368c950ccd3` |
+
+## Corrective prerequisites for the earlier release
+
+- [@xivdyetools/core 5.16.0 declaration repair](https://github.com/FlashGalatine/xivdyetools/pull/393) must be integrated and revalidated before its earlier publisher. It retains the legacy API/result contract; no new minor version is allocated.
+- [@xivdyetools/bot-logic 4.12.0 declaration repair](https://github.com/FlashGalatine/xivdyetools/pull/401) must be integrated and revalidated before its earlier publisher. It retains the legacy API/result contract; no new minor version is allocated.
+
+The Core repair restores five existing public helper declarations. The Bot repair restores five
+existing command/translator declarations. Both fixes are also present in the major candidates.
+The corrected Bot minor native proof selects the corrected Core minor archive and SVG 4.4.1.
+Do not use an earlier historical receipt as strict declaration acceptance. Old refs and receipts
+remain immutable; refresh/revalidate later cuts when integrating these companions.
+
+## Browser compatibility acceptance
+
+A controlled live development page found that native JSON import attributes reject Vite's
+JavaScript-transformed palette responses. The original fifteen assertions passed while missing
+this failure. The companion adds independent Hair and Skin checks with known colors, 192 cells
+and no live page errors; removing the plugin fails both. A narrow client-only `serve` transform
+adapts two Core modules, retaining source maps, lazy imports and native Node package attributes.
+The plugin is absent from production builds. No production failure was established by the
+development probe, and this local result does not establish deployed acceptance. The bridge
+uses a deprecated Vite API and must be revisited when upstream behavior changes.
+
+## Stop, rollback and later execution
+
+Keep the earlier accepted app artifacts and their matching package/source identities. Stop
+dependent publishers/consumers on a failed registry or acceptance check; do not publish an
+already-used version again or substitute a locally packed archive into the gated publisher.
+Select the reviewed source/run and freshly built same-run artifact through the existing publisher.
+For application rollback, verify the selected source's package/API compatibility and retain all
+existing identity/moderation/notification safeguards and unresolved-operation holds. This wave
+adds no migration or activation action.
+
+Every merge remains blocked until October 30 or later **and** a new explicit approval plus
+satisfied prerequisites. There is no scheduled merge, publication or deployment.
