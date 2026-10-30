@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Preserve emitted declarations for the existing public harmony, vision, input-options and translator contracts when building with `stripInternal`; all runtime contracts and the deprecated character projection remain unchanged.
+
 - Prepare the six-language image-extraction manual's **5 MB** limit for A-IMAGE.
   This numeric-only companion must be included in the reviewed 4.12.0 publication
   and the corrected manual deployed before image-worker's lower file cap activates.
