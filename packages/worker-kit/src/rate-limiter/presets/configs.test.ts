@@ -4,7 +4,8 @@
  * Covers all exported config objects and lookup functions.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+import { MemoryRateLimiter } from '../backends/memory.js';
 import {
   OAUTH_LIMITS,
   getOAuthLimit,
@@ -86,6 +87,7 @@ describe('DISCORD_COMMAND_LIMITS', () => {
     const expectedCommands = [
       'extractor',
       'extractor:image',
+      'glamour',
       'accessibility',
       'budget',
       'harmony',
@@ -120,6 +122,35 @@ describe('DISCORD_COMMAND_LIMITS', () => {
 });
 
 describe('getDiscordCommandLimit', () => {
+  it.each([undefined, 'unknown-subcommand'])(
+    'gives glamour exactly 5/min without burst (subcommand %s)',
+    (subcommand) => {
+      expect(getDiscordCommandLimit('glamour', subcommand)).toEqual({
+        maxRequests: 5,
+        windowMs: 60_000,
+      });
+    },
+  );
+
+  it('enforces five glamour requests and restores allowance at 60 seconds', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-27T12:00:00Z'));
+    try {
+      const limiter = new MemoryRateLimiter();
+      const limit = getDiscordCommandLimit('glamour');
+      for (let i = 0; i < 5; i++) {
+        expect((await limiter.check('glamour-user', limit)).allowed).toBe(true);
+      }
+      expect((await limiter.check('glamour-user', limit)).allowed).toBe(false);
+      vi.advanceTimersByTime(59_999);
+      expect((await limiter.check('glamour-user', limit)).allowed).toBe(false);
+      vi.advanceTimersByTime(1);
+      expect((await limiter.check('glamour-user', limit)).allowed).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('returns the specific limit for known commands', () => {
     expect(getDiscordCommandLimit('extractor')).toEqual(DISCORD_COMMAND_LIMITS.extractor);
     expect(getDiscordCommandLimit('harmony')).toEqual(DISCORD_COMMAND_LIMITS.harmony);
@@ -134,8 +165,11 @@ describe('getDiscordCommandLimit', () => {
   });
 
   it('returns default for unknown commands', () => {
-    expect(getDiscordCommandLimit('nonexistent')).toEqual(DISCORD_COMMAND_LIMITS.default);
-    expect(getDiscordCommandLimit('nonexistent', 'sub')).toEqual(DISCORD_COMMAND_LIMITS.default);
+    expect(getDiscordCommandLimit('nonexistent')).toEqual({ maxRequests: 15, windowMs: 60_000 });
+    expect(getDiscordCommandLimit('nonexistent', 'sub')).toEqual({
+      maxRequests: 15,
+      windowMs: 60_000,
+    });
   });
 });
 
