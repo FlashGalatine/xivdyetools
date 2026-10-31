@@ -94,6 +94,8 @@ docs/                     # VitePress site → developers.xivdyetools.app (built
 └── public/mark.svg           # The flat six-stripe mark the bar's `logo` uses (< 20 px: flat mark, never the can)
 ```
 
+Acquisition maintenance captures a canonical game/schema pair and checks every response, including search cursors. `--pinned` reads both pins from metadata; legacy metadata requires an explicit `--schema` and byte-identical acquisition/facewear output for its first enrollment. `--cache-dir`, `--offline`, `--out-dir` and `--check-unchanged` support reproducibility checks without altering source tables. All upstream review reads finish before output adoption. See [the maintainer guide](../../docs/maintainer/acquisition-generation.md); this tooling does not change runtime request behavior.
+
 ### API Endpoints (16 under `/v1` — 14 `GET`, 2 `POST` — plus health + the Universalis proxy)
 
 All `GET` `/v1` routes except `/v1/chara/icon/:iconId` cache `Cache-Control: public, max-age=3600, s-maxage=86400`.

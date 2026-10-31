@@ -2,7 +2,7 @@
 
 **Single source of truth for all XIV Dye Tools project versions**
 
-*Last Updated: October 11, 2026*
+*Last Updated: October 29, 2026*
 
 > **Versions below match each project's `package.json` in this checkout** and are checked
 > against it by `pnpm docs:check-versions` (`scripts/check-doc-versions.ts`, run in CI), so
@@ -30,7 +30,7 @@
 | **Moderation Bot** | v1.8.2 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.3 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.6.1 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
-| **Public REST API** | v0.21.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
+| **Public REST API** | v0.21.1 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
 | **OpenGraph Worker** | v2.12.0 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.3.3 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
@@ -638,6 +638,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v0.21.1 | Oct 2026 | Maintenance acquisition generation validates fixed game/schema pins, supports exact-request offline replay and completes review requests before output adoption; runtime tables unchanged |
 | v0.21.0 | Oct 2026 | Snapshot/schema-aware equipment caching, optional versioned icon URLs and conditional PNG refresh, isolate-local Item/Glasses miss coalescing |
 | v0.20.1 | Oct 2026 | Acquisition lines for 671 older tomestone items omit the redundant base-item upgrade exchange when a reachable vendor sells the item outright for Poetics |
 | v0.20.0 | Oct 2026 | `uiCategory` (the named item's ItemUICategory row) on each resolved item, so the GPOSERS list can tell which main hands take an Off Hand; row cache shape 5 (every cached row refetches once) |
