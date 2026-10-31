@@ -44,6 +44,10 @@ pnpm --filter @xivdyetools/worker-kit run test
 - **`getClientIp` only** for keys (SEC-002) — `X-Forwarded-For` is spoofable. The opt-in
   `ipv6Prefix64` option groups valid IPv6 hosts by /64 without changing default callers;
   mapped IPv4 forms resolve to dotted IPv4 rather than sharing a zero-prefix bucket.
+  Only IPv4-mapped addresses (::ffff:0:0/96) resolve to dotted IPv4. Deprecated
+  IPv4-compatible (::a.b.c.d) and NAT64 well-known-prefix (64:ff9b::a.b.c.d) literals keep
+  their /64 like any IPv6 address (`::` and `64:ff9b::`). CF-Connecting-IP does not carry
+  either range for a real client, so this matters only for a trusted X-Forwarded-For source.
   Invalid input retains the old lowercase output. Preserve header precedence and log only
   the key scope, never the raw network key. The shared `glamour` preset is 5/minute without
   burst and selects Discord's existing RL_5 tier through its normal lookup.

@@ -37,6 +37,7 @@ describe('getClientIp', () => {
       ['2001:db8:abcd:1234:0:0:192.0.2.1', '2001:db8:abcd:1234::'],
       ['2001:db8::192.0.2.1', '2001:db8::'],
       ['::ffff:0:192.0.2.1', '::'],
+      ['64:ff9b::192.0.2.1', '64:ff9b::'],
     ] as const;
 
     it.each(prefixCases)('normalizes CF address %s to %s', (input, expected) => {
