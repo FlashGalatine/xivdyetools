@@ -60,23 +60,25 @@ describe('provider account creation and profile updates with actual SQLite', () 
     });
     expect(fixture.sqlite.prepare('SELECT * FROM identity_operations').all()).toEqual([]);
   });
-  it.each([
-    { ...xiv, discord_id: D },
-    { ...discord, xivauth_id: X },
-  ])(
-    'does not silently perform an existing relationship change while inactive %#',
-    async (params) => {
-      fixture.seed({ id: U, xivauth_id: X, auth_provider: 'xivauth' });
-      if (params.auth_provider === 'discord') {
-        const row = await findOrCreateUser(fixture.db, params);
-        expect(row.id).not.toBe(U);
-        expect(row.xivauth_id).toBeNull();
-      } else
-        await expect(findOrCreateUser(fixture.db, params)).rejects.toMatchObject({
-          code: 'unavailable',
-        });
-    },
-  );
+  it('inactive: an XIVAuth sign-in asserting a new Discord ID for an XIVAuth-only row is refused', async () => {
+    fixture.seed({ id: U, xivauth_id: X, auth_provider: 'xivauth' });
+    await expect(findOrCreateUser(fixture.db, { ...xiv, discord_id: D })).rejects.toMatchObject({
+      code: 'unavailable',
+    });
+    expect(
+      fixture.sqlite.prepare('SELECT discord_id,identity_revision FROM users WHERE id=?').get(U),
+    ).toEqual({ discord_id: null, identity_revision: 0 });
+    expect(fixture.sqlite.prepare('SELECT * FROM identity_operations').all()).toEqual([]);
+  });
+  it('a Discord sign-in ignores a supplied xivauth_id and never links it to an existing row', async () => {
+    fixture.seed({ id: U, xivauth_id: X, auth_provider: 'xivauth' });
+    const row = await findOrCreateUser(fixture.db, { ...discord, xivauth_id: X });
+    expect(row.id).not.toBe(U);
+    expect(row).toMatchObject({ discord_id: D, xivauth_id: null });
+    expect(fixture.sqlite.prepare('SELECT discord_id FROM users WHERE id=?').get(U)).toEqual({
+      discord_id: null,
+    });
+  });
   it('inactive attaching XIVAuth to an existing Discord-only row is refused', async () => {
     fixture.seed({ id: U, discord_id: D });
     await expect(findOrCreateUser(fixture.db, { ...xiv, discord_id: D })).rejects.toMatchObject({

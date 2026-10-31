@@ -145,6 +145,20 @@ function postXIVAuthCallback(body: Record<string, unknown>, customEnv?: Env): Pr
         : SELF.fetch('http://localhost/auth/xivauth/callback', init);
 }
 
+/**
+ * Structured request-logger entries: the worker-kit JSON adapter writes every level,
+ * warn included, through console.log (packages/logger/src/adapters/json-adapter.ts).
+ */
+function loggedEntries(calls: unknown[][]): { line: string; message?: string; context?: Record<string, unknown> }[] {
+    return calls.flatMap(([line]) => {
+        try {
+            return [{ line: String(line), ...(JSON.parse(String(line)) as { message?: string; context?: Record<string, unknown> }) }];
+        } catch {
+            return [];
+        }
+    });
+}
+
 describe('XIVAuth Handler', () => {
     beforeEach(() => {
         resetMockDB();
@@ -157,14 +171,23 @@ describe('XIVAuth Handler', () => {
         const upstream='20000000-0000-4000-8000-000000000001';
         await env.DB.prepare('INSERT INTO users (id,discord_id,xivauth_id,auth_provider,username) VALUES (?,?,?,?,?)').bind(id,'123456789012345678',upstream,'xivauth','Stored').run();
         mockXIVAuth({userId:upstream,socialIdentities});
-        const response=await postXIVAuthCallback({code:'fresh-code',code_verifier:VALID_CODE_VERIFIER,state:await boundState()});
+        const logSpy=vi.spyOn(console,'log').mockImplementation(()=>{});
+        let response:Response;
+        try {
+            response=await postXIVAuthCallback({code:'fresh-code',code_verifier:VALID_CODE_VERIFIER,state:await boundState()});
+            const refusals=loggedEntries(logSpy.mock.calls).filter((entry)=>entry.message==='XIVAuth identity refusal');
+            expect(refusals).toHaveLength(1);expect(refusals[0]!.context).toMatchObject({code:'unavailable'});
+            expect(refusals[0]!.line).not.toContain(id);expect(refusals[0]!.line).not.toContain(upstream);
+        } finally {
+            logSpy.mockRestore();
+        }
         const body=await response.json() as Record<string,unknown>;
         expect(response.status).toBe(503);expect(body).not.toHaveProperty('token');
         expect(JSON.stringify(body)).not.toContain(id);expect(JSON.stringify(body)).not.toContain(upstream);
         expect((await env.DB.prepare('SELECT COUNT(*) AS count FROM identity_operations').first<{count:number}>())!.count).toBe(0);
     });
 
-    describe('signed state migration across GET and POST', () => {
+    describe('signed state across GET and POST', () => {
         const cutoff = Date.parse('2026-10-28T00:00:00Z') / 1000;
 
         async function migrationState(legacy: boolean, iat: number, exp = iat + 600): Promise<string> {
@@ -182,16 +205,11 @@ describe('XIVAuth Handler', () => {
             return `${encoded}.${await signJwtData(encoded, env.JWT_SECRET)}`;
         }
 
-        it.each([
-            { legacy: true, now: cutoff - 1, iat: cutoff - 1 },
-            { legacy: true, now: cutoff, iat: cutoff },
-            { legacy: true, now: cutoff + 600, iat: cutoff },
-            { legacy: false, now: cutoff + 601, iat: cutoff + 601 },
-        ])('completes the production GET bounce and POST exchange: %o', async ({ legacy, now, iat }) => {
+        it.each([cutoff - 1, cutoff + 601])('completes the production GET bounce and POST exchange at %i', async (now) => {
             vi.setSystemTime(now * 1000);
             const fetchMock = mockXIVAuth();
             const production = createProductionEnv();
-            const state = await migrationState(legacy, iat);
+            const state = await migrationState(false, now);
             const get = await fetchWithEnv(production,
                 `http://localhost/auth/xivauth/callback?${new URLSearchParams({ code: 'migration-code', state })}`,
                 { redirect: 'manual' });
@@ -220,10 +238,10 @@ describe('XIVAuth Handler', () => {
         });
 
         it.each([
-            { now: cutoff + 1, iat: cutoff + 1, exp: cutoff + 600 },
-            { now: cutoff + 601, iat: cutoff, exp: cutoff + 600 },
+            { now: cutoff - 1, iat: cutoff - 1, exp: cutoff + 599 },
+            { now: cutoff, iat: cutoff, exp: cutoff + 600 },
             { now: cutoff + 601, iat: cutoff + 1, exp: cutoff + 601 },
-        ])('rejects disallowed legacy state on both legs without upstream calls: %o', async ({ now, iat, exp }) => {
+        ])('rejects raw-HMAC (unprefixed) state on both legs without upstream calls: %o', async ({ now, iat, exp }) => {
             vi.setSystemTime(now * 1000);
             const fetchMock = mockXIVAuth();
             const production = createProductionEnv();
@@ -246,7 +264,7 @@ describe('XIVAuth Handler', () => {
             expect(fetchMock).not.toHaveBeenCalled();
         });
 
-        it.each(['development', 'production'])('keeps unsigned compatibility GET-only in %s after the deadline', async (environment) => {
+        it.each(['development', 'production'])('keeps unsigned compatibility GET-only in %s', async (environment) => {
             vi.setSystemTime((cutoff + 601) * 1000);
             const fetchMock = mockXIVAuth();
             const targetEnv = environment === 'production' ? createProductionEnv() : env;

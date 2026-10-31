@@ -1,23 +1,23 @@
 import { afterAll, beforeAll, expect, it, vi } from 'vitest';
 import type { TestHarness } from 'wrangler';
-import { mkdirSync, readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { fileURLToPath, URL } from 'node:url';
-import { resolve } from 'node:path';
+import { join, resolve } from 'node:path';
 import type * as Caller from './mocks/identity-timeout-caller.js';
 import type * as Peer from './mocks/identity-timeout-peer.js';
 let harness: TestHarness;
 let db: D1Database;
 const source = (path: string) => fileURLToPath(new URL(path, import.meta.url));
 const saved = new Map<string, string | undefined>();
+let scratch: string | undefined;
 const U = '10000000-0000-4000-8000-000000000001';
 const X = '20000000-0000-4000-8000-000000000001';
 const D = '123456789012345678';
 beforeAll(async () => {
-  const root = resolve(
-    source('../../../../.superpowers/sdd/2026-10-29-release-prerequisites/oauth'),
-    `timeout-runtime-${process.pid}`,
-  );
-  mkdirSync(root, { recursive: true });
+  // Fresh OS temp root: Wrangler's profile, cache, logs and .wrangler stay out of the checkout.
+  const root = mkdtempSync(join(tmpdir(), 'xivdyetools-oauth-timeouts-'));
+  scratch = root;
   for (const [key, value] of Object.entries({
     USERPROFILE: root,
     APPDATA: resolve(root, 'roaming'),
@@ -86,6 +86,7 @@ afterAll(async () => {
       if (value === undefined) delete process.env[key];
       else process.env[key] = value;
     }
+    if (scratch) rmSync(scratch, { recursive: true, force: true, maxRetries: 5 });
   }
 }, 30000);
 const peer = () => harness.getWorker<Record<string, never>, typeof Peer>('timeout-peer');

@@ -417,6 +417,8 @@ xivauthRouter.post('/xivauth/callback', async (c) => {
     });
   } catch (err) {
     if (err instanceof IdentityError) {
+      // The refusal code only: never the message, internal, Discord or XIVAuth IDs.
+      logger?.warn('XIVAuth identity refusal', { code: err.code });
       return c.json<AuthResponse>({ success: false, error: 'Authentication temporarily unavailable. Sign in again.' }, 503);
     }
     // The structured logger sanitises error objects (no stack in production)
