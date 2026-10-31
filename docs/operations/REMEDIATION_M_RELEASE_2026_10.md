@@ -83,11 +83,11 @@ release and does not close any gate above.
 
 ## Prepared source and acceptance receipts
 
-[Redacted preparation receipt](../audits/2026-10-26-security/evidence/m-sprint-preparation-2026-10-29.json) records the immutable heads, gates, native archive hashes and exact-head CI. It covers twelve source PRs; the documentation companion verifies its own CI separately.
+[Redacted preparation receipt](../audits/2026-10-26-security/evidence/m-sprint-preparation-2026-10-29.json) records the immutable heads, gates, native archive hashes and exact-head CI. It covers twelve source PRs; the documentation companion verifies its own CI separately. Where a cell names two heads, the receipt binds the first; the second is the 2026-10-31 low-finding head ([unit acceptance](REMEDIATION_UNIT_ACCEPTANCE_2026_10.md) section 1).
 
 | Source | Version | Draft PR | Head |
 |---|---|---|---|
-| M-CORE | 6.0.0 | [#391](https://github.com/FlashGalatine/xivdyetools/pull/391) | `cf54ecfd6670bc3a30dbe7d74d49e2969b9abf69` |
+| M-CORE | 6.0.0 | [#391](https://github.com/FlashGalatine/xivdyetools/pull/391) | `cf54ecfd6670bc3a30dbe7d74d49e2969b9abf69`; `3cd1b6df23fb64e276efe868b89a7e3d398e4d75` since 2026-10-31 (test-only low-finding commit) |
 | M-SVG | 4.4.2 | [#392](https://github.com/FlashGalatine/xivdyetools/pull/392) | `ebeb016e8437e714ddf706aacbabdce4636cf406` |
 | M-BOT-LOGIC | 5.0.0 | [#394](https://github.com/FlashGalatine/xivdyetools/pull/394) | `7215c3660ade7b2adb1a0c53f6129034390a50c0` |
 | M-API | 0.21.2 | [#395](https://github.com/FlashGalatine/xivdyetools/pull/395) | `ac6fd77d79e8d0e5af98845f06a72772fbb95102` |
@@ -96,7 +96,9 @@ release and does not close any gate above.
 | M-DISCORD | 5.9.8 | [#398](https://github.com/FlashGalatine/xivdyetools/pull/398) | `929f8f6c1cf98bdfe1ae2b8c9525c51e82af6db6` |
 | M-MODERATION | 1.9.1 | [#399](https://github.com/FlashGalatine/xivdyetools/pull/399) | `c79d2b24180d84865950e9b8ea2030cc4e9789c9` |
 | M-STOAT | 0.3.5 | [#400](https://github.com/FlashGalatine/xivdyetools/pull/400) | `876dadb33bbefdaa0dc12d982e539eddd13cf1d0` |
-| Web development compatibility companion | 5.16.5 | [#402](https://github.com/FlashGalatine/xivdyetools/pull/402) | `179b2ebbb31b43e044eae88467e92368c950ccd3` |
+| Web development compatibility companion | 5.16.5 | [#402](https://github.com/FlashGalatine/xivdyetools/pull/402) | `179b2ebbb31b43e044eae88467e92368c950ccd3`; `a33e7f588f6f94e8acd630a07028f2c1a1f2dfed` since 2026-10-31 (changelog-only low-finding commit) |
+| Core declaration repair (earlier minor) | 5.16.0 (no new version) | [#393](https://github.com/FlashGalatine/xivdyetools/pull/393) | `e0e8c3eccf44f66ca054fa21e17b1ddb3b5502da`; `d1e0c467f97fd553628726432460c540508b9f7c` since 2026-10-31 (test-only low-finding commit) |
+| Bot Logic declaration repair (earlier minor) | 4.12.0 (no new version) | [#401](https://github.com/FlashGalatine/xivdyetools/pull/401) | `698b7cefa2fb6a829a84425012e2ce584f14f25d` |
 
 ## Corrective prerequisites for the earlier release
 
