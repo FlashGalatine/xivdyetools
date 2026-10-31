@@ -9,8 +9,9 @@ Release-cut baseline: `13c386e5983fe58ff17ac08fb5712239feb2e696`. Recheck main b
 The [isolated-cut evidence](../audits/2026-10-26-security/evidence/remediation-isolated-cuts-2026-10-29.md)
 and [normalized receipt](../audits/2026-10-26-security/evidence/isolated-release-cuts-2026-10-29.json)
 bind the candidate heads, trees, scoped companions, gates and observations used here.
-The earlier source-stack PRs, including #365 and #367, remain review history. Use the isolated
-cut queue below when selecting future releases; merging a source-stack PR would bypass that split.
+The earlier source-stack PRs (#337 to #365 and #367) and #390 were closed as superseded on
+2026-10-31; their branches stay as review history (section 9). Use the isolated cut queue below
+when selecting future releases; reopening and merging a source-stack PR would bypass that split.
 
 ## 1. Establish an effective production hold before integration
 
@@ -300,9 +301,16 @@ an earlier minor candidate require refreshed artifact/consumer verification ther
 
 First the image hold guard [#412](https://github.com/FlashGalatine/xivdyetools/pull/412), with the `IMAGE_WORKER_DEPLOY_HOLD` variable set straight after it (2026-10-31; unit acceptance unit 15 and section 6); then cut 00; cut 01, then e-00; cut 02; cut 03, then #393; cuts 04, 05, 05a and 06, then #401 and [#415](https://github.com/FlashGalatine/xivdyetools/pull/415); retarget e-02 to `main` (its diff is then the text selection alone); the app cuts; cut 12, then e-03 and [#416](https://github.com/FlashGalatine/xivdyetools/pull/416) in either order; cut 14, then its documentation companion [#413](https://github.com/FlashGalatine/xivdyetools/pull/413); the moderation activation release [#414](https://github.com/FlashGalatine/xivdyetools/pull/414) comes last, after the whole queue and M8's accepted inactive deploy. e-01 is verification evidence and is not merged. Hold every package-triggered production run and approve nothing implicitly. In particular, leave e-02's og-worker run unapproved: og 2.12.0 would serve `lang=de` and `lang=fr` cards cached under the old names for up to 7 days, and cut 13's version change re-keys that cache (unit acceptance unit 13).
 
-### #390 after this reconciliation
+### #390 and the source stack, closed 2026-10-31
 
-[#390](https://github.com/FlashGalatine/xivdyetools/pull/390) is still open, ready for review (not a draft) and targets `main`, and it carries a Core 5.15.1 bump and a root `CHANGELOG-laymans.md` entry. Its content is now carried by [#409](https://github.com/FlashGalatine/xivdyetools/pull/409) for the earlier minors and by [#404](https://github.com/FlashGalatine/xivdyetools/pull/404) for the Core 6 line, so it is superseded. Merged as it stands it would start the production workflows its paths match (held only by the environment approval), send the root announcement (which that approval does not hold) and collide with the 5.16.0 chain. Converting it to a draft or closing it as superseded is the maintainer's decision; this reconciliation did not touch it.
+The maintainer closed [#390](https://github.com/FlashGalatine/xivdyetools/pull/390) and the source-stack PRs #337 to #365 and #367 as superseded on 2026-10-31, after the open-PR audit, each with a closing note. #366 is independent and stays open. Closing deleted nothing: the branches are kept, and GitHub keeps each closed PR's head ref, so every source SHA this runbook and its receipts cite stays reachable.
+
+- **#390.** Its data, tests, docs and research are byte-identical in [#409](https://github.com/FlashGalatine/xivdyetools/pull/409) (Core 5.16.0) and [#404](https://github.com/FlashGalatine/xivdyetools/pull/404) (Core 6). Its Core 5.15.1 bump and root `CHANGELOG-laymans.md` entry were not carried. The entry's line, "German dye names now use the game's color names, and French dye names use the game's capitalization", is a candidate for the batch announcement once one is authorized.
+- **Ported before closing.** These items had been dropped by the cuts:
+  - `/glamour`'s 5/minute limit note (from #337) is now in Discord 5.9.1's changelog on [#415](https://github.com/FlashGalatine/xivdyetools/pull/415) (`1c9833a18454`). #415 already starts the Discord run, so no run is added.
+  - On this branch: the `docs/versions.md` registry paragraph (from #338), re-checked against npm on 2026-10-31, with the bundling note, the presets compatibility row at 2.8.2, the 5.9.1 row and the `/glamour` compatibility row (from #337); the core `.chara` bullet in `docs/architecture/overview.md` (from #338), reworded for the conditional Core 6 removal; the `identity-moderation.md` row in `docs/architecture/index.md` (from #343); #390's `docs/research/index.md` row; and the analytics spec's 2026-10-27 status note (from #341).
+- **Left on the branches for the audit-docs companion.** The source stack adds 59 and changes 104 files under `docs/audits`; 6 of them reach this queue. The five 2026-10-28 plans under `docs/superpowers/plans/` (from #350, #351, #352, #362 and #363) stay with them, because their links point into those audit files. The companion follows the A/R/H cuts and restates each finding status against the cut that shipped it. Until it merges, `docs/audits` on `main` keeps the #336 statuses.
+- **Merge note.** #366 and #372 also add a row at the top of `docs/research/index.md`, so of the three, each one updated with `main` after another has merged conflicts on that line: keep every row.
 
 ### Image hold
 

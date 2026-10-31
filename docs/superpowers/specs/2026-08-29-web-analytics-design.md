@@ -1,6 +1,6 @@
 # Web-app analytics — making "Enable Analytics" real
 
-**Date:** 2026-08-29 · **Apps:** `apps/web-app`, `apps/api-worker` · **Status:** implemented (PR #149) · **Branch:** `web-analytics` (worktree `.worktrees/xivdyetools-analytics`)
+**Date:** 2026-08-29 · **Apps:** `apps/web-app`, `apps/api-worker` · **Status:** implemented (PR #149); 2026-10-27 numeric-version change prepared in A-API — [current blob8 contract](../../operations/ANALYTICS_QUERIES.md) · **Branch:** `web-analytics` (worktree `.worktrees/xivdyetools-analytics`)
 
 ## Problem
 

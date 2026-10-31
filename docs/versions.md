@@ -4,19 +4,25 @@
 
 **Single source of truth for all XIV Dye Tools project versions**
 
-*Last Updated: October 30, 2026*
+*Last Updated: October 31, 2026*
 
 > **Versions below match each project's `package.json` in this checkout** and are checked
 > against it by `pnpm docs:check-versions` (`scripts/check-doc-versions.ts`, run in CI), so
 > this table cannot silently drift again. The 5.0 wave merged to `main` on 2026-08-28
-> (PR #123). As of 2026-10-26 (checked against the registry API), every published
-> package here is at parity with npm except `@xivdyetools/core` 5.15.0 (npm 5.12.0; 5.13.0 and
-> 5.14.0 were never published, so 5.15.0 is its next publish) and `@xivdyetools/bot-logic` 4.11.0 (npm 4.9.0), each
-> published right after the change that bumped it merges;
+> (PR #123). Registry checks on 2026-10-31 returned, for all seven published packages, the
+> versions `main` held that day: types 3.3.0, logger 2.3.0, auth 2.0.2, worker-kit 1.5.0,
+> core 5.15.0, SVG 4.4.0 and bot-logic 4.11.0. The newer package versions below are prepared in this
+> candidate source and stay unpublished until each is released after the change that bumped it
+> merges;
 > Actions → **"Publish Packages to npm"** publishes whatever differs from the registry, so check
 > there rather than trusting this sentence to stay current. Merging to
 > `main` is the release — see [Release Process](developer-guides/release-process.md) and the
 > per-workspace `CHANGELOG.md` files for what each version contains.
+>
+> Workspace apps bundle local package source, so merging a package change deploys every app
+> whose production path filter lists that package, whether or not the package is on npm yet.
+> Pushes to other branches can also update the shared web, Discord and OpenGraph betas; the
+> flat `codex/release-cut-*` refs are excluded.
 
 ---
 
@@ -222,7 +228,7 @@
 | v5.9.4 | Oct 2026 | Bot-logic 4.12.0: harmony distances use the selected metric, eyes merge only for equal eligible colors, bounded and sanitized glamour descriptions; command-choice localization remains in A-DISCORD |
 | v5.9.3 | Oct 2026 | SVG 4.4.1: shared card text fitting is linear while preserving existing card content, widths and truncation; security-only patch after the separate core deployment |
 | v5.9.2 | Oct 2026 | Core 5.16.0: `/glamour` GPOSERS text joins newlines in linear time while retaining prior output; command schema unchanged; imported nicknames remain excluded from bot output |
-| v5.9.1 | Oct 2026 | Prepared font readiness: preserve all existing Japanese/Simplified Chinese glyphs and add characters needed by the pending shared bot catalog; runtime handlers and bindings unchanged |
+| v5.9.1 | Oct 2026 | Prepared font readiness: preserve all existing Japanese/Simplified Chinese glyphs and add characters needed by the pending shared bot catalog; runtime handlers and bindings unchanged. Also records `/glamour`'s 5/minute limit, worker-kit 1.6.0's preset on the existing RL_5 binding, live since worker-kit's own merge |
 | v5.9.0 | Oct 2026 | Core 5.15.0 + bot-logic 4.11.0: `/swatch` and `/glamour` pass the attachment's capped bytes to the `xivcharakit`-backed reader (invalid UTF-8 refused), `/glamour` opens gear-only files, unmatched or unreadable colors, gear and dyes get a fixed line; attachment guards unchanged; no command shape change; bundle 2,732.6 KiB gzip (88.9 % of the cap) |
 | v5.8.15 | Oct 2026 | Core 5.13.0 + 5.14.0, bot-logic 4.10.0 (2026-10-15 import review): `/swatch` and `/glamour` refuse an attachment not named `.chara` before deferring, and the cap is 8 KiB (was 1 MiB) on the reported size and the streamed download, with an 8 KB message; no command shape changes |
 | v5.8.14 | Oct 2026 | bot-logic 4.9.0 (no source change here): `/glamour`'s list leaves out invisible pieces and an Off Hand the main hand doesn't take; the card is unchanged; no command shape changes |
@@ -760,7 +766,7 @@ and the [rollout runbook](operations/security-remediation-2026-09-15.md) for the
 | xivdyetools-web-app v5.16.4 | @xivdyetools/core v5.16.0; @xivdyetools/logger v2.4.0; @xivdyetools/svg v4.4.1; @xivdyetools/types v3.3.0 | Prepared source; publication and deployed acceptance remain pending |
 | xivdyetools-api-worker v0.21.1 | @xivdyetools/core v5.16.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
 | xivdyetools-discord-worker v5.9.7 | @xivdyetools/auth v3.0.0; @xivdyetools/bot-logic v4.12.0; @xivdyetools/svg v4.4.1; @xivdyetools/core v5.16.0; @xivdyetools/logger v2.4.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
-| xivdyetools-presets-api v2.8.1 | @xivdyetools/auth v3.0.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
+| xivdyetools-presets-api v2.8.2 | @xivdyetools/auth v3.0.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
 | xivdyetools-oauth-worker v3.2.0 | @xivdyetools/auth v3.0.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
 | @xivdyetools/bot-logic v4.12.0 | @xivdyetools/core v5.16.0; @xivdyetools/svg v4.4.1; @xivdyetools/types v3.3.0 | Prepared source; publication and deployed acceptance remain pending |
 | @xivdyetools/svg v4.4.1 | @xivdyetools/core v5.16.0; @xivdyetools/types v3.3.0 | Prepared source; publication and deployed acceptance remain pending |
@@ -805,6 +811,7 @@ and the [rollout runbook](operations/security-remediation-2026-09-15.md) for the
 | Discord Worker v5.0+ | @xivdyetools/core v4.0.0+ | Also `@xivdyetools/svg` v2.0.0+, `@xivdyetools/bot-logic` v2.0.0+ (incl. `/i18n`), `@xivdyetools/worker-kit` v1.0.0+ |
 | OG Worker v2.0+ | @xivdyetools/svg v2.0.0+ | 15E band frame generators |
 | Any consumer of blending | @xivdyetools/core v2.8.0+ | `@xivdyetools/color-blending` retired; import from `@xivdyetools/core/blending` |
+| Callers opting into IPv6 /64 keys; Discord Worker v5.9.1+ | @xivdyetools/worker-kit v1.6.0+ | `getClientIp(..., { ipv6Prefix64: true })`; shared `/glamour` limit selects RL_5 |
 | Any worker using middleware | @xivdyetools/worker-kit v1.0.0+ | Replaces `worker-middleware` and `rate-limiter` |
 | Web App v4.9–4.12 | @xivdyetools/core v2.5.0+ | Patch 7.5 dye consolidation active end-to-end |
 | Web App v4.5–4.8 | @xivdyetools/core v2.0.0+ | Types imported from `@xivdyetools/types` directly |
