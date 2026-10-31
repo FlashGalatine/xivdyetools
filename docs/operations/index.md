@@ -10,6 +10,7 @@ Runbooks and checklists for the maintainer. Everything here needs credentials CI
 | [MODERATION.md](MODERATION.md) | Moderating community presets with the moderation bot |
 | [DATA_SUBJECT_REQUESTS.md](DATA_SUBJECT_REQUESTS.md) | Privately verifying, exporting and deleting user data, with identity, ban, session and retention holds |
 | [PAGES_RETENTION.md](PAGES_RETENTION.md) | Dry-run Pages history retention, current/retired origin checks and the held apply-activation requirements |
+| [Conditional M release preparation](REMEDIATION_M_RELEASE_2026_10.md) | Nine conditional major/adoption cuts; earlier publication and acceptance gates remain open, with merges deferred until October 30 or later, satisfied prerequisites and new explicit authorization |
 | [October 2026 remediation release/adoption](REMEDIATION_RELEASE_2026_10.md) | Held A/R/H package/app sequence, production trigger fanout, provider/configuration cuts, migration prerequisites and release receipts; preparation does not authorize activation |
 | [ANALYTICS_QUERIES.md](ANALYTICS_QUERIES.md) | The Analytics Engine datasets (web-app telemetry, bot command traces) and the queries that read them |
 | [DOMAIN_DEPRECATION.md](DOMAIN_DEPRECATION.md) | Retiring `*.xivdyetools.projectgalatine.com` in phases (custom domains removed 2026-10-04/05; the apex-redirect code remains) |

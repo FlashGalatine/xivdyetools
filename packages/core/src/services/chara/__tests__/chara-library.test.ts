@@ -13,7 +13,7 @@ import type {
 } from '../chara-library-types.js';
 import type { CharaInspection } from 'xivcharakit';
 import type { PaletteRequest } from 'xivcharakit/palettes';
-import { MAX_CHARA_FILE_BYTES } from '../chara-parser.js';
+import { MAX_CHARA_FILE_BYTES } from '../chara-limits.js';
 import { importSpecifiers, runtimeClosure } from './import-graph.js';
 import * as core from '../../../index.js';
 
@@ -42,8 +42,6 @@ describe('public surface', () => {
     expect(typeof core.inspectCharaForTools).toBe('function');
     expect(typeof core.resolveCharaForTools).toBe('function');
     expect(typeof core.createCharaPaletteProvider).toBe('function');
-    expect(typeof core.parseCharaFile).toBe('function');
-    expect(typeof core.resolveCharaColors).toBe('function');
   });
 
   it('exports the provider-based entry from the root barrel', () => {
