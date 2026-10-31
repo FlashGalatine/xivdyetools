@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Keep companion dyes when a 4.x saved palette from the German UI is migrated. Core 5.16.0
+  adopts XIVAPI's German names (118 change, for example Schneeweißer to Schneeweiß), so the
+  one-time migration also accepts a frozen table of the earlier German names, in any UI
+  locale; a current name always wins.
 - Restore Swatch match cards and sharing after locale changes without reloading the
   character or duplicating live subscriptions. Close pending and open Glamour export
   sheets when the loaded character changes.

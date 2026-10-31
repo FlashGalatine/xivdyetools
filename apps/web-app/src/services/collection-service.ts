@@ -19,6 +19,7 @@
 import { StorageService } from './storage-service';
 import { dyeService, toStainId } from './dye-service-wrapper';
 import { LanguageService } from './language-service';
+import { LEGACY_GERMAN_DYE_NAMES } from './legacy-german-dye-names';
 import { STORAGE_KEYS } from '@shared/constants';
 import { logger } from '@shared/logger';
 
@@ -365,6 +366,12 @@ export class CollectionService {
       // defect (cross-locale switchers may still lose dyes, loudly)
       const localized = LanguageService.getDyeName(dye.itemID);
       if (localized) byName.set(localized.toLowerCase(), dye.stainID);
+    }
+    // German names a 4.x palette could hold from before core 5.16.0's
+    // correction, in any UI locale: none equals a current name, and a current
+    // name always wins.
+    for (const [legacyName, stainID] of LEGACY_GERMAN_DYE_NAMES) {
+      if (!byName.has(legacyName)) byName.set(legacyName, stainID);
     }
 
     let migratedCount = 0;
