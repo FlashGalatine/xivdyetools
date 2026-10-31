@@ -135,7 +135,23 @@ const PREF_KEY_ALIASES: Record<string, string> = { show_deltae: 'showDeltaE' };
  * one choice value, or undefined when that list is intentionally not
  * localized (matching-method tags, language endonyms, preset categories…).
  */
-function choiceLocalizations(command: string, option: string, value: string): Localizations | undefined {
+function choiceLocalizations(command: string, option: string, value: string, name: string): Localizations | undefined {
+  if ((command === 'swatch' && option === 'order') || (command === 'preset' && option === 'sort')) {
+    const key = `commands.${command}.choices.${option}.${value}`;
+    const emoji = name.match(/^(\P{Letter}+) /u)?.[1];
+    return buildLocalizations((t) => {
+      const label = t.t(key);
+      return label === key ? undefined : emoji ? `${emoji} ${label}` : label;
+    });
+  }
+  if (command === 'swatch' && option === 'slot') {
+    const key = `card.swatchSlotName.${value}`;
+    const emoji = name.match(/^(\P{Letter}+) /u)?.[1];
+    return buildLocalizations((t) => {
+      const label = t.t(key);
+      return label === key ? undefined : emoji ? `${emoji} ${label}` : label;
+    });
+  }
   if (command === 'preferences' && option === 'key') {
     return keyed(`preferences.keys.${PREF_KEY_ALIASES[value] ?? snakeToCamel(value)}`);
   }
@@ -219,7 +235,7 @@ function localizeOption(command: string, keyPrefix: string, option: Option): Opt
   if (desc) out.description_localizations = desc;
   if (option.choices) {
     out.choices = option.choices.map((c) => {
-      const loc = typeof c.value === 'string' ? choiceLocalizations(command, option.name, c.value) : undefined;
+      const loc = typeof c.value === 'string' ? choiceLocalizations(command, option.name, c.value, c.name) : undefined;
       return loc ? { ...c, name_localizations: loc } : { ...c };
     });
   }

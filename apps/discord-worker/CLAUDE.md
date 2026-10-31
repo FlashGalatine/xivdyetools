@@ -28,7 +28,7 @@ python scripts/subset-cjk-fonts.py       # regenerate the Noto Sans JP/SC/KR sub
 
 **Fonts ship as static instances, never variable files.** resvg's font database cannot move a variable axis — a variable file exposes only its default instance, so every `font-weight` in the card system rendered at one weight (Space Grotesk's default is Light 300) until 2026-08-29. `src/fonts/` holds `SpaceGrotesk-{Regular,SemiBold,Bold}.ttf` and `Onest-{Regular,SemiBold,Bold}.ttf`, instanced by `scripts/instance-latin-fonts.py` from the variable sources in `scripts/font-sources/`; `font-faces.test.ts` renders 400/600/700 through resvg-wasm and fails if any two match. Four lists mirror the `fonts.ts` imports and must move together: `fonts.test.ts` (DEAD-005 mocks), `font-coverage.test.ts` (cmaps), `font-load-order.test.ts` (real-byte mocks; it fails if one is missing) — `font-faces.test.ts` reads the list off `fonts.ts` itself.
 
-**The CJK subsets (`NotoSans{SC,JP,KR}-Subset.ttf`) are cut from four inputs** by `scripts/subset-cjk-fonts.py`: the core and bot-logic locale JSON (minus `commands.<cmd>.options`, I18N-001), `CONSOLIDATED_DYES` names, and — since Sprint 30 (FONT-001, 2026-10-06) — api-worker's equippable-item name tables in `apps/api-worker/src/chara/data/`: `item-names.{ko,zh}.json` feed the SC and KR cuts, and `item-names.ja.json` feeds the JP cut only. `/glamour` draws a piece's localized name only when the bundled fonts can draw every codepoint of it (`canDraw` → `filterToRenderable`, BUG-030), else the English name; with the item names in the cut, every ko, zh and ja item name is drawable except two ko names whose source text carries a stray U+200F (allow-listed in `item-name-coverage.test.ts`; down from 63.2 % ko / 97.3 % zh / 7.3 % ja falling back to English). The ja table is build-time data only — api-worker still serves ja names from XIVAPI at run time and never imports it; `build-item-names.mjs ja` copies the same game data from the global datamining export, and a 319-id sample matched XIVAPI `latest` (7.56x1) exactly.
+**The CJK subsets (`NotoSans{SC,JP,KR}-Subset.ttf`) are cut from four inputs** by `scripts/subset-cjk-fonts.py`: the core and bot-logic locale JSON (minus command-picker `commands.<cmd>.options` and `.choices`, I18N-001; command descriptions are retained), `CONSOLIDATED_DYES` names, and — since Sprint 30 (FONT-001, 2026-10-06) — api-worker's equippable-item name tables in `apps/api-worker/src/chara/data/`: `item-names.{ko,zh}.json` feed the SC and KR cuts, and `item-names.ja.json` feeds the JP cut only. `/glamour` draws a piece's localized name only when the bundled fonts can draw every codepoint of it (`canDraw` → `filterToRenderable`, BUG-030), else the English name. Every current zh and ja item name is drawable; two Korean names retain the documented U+200F exception and fall back to English. The later controlled API refresh strips those two marks and co-owns removing the exception without changing font bytes (the original font expansion reduced 63.2 % ko / 97.3 % zh / 7.3 % ja falling back to English). The ja table is build-time data only — api-worker still serves ja names from XIVAPI at run time and never imports it; `build-item-names.mjs ja` copies the same game data from the global datamining export, and a 319-id sample matched XIVAPI `latest` (7.56x1) exactly.
 
 **Which face draws a CJK glyph is decided by the font LOAD order, not the font-family list.** Every card text stack is Latin-led (`Onest, Noto Sans JP, Noto Sans SC, Noto Sans KR` and its Space Grotesk / Fragment Mono variants), so the Latin face draws what it has and resvg fills every other glyph from the loaded faces in `getFontBuffers(locale)` order: JP, SC, KR for `ja`; SC, KR, JP for every other locale. Every card handler passes the user's locale as `renderSvgToPng(svg, { scale: 2, locale })`. Reordering the CJK names behind the Latin face in `@xivdyetools/svg`'s stacks changes nothing here (moving a CJK family to the front would change the primary face instead). Measured with real resvg-wasm renders on 2026-10-06, after the switch to locale-aware order:
 
@@ -38,7 +38,7 @@ python scripts/subset-cjk-fonts.py       # regenerate the Noto Sans JP/SC/KR sub
 
 `fonts.test.ts` pins both orders and `font-load-order.test.ts` renders them.
 
-**Re-cut trigger:** any locale edit, and any run of api-worker's `scripts/build-item-names.mjs` — `font-coverage.test.ts` (locale strings; surplus report) and `item-name-coverage.test.ts` (item names drawable; every ja kana/kanji in the JP subset) fail until the re-cut lands, and CI runs the latter on every push because an api-worker-only change never selects this workspace. The item names cost ~340 KiB gzipped (ko/zh ~250, ja ~90): the Worker measured 2,717.2 KiB of its 3,072 KiB cap afterwards, 109 KiB under the 2,826 KiB warning band (`pnpm run check-bundle-size`), so check it after every re-cut.
+**Coverage trigger:** after every locale edit or item-name regeneration, run `font-coverage.test.ts` (locale strings; surplus report), `item-name-coverage.test.ts` (item names drawable; every ja kana/kanji in the JP subset), and the actual regional-face/render-order tests. Re-cut when the required drawable coverage changes; a pinned data refresh with no added codepoints can pass against unchanged subsets. Keep stale-exception assertions active. CI runs item-name coverage on every push because an api-worker-only change may not select this workspace. The item names cost ~340 KiB gzipped (ko/zh ~250, ja ~90): the Worker measured 2,717.2 KiB of its 3,072 KiB cap afterwards, 109 KiB under the 2,826 KiB warning band (`pnpm run check-bundle-size`), so check it after every re-cut.
 
 ### Registering Commands
 
@@ -225,6 +225,40 @@ Long-running handlers return `DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE` immediately,
 
 Always prefer the Service Binding (`env.PRESETS_API.fetch(req)`) — zero HTTP overhead. Falls back to `PRESETS_API_URL` for local dev when the binding is absent.
 
+Favorite listing uses one signed `POST /api/v1/presets/batch` for up to 50 IDs, with the acting
+Discord user as signed rate-limit context. The approved-only response partitions requested IDs
+into presets and missing IDs; transport, malformed or incomplete replies fail the whole lookup.
+Keep favorite order and KV entries, budget complete escaped lines plus notices within 4096,
+and check every list delivery result. A failed edit marks the command unserved and attempts one
+short fallback. `/glamour` applies the same bounded delivery rule. Character attachment transport
+returns capped original bytes only; the shared parser owns UTF-8 validation.
+
+The private named `PresetNotifications` entrypoint accepts the existing notification Fetch
+protocol. `PRESET_WEBHOOK_BINDING_ONLY` stays explicitly false in both configurations until
+the separate presets binding companion is deployed and verified. A later activation makes
+the public webhook return 404 before bearer comparison/body reading; private dispatch uses an
+unforgeable internal marker and retains authentication, validation and the actual-byte cap.
+Keep the named export while consumers use it. To roll a consumer back to the default binding,
+first restore and verify public compatibility; never remove the provider entrypoint first.
+Buttons use a separate per-user `button` key at 30/min before analytics/dispatch, with existing
+backend fail-open reporting. Command limits remain unchanged.
+
+Clan autocomplete matches localized official clan/race labels and canonical English values;
+stored values stay canonical and the preference remains dormant. Registered Swatch order/slot
+and preset-sort labels consume the prepared six-language keys. New preview-image decisions omit
+moderator names/ID fallbacks from posts while retaining API actor attribution.
+
+Release prerequisite: publish bot-logic 4.12.0 from source including A-DISCORD's additive
+race/clan exports and locale companion (after its core/SVG prerequisites), and deploy the capped
+presets batch endpoint before the Discord consumer. Command registration runs through the deploy
+workflow. Keep production bot API credentials off beta; the signed favorites success path is
+proved locally with fake bindings. Production merge/activation is a separate authorized step.
+The manual package publish and automatic consumer workflows do not enforce that order. Before
+production merges, verify eligibility to publish the reviewed ref first, or separately authorize
+and verify a hold on all affected automatic consumer deployments before merge/publish/verification.
+Only then release/deploy the reviewed consumer source. Do not reuse an earlier published package
+version for this companion; this source preparation changes no workflows or environment policy.
+
 ### Analytics Tracking
 
 Tier A (2026-08-29, spec `docs/superpowers/specs/2026-08-29-bot-analytics-tier-a-design.md`): `handleCommand()` starts a `CommandTrace` (`services/command-trace.ts`) before the rate-limit check and hands every handler a **traced `ExecutionContext`** whose `waitUntil` also records the promise on the trace; the `finally` calls `finishCommandTrace()`, which drains those promises (bounded by `DRAIN_DEADLINE_MS` = 20 s, after which the row is written as `unknown` instead of being lost) and then writes the datapoint through `trackCommandWithKV()` — so `success`/latency describe the deferred work, not the deferred ack. The trace has **one writer**: `markCommandOutcome()`. Handlers call it wherever a command ends with an error embed — a catch (`classifyError(error[, 'render'])`), a bot-logic `GENERATION_FAILED` branch (`'render'`), an unreadable image/`.chara` (`'image_input'`); `/dye`'s text fallbacks mark `'render'` with `{ served: true }`; the dispatcher calls it for a rate-limited request and a handler throw; nobody else finishes a trace. **Two axes per datapoint:** `success` (blob4, and the KV `success`/`failure` counters behind `/stats`) = the user got an answer to what they asked; the outcome class (blob5) = the most significant thing of ours that broke, or `ok` — `ok`, `rejected`, `rate_limited`, `upstream_universalis`, `upstream_presets`, `image_input`, `render`, `unknown`. `classifyError` maps a presets-api / Universalis **4xx other than 408 and 429 to `rejected`** (the service's own reply, relayed to the user — answered, but visible as its own class so a systematic 4xx from our payload is a spike); a 408 (a timeout — universalis-client raises one for its own 10 s abort), a 429, a 5xx and a network/binding failure are `upstream_universalis` / `upstream_presets` and unanswered (BUG-005); a `served` mark is answered too; everything else with a class is a failure. Rate-limited requests are AE-only (no KV counters — `/stats` counts commands that ran, and KV allows one write per second per key). Columns: blobs 1–4 unchanged (command, userId, guild/dm, answered), blob5 **outcome class** (was the never-set `errorType`), blob6 subcommand/button kind, blob7 locale bucket, blob8 `command|button`, double2 real latency. Copy-button clicks are AE-only `kind=button` rows via `trackButtonClick()`; the button kinds are `COPY_BUTTON_KINDS` in `handlers/buttons/copy.ts`; the image-worker rejection markers are `services/image-input-errors.ts`. The list of what must **never** be recorded lives on `CommandEvent` in `services/analytics.ts` (the only place a value is written) and is promised by `PRIVACY_POLICY.md` §2. Queries and the outcome rules: `docs/operations/ANALYTICS_QUERIES.md` (Discord section).
@@ -351,3 +385,19 @@ npm run test:integration                                  # Integration suite
 4. Smoke-test core commands in the test guild.
 5. `npm run deploy:production` — or simply merge to `main`: `deploy-discord-worker.yml` deploys `--env production` **and then runs `register-commands` itself** (`DISCORD_TOKEN` from repo secrets), so a manual `npm run register-commands` is only needed for out-of-band schema pushes. The beta workflow registers guild-scoped commands the same way.
 6. Hit `https://bot.xivdyetools.app/health` to confirm the new build is live.
+
+## A-PRESETS link review companion
+
+Preset review messages show complete decoded example-link path text in `Links` and, when offered,
+the effective target in `Revert link`. Do not render hostname, credentials, query or fragment or
+fetch supplied links. Escape dangerous controls visibly inside one inline-code pair; never silently
+truncate required paths. Missing link metadata is unavailable, distinct from explicit null.
+Keep Reject available when required unsafe/oversized content withholds Approve/Revert. The
+moderation consumer re-checks fresh revision/status and displayed link fields before publishing,
+refreshing old messages before action. Typed-ID confirmations use the same completeness guard.
+No command registration or public shared type change accompanies this patch.
+
+Presets API extended metadata moderation remains default off. Verify both consumer production
+deployments before preparing a separate activation-only API PR. Explicitly recorded snapshot links
+remain validated/restored even after disabling the API flag; missing legacy links preserve current
+state while disabled and clear it while enabled. This companion grants no manual deployment.

@@ -35,6 +35,24 @@ Rules:
   path filter.
 -->
 
+## [5.9.7] - 2026-10-27
+### Favorite lists and clearer replies
+- `/preset favorite list` keeps your saved order, fits long names into its reply, and distinguishes unavailable presets from a temporary service problem. Your favorites stay saved.
+- `/glamour` detects when Discord cannot deliver its card and tries one short fallback message.
+### Your language and privacy
+- Clan suggestions and validation use your language. Swatch slot/order choices and preset sort choices are translated too.
+- New preview-image decisions omit the moderator's name. The privacy policy now explains the clan, gender and tool label shown on character cards, and when an edit snapshot is kept, in all six languages.
+
+## [5.9.6] - 2026-10-27
+### Privacy policy
+- The policy now explains private ID review, bans that continue after unlinking, and temporary recovery records for the new moderation features when enabled. All six language versions are updated.
+
+## [5.9.4] - 2026-10-27
+### 🎨 Clearer character and harmony results
+- `/harmony` shows every result's distance using your selected matching method, including hue-first searches.
+- `/swatch` keeps left and right eyes separate when the colors being matched differ, even if the file gives them the same palette index.
+- `/glamour` keeps unusually long item notes within Discord's message limit while preserving help and share links.
+
 ## [5.9.0] - 2026-10-26
 ### 🗂️ A new character-file reader for /swatch and /glamour
 - `/glamour` now opens a character file that only holds gear and has no appearance colors.
