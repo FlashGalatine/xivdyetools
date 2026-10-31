@@ -21,6 +21,7 @@ import type { Dye } from '@xivdyetools/types';
 const {
   mockShow,
   mockDismissTop,
+  mockDismiss,
   mockToastError,
   mockToastInfo,
   mockToastSuccess,
@@ -54,6 +55,7 @@ const {
   return {
     mockShow: vi.fn().mockReturnValue('modal-id-preset-edit'),
     mockDismissTop: vi.fn(),
+    mockDismiss: vi.fn(),
     mockToastError: vi.fn(),
     mockToastInfo: vi.fn(),
     mockToastSuccess: vi.fn(),
@@ -72,6 +74,7 @@ vi.mock('@services/index', () => ({
   ModalService: {
     show: mockShow,
     dismissTop: mockDismissTop,
+    dismiss: mockDismiss,
   },
   LanguageService: {
     // Echo the key back so a rendered English literal fails loudly.
@@ -108,6 +111,8 @@ vi.mock('@services/preset-submission-service', async (importOriginal) => {
 });
 
 import { showPresetEditForm } from '../preset-edit-form';
+import { ModalService as RealModalService } from '@services/modal-service';
+import { uploadPreviewImage, removePreviewImage } from '@services/preset-submission-service';
 import type { CommunityPreset } from '@services/community-preset-service';
 
 /** 48 characters — long enough to clear MIN_DESC_LENGTH. */
@@ -145,6 +150,133 @@ describe('showPresetEditForm — localization', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  describe('originating modal ownership (BUG-016)', () => {
+    beforeEach(() => {
+      RealModalService.dismissAll();
+      mockShow.mockImplementation((config) => RealModalService.show(config));
+      mockDismiss.mockImplementation((id) => RealModalService.dismiss(id));
+      mockDismissTop.mockImplementation(() => RealModalService.dismissTop());
+    });
+    afterEach(() => {
+      RealModalService.dismissAll();
+      mockShow.mockReset().mockReturnValue('modal-id-preset-edit');
+      mockDismiss.mockReset();
+      mockDismissTop.mockReset();
+    });
+
+    it('Cancel dismisses its own form while another modal stays open', () => {
+      showPresetEditForm(makePreset());
+      const form = getFormContent();
+      const other = RealModalService.show({ type: 'custom', title: 'Other' });
+      [...form.querySelectorAll('button')]
+        .find((button) => button.textContent === 'common.cancel')!
+        .click();
+      expect(RealModalService.getModals().map((modal) => modal.id)).toEqual([other]);
+    });
+
+    it.each(['patch', 'upload', 'removal'] as const)(
+      'late %s success keeps an unrelated modal and reports the committed edit once',
+      async (stage) => {
+        let resolve!: () => void;
+        const pending = new Promise<void>((done) => {
+          resolve = done;
+        });
+        if (stage === 'patch')
+          mockEditPreset.mockImplementationOnce(async () => {
+            await pending;
+            return { success: true };
+          });
+        if (stage === 'upload')
+          vi.mocked(uploadPreviewImage).mockImplementationOnce(async () => {
+            await pending;
+          });
+        if (stage === 'removal')
+          vi.mocked(removePreviewImage).mockImplementationOnce(async () => {
+            await pending;
+          });
+        const edited = vi.fn();
+        showPresetEditForm(
+          makePreset({
+            preview_image_status: 'approved',
+            preview_image_url: 'https://shots.xivdyetools.app/preset-1/a.webp',
+          }),
+          edited
+        );
+        const origin = RealModalService.getTopModal()!.id;
+        const form = getFormContent();
+        const name = form.querySelector<HTMLInputElement>('#edit-preset-name')!;
+        name.value = 'Changed name';
+        name.dispatchEvent(new Event('input'));
+        if (stage === 'upload') {
+          const input = form.querySelector<HTMLInputElement>('input[type="file"]')!;
+          Object.defineProperty(input, 'files', {
+            value: [new File(['image'], 'new.webp', { type: 'image/webp' })],
+          });
+          input.dispatchEvent(new Event('change'));
+        }
+        if (stage === 'removal')
+          [...form.querySelectorAll('button')]
+            .find((button) => button.textContent === 'preset.previewImageRemove')!
+            .click();
+        form.querySelector<HTMLButtonElement>('#save-preset-btn')!.click();
+        await vi.waitFor(() =>
+          expect(
+            stage === 'patch'
+              ? mockEditPreset
+              : stage === 'upload'
+                ? uploadPreviewImage
+                : removePreviewImage
+          ).toHaveBeenCalled()
+        );
+        RealModalService.dismiss(origin);
+        const other = RealModalService.show({ type: 'custom', title: 'Other' });
+        resolve();
+        await vi.waitFor(() => expect(edited).toHaveBeenCalledTimes(1));
+        expect(edited).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
+        expect(RealModalService.getModals().map((modal) => modal.id)).toEqual([other]);
+      }
+    );
+  });
+
+  it.each([
+    'http://shots.xivdyetools.app/a.webp',
+    'javascript:alert(1)',
+    'data:image/png;base64,AA',
+    'blob:https://xivdyetools.app/id',
+  ])('never renders unsafe stored preview %s', (url) => {
+    showPresetEditForm(makePreset({ preview_image_status: 'approved', preview_image_url: url }));
+    expect(getFormContent().querySelector('img')).toBeNull();
+  });
+
+  it('keeps an approved HTTPS image and the stored remove action usable', async () => {
+    const url = 'https://shots.xivdyetools.app/preset-1/a.webp';
+    showPresetEditForm(makePreset({ preview_image_status: 'approved', preview_image_url: url }));
+    const content = getFormContent();
+    expect(content.querySelector('img')?.getAttribute('src')).toBe(url);
+    Array.from(content.querySelectorAll('button'))
+      .find((b) => b.textContent === 'preset.previewImageRemove')!
+      .click();
+    expect(content.querySelector('img')).toBeNull();
+    content.querySelector<HTMLButtonElement>('#save-preset-btn')!.click();
+    await vi.waitFor(() => expect(removePreviewImage).toHaveBeenCalledWith('preset-1'));
+  });
+
+  it('can upload a new preview independently of an unsafe stored URL', async () => {
+    showPresetEditForm(
+      makePreset({
+        preview_image_status: 'approved',
+        preview_image_url: 'http://unsafe.test/a.webp',
+      })
+    );
+    const content = getFormContent();
+    const file = new File(['image'], 'new.webp', { type: 'image/webp' });
+    const input = content.querySelector<HTMLInputElement>('input[type="file"]')!;
+    Object.defineProperty(input, 'files', { value: [file] });
+    input.dispatchEvent(new Event('change'));
+    content.querySelector<HTMLButtonElement>('#save-preset-btn')!.click();
+    await vi.waitFor(() => expect(uploadPreviewImage).toHaveBeenCalledWith('preset-1', file));
   });
 
   it('takes the modal title, labels and placeholders from translation keys', () => {

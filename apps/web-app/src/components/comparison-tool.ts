@@ -204,6 +204,8 @@ export class ComparisonTool extends BaseComponent {
         StorageService.getItem<boolean>(STORAGE_KEYS.showMarketPrices) ??
         DEFAULT_OPTIONS.showMarketPrices,
     };
+    // Seed before cards can render; subscriptions only deliver future changes.
+    this.setConfig(ConfigController.getInstance().getConfig('comparison'));
   }
 
   // ============================================================================
@@ -269,7 +271,7 @@ export class ComparisonTool extends BaseComponent {
    * Fetch prices for selected dyes and update display
    */
   private async fetchAndUpdatePrices(): Promise<void> {
-    if (!this.comparisonOptions.showMarketPrices || this.selectedDyes.length === 0) {
+    if (!this.showPrices || this.selectedDyes.length === 0) {
       return;
     }
 
@@ -428,6 +430,14 @@ export class ComparisonTool extends BaseComponent {
         StorageService.setItem(STORAGE_KEYS.showCmyk, opts.showCmyk);
         needsRerender = true;
         logger.info(`[ComparisonTool] setConfig: displayOptions.showCmyk -> ${opts.showCmyk}`);
+      }
+
+      // Ticket readouts follow the same canonical options on single and duel cards.
+      for (const key of ['showHue', 'showStain', 'showSpectrum'] as const) {
+        if (opts[key] !== undefined && opts[key] !== this.comparisonOptions[key]) {
+          this.comparisonOptions[key] = opts[key];
+          needsRerender = true;
+        }
       }
 
       // Map showDeltaE to internal showDistanceValues
@@ -2452,6 +2462,7 @@ export class ComparisonTool extends BaseComponent {
     this.updateSelectedDyesDisplay();
     this.updateResults();
     this.updateShareButton(); // Update share button with new dye selection
+    void this.fetchAndUpdatePrices();
   }
 
   /**

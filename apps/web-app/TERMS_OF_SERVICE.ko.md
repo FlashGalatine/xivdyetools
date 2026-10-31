@@ -2,7 +2,7 @@
 
 > 이 문서는 편의를 위해 제공되는 번역본입니다. 영어 버전이 원본이며, 두 버전이 다를 경우 영어 버전이 우선합니다. [English](TERMS_OF_SERVICE.md)
 
-**최종 업데이트:** 2026-10-12 · **xivdyetools.app**과 **beta.xivdyetools.app**에 적용됩니다. 사용자 데이터를 어떻게 다루는지는 별도의 문서에 있습니다: [`PRIVACY.md`](PRIVACY.ko.md). Discord 봇은 별도의 약관을 따릅니다: [`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.ko.md).
+**최종 업데이트:** 2026-10-28 · **xivdyetools.app**과 **beta.xivdyetools.app**에 적용됩니다. 사용자 데이터를 어떻게 다루는지는 별도의 문서에 있습니다: [`PRIVACY.md`](PRIVACY.ko.md). Discord 봇은 별도의 약관을 따릅니다: [`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.ko.md).
 
 XIV Dye Tools는 Final Fantasy XIV를 위한 무료 팬메이드 색상 도구 모음입니다. Square Enix와 제휴, 승인 또는 후원 관계가 없습니다. 이 사이트를 이용함으로써 사용자는 아래 내용에 동의하게 됩니다. 동의하지 않으신다면 이용하지 말아 주세요 — 이 사이트를 그만두는 데는 어떤 비용도 들지 않습니다.
 
@@ -17,7 +17,7 @@ XIV Dye Tools는 Final Fantasy XIV를 위한 무료 팬메이드 색상 도구 �
 색상 도구를 이용하는 데는 계정이 전혀 필요하지 않습니다. 계정이 필요한 경우는 커뮤니티 프리셋을 제출, 수정 또는 투표할 때뿐입니다.
 
 - 로그인은 Discord 또는 XIVAuth를 통해 이루어집니다. 저희는 비밀번호를 절대 보거나 저장하지 않습니다.
-- 로그인하면 제공자 id와 이름을 담은 계정 기록이 생성됩니다. Discord로 로그인한 경우 이름은 사용자의 표시 이름입니다. XIVAuth로 로그인한 경우 이름은 인증된 캐릭터의 이름이거나, 로그인할 때 사용할 수 있는 인증된 캐릭터가 없으면 "XIVAuth User" 뒤에 XIVAuth ID의 처음 8자를 붙인 이름이며, 자세한 내용은 개인정보 안내에 나와 있습니다. 사용자의 XIVAuth 계정이 Discord와 연결되어 있으면, 이 기록에는 그 Discord 사용자 ID도 함께 담깁니다. 기록에 담긴 이름은 사용자가 게시하는 모든 프리셋의 작성자로 표시됩니다.
+- 로그인하면 제공자 id와 이름을 담은 계정 기록이 생성됩니다. Discord로 로그인한 경우 이름은 사용자의 표시 이름이며, 표시 이름이 없으면 사용자 이름입니다. XIVAuth로 로그인한 경우 이름은 인증된 캐릭터의 이름이거나, 로그인할 때 사용할 수 있는 인증된 캐릭터가 없으면 "XIVAuth User" 뒤에 XIVAuth ID의 처음 8자를 붙인 이름이며, 자세한 내용은 개인정보 안내에 나와 있습니다. 사용자의 XIVAuth 계정이 Discord와 연결되어 있으면, 이 기록에는 그 Discord 사용자 ID도 함께 담깁니다. 기록에 담긴 이름은 사용자가 게시하는 모든 프리셋의 작성자로 표시됩니다.
 - 사용자의 세션은 브라우저에 보관되는 토큰입니다. 브라우저의 사이트 데이터를 지우면 로그아웃됩니다.
 - 사용자는 자신의 계정 아래에서 일어나는 일에 책임이 있습니다. 다른 누군가가 계정에 접근했다고 생각되면, 제공자 쪽에서 앱의 접근 권한을 해지하고 저희에게 알려 주세요.
 - 저희는 이 약관을 위반하는 계정을 정지하거나 삭제할 수 있습니다.
@@ -46,7 +46,7 @@ XIV Dye Tools는 Final Fantasy XIV를 위한 무료 팬메이드 색상 도구 �
 
 1. Discord에 참여하세요: <https://discord.gg/5VUSKTZCe5>
 2. **#dyetools-issues-and-suggestions**에서 문의하시거나 "Flash Galatine"에게 DM을 보내세요
-3. Discord 사용자 ID와 프리셋 이름을 포함해 주세요
+3. Discord와 XIVAuth 중 어느 것으로 로그인하는지 밝히고, Discord 사용자 ID 또는 프리셋에 표시되는 작성자 이름을 포함하고, 프리셋 이름도 알려 주세요
 
 이의 제기는 7일 이내에 검토됩니다. 계정 기록과 그 아래 제출된 모든 것의 삭제를 원하시면 [`PRIVACY.md`](PRIVACY.ko.md)를 참고하세요.
 

@@ -138,14 +138,16 @@ export class GlamourTool extends BaseComponent {
     const session = CharaSessionService.getSession();
     if (this.emptyNote) this.emptyNote.hidden = !session || hasGlamour(session.resolved);
     const container = this.blockContainer;
-    if (this.block || !container || !session || !hasGlamour(session.resolved)) return;
+    const actionsHost = this.actionsHost;
+    if (this.block || !container || !actionsHost || !session || !hasGlamour(session.resolved))
+      return;
     const token = ++this.blockLoadToken;
     void import('@components/glamour-block')
       .then(({ GlamourBlock }) => {
         if (token !== this.blockLoadToken || this.block) return;
         this.block = new GlamourBlock(container, {
           onSubmitPalette: (dyes, name) => this.submitPalette(dyes, name),
-          actionsHost: this.actionsHost ?? undefined,
+          actionsHost,
         });
         this.block.init();
       })

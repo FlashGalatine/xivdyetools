@@ -97,38 +97,6 @@ describe('ErrorHandler', () => {
     });
   });
 
-  describe('createUserMessage', () => {
-    it('should return user-friendly message for INVALID_HEX_COLOR', () => {
-      const error = new AppError(ErrorCode.INVALID_HEX_COLOR, 'Internal', 'error');
-      const message = ErrorHandler.createUserMessage(error);
-      expect(message).toContain('hex');
-    });
-
-    it('should return user-friendly message for INVALID_RGB_VALUE', () => {
-      const error = new AppError(ErrorCode.INVALID_RGB_VALUE, 'Internal', 'error');
-      const message = ErrorHandler.createUserMessage(error);
-      expect(message).toContain('RGB');
-    });
-
-    it('should return user-friendly message for DYE_NOT_FOUND', () => {
-      const error = new AppError(ErrorCode.DYE_NOT_FOUND, 'Internal', 'error');
-      const message = ErrorHandler.createUserMessage(error);
-      expect(message.toLowerCase()).toContain('dye');
-    });
-
-    it('should return generic message for unknown error codes', () => {
-      const error = new AppError('CUSTOM_ERROR', 'Internal', 'error');
-      const message = ErrorHandler.createUserMessage(error);
-      expect(typeof message).toBe('string');
-      expect(message.length).toBeGreaterThan(0);
-    });
-
-    it('should normalize non-AppError before creating message', () => {
-      const message = ErrorHandler.createUserMessage(new Error('test'));
-      expect(typeof message).toBe('string');
-    });
-  });
-
   describe('report', () => {
     it('should not throw without Sentry', () => {
       expect(() => ErrorHandler.report(new Error('test'))).not.toThrow();

@@ -353,6 +353,69 @@ describe('AccessibilityTool', () => {
   // Basic Rendering Tests
   // ============================================================================
 
+  describe('BUG-017 canonical display options', () => {
+    it('seeds first restored cards and follows broadcasts while retaining metadata restrictions', async () => {
+      const { ConfigController, StorageService } = await import('@services/index');
+      const { ConfigController: RealController } = await import('@services/config-controller');
+      const { DEFAULT_DISPLAY_OPTIONS } = await import('@shared/tool-config-types');
+      const stub = ConfigController.getInstance();
+      RealController.resetInstance();
+      const controller = RealController.getInstance();
+      controller.setConfig('accessibility', {
+        displayOptions: {
+          ...DEFAULT_DISPLAY_OPTIONS,
+          showHex: false,
+          showRgb: false,
+          showCmyk: true,
+          showHue: false,
+          showStain: false,
+          showSpectrum: false,
+          showPrice: true,
+          showAcquisition: true,
+        },
+      });
+      vi.mocked(ConfigController.getInstance).mockReturnValue(controller as never);
+      vi.mocked(StorageService.getItem).mockImplementation((key) =>
+        key === SELECTED_KEY ? ([mockDyes[0].id] as never) : null
+      );
+      try {
+        tool = mount();
+        const card = () => rightPanel.querySelector('v4-result-card');
+        expect(card()).toMatchObject({
+          showHex: false,
+          showRgb: false,
+          showCmyk: true,
+          showHue: false,
+          showStain: false,
+          showConsolidation: false,
+          showPrice: false,
+          showAcquisition: false,
+        });
+        controller.setConfig('accessibility', {
+          displayOptions: {
+            ...controller.getConfig('accessibility').displayOptions,
+            showHex: true,
+            showStain: true,
+            showSpectrum: true,
+          },
+        });
+        expect(card()).toMatchObject({
+          showHex: true,
+          showCmyk: true,
+          showStain: true,
+          showConsolidation: true,
+          showPrice: false,
+          showAcquisition: false,
+        });
+      } finally {
+        tool?.destroy();
+        vi.mocked(ConfigController.getInstance).mockReturnValue(stub);
+        vi.mocked(StorageService.getItem).mockReturnValue(null);
+        RealController.resetInstance();
+      }
+    });
+  });
+
   describe('Basic Rendering', () => {
     it('should render accessibility tool', () => {
       tool = new AccessibilityTool(container, { leftPanel, rightPanel, drawerContent });

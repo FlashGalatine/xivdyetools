@@ -2,7 +2,7 @@
 
 > Ceci est une traduction fournie à titre pratique. La version anglaise fait foi ; en cas de divergence, c'est elle qui prévaut. [Anglais](PRIVACY.md)
 
-**Dernière mise à jour :** 2026-10-12 · Couvre **xivdyetools.app** et **beta.xivdyetools.app**. Le bot
+**Dernière mise à jour :** 2026-10-28 · Couvre **xivdyetools.app** et **beta.xivdyetools.app**. Le bot
 Discord a sa propre politique : [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.fr.md).
 
 XIV Dye Tools fonctionne dans votre navigateur. Les outils de couleur — l'Extracteur de palette,
@@ -35,20 +35,25 @@ en forment la liste complète.
 
 - Un fichier `.chara` (Anamnesis, Ktisis, Brio) est analysé sur votre appareil. Le nom du
   personnage qu'il contient n'est jamais envoyé où que ce soit, et n'est jamais utilisé comme nom
-  de préréglage, nom d'auteur, ou toute autre chose visible par d'autres joueurs. Soumettre
+  de préréglage, nom d'auteur, ou toute autre chose visible par d'autres personnes. Soumettre
   un mirage aux préréglages communautaires exige que vous saisissiez vous-même un nom —
   le champ commence vide exprès, car le nom du personnage et le nom du fichier sont tous deux des
   endroits où les joueurs mettent leur vrai nom.
-- **Une exception, qui reste sur votre appareil.** Si vous enregistrez un mirage ou sa palette
-  dans ce navigateur sans saisir de nom, l'enregistrement se rabat sur le surnom du personnage,
-  puis sur le nom du fichier `.chara`. Ce nom vit dans le stockage de votre navigateur, à côté de
-  vos autres collections enregistrées. Il n'est jamais téléversé, et le chemin communautaire
-  ci-dessus ne le lit jamais. Renommez ou supprimez l'enregistrement, ou effacez les données de
-  votre site, et il disparaît.
+- **Noms enregistrés sur cet appareil.** Les nouvelles sauvegardes de couleurs de personnage dans
+  le Nuancier utilisent un nom générique dans votre langue. Les anciens enregistrements de
+  personnage peuvent conserver le surnom ou le nom de fichier utilisé à l'enregistrement. Si vous
+  enregistrez un mirage ou sa palette sans saisir de nom, cet enregistrement peut toujours reprendre
+  le surnom du personnage, puis le nom du fichier `.chara`. Ces noms restent dans le stockage de
+  votre navigateur ; ils ne sont jamais téléversés et le chemin communautaire ci-dessus ne les
+  lit jamais. L'application n'a aucun contrôle pour renommer ou supprimer un enregistrement
+  individuellement. **Paramètres avancés → Effacer les palettes sauvegardées** supprime toutes les
+  collections de palettes sauvegardées. Pour supprimer les collections de personnage, vous devez
+  effacer les données du site dans votre navigateur ; cela efface aussi vos autres travaux
+  enregistrés localement et votre jeton de connexion.
 - Pour nommer l'équipement dans le Lecteur de mirages, l'application interroge notre API pour
   connaître l'objet derrière chaque emplacement. La requête ne transporte que les **numéros de
-  modèle** de l'équipement provenant du fichier et l'identifiant de son accessoire de visage (une
-  douzaine de petits entiers par fichier) — ni le fichier, ni le nom, ni les couleurs, ni les
+  modèle** de l'équipement provenant du fichier et l'identifiant de son accessoire de visage (jusqu’à
+  27 petits entiers et 12 noms d’emplacement fixes par fichier) — ni le fichier, ni le nom, ni les couleurs, ni les
   teintures. Notre API recherche ces numéros dans [XIVAPI](https://xivapi.com/), un service
   communautaire de données du jeu, qui reçoit ces numéros et rien vous concernant. Les noms des
   objets, la façon d'obtenir chaque objet et les icônes des objets reviennent depuis le même hôte
@@ -68,7 +73,11 @@ en efface une partie :
   valeurs par défaut. Cela ne supprime pas votre travail enregistré.
 - **Paramètres avancés → Effacer les favoris** supprime vos teintures favorites.
 - **Paramètres avancés → Effacer les palettes sauvegardées** supprime d'un seul coup toutes vos palettes
-  enregistrées. L'application n'a aucun contrôle qui supprime une seule palette.
+  sauvegardées. L'application n'a aucun contrôle qui supprime une seule palette.
+- Les **préréglages communautaires enregistrés** dans l’outil Préréglages sont distincts.
+  « Effacer les palettes sauvegardées » ne les supprime pas. Utilisez le bouton
+  d’enregistrement de chaque préréglage pour retirer sa copie enregistrée, ou effacez les
+  données de site de votre navigateur pour les supprimer tous.
 - Les échanges que vous enregistrez dans Suggestions Budget et les couleurs de personnage que vous
   enregistrez dans le Nuancier n'ont aucun contrôle de suppression dans l'application ; les contrôles
   de données de site de votre navigateur les effacent.
@@ -95,8 +104,9 @@ n'autorise rien d'autre) ainsi qu'avec les tiers nommés ci-dessous :
    [Universalis](https://universalis.app).
 2. **Noms et icônes d'équipement pour les imports `.chara`** — `data.xivdyetools.app` (voir
    ci-dessus).
-3. **Préréglages communautaires** (`api.xivdyetools.app`) : la navigation n'envoie rien
-   vous concernant. Se connecter via `auth.xivdyetools.app` avec Discord ou XIVAuth crée
+3. **Préréglages communautaires** (`api.xivdyetools.app`) : la navigation sans connexion n’envoie aucune information de compte. Lorsque vous êtes connecté,
+   ouvrir un préréglage envoie votre jeton de connexion pour vérifier si vous avez déjà voté.
+   Cette vérification ne conserve aucune trace de votre consultation. Se connecter via `auth.xivdyetools.app` avec Discord ou XIVAuth crée
    immédiatement un enregistrement de compte, que vous alliez ou non ensuite soumettre ou voter.
    Avec Discord, l'enregistrement contient votre identifiant utilisateur Discord et votre nom
    d'affichage (votre nom d'utilisateur si vous n'avez pas de nom d'affichage). Avec XIVAuth,
@@ -114,15 +124,12 @@ n'autorise rien d'autre) ainsi qu'avec les tiers nommés ci-dessous :
    comme votre vote pour lui ; si un préréglage publié a déjà les mêmes teintures, votre
    soumission devient un vote pour ce préréglage à la place. Un préréglage contient ce que
    vous saisissez dans le formulaire — et, si notre vérification automatique retient pour examen le
-   nouveau nom ou la nouvelle description d'une modification, la version antérieure à la première
+   nouveau nom, la description, les étiquettes ou le lien d'exemple d'une modification apportée à un préréglage déjà publié, la version antérieure à la première
    modification de ce type, conservée jusqu'à ce qu'un modérateur la restaure ou que le
    préréglage soit supprimé — plus l'image d'aperçu facultative décrite sous Images ci-dessus. Pour
    supprimer une image d'aperçu, utilisez le formulaire de modification du préréglage ;
    supprimer un préréglage depuis **Mes soumissions** supprime aussi son image d'aperçu.
-   Lorsque vous soumettez ou modifiez un préréglage, son nom et sa description peuvent
-   aussi être envoyés à la [Perspective API](https://perspectiveapi.com/) de Google pour un score de
-   modération (facultatif — modération de contenu uniquement) ; la requête indique à Google de ne
-   pas les stocker (`doNotStore`), et rien d'autre — aucune identité de compte — n'y est envoyé. Ce
+   Lorsque vous soumettez ou modifiez un préréglage, son nom, sa description, ses étiquettes et le texte du chemin du lien d'exemple peuvent être envoyés à la [Perspective API](https://perspectiveapi.com/) de Google pour un score de modération (facultatif — modération de contenu uniquement). La requête indique à Google de ne pas stocker ces textes (`doNotStore`). Les paramètres de requête, fragments, identifiants de connexion et noms d'hôte de l'URL sont exclus du texte du lien. Nous ne joignons aucun identifiant de compte au texte et n'accédons jamais au lien d'exemple fourni. Ce
    que nous conservons d'autre sur vos préréglages, et pour combien de temps, figure sous
    *Préréglages communautaires : ce que nous conservons* ci-dessous ; la façon de le
    supprimer figure sous *Supprimer vos données*. Les images d'aperçu des préréglages sont
@@ -169,11 +176,7 @@ connexion (`auth.xivdyetools.app`), le reste par notre service de préréglages
 - **Votre enregistrement de compte, vos préréglages et vos votes** (élément 3 ci-dessus)
   sont conservés jusqu'à ce que vous les supprimiez ou nous demandiez de les supprimer (voir
   *Supprimer vos données*).
-- **Limites quotidiennes.** Chaque préréglage que vous soumettez, chaque modification du nom
-  ou de la description d'un préréglage que vous envoyez, et chaque image d'aperçu que vous
-  téléversez est compté afin que les limites quotidiennes puissent être appliquées. Le compteur
-  consigne l'identifiant de votre compte, le type d'action, le préréglage et l'heure, et il
-  est supprimé après **30 jours** ; supprimer le préréglage ne supprime pas le compteur plus tôt.
+- **Limites quotidiennes.** Les limites quotidiennes comptent les tentatives de soumission qui atteignent la modération, les changements du nom ou de la description d'un préréglage, et les tentatives de traitement des images d'aperçu. Les changements d'étiquettes ou de lien d'exemple ne comptent comme modifications que lorsque les vérifications étendues sont activées ; les étiquettes et le texte du chemin du lien ne peuvent être envoyés pour modération que dans ce cas. Les champs textuels inchangés ne consomment pas de place de modification. Les échecs de décodage d'image et les délais dépassés restent comptés. Pour les tentatives de traitement d'image d'aperçu uniquement, les rejets de validation précoce et les erreurs de stockage d'image ou de base de données ne sont pas décomptés du quota. Si le résultat d'une écriture en base de données ne peut pas être confirmé, la tentative reste comptée. Une tentative de soumission reste comptée dès le début de la modération, même si aucun préréglage n'est créé. Le compteur consigne l'identifiant de votre compte, le type d'action, le préréglage et l'heure, et il est supprimé après **30 jours** ; supprimer le préréglage ne supprime pas ce compteur plus tôt.
 - **Messages sur notre serveur Discord.** Nos modérateurs travaillent dans deux salons privés de
   notre serveur Discord. Le salon de modération reçoit chaque préréglage, modification ou
   image d'aperçu qui nécessite une vérification : le message montre le préréglage (par
@@ -217,6 +220,16 @@ connexion (`auth.xivdyetools.app`), le reste par notre service de préréglages
 
 Le bot Discord conserve les mêmes enregistrements pour les préréglages soumis par son
 intermédiaire ; voir [sa politique](../discord-worker/PRIVACY_POLICY.fr.md).
+
+### Vérification des identités enregistrées et portée des bannissements
+
+Notre service de connexion conserve une révision de session avec votre compte. Les services autorisés peuvent récupérer en privé votre identifiant de compte interne enregistré, l'identifiant utilisateur Discord associé s'il existe et la révision, ou vérifier qu'une session correspond toujours aux associations de connexion enregistrées. Cette recherche ne renvoie ni identifiant XIVAuth, ni nom, ni liste de personnages, ni jeton du fournisseur. Les associations enregistrées ne constituent pas une nouvelle vérification auprès du fournisseur externe. Une modification qui ne peut pas être effectuée en toute sécurité est refusée ; le déplacement des presets, votes et compteurs de limites quotidiennes exige une association acceptée en toute sécurité et ne peut pas contourner un bannissement actif.
+
+Lorsque la modération des identités associées est activée, un modérateur autorisé examine en privé les identifiants exacts avant de créer ou d'étendre un bannissement, ou de lever un bannissement précis. Un bannissement peut couvrir plusieurs identifiants de compte internes et identifiants utilisateur Discord confirmés pour ce bannissement ou conservés lors d'un changement d'association. Les restrictions existantes subsistent après la dissociation jusqu'à leur levée après examen par la modération ; les bannissements ultérieurs ne s'étendent pas automatiquement aux identités précédemment dissociées. Ces associations servent uniquement à appliquer ce bannissement et n'accordent aucun accès au compte. Elles suivent la conservation du dossier de bannissement : suppression 90 jours après sa levée.
+
+L'examen des identifiants utilise des réponses Discord éphémères réservées aux modérateurs, distinctes des publications ordinaires dans les salons décrites dans cette politique. Nous ne promettons pas de délai de suppression de ces réponses par Discord. Notre base de presets conserve brièvement l'identifiant du modérateur agissant, les identifiants et révisions examinés, le bannissement et l'action sélectionnés, l'empreinte de la proposition, un nonce, le résultat et les échéances. Les confirmations ne contiennent aucun nom, jeton du fournisseur ou motif en texte libre. Elles expirent sous 15 minutes et deviennent admissibles à des nettoyages quotidiens et déclenchés par les requêtes, effectués en lots limités ; leur suppression peut attendre un passage réussi.
+
+Lorsque la récupération des associations de compte interrompues est activée, notre service de connexion conserve les identifiants fournisseur/compte concernés, les associations et révisions attendues, la modification prévue, l'état et les échéances ; le service de presets conserve un reçu d'opération correspondant. Aucun de ces enregistrements de récupération ne contient de nom, de jeton du fournisseur, de liste de personnages ou de motif en texte libre. L'échéance de l'opération est d'au plus 15 minutes. Les enregistrements terminés ou refusés deviennent admissibles au nettoyage 24 heures après le plus tardif de l'échéance ou de l'accusé de réception ; une annulation dont l'absence de reçu distant est confirmée utilise sa date de fin au lieu de l'accusé de réception. Le nettoyage est effectué au mieux. Les modifications appliquées ou au résultat inconnu qui restent non résolues demeurent en attente d'examen par l'opérateur après l'échéance, y compris avant d'effacer leurs enregistrements de récupération dans le cadre d'une demande de suppression.
 
 ## Analyses d'utilisation (avec consentement)
 

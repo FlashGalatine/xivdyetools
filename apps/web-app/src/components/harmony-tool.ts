@@ -209,11 +209,11 @@ export class HarmonyTool extends BaseComponent {
     // Initialize MarketBoardService (shared price cache)
     this.marketBoardService = MarketBoardService.getInstance();
 
-    // Load persisted state
-    this.selectedHarmonyType =
-      StorageService.getItem<string>(STORAGE_KEYS.harmonyType) ?? 'complementary';
-    this.companionDyesCount =
-      StorageService.getItem<number>(STORAGE_KEYS.companionCount) ?? COMPANION_DYES_DEFAULT;
+    // Canonical settings seed the first rail and results. Subscriptions do
+    // not replay saved settings, and the old per-tool keys can disagree.
+    const harmonyConfig = ConfigController.getInstance().getConfig('harmony');
+    this.selectedHarmonyType = harmonyConfig.harmonyType ?? 'complementary';
+    this.companionDyesCount = harmonyConfig.companionDyesCount ?? COMPANION_DYES_DEFAULT;
     // Load persisted selected dye
     const savedDyeId = StorageService.getItem<number>(STORAGE_KEYS.selectedDyeId);
     if (savedDyeId !== null) {
@@ -369,13 +369,28 @@ export class HarmonyTool extends BaseComponent {
         const filtersChanged =
           JSON.stringify(this.dyeFiltersConfig) !== JSON.stringify(newDyeFilters);
 
+        const typeChanged =
+          config.harmonyType !== undefined && config.harmonyType !== this.selectedHarmonyType;
         const algorithmChanged =
+          typeChanged ||
           this.usePerceptualMatching !== config.strictMatching ||
           (config.matchingMethod !== undefined && this.matchingMethod !== config.matchingMethod) ||
           this.preventDuplicates !== (config.preventDuplicates ?? true) ||
           (config.companionDyesCount !== undefined &&
             this.companionDyesCount !== config.companionDyesCount) ||
           (config.wheel !== undefined && this.wheel !== config.wheel);
+
+        if (typeChanged) {
+          this.selectedHarmonyType = config.harmonyType;
+          StorageService.setItem(STORAGE_KEYS.harmonyType, config.harmonyType);
+          this.swappedDyes.clear();
+          this.updateHarmonyTypeButtonStyles(this.harmonyTypesContainer, this.selectedHarmonyType);
+          this.updateHarmonyTypeButtonStyles(
+            this.drawerHarmonyTypesContainer,
+            this.selectedHarmonyType
+          );
+          this.renderTypeRail();
+        }
 
         // The companion count lives in the sidebar now — the tool's own
         // left-panel slider was orphaned when config moved behind the gear.

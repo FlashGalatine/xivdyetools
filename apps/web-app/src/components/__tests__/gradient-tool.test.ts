@@ -207,6 +207,8 @@ vi.mock('@services/index', () => ({
   },
 }));
 
+vi.mock('@components/export-sheet', () => ({ openExportSheet: vi.fn() }));
+
 vi.mock('@shared/logger', () => ({
   logger: {
     info: vi.fn(),
@@ -260,6 +262,202 @@ describe('GradientTool', () => {
   // ============================================================================
   // Basic Rendering Tests
   // ============================================================================
+
+  describe('BUG-022 endpoint arming', () => {
+    it('disables End with the Start prompt until Start exists, then fills the distinct End pick', () => {
+      tool = mount();
+      const start = () =>
+        panel.querySelector<HTMLButtonElement>('[data-testid="gradient-start-node"]')!;
+      const end = () =>
+        panel.querySelector<HTMLButtonElement>('[data-testid="gradient-end-node"]')!;
+      expect(end().disabled).toBe(true);
+      expect(end().title).toBe('gradient.clickToSelectStart');
+      end().click();
+      tool.selectDye(mockDyes[0]);
+      expect(start().textContent).toContain(`Dye-${mockDyes[0].itemID}`);
+      expect(end().disabled).toBe(false);
+      end().click();
+      tool.selectDye(mockDyes[1]);
+      expect(start().textContent).toContain(`Dye-${mockDyes[0].itemID}`);
+      expect(end().textContent).toContain(`Dye-${mockDyes[1].itemID}`);
+      expect(shareParams()!.shareParams).toMatchObject({
+        start: mockDyes[0].stainID,
+        end: mockDyes[1].stainID,
+      });
+    });
+  });
+
+  describe('BUG-020 completed ramp prices', () => {
+    const service = () => MarketBoardService.getInstance();
+
+    beforeEach(() => {
+      vi.mocked(StorageService.getItem).mockReturnValue(null);
+      vi.mocked(service().getShowPrices).mockReturnValue(true);
+      vi.mocked(service().shouldFetchPrice).mockReturnValue(true);
+      vi.mocked(dyeService.findClosestDye).mockReturnValue(mockDyes[2]);
+    });
+
+    afterEach(() => {
+      vi.mocked(service().getShowPrices).mockReturnValue(false);
+      vi.mocked(service().shouldFetchPrice).mockReturnValue(false);
+      vi.mocked(service().fetchPricesForDyes).mockResolvedValue(new Map());
+      vi.mocked(service().getPricesView).mockReturnValue(new Map());
+      vi.mocked(StorageService.getItem).mockReturnValue(null);
+      window.history.replaceState({}, '', '/');
+    });
+
+    it.each(['direct', 'restore'] as const)(
+      'fetches actual %s ramp dyes and paints prices after completion',
+      async (mode) => {
+        let finish!: () => void;
+        const pending = new Promise<void>((resolve) => {
+          finish = resolve;
+        });
+        vi.mocked(service().fetchPricesForDyes).mockImplementation(async () => {
+          await pending;
+          const prices = new Map(
+            mockDyes.map((d) => [
+              d.itemID,
+              {
+                itemID: d.itemID,
+                currentMinPrice: 456,
+                currentAverage: 500,
+                currentMaxPrice: 600,
+                lastUpdate: 1000,
+              },
+            ])
+          );
+          vi.mocked(service().getPricesView).mockReturnValue(prices as never);
+          return prices as never;
+        });
+        try {
+          if (mode === 'restore') {
+            vi.mocked(StorageService.getItem).mockImplementation((key) =>
+              key === 'v3_mixer_selected_dyes' ? ([mockDyes[0].id, mockDyes[1].id] as never) : null
+            );
+          }
+          tool = mount();
+          if (mode === 'direct') {
+            tool.selectDye(mockDyes[0]);
+            tool.selectDye(mockDyes[1]);
+          }
+          expect(stepCards().length).toBeGreaterThan(2);
+          const displayed = [...new Set(stepCards().map((card) => card.data.dye.id))].sort();
+          expect(service().fetchPricesForDyes).toHaveBeenCalledTimes(1);
+          expect(
+            vi
+              .mocked(service().fetchPricesForDyes)
+              .mock.calls[0][0].map((d) => d.id)
+              .sort()
+          ).toEqual(displayed);
+          expect(stepCards()[0]).toMatchObject({ data: { price: undefined } });
+          finish();
+          await pending;
+          await flush();
+          for (const card of stepCards()) expect(card).toMatchObject({ data: { price: 456 } });
+        } finally {
+          finish();
+          await pending;
+          await flush();
+        }
+      }
+    );
+
+    it.each(['pin', 'clear'] as const)(
+      'prices dyes newly displayed by the actual %s control',
+      async (action) => {
+        tool = mount();
+        tool.selectDye(mockDyes[0]);
+        tool.selectDye(mockDyes[1]);
+        await flush();
+        const pinButton = () => panel.querySelector<HTMLButtonElement>('.v5-grad-pin')!;
+        if (action === 'clear') {
+          pinButton().click();
+          await flush();
+        }
+        vi.mocked(service().fetchPricesForDyes).mockClear();
+        vi.mocked(dyeService.findClosestDye).mockReturnValue(mockDyes[3]);
+        let finish!: () => void;
+        const pending = new Promise<void>((resolve) => {
+          finish = resolve;
+        });
+        vi.mocked(service().fetchPricesForDyes).mockImplementation(async () => {
+          await pending;
+          const prices = new Map(
+            mockDyes.map((d) => [
+              d.itemID,
+              {
+                itemID: d.itemID,
+                currentMinPrice: 789,
+                currentAverage: 800,
+                currentMaxPrice: 900,
+                lastUpdate: 1000,
+              },
+            ])
+          );
+          vi.mocked(service().getPricesView).mockReturnValue(prices as never);
+          return prices as never;
+        });
+        try {
+          if (action === 'pin') pinButton().click();
+          else
+            [...panel.querySelectorAll('button')]
+              .find((button) => button.textContent === 'gradient.clearPins')!
+              .click();
+          expect(stepCards().map((card) => card.data.dye.id)).toContain(mockDyes[3].id);
+          expect(service().fetchPricesForDyes).toHaveBeenCalledTimes(1);
+          const displayed = [...new Set(stepCards().map((card) => card.data.dye.id))].sort();
+          expect(
+            vi
+              .mocked(service().fetchPricesForDyes)
+              .mock.calls[0][0].map((d) => d.id)
+              .sort()
+          ).toEqual(displayed);
+          finish();
+          await pending;
+          await flush();
+          for (const card of stepCards()) expect(card).toMatchObject({ data: { price: 789 } });
+        } finally {
+          finish();
+          await pending;
+          await flush();
+        }
+      }
+    );
+
+    it('fetches rematched and pinned dyes while no-op and prices-off changes fetch nothing', async () => {
+      tool = mount();
+      tool.selectDye(mockDyes[0]);
+      tool.selectDye(mockDyes[1]);
+      await flush();
+      vi.mocked(service().fetchPricesForDyes).mockClear();
+      vi.mocked(dyeService.findClosestDye).mockReturnValue(mockDyes[3]);
+      tool.setConfig({ matchingMethod: 'oklab' });
+      await flush();
+      expect(service().fetchPricesForDyes).toHaveBeenCalledTimes(1);
+      expect(vi.mocked(service().fetchPricesForDyes).mock.calls[0][0].map((d) => d.id)).toContain(
+        mockDyes[3].id
+      );
+      pinsOf(tool).set(2, mockDyes[4]);
+      tool.setConfig({ interpolation: 'lab' });
+      await flush();
+      expect(
+        vi
+          .mocked(service().fetchPricesForDyes)
+          .mock.calls.at(-1)![0]
+          .map((d) => d.id)
+      ).toContain(mockDyes[4].id);
+      vi.mocked(service().fetchPricesForDyes).mockClear();
+      tool.setConfig({ interpolation: 'lab' });
+      tool.setConfig({});
+      tool.selectDye(mockDyes[0]);
+      expect(service().fetchPricesForDyes).not.toHaveBeenCalled();
+      vi.mocked(service().getShowPrices).mockReturnValue(false);
+      tool.setConfig({ matchingMethod: 'ciede2000' });
+      await flush();
+      expect(service().fetchPricesForDyes).not.toHaveBeenCalled();
+    });
+  });
 
   describe('Basic Rendering', () => {
     it('renders the 4C workspace into the one panel v4-layout hands it', () => {
@@ -510,6 +708,21 @@ describe('GradientTool', () => {
         (_hex: string, options?: { excludeIds?: number[] }) =>
           mockDyes.find((d) => !options?.excludeIds?.includes(d.id)) ?? null
       );
+
+  it('exports the selected OKLAB method from the actual export action (BUG-013)', async () => {
+    const { openExportSheet } = await import('@components/export-sheet');
+    tool = await mountWithRamp();
+    tool.setConfig({ matchingMethod: 'oklab' });
+    await flush();
+    const button = panel.querySelector<HTMLButtonElement>('[data-testid="gradient-export"]')!;
+    expect(button.disabled).toBe(false);
+    button.click();
+    expect(vi.mocked(openExportSheet).mock.calls.at(-1)?.[0]).toMatchObject({
+      tool: 'gradient',
+      matchingMethod: 'oklab',
+      entries: expect.any(Array),
+    });
+  });
 
   describe('selectDye — the two endpoints', () => {
     it('fills the start endpoint first', async () => {

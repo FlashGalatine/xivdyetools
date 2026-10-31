@@ -14,6 +14,14 @@ vi.mock('../auth-service', () => ({
   authService: {
     isAuthenticated: vi.fn(() => false),
     getAuthHeaders: vi.fn(() => ({})),
+    getState: vi.fn(() => ({
+      isAuthenticated: false,
+      user: null,
+      token: null,
+      provider: null,
+      expiresAt: null,
+    })),
+    subscribe: vi.fn(() => () => {}),
   },
 }));
 
@@ -35,6 +43,144 @@ describe('CommunityPresetService Integration Tests', () => {
 
   afterEach(() => {
     service.clearCache();
+  });
+
+  describe('vote checks crossing invalidation (BUG-014)', () => {
+    afterEach(() => vi.restoreAllMocks());
+
+    function notifySession(token: string | null, id = 'author-1'): void {
+      const state = {
+        isAuthenticated: token !== null,
+        token,
+        user: token ? { id } : null,
+        provider: token ? 'discord' : null,
+        expiresAt: null,
+      } as ReturnType<typeof authService.getState>;
+      vi.mocked(authService.getState).mockReturnValue(state);
+      vi.mocked(authService.isAuthenticated).mockReturnValue(state.isAuthenticated);
+      vi.mocked(authService.getAuthHeaders).mockReturnValue(
+        token ? { Authorization: `Bearer ${token}` } : {}
+      );
+      vi.mocked(authService.subscribe).mock.calls.at(-1)?.[0](state);
+    }
+
+    it.each(['POST', 'DELETE', 'clear', 'invalidate', 'replacement', 'logout-login'])(
+      'fetches fresh vote state after an old check lands across %s',
+      async (boundary) => {
+        notifySession('old-session');
+        let resolveOld!: (response: Response) => void;
+        let checks = 0;
+        vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, options) => {
+          if (options?.method === 'POST' || options?.method === 'DELETE') {
+            return Response.json({ success: true, new_vote_count: 12 });
+          }
+          checks++;
+          if (checks === 1)
+            return new Promise<Response>((resolve) => {
+              resolveOld = resolve;
+            });
+          return Response.json({ has_voted: boundary !== 'DELETE', vote_count: 12 });
+        });
+        const old = service.hasVoted('race');
+        if (boundary === 'POST') await service.voteForPreset('race');
+        if (boundary === 'DELETE') await service.removeVote('race');
+        if (boundary === 'clear') service.clearCache();
+        if (boundary === 'invalidate') service.invalidatePresets('race');
+        if (boundary === 'replacement') notifySession('new-session', 'author-2');
+        if (boundary === 'logout-login') {
+          notifySession(null);
+          notifySession('old-session');
+        }
+        resolveOld(
+          Response.json({
+            has_voted: boundary === 'DELETE',
+            vote_count: boundary === 'DELETE' ? 13 : 11,
+          })
+        );
+        await old;
+
+        expect(await service.hasVoted('race')).toEqual({
+          has_voted: boundary !== 'DELETE',
+          vote_count: 12,
+        });
+        expect(checks).toBe(2);
+      }
+    );
+
+    it('keeps the cached check for unchanged session notifications and clears it for a replacement token', async () => {
+      notifySession('session-a');
+      vi.mocked(authService.getAuthHeaders).mockClear();
+      const fetch = vi
+        .spyOn(globalThis, 'fetch')
+        .mockResolvedValueOnce(Response.json({ has_voted: false, vote_count: 4 }))
+        .mockResolvedValueOnce(Response.json({ has_voted: true, vote_count: 5 }));
+      await service.hasVoted('same');
+      notifySession('session-a');
+      expect(await service.hasVoted('same')).toEqual({ has_voted: false, vote_count: 4 });
+      expect(fetch).toHaveBeenCalledTimes(1);
+      expect(authService.getAuthHeaders).toHaveBeenCalledTimes(1);
+      notifySession('session-b');
+      expect(await service.hasVoted('same')).toEqual({ has_voted: true, vote_count: 5 });
+      expect(fetch).toHaveBeenCalledTimes(2);
+      expect(authService.getAuthHeaders).toHaveBeenCalledTimes(2);
+    });
+
+    it('rejects a check crossing logout after silent persisted restore (synthetic cache probe)', async () => {
+      notifySession(null);
+      // Construct before initialize() restores persisted login. initialize's
+      // loadFromStorage path does not notify the already-subscribed service.
+      // @ts-expect-error - reset the private singleton as in beforeEach
+      CommunityPresetService.instance = null;
+      service = CommunityPresetService.getInstance();
+      const persistedState = {
+        isAuthenticated: true,
+        token: 'persisted-session',
+        user: { id: 'author-1' },
+        provider: 'discord',
+        expiresAt: null,
+      } as ReturnType<typeof authService.getState>;
+      function restoreWithoutNotification(): void {
+        vi.mocked(authService.getState).mockReturnValue(persistedState);
+        vi.mocked(authService.isAuthenticated).mockReturnValue(true);
+        vi.mocked(authService.getAuthHeaders).mockReturnValue({
+          Authorization: 'Bearer persisted-session',
+        });
+      }
+      restoreWithoutNotification();
+      let resolveOld!: (response: Response) => void;
+      const fetch = vi
+        .spyOn(globalThis, 'fetch')
+        .mockImplementationOnce(
+          () =>
+            new Promise<Response>((resolve) => {
+              resolveOld = resolve;
+            })
+        )
+        .mockResolvedValueOnce(Response.json({ has_voted: false, vote_count: 7 }));
+      vi.mocked(authService.getAuthHeaders).mockClear();
+      const pending = service.hasVoted('persisted-race');
+      expect(fetch).toHaveBeenCalledTimes(1);
+      expect(authService.getAuthHeaders).toHaveBeenCalledTimes(1);
+
+      notifySession(null);
+      resolveOld(Response.json({ has_voted: true, vote_count: 8 }));
+      await pending;
+      expect(await service.hasVoted('persisted-race')).toEqual({ has_voted: false });
+      expect(fetch).toHaveBeenCalledTimes(1);
+      expect(authService.getAuthHeaders).toHaveBeenCalledTimes(1);
+
+      // Synthetic observation only: a normal later login notification would
+      // clear the cache itself. A second silent same-session restore lets the
+      // public next fetch reveal whether the logout-crossing answer was cached;
+      // it is not a claim of a production cross-login incorrect result.
+      restoreWithoutNotification();
+      expect(await service.hasVoted('persisted-race')).toEqual({
+        has_voted: false,
+        vote_count: 7,
+      });
+      expect(fetch).toHaveBeenCalledTimes(2);
+      expect(authService.getAuthHeaders).toHaveBeenCalledTimes(2);
+    });
   });
 
   // ============================================
