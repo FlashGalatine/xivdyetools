@@ -1,0 +1,2455 @@
+{
+  "schemaVersion": 1,
+  "preparedLocalDate": "2026-10-30",
+  "timezone": "America/New_York",
+  "scope": "Preparation only: source cuts, local gates and local native proofs. No merge, package publication, deployment, workflow dispatch, remote database access, hosted Image request, command registration or announcement occurred.",
+  "productionActivation": "HOLD",
+  "published": false,
+  "deployed": false,
+  "main": "13c386e5983fe58ff17ac08fb5712239feb2e696",
+  "controls": {
+    "checkedAtUtc": "2026-10-30T13:03:06.354Z",
+    "mainProtection": {
+      "ok": true,
+      "requiredStatusChecks": {
+        "strict": true,
+        "contexts": [
+          "Lint, Type-check, Test, Build",
+          "Security audit (production dependencies)",
+          "E2E (Playwright, chromium)",
+          "Secret scan (gitleaks)"
+        ]
+      },
+      "enforceAdmins": true,
+      "requiredReviews": null,
+      "allowForcePushes": false,
+      "allowDeletions": false
+    },
+    "productionEnvironment": {
+      "ok": true,
+      "canAdminsBypass": false,
+      "protectionRules": [
+        {
+          "type": "branch_policy",
+          "reviewers": []
+        },
+        {
+          "type": "required_reviewers",
+          "preventSelfReview": false,
+          "reviewers": [
+            "FlashGalatine"
+          ]
+        }
+      ],
+      "deploymentBranchPolicy": {
+        "protected_branches": false,
+        "custom_branch_policies": true
+      }
+    },
+    "productionBranchPolicies": [
+      {
+        "name": "main",
+        "type": "branch"
+      }
+    ],
+    "npm": {
+      "types": {
+        "latest": "3.3.0",
+        "pending": "3.3.0",
+        "pendingStatus": "PUBLISHED"
+      },
+      "logger": {
+        "latest": "2.3.0",
+        "pending": "2.4.0",
+        "pendingStatus": "ABSENT"
+      },
+      "auth": {
+        "latest": "2.0.2",
+        "pending": "3.0.0",
+        "pendingStatus": "ABSENT"
+      },
+      "worker-kit": {
+        "latest": "1.5.0",
+        "pending": "1.6.0",
+        "pendingStatus": "ABSENT"
+      },
+      "core": {
+        "latest": "5.15.0",
+        "pending": "5.16.0",
+        "pendingStatus": "ABSENT",
+        "major": "6.0.0",
+        "majorStatus": "ABSENT"
+      },
+      "svg": {
+        "latest": "4.4.0",
+        "pending": "4.4.1",
+        "pendingStatus": "ABSENT",
+        "major": "4.4.2",
+        "majorStatus": "ABSENT"
+      },
+      "bot-logic": {
+        "latest": "4.11.0",
+        "pending": "4.12.0",
+        "pendingStatus": "ABSENT",
+        "major": "5.0.0",
+        "majorStatus": "ABSENT"
+      }
+    },
+    "deployLikeRunsOnReleaseCutRefs": 0,
+    "pullRequestsInspected": 38,
+    "pullRequests": [
+      {
+        "number": 365,
+        "state": "OPEN",
+        "draft": true,
+        "headSha": "cea587fa276b502a246f6c5fe0d1cfe9a03ef55f",
+        "checksGreen": true
+      },
+      {
+        "number": 367,
+        "state": "OPEN",
+        "draft": true,
+        "headSha": "c7cc39817199636c4a5cecdce5784aa7f7b95598",
+        "checksGreen": true
+      },
+      {
+        "number": 369,
+        "state": "OPEN",
+        "draft": true,
+        "headSha": "9e6341ddc9cf738045b96e846eff0615c1cb2118",
+        "checksGreen": true
+      },
+      {
+        "number": 370,
+        "state": "OPEN",
+        "draft": true,
+        "headSha": "c2410fa919d26bed9ce50a33efe111ef6cfdc2dc",
+        "checksGreen": true
+      },
+      {
+        "number": 371,
+        "state": "OPEN",
+        "draft": true,
+        "headSha": "9958553e11a3ebaeea07c6d9b63645bc4f6aa85a",
+        "checksGreen": true
+      },
+      {
+        "number": 373,
+        "state": "OPEN",
+        "draft": true,
+        "headSha": "0fed2b3744c2a52ac944d038c5e0a4eded183dbd",
+        "checksGreen": true
+      },
+      {
+        "number": 374,
+        "state": "OPEN",
+        "draft": true,
+        "headSha": "489b9c5e9282c1e2f5af076d901cccb378447258",
+        "checksGreen": true
+      },
+      {
+        "number": 375,
+        "state": "OPEN",
+        "draft": true,
+        "headSha": "f42786596cf154bf8ae5d9d43fbb35c258ba106b",
+        "checksGreen": true
+      },
+      {
+        "number": 376,
+        "state": "OPEN",
+        "draft": true,
+        "headSha": "c2d6231190d6e91cb613ba2f597386eba5fd84c8",
+        "checksGreen": true
+      },
+      {
+        "number": 377,
+        "state": "OPEN",
+        "draft": true,
+        "headSha": "ebba1baaa08a4d78b3c55baf7261273cd1fe12af",
+        "checksGreen": true
+      },
+      {
+        "number": 378,
+        "state": "OPEN",
+        "draft": true,
+        "headSha": "cb728e14ebd0d2bfbdabf9cda830b37e02dced87",
+        "checksGreen": true
+      },
+      {
+        "number": 379,
+        "state": "OPEN",
+        "draft": true,
+        "headSha": "ca352abc7c7faa8089c78d2244857733cd6ebfb1",
+        "checksGreen": true
+      },
+      {
+        "number": 380,
+        "state": "OPEN",
+        "draft": true,
+        "headSha": "47e297d1893f38029f62b369b015ead85e5ede30",
+        "checksGreen": true
+      },
+      {
+        "number": 381,
+        "state": "OPEN",
+        "draft": true,
+        "headSha": "f54c8d832ba2672398b9845f7e708dd7a656cffc",
+        "checksGreen": true
+      },
+      {
+        "number": 382,
+        "state": "OPEN",
+        "draft": true,
+        "headSha": "c0985720f9e785cfcfe60b95960f6bcaccb7455d",
+        "checksGreen": true
+      },
+      {
+        "number": 383,
+        "state": "OPEN",
+        "draft": true,
+        "headSha": "0e5c660bda767859279f5157e14d46b4442b7ac9",
+        "checksGreen": true
+      },
+      {
+        "number": 384,
+        "state": "OPEN",
+        "draft": true,
+        "headSha": "d81fece2ed6cafee5deb496444f23ac6076f13d3",
+        "checksGreen": true
+      },
+      {
+        "number": 385,
+        "state": "OPEN",
+        "draft": true,
+        "headSha": "99a7ae4dd7dabf8a69ec182429d9892c170bee2b",
+        "checksGreen": true
+      },
+      {
+        "number": 386,
+        "state": "OPEN",
+        "draft": true,
+        "headSha": "fe087b42348ba4e2d8918fc973f8f4f43f193571",
+        "checksGreen": true
+      },
+      {
+        "number": 387,
+        "state": "OPEN",
+        "draft": true,
+        "headSha": "315f40075dae94e3f171ae30bc577b11f53c3a47",
+        "checksGreen": true
+      },
+      {
+        "number": 388,
+        "state": "OPEN",
+        "draft": true,
+        "headSha": "2b95c0df20b0585d405f2684b10b982d61a48bf6",
+        "checksGreen": true
+      },
+      {
+        "number": 390,
+        "state": "OPEN",
+        "draft": false,
+        "headSha": "b1f9010568bda4537688556dfa3efedd0642e116",
+        "checksGreen": true
+      },
+      {
+        "number": 391,
+        "state": "OPEN",
+        "draft": true,
+        "headSha": "cf54ecfd6670bc3a30dbe7d74d49e2969b9abf69",
+        "checksGreen": true
+      },
+      {
+        "number": 392,
+        "state": "OPEN",
+        "draft": true,
+        "headSha": "ebeb016e8437e714ddf706aacbabdce4636cf406",
+        "checksGreen": true
+      },
+      {
+        "number": 393,
+        "state": "OPEN",
+        "draft": true,
+        "headSha": "e0e8c3eccf44f66ca054fa21e17b1ddb3b5502da",
+        "checksGreen": true
+      },
+      {
+        "number": 394,
+        "state": "OPEN",
+        "draft": true,
+        "headSha": "7215c3660ade7b2adb1a0c53f6129034390a50c0",
+        "checksGreen": true
+      },
+      {
+        "number": 395,
+        "state": "OPEN",
+        "draft": true,
+        "headSha": "ac6fd77d79e8d0e5af98845f06a72772fbb95102",
+        "checksGreen": true
+      },
+      {
+        "number": 396,
+        "state": "OPEN",
+        "draft": true,
+        "headSha": "4ed3ad35a28b3c618aad664deba17512771711f6",
+        "checksGreen": true
+      },
+      {
+        "number": 397,
+        "state": "OPEN",
+        "draft": true,
+        "headSha": "f95dd83798a37aa943223b6c0b31d707054a2211",
+        "checksGreen": true
+      },
+      {
+        "number": 398,
+        "state": "OPEN",
+        "draft": true,
+        "headSha": "929f8f6c1cf98bdfe1ae2b8c9525c51e82af6db6",
+        "checksGreen": true
+      },
+      {
+        "number": 399,
+        "state": "OPEN",
+        "draft": true,
+        "headSha": "c79d2b24180d84865950e9b8ea2030cc4e9789c9",
+        "checksGreen": true
+      },
+      {
+        "number": 400,
+        "state": "OPEN",
+        "draft": true,
+        "headSha": "876dadb33bbefdaa0dc12d982e539eddd13cf1d0",
+        "checksGreen": true
+      },
+      {
+        "number": 401,
+        "state": "OPEN",
+        "draft": true,
+        "headSha": "698b7cefa2fb6a829a84425012e2ce584f14f25d",
+        "checksGreen": true
+      },
+      {
+        "number": 402,
+        "state": "OPEN",
+        "draft": true,
+        "headSha": "179b2ebbb31b43e044eae88467e92368c950ccd3",
+        "checksGreen": true
+      },
+      {
+        "number": 403,
+        "state": "OPEN",
+        "draft": true,
+        "headSha": "3ad26ae6666f6a8823e86198cb0873fc03d6cec7",
+        "checksGreen": true
+      },
+      {
+        "number": 404,
+        "state": "OPEN",
+        "draft": true,
+        "headSha": "ae7991ac94812900942947addffebdf5056d6682",
+        "checksGreen": true
+      },
+      {
+        "number": 405,
+        "state": "OPEN",
+        "draft": true,
+        "headSha": "b9b51f6b0b7dcb8edb5a359d84781276d5666cde",
+        "checksGreen": true
+      },
+      {
+        "number": 406,
+        "state": "OPEN",
+        "draft": true,
+        "headSha": "2ac97b6fb37c12640a70af0aebac42d4086912e0",
+        "checksGreen": true
+      }
+    ]
+  },
+  "decisions": [
+    {
+      "id": "390-earlier-minors",
+      "decidedBy": "maintainer",
+      "on": "2026-10-30",
+      "channel": "chat with the preparation session",
+      "choice": "Include the authoritative German/French dye-name corrections of PR #390 in the earlier minors",
+      "alternative": "Leave them to the Core 6 line only",
+      "consequence": "Prepared as the e-02 cut on the integrated tip; Core stays 5.16.0; merge approval remains NOT GIVEN"
+    },
+    {
+      "id": "cloudflare-thread-check",
+      "decidedBy": "maintainer",
+      "on": "2026-10-30",
+      "choice": "Read the existing Cloudflare Community thread for replies (read-only)",
+      "result": {
+        "topicId": 974619,
+        "checkedAtUtc": "2026-10-30T13:00:38Z",
+        "postsCount": 1,
+        "replyCount": 0,
+        "views": 10,
+        "visible": true,
+        "closed": false,
+        "tags": [
+          "Review",
+          "workers"
+        ],
+        "note": "No reply to reconcile; nothing was posted"
+      }
+    }
+  ],
+  "findings": [
+    {
+      "id": "logger-stripinternal-declarations",
+      "summary": "@xivdyetools/logger declarations re-export six symbols that stripInternal removes: ConsoleAdapter, JsonAdapter, NoopAdapter, BaseLogger, LogEntry, createWorkerLogger. A consumer compiling with skipLibCheck:false meets TS2305 inside the package's own .d.ts files.",
+      "foundBy": "first native proof of the integrated earlier-minor tip (the ten Core and Bot Logic repairs compiled clean; only logger failed)",
+      "publishedImpact": "The already-published logger 2.3.0 declarations have the same defect (checked 2026-10-30 from the registry tarball).",
+      "repair": "e-00 (declaration companion on cut 01, folded into the pending 2.4.0 with no new version)",
+      "status": "Prepared and recommended before P1; whether to require it is the maintainer's release-policy decision (AP-30). Not an approved gate.",
+      "priorReceiptsCoverage": "The M and F wave strict-declaration receipts covered Core, SVG and Bot Logic entry points only; the F tip still ships the unrepaired logger source."
+    },
+    {
+      "id": "auth-peer-range",
+      "kind": "observation",
+      "summary": "@xivdyetools/auth 3.0.0 declares peer @cloudflare/workers-types ^4.0.0 while the builder lock resolves 5.20261023.1; a consumer on 5.x sees a peer warning (worker-kit declares ^4.0.0 || ^5.0.0)."
+    },
+    {
+      "id": "pack-key-order",
+      "kind": "observation",
+      "summary": "pnpm pack writes the expanded workspace dependency keys of core and bot-logic in a varying order; archives from identical dist content can therefore differ in package.json key order only (dist and all other files byte-identical)."
+    },
+    {
+      "id": "gnu-tar-test-scripts",
+      "kind": "environment",
+      "summary": "In this session's shell the first test:scripts run failed 48 tests because Git's GNU tar read the drive letter in C:\\ paths as a remote host. The failed attempt is preserved in the e-01 record; the rerun put Windows bsdtar first on PATH with no test or assertion changed."
+    }
+  ],
+  "cuts": [
+    {
+      "id": "e-00",
+      "branch": "codex/release-cut-e-00-logger-declarations-20261030",
+      "baseBranch": "codex/release-cut-01-logger-20261029",
+      "prKey": "E00",
+      "role": "Logger 2.4.0 declaration repair",
+      "label": "e-00 logger declaration companion on its own base (cut 01)",
+      "head": "f461b94578c7fef10e7a860d862d513b05e095c8",
+      "tree": "d9533007ceb9c3b10e95562d0db75648db9a709f",
+      "base": "c2410fa919d26bed9ce50a33efe111ef6cfdc2dc",
+      "ownedFileCount": 8,
+      "owned": [
+        "packages/logger/CHANGELOG.md",
+        "packages/logger/src/__tests__/package-declarations.test.ts",
+        "packages/logger/src/adapters/console-adapter.ts",
+        "packages/logger/src/adapters/json-adapter.ts",
+        "packages/logger/src/adapters/noop-adapter.ts",
+        "packages/logger/src/core/base-logger.ts",
+        "packages/logger/src/presets/worker.ts",
+        "packages/logger/src/types.ts"
+      ],
+      "graph": {
+        "attempted": 62,
+        "executed": 56,
+        "cached": 6,
+        "success": 56,
+        "failed": 0,
+        "exitCode": 0
+      },
+      "gates": [
+        {
+          "gate": "graph",
+          "exit": 0,
+          "seconds": 478.2
+        },
+        {
+          "gate": "coverage-xivdyetools-logger",
+          "exit": 0,
+          "seconds": 4.7
+        },
+        {
+          "gate": "docs-check-links",
+          "exit": 0,
+          "seconds": 1.8
+        },
+        {
+          "gate": "docs-check-versions",
+          "exit": 0,
+          "seconds": 1.5
+        },
+        {
+          "gate": "test-scripts",
+          "exit": 0,
+          "seconds": 6.7
+        },
+        {
+          "gate": "type-check-scripts",
+          "exit": 0,
+          "seconds": 2.4
+        },
+        {
+          "gate": "dead-code-check",
+          "exit": 0,
+          "seconds": 6.5
+        },
+        {
+          "gate": "workers-check-logs",
+          "exit": 0,
+          "seconds": 1.4
+        },
+        {
+          "gate": "web-bundle",
+          "exit": 0,
+          "seconds": 13.7
+        },
+        {
+          "gate": "worker-bundle-discord-worker",
+          "exit": 0,
+          "seconds": 3.4
+        },
+        {
+          "gate": "worker-bundle-og-worker",
+          "exit": 0,
+          "seconds": 3
+        }
+      ],
+      "coverage": {
+        "@xivdyetools/logger": {
+          "statements": 96.52,
+          "branches": 92.13,
+          "functions": 100,
+          "lines": 96.46
+        }
+      },
+      "workerGzipKiB": {
+        "xivdyetools-discord-worker": 2734.33,
+        "xivdyetools-og-worker": 1953.78
+      },
+      "outgoingSecretScanExit": 0,
+      "validatedAt": "2026-10-30T14:31:56.012Z",
+      "node": "v22.21.0",
+      "pr": "https://github.com/FlashGalatine/xivdyetools/pull/407",
+      "ci": null
+    },
+    {
+      "id": "e-01",
+      "branch": "codex/release-cut-e-01-minors-20261030",
+      "baseBranch": "codex/release-cut-06-bot-logic-20261029",
+      "prKey": "E01",
+      "role": "Verification tip: cut 06 + logger repair + #393 + #401 (tree equals merging them)",
+      "label": "e-01 integrated earlier-minor tip (cut 06 + #393 + #401 + logger companion)",
+      "head": "71ed0595ccf94182dadd391c1bdb6e70d10ef0f4",
+      "tree": "7491501c58f8eb51021405c7e16e3ef59479654c",
+      "base": "ebba1baaa08a4d78b3c55baf7261273cd1fe12af",
+      "ownedFileCount": 17,
+      "owned": [
+        "packages/bot-logic/CHANGELOG.md",
+        "packages/bot-logic/src/__tests__/package-declarations.test.ts",
+        "packages/bot-logic/src/commands/accessibility.ts",
+        "packages/bot-logic/src/commands/harmony.ts",
+        "packages/bot-logic/src/i18n/types.ts",
+        "packages/bot-logic/src/input-resolution.ts",
+        "packages/core/CHANGELOG.md",
+        "packages/core/src/__tests__/package-declarations.test.ts",
+        "packages/core/src/utils/index.ts",
+        "packages/logger/CHANGELOG.md",
+        "packages/logger/src/__tests__/package-declarations.test.ts",
+        "packages/logger/src/adapters/console-adapter.ts",
+        "packages/logger/src/adapters/json-adapter.ts",
+        "packages/logger/src/adapters/noop-adapter.ts",
+        "packages/logger/src/core/base-logger.ts",
+        "packages/logger/src/presets/worker.ts",
+        "packages/logger/src/types.ts"
+      ],
+      "graph": {
+        "attempted": 62,
+        "executed": 50,
+        "cached": 12,
+        "success": 50,
+        "failed": 0,
+        "exitCode": 0
+      },
+      "gates": [
+        {
+          "gate": "graph",
+          "exit": 0,
+          "seconds": 427.5
+        },
+        {
+          "gate": "coverage-xivdyetools-logger",
+          "exit": 0,
+          "seconds": 4.6
+        },
+        {
+          "gate": "coverage-xivdyetools-core",
+          "exit": 0,
+          "seconds": 21.8
+        },
+        {
+          "gate": "coverage-xivdyetools-bot-logic",
+          "exit": 0,
+          "seconds": 4.8
+        },
+        {
+          "gate": "coverage-xivdyetools-svg",
+          "exit": 0,
+          "seconds": 4.4
+        },
+        {
+          "gate": "docs-check-links",
+          "exit": 0,
+          "seconds": 1.7
+        },
+        {
+          "gate": "docs-check-versions",
+          "exit": 0,
+          "seconds": 1.4
+        },
+        {
+          "gate": "test-scripts",
+          "exit": 0,
+          "seconds": 6.5
+        },
+        {
+          "gate": "type-check-scripts",
+          "exit": 0,
+          "seconds": 2.3
+        },
+        {
+          "gate": "dead-code-check",
+          "exit": 0,
+          "seconds": 5.9
+        },
+        {
+          "gate": "workers-check-logs",
+          "exit": 0,
+          "seconds": 1.3
+        },
+        {
+          "gate": "web-bundle",
+          "exit": 0,
+          "seconds": 12.9
+        },
+        {
+          "gate": "worker-bundle-discord-worker",
+          "exit": 0,
+          "seconds": 3.3
+        },
+        {
+          "gate": "worker-bundle-og-worker",
+          "exit": 0,
+          "seconds": 2.9
+        }
+      ],
+      "coverage": {
+        "@xivdyetools/logger": {
+          "statements": 96.52,
+          "branches": 92.13,
+          "functions": 100,
+          "lines": 96.46
+        },
+        "@xivdyetools/core": {
+          "statements": 96.59,
+          "branches": 93.88,
+          "functions": 99.26,
+          "lines": 96.9
+        },
+        "@xivdyetools/bot-logic": {
+          "statements": 99.58,
+          "branches": 96.56,
+          "functions": 100,
+          "lines": 99.76
+        },
+        "@xivdyetools/svg": {
+          "statements": 98.83,
+          "branches": 94.45,
+          "functions": 100,
+          "lines": 98.92
+        }
+      },
+      "workerGzipKiB": {
+        "xivdyetools-discord-worker": 2736.61,
+        "xivdyetools-og-worker": 1954.01
+      },
+      "outgoingSecretScanExit": 0,
+      "validatedAt": "2026-10-30T14:03:49.278Z",
+      "node": "v22.21.0",
+      "pr": "https://github.com/FlashGalatine/xivdyetools/pull/408",
+      "ci": null
+    },
+    {
+      "id": "e-02",
+      "branch": "codex/release-cut-e-02-dye-names-20261030",
+      "baseBranch": "codex/release-cut-e-01-minors-20261030",
+      "prKey": "E02",
+      "role": "PR #390 German/French dye-name selection",
+      "label": "e-02 authoritative German/French dye names on the integrated tip (maintainer decision 2026-10-30)",
+      "head": "b0efa0f26518d15fa3f23869e52b72128858f6d6",
+      "tree": "c95faa82f9e3e4223e83da41ab0edabb7db39575",
+      "base": "71ed0595ccf94182dadd391c1bdb6e70d10ef0f4",
+      "ownedFileCount": 22,
+      "owned": [
+        "apps/og-worker/src/og-data-generator.test.ts",
+        "docs/maintainer/adding-dyes.md",
+        "docs/reference/ffxiv-terminology.md",
+        "docs/research/2026-10-29-dye-name-translations/README.md",
+        "docs/research/2026-10-29-dye-name-translations/REPORT.md",
+        "docs/research/2026-10-29-dye-name-translations/adoption.json",
+        "docs/research/2026-10-29-dye-name-translations/inputs/dyenames.csv",
+        "docs/research/2026-10-29-dye-name-translations/inputs/dyes.json",
+        "docs/research/2026-10-29-dye-name-translations/inputs/rules.json",
+        "docs/research/2026-10-29-dye-name-translations/manifest.json",
+        "docs/research/2026-10-29-dye-name-translations/raw/stain-page-0001.json",
+        "docs/research/2026-10-29-dye-name-translations/raw/stain-page-0002.json",
+        "docs/research/2026-10-29-dye-name-translations/raw/stain-page-0003.json",
+        "docs/research/2026-10-29-dye-name-translations/report.json",
+        "docs/research/2026-10-29-dye-name-translations/verification.json",
+        "packages/bot-logic/src/input-resolution.test.ts",
+        "packages/core/CHANGELOG.md",
+        "packages/core/CLAUDE.md",
+        "packages/core/dyenames.csv",
+        "packages/core/scripts/fetch_dye_names.py",
+        "packages/core/src/data/locales/de.json",
+        "packages/core/src/data/locales/fr.json"
+      ],
+      "graph": {
+        "attempted": 62,
+        "executed": 33,
+        "cached": 29,
+        "success": 33,
+        "failed": 0,
+        "exitCode": 0
+      },
+      "gates": [
+        {
+          "gate": "graph",
+          "exit": 0,
+          "seconds": 373.2
+        },
+        {
+          "gate": "coverage-xivdyetools-core",
+          "exit": 0,
+          "seconds": 21.9
+        },
+        {
+          "gate": "coverage-xivdyetools-bot-logic",
+          "exit": 0,
+          "seconds": 5.2
+        },
+        {
+          "gate": "coverage-xivdyetools-og-worker",
+          "exit": 0,
+          "seconds": 6.1
+        },
+        {
+          "gate": "docs-check-links",
+          "exit": 0,
+          "seconds": 1.8
+        },
+        {
+          "gate": "docs-check-versions",
+          "exit": 0,
+          "seconds": 1.4
+        },
+        {
+          "gate": "test-scripts",
+          "exit": 0,
+          "seconds": 6.9
+        },
+        {
+          "gate": "type-check-scripts",
+          "exit": 0,
+          "seconds": 2.4
+        },
+        {
+          "gate": "dead-code-check",
+          "exit": 0,
+          "seconds": 6.6
+        },
+        {
+          "gate": "workers-check-logs",
+          "exit": 0,
+          "seconds": 1.4
+        },
+        {
+          "gate": "web-bundle",
+          "exit": 0,
+          "seconds": 14.1
+        },
+        {
+          "gate": "worker-bundle-discord-worker",
+          "exit": 0,
+          "seconds": 3.3
+        },
+        {
+          "gate": "worker-bundle-og-worker",
+          "exit": 0,
+          "seconds": 3.1
+        }
+      ],
+      "coverage": {
+        "@xivdyetools/core": {
+          "statements": 96.59,
+          "branches": 93.88,
+          "functions": 99.26,
+          "lines": 96.9
+        },
+        "@xivdyetools/bot-logic": {
+          "statements": 99.58,
+          "branches": 96.56,
+          "functions": 100,
+          "lines": 99.76
+        },
+        "xivdyetools-og-worker": {
+          "statements": 97.91,
+          "branches": 94.19,
+          "functions": 100,
+          "lines": 98.23
+        }
+      },
+      "workerGzipKiB": {
+        "xivdyetools-discord-worker": 2736.55,
+        "xivdyetools-og-worker": 1953.94
+      },
+      "outgoingSecretScanExit": 0,
+      "validatedAt": "2026-10-30T14:39:54.278Z",
+      "node": "v22.21.0",
+      "pr": "https://github.com/FlashGalatine/xivdyetools/pull/409",
+      "ci": null
+    },
+    {
+      "id": "e-03",
+      "branch": "codex/release-cut-e-03-web-json-20261030",
+      "baseBranch": "codex/release-cut-12-web-20261029",
+      "prKey": "E03",
+      "role": "Web 5.16.4 Vite development bridge",
+      "e2e": {
+        "head": "e1293ba5e0695b50bc5713528a98f9d93651fe44",
+        "tree": "da12c3ea9c7d1d9539b8ea06c26ccd1f944f172f",
+        "branch": "codex/release-cut-e-03-web-json-20261030",
+        "playwright": null,
+        "startedAt": "2026-10-30T15:13:19.599Z",
+        "port5173FreeBefore": true,
+        "newSpecs": {
+          "label": "new-specs",
+          "command": "pnpm --filter xivdyetools-web-app exec playwright test --project=chromium --reporter=list e2e/swatch-json-palettes.spec.ts",
+          "exit": 0,
+          "seconds": 7.7,
+          "passed": 2,
+          "failed": 0,
+          "flaky": 0,
+          "skipped": 0
+        },
+        "existingSwatchSpec": {
+          "label": "existing-swatch-spec",
+          "command": "pnpm --filter xivdyetools-web-app exec playwright test --project=chromium --reporter=list e2e/swatch-chara-session.spec.ts",
+          "exit": 0,
+          "seconds": 20.8,
+          "passed": 10,
+          "failed": 0,
+          "flaky": 0,
+          "skipped": 0
+        },
+        "mutationPluginRemoved": {
+          "label": "mutation-plugin-removed",
+          "command": "pnpm --filter xivdyetools-web-app exec playwright test --project=chromium --reporter=list e2e/swatch-json-palettes.spec.ts",
+          "exit": 1,
+          "seconds": 47.6,
+          "passed": 0,
+          "failed": 2,
+          "flaky": 0,
+          "skipped": 0
+        },
+        "treeRestoredAfterMutation": true,
+        "productionBundle": {
+          "filesScanned": 97,
+          "pluginReferences": 0,
+          "hits": []
+        },
+        "finishedAt": "2026-10-30T15:14:35.963Z",
+        "verdict": "PASS"
+      },
+      "label": "e-03 web 5.16.4 Vite development bridge on cut 12",
+      "head": "e1293ba5e0695b50bc5713528a98f9d93651fe44",
+      "tree": "da12c3ea9c7d1d9539b8ea06c26ccd1f944f172f",
+      "base": "0e5c660bda767859279f5157e14d46b4442b7ac9",
+      "ownedFileCount": 6,
+      "owned": [
+        "apps/web-app/CHANGELOG.md",
+        "apps/web-app/CLAUDE.md",
+        "apps/web-app/e2e/swatch-json-palettes.spec.ts",
+        "apps/web-app/src/__tests__/vite-plugin-core-json.test.ts",
+        "apps/web-app/vite-plugin-core-json.ts",
+        "apps/web-app/vite.config.ts"
+      ],
+      "graph": {
+        "attempted": 62,
+        "executed": 51,
+        "cached": 11,
+        "success": 51,
+        "failed": 0,
+        "exitCode": 0
+      },
+      "gates": [
+        {
+          "gate": "graph",
+          "exit": 0,
+          "seconds": 520.2
+        },
+        {
+          "gate": "coverage-xivdyetools-web-app",
+          "exit": 0,
+          "seconds": 103.2
+        },
+        {
+          "gate": "docs-check-links",
+          "exit": 0,
+          "seconds": 1.7
+        },
+        {
+          "gate": "docs-check-versions",
+          "exit": 0,
+          "seconds": 1.4
+        },
+        {
+          "gate": "test-scripts",
+          "exit": 0,
+          "seconds": 6.5
+        },
+        {
+          "gate": "type-check-scripts",
+          "exit": 0,
+          "seconds": 2.3
+        },
+        {
+          "gate": "dead-code-check",
+          "exit": 0,
+          "seconds": 6.2
+        },
+        {
+          "gate": "workers-check-logs",
+          "exit": 0,
+          "seconds": 1.3
+        },
+        {
+          "gate": "web-bundle",
+          "exit": 0,
+          "seconds": 13
+        }
+      ],
+      "coverage": {
+        "xivdyetools-web-app": {
+          "statements": 88.43,
+          "branches": 79.4,
+          "functions": 86.33,
+          "lines": 89.85
+        }
+      },
+      "workerGzipKiB": {},
+      "outgoingSecretScanExit": 0,
+      "validatedAt": "2026-10-30T15:13:10.153Z",
+      "node": "v22.21.0",
+      "pr": "https://github.com/FlashGalatine/xivdyetools/pull/410",
+      "ci": null
+    },
+    {
+      "id": "queue-simulation",
+      "branch": "er-queue-sim-20261030 (local only, never pushed; labelled e-04)",
+      "baseBranch": "codex/release-cut-17-readiness-20261029",
+      "prKey": null,
+      "role": "Cut 17 (A/R/H end state) + e-02 (with e-01 and e-00) + e-03, built with git merge-tree",
+      "label": "queue simulation: cut 17 (A/R/H end state) + e-02 (with e-01 and e-00) + e-03; local only, never pushed",
+      "head": "38b649f8bcc1acba11c0b34ed5534977a86ed8ef",
+      "tree": "6fa39f1628ffb9d418b6390d48425c85dd0de7f5",
+      "base": "2b95c0df20b0585d405f2684b10b982d61a48bf6",
+      "ownedFileCount": 44,
+      "owned": [
+        "apps/og-worker/src/og-data-generator.test.ts",
+        "apps/web-app/CHANGELOG.md",
+        "apps/web-app/CLAUDE.md",
+        "apps/web-app/e2e/swatch-json-palettes.spec.ts",
+        "apps/web-app/src/__tests__/vite-plugin-core-json.test.ts",
+        "apps/web-app/vite-plugin-core-json.ts",
+        "apps/web-app/vite.config.ts",
+        "docs/maintainer/adding-dyes.md",
+        "docs/reference/ffxiv-terminology.md",
+        "docs/research/2026-10-29-dye-name-translations/README.md",
+        "docs/research/2026-10-29-dye-name-translations/REPORT.md",
+        "docs/research/2026-10-29-dye-name-translations/adoption.json",
+        "docs/research/2026-10-29-dye-name-translations/inputs/dyenames.csv",
+        "docs/research/2026-10-29-dye-name-translations/inputs/dyes.json",
+        "docs/research/2026-10-29-dye-name-translations/inputs/rules.json",
+        "docs/research/2026-10-29-dye-name-translations/manifest.json",
+        "docs/research/2026-10-29-dye-name-translations/raw/stain-page-0001.json",
+        "docs/research/2026-10-29-dye-name-translations/raw/stain-page-0002.json",
+        "docs/research/2026-10-29-dye-name-translations/raw/stain-page-0003.json",
+        "docs/research/2026-10-29-dye-name-translations/report.json",
+        "docs/research/2026-10-29-dye-name-translations/verification.json",
+        "packages/bot-logic/CHANGELOG.md",
+        "packages/bot-logic/src/__tests__/package-declarations.test.ts",
+        "packages/bot-logic/src/commands/accessibility.ts",
+        "packages/bot-logic/src/commands/harmony.ts",
+        "packages/bot-logic/src/i18n/types.ts",
+        "packages/bot-logic/src/input-resolution.test.ts",
+        "packages/bot-logic/src/input-resolution.ts",
+        "packages/core/CHANGELOG.md",
+        "packages/core/CLAUDE.md",
+        "packages/core/dyenames.csv",
+        "packages/core/scripts/fetch_dye_names.py",
+        "packages/core/src/__tests__/package-declarations.test.ts",
+        "packages/core/src/data/locales/de.json",
+        "packages/core/src/data/locales/fr.json",
+        "packages/core/src/utils/index.ts",
+        "packages/logger/CHANGELOG.md",
+        "packages/logger/src/__tests__/package-declarations.test.ts",
+        "packages/logger/src/adapters/console-adapter.ts",
+        "packages/logger/src/adapters/json-adapter.ts",
+        "packages/logger/src/adapters/noop-adapter.ts",
+        "packages/logger/src/core/base-logger.ts",
+        "packages/logger/src/presets/worker.ts",
+        "packages/logger/src/types.ts"
+      ],
+      "graph": {
+        "attempted": 62,
+        "executed": 62,
+        "cached": 0,
+        "success": 62,
+        "failed": 0,
+        "exitCode": 0
+      },
+      "gates": [
+        {
+          "gate": "graph",
+          "exit": 0,
+          "seconds": 516.2
+        },
+        {
+          "gate": "coverage-xivdyetools-logger",
+          "exit": 0,
+          "seconds": 4.6
+        },
+        {
+          "gate": "coverage-xivdyetools-core",
+          "exit": 0,
+          "seconds": 22.1
+        },
+        {
+          "gate": "coverage-xivdyetools-bot-logic",
+          "exit": 0,
+          "seconds": 5.6
+        },
+        {
+          "gate": "coverage-xivdyetools-svg",
+          "exit": 0,
+          "seconds": 4.7
+        },
+        {
+          "gate": "coverage-xivdyetools-web-app",
+          "exit": 0,
+          "seconds": 105.2
+        },
+        {
+          "gate": "coverage-xivdyetools-og-worker",
+          "exit": 0,
+          "seconds": 5.9
+        },
+        {
+          "gate": "docs-check-links",
+          "exit": 0,
+          "seconds": 1.7
+        },
+        {
+          "gate": "docs-check-versions",
+          "exit": 0,
+          "seconds": 1.4
+        },
+        {
+          "gate": "test-scripts",
+          "exit": 0,
+          "seconds": 6.5
+        },
+        {
+          "gate": "type-check-scripts",
+          "exit": 0,
+          "seconds": 2.3
+        },
+        {
+          "gate": "dead-code-check",
+          "exit": 0,
+          "seconds": 6.1
+        },
+        {
+          "gate": "workers-check-logs",
+          "exit": 0,
+          "seconds": 1.3
+        },
+        {
+          "gate": "web-bundle",
+          "exit": 0,
+          "seconds": 13
+        },
+        {
+          "gate": "worker-bundle-discord-worker",
+          "exit": 0,
+          "seconds": 3.1
+        },
+        {
+          "gate": "worker-bundle-og-worker",
+          "exit": 0,
+          "seconds": 2.9
+        }
+      ],
+      "coverage": {
+        "@xivdyetools/logger": {
+          "statements": 96.52,
+          "branches": 92.13,
+          "functions": 100,
+          "lines": 96.46
+        },
+        "@xivdyetools/core": {
+          "statements": 96.59,
+          "branches": 93.88,
+          "functions": 99.26,
+          "lines": 96.9
+        },
+        "@xivdyetools/bot-logic": {
+          "statements": 99.58,
+          "branches": 96.56,
+          "functions": 100,
+          "lines": 99.76
+        },
+        "@xivdyetools/svg": {
+          "statements": 98.83,
+          "branches": 94.45,
+          "functions": 100,
+          "lines": 98.92
+        },
+        "xivdyetools-web-app": {
+          "statements": 88.43,
+          "branches": 79.4,
+          "functions": 86.33,
+          "lines": 89.85
+        },
+        "xivdyetools-og-worker": {
+          "statements": 97.91,
+          "branches": 94.19,
+          "functions": 100,
+          "lines": 98.23
+        }
+      },
+      "workerGzipKiB": {
+        "xivdyetools-discord-worker": 2739.72,
+        "xivdyetools-og-worker": 1953.86
+      },
+      "outgoingSecretScanExit": 0,
+      "validatedAt": "2026-10-30T15:27:05.113Z",
+      "node": "v22.21.0",
+      "pr": null,
+      "ci": null
+    }
+  ],
+  "firstIntegrationTip": {
+    "head": "c4ba5d5571c660bfcfe3f7abe49ec34d30984318",
+    "tree": "bcc7c526661e4fd4fb758d14fde1dae53b85ec47",
+    "graph": {
+      "attempted": 62,
+      "executed": 62,
+      "cached": 0,
+      "success": 62,
+      "failed": 0,
+      "exitCode": 0
+    },
+    "gates": [
+      {
+        "gate": "graph",
+        "exit": 0,
+        "seconds": 494.9
+      },
+      {
+        "gate": "coverage-xivdyetools-core",
+        "exit": 0,
+        "seconds": 23.5
+      },
+      {
+        "gate": "coverage-xivdyetools-bot-logic",
+        "exit": 0,
+        "seconds": 6
+      },
+      {
+        "gate": "coverage-xivdyetools-svg",
+        "exit": 0,
+        "seconds": 5.2
+      },
+      {
+        "gate": "docs-check-links",
+        "exit": 0,
+        "seconds": 1.8
+      },
+      {
+        "gate": "docs-check-versions",
+        "exit": 0,
+        "seconds": 1.5
+      },
+      {
+        "gate": "test-scripts#attempt-1",
+        "exit": 1,
+        "seconds": 135.3,
+        "note": "Environment, not code: this shell session resolved GNU tar (Git usr/bin) ahead of Windows bsdtar, so the publisher tests read the drive letter in C:... paths as a remote host (48 failures, all in scripts/publish-packages.test.ts: tar (child): Cannot connect to C: resolve failed). Earlier receipts ran with bsdtar first. The rerun puts System32 first on PATH; no test or assertion was changed."
+      },
+      {
+        "gate": "test-scripts",
+        "exit": 0,
+        "seconds": 12.4
+      },
+      {
+        "gate": "type-check-scripts",
+        "exit": 0,
+        "seconds": 2.9
+      },
+      {
+        "gate": "dead-code-check",
+        "exit": 0,
+        "seconds": 7.2
+      },
+      {
+        "gate": "workers-check-logs",
+        "exit": 0,
+        "seconds": 1.5
+      },
+      {
+        "gate": "web-bundle",
+        "exit": 0,
+        "seconds": 20
+      },
+      {
+        "gate": "worker-bundle-discord-worker",
+        "exit": 0,
+        "seconds": 5.4
+      },
+      {
+        "gate": "worker-bundle-og-worker",
+        "exit": 0,
+        "seconds": 5
+      }
+    ],
+    "note": "Cold-cache run on the tip before the logger repair; kept as the first record. Its test-scripts attempt 1 failed for the GNU tar environment reason in findings."
+  },
+  "nativeProofs": [
+    {
+      "label": "e01",
+      "role": "First native proof, run on the integrated tip before the logger repair (c4ba5d55). It failed only on logger and is kept as the record that found the defect.",
+      "status": "FAIL",
+      "statusReason": "Strict skipLibCheck:false compile of the real-tree archives exited 2: @xivdyetools/logger 2.4.0 declarations re-export six stripped @internal symbols (ConsoleAdapter, JsonAdapter, NoopAdapter, BaseLogger, LogEntry, createWorkerLogger). The ten repaired Core/Bot Logic symbols compile with zero diagnostics.",
+      "scope": "Local native archive proof only; no CI provenance, registry or deployed acceptance claim",
+      "source": {
+        "head": "c4ba5d5571c660bfcfe3f7abe49ec34d30984318",
+        "tree": "bcc7c526661e4fd4fb758d14fde1dae53b85ec47",
+        "basePreviousCut": "ebba1baaa08a4d78b3c55baf7261273cd1fe12af"
+      },
+      "tools": {
+        "node": "v22.21.0",
+        "pnpm": "11.17.0",
+        "typescript": "5.9.3"
+      },
+      "packages": [
+        {
+          "name": "@xivdyetools/logger",
+          "version": "2.4.0",
+          "archiveSha256": "13055dc40bad9e4780deacb165bd11b52346f6bf7cd4547752f9b1024ae19265",
+          "archiveSri": "sha512-iCtX0hxgC8Dhsiti8I20zE2g6gdXHJoB/+234MkdcOokf6sgyn/KVUyMsH+LyddlyD740SHNSQlYOEOznDtL3Q==",
+          "bytes": 43640,
+          "distFiles": 52,
+          "packedDependencies": {},
+          "packedPeerDependencies": {},
+          "packedOptionalDependencies": {}
+        },
+        {
+          "name": "@xivdyetools/auth",
+          "version": "3.0.0",
+          "archiveSha256": "e5b67734e419fc036a6db0ee2792f88e1d3c559efa50a8b2e4914b57159e0a4a",
+          "archiveSri": "sha512-euz8IHGns2gr+Sn/CYn+2RppF/1P4pPquNwqYLpTEHP2NvNpIYgbS4Do3cDQAqChcmf0nEsEi5d7Jgj2lLXi7Q==",
+          "bytes": 47776,
+          "distFiles": 36,
+          "packedDependencies": {
+            "discord-interactions": "^4.4.0"
+          },
+          "packedPeerDependencies": {
+            "@cloudflare/workers-types": "^4.0.0"
+          },
+          "packedOptionalDependencies": {}
+        },
+        {
+          "name": "@xivdyetools/core",
+          "version": "5.16.0",
+          "archiveSha256": "d9b71b31c719bf3c2ecdff026c7a950fc85d86ca025a596e89b6d73c8f380b95",
+          "archiveSri": "sha512-qEi03GWZq/Xu6e99F1508Kv79dkZEq75sJ/xG9t3nXINjLIEEQfKoJ9ApdBVBs+6CQfdLNJccqO/NdQ6U7Ox5w==",
+          "bytes": 544860,
+          "distFiles": 246,
+          "packedDependencies": {
+            "spectral.js": "^3.0.0",
+            "xivcharakit": "0.1.0-beta.4",
+            "@xivdyetools/logger": "2.4.0",
+            "@xivdyetools/types": "3.3.0"
+          },
+          "packedPeerDependencies": {},
+          "packedOptionalDependencies": {}
+        },
+        {
+          "name": "@xivdyetools/worker-kit",
+          "version": "1.6.0",
+          "archiveSha256": "769284216c94b8057677aef27005b53b44d32fad195e95822b77206f6e8477f4",
+          "archiveSri": "sha512-/Fn9Zd26dQ/axDHDuLQ8+XstmKKntqF9nepPlE1Vth+XCHgdQhJF0GA5+A8Tp2jbxBcJd1q3Ac7NkMbcOd6ECQ==",
+          "bytes": 63527,
+          "distFiles": 92,
+          "packedDependencies": {
+            "@upstash/redis": "^1.39.0",
+            "@xivdyetools/logger": "2.4.0"
+          },
+          "packedPeerDependencies": {
+            "@cloudflare/workers-types": "^4.0.0 || ^5.0.0",
+            "hono": "^4.13.7"
+          },
+          "packedOptionalDependencies": {}
+        },
+        {
+          "name": "@xivdyetools/svg",
+          "version": "4.4.1",
+          "archiveSha256": "2c545784f2ad1c1a5f9ecf13f81b9f26a4352484028d916e85f4eacae00e48c2",
+          "archiveSri": "sha512-OXFYja3uyqCYD0oexYkF4GZgUs59cuIpI4Fsi7Dt68v2hC6tF67LT30lNs7HVCQUUI/osPAj/FBJqIX4pc7smQ==",
+          "bytes": 115948,
+          "distFiles": 76,
+          "packedDependencies": {
+            "@xivdyetools/core": "5.16.0",
+            "@xivdyetools/types": "3.3.0"
+          },
+          "packedPeerDependencies": {},
+          "packedOptionalDependencies": {}
+        },
+        {
+          "name": "@xivdyetools/bot-logic",
+          "version": "4.12.0",
+          "archiveSha256": "b305994cbe5c1f74ebca4569b1ece5c8c534ab250d1dfddd8ebaaa97e3fc6f76",
+          "archiveSri": "sha512-FW1cRa6aBKsGOqGY5OpDlQvvXhkP+psX4cSQfq+oLWjBM32FE6I4IpIAbzqawfVlxARj+v3Xm462eMcX0m/pYA==",
+          "bytes": 201360,
+          "distFiles": 94,
+          "packedDependencies": {
+            "@xivdyetools/core": "5.16.0",
+            "@xivdyetools/svg": "4.4.1",
+            "@xivdyetools/types": "3.3.0"
+          },
+          "packedPeerDependencies": {},
+          "packedOptionalDependencies": {}
+        }
+      ],
+      "install": {
+        "offline": true,
+        "flags": [
+          "--offline",
+          "--ignore-scripts",
+          "--config.auto-install-peers=false",
+          "--strict-peer-dependencies=false"
+        ],
+        "lifecycleScripts": "suppressed",
+        "internalPackagesFrom": "file: archives packed from this tree",
+        "externalsFrom": "SRI-verified seed archives (integrity equal to the tree lockfile) + @cloudflare/workers-types from the local pnpm store",
+        "packages": 14
+      },
+      "probe": {
+        "result": "PASS",
+        "exportsImported": 27,
+        "locales": 6,
+        "manualStringsChecked": 414,
+        "jwtCases": [
+          "valid token accepted: pass",
+          "wrong secret rejected: pass",
+          "expired token rejected: pass"
+        ],
+        "coreJsonImportAttributesWithoutLoader": true
+      },
+      "strictDeclarations": {
+        "skipLibCheck": false,
+        "strict": true,
+        "moduleResolution": "NodeNext",
+        "exitCode": 2,
+        "diagnostics": [
+          "node_modules/@xivdyetools/logger/dist/adapters/index.d.ts(8,25): error TS2305: Module '\"./console-adapter.js\"' has no exported member 'ConsoleAdapter'.",
+          "node_modules/@xivdyetools/logger/dist/adapters/index.d.ts(9,25): error TS2305: Module '\"./json-adapter.js\"' has no exported member 'JsonAdapter'.",
+          "node_modules/@xivdyetools/logger/dist/adapters/index.d.ts(10,25): error TS2305: Module '\"./noop-adapter.js\"' has no exported member 'NoopAdapter'.",
+          "node_modules/@xivdyetools/logger/dist/core/index.d.ts(8,25): error TS2305: Module '\"./base-logger.js\"' has no exported member 'BaseLogger'.",
+          "node_modules/@xivdyetools/logger/dist/index.d.ts(61,1): error TS2305: Module '\"./types.js\"' has no exported member 'LogEntry'.",
+          "node_modules/@xivdyetools/logger/dist/presets/index.d.ts(12,1): error TS2305: Module '\"./worker.js\"' has no exported member 'createWorkerLogger'."
+        ],
+        "repairedSymbolDiagnostics": 0,
+        "symbolsOnlyVariantExit": 0
+      },
+      "negativeControl": {
+        "revertedFiles": [
+          "packages/core/src/utils/index.ts",
+          "packages/bot-logic/src/commands/harmony.ts",
+          "packages/bot-logic/src/commands/accessibility.ts",
+          "packages/bot-logic/src/i18n/types.ts",
+          "packages/bot-logic/src/input-resolution.ts"
+        ],
+        "internalTagLinesRestored": 10,
+        "exitCode": 2,
+        "allRevertedSymbolsNamed": true,
+        "symbolsNamed": {
+          "clamp": 1,
+          "round": 1,
+          "isValidRGB": 1,
+          "isValidHSV": 1,
+          "isAbortError": 1,
+          "HARMONY_TYPES": 2,
+          "VISION_TYPES": 1,
+          "ResolveColorOptions": 2,
+          "LocaleData": 1,
+          "TranslatorLogger": 2
+        },
+        "symbolsOnlyVariantExit": 2,
+        "revertedArchives": [
+          {
+            "name": "@xivdyetools/core",
+            "sha256": "8f0e99497b929ca882a91f9afd858fb1ff3ff773f90a92a8c99cf60a25657efd"
+          },
+          {
+            "name": "@xivdyetools/bot-logic",
+            "sha256": "41523eaf6211aad4094902e692334fee2042831a4a7a27da32022736cc1acd27"
+          }
+        ],
+        "result": "FAILED_AS_EXPECTED_NAMING_ALL_REVERTED_SYMBOLS"
+      },
+      "comparison": {
+        "outcome": "logger/auth/worker-kit/svg byte-identical to cut-06; core and bot-logic byte-identical to their #393/#401 backport archives; every difference from cut-06 explained",
+        "packages": [
+          {
+            "name": "@xivdyetools/logger",
+            "sha256": "13055dc40bad9e4780deacb165bd11b52346f6bf7cd4547752f9b1024ae19265",
+            "identicalToCut06": true,
+            "identicalToBackport": null,
+            "explanation": "Identical to cut-06: no source input under packages/logger changed between the base and this tree."
+          },
+          {
+            "name": "@xivdyetools/auth",
+            "sha256": "e5b67734e419fc036a6db0ee2792f88e1d3c559efa50a8b2e4914b57159e0a4a",
+            "identicalToCut06": true,
+            "identicalToBackport": null,
+            "explanation": "Identical to cut-06: no source input under packages/auth changed between the base and this tree."
+          },
+          {
+            "name": "@xivdyetools/core",
+            "sha256": "d9b71b31c719bf3c2ecdff026c7a950fc85d86ca025a596e89b6d73c8f380b95",
+            "identicalToCut06": false,
+            "identicalToBackport": true,
+            "explanation": "Differs from cut-06 only by the #393 repair (dist/utils/index.{js,d.ts}[.map] — the five @internal tags removed) plus pnpm pack's nondeterministic ordering of the expanded workspace dependency keys (cut-06: types,logger; now: logger,types). Byte-identical to the #393 backport archive. The negative-control rebuild of this tree with only the tags restored reproduced the cut-06 archive byte-for-byte (8f0e9949...), so the repair is the only content change."
+          },
+          {
+            "name": "@xivdyetools/worker-kit",
+            "sha256": "769284216c94b8057677aef27005b53b44d32fad195e95822b77206f6e8477f4",
+            "identicalToCut06": true,
+            "identicalToBackport": null,
+            "explanation": "Identical to cut-06: no source input under packages/worker-kit changed between the base and this tree."
+          },
+          {
+            "name": "@xivdyetools/svg",
+            "sha256": "2c545784f2ad1c1a5f9ecf13f81b9f26a4352484028d916e85f4eacae00e48c2",
+            "identicalToCut06": true,
+            "identicalToBackport": null,
+            "explanation": "Identical to cut-06: no source input under packages/svg changed between the base and this tree."
+          },
+          {
+            "name": "@xivdyetools/bot-logic",
+            "sha256": "b305994cbe5c1f74ebca4569b1ece5c8c534ab250d1dfddd8ebaaa97e3fc6f76",
+            "identicalToCut06": false,
+            "identicalToBackport": true,
+            "explanation": "Differs from cut-06 by the #401 repair (commands/harmony, commands/accessibility, i18n/types, input-resolution .js/.d.ts/.map) and because the cut-06 builder dist carried 4 stale test-fixture build outputs (commands/__fixtures__/chara-fixtures.{js,d.ts}[.map], 98 vs 94 files) that a clean build does not emit, plus pnpm pack's nondeterministic ordering of the expanded workspace dependency keys (cut-06: svg,core,types; now: core,svg,types). Byte-identical to the #401 backport archive (b305994cbe...). The tags-restored rebuild (41523eaf...) is not equal to cut-06 because it lacks those stale fixture files and has the other key order."
+          }
+        ]
+      },
+      "builderUntouched": true
+    },
+    {
+      "label": "e01b",
+      "role": "Proof of the integrated tip with all three declaration repairs (e-01).",
+      "status": "PASS",
+      "scope": "Local native archive proof only; no CI provenance, registry or deployed acceptance claim",
+      "source": {
+        "head": "71ed0595ccf94182dadd391c1bdb6e70d10ef0f4",
+        "tree": "7491501c58f8eb51021405c7e16e3ef59479654c",
+        "basePreviousCut": "ebba1baaa08a4d78b3c55baf7261273cd1fe12af",
+        "previousRunHead": "c4ba5d5571c660bfcfe3f7abe49ec34d30984318"
+      },
+      "tools": {
+        "node": "v22.21.0",
+        "pnpm": "11.17.0",
+        "typescript": "5.9.3"
+      },
+      "packages": [
+        {
+          "name": "@xivdyetools/logger",
+          "version": "2.4.0",
+          "archiveSha256": "8af98d82ce32135f214aa1d129952e90479c9657916d2549e8d0bf919e8889b7",
+          "archiveSri": "sha512-xHhXOvNuUtdb9NpBLT1CBPxOv0MKSC0cL+GLIwcpabn095DzD9ePOLBoa5ctrI7d0EbmeW2bMtFR65mlT0jo2g==",
+          "bytes": 49621,
+          "distFiles": 52,
+          "distMatchesTree": true,
+          "packedDependencies": {},
+          "packedPeerDependencies": {},
+          "packedOptionalDependencies": {}
+        },
+        {
+          "name": "@xivdyetools/auth",
+          "version": "3.0.0",
+          "archiveSha256": "e5b67734e419fc036a6db0ee2792f88e1d3c559efa50a8b2e4914b57159e0a4a",
+          "archiveSri": "sha512-euz8IHGns2gr+Sn/CYn+2RppF/1P4pPquNwqYLpTEHP2NvNpIYgbS4Do3cDQAqChcmf0nEsEi5d7Jgj2lLXi7Q==",
+          "bytes": 47776,
+          "distFiles": 36,
+          "distMatchesTree": true,
+          "packedDependencies": {
+            "discord-interactions": "^4.4.0"
+          },
+          "packedPeerDependencies": {
+            "@cloudflare/workers-types": "^4.0.0"
+          },
+          "packedOptionalDependencies": {}
+        },
+        {
+          "name": "@xivdyetools/core",
+          "version": "5.16.0",
+          "archiveSha256": "cde357071f3b35b5d27dd8c30efb18a1cbbcc65699caa737136836430a9d08f3",
+          "archiveSri": "sha512-B+s5GLWAZUE0/775wTwQwBKC4jgTa+dNyAYT4matKHZbV7K7F+sBB2rA9dj7zORFkQu2j38AMGO5KldipJX1KQ==",
+          "bytes": 544860,
+          "distFiles": 246,
+          "distMatchesTree": true,
+          "packedDependencies": {
+            "spectral.js": "^3.0.0",
+            "xivcharakit": "0.1.0-beta.4",
+            "@xivdyetools/types": "3.3.0",
+            "@xivdyetools/logger": "2.4.0"
+          },
+          "packedPeerDependencies": {},
+          "packedOptionalDependencies": {}
+        },
+        {
+          "name": "@xivdyetools/worker-kit",
+          "version": "1.6.0",
+          "archiveSha256": "769284216c94b8057677aef27005b53b44d32fad195e95822b77206f6e8477f4",
+          "archiveSri": "sha512-/Fn9Zd26dQ/axDHDuLQ8+XstmKKntqF9nepPlE1Vth+XCHgdQhJF0GA5+A8Tp2jbxBcJd1q3Ac7NkMbcOd6ECQ==",
+          "bytes": 63527,
+          "distFiles": 92,
+          "distMatchesTree": true,
+          "packedDependencies": {
+            "@upstash/redis": "^1.39.0",
+            "@xivdyetools/logger": "2.4.0"
+          },
+          "packedPeerDependencies": {
+            "@cloudflare/workers-types": "^4.0.0 || ^5.0.0",
+            "hono": "^4.13.7"
+          },
+          "packedOptionalDependencies": {}
+        },
+        {
+          "name": "@xivdyetools/svg",
+          "version": "4.4.1",
+          "archiveSha256": "2c545784f2ad1c1a5f9ecf13f81b9f26a4352484028d916e85f4eacae00e48c2",
+          "archiveSri": "sha512-OXFYja3uyqCYD0oexYkF4GZgUs59cuIpI4Fsi7Dt68v2hC6tF67LT30lNs7HVCQUUI/osPAj/FBJqIX4pc7smQ==",
+          "bytes": 115948,
+          "distFiles": 76,
+          "distMatchesTree": true,
+          "packedDependencies": {
+            "@xivdyetools/core": "5.16.0",
+            "@xivdyetools/types": "3.3.0"
+          },
+          "packedPeerDependencies": {},
+          "packedOptionalDependencies": {}
+        },
+        {
+          "name": "@xivdyetools/bot-logic",
+          "version": "4.12.0",
+          "archiveSha256": "9062159de489ea751e77ed9b33e5c4d4d0d92644956cf40565f74f320c64e7e7",
+          "archiveSri": "sha512-UIq0XDRZ2UHJOjSb3MUTz1iP64fbQ8eYv6BGAQ9nT15y4mYypqz5DcZywnRAAuCJhq/uwRTJfrIKQMkVTwSvlQ==",
+          "bytes": 201358,
+          "distFiles": 94,
+          "distMatchesTree": true,
+          "packedDependencies": {
+            "@xivdyetools/core": "5.16.0",
+            "@xivdyetools/types": "3.3.0",
+            "@xivdyetools/svg": "4.4.1"
+          },
+          "packedPeerDependencies": {},
+          "packedOptionalDependencies": {}
+        }
+      ],
+      "install": {
+        "offline": true,
+        "flags": [
+          "--offline",
+          "--ignore-scripts",
+          "--config.auto-install-peers=false",
+          "--strict-peer-dependencies=false"
+        ],
+        "lifecycleScripts": "suppressed",
+        "internalPackagesFrom": "file: archives packed from this tree",
+        "externalsFrom": "SRI-verified seed archives (integrity equal to the tree lockfile) + @cloudflare/workers-types from the local pnpm store",
+        "packages": 14
+      },
+      "probe": {
+        "result": "PASS",
+        "exportsImported": 27,
+        "locales": 6,
+        "manualStringsChecked": 414,
+        "jwtCases": [
+          "valid token accepted: pass",
+          "wrong secret rejected: pass",
+          "expired token rejected: pass"
+        ],
+        "coreJsonImportAttributesWithoutLoader": true
+      },
+      "strictDeclarations": {
+        "skipLibCheck": false,
+        "strict": true,
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "exitCode": 0,
+        "diagnostics": 0,
+        "symbolsAsserted": 16,
+        "tsExpectErrorDirectives": 19,
+        "directivesConsumed": true,
+        "symbolsOnlyVariantExit": 0
+      },
+      "negativeControl": {
+        "revertedFiles": [
+          "packages/logger/src/adapters/console-adapter.ts",
+          "packages/logger/src/adapters/json-adapter.ts",
+          "packages/logger/src/adapters/noop-adapter.ts",
+          "packages/logger/src/core/base-logger.ts",
+          "packages/logger/src/presets/worker.ts",
+          "packages/logger/src/types.ts",
+          "packages/core/src/utils/index.ts",
+          "packages/bot-logic/src/commands/harmony.ts",
+          "packages/bot-logic/src/commands/accessibility.ts",
+          "packages/bot-logic/src/i18n/types.ts",
+          "packages/bot-logic/src/input-resolution.ts"
+        ],
+        "internalTagLinesRestored": 16,
+        "exitCode": 2,
+        "diagnostics": 41,
+        "allRevertedSymbolsNamed": true,
+        "symbolsNamed": {
+          "ConsoleAdapter": 1,
+          "JsonAdapter": 1,
+          "NoopAdapter": 1,
+          "BaseLogger": 1,
+          "LogEntry": 1,
+          "createWorkerLogger": 2,
+          "clamp": 1,
+          "round": 1,
+          "isValidRGB": 1,
+          "isValidHSV": 1,
+          "isAbortError": 1,
+          "HARMONY_TYPES": 2,
+          "VISION_TYPES": 1,
+          "ResolveColorOptions": 2,
+          "LocaleData": 1,
+          "TranslatorLogger": 2
+        },
+        "directivesAllUnused": true,
+        "symbolsOnlyVariantExit": 2,
+        "revertedArchives": [
+          {
+            "name": "@xivdyetools/logger",
+            "sha256": "13055dc40bad9e4780deacb165bd11b52346f6bf7cd4547752f9b1024ae19265",
+            "equalsCut06Archive": true
+          },
+          {
+            "name": "@xivdyetools/core",
+            "sha256": "8de0e5d16199a2d57ce73570053ed18b935d229cc884b7dcac489be4a12274c9",
+            "equalsCut06Archive": false
+          },
+          {
+            "name": "@xivdyetools/bot-logic",
+            "sha256": "41523eaf6211aad4094902e692334fee2042831a4a7a27da32022736cc1acd27",
+            "equalsCut06Archive": false
+          }
+        ],
+        "result": "FAILED_AS_EXPECTED_NAMING_ALL_REVERTED_SYMBOLS"
+      },
+      "comparison": {
+        "outcome": "auth/worker-kit/svg byte-identical to cut-06 and the previous run; logger differs from cut-06 only by the declaration repair (tags-restored rebuild == cut-06 byte for byte); core and bot-logic dist byte-identical to the #393/#401 backport archives, archives differ only by pnpm pack dependency-key order in package.json (not byte-identical); every difference explained",
+        "checks": {
+          "authWorkerKitSvgIdenticalToCut06AndPreviousRun": true,
+          "coreBotLogicArchiveIdenticalToBackport": false,
+          "coreBotLogicDistIdenticalToBackport": true,
+          "coreBotLogicOnlyPackageJsonKeyOrderDiffersFromBackport": true,
+          "coreBotLogicNoSourceChangeSinceBackportOrPreviousRun": true,
+          "loggerDiffersFromCut06OnlyByRepair": true
+        },
+        "packages": [
+          {
+            "name": "@xivdyetools/logger",
+            "sha256": "8af98d82ce32135f214aa1d129952e90479c9657916d2549e8d0bf919e8889b7",
+            "identicalToCut06": false,
+            "identicalToPreviousRun": false,
+            "identicalToBackport": null,
+            "distIdenticalToBackport": null,
+            "explanation": "Differs from cut-06 (13055dc40bad) and from the previous e01 run (identical to cut-06) only by the logger declaration repair f461b945: 17 dist files changed (the six .d.ts that now declare ConsoleAdapter/JsonAdapter/NoopAdapter/BaseLogger/LogEntry/createWorkerLogger, their .d.ts.map, and the five emitted .js whose JSDoc lost the \"@internal\" word; types.js is unchanged because LogEntry is type-only). The only changed source inputs are the six tag lines, CHANGELOG.md (not packed) and the new declaration test (not packed). The negative-control rebuild of this tree with only those six tags restored packed to 13055dc40bad, byte-identical to the cut-06 logger archive, so the repair is the only content change."
+          },
+          {
+            "name": "@xivdyetools/auth",
+            "sha256": "e5b67734e419fc036a6db0ee2792f88e1d3c559efa50a8b2e4914b57159e0a4a",
+            "identicalToCut06": true,
+            "identicalToPreviousRun": true,
+            "identicalToBackport": null,
+            "distIdenticalToBackport": null,
+            "explanation": "Byte-identical to cut-06 and to the previous e01 run: no source input under packages/auth changed between the base and this tree."
+          },
+          {
+            "name": "@xivdyetools/core",
+            "sha256": "cde357071f3b35b5d27dd8c30efb18a1cbbcc65699caa737136836430a9d08f3",
+            "identicalToCut06": false,
+            "identicalToPreviousRun": false,
+            "identicalToBackport": false,
+            "distIdenticalToBackport": true,
+            "explanation": "Dist is byte-identical to the #393 backport archive and to the previous e01 run (246 files, same per-file sha256); no packages/core input changed since the backport head or the previous run. The archive sha256 differs (cde357071f3b vs d9b71b31c719) only because pnpm pack wrote the expanded workspace dependency keys of package.json in a different order (backport/e01: spectral.js,xivcharakit,@xivdyetools/logger,@xivdyetools/types; now: spectral.js,xivcharakit,@xivdyetools/types,@xivdyetools/logger); every other packed file is byte-identical and the manifests are semantically equal. Versus cut-06 the dist differs only by the #393 repair (utils/index.{js,d.ts}[.map]). The tags-restored core rebuild has the cut-06 dist exactly (0 differing dist files); whole-archive versus the cut-06 archive (8f0e99497b92) the differing files are [package.json], onlyDifferenceIsPackageJsonDependencyKeyOrder=true (snapshot spectral.js,xivcharakit,@xivdyetools/logger,@xivdyetools/types vs cut-06 spectral.js,xivcharakit,@xivdyetools/types,@xivdyetools/logger)."
+          },
+          {
+            "name": "@xivdyetools/worker-kit",
+            "sha256": "769284216c94b8057677aef27005b53b44d32fad195e95822b77206f6e8477f4",
+            "identicalToCut06": true,
+            "identicalToPreviousRun": true,
+            "identicalToBackport": null,
+            "distIdenticalToBackport": null,
+            "explanation": "Byte-identical to cut-06 and to the previous e01 run: no source input under packages/worker-kit changed between the base and this tree."
+          },
+          {
+            "name": "@xivdyetools/svg",
+            "sha256": "2c545784f2ad1c1a5f9ecf13f81b9f26a4352484028d916e85f4eacae00e48c2",
+            "identicalToCut06": true,
+            "identicalToPreviousRun": true,
+            "identicalToBackport": null,
+            "distIdenticalToBackport": null,
+            "explanation": "Byte-identical to cut-06 and to the previous e01 run: no source input under packages/svg changed between the base and this tree."
+          },
+          {
+            "name": "@xivdyetools/bot-logic",
+            "sha256": "9062159de489ea751e77ed9b33e5c4d4d0d92644956cf40565f74f320c64e7e7",
+            "identicalToCut06": false,
+            "identicalToPreviousRun": false,
+            "identicalToBackport": false,
+            "distIdenticalToBackport": true,
+            "explanation": "Dist is byte-identical to the #401 backport archive and to the previous e01 run (94 files); no packages/bot-logic input changed since the backport head or the previous run. The archive sha256 differs (9062159de489 vs b305994cbe5c) only because of pnpm pack's nondeterministic order of the expanded workspace dependency keys (backport/e01: @xivdyetools/core,@xivdyetools/svg,@xivdyetools/types; now: @xivdyetools/core,@xivdyetools/types,@xivdyetools/svg); every other packed file is byte-identical. Versus cut-06 it differs by the #401 repair (commands/harmony, commands/accessibility, i18n/types, input-resolution) and because the cut-06 builder dist carried 4 stale test-fixture outputs (commands/__fixtures__/chara-fixtures.*, 98 vs 94 files; now correctly labelled only-earlier) that a clean build does not emit. The tags-restored rebuild (41523eaf6211) versus the cut-06 archive differs in [dist/commands/__fixtures__/chara-fixtures.d.ts (only-earlier), dist/commands/__fixtures__/chara-fixtures.d.ts.map (only-earlier), dist/commands/__fixtures__/chara-fixtures.js (only-earlier), dist/commands/__fixtures__/chara-fixtures.js.map (only-earlier), package.json (changed)]: the 4 stale fixture files plus package.json, whose dependency key order is @xivdyetools/core,@xivdyetools/types,@xivdyetools/svg vs cut-06 @xivdyetools/svg,@xivdyetools/core,@xivdyetools/types (semantically equal: true)."
+          }
+        ]
+      },
+      "builderUntouched": true,
+      "observations": [
+        "@xivdyetools/auth 3.0.0 declares peer @cloudflare/workers-types ^4.0.0 while the builder lock resolves 5.20261023.1, so a consumer on 5.x gets a peer warning (the offline install printed \"Issues with peer dependencies found\"). worker-kit 1.6.0 declares ^4.0.0 || ^5.0.0.",
+        "pnpm 11.17.0 pack writes the expanded workspace dependency keys of package.json in a nondeterministic order (seen across cut-06, the backports, e01, e01b and both snapshots), so core and bot-logic archives are not byte-reproducible even though every other packed byte is."
+      ]
+    },
+    {
+      "label": "e02",
+      "role": "Superseded run for e-02: it failed only because the builder's dist carried four stale __fixtures__ files left by an older checkout. Text adoption and strict checks passed in it. Kept as a record.",
+      "status": "FAIL",
+      "statusReason": "archive comparison findings: bot-logic-stale-fixture-outputs, declaration-premise",
+      "scope": "Local native archive proof only; no CI provenance, registry or deployed acceptance claim",
+      "source": {
+        "head": "b0efa0f26518d15fa3f23869e52b72128858f6d6",
+        "tree": "c95faa82f9e3e4223e83da41ab0edabb7db39575",
+        "basePreviousCut": "71ed0595ccf94182dadd391c1bdb6e70d10ef0f4",
+        "previousRunHead": "71ed0595ccf94182dadd391c1bdb6e70d10ef0f4"
+      },
+      "tools": {
+        "node": "v22.21.0",
+        "pnpm": "11.17.0",
+        "typescript": "5.9.3"
+      },
+      "packages": [
+        {
+          "name": "@xivdyetools/logger",
+          "version": "2.4.0",
+          "archiveSha256": "8af98d82ce32135f214aa1d129952e90479c9657916d2549e8d0bf919e8889b7",
+          "archiveSri": "sha512-xHhXOvNuUtdb9NpBLT1CBPxOv0MKSC0cL+GLIwcpabn095DzD9ePOLBoa5ctrI7d0EbmeW2bMtFR65mlT0jo2g==",
+          "bytes": 49621,
+          "distFiles": 52,
+          "distMatchesTree": true,
+          "packedDependencies": {},
+          "packedPeerDependencies": {},
+          "packedOptionalDependencies": {}
+        },
+        {
+          "name": "@xivdyetools/auth",
+          "version": "3.0.0",
+          "archiveSha256": "e5b67734e419fc036a6db0ee2792f88e1d3c559efa50a8b2e4914b57159e0a4a",
+          "archiveSri": "sha512-euz8IHGns2gr+Sn/CYn+2RppF/1P4pPquNwqYLpTEHP2NvNpIYgbS4Do3cDQAqChcmf0nEsEi5d7Jgj2lLXi7Q==",
+          "bytes": 47776,
+          "distFiles": 36,
+          "distMatchesTree": true,
+          "packedDependencies": {
+            "discord-interactions": "^4.4.0"
+          },
+          "packedPeerDependencies": {
+            "@cloudflare/workers-types": "^4.0.0"
+          },
+          "packedOptionalDependencies": {}
+        },
+        {
+          "name": "@xivdyetools/core",
+          "version": "5.16.0",
+          "archiveSha256": "c11b905d9104b0e4cd6fdd8ec8b4dc1b1e809fef2bb6ccbb831594a277281d4b",
+          "archiveSri": "sha512-f9BgMxfD7qnVUKJAIZKyHGZK4Tdc7eakFROPWwRoMiBgi7wW5NbI+u62IBMXhOoABLo57zk27GoQAFO9D3Do5g==",
+          "bytes": 544832,
+          "distFiles": 246,
+          "distMatchesTree": true,
+          "packedDependencies": {
+            "spectral.js": "^3.0.0",
+            "xivcharakit": "0.1.0-beta.4",
+            "@xivdyetools/logger": "2.4.0",
+            "@xivdyetools/types": "3.3.0"
+          },
+          "packedPeerDependencies": {},
+          "packedOptionalDependencies": {}
+        },
+        {
+          "name": "@xivdyetools/worker-kit",
+          "version": "1.6.0",
+          "archiveSha256": "769284216c94b8057677aef27005b53b44d32fad195e95822b77206f6e8477f4",
+          "archiveSri": "sha512-/Fn9Zd26dQ/axDHDuLQ8+XstmKKntqF9nepPlE1Vth+XCHgdQhJF0GA5+A8Tp2jbxBcJd1q3Ac7NkMbcOd6ECQ==",
+          "bytes": 63527,
+          "distFiles": 92,
+          "distMatchesTree": true,
+          "packedDependencies": {
+            "@upstash/redis": "^1.39.0",
+            "@xivdyetools/logger": "2.4.0"
+          },
+          "packedPeerDependencies": {
+            "@cloudflare/workers-types": "^4.0.0 || ^5.0.0",
+            "hono": "^4.13.7"
+          },
+          "packedOptionalDependencies": {}
+        },
+        {
+          "name": "@xivdyetools/svg",
+          "version": "4.4.1",
+          "archiveSha256": "94ef9b9cc263ecfdb5e257b9f57b1b4ccf87a50110d1cb06adc24e1c566a93f3",
+          "archiveSri": "sha512-R3VuLYhWo9Q6a+SwirsRv17HM+XPog/I7G4AP7+ouTF6Q3Ygi5HW/JlamsJBbAvmgT4bS/EO8bb4E8YSi4oBgQ==",
+          "bytes": 115949,
+          "distFiles": 76,
+          "distMatchesTree": true,
+          "packedDependencies": {
+            "@xivdyetools/types": "3.3.0",
+            "@xivdyetools/core": "5.16.0"
+          },
+          "packedPeerDependencies": {},
+          "packedOptionalDependencies": {}
+        },
+        {
+          "name": "@xivdyetools/bot-logic",
+          "version": "4.12.0",
+          "archiveSha256": "60092687d542fcfe763f3a7d618c0f99f0c4db9a7eee443a6d7ae0024151bacd",
+          "archiveSri": "sha512-7G1tyn32NGxo5+b1vrHegTU+LVt95btBI4YD+nCwNI+rqC4VdvHRm3wAqRcHPRlsycwFIys3MgH1eGhQShQRaA==",
+          "bytes": 206171,
+          "distFiles": 98,
+          "distMatchesTree": true,
+          "packedDependencies": {
+            "@xivdyetools/core": "5.16.0",
+            "@xivdyetools/svg": "4.4.1",
+            "@xivdyetools/types": "3.3.0"
+          },
+          "packedPeerDependencies": {},
+          "packedOptionalDependencies": {}
+        }
+      ],
+      "install": {
+        "offline": true,
+        "flags": [
+          "--offline",
+          "--ignore-scripts",
+          "--config.auto-install-peers=false",
+          "--strict-peer-dependencies=false"
+        ],
+        "lifecycleScripts": "suppressed",
+        "internalPackagesFrom": "file: archives packed from this tree",
+        "externalsFrom": "SRI-verified seed archives (integrity equal to the tree lockfile) + @cloudflare/workers-types from the local pnpm store",
+        "packages": 14
+      },
+      "probe": {
+        "result": "PASS",
+        "exportsImported": 27,
+        "locales": 6,
+        "manualStringsChecked": 414,
+        "jwtCases": [
+          "valid token accepted: pass",
+          "wrong secret rejected: pass",
+          "expired token rejected: pass"
+        ],
+        "coreJsonImportAttributesWithoutLoader": true
+      },
+      "strictDeclarations": {
+        "skipLibCheck": false,
+        "strict": true,
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "exitCode": 0,
+        "diagnostics": 0,
+        "symbolsAsserted": 16,
+        "tsExpectErrorDirectives": 19,
+        "directivesConsumed": true,
+        "contractIdenticalToE01b": true,
+        "symbolsOnlyVariantExit": 0
+      },
+      "negativeControl": {
+        "skipped": true,
+        "reason": "Skipped for label e02 by instruction: e-02 changes only dyenames.csv, the German and French Core locale payloads, two consumer test expectations and docs, so the packed declaration files are expected to equal e01b. The e01b negative control is reused by reference; the premise is verified below by sha256 of every packed .d.ts/.d.ts.map in the logger, core and bot-logic archives. No snapshot was created.",
+        "premiseAllDeclarationFilesIdentical": false,
+        "premiseRepairedSymbolFilesIdentical": true,
+        "premiseDiffering": {
+          "logger": [],
+          "core": [],
+          "bot-logic": [
+            {
+              "file": "commands/__fixtures__/chara-fixtures.d.ts",
+              "status": "only-new"
+            },
+            {
+              "file": "commands/__fixtures__/chara-fixtures.d.ts.map",
+              "status": "only-new"
+            }
+          ]
+        },
+        "reusedE01bResult": {
+          "exitCode": 2,
+          "diagnostics": 41,
+          "allRevertedSymbolsNamed": true,
+          "result": "FAILED_AS_EXPECTED_NAMING_ALL_REVERTED_SYMBOLS"
+        }
+      },
+      "comparison": {
+        "outcome": "FINDINGS: bot-logic-stale-fixture-outputs, declaration-premise",
+        "checks": {
+          "loggerAuthWorkerKitSvgBotLogicByteIdenticalOrKeyOrderOnlyVsE01b": false,
+          "coreDiffersFromE01bOnlyInDeFrLocalesPlusKeyOrder": true,
+          "declarationFilesIdenticalToE01b": false,
+          "repairedSymbolDeclarationFilesIdenticalToE01b": true
+        },
+        "packages": [
+          {
+            "name": "@xivdyetools/logger",
+            "sha256": "8af98d82ce32135f214aa1d129952e90479c9657916d2549e8d0bf919e8889b7",
+            "e01bSha256": "8af98d82ce32135f214aa1d129952e90479c9657916d2549e8d0bf919e8889b7",
+            "identicalToE01b": true,
+            "meetsE01bRule": true,
+            "differingFilesVsE01b": [],
+            "identicalToCut06": false,
+            "identicalToBackport": null,
+            "distIdenticalToBackport": null,
+            "explanation": "Byte-identical to e01b: no packages/logger input changed since 71ed0595."
+          },
+          {
+            "name": "@xivdyetools/auth",
+            "sha256": "e5b67734e419fc036a6db0ee2792f88e1d3c559efa50a8b2e4914b57159e0a4a",
+            "e01bSha256": "e5b67734e419fc036a6db0ee2792f88e1d3c559efa50a8b2e4914b57159e0a4a",
+            "identicalToE01b": true,
+            "meetsE01bRule": true,
+            "differingFilesVsE01b": [],
+            "identicalToCut06": true,
+            "identicalToBackport": null,
+            "distIdenticalToBackport": null,
+            "explanation": "Byte-identical to e01b: no packages/auth input changed since 71ed0595."
+          },
+          {
+            "name": "@xivdyetools/core",
+            "sha256": "c11b905d9104b0e4cd6fdd8ec8b4dc1b1e809fef2bb6ccbb831594a277281d4b",
+            "e01bSha256": "cde357071f3b35b5d27dd8c30efb18a1cbbcc65699caa737136836430a9d08f3",
+            "identicalToE01b": false,
+            "meetsE01bRule": true,
+            "differingFilesVsE01b": [
+              {
+                "file": "dist/data/locales/de.json",
+                "status": "changed"
+              },
+              {
+                "file": "dist/data/locales/fr.json",
+                "status": "changed"
+              },
+              {
+                "file": "package.json",
+                "status": "changed"
+              }
+            ],
+            "identicalToCut06": false,
+            "identicalToBackport": false,
+            "distIdenticalToBackport": false,
+            "explanation": "Differs from e01b (cde357071f3b) in [dist/data/locales/de.json (changed), dist/data/locales/fr.json (changed), package.json (changed)]. The two locale payloads are the PR #390 de/fr text adoption (changed inputs since 71ed0595: packages/core/CHANGELOG.md, packages/core/CLAUDE.md, packages/core/dyenames.csv, packages/core/scripts/fetch_dye_names.py, packages/core/src/data/locales/de.json, packages/core/src/data/locales/fr.json; dyenames.csv, CHANGELOG.md, CLAUDE.md and scripts/ are not packed). package.json is semantically equal; only pnpm pack's dependency key order differs (e01b: spectral.js,xivcharakit,@xivdyetools/types,@xivdyetools/logger; now: spectral.js,xivcharakit,@xivdyetools/logger,@xivdyetools/types). Every other packed file is hash-equal."
+          },
+          {
+            "name": "@xivdyetools/worker-kit",
+            "sha256": "769284216c94b8057677aef27005b53b44d32fad195e95822b77206f6e8477f4",
+            "e01bSha256": "769284216c94b8057677aef27005b53b44d32fad195e95822b77206f6e8477f4",
+            "identicalToE01b": true,
+            "meetsE01bRule": true,
+            "differingFilesVsE01b": [],
+            "identicalToCut06": true,
+            "identicalToBackport": null,
+            "distIdenticalToBackport": null,
+            "explanation": "Byte-identical to e01b: no packages/worker-kit input changed since 71ed0595."
+          },
+          {
+            "name": "@xivdyetools/svg",
+            "sha256": "94ef9b9cc263ecfdb5e257b9f57b1b4ccf87a50110d1cb06adc24e1c566a93f3",
+            "e01bSha256": "2c545784f2ad1c1a5f9ecf13f81b9f26a4352484028d916e85f4eacae00e48c2",
+            "identicalToE01b": false,
+            "meetsE01bRule": true,
+            "differingFilesVsE01b": [
+              {
+                "file": "package.json",
+                "status": "changed"
+              }
+            ],
+            "identicalToCut06": false,
+            "identicalToBackport": null,
+            "distIdenticalToBackport": null,
+            "explanation": "Not byte-identical to e01b (2c545784f2ad): the only differing packed file is package.json, semantically equal, whose expanded workspace dependency keys pnpm pack wrote in a different order (e01b: @xivdyetools/core,@xivdyetools/types; now: @xivdyetools/types,@xivdyetools/core). Every other packed file (all 76 dist files) is byte-identical; no packages/svg input changed since 71ed0595 (0 files)."
+          },
+          {
+            "name": "@xivdyetools/bot-logic",
+            "sha256": "60092687d542fcfe763f3a7d618c0f99f0c4db9a7eee443a6d7ae0024151bacd",
+            "e01bSha256": "9062159de489ea751e77ed9b33e5c4d4d0d92644956cf40565f74f320c64e7e7",
+            "identicalToE01b": false,
+            "meetsE01bRule": false,
+            "differingFilesVsE01b": [
+              {
+                "file": "dist/commands/__fixtures__/chara-fixtures.d.ts",
+                "status": "only-new"
+              },
+              {
+                "file": "dist/commands/__fixtures__/chara-fixtures.d.ts.map",
+                "status": "only-new"
+              },
+              {
+                "file": "dist/commands/__fixtures__/chara-fixtures.js",
+                "status": "only-new"
+              },
+              {
+                "file": "dist/commands/__fixtures__/chara-fixtures.js.map",
+                "status": "only-new"
+              },
+              {
+                "file": "package.json",
+                "status": "changed"
+              }
+            ],
+            "identicalToCut06": false,
+            "identicalToBackport": false,
+            "distIdenticalToBackport": false,
+            "explanation": "FINDING: see findings[bot-logic-stale-fixture-outputs]. Besides the 4 stale fixture outputs, package.json differs from e01b only by dependency key order (e01b: @xivdyetools/core,@xivdyetools/types,@xivdyetools/svg; now: @xivdyetools/core,@xivdyetools/svg,@xivdyetools/types); the only bot-logic source change since 71ed0595 is packages/bot-logic/src/input-resolution.test.ts (not packed)."
+          }
+        ]
+      },
+      "builderUntouched": true,
+      "textAdoption": {
+        "result": "PASS",
+        "coreLocalePayloadsEqualSourceBySha256AndDeepEqual": true,
+        "runtimeNamesChecked": 750,
+        "pinnedAuthoritativeNamesChecked": 250,
+        "pinnedVersion": "0874aee069e1e7c4",
+        "fetchCalls": 0,
+        "sentinels": [
+          "5729 de Schneeweiß / fr Blanc neige: pass",
+          "48164 de Knallorange / fr Orange brillant: pass",
+          "48227 de Karmesinrot / fr Rouge carmin: pass"
+        ],
+        "localeSha256": {
+          "en": "8c0fdf7e99bc2c5019ba4d3003505768991b48823ff0481d212c6949992a746c",
+          "ja": "237527671a0ff4d195007a5adde4fde7edad5bf1702a3b7f7b0ba7b6a74b60b6",
+          "de": "ccb05c257d1deeb072b6ac0691e502d86b7099cc82be7cc52dd252193851fb1c",
+          "fr": "712a6392690f3115f5d20312f9478a30161d94b8ddba265b29e695fec7e1e332",
+          "ko": "2e151b02c48f10bc5437df9b78d21434c95594e050d8e73f998e2d0bca8c841e",
+          "zh": "14f734032013ac17e0def3858302ac5432c41bd9cb16bb4e9d5be173108eb4f3"
+        }
+      },
+      "observations": [
+        "@xivdyetools/auth 3.0.0 declares peer @cloudflare/workers-types ^4.0.0 while the builder lock resolves 5.20261023.1; the offline install printed \"Issues with peer dependencies found\". worker-kit 1.6.0 declares ^4.0.0 || ^5.0.0.",
+        "pnpm 11.17.0 pack again wrote the expanded workspace dependency keys of package.json in a different order than e01b for svg, core and bot-logic (recurring; see comparison.perPackageVsE01b).",
+        "The mtime freshness heuristic is false for core, bot-logic; content was verified instead (packed dist == builder dist; core locale payloads == src by sha256)."
+      ]
+    },
+    {
+      "label": "e02b",
+      "role": "Proof of the e-02 cut after a forced clean rebuild of the six packages, with a dist-freshness assertion.",
+      "status": "PASS",
+      "statusReason": "all gates passed",
+      "scope": "Local native archive proof only; no CI provenance, registry or deployed acceptance claim",
+      "source": {
+        "head": "b0efa0f26518d15fa3f23869e52b72128858f6d6",
+        "tree": "c95faa82f9e3e4223e83da41ab0edabb7db39575",
+        "basePreviousCut": "71ed0595ccf94182dadd391c1bdb6e70d10ef0f4",
+        "previousRunHead": "71ed0595ccf94182dadd391c1bdb6e70d10ef0f4"
+      },
+      "tools": {
+        "node": "v22.21.0",
+        "pnpm": "11.17.0",
+        "typescript": "5.9.3"
+      },
+      "packages": [
+        {
+          "name": "@xivdyetools/logger",
+          "version": "2.4.0",
+          "archiveSha256": "8af98d82ce32135f214aa1d129952e90479c9657916d2549e8d0bf919e8889b7",
+          "archiveSri": "sha512-xHhXOvNuUtdb9NpBLT1CBPxOv0MKSC0cL+GLIwcpabn095DzD9ePOLBoa5ctrI7d0EbmeW2bMtFR65mlT0jo2g==",
+          "bytes": 49621,
+          "distFiles": 52,
+          "distMatchesTree": true,
+          "packedDependencies": {},
+          "packedPeerDependencies": {},
+          "packedOptionalDependencies": {}
+        },
+        {
+          "name": "@xivdyetools/auth",
+          "version": "3.0.0",
+          "archiveSha256": "e5b67734e419fc036a6db0ee2792f88e1d3c559efa50a8b2e4914b57159e0a4a",
+          "archiveSri": "sha512-euz8IHGns2gr+Sn/CYn+2RppF/1P4pPquNwqYLpTEHP2NvNpIYgbS4Do3cDQAqChcmf0nEsEi5d7Jgj2lLXi7Q==",
+          "bytes": 47776,
+          "distFiles": 36,
+          "distMatchesTree": true,
+          "packedDependencies": {
+            "discord-interactions": "^4.4.0"
+          },
+          "packedPeerDependencies": {
+            "@cloudflare/workers-types": "^4.0.0"
+          },
+          "packedOptionalDependencies": {}
+        },
+        {
+          "name": "@xivdyetools/core",
+          "version": "5.16.0",
+          "archiveSha256": "c11b905d9104b0e4cd6fdd8ec8b4dc1b1e809fef2bb6ccbb831594a277281d4b",
+          "archiveSri": "sha512-f9BgMxfD7qnVUKJAIZKyHGZK4Tdc7eakFROPWwRoMiBgi7wW5NbI+u62IBMXhOoABLo57zk27GoQAFO9D3Do5g==",
+          "bytes": 544832,
+          "distFiles": 246,
+          "distMatchesTree": true,
+          "packedDependencies": {
+            "spectral.js": "^3.0.0",
+            "xivcharakit": "0.1.0-beta.4",
+            "@xivdyetools/logger": "2.4.0",
+            "@xivdyetools/types": "3.3.0"
+          },
+          "packedPeerDependencies": {},
+          "packedOptionalDependencies": {}
+        },
+        {
+          "name": "@xivdyetools/worker-kit",
+          "version": "1.6.0",
+          "archiveSha256": "769284216c94b8057677aef27005b53b44d32fad195e95822b77206f6e8477f4",
+          "archiveSri": "sha512-/Fn9Zd26dQ/axDHDuLQ8+XstmKKntqF9nepPlE1Vth+XCHgdQhJF0GA5+A8Tp2jbxBcJd1q3Ac7NkMbcOd6ECQ==",
+          "bytes": 63527,
+          "distFiles": 92,
+          "distMatchesTree": true,
+          "packedDependencies": {
+            "@upstash/redis": "^1.39.0",
+            "@xivdyetools/logger": "2.4.0"
+          },
+          "packedPeerDependencies": {
+            "@cloudflare/workers-types": "^4.0.0 || ^5.0.0",
+            "hono": "^4.13.7"
+          },
+          "packedOptionalDependencies": {}
+        },
+        {
+          "name": "@xivdyetools/svg",
+          "version": "4.4.1",
+          "archiveSha256": "2c545784f2ad1c1a5f9ecf13f81b9f26a4352484028d916e85f4eacae00e48c2",
+          "archiveSri": "sha512-OXFYja3uyqCYD0oexYkF4GZgUs59cuIpI4Fsi7Dt68v2hC6tF67LT30lNs7HVCQUUI/osPAj/FBJqIX4pc7smQ==",
+          "bytes": 115948,
+          "distFiles": 76,
+          "distMatchesTree": true,
+          "packedDependencies": {
+            "@xivdyetools/core": "5.16.0",
+            "@xivdyetools/types": "3.3.0"
+          },
+          "packedPeerDependencies": {},
+          "packedOptionalDependencies": {}
+        },
+        {
+          "name": "@xivdyetools/bot-logic",
+          "version": "4.12.0",
+          "archiveSha256": "b305994cbe5c1f74ebca4569b1ece5c8c534ab250d1dfddd8ebaaa97e3fc6f76",
+          "archiveSri": "sha512-FW1cRa6aBKsGOqGY5OpDlQvvXhkP+psX4cSQfq+oLWjBM32FE6I4IpIAbzqawfVlxARj+v3Xm462eMcX0m/pYA==",
+          "bytes": 201360,
+          "distFiles": 94,
+          "distMatchesTree": true,
+          "packedDependencies": {
+            "@xivdyetools/core": "5.16.0",
+            "@xivdyetools/svg": "4.4.1",
+            "@xivdyetools/types": "3.3.0"
+          },
+          "packedPeerDependencies": {},
+          "packedOptionalDependencies": {}
+        }
+      ],
+      "install": {
+        "offline": true,
+        "flags": [
+          "--offline",
+          "--ignore-scripts",
+          "--config.auto-install-peers=false",
+          "--strict-peer-dependencies=false"
+        ],
+        "lifecycleScripts": "suppressed",
+        "internalPackagesFrom": "file: archives packed from this tree",
+        "externalsFrom": "SRI-verified seed archives (integrity equal to the tree lockfile) + @cloudflare/workers-types from the local pnpm store",
+        "packages": 14
+      },
+      "probe": {
+        "result": "PASS",
+        "exportsImported": 27,
+        "locales": 6,
+        "manualStringsChecked": 414,
+        "jwtCases": [
+          "valid token accepted: pass",
+          "wrong secret rejected: pass",
+          "expired token rejected: pass"
+        ],
+        "coreJsonImportAttributesWithoutLoader": true
+      },
+      "strictDeclarations": {
+        "skipLibCheck": false,
+        "strict": true,
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "exitCode": 0,
+        "diagnostics": 0,
+        "symbolsAsserted": 16,
+        "tsExpectErrorDirectives": 19,
+        "directivesConsumed": true,
+        "contractIdenticalToE01b": true,
+        "symbolsOnlyVariantExit": 0
+      },
+      "negativeControl": {
+        "skipped": true,
+        "reason": "Skipped for label e02b by instruction: e-02 changes only dyenames.csv, the German and French Core locale payloads, two consumer test expectations and docs, so the packed declaration files are expected to equal e01b. The e01b negative control is reused by reference; the premise is verified below by sha256 of every packed .d.ts/.d.ts.map in the logger, core and bot-logic archives. No snapshot was created.",
+        "premiseAllDeclarationFilesIdentical": true,
+        "premiseRepairedSymbolFilesIdentical": true,
+        "premiseDiffering": {
+          "logger": [],
+          "core": [],
+          "bot-logic": []
+        },
+        "reusedE01bResult": {
+          "exitCode": 2,
+          "diagnostics": 41,
+          "allRevertedSymbolsNamed": true,
+          "result": "FAILED_AS_EXPECTED_NAMING_ALL_REVERTED_SYMBOLS"
+        }
+      },
+      "comparison": {
+        "outcome": "logger/auth/worker-kit/svg byte-identical to e01b; bot-logic differs only by pnpm pack dependency-key order in package.json; core differs only in dist/data/locales/de.json + fr.json (+ package.json dependency-key order); every packed .d.ts/.d.ts.map of logger/core/bot-logic identical to e01b; dist file sets equal a clean build and e01b",
+        "checks": {
+          "loggerAuthWorkerKitSvgBotLogicByteIdenticalOrKeyOrderOnlyVsE01b": true,
+          "coreDiffersFromE01bOnlyInDeFrLocalesPlusKeyOrder": true,
+          "declarationFilesIdenticalToE01b": true,
+          "repairedSymbolDeclarationFilesIdenticalToE01b": true
+        },
+        "packages": [
+          {
+            "name": "@xivdyetools/logger",
+            "sha256": "8af98d82ce32135f214aa1d129952e90479c9657916d2549e8d0bf919e8889b7",
+            "e01bSha256": "8af98d82ce32135f214aa1d129952e90479c9657916d2549e8d0bf919e8889b7",
+            "identicalToE01b": true,
+            "meetsE01bRule": true,
+            "differingFilesVsE01b": [],
+            "identicalToFailedE02": true,
+            "differingFilesVsFailedE02": [],
+            "identicalToCut06": false,
+            "identicalToBackport": null,
+            "distIdenticalToBackport": null,
+            "explanation": "Byte-identical to e01b: no packages/logger input changed since 71ed0595."
+          },
+          {
+            "name": "@xivdyetools/auth",
+            "sha256": "e5b67734e419fc036a6db0ee2792f88e1d3c559efa50a8b2e4914b57159e0a4a",
+            "e01bSha256": "e5b67734e419fc036a6db0ee2792f88e1d3c559efa50a8b2e4914b57159e0a4a",
+            "identicalToE01b": true,
+            "meetsE01bRule": true,
+            "differingFilesVsE01b": [],
+            "identicalToFailedE02": true,
+            "differingFilesVsFailedE02": [],
+            "identicalToCut06": true,
+            "identicalToBackport": null,
+            "distIdenticalToBackport": null,
+            "explanation": "Byte-identical to e01b: no packages/auth input changed since 71ed0595."
+          },
+          {
+            "name": "@xivdyetools/core",
+            "sha256": "c11b905d9104b0e4cd6fdd8ec8b4dc1b1e809fef2bb6ccbb831594a277281d4b",
+            "e01bSha256": "cde357071f3b35b5d27dd8c30efb18a1cbbcc65699caa737136836430a9d08f3",
+            "identicalToE01b": false,
+            "meetsE01bRule": true,
+            "differingFilesVsE01b": [
+              {
+                "file": "dist/data/locales/de.json",
+                "status": "changed"
+              },
+              {
+                "file": "dist/data/locales/fr.json",
+                "status": "changed"
+              },
+              {
+                "file": "package.json",
+                "status": "changed"
+              }
+            ],
+            "identicalToFailedE02": true,
+            "differingFilesVsFailedE02": [],
+            "identicalToCut06": false,
+            "identicalToBackport": false,
+            "distIdenticalToBackport": false,
+            "explanation": "Differs from e01b (cde357071f3b) in [dist/data/locales/de.json (changed), dist/data/locales/fr.json (changed), package.json (changed)]. The two locale payloads are the PR #390 de/fr text adoption (changed inputs since 71ed0595: packages/core/CHANGELOG.md, packages/core/CLAUDE.md, packages/core/dyenames.csv, packages/core/scripts/fetch_dye_names.py, packages/core/src/data/locales/de.json, packages/core/src/data/locales/fr.json; dyenames.csv, CHANGELOG.md, CLAUDE.md and scripts/ are not packed). package.json is semantically equal; only pnpm pack's dependency key order differs (e01b: spectral.js,xivcharakit,@xivdyetools/types,@xivdyetools/logger; now: spectral.js,xivcharakit,@xivdyetools/logger,@xivdyetools/types). Every other packed file is hash-equal."
+          },
+          {
+            "name": "@xivdyetools/worker-kit",
+            "sha256": "769284216c94b8057677aef27005b53b44d32fad195e95822b77206f6e8477f4",
+            "e01bSha256": "769284216c94b8057677aef27005b53b44d32fad195e95822b77206f6e8477f4",
+            "identicalToE01b": true,
+            "meetsE01bRule": true,
+            "differingFilesVsE01b": [],
+            "identicalToFailedE02": true,
+            "differingFilesVsFailedE02": [],
+            "identicalToCut06": true,
+            "identicalToBackport": null,
+            "distIdenticalToBackport": null,
+            "explanation": "Byte-identical to e01b: no packages/worker-kit input changed since 71ed0595."
+          },
+          {
+            "name": "@xivdyetools/svg",
+            "sha256": "2c545784f2ad1c1a5f9ecf13f81b9f26a4352484028d916e85f4eacae00e48c2",
+            "e01bSha256": "2c545784f2ad1c1a5f9ecf13f81b9f26a4352484028d916e85f4eacae00e48c2",
+            "identicalToE01b": true,
+            "meetsE01bRule": true,
+            "differingFilesVsE01b": [],
+            "identicalToFailedE02": false,
+            "differingFilesVsFailedE02": [
+              {
+                "file": "package.json",
+                "status": "changed"
+              }
+            ],
+            "identicalToCut06": true,
+            "identicalToBackport": null,
+            "distIdenticalToBackport": null,
+            "explanation": "Byte-identical to e01b."
+          },
+          {
+            "name": "@xivdyetools/bot-logic",
+            "sha256": "b305994cbe5c1f74ebca4569b1ece5c8c534ab250d1dfddd8ebaaa97e3fc6f76",
+            "e01bSha256": "9062159de489ea751e77ed9b33e5c4d4d0d92644956cf40565f74f320c64e7e7",
+            "identicalToE01b": false,
+            "meetsE01bRule": true,
+            "differingFilesVsE01b": [
+              {
+                "file": "package.json",
+                "status": "changed"
+              }
+            ],
+            "identicalToFailedE02": false,
+            "differingFilesVsFailedE02": [
+              {
+                "file": "dist/commands/__fixtures__/chara-fixtures.d.ts",
+                "status": "only-earlier"
+              },
+              {
+                "file": "dist/commands/__fixtures__/chara-fixtures.d.ts.map",
+                "status": "only-earlier"
+              },
+              {
+                "file": "dist/commands/__fixtures__/chara-fixtures.js",
+                "status": "only-earlier"
+              },
+              {
+                "file": "dist/commands/__fixtures__/chara-fixtures.js.map",
+                "status": "only-earlier"
+              }
+            ],
+            "identicalToCut06": false,
+            "identicalToBackport": true,
+            "distIdenticalToBackport": true,
+            "explanation": "Not byte-identical to e01b (9062159de489): the only differing packed file is package.json, semantically equal, whose expanded workspace dependency keys pnpm pack wrote in a different order (e01b: @xivdyetools/core,@xivdyetools/types,@xivdyetools/svg; now: @xivdyetools/core,@xivdyetools/svg,@xivdyetools/types). All 94 dist files and README.md are byte-identical. The only bot-logic input change since 71ed0595 is packages/bot-logic/src/input-resolution.test.ts (not packed). The e02 stale fixture outputs are gone."
+          }
+        ]
+      },
+      "builderUntouched": true,
+      "textAdoption": {
+        "result": "PASS",
+        "coreLocalePayloadsEqualSourceBySha256AndDeepEqual": true,
+        "runtimeNamesChecked": 750,
+        "pinnedAuthoritativeNamesChecked": 250,
+        "pinnedVersion": "0874aee069e1e7c4",
+        "fetchCalls": 0,
+        "sentinels": [
+          "5729 de Schneeweiß / fr Blanc neige: pass",
+          "48164 de Knallorange / fr Orange brillant: pass",
+          "48227 de Karmesinrot / fr Rouge carmin: pass"
+        ],
+        "localeSha256": {
+          "en": "8c0fdf7e99bc2c5019ba4d3003505768991b48823ff0481d212c6949992a746c",
+          "ja": "237527671a0ff4d195007a5adde4fde7edad5bf1702a3b7f7b0ba7b6a74b60b6",
+          "de": "ccb05c257d1deeb072b6ac0691e502d86b7099cc82be7cc52dd252193851fb1c",
+          "fr": "712a6392690f3115f5d20312f9478a30161d94b8ddba265b29e695fec7e1e332",
+          "ko": "2e151b02c48f10bc5437df9b78d21434c95594e050d8e73f998e2d0bca8c841e",
+          "zh": "14f734032013ac17e0def3858302ac5432c41bd9cb16bb4e9d5be173108eb4f3"
+        }
+      },
+      "observations": [
+        "@xivdyetools/auth 3.0.0 declares peer @cloudflare/workers-types ^4.0.0 while the builder lock resolves 5.20261023.1; the offline install printed \"Issues with peer dependencies found\". worker-kit 1.6.0 declares ^4.0.0 || ^5.0.0.",
+        "pnpm 11.17.0 pack wrote the expanded workspace dependency keys of package.json in a different order than e01b for core, bot-logic (recurring and run-to-run unstable: svg flipped back to the e01b order, so svg is byte-identical to e01b but not to the failed e02 run; see comparison.perPackageVsE01b and packages[].vsE02).",
+        "The bot-logic 4.12.0 archive is byte-identical to the #401 backport archive recorded in the m-sprint-preparation receipt (b305994cbe5c1f74ebca4569b1ece5c8c534ab250d1dfddd8ebaaa97e3fc6f76); the task text's value for it (b305994c0e5d...) is again wrong and was not used.",
+        "The dist-freshness content check flagged core data/locales/*.json (6) against the fresh tsc emit; reclassified as expected because core's build runs copy:locales after tsc and overwrites tsc's re-indented JSON with the src bytes (builder dist == src by sha256; tsc emit deep-equals src). The file-set rule itself passed for all six packages.",
+        "The mtime freshness heuristic is false for core; content was verified instead (packed dist == builder dist; core locale payloads == src by sha256)."
+      ]
+    }
+  ],
+  "queueSimulation": {
+    "note": "Local only and never pushed. Built with git merge-tree (no checkout): cut 17 (the A/R/H end state), then e-02 (which carries e-01 and e-00), then e-03.",
+    "commit": "38b649f8bcc1acba11c0b34ed5534977a86ed8ef",
+    "tree": "6fa39f1628ffb9d418b6390d48425c85dd0de7f5",
+    "constructedFrom": {
+      "cut17": "2b95c0df20b0585d405f2684b10b982d61a48bf6",
+      "e02": "b0efa0f26518d15fa3f23869e52b72128858f6d6",
+      "e03": "e1293ba5e0695b50bc5713528a98f9d93651fe44"
+    },
+    "merges": {
+      "cut17WithE02": "clean",
+      "withE03": "clean"
+    },
+    "wholeGraph": {
+      "attempted": 62,
+      "executed": 62,
+      "cached": 0,
+      "success": 62,
+      "failed": 0,
+      "exitCode": 0
+    },
+    "workerGzipKiB": {
+      "xivdyetools-discord-worker": 2739.72,
+      "xivdyetools-og-worker": 1953.86
+    },
+    "outgoingSecretScanExit": 0,
+    "forwardMerge": {
+      "ontoF03": {
+        "mergeTreeExit": 0,
+        "clean": true,
+        "mergedTree": "103339590bfc32e1e3b1275fb300db9fc25f119a",
+        "differsFromF03By": "11 files changed, 97 insertions(+), 6 deletions(-)",
+        "differingFiles": [
+          "apps/web-app/CHANGELOG.md",
+          "packages/bot-logic/CHANGELOG.md",
+          "packages/core/CHANGELOG.md",
+          "packages/logger/CHANGELOG.md",
+          "packages/logger/src/__tests__/package-declarations.test.ts",
+          "packages/logger/src/adapters/console-adapter.ts",
+          "packages/logger/src/adapters/json-adapter.ts",
+          "packages/logger/src/adapters/noop-adapter.ts",
+          "packages/logger/src/core/base-logger.ts",
+          "packages/logger/src/presets/worker.ts",
+          "packages/logger/src/types.ts"
+        ]
+      }
+    }
+  }
+}

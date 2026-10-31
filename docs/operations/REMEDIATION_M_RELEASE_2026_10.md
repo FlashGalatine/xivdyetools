@@ -34,7 +34,7 @@ folding removal into those minor artifacts would defeat the required deprecation
 - Publish and verify the A/R/H prerequisite packages, including Core 5.16.0, SVG 4.4.1 and
   Bot Logic 4.12.0, with actual registry-artifact and consumer acceptance evidence.
 - Record the required beta and production acceptance of the current facade and deprecated
-  result contract. Source tests and local packs do not establish deployed acceptance.
+  result contract. Source tests and local packs do not establish deployed acceptance. **Ruling (2026-10-31, R1):** beta acceptance is retired for this wave. Production acceptance of the deployed A/R/H consumers (discord 5.9.7, API 0.21.1, web 5.16.4, OG 2.12.2 and moderation 1.9.0 with `LINKED_BAN_CONFIRMATION_ENABLED=false`; units 9 and 11-14 of the [unit acceptance checklist](REMEDIATION_UNIT_ACCEPTANCE_2026_10.md)) stands in for the beta acceptance of the current facade and deprecated result contract before Core 6.0.0. Manual beta dispatch remains unauthorized, and the ruling authorizes no merge, publication, deployment or activation.
 - Recheck external npm consumers before removing public APIs or the result field. Local
   zero-call-site searches cannot settle external use. Revisit removal if an active consumer
   still needs the field.
@@ -54,7 +54,7 @@ verification and version boundaries; they do not pin or delay dependency adoptio
 The existing production reviewer gate must hold every package-triggered app run. During a
 later explicitly authorized release, hold/cancel stale consumer runs and select only the
 intended app source/run after its prerequisites and acceptance checks. Approving a package
-publisher must not approve any app deployment. Do not treat draft status as an activation gate.
+publisher must not approve any app deployment. Do not treat draft status as an activation gate. **Rule (2026-10-31):** stale runs are no longer held: reject or cancel every stale run that is waiting for review or pending in its workflow's concurrency group before the next merge that matches the same workflow, and never cancel an approved run in progress, which can stop between `wrangler deploy` and `register-commands`. Each deploy workflow's single concurrency group has `cancel-in-progress: false`, so a stale run left waiting can hold up the selected one ([unit acceptance](REMEDIATION_UNIT_ACCEPTANCE_2026_10.md) AP-06).
 
 Push only flat `codex/release-cut-*` candidate refs, excluded by all three automatic beta
 workflows. Never push the private builder or local implementation branches. Manual beta
@@ -83,11 +83,11 @@ release and does not close any gate above.
 
 ## Prepared source and acceptance receipts
 
-[Redacted preparation receipt](../audits/2026-10-26-security/evidence/m-sprint-preparation-2026-10-29.json) records the immutable heads, gates, native archive hashes and exact-head CI. It covers twelve source PRs; the documentation companion verifies its own CI separately.
+[Redacted preparation receipt](../audits/2026-10-26-security/evidence/m-sprint-preparation-2026-10-29.json) records the immutable heads, gates, native archive hashes and exact-head CI. It covers twelve source PRs; the documentation companion verifies its own CI separately. Where a cell names two heads, the receipt binds the first; the second is the 2026-10-31 low-finding head ([unit acceptance](REMEDIATION_UNIT_ACCEPTANCE_2026_10.md) section 1).
 
 | Source | Version | Draft PR | Head |
 |---|---|---|---|
-| M-CORE | 6.0.0 | [#391](https://github.com/FlashGalatine/xivdyetools/pull/391) | `cf54ecfd6670bc3a30dbe7d74d49e2969b9abf69` |
+| M-CORE | 6.0.0 | [#391](https://github.com/FlashGalatine/xivdyetools/pull/391) | `cf54ecfd6670bc3a30dbe7d74d49e2969b9abf69`; `3cd1b6df23fb64e276efe868b89a7e3d398e4d75` since 2026-10-31 (test-only low-finding commit) |
 | M-SVG | 4.4.2 | [#392](https://github.com/FlashGalatine/xivdyetools/pull/392) | `ebeb016e8437e714ddf706aacbabdce4636cf406` |
 | M-BOT-LOGIC | 5.0.0 | [#394](https://github.com/FlashGalatine/xivdyetools/pull/394) | `7215c3660ade7b2adb1a0c53f6129034390a50c0` |
 | M-API | 0.21.2 | [#395](https://github.com/FlashGalatine/xivdyetools/pull/395) | `ac6fd77d79e8d0e5af98845f06a72772fbb95102` |
@@ -96,7 +96,9 @@ release and does not close any gate above.
 | M-DISCORD | 5.9.8 | [#398](https://github.com/FlashGalatine/xivdyetools/pull/398) | `929f8f6c1cf98bdfe1ae2b8c9525c51e82af6db6` |
 | M-MODERATION | 1.9.1 | [#399](https://github.com/FlashGalatine/xivdyetools/pull/399) | `c79d2b24180d84865950e9b8ea2030cc4e9789c9` |
 | M-STOAT | 0.3.5 | [#400](https://github.com/FlashGalatine/xivdyetools/pull/400) | `876dadb33bbefdaa0dc12d982e539eddd13cf1d0` |
-| Web development compatibility companion | 5.16.5 | [#402](https://github.com/FlashGalatine/xivdyetools/pull/402) | `179b2ebbb31b43e044eae88467e92368c950ccd3` |
+| Web development compatibility companion | 5.16.5 | [#402](https://github.com/FlashGalatine/xivdyetools/pull/402) | `179b2ebbb31b43e044eae88467e92368c950ccd3`; `a33e7f588f6f94e8acd630a07028f2c1a1f2dfed` since 2026-10-31 (changelog-only low-finding commit) |
+| Core declaration repair (earlier minor) | 5.16.0 (no new version) | [#393](https://github.com/FlashGalatine/xivdyetools/pull/393) | `e0e8c3eccf44f66ca054fa21e17b1ddb3b5502da`; `d1e0c467f97fd553628726432460c540508b9f7c` since 2026-10-31 (test-only low-finding commit) |
+| Bot Logic declaration repair (earlier minor) | 4.12.0 (no new version) | [#401](https://github.com/FlashGalatine/xivdyetools/pull/401) | `698b7cefa2fb6a829a84425012e2ce584f14f25d` |
 
 ## Corrective prerequisites for the earlier release
 
@@ -108,6 +110,8 @@ existing command/translator declarations. Both fixes are also present in the maj
 The corrected Bot minor native proof selects the corrected Core minor archive and SVG 4.4.1.
 Do not use an earlier historical receipt as strict declaration acceptance. Old refs and receipts
 remain immutable; refresh/revalidate later cuts when integrating these companions.
+
+A third companion was found on 2026-10-30: `@xivdyetools/logger` 2.4.0, and the published 2.3.0, re-export six symbols that `stripInternal` removes from the emitted declarations. Unlike the Core and Bot Logic repairs, it is not present in the major candidates (the F tip ships the unrepaired logger source). A repair ([#407](https://github.com/FlashGalatine/xivdyetools/pull/407)) is prepared and recommended before P1 and merges cleanly onto this tree; whether to require it is the maintainer's decision. The M-wave strict-declaration receipts covered Core, SVG and Bot Logic only. See [section 9 of the A/R/H runbook](REMEDIATION_RELEASE_2026_10.md#9-earlier-minor-reconciliation--2026-10-30).
 
 ## Browser compatibility acceptance
 
