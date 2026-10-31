@@ -298,7 +298,7 @@ an earlier minor candidate require refreshed artifact/consumer verification ther
 
 ### Intended merge order, when a merge is separately authorized
 
-First the image hold guard #412, with the `IMAGE_WORKER_DEPLOY_HOLD` variable set straight after it (2026-10-31; unit acceptance unit 15 and section 6); then cut 00; cut 01, then e-00; cut 02; cut 03, then #393; cuts 04, 05, 05a and 06, then #401; retarget e-02 to `main` (its diff is then the text selection alone); the app cuts; cut 12, then e-03; cut 14, then its documentation companion #PR14A; the moderation activation release #PRACT comes last, after the whole queue and M8's accepted inactive deploy. e-01 is verification evidence and is not merged. Hold every package-triggered production run and approve nothing implicitly.
+First the image hold guard [#412](https://github.com/FlashGalatine/xivdyetools/pull/412), with the `IMAGE_WORKER_DEPLOY_HOLD` variable set straight after it (2026-10-31; unit acceptance unit 15 and section 6); then cut 00; cut 01, then e-00; cut 02; cut 03, then #393; cuts 04, 05, 05a and 06, then #401; retarget e-02 to `main` (its diff is then the text selection alone); the app cuts; cut 12, then e-03; cut 14, then its documentation companion [#413](https://github.com/FlashGalatine/xivdyetools/pull/413); the moderation activation release [#414](https://github.com/FlashGalatine/xivdyetools/pull/414) comes last, after the whole queue and M8's accepted inactive deploy. e-01 is verification evidence and is not merged. Hold every package-triggered production run and approve nothing implicitly.
 
 ### #390 after this reconciliation
 
