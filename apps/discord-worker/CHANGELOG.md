@@ -28,6 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   an unused text copy.
 - Clan autocomplete and validation use official localized race/clan labels while keeping canonical
   saved values. Command registration localizes Swatch order/slots and preset sort choices.
+- Retry an /extractor image once, after 500 ms, when image-worker reports its single processing
+  slot busy (503 "Image processing unavailable"), inside the same 10 s request budget; a second
+  busy reply keeps the generic localized failure. No other failure is retried.
 
 ### Security
 

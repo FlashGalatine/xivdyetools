@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { TestHarness, TestHarnessOptions } from 'wrangler';
-import { mkdirSync, mkdtempSync, readdirSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { mkdirSync, mkdtempSync, readdirSync, rmSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath, URL } from 'node:url';
 
@@ -19,6 +19,7 @@ let harness: TestHarness;
 let compatibility: Array<{ status: number; body: unknown }>;
 let shortSecretStatus: number;
 const saved = new Map<string, string | undefined>();
+const scratch: string[] = [];
 const init = (body = payload, auth = `Bearer ${secret}`) => ({
   method: 'POST',
   headers: { Authorization: auth, 'Content-Type': 'application/json' },
@@ -34,11 +35,10 @@ beforeAll(async () => {
   }
   // A short isolated OS temp root avoids Windows child-process path limits.
   const temporary = mkdtempSync(resolve(tmpdir(), 'd8ng-'));
-  const root = resolve(
-    source('../../../.superpowers/sdd/REMEDIATION_PLAN'),
-    `guard-fix1-runtime-${process.pid}`,
-  );
-  mkdirSync(resolve(root, 'profile'), { recursive: true });
+  // The Wrangler root (profile, cache, logs, .wrangler) is OS temp too, never the checkout.
+  const root = mkdtempSync(join(tmpdir(), 'd8nr-'));
+  scratch.push(temporary, root);
+  mkdirSync(resolve(root, 'profile'));
   for (const [key, value] of Object.entries({
     TEMP: temporary,
     TMP: temporary,
@@ -121,6 +121,9 @@ afterAll(async () => {
     for (const [key, value] of saved) {
       if (value === undefined) delete process.env[key];
       else process.env[key] = value;
+    }
+    for (const directory of scratch.splice(0)) {
+      rmSync(directory, { recursive: true, force: true, maxRetries: 5 });
     }
   }
 }, 30000);
