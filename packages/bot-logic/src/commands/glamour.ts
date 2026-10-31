@@ -47,7 +47,7 @@ import { createTranslator, type LocaleCode, type Translator, type TranslatorLogg
 import { getLocalizedDyeName, getLocalizedRace, initializeLocale } from '../localization.js';
 import { genderSymbol, producerToken, readCharaForTools, tribeDisplay } from './chara-identity.js';
 import { failureKind } from './failure-kind.js';
-import { sanitizeEmbedText } from '../discord-markdown.js';
+import { sanitizeLineValue } from '../discord-markdown.js';
 import type { EmbedData } from './types.js';
 
 // ============================================================================
@@ -377,12 +377,21 @@ const BLOCKED_KEYS: Record<CharaPieceProblem, string> = {
 };
 
 /**
+ * Code-point cap for one resolver value. The longest acquisition line api-worker
+ * ships is 659 code points, so no real line is cut, while one oversized value
+ * still cannot push every later slot out of the list.
+ */
+const VALUE_CAP = 700;
+
+/**
  * Resolver values are untrusted embed text: collapse controls/whitespace,
- * defuse mentions, escape markup and bound escape growth. Trusted form labels,
- * dye names and localized advisory wording are assembled separately.
+ * defuse mentions, escape the markup that can form mid-line and bound escape
+ * growth. Parentheses stay bare, so a copied acquisition line reads
+ * "Crafted (WVR Lvl. 1)" with no backslashes. Trusted form labels, dye names
+ * and localized advisory wording are assembled separately.
  */
 function plain(text: string): string {
-  return sanitizeEmbedText(text, 256);
+  return sanitizeLineValue(text, VALUE_CAP);
 }
 
 /** Shorten already escaped literal text by UTF-16 units without splitting emoji or escapes. */
@@ -620,7 +629,7 @@ export async function executeGlamour(input: GlamourInput): Promise<GlamourResult
       return notes;
     };
     const closing = `${t.t('card.glamourManual')} \`/manual topic:👤\`\n${SHARE_URL}`;
-    let nameBudget = 512; // sanitizeEmbedText's 256 code points can occupy 512 UTF-16 units.
+    let nameBudget = VALUE_CAP * 2; // VALUE_CAP code points can occupy twice as many UTF-16 units.
     let tail = [...advisoryNotes(nameBudget), closing].join('\n');
     // Leave one ellipsis and the blank line even if no complete body line fits.
     while (tail.length > EMBED_BUDGET - 3) {

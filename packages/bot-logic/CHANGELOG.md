@@ -39,8 +39,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
-- Glamour resolver names/acquisition text use the shared bounded embed sanitizer, including
-  masked-link/angle-token escaping, mention defusing and single-line normalization.
+- Glamour resolver names and acquisition text now strip controls, collapse whitespace to one
+  line and defuse mentions. To the escaping 4.11.0 already did (`*`, `_`, `~`, backtick, `|`,
+  backslash) they add `[`, `]` and `<`, so masked links and mention, channel, emoji and timestamp
+  tokens stay inert. Parentheses, `#` and `>` stay bare: they cannot form markup mid-line, and a
+  copied acquisition line reads "Crafted (WVR Lvl. 1)". The ten shipped lines with a bracketed
+  `[M]`/`[F]` marker keep their bracket escapes. Each value is capped at 700 code points, above
+  the longest acquisition line api-worker ships (659), so no line is cut short.
 - The shared sanitizer escapes `<` and removes Arabic letter mark, bidi isolates and astral tag
   controls before mention handling. Public helper signatures and ordinary emoji remain supported.
 
