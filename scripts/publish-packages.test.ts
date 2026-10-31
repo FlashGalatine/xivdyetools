@@ -33,6 +33,14 @@ const workflowPath = fileURLToPath(
   new URL('../.github/workflows/publish-packages.yml', import.meta.url),
 );
 const workflow = (): string => readFileSync(workflowPath, 'utf8').replace(/\r\n/g, '\n');
+const pinnedPnpm = ((): string => {
+  const manifest = JSON.parse(
+    readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
+  ) as { packageManager?: unknown };
+  const match = /^pnpm@(\d+\.\d+\.\d+)$/.exec(String(manifest.packageManager));
+  if (!match) throw new Error('packageManager must pin an exact pnpm version');
+  return match[1];
+})();
 function job(yaml: string, name: string): string {
   return (
     new RegExp(`^  ${name}:\\n[\\s\\S]*?(?=^  [a-z][\\w-]*:|$(?![\\s\\S]))`, 'm').exec(yaml)?.[0] ??
@@ -705,6 +713,24 @@ test('publisher runtime imports only Node built-ins', () => {
   assert.match(source, /\.\.\.publishArguments\(tarball\)/);
 });
 
+test('pnpm pin agrees across packageManager, the publisher and the publish workflow', () => {
+  const source = readFileSync(new URL('./publish-packages.ts', import.meta.url), 'utf8');
+  assert.equal(
+    /const PNPM_VERSION = '([^']+)'/.exec(source)?.[1],
+    pinnedPnpm,
+    'bump PNPM_VERSION in scripts/publish-packages.ts together with packageManager',
+  );
+  const pins = [...workflow().matchAll(/^\s+version: (\S+)\s*$/gm)].map((match) => match[1]);
+  assert.ok(pins.length > 0, 'publish-packages.yml must pin the pnpm/action-setup version');
+  assert.deepEqual(
+    [...new Set(pins)],
+    [pinnedPnpm],
+    'bump the pnpm/action-setup version in publish-packages.yml together with packageManager',
+  );
+});
+
+// Not hermetic by design: this runs the real `pnpm publish --provenance --dry-run` and fails
+// closed when the installed pnpm drifts from the pinned version.
 test('local pnpm dry-run cannot execute packed lifecycle hooks', async (t) => {
   let pnpmJs = process.env.PUBLISH_TEST_PNPM_JS;
   if (process.platform === 'win32' && !pnpmJs) {
@@ -713,7 +739,7 @@ test('local pnpm dry-run cannot execute packed lifecycle hooks', async (t) => {
     const candidates = [join(home, 'node_modules', 'pnpm', 'bin', 'pnpm.cjs')];
     if (existsSync(versions)) {
       for (const version of readdirSync(versions).filter((value) =>
-        /^11\.17\.0(?:_|$)/.test(value),
+        new RegExp(`^${pinnedPnpm.replace(/\./g, '\\.')}(?:_|$)`).test(value),
       )) {
         candidates.push(join(versions, version, 'node_modules', 'pnpm', 'bin', 'pnpm.cjs'));
       }
@@ -721,7 +747,7 @@ test('local pnpm dry-run cannot execute packed lifecycle hooks', async (t) => {
     pnpmJs = candidates.find((path) => existsSync(path));
     assert.ok(
       pnpmJs,
-      'set PUBLISH_TEST_PNPM_JS to pnpm 11.17.0 bin/pnpm.cjs for the local dry-run',
+      `set PUBLISH_TEST_PNPM_JS to pnpm ${pinnedPnpm} bin/pnpm.cjs for the local dry-run (Windows has no PATH shim it can exec directly)`,
     );
   }
   const options = fixture(t, [name('types')]);

@@ -6,7 +6,9 @@ import { errorResponse, ErrorCode } from '../src/utils/api-response.js';
 describe('test module resolution', () => {
   it('loads dependency JavaScript and relative TypeScript .js imports together', async () => {
     // The relative import above resolves to api-response.ts; dependencies keep
-    // their actual .js filenames. A global .js-stripping alias breaks the latter.
+    // their actual .js filenames. A global .js-stripping alias breaks the latter,
+    // but only under a Windows loading workload; the OS-independent guard is
+    // tests/vitest-alias-boundary.test.ts.
     const kv = createMockKV();
     await kv.put('message', 'Resolution boundary reached');
     const app = new Hono();
