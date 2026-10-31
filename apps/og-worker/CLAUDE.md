@@ -338,13 +338,13 @@ Cloudflare Workers disallow dynamic `WebAssembly.instantiate()`, so `services/re
 
 `services/fonts.ts` does static `import` of all **ten** TTFs — three Space Grotesk instances
 (Regular / SemiBold / Bold), three Onest instances, Fragment Mono Regular, and the Noto Sans
-JP/SC/KR subsets — and caches `Uint8Array` views in module scope. They are **static instances, not
-variable fonts**: resvg exposes only a variable file's default instance, so while
-`*-VariableFont_wght.ttf` was bundled every `font-weight` on every card rendered at that one weight
-(Space Grotesk's default is Light 300). Regenerate with
+JP/SC/KR subsets — builds each face's `Uint8Array` view once and caches the two load orders in
+module scope. They are **static instances, not variable fonts**: resvg exposes only a variable
+file's default instance, so while `*-VariableFont_wght.ttf` was bundled every `font-weight` on
+every card rendered at that one weight (Space Grotesk's default is Light 300). Regenerate with
 `apps/discord-worker/scripts/instance-latin-fonts.py --app og-worker`; `font-faces.test.ts` renders
 400 / 600 / 700 and fails if any two come out identical. Prove a weight change by **rendering**,
-never by reading the SVG string. `getFontBuffers()` is passed to `Resvg`'s `font.fontBuffers`; `defaultFontFamily: 'Onest'`. The JP subset exists because folding Japanese into the SC subset renders JA text in Chinese letterforms, so JA stacks put `Noto Sans JP` first.
+never by reading the SVG string. `getFontBuffers(locale)` is passed to `Resvg`'s `font.fontBuffers`; `defaultFontFamily: 'Onest'`. resvg fills glyphs the Latin faces lack in **buffer order**, not in the SVG `font-family` stack's order, so `fonts.ts` returns the Latin faces followed by JP, SC, KR for `ja` and SC, KR, JP otherwise (see *Regional font selection* above). The JP subset exists because folding Japanese into the SC subset renders JA text in Chinese letterforms.
 
 **Any new or changed card string means re-running `scripts/subset-cjk-fonts.py`** — a subset that has never seen a glyph renders tofu. The script reads *both* `packages/core/src/data/locales/` (dye, tool, harmony and lens names) *and* `src/services/og-strings.ts` (this worker's own deck strings, tool tags, deck lines and role words — every `  xx: {` locale block in that file); it fails loudly if the ×6 tables in that file stop parsing rather than silently under-covering them. `services/og-embed.ts` is deliberately a separate file so the crawler's browser-rendered sentences do not get cut into the card subsets; a new ×6 table that *is* drawn on a card belongs in `og-strings.ts` and in `stringsFor()` in `font-coverage.test.ts`. Source fonts download into the gitignored `scripts/.font-sources/` on first run. `services/font-coverage.test.ts` **verifies** what the script generates: it parses the bundled TTFs' `cmap`s (one per family) and fails `pnpm test` if any runtime string (core locales via `LocaleLoader`, the `og-strings.ts` tables, the Δ/·/→ glyphs the adapters emit) is not drawable, or if a `ja` CJK glyph is missing from the JP subset; surplus glyphs only warn. Compare subsets by cmap, never by md5 — fonttools rewrites `head.modified` on every run.
 
