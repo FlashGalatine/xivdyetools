@@ -1,6 +1,15 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { createMockD1Database } from '@xivdyetools/test-utils';
-import { searchPresetAuthors, searchBannedUsers } from './ban-service.js';
+import type { ExtendedLogger } from '@xivdyetools/logger';
+import { searchPresetAuthors, searchBannedUsers, banUser, unbanUser } from './ban-service.js';
+import { applyBanReview } from './ban-confirmation-service.js';
+import type { Env } from '../types/env.js';
+
+// Only the apply step is replaced; activeBanMatch stays real for the search queries.
+vi.mock('./ban-confirmation-service.js', async () => ({
+  ...(await vi.importActual('./ban-confirmation-service.js')),
+  applyBanReview: vi.fn(async () => ({ success: true, presetsHidden: 0 })),
+}));
 
 describe('ban-service', () => {
   let db: ReturnType<typeof createMockD1Database>;
@@ -100,21 +109,15 @@ describe('ban-service', () => {
       expect(results).toEqual([]);
     });
 
-    it('should fallback to simpler query on error', async () => {
-      let callCount = 0;
-      db._setupMock((_query) => {
-        callCount++;
-        if (callCount === 1) {
-          throw new Error('banned_users table error');
-        }
-        return { results: [{ discord_id: 'user-1', username: 'User', preset_count: 1 }] };
+    it('propagates a query failure to the caller, which logs it', async () => {
+      db._setupMock(() => {
+        throw new Error('D1 failure');
       });
 
-      const results = await searchPresetAuthors(db as unknown as D1Database, 'test', 25);
-
-      expect(results).toHaveLength(1);
-      expect(db._queries).toHaveLength(2); // Two queries (first failed, second succeeded)
-      expect(db._queries[1]).not.toContain('LEFT JOIN banned_users');
+      await expect(searchPresetAuthors(db as unknown as D1Database, 'test', 25)).rejects.toThrow(
+        'D1 failure',
+      );
+      expect(db._queries).toHaveLength(1);
     });
   });
 
@@ -168,6 +171,12 @@ describe('ban-service', () => {
       expect(db._queries[0]).toContain('username LIKE ? ESCAPE');
       expect(db._queries[0]).toContain('discord_id LIKE ? ESCAPE');
       expect(db._queries[0]).toContain('OR');
+      expect(db._queries[0]).toContain(
+        'EXISTS (SELECT 1 FROM ban_identity_memberships bm WHERE bm.ban_id = banned_users.id ' +
+          'AND bm.identity_id LIKE ? ESCAPE',
+      );
+      expect(db._bindings[0]).toHaveLength(5);
+      expect(db._bindings[0][3]).toBe('%test%');
     });
 
     /**
@@ -210,14 +219,14 @@ describe('ban-service', () => {
       expect(db._queries[0]).toContain('WHERE unbanned_at IS NULL');
     });
 
-    it('should handle errors gracefully', async () => {
+    it('propagates a query failure (e.g. no 0016 table) for the autocomplete to log', async () => {
       db._setupMock(() => {
-        throw new Error('Database error');
+        throw new Error('D1_ERROR: no such table: ban_identity_memberships');
       });
 
-      const results = await searchBannedUsers(db as unknown as D1Database, 'test', 25);
-
-      expect(results).toEqual([]);
+      await expect(searchBannedUsers(db as unknown as D1Database, 'test', 25)).rejects.toThrow(
+        'no such table',
+      );
     });
 
     it('should handle empty results', async () => {
@@ -226,6 +235,53 @@ describe('ban-service', () => {
       const results = await searchBannedUsers(db as unknown as D1Database, 'nonexistent', 25);
 
       expect(results).toEqual([]);
+    });
+  });
+  describe('ban/unban wrappers', () => {
+    const env = {} as Env;
+    const logger = { error: vi.fn() } as unknown as ExtendedLogger;
+
+    beforeEach(() => {
+      vi.mocked(applyBanReview).mockClear();
+    });
+
+    it('banUser forwards env, nonce, actor, ban, reason, username, logger in order', async () => {
+      await banUser(env, 'nonce-1', 'actor-1', 'reason text here', 'Display Name', logger);
+      expect(applyBanReview).toHaveBeenCalledWith(
+        env,
+        'nonce-1',
+        'actor-1',
+        'ban',
+        'reason text here',
+        'Display Name',
+        logger,
+      );
+    });
+
+    it('banUser without a logger forwards none', async () => {
+      await banUser(env, 'nonce-1', 'actor-1', 'reason text here', 'Display Name');
+      expect(applyBanReview).toHaveBeenCalledWith(
+        env,
+        'nonce-1',
+        'actor-1',
+        'ban',
+        'reason text here',
+        'Display Name',
+        undefined,
+      );
+    });
+
+    it('unbanUser forwards only env, nonce, actor, unban and the logger', async () => {
+      await unbanUser(env, 'nonce-1', 'actor-1', logger);
+      expect(applyBanReview).toHaveBeenCalledWith(
+        env,
+        'nonce-1',
+        'actor-1',
+        'unban',
+        undefined,
+        undefined,
+        logger,
+      );
     });
   });
 });

@@ -9,6 +9,7 @@
  * @module services/ban-service
  */
 
+import type { ExtendedLogger } from '@xivdyetools/logger';
 import { validateAndEscapeQuery } from '../utils/sql-helpers.js';
 import { activeBanMatch, applyBanReview } from './ban-confirmation-service.js';
 import type { Env } from '../types/env.js';
@@ -74,56 +75,29 @@ export async function searchPresetAuthors(
   }
   const escapedQuery = validation.sanitized;
 
-  try {
-    const results = await db
-      .prepare(
-        `
-        SELECT
-          p.author_discord_id as discord_id,
-          p.author_name as username,
-          COUNT(*) as preset_count
-        FROM presets p
-        WHERE p.author_discord_id IS NOT NULL
-          AND p.author_name LIKE ? ESCAPE '\\'
-        GROUP BY p.author_discord_id
-        ORDER BY preset_count DESC, p.author_name ASC
-        LIMIT ?
-        `,
-      )
-      .bind(`%${escapedQuery}%`, Math.min(25, Math.max(1, limit)))
-      .all<{ discord_id: string; username: string; preset_count: number }>();
+  const results = await db
+    .prepare(
+      `
+      SELECT
+        p.author_discord_id as discord_id,
+        p.author_name as username,
+        COUNT(*) as preset_count
+      FROM presets p
+      WHERE p.author_discord_id IS NOT NULL
+        AND p.author_name LIKE ? ESCAPE '\\'
+      GROUP BY p.author_discord_id
+      ORDER BY preset_count DESC, p.author_name ASC
+      LIMIT ?
+      `,
+    )
+    .bind(`%${escapedQuery}%`, Math.min(25, Math.max(1, limit)))
+    .all<{ discord_id: string; username: string; preset_count: number }>();
 
-    return (results.results || []).map((row) => ({
-      discordId: row.discord_id,
-      username: row.username,
-      presetCount: row.preset_count,
-    }));
-  } catch {
-    // Fallback: Query without banned_users filter
-    const results = await db
-      .prepare(
-        `
-        SELECT
-          author_discord_id as discord_id,
-          author_name as username,
-          COUNT(*) as preset_count
-        FROM presets
-        WHERE author_discord_id IS NOT NULL
-          AND author_name LIKE ? ESCAPE '\\'
-        GROUP BY author_discord_id
-        ORDER BY preset_count DESC, author_name ASC
-        LIMIT ?
-        `,
-      )
-      .bind(`%${escapedQuery}%`, Math.min(25, Math.max(1, limit)))
-      .all<{ discord_id: string; username: string; preset_count: number }>();
-
-    return (results.results || []).map((row) => ({
-      discordId: row.discord_id,
-      username: row.username,
-      presetCount: row.preset_count,
-    }));
-  }
+  return (results.results || []).map((row) => ({
+    discordId: row.discord_id,
+    username: row.username,
+    presetCount: row.preset_count,
+  }));
 }
 
 /**
@@ -148,50 +122,46 @@ export async function searchBannedUsers(
   }
   const escapedQuery = validation.sanitized;
 
-  try {
-    const results = await db
-      .prepare(
-        `
-        SELECT
-          discord_id,
-          xivauth_id,
-          username,
-          banned_at
-        FROM banned_users
-        WHERE unbanned_at IS NULL
-          AND (
-            username LIKE ? ESCAPE '\\'
-            OR discord_id LIKE ? ESCAPE '\\'
-            OR xivauth_id LIKE ? ESCAPE '\\'
-            OR EXISTS (SELECT 1 FROM ban_identity_memberships bm WHERE bm.ban_id = banned_users.id AND bm.identity_id LIKE ? ESCAPE '\\')
-          )
-        ORDER BY username ASC
-        LIMIT ?
-        `,
-      )
-      .bind(
-        `%${escapedQuery}%`,
-        `%${escapedQuery}%`,
-        `%${escapedQuery}%`,
-        `%${escapedQuery}%`,
-        Math.min(25, Math.max(1, limit)),
-      )
-      .all<{
-        discord_id: string | null;
-        xivauth_id: string | null;
-        username: string;
-        banned_at: string;
-      }>();
+  const results = await db
+    .prepare(
+      `
+      SELECT
+        discord_id,
+        xivauth_id,
+        username,
+        banned_at
+      FROM banned_users
+      WHERE unbanned_at IS NULL
+        AND (
+          username LIKE ? ESCAPE '\\'
+          OR discord_id LIKE ? ESCAPE '\\'
+          OR xivauth_id LIKE ? ESCAPE '\\'
+          OR EXISTS (SELECT 1 FROM ban_identity_memberships bm WHERE bm.ban_id = banned_users.id AND bm.identity_id LIKE ? ESCAPE '\\')
+        )
+      ORDER BY username ASC
+      LIMIT ?
+      `,
+    )
+    .bind(
+      `%${escapedQuery}%`,
+      `%${escapedQuery}%`,
+      `%${escapedQuery}%`,
+      `%${escapedQuery}%`,
+      Math.min(25, Math.max(1, limit)),
+    )
+    .all<{
+      discord_id: string | null;
+      xivauth_id: string | null;
+      username: string;
+      banned_at: string;
+    }>();
 
-    return (results.results || []).map((row) => ({
-      discordId: row.discord_id,
-      xivAuthId: row.xivauth_id,
-      username: row.username,
-      bannedAt: row.banned_at,
-    }));
-  } catch {
-    return [];
-  }
+  return (results.results || []).map((row) => ({
+    discordId: row.discord_id,
+    xivAuthId: row.xivauth_id,
+    username: row.username,
+    bannedAt: row.banned_at,
+  }));
 }
 
 export async function getPresetAuthorName(
@@ -221,9 +191,15 @@ export async function banUser(
   actorId: string,
   reason: string,
   username: string,
+  logger?: ExtendedLogger,
 ): Promise<BanResult> {
-  return applyBanReview(env, nonce, actorId, 'ban', reason, username);
+  return applyBanReview(env, nonce, actorId, 'ban', reason, username, logger);
 }
-export async function unbanUser(env: Env, nonce: string, actorId: string): Promise<UnbanResult> {
-  return applyBanReview(env, nonce, actorId, 'unban');
+export async function unbanUser(
+  env: Env,
+  nonce: string,
+  actorId: string,
+  logger?: ExtendedLogger,
+): Promise<UnbanResult> {
+  return applyBanReview(env, nonce, actorId, 'unban', undefined, undefined, logger);
 }

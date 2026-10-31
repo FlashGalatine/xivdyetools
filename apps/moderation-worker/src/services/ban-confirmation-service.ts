@@ -1,3 +1,4 @@
+import type { ExtendedLogger } from '@xivdyetools/logger';
 import type { Env } from '../types/env.js';
 import { parseModeratorIds } from '@xivdyetools/bot-logic';
 import { isValidUuid, isXivAuthUuid } from '../utils/response.js';
@@ -51,6 +52,22 @@ interface ReviewRow {
 export const REVIEW_UNAVAILABLE =
   'This review is unavailable or changed. Run the command again and review the current scope.';
 export const INACTIVE_BANS = 'Account ban confirmations are not active. No action was taken.';
+export const BAN_SCOPE_OVERFLOW = 'Too many active bans match. Manual review is required.';
+const NO_ACTIVE_BAN = 'No active ban matches this account.';
+const INVALID_BAN_REASON = 'Please provide a valid ban reason (10 to 500 characters).';
+/** Fixed refusals thrown on purpose; anything else is an unexpected failure worth a server log. */
+export function isExpectedBanRefusal(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    [
+      REVIEW_UNAVAILABLE,
+      INACTIVE_BANS,
+      BAN_SCOPE_OVERFLOW,
+      NO_ACTIVE_BAN,
+      INVALID_BAN_REASON,
+    ].includes(error.message)
+  );
+}
 const sorted = (values: string[]): string[] => [...new Set(values)].sort();
 const same = (a: unknown, b: unknown): boolean => JSON.stringify(a) === JSON.stringify(b);
 const unavailable = (): never => {
@@ -205,8 +222,7 @@ async function parentIds(db: D1Database, ids: string[]): Promise<string[]> {
     .prepare(`${matchingSql('?')} ORDER BY b.id LIMIT 17`)
     .bind(JSON.stringify(ids))
     .all<{ id: string }>();
-  if ((rows.results?.length ?? 0) > 16)
-    throw new Error('Too many active bans match. Manual review is required.');
+  if ((rows.results?.length ?? 0) > 16) throw new Error(BAN_SCOPE_OVERFLOW);
   return (rows.results ?? []).map((row) => row.id);
 }
 async function parentScope(db: D1Database, id: string): Promise<string[]> {
@@ -356,8 +372,7 @@ export async function createBanReview(
   authorize(env, actorId);
   const ids = action === 'ban' ? snapshotIds(snapshots) : inputs;
   const matches = await parentIds(env.DB, ids);
-  if (action === 'unban' && matches.length === 0)
-    throw new Error('No active ban matches this account.');
+  if (action === 'unban' && matches.length === 0) throw new Error(NO_ACTIVE_BAN);
   const primary = matches.length
     ? await parentIds(env.DB, action === 'ban' ? snapshotIds([snapshots[0]]) : inputs)
     : [];
@@ -467,6 +482,7 @@ export async function applyBanReview(
   action: Action,
   reason?: string,
   username = '',
+  logger?: ExtendedLogger,
 ): Promise<ConfirmationResult> {
   const failed = (error: string): ConfirmationResult => ({
     success: false,
@@ -484,7 +500,7 @@ export async function applyBanReview(
       action === 'ban' &&
       (!trimmedReason || trimmedReason.length < 10 || trimmedReason.length > 500)
     )
-      throw new Error('Please provide a valid ban reason (10 to 500 characters).');
+      throw new Error(INVALID_BAN_REASON);
     if (action === 'ban' && !same(p.snapshots, await resolveIdentities(env, p.inputs)))
       unavailable();
     authorize(env, actorId);
@@ -628,7 +644,12 @@ export async function applyBanReview(
       presetsRestored: action === 'unban' ? changed : 0,
       presetsStillHidden: stillHidden,
     };
-  } catch {
+  } catch (error) {
+    if (!isExpectedBanRefusal(error))
+      logger?.error(
+        'Account ban review could not be applied',
+        error instanceof Error ? error : undefined,
+      );
     return failed(REVIEW_UNAVAILABLE);
   }
 }

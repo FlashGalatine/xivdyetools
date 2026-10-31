@@ -9,6 +9,7 @@ import { parseModeratorIds } from '@xivdyetools/bot-logic';
 import { getPresetAuthorName, banUser } from '../../services/ban-service.js';
 import {
   loadBanReview,
+  isExpectedBanRefusal,
   INACTIVE_BANS,
   REVIEW_UNAVAILABLE,
 } from '../../services/ban-confirmation-service.js';
@@ -43,7 +44,7 @@ export async function handleBanReasonModal(
     if (review.proposal.action !== 'ban') return ephemeralResponse(REVIEW_UNAVAILABLE);
     const target = review.proposal.inputs[0];
     const username = await getPresetAuthorName(env.DB, target);
-    const result = await banUser(env, nonce, actorId, reason, username ?? target);
+    const result = await banUser(env, nonce, actorId, reason, username ?? target, logger);
     if (!result.success)
       return ephemeralResponse({
         embeds: [errorEmbed('Ban Failed', result.error ?? REVIEW_UNAVAILABLE)],
@@ -76,7 +77,9 @@ export async function handleBanReasonModal(
       reasonLength: reason.length,
     });
     return updateMessageResponse({ embeds: [embed], components: [] });
-  } catch {
+  } catch (error) {
+    if (!isExpectedBanRefusal(error))
+      logger?.error('Ban reason modal failed', error instanceof Error ? error : undefined);
     return ephemeralResponse(REVIEW_UNAVAILABLE);
   }
 }

@@ -19,6 +19,8 @@ const MOD = '987654321098765432',
   NONCE = 'b0000000-0000-4000-8000-000000000001',
   P = 'b0000000-0000-4000-8000-000000000002';
 let env: Env;
+let run: ReturnType<typeof vi.fn>;
+let bind: ReturnType<typeof vi.fn>;
 const ctx = {} as ExecutionContext;
 const interaction = (prefix = 'ban_confirm_', id = NONCE) => ({
   id: 'i',
@@ -47,12 +49,12 @@ const review = () =>
   }) as unknown as confirmations.BanReview;
 beforeEach(() => {
   vi.clearAllMocks();
+  run = vi.fn(async () => ({ meta: { changes: 1 } }));
+  bind = vi.fn(() => ({ run }));
   env = {
     LINKED_BAN_CONFIRMATION_ENABLED: 'true',
     MODERATOR_IDS: MOD,
-    DB: {
-      prepare: vi.fn(() => ({ bind: () => ({ run: async () => ({ meta: { changes: 1 } }) }) })),
-    },
+    DB: { prepare: vi.fn(() => ({ bind })) },
   } as unknown as Env;
   vi.mocked(confirmations.loadBanReview).mockResolvedValue(review());
   vi.mocked(confirmations.selectBanParent).mockResolvedValue(review());
@@ -82,7 +84,7 @@ describe('actor-bound nonce controls', () => {
     const response = await handleBanConfirmButton(interaction(), env, ctx);
     const body = (await response.json()) as any;
     expect(body.type).toBe(7);
-    expect(unbanUser).toHaveBeenCalledWith(env, NONCE, MOD);
+    expect(unbanUser).toHaveBeenCalledWith(env, NONCE, MOD, undefined);
     expect(body.data.embeds[0].fields).toContainEqual({
       name: 'Presets Restored',
       value: '2',
@@ -133,14 +135,38 @@ describe('actor-bound nonce controls', () => {
       expect(unbanUser).not.toHaveBeenCalled();
     },
   );
-  it('cancel checks actor-bound nonce and consumes it once', async () => {
+  it('cancel deletes only the live reviewed nonce bound to the actor', async () => {
     const body = (await (
       await handleBanCancelButton(interaction('ban_cancel_'), env, ctx)
     ).json()) as any;
     expect(body.type).toBe(7);
-    expect(confirmations.loadBanReview).toHaveBeenCalledWith(env, NONCE, MOD);
     expect(body.data.components).toEqual([]);
-    expect(env.DB.prepare).toHaveBeenCalled();
+    expect(confirmations.loadBanReview).toHaveBeenCalledWith(env, NONCE, MOD, 'review');
+    expect(env.DB.prepare).toHaveBeenCalledTimes(1);
+    const sql = vi.mocked(env.DB.prepare).mock.calls[0][0];
+    expect(sql).toBe(
+      "DELETE FROM moderation_ban_confirmations WHERE nonce=? AND actor_id=? AND action=? AND mode=? AND proposal_hash=? AND phase='review' AND consumed_at IS NULL AND outcome IS NULL AND expires_at>unixepoch()",
+    );
+    expect(sql).not.toContain("'applied'");
+    expect(bind).toHaveBeenCalledWith(NONCE, MOD, 'ban', 'new', 'a'.repeat(64));
+    expect(run).toHaveBeenCalledTimes(1);
+  });
+  it('cancel that claims no row refuses privately', async () => {
+    run.mockResolvedValueOnce({ meta: { changes: 0 } });
+    const response = await handleBanCancelButton(interaction('ban_cancel_'), env, ctx);
+    const text = await response.text();
+    const body = JSON.parse(text);
+    expect(body.type).toBe(4);
+    expect(body.data.flags).toBe(64);
+    expect(text).not.toContain('Ban Cancelled');
+  });
+  it('cancel of an unloadable nonce never writes', async () => {
+    vi.mocked(confirmations.loadBanReview).mockRejectedValue(new Error('unknown nonce'));
+    const body = (await (
+      await handleBanCancelButton(interaction('ban_cancel_'), env, ctx)
+    ).json()) as any;
+    expect(body.data.flags).toBe(64);
+    expect(env.DB.prepare).not.toHaveBeenCalled();
   });
   it('selection passes exact nonce/one choice to atomic selector and renders fresh private review', async () => {
     const body = (await (

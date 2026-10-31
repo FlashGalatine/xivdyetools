@@ -428,6 +428,22 @@ describe('FINDING-017 — moderation buttons are bound to a reviewed revision', 
       expect(json.data.custom_id).toBe(`preset_revert_modal_${ID}:21:pending`);
     });
 
+    it('answers privately with no modal when a bound Revert cannot load the preset', async () => {
+      vi.mocked(presetApi.getModerationPreset).mockRejectedValue(new Error('boom'));
+      const response = await handlePresetRevertButton(
+        click(`preset_revert_${ID}:21:pending`),
+        env,
+        ctx,
+      );
+      const json = (await response.json()) as any;
+
+      expect(json.type).not.toBe(InteractionResponseType.MODAL);
+      expect(json.data.flags).toBe(64);
+      expect(json.data.content).toContain('Nothing was changed');
+      expect(presetApi.approvePreset).not.toHaveBeenCalled();
+      expect(discordApi.safeEditMessage).not.toHaveBeenCalled();
+    });
+
     it('still refuses a banned author before calling presets-api', async () => {
       vi.mocked(banService.isPresetAuthorBanned).mockResolvedValueOnce(true);
 
