@@ -76,6 +76,12 @@ test('Beta guard: there are 3 beta deploy workflows', () => {
 for (const file of betas) {
   const yaml = read(file);
 
+  test(`Release preparation: ${file} excludes isolated release-cut pushes`, () => {
+    const push = /^ {2}push:\n([\s\S]*?)(?=^ {2}\S|^\S)/m.exec(yaml)?.[1] ?? '';
+    const branches = /^ {4}branches-ignore:\n([\s\S]*?)(?=^ {4}\S)/m.exec(push)?.[1] ?? '';
+    assert.match(branches, /^ {6}- 'codex\/release-cut-\*'$/m);
+  });
+
   test(`Beta guard: ${file} guard pathspec mirrors push.paths`, () => {
     const filter = pushPaths(yaml)
       .filter((p) => !p.startsWith('!'))

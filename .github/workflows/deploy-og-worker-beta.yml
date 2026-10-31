@@ -26,6 +26,8 @@ on:
       - master
       # Dependency bumps should not seize beta from whoever is testing on it.
       - 'dependabot/**'
+      # Isolated release candidates run PR CI without taking over shared beta.
+      - 'codex/release-cut-*'
     paths:
       - 'apps/og-worker/**'
       - 'packages/core/**'
