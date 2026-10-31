@@ -49,7 +49,8 @@ src/
 ├── localization.ts                # initializeLocale + per-locale getLocalized* lookups (dye name, category, acquisition, currency, harmony, wheel, vision, race, clan)
 ├── css-colors.ts                  # CSS named-color → hex (BlueViolet, coral, ...)
 ├── moderators.ts                  # parseModeratorIds / isModeratorId / isValidDiscordSnowflake (shared MODERATOR_IDS grammar)
-├── discord-markdown.ts            # escapeDiscordMarkdown / sanitizeEmbedText / ALLOWED_MENTIONS_NONE (user-sourced text in bot-authored embeds)
+├── discord-markdown.ts            # escapeDiscordMarkdown / sanitizeEmbedText / ALLOWED_MENTIONS_NONE (user-sourced text in bot-authored embeds);
+│                                  #   sanitizeLineValue (internal): /glamour list values, escapes only mid-line markup
 ├── i18n/                          # Bot UI Translator + six locale JSONs — subpath @xivdyetools/bot-logic/i18n
 └── commands/
     ├── types.ts                   # EmbedData, EmbedField (platform-neutral)
