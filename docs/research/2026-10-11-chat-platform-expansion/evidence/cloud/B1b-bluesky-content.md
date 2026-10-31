@@ -95,7 +95,7 @@ Everything above comes from search snippets, not primary pages. Verify directly 
 | en.finalfantasyxiv.com (official EN) | bluesky | followers (labeled 'follows') | about 100,541 | 2026-10 (snapshot) | snippet | https://bsky.app/profile/en.finalfantasyxiv.com |
 | @FF_XIV_EN (official EN) | x | followers | about 652.6K | undated | snippet | https://x.com/ff_xiv_en |
 | Official EN Bluesky / X follower ratio | other | computed ratio | 100.5K / 652.6K = about 15% (dates differ) | 2026-10 | computed | https://bsky.app/profile/en.finalfantasyxiv.com |
-| GPOSERS @gposers.org | bluesky | followers | about 2,048 | undated snapshot | snippet | https://bsky.app/profile/gposers.org |
+| GPOSERS @gposers.org | bluesky | followers | about 2,048 (B1a recorded 2,043 from a separate undated snippet; the README ratio uses 2,043) | undated snapshot | snippet | https://bsky.app/profile/gposers.org |
 | FFXIV starter packs on blueskystarterpack.com | bluesky | pack count | 53+ | 2026-06 | snippet | https://blueskystarterpack.com/ffxiv |
 | Gpose starter packs on blueskystarterpack.com | bluesky | pack count | 10+ | 2025-11 | snippet | https://blueskystarterpack.com/gpose |
 | #FFXIV / #FF14 in public hashtag gist | bluesky | posts in 30 days | 1,488 (#FFXIV) or 628 (#FF14); readings conflict | about 2023-09 (stale) | unverified | [URL removed: names an individual] |

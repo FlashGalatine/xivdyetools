@@ -4,6 +4,8 @@
 
 **Goal:** Minimize PR #317's research files and enforce aggregate-only collectors.
 
+**Status (2026-10-31):** carried out as a fresh single-commit replacement, PR #366 (`32a13b8b`), whose CI passed all four jobs including the gitleaks secret scan. The Task 3 boxes and the verification record below are as written before that commit. A follow-up commit adds two publication checks (log schema, collector defaults): 103 total.
+
 **Architecture:** Fixed-schema CLI exports with contributor thresholds; aggregate
 historical evidence; a publication gate rejects unexpected structured fields and
 linked individual evidence.

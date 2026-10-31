@@ -21,7 +21,7 @@ Scope note: WebFetch could not resolve any host from this sandbox (getaddrinfo E
 
 ## 3. zh-TW locale: the repo ships Simplified only
 
-- bot-logic maps both zh-CN and zh-TW to the single `zh` locale: packages/bot-logic/src/i18n/locale-resolution.ts:59-60; the comment at :27-28 says Discord wants both but "the bot ships one zh". LOCALE_CODES has only ja/de/fr/ko/zh (:64).
+- bot-logic (user locale) and discord-worker (command localization) both map zh-CN and zh-TW to the single `zh` locale: packages/bot-logic/src/i18n/locale-resolution.ts:101-102 (user locale) and apps/discord-worker/src/commands/localize.ts:59-60 (command localization); the comment at localize.ts:27-28 says Discord wants both but "the bot ships one zh". LOCALE_CODES in localize.ts has only ja/de/fr/ko/zh (:64).
 - packages/core/src/services/LocalizationService.ts:39 lists 'zh' only; :53 documents the zh-CN prefix handling.
 - The text is Simplified: packages/bot-logic/src/i18n/locales/zh.json:7 uses 染剂; core dye names use Simplified (packages/core/src/data/locales/zh.json:18 素雪白, :19 苍白灰). That file was generated 2026-10-06 and is built from dyenames.csv / localize.yaml per CLAUDE.md, so Traditional names must enter the source CSV/YAML.
 - A real zh-TW locale needs: (a) a new locale code in core, bot-logic, svg/og fonts and the web app; (b) the TC client's official 125 dye names (a source I could not find; a web search for official TC/SC dye-name differences returned nothing; the data must come from the TC client or its game data export, not from OpenCC conversion, because FFXIV TC and SC localizations differ in terms); (c) about 270 locale-file lines of UI strings translated (core zh.json is 270 lines; bot-logic zh.json size not counted); (d) Traditional-capable CJK font subsets for card rendering (Noto Sans TC; the repo subsets JP/SC/KR only, per CLAUDE.md); (e) the locale-quality gates and parity tests; (f) Discord's `zh-TW` locale already exists, so registering command localizations is cheap.
@@ -82,7 +82,7 @@ Scope note: WebFetch could not resolve any host from this sandbox (getaddrinfo E
 [21] https://classic.yarnpkg.com/en/package/koishi-plugin-ffxiv-macrodict ; https://github-redirect.dependabot.com/AwesomeHamster/hatsushimo
 [22] https://developer.aliyun.com/article/1710410 and https://developer.cloud.tencent.cn/article/2395564
 [23] https://lowendspirit.com/discussion/8352
-Repo: packages/bot-logic/src/i18n/locale-resolution.ts:27-28,59-60,64; packages/core/src/services/LocalizationService.ts:39; packages/bot-logic/src/i18n/locales/zh.json:7; packages/core/src/data/locales/zh.json:18-19.
+Repo: apps/discord-worker/src/commands/localize.ts:27-28,59-60,64; packages/bot-logic/src/i18n/locale-resolution.ts:101-102; packages/core/src/services/LocalizationService.ts:39; packages/bot-logic/src/i18n/locales/zh.json:7; packages/core/src/data/locales/zh.json:18-19.
 
 
 ## Platform verdicts (structured)
@@ -104,7 +104,7 @@ Repo: packages/bot-logic/src/i18n/locale-resolution.ts:27-28,59-60,64; packages/
 | ID | Claim | Confidence | Source | Date |
 |---|---|---|---|---|
 | C1 | FFXIV Traditional Chinese PC service exists: operator 宇峻奧汀 with 智寶國際, covering Taiwan, HK, Macau, Singapore, Malaysia; announced 2025-02-27, early access 2025-11-27, launch 2025-12-10. | snippet | https://gnn.gamer.com.tw/detail.php?sn=296226 | 2025-12 |
-| C2 | bot-logic maps zh-CN and zh-TW both to single 'zh' locale; comment says the bot ships one zh. | repo | packages/bot-logic/src/i18n/locale-resolution.ts:27-28,59-60 | 2026-10-11 |
+| C2 | bot-logic (user locale) and discord-worker (command localization) both map zh-CN and zh-TW to a single zh; the localize.ts comment says the bot ships one zh. | repo | apps/discord-worker/src/commands/localize.ts:27-28,59-60; packages/bot-logic/src/i18n/locale-resolution.ts:101-102 | 2026-10-11 |
 | C3 | zh locale strings and dye names are Simplified (染剂, 素雪白, 苍白灰). | repo | packages/core/src/data/locales/zh.json:18-19 | 2026-10-06 |
 | C4 | LINE OpenChat has TW FFXIV rooms: Garuda server room about 443 members, new-player prep room about 579, Elemental-related room about 211 (snapshot, member counts). | snippet | https://openchat.line.me/th/cover/bxB8Da49QnWeEXGdVS449q04ZWR5lKQEfvHhAFjaWY_2xA9S98rOP8sArmQ | undated snapshot |
 | C5 | Bots cannot join OpenChat like normal groups (maintainer comment); official docs omit OpenChat. No 2026 change found. | secondary | https://github.com/line/line-bot-sdk-python/issues/918 | undated |
@@ -120,7 +120,7 @@ Repo: packages/bot-logic/src/i18n/locale-resolution.ts:27-28,59-60,64; packages/
 ## Corrections to the 2026-10-04 refresh
 
 - The refresh treats zh as mainland-only. A Traditional Chinese FFXIV service (宇峻奧汀 / 智寶國際; Taiwan, HK, Macau, Singapore, Malaysia) launched 2025-12-10, snippet-level sources [1][2].
-- Its claim that zh-TW users are covered by the six locales is only nominally true: the repo maps zh-TW to Simplified zh (locale-resolution.ts:59-60).
+- Its claim that zh-TW users are covered by the six locales is only nominally true: the repo maps zh-TW to Simplified zh (locale-resolution.ts:101-102).
 - Its statement that no LINE FFXIV groups were found holds for Japan, but Taiwan has visible LINE OpenChat FFXIV rooms (443/579/211 members, snapshot).
 
 

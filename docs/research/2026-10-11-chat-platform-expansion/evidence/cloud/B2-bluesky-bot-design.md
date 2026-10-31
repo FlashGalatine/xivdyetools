@@ -18,7 +18,7 @@
 - **Biggest technical risk:** Bluesky's per-IP limits applied to Cloudflare's shared egress IPs (atproto issue #3388) [21]. Spend one day on a spike before committing.
 - **Effort.**
   - 07's build estimate holds for the bot itself, but leaves out about 3.5–5 days of policy and pipeline work.
-  - **MVP** (dye info, match and harmony card replies; en+ja checked, all six locales present for the gate): **19.5–26.5 days (≈4–5.3 weeks)**.
+  - **MVP** (dye info, match and harmony card replies; en+ja checked, all six locales present for the gate): **19.5–26 days (≈4–5.2 weeks)**.
   - **Full** (all commands that fit, image extraction, budget, read-only presets, DO poller): **≈31–44 days (6–9 weeks)**.
 
 ---
@@ -277,9 +277,9 @@
 | 12 | Pipeline: wrangler (observability off, crons), deploy workflow, CI, docs and version tables | 1.5–2 |
 | 13 | Tests | 2–3 |
 | 14 | Beta soak | 1 |
-| | **MVP total** | **19.5–26.5 (≈4–5.3 wk)** |
+| | **MVP total** | **19.5–26 (≈4–5.2 wk)** |
 
-**Comparison with 07:** leaving out rows 11–12 gives 16–21.5 days (3.2–4.3 wk), which is consistent with 07's 3.5–5 weeks.
+**Comparison with 07:** leaving out rows 11–12 gives 16–21 days (3.2–4.2 wk), which is consistent with 07's 3.5–5 weeks.
 
 **Full version adds:**
 - The remaining T1 commands (gradient, mixer, comparison, contrast, a11y, dye search/list/random, manual): +5–7 days.
@@ -389,7 +389,7 @@
 - Prove first that Workers can call bsky.social without hitting per-IP limits (atproto #3388). That is the main go/no-go risk.
 - Policy requirements: self-label the account bot; reply only when tagged; provide a deletion path ('@bot delete' plus email); keep a monitored contact email; put the © SQUARE ENIX notice in the bio and ToS; and put no donation links in bot output.
 - og-worker needs a 'Bluesky Cardyb' pattern and a 'bluesky' CrawlerType. Use a DNS TXT record for the handle, because the SPA fallback answers /.well-known/atproto-did with HTML.
-- MVP (dye info + match + harmony) is about 4–5.3 dev-weeks including policy and pipeline. The full bot is about 6–9 weeks. 07's 3.5–5 weeks matches the build alone.
+- MVP (dye info + match + harmony) is about 4–5.2 dev-weeks including policy and pipeline. The full bot is about 6–9 weeks. 07's 3.5–5 weeks matches the build alone.
 
 
 ## Open questions

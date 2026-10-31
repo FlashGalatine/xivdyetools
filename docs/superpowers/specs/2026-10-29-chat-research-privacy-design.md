@@ -1,6 +1,6 @@
 # Chat research aggregate publication
 
-**Status:** Implementation authorized by the maintainer on 2026-10-29 for PR #317.
+**Status:** Implementation authorized by the maintainer on 2026-10-29 for PR #317; carried out in PR #366, which replaced it.
 
 The approved PR follow-up identified linkable account records and collectors that
 recreate raw identifiers. The public research needs useful cohort measurements

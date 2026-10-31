@@ -107,7 +107,7 @@ Ordered by value for effort. Nothing here is a recommendation until §6 step 1 h
 | Policy | Self-label the account `bot`, reply only when tagged, provide a deletion path and a monitored contact email. |
 | Handle | Use a DNS TXT record at `_atproto.xivdyetools.app`. The web app's SPA fallback answers `/.well-known/atproto-did` with HTML (`apps/web-app/public/_redirects:3`). |
 | Link cards | og-worker has no pattern for Bluesky's `Cardyb` fetcher. |
-| Effort | MVP (dye info, match and harmony cards; en and ja reviewed): about **4–5.3 dev-weeks** including policy and pipeline. The full bot: about 6–9 weeks. |
+| Effort | MVP (dye info, match and harmony cards; en and ja reviewed): about **4–5.2 dev-weeks** including policy and pipeline. The full bot: about 6–9 weeks. |
 
 **Check before any new public surface:** B2 saw snippets saying Square Enix's **FFXIV Materials Usage License** was revised with effect from 2026-09-16. Per those snippets it is non-commercial, asks for "© SQUARE ENIX" "with every use", and bars soliciting donations. The repo links Patreon and Ko-fi (`README.md:169-170`, `apps/discord-worker/src/handlers/commands/manual.ts:305`). Read the license text (NA rule 5382, EU rule 5383) before deciding anything. It concerns the existing bot too, not only Bluesky.
 
@@ -135,7 +135,7 @@ Ordered by value for effort. Nothing here is a recommendation until §6 step 1 h
 ### 2.4 Traditional Chinese: the biggest regional gap (new since 2026-10-04)
 
 - **The service.** A Traditional Chinese FFXIV service has been live since **2025-12-10** (snippet, P6). It covers Taiwan, Hong Kong, Macau, Singapore and Malaysia, operated by UserJoy and 智寶國際.
-- **The repo maps `zh-TW` to Simplified `zh`** (`packages/bot-logic/src/i18n/locale-resolution.ts:59-60`), so those players get Simplified text and Simplified dye names.
+- **The repo maps `zh-TW` to Simplified `zh`** (`packages/bot-logic/src/i18n/locale-resolution.ts:101-102`; slash-command localization does the same at `apps/discord-worker/src/commands/localize.ts:59-60`), so those players get Simplified text and Simplified dye names.
 - **Taiwanese players gather in LINE OpenChat** (rooms of 443, 579 and 211 members), which bots cannot join. Hong Kong players are on Discord (one server has 8,940 members).
 - **The fix is a locale, not a platform:**
   - the TC client's official dye names (source not found);

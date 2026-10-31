@@ -217,6 +217,40 @@ function kindFor(name) {
   throw new Error('Unreviewed evidence filename');
 }
 
+const statusLines = [
+  /^connected; sampling for \d+ min$/,
+  /^socket closed at \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z; reconnecting$/,
+  /^reconnected from cursor \d+$/,
+];
+const checkpointKeys = [
+  'checkpoint',
+  'coveredMinutes',
+  'reconnects',
+  'allPosts',
+  'duplicatesSkipped',
+  'ffxivPosts',
+  'byLang',
+  'byTerm',
+];
+const approvedLogs = [
+  '20261012T0354Z-stream-na.log',
+  '20261012T1602Z-stream-eu.log',
+  '20261013T1100Z-stream-jp.log',
+];
+
+function validateLogLine(line, at) {
+  if (line.startsWith('{')) {
+    object(JSON.parse(line), checkpointKeys, at, (key, value, location) =>
+      field(key === 'checkpoint' ? 'asOf' : key, value, location),
+    );
+  } else {
+    assert.ok(
+      statusLines.some((pattern) => pattern.test(line)),
+      `unapproved log line at ${at}`,
+    );
+  }
+}
+
 test('publication schema rejects individual rows, unknown nested keys and free text', () => {
   const safe = { asOf: '2026-10-29T00:00:00.000Z', profileCount: 9, publicationNote };
   validate('profiles', safe);
@@ -241,6 +275,32 @@ test('published research JSON contains only approved aggregate fields', () => {
     validate(kindFor(name), JSON.parse(readFileSync(path.join(evidence, name), 'utf8')));
 });
 
+test('stream progress logs hold only approved status lines and aggregate checkpoints', () => {
+  validateLogLine('connected; sampling for 60 min', 'synthetic');
+  assert.throws(() => validateLogLine('reply from synthetic.example.invalid', 'synthetic'));
+  assert.throws(() =>
+    validateLogLine(
+      '{"checkpoint":"2026-10-12T03:59:03.777Z","handle":"synthetic.example.invalid"}',
+      'synthetic',
+    ),
+  );
+  assert.throws(() =>
+    validateLogLine(
+      '{"checkpoint":"2026-10-12T03:59:03.777Z","byLang":{"did:plc:synthetic0":1}}',
+      'synthetic',
+    ),
+  );
+  const logs = readdirSync(evidence)
+    .filter((name) => name.endsWith('.log'))
+    .sort();
+  assert.deepEqual(logs, approvedLogs, 'unreviewed log file');
+  for (const name of logs)
+    readFileSync(path.join(evidence, name), 'utf8')
+      .split(/\r?\n/)
+      .filter(Boolean)
+      .forEach((line, i) => validateLogLine(line, `${name}:${i + 1}`));
+});
+
 test('narrative boundary rejects individual measurements and named creator-owned examples', () => {
   assertPublicNarrative('Whole-category audience: 12345 viewers.');
   assert.throws(() =>
@@ -258,17 +318,54 @@ test('public research has no stable individual labels or hand-count files', () =
       const full = path.join(directory, entry.name);
       assert.ok(!labels.test(entry.name), 'individual label in filename');
       if (entry.isDirectory()) {
-        if (entry.name !== 'scripts') walk(full);
+        walk(full);
         continue;
       }
       assert.ok(!entry.name.endsWith('.tsv'), 'person-linked hand-count artifact');
-      if (/\.(?:md|json|js|log)$/.test(entry.name))
+      if (/\.(?:md|json|js|mjs|log)$/.test(entry.name))
         assert.ok(
           !labels.test(readFileSync(full, 'utf8')),
           `individual label retained in ${path.relative(research, full)}`,
         );
+      if (/\.m?js$/.test(entry.name)) {
+        const text = readFileSync(full, 'utf8');
+        for (const did of text.match(/did:[a-z]+:[A-Za-z0-9._-]+/g) ?? [])
+          assert.match(
+            did,
+            /^did:plc:synthetic\d*$/,
+            `non-synthetic DID in ${path.relative(research, full)}`,
+          );
+      }
       if (entry.name.endsWith('.md')) assertPublicNarrative(readFileSync(full, 'utf8'));
     }
   }
   walk(research);
+});
+
+test('collector defaults name only reviewed official and organization accounts', () => {
+  const scripts = path.join(research, 'evidence/scripts');
+  const list = (file, name) =>
+    JSON.parse(
+      readFileSync(path.join(scripts, file), 'utf8')
+        .match(new RegExp(`const ${name} = (\\[[^\\]]*\\])`))[1]
+        .replace(/'/g, '"'),
+    );
+  assert.deepEqual(list('bsky-ffxiv-census.mjs', 'DEFAULT_HANDLES'), [
+    'en.finalfantasyxiv.com',
+    'fr.finalfantasyxiv.com',
+    'de.finalfantasyxiv.com',
+    'jp.finalfantasyxiv.com',
+    'gposers.org',
+    'ffxivteamcraft.com',
+    'gamerescape.com',
+  ]);
+  assert.deepEqual(list('x-follower-counts.mjs', 'DEFAULT_ACCOUNTS'), [
+    'FF_XIV_EN',
+    'FF_XIV_FR',
+    'FF_XIV_DE',
+    'FF_XIV_JP',
+    'GPOSERS_FFXIV',
+    'FFXIVTeamcraft',
+    'gamerescape',
+  ]);
 });

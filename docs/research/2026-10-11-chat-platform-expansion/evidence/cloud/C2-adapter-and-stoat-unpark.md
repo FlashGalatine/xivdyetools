@@ -23,7 +23,7 @@ Date: 2026-10-11. Builds on `docs/research/discord-alternatives/07-2026-10-refre
   - a namespaced `ActorId`.
 
   Estimate: 2–3 weeks.
-- **Un-park checklist** (§7): about 2 weeks for a lookup-only MVP with no images. T1 parity (8 card commands, preferences, reactions, deploy, policy documents) takes 4–6 weeks on top of the shared extraction. That matches the 5–6.5 weeks in [13].
+- **Un-park checklist** (§7): about 2 weeks for a lookup-only MVP with no images. T1 parity (8 card commands, preferences, reactions, deploy, policy documents) takes 4–6 weeks on top of the 2–3-week shared extraction, so about 6–9 weeks in all. That is more than the 5–6.5 weeks in [13], which already includes the extraction.
 
 ## 2. Inventory of apps/stoat-worker (v0.3.3, 2026-10-06)
 
@@ -316,7 +316,7 @@ Later: `swatch` and `glamour` (need the attachment-host abstraction), then `budg
 
 **Totals**
 - Lookup-only MVP with no images: about 2 weeks (steps 1–3 and 9–12, with the policy documents amended).
-- T1 parity: 4–6 weeks plus 2–3 weeks of shared extraction.
+- T1 parity: 4–6 weeks plus 2–3 weeks of shared extraction (about 6–9 weeks in all; [13]'s 5–6.5 includes the extraction).
 
 ## Searches that found nothing or failed
 
