@@ -79,7 +79,7 @@
 | Version | Date | Highlights |
 |---------|------|------------|
 | v6.0.0 | Oct 2026 | Conditional Core 6 source: retire the six deprecated legacy character APIs and executable host parity half while preserving live contracts and all 261 library cases; registry/publication/consumer acceptance held |
-| v5.16.0 | Oct 2026 | A-CORE remediation: legacy character APIs deprecated for core 6 after release/acceptance gates; shared limit and nine live types relocated with unchanged exports; imported labels preserve surrogate pairs within 256 UTF-16 units; GPOSERS newline joining made linear with unchanged output; facade docs and xivcharakit attribution refreshed |
+| v5.16.0 | Oct 2026 | A-CORE remediation: legacy character APIs deprecated for core 6 after release/acceptance gates; shared limit and nine live types relocated with unchanged exports; imported labels preserve surrogate pairs within 256 UTF-16 units; GPOSERS newline joining made linear with unchanged output; facade docs and xivcharakit attribution refreshed; German and French dye names from XIVAPI's `Stain.Name` (e-02, from #390: 118 German wording and 125 French capitalization changes) |
 | v5.15.0 | Oct 2026 | `.chara` import on `xivcharakit@0.1.0-beta.4` (exact pin): `inspectCharaForTools` / `resolveCharaForTools` / `resolveCharaWithProvider` / `createCharaPaletteProvider` and the `ImportedCharaCharacter` projection (with `indexGap`; `resolveCharaWithProvider` takes a palette provider and never reaches the palette tables), additive beside the legacy parser and resolver. Adopted by web 5.16.0 and Discord 5.9.0 |
 | v5.14.0 | Oct 2026 | `MAX_CHARA_FILE_BYTES` (8,192): the largest `.chara` file the web app and the bot accept, enforced by them on the original bytes (2026-10-15 import review). Exports without an attached image measured 1,837–2,777 bytes; the corpus's one larger file carried an image attached in Anamnesis (3,128,021 bytes) |
 | v5.13.0 | Oct 2026 | `.chara` error messages are bounded (2026-10-15 import audit, FINDING-002): a value is quoted only up to 64 characters, otherwise described by kind and size, and nothing walks it, so a nested palette index that fits in 8 KiB no longer overflows the stack and a 1 MiB Tribe value no longer becomes a 1 MiB message. A float color string over 128 characters is refused before it is split |
@@ -228,7 +228,7 @@
 | v5.9.4 | Oct 2026 | Bot-logic 4.12.0: harmony distances use the selected metric, eyes merge only for equal eligible colors, bounded and sanitized glamour descriptions; command-choice localization remains in A-DISCORD |
 | v5.9.3 | Oct 2026 | SVG 4.4.1: shared card text fitting is linear while preserving existing card content, widths and truncation; security-only patch after the separate core deployment |
 | v5.9.2 | Oct 2026 | Core 5.16.0: `/glamour` GPOSERS text joins newlines in linear time while retaining prior output; command schema unchanged; imported nicknames remain excluded from bot output |
-| v5.9.1 | Oct 2026 | Prepared font readiness: preserve all existing Japanese/Simplified Chinese glyphs and add characters needed by the pending shared bot catalog; runtime handlers and bindings unchanged. Also records `/glamour`'s 5/minute limit, worker-kit 1.6.0's preset on the existing RL_5 binding, live since worker-kit's own merge |
+| v5.9.1 | Oct 2026 | Prepared font readiness: preserve all existing Japanese/Simplified Chinese glyphs and add characters needed by the pending shared bot catalog; runtime handlers and bindings unchanged. Also records `/glamour`'s 5/minute limit, worker-kit 1.6.0's preset on the existing RL_5 binding, which reaches production with the Discord run that worker-kit's merge starts (cut 04) |
 | v5.9.0 | Oct 2026 | Core 5.15.0 + bot-logic 4.11.0: `/swatch` and `/glamour` pass the attachment's capped bytes to the `xivcharakit`-backed reader (invalid UTF-8 refused), `/glamour` opens gear-only files, unmatched or unreadable colors, gear and dyes get a fixed line; attachment guards unchanged; no command shape change; bundle 2,732.6 KiB gzip (88.9 % of the cap) |
 | v5.8.15 | Oct 2026 | Core 5.13.0 + 5.14.0, bot-logic 4.10.0 (2026-10-15 import review): `/swatch` and `/glamour` refuse an attachment not named `.chara` before deferring, and the cap is 8 KiB (was 1 MiB) on the reported size and the streamed download, with an 8 KB message; no command shape changes |
 | v5.8.14 | Oct 2026 | bot-logic 4.9.0 (no source change here): `/glamour`'s list leaves out invisible pieces and an Off Hand the main hand doesn't take; the card is unchanged; no command shape changes |
@@ -772,6 +772,7 @@ and the [rollout runbook](operations/security-remediation-2026-09-15.md) for the
 | @xivdyetools/svg v4.4.1 | @xivdyetools/core v5.16.0; @xivdyetools/types v3.3.0 | Prepared source; publication and deployed acceptance remain pending |
 | @xivdyetools/worker-kit v1.6.0 | @xivdyetools/logger v2.4.0 | Prepared source; publication and deployed acceptance remain pending |
 | @xivdyetools/core v5.16.0 | @xivdyetools/logger v2.4.0; @xivdyetools/types v3.3.0 | Prepared source; publication and deployed acceptance remain pending |
+| Web App v5.16.1+ | @xivdyetools/core v5.16.0+ | Label cap preserves surrogate pairs; linear GPOSERS newline joining; workspace deployment does not wait for npm |
 | Web App v5.16.0+ | @xivdyetools/core v5.15.0+ | `@xivdyetools/core/chara` (`inspectCharaForTools`, `resolveCharaWithProvider`) — the `.chara` inspection Web Worker imports it, and the xivcharakit-backed reader replaces the in-page parse |
 | Web App v5.15.5+ | @xivdyetools/core v5.14.0+ | `MAX_CHARA_FILE_BYTES` — the `.chara` cap, and core 5.13.0's bounded parse errors |
 | Web App v5.15.4 | @xivdyetools/core v5.12.0+ | `gposersOmittedSlots` — the GPOSERS list leaves out invisible pieces and an Off Hand the main hand doesn't take |
@@ -784,6 +785,9 @@ and the [rollout runbook](operations/security-remediation-2026-09-15.md) for the
 | Web App v5.12.2–5.12.4 | @xivdyetools/core v5.5.0+ | Tribe-derived `.chara` race — below this the Swatch Matcher refuses every Lalafell file |
 | Web App v5.7–5.12.1 | @xivdyetools/core v5.2.0+ | Color-wheel selector (`getColorWheel`, `HarmonySelectionConfig.wheel`); `@xivdyetools/types` v3.2.0+ (`ColorWheelId`) |
 | Web App v5.1–5.6 | @xivdyetools/core v4.2.0+ | `generateHarmonySlots` + `HARMONY_OFFSETS` (harmony convergence); 5.4+ needs core v5.0.0+ (one RYB mixer), 5.5+ core v5.1.0+ (ΔEOK2 labels) |
+| Discord Worker v5.9.4+; Moderation v1.8.3+; parked Stoat v0.3.4+ | @xivdyetools/bot-logic v4.12.0+ | Shared sanitizer hardening; Discord also adopts harmony/swatch/glamour fixes. Package publication follows core v5.16.0 then SVG v4.4.1; workspace apps bundle local source. Choice registration follows in A-DISCORD |
+| Discord Worker v5.9.3+; OG Worker v2.12.1+ | @xivdyetools/svg v4.4.1+ | Linear card text fitting with unchanged output; package publication requires core v5.16.0 availability, while workspace app deploys bundle local source |
+| Discord Worker v5.9.2+ | @xivdyetools/core v5.16.0+ | Linear GPOSERS newline joining; nicknames remain excluded; workspace deployment does not wait for npm |
 | Discord Worker v5.9.0+ | @xivdyetools/core v5.15.0+ | `@xivdyetools/core/chara` — `/swatch` and `/glamour` read `.chara` files through the xivcharakit-backed reader; `@xivdyetools/bot-logic` v4.11.0+ |
 | Discord Worker v5.8.15+ | @xivdyetools/core v5.14.0+ | `MAX_CHARA_FILE_BYTES`; `@xivdyetools/bot-logic` v4.10.0+ — the `{kb}` size reason and `notChara` |
 | Discord Worker v5.8.14 | @xivdyetools/core v5.12.0+ | `@xivdyetools/bot-logic` v4.9.0+ — `/glamour`'s list applies `gposersOmittedSlots` |
@@ -803,6 +807,7 @@ and the [rollout runbook](operations/security-remediation-2026-09-15.md) for the
 | OG Worker v2.10.4–2.11.1 | @xivdyetools/core v5.7.0+ | Creator palettes on the Swatch Matcher card |
 | OG Worker v2.10–2.10.3 | @xivdyetools/core v5.2.0+ | `?wheel=` validated against `COLOR_WHEEL_IDS`; `@xivdyetools/svg` v4.1.0+ |
 | OG Worker v2.5–2.9 | @xivdyetools/core v4.2.0+ | `generateHarmonySlots` (2.6.0+); `@xivdyetools/svg` v3.1.0+ (`bandInk` export) |
+| API Worker v0.21.1+ | @xivdyetools/worker-kit v1.6.0+ | Opt-in IPv6 /64 keys for API, telemetry, proxy and Chara limits; workspace deployment bundles local source independently of npm publication |
 | API Worker v0.16+ | @xivdyetools/core v5.8.0+ | `items.<slot>.rules` on `POST /v1/chara/resolve` (`groupCharaTwinRules`, `charaWearMask`) |
 | API Worker v0.14–0.15 | @xivdyetools/core v5.2.0+ | `/v1/wheels`, `/v1/harmony` |
 | API Worker v0.12–0.13 | @xivdyetools/core v5.1.0+ | `?method=oklab` is ΔEOK2 |
