@@ -142,6 +142,23 @@ for (const file of betas) {
   });
 }
 
+// The image-worker hold is a repository variable read by the deploy job, so a merge
+// during the hold queues no production approval. A manual dispatch must still deploy.
+test('Image hold: deploy-image-worker.yml skips push runs while IMAGE_WORKER_DEPLOY_HOLD is true', () => {
+  const yaml = read('deploy-image-worker.yml');
+  const deploy = jobBlock(yaml, 'deploy');
+  assert.match(
+    deploy,
+    /^ {4}if: github\.event_name == 'workflow_dispatch' \|\| vars\.IMAGE_WORKER_DEPLOY_HOLD != 'true'$/m,
+  );
+  assert.match(
+    deploy,
+    /^ {4}environment: production$/m,
+    'the reviewer gate stays on the deploy job',
+  );
+  assert.match(yaml, /^ {2}workflow_dispatch:\s*$/m, 'a manual dispatch must remain available');
+});
+
 test('BUG-152: ci.yml cancels only superseded pull_request runs', () => {
   const yaml = read('ci.yml');
   const block = yaml.slice(yaml.indexOf('\nconcurrency:'));
