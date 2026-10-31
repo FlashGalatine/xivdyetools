@@ -285,7 +285,7 @@ an earlier minor candidate require refreshed artifact/consumer verification ther
 |---|---|---|---|---|
 | e-00 | [#407](https://github.com/FlashGalatine/xivdyetools/pull/407) | `f461b94578c7` | cut 01 | Logger 2.4.0 declaration repair. Prepared; recommended before P1 |
 | e-01 | [#408](https://github.com/FlashGalatine/xivdyetools/pull/408) | `71ed0595ccf9` | cut 06 | **Verification tip, not for merge in this form.** Cut 06 plus the logger repair, [#393](https://github.com/FlashGalatine/xivdyetools/pull/393) and [#401](https://github.com/FlashGalatine/xivdyetools/pull/401); its tree equals merging them |
-| e-02 | [#409](https://github.com/FlashGalatine/xivdyetools/pull/409) | `b0efa0f26518` | e-01 | PR #390's German and French dye-name corrections, as the maintainer decided on 2026-10-30; Core stays 5.16.0 |
+| e-02 | [#409](https://github.com/FlashGalatine/xivdyetools/pull/409) | `b0efa0f26518`; `7fbd756b2c30` after the 2026-10-31 changelog and docs commit | e-01 | PR #390's German and French dye-name corrections, as the maintainer decided on 2026-10-30; Core stays 5.16.0 |
 | e-03 | [#410](https://github.com/FlashGalatine/xivdyetools/pull/410) | `e1293ba5e069` | cut 12 | Web 5.16.4 Vite development bridge for Core's native JSON import attributes (development only) |
 
 ### What was found
@@ -298,7 +298,7 @@ an earlier minor candidate require refreshed artifact/consumer verification ther
 
 ### Intended merge order, when a merge is separately authorized
 
-First the image hold guard [#412](https://github.com/FlashGalatine/xivdyetools/pull/412), with the `IMAGE_WORKER_DEPLOY_HOLD` variable set straight after it (2026-10-31; unit acceptance unit 15 and section 6); then cut 00; cut 01, then e-00; cut 02; cut 03, then #393; cuts 04, 05, 05a and 06, then #401 and [#415](https://github.com/FlashGalatine/xivdyetools/pull/415); retarget e-02 to `main` (its diff is then the text selection alone); the app cuts; cut 12, then e-03; cut 14, then its documentation companion [#413](https://github.com/FlashGalatine/xivdyetools/pull/413); the moderation activation release [#414](https://github.com/FlashGalatine/xivdyetools/pull/414) comes last, after the whole queue and M8's accepted inactive deploy. e-01 is verification evidence and is not merged. Hold every package-triggered production run and approve nothing implicitly.
+First the image hold guard [#412](https://github.com/FlashGalatine/xivdyetools/pull/412), with the `IMAGE_WORKER_DEPLOY_HOLD` variable set straight after it (2026-10-31; unit acceptance unit 15 and section 6); then cut 00; cut 01, then e-00; cut 02; cut 03, then #393; cuts 04, 05, 05a and 06, then #401 and [#415](https://github.com/FlashGalatine/xivdyetools/pull/415); retarget e-02 to `main` (its diff is then the text selection alone); the app cuts; cut 12, then e-03 and [#416](https://github.com/FlashGalatine/xivdyetools/pull/416) in either order; cut 14, then its documentation companion [#413](https://github.com/FlashGalatine/xivdyetools/pull/413); the moderation activation release [#414](https://github.com/FlashGalatine/xivdyetools/pull/414) comes last, after the whole queue and M8's accepted inactive deploy. e-01 is verification evidence and is not merged. Hold every package-triggered production run and approve nothing implicitly. In particular, leave e-02's og-worker run unapproved: og 2.12.0 would serve `lang=de` and `lang=fr` cards cached under the old names for up to 7 days, and cut 13's version change re-keys that cache (unit acceptance unit 13).
 
 ### #390 after this reconciliation
 
