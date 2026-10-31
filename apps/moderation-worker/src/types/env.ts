@@ -5,6 +5,8 @@
  * Variables are set in wrangler.toml [vars]
  * Bindings (KV, D1) are configured in wrangler.toml
  */
+import type { IdentityLookupBinding } from '../services/identity-lookup.js';
+
 export interface Env {
   // =========================================================================
   // Secrets (set via wrangler secret put)
@@ -41,6 +43,8 @@ export interface Env {
 
   /** Runtime environment for conditional behavior */
   ENVIRONMENT?: string;
+  LINKED_BAN_CONFIRMATION_ENABLED?: string;
+  OAUTH_IDENTITY?: IdentityLookupBinding;
 
   /** Discord Application ID */
   DISCORD_CLIENT_ID: string;
@@ -102,6 +106,7 @@ export interface DiscordInteraction {
     name?: string;
     type?: number;
     custom_id?: string;
+    values?: string[];
     options?: Array<{
       name: string;
       type?: number;

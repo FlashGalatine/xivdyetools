@@ -23,10 +23,10 @@ import { safeSendMessage } from '../../utils/discord-api.js';
 import * as presetApi from '../../services/preset-api.js';
 import * as banService from '../../services/ban-service.js';
 import { STATUS_DISPLAY, PresetReviewConflictError } from '../../types/preset.js';
-import { sanitizeName, sanitizeUserName } from '../../utils/embed-text.js';
+import { sanitizeName } from '../../utils/embed-text.js';
 import { buildReviewCustomId, parseReviewCustomId } from '@xivdyetools/types';
 import type { ParsedReviewId, ReviewBinding, ReviewKind } from '@xivdyetools/types';
-import { editReviewMessage, refreshReview, withoutTransientFields } from '../review-message.js';
+import { editReviewMessage, refreshReview, withoutTransientFields, isReviewedPublishAction } from '../review-message.js';
 
 /** MOD-4: shown when the approve button targets a banned author's preset. */
 const AUTHOR_BANNED_MESSAGE =
@@ -88,7 +88,7 @@ type ClickKind = keyof typeof PREFIXES;
 
 type Click =
   | { response: Response }
-  | { parsed: ParsedReviewId; userId: string; userName: string };
+  | { parsed: ParsedReviewId; userId: string };
 
 /**
  * Identify the click, validate its custom_id and check the moderator. Anything
@@ -97,7 +97,6 @@ type Click =
 function resolveClick(interaction: ButtonInteraction, env: Env, kind: ClickKind): Click {
   const customId = interaction.data?.custom_id || '';
   const userId = interaction.member?.user?.id ?? interaction.user?.id;
-  const userName = interaction.member?.user?.username ?? interaction.user?.username ?? 'Moderator';
   const rest = customId.slice(PREFIXES[kind].length);
 
   if (!rest || !userId) {
@@ -114,7 +113,7 @@ function resolveClick(interaction: ButtonInteraction, env: Env, kind: ClickKind)
     return { response: ephemeralResponse(`You do not have permission to ${kind} presets.`) };
   }
 
-  return { parsed, userId, userName };
+  return { parsed, userId };
 }
 
 /**
@@ -152,14 +151,14 @@ export async function handlePresetApproveButton(
 ): Promise<Response> {
   const click = resolveClick(interaction, env, 'approve');
   if ('response' in click) return click.response;
-  const { parsed, userId, userName } = click;
+  const { parsed, userId } = click;
 
   if (!parsed.binding) {
     return refreshInstead(interaction, env, ctx, parsed.presetId, userId, logger);
   }
 
   ctx.waitUntil(
-    processApproval(interaction, env, parsed.presetId, parsed.binding, userId, userName, logger)
+    processApproval(interaction, env, parsed.presetId, parsed.binding, userId, logger)
   );
 
   return Response.json({
@@ -173,12 +172,8 @@ async function processApproval(
   presetId: string,
   binding: ReviewBinding,
   userId: string,
-  userName: string,
   logger?: ExtendedLogger
 ): Promise<void> {
-  // FINDING-019: the moderator's Discord name is user-controlled text
-  const safeModerator = sanitizeUserName(userName);
-
   try {
     // MOD-4 (FINDING-034, 2026-08-21 audit): a ban hides only the author's
     // approved presets, so their pending / flagged entries would otherwise
@@ -203,6 +198,10 @@ async function processApproval(
       return;
     }
 
+    if (!(await isReviewedPublishAction(interaction, env, presetId, userId, binding, 'approve'))) {
+      await refreshReview(interaction, env, presetId, userId, logger);
+      return;
+    }
     const preset = await presetApi.approvePreset(env, presetId, userId, binding);
     const safeName = sanitizeName(preset.name); // FINDING-019 (author-controlled)
 
@@ -217,7 +216,7 @@ async function processApproval(
           // belongs under "Preset Approved"
           fields: [
             ...withoutTransientFields(originalEmbed.fields),
-            { name: 'Action', value: `Approved by ${safeModerator}`, inline: false },
+            { name: 'Action', value: 'Approved', inline: false },
           ],
           footer: originalEmbed.footer?.text ? { text: originalEmbed.footer.text } : undefined,
           timestamp: originalEmbed.timestamp,
@@ -231,7 +230,7 @@ async function processApproval(
         embeds: [
           {
             title: `✅ ${safeName} - Approved`,
-            description: `Preset approved by ${safeModerator}`,
+            description: 'Preset approved',
             color: STATUS_DISPLAY.approved.color,
             footer: { text: `ID: ${preset.id}` },
           },
@@ -348,7 +347,6 @@ export async function handlePresetRejectButton(
 /**
  * Handle the Revert button click - shows modal for reason
  */
-// eslint-disable-next-line @typescript-eslint/require-await
 export async function handlePresetRevertButton(
   interaction: ButtonInteraction,
   env: Env,
@@ -363,5 +361,12 @@ export async function handlePresetRevertButton(
     return refreshInstead(interaction, env, ctx, parsed.presetId, userId, logger);
   }
 
-  return reasonModal('revert_modal', parsed.presetId, parsed.binding);
+  try {
+    if (!(await isReviewedPublishAction(interaction, env, parsed.presetId, userId, parsed.binding, 'revert'))) {
+      return refreshInstead(interaction, env, ctx, parsed.presetId, userId, logger);
+    }
+    return reasonModal('revert_modal', parsed.presetId, parsed.binding);
+  } catch {
+    return ephemeralResponse('Could not load the preset to confirm this review. Nothing was changed — try again.');
+  }
 }

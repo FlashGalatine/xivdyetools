@@ -36,12 +36,16 @@ import {
   handleBanReasonModal,
   isBanReasonModal,
 } from './handlers/modals/index.js';
+import { linkedBansEnabled } from './services/identity-lookup.js';
+import { parseModeratorIds } from '@xivdyetools/bot-logic';
+import { handleBanParentSelect } from './handlers/buttons/ban-confirmation.js';
 import * as banService from './services/ban-service.js';
 import * as presetApi from './services/preset-api.js';
 import {
   validateEnv,
   logValidationErrors,
   PRODUCTION_ENV_ERROR_PREFIX,
+  LINKED_BAN_ENV_ERROR_PREFIX,
 } from './utils/env-validation.js';
 import { createUserTranslator } from './services/bot-i18n.js';
 import { requestIdMiddleware, loggerMiddleware } from '@xivdyetools/worker-kit';
@@ -129,7 +133,7 @@ app.use('*', async (c, next) => {
   // moderation bot that answers errors is noticed in minutes; the same
   // fail-closed treatment presets-api 2.2.0, oauth 3.0.0 and discord-worker
   // 5.1.0 took under this finding.
-  if (envResult.errors.some((e) => e.startsWith(PRODUCTION_ENV_ERROR_PREFIX))) {
+  if (envResult.errors.some((e) => e.startsWith(PRODUCTION_ENV_ERROR_PREFIX) || e.startsWith(LINKED_BAN_ENV_ERROR_PREFIX))) {
     return c.json({ error: 'Service misconfigured' }, 500);
   }
 
@@ -236,7 +240,7 @@ async function handleCommand(
   const userId = interaction.member?.user?.id ?? interaction.user?.id;
 
   if (!userId) {
-    logger.error('Unable to identify user from interaction', { commandName });
+    logger.error('Unable to identify user from interaction', undefined, { commandName });
     return ephemeralResponse('Unable to identify user. Please try again.');
   }
 
@@ -352,7 +356,7 @@ export async function handleAutocomplete(
     });
 
   if (!userId) {
-    logger.error('Unable to identify user from autocomplete interaction', { commandName });
+    logger.error('Unable to identify user from autocomplete interaction', undefined, { commandName });
     return noChoices();
   }
 
@@ -444,7 +448,7 @@ export async function handleAutocomplete(
       }
     }
     // User autocomplete for ban_user/unban_user subcommands
-    else if (focusedName === 'user') {
+    else if ((focusedName === 'user' || focusedName === 'additional_user') && linkedBansEnabled(env) && parseModeratorIds(env.MODERATOR_IDS).has(userId)) {
       if (subcommandName === 'ban_user') {
         choices = await getBanUserAutocompleteChoices(env, query, logger);
       } else if (subcommandName === 'unban_user') {
@@ -455,7 +459,7 @@ export async function handleAutocomplete(
 
   return Response.json({
     type: InteractionResponseType.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT,
-    data: { choices },
+    data: { choices: choices.slice(0, 25) },
   });
 }
 
@@ -538,13 +542,17 @@ export async function handleComponent(
   logger.info('Handling component', { customId, componentType });
 
   if (!userId) {
-    logger.error('Unable to identify user from component interaction', { customId });
+    logger.error('Unable to identify user from component interaction', undefined, { customId });
     return ephemeralResponse('Unable to identify user. Please try again.');
   }
 
   // MOD-12 (FINDING-034): same per-user limiter as slash commands
   const limited = await enforceCommandRateLimit(env, ctx, userId, logger, { customId });
   if (limited) return limited;
+
+  if (componentType === 3 && customId?.startsWith('ban_choose_')) {
+    return handleBanParentSelect(interaction, env, ctx, logger);
+  }
 
   // Buttons have component_type 2
   if (componentType === 2) {
@@ -571,7 +579,7 @@ export async function handleModal(
   logger.info('Handling modal', { customId });
 
   if (!userId) {
-    logger.error('Unable to identify user from modal interaction', { customId });
+    logger.error('Unable to identify user from modal interaction', undefined, { customId });
     return ephemeralResponse('Unable to identify user. Please try again.');
   }
 

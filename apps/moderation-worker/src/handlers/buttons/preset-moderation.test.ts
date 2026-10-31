@@ -51,6 +51,13 @@ vi.mock('../../services/ban-service.js', () => ({
   isPresetAuthorBanned: vi.fn(async () => false),
 }));
 
+beforeEach(() => {
+  vi.mocked(presetApi.getModerationPreset).mockResolvedValue({ preset: {
+    id: VALID_PRESET_ID, name: 'Test Preset', description: 'Description', author_name: 'Author', status: 'pending', dyes: [],
+    previous_values: { name: 'Before', description: 'old', tags: [], dyes: [] }, moderation_status: 'unknown',
+  }, revision: 4 } as any);
+});
+
 describe('handlePresetApproveButton', () => {
   let env: Env;
   let ctx: ExecutionContext;
@@ -242,7 +249,7 @@ describe('handlePresetApproveButton', () => {
             fields: expect.arrayContaining([
               expect.objectContaining({
                 name: 'Action',
-                value: 'Approved by Moderator',
+                value: 'Approved',
               }),
             ]),
           }),
@@ -298,7 +305,7 @@ describe('handlePresetApproveButton', () => {
       embeds: [
         {
           color: 5763719,
-          description: 'Preset approved by Moderator',
+          description: 'Preset approved',
           footer: {
             text: `ID: ${VALID_PRESET_ID}`,
           },
@@ -493,7 +500,7 @@ describe('handlePresetApproveButton', () => {
           expect.objectContaining({
             fields: expect.arrayContaining([
               expect.objectContaining({
-                value: 'Approved by Moderator',
+                value: 'Approved',
               }),
             ]),
           }),
@@ -734,7 +741,7 @@ describe('moderation buttons — security audit remediations', () => {
     expect(discordApi.sendMessage).not.toHaveBeenCalled();
   });
 
-  it('FINDING-019: moderator name and preset name are escaped in the edit and the log post', async () => {
+  it('FINDING-019: preset name is escaped and generated attribution is neutral', async () => {
     vi.mocked(presetApi.approvePreset).mockResolvedValueOnce({
       id: VALID_PRESET_ID,
       name: '[Click](https://evil.example) **now**',
@@ -746,11 +753,66 @@ describe('moderation buttons — security audit remediations', () => {
     const edit = vi.mocked(discordApi.editMessage).mock.calls[0][3] as any;
     const action = edit.embeds[0].fields.find((f: { name: string }) => f.name === 'Action').value;
     expect(action).not.toContain('@everyone');
-    expect(action).toContain('\\_Mod\\_');
+    expect(action).toBe('Approved');
 
     const log = vi.mocked(discordApi.sendMessage).mock.calls[0][2] as any;
     expect(log.embeds[0].title).not.toMatch(/\[Click\]\(https:\/\/evil\.example\)/);
     expect(log.embeds[0].title).toContain('\\*\\*now\\*\\*');
     expect(log.embeds[0].description).not.toContain('@everyone');
+  });
+});
+
+// F001: inspect actual generated payloads, while retaining actor IDs on writes.
+describe('F001 neutral attribution', () => {
+  const actorId = '987654321098765432';
+  const actorName = '_AttributionSentinel_ @here';
+  const presetId = 'a0000000-0000-4000-8000-000000000001';
+  const binding = { revision: 5, status: 'pending' } as const;
+  const cases = ['guild', 'dm'].flatMap(source => [true, false].map(log => ({ source, log })));
+  beforeEach(() => { vi.clearAllMocks(); vi.mocked(presetApi.isModerator).mockReturnValue(true); });
+  it.each(cases)('approve: $source, log=$log', async ({ source, log }) => {
+
+    const env = { DISCORD_TOKEN: 'token', DISCORD_CLIENT_ID: 'app', MODERATION_CHANNEL_ID: 'moderation', SUBMISSION_LOG_CHANNEL_ID: log ? 'log' : undefined } as Env;
+    const pending: Promise<unknown>[] = [];
+    const ctx = { waitUntil: (p: Promise<unknown>) => { pending.push(p); } } as ExecutionContext;
+    const actor = { id: actorId, username: actorName };
+    const identity = source === 'guild' ? { member: { user: actor } } : { user: actor };
+
+    vi.mocked(presetApi.getModerationPreset).mockResolvedValue({ preset: {
+      id: presetId, name: 'Safe Preset', description: 'Reviewed description', author_name: 'Author', status: 'pending', dyes: [], moderation_status: 'unknown',
+      previous_values: { name: 'Before', description: 'old', tags: [], dyes: [] },
+    }, revision: 5 } as any);
+    vi.mocked(presetApi.approvePreset).mockResolvedValue({ id: presetId, name: 'Safe Preset' } as any);
+    await handlePresetApproveButton({
+      id: 'interaction', token: 'token', application_id: 'app', channel_id: 'moderation', ...identity,
+      data: { custom_id: `preset_approve_${presetId}:5:pending`, },
+      message: { id: 'message', embeds: [{ description: 'Reviewed description', fields: [{ name: 'Author', value: 'Author' }], footer: { text: `ID: ${presetId}` }, timestamp: '2026-10-27T00:00:00Z' }] },
+    }, env, ctx);
+    await Promise.all(pending);
+    expect(presetApi.isModerator).toHaveBeenCalledWith(env, actorId);
+    expect(presetApi.approvePreset).toHaveBeenCalledWith(env, presetId, actorId, binding);
+
+    const edit = vi.mocked(discordApi.editMessage).mock.calls.at(-1)![3] as any;
+    const post = vi.mocked(discordApi.sendMessage).mock.calls.at(-1)?.[2] as any;
+    const payloads = [edit, post];
+
+    for (const payload of payloads.filter(Boolean)) {
+      const text = JSON.stringify(payload);
+      expect.soft(text).not.toContain(actorName);
+      expect.soft(text).not.toContain(JSON.stringify(String.raw`\_AttributionSentinel\_ @‍here`).slice(1, -1));
+      expect.soft(text).not.toContain('AttributionSentinel');
+      expect.soft(text).not.toContain(actorId);
+    }
+    expect.soft(edit.embeds[0].fields).toContainEqual(expect.objectContaining({ name: 'Action', value: 'Approved' }));
+
+    expect(edit.components).toEqual([]);
+    expect(discordApi.sendMessage).toHaveBeenCalledTimes(log ? 1 : 0);
+    if (log) {
+      expect.soft(post.embeds[0].description).toBe('Preset approved');
+      expect(post.embeds[0].title).toContain('Safe Preset');
+      expect(post.embeds[0].footer.text).toBe(`ID: ${presetId}`);
+    }
+    expect(edit.embeds[0]).toMatchObject({ description: 'Reviewed description', footer: { text: `ID: ${presetId}` }, timestamp: '2026-10-27T00:00:00Z' });
+    expect(edit.embeds[0].fields).toContainEqual({ name: 'Author', value: 'Author' });
   });
 });

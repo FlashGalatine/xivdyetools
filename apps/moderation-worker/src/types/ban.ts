@@ -6,36 +6,6 @@
  */
 
 /**
- * Database row for banned_users table
- */
-export interface BannedUserRow {
-  id: string;
-  discord_id: string | null;
-  xivauth_id: string | null;
-  username: string;
-  moderator_discord_id: string;
-  reason: string;
-  banned_at: string;
-  unbanned_at: string | null;
-  unban_moderator_discord_id: string | null;
-}
-
-/**
- * Banned user record
- */
-export interface BannedUser {
-  id: string;
-  discordId: string | null;
-  xivAuthId: string | null;
-  username: string;
-  moderatorDiscordId: string;
-  reason: string;
-  bannedAt: string;
-  unbannedAt: string | null;
-  unbanModeratorDiscordId: string | null;
-}
-
-/**
  * User search result for autocomplete
  */
 export interface UserSearchResult {
@@ -59,28 +29,6 @@ export interface BannedUserSearchResult {
   username: string;
   /** When they were banned */
   bannedAt: string;
-}
-
-/**
- * Recent preset summary for ban confirmation
- */
-export interface RecentPresetSummary {
-  /** Preset ID */
-  id: string;
-  /** Preset name */
-  name: string;
-  /** Share URL for the preset */
-  shareUrl: string;
-}
-
-/**
- * Data for the ban confirmation embed
- */
-export interface BanConfirmationData {
-  /** User being banned */
-  user: UserSearchResult;
-  /** Last 3 presets with share links */
-  recentPresets: RecentPresetSummary[];
 }
 
 /**
@@ -116,4 +64,3 @@ export interface UnbanResult {
   /** The underlying error, for logging only — never shown to Discord */
   cause?: unknown;
 }
-

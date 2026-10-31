@@ -1,1028 +1,293 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { handleBanReasonModal, isBanReasonModal } from './ban-reason.js';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Env } from '../../types/env.js';
-import { InteractionResponseType } from '../../types/env.js';
-import { createMockD1Database } from '@xivdyetools/test-utils';
-import * as presetApi from '../../services/preset-api.js';
-import * as banService from '../../services/ban-service.js';
-import * as discordApi from '../../utils/discord-api.js';
-
-// Mock modules
-vi.mock('../../utils/discord-api.js', () => {
-  const sendMessage = vi.fn();
-  // BUG-035: handlers call the safe wrappers; alias to the same mocks
-  // moderation-worker-09: processBan now also resolves the "Processing Ban…"
-  // acknowledgement through safeEditOriginalResponse.
-  return {
-    sendMessage,
-    safeSendMessage: sendMessage,
-    safeEditOriginalResponse: vi.fn(),
-  };
-});
-
-vi.mock('../../services/preset-api.js', async () => {
-  const actual = await vi.importActual('../../services/preset-api.js');
-  return {
-    ...actual,
-    isModerator: vi.fn(),
-  };
-});
-
+import type { ModalInteraction } from '../../types/modal.js';
+import { handleBanReasonModal, isBanReasonModal } from './ban-reason.js';
+import * as bans from '../../services/ban-service.js';
+import * as confirmations from '../../services/ban-confirmation-service.js';
+import * as discord from '../../utils/discord-api.js';
 vi.mock('../../services/ban-service.js', () => ({
   banUser: vi.fn(),
-  // FINDING-007: the modal custom_id carries only the id; the username is
-  // resolved from D1 at submit time
   getPresetAuthorName: vi.fn(),
 }));
-
-describe('handleBanReasonModal', () => {
-  let env: Env;
-  let ctx: ExecutionContext;
-  let db: ReturnType<typeof createMockD1Database>;
-
-  beforeEach(() => {
-    db = createMockD1Database();
-    vi.clearAllMocks();
-    vi.useFakeTimers();
-
-    env = {
-      DISCORD_PUBLIC_KEY: 'test-key',
-      DISCORD_TOKEN: 'test-bot-token',
-      DISCORD_CLIENT_ID: 'app-123',
-      MODERATOR_IDS: 'mod-1,mod-2',
-      MODERATION_CHANNEL_ID: 'channel-mod',
-      SUBMISSION_LOG_CHANNEL_ID: 'channel-log',
-      BOT_API_SECRET: 'test-secret',
-      BOT_SIGNING_SECRET: 'test-signing-secret-padding-1234',
-      DB: db as unknown as D1Database,
-      KV: undefined as unknown as KVNamespace,
-      PRESETS_API: undefined,
-      PRESETS_API_URL: 'https://presets-api.example.com',
-    };
-
-    // Mock ctx.waitUntil to immediately execute the promise
-    ctx = {
-      waitUntil: vi.fn((promise: Promise<any>) => promise),
-      passThroughOnException: vi.fn(),
-    } as unknown as ExecutionContext;
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it('should return error when moderator ID is missing', async () => {
-    const interaction = {
-      id: 'int-1',
-      token: 'token-1',
-      application_id: 'app-123',
-      data: {
-        custom_id: 'ban_reason_modal_123456789012345678',
-        components: [
-          {
-            type: 1,
-            components: [
-              {
-                type: 4,
-                custom_id: 'ban_reason',
-                value: 'User violated community guidelines repeatedly',
-              },
-            ],
-          },
-        ],
-      },
-    };
-
-    const response = await handleBanReasonModal(interaction, env, ctx);
-    const json = (await response.json()) as any;
-
-    expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-    expect(json.data.embeds[0].description).toContain('Invalid modal submission');
-    expect(json.data.flags).toBe(64);
-  });
-
-  it('should deny access for non-moderators', async () => {
-    vi.mocked(presetApi.isModerator).mockReturnValue(false);
-
-    const interaction = {
-      id: 'int-1',
-      token: 'token-1',
-      application_id: 'app-123',
-      data: {
-        custom_id: 'ban_reason_modal_123456789012345678',
-        components: [
-          {
-            type: 1,
-            components: [
-              {
-                type: 4,
-                custom_id: 'ban_reason',
-                value: 'User violated community guidelines repeatedly',
-              },
-            ],
-          },
-        ],
-      },
-      member: { user: { id: '123456789012345678', username: 'NormalUser' } },
-    };
-
-    const response = await handleBanReasonModal(interaction, env, ctx);
-    const json = (await response.json()) as any;
-
-    expect(json.data.embeds[0].description).toContain('do not have permission');
-  });
-
-  it('should return error for invalid custom_id format', async () => {
-    vi.mocked(presetApi.isModerator).mockReturnValue(true);
-
-    const interaction = {
-      id: 'int-1',
-      token: 'token-1',
-      application_id: 'app-123',
-      data: {
-        custom_id: 'ban_reason_modal_invalidformat',
-        components: [
-          {
-            type: 1,
-            components: [
-              {
-                type: 4,
-                custom_id: 'ban_reason',
-                value: 'Valid reason here that is long enough',
-              },
-            ],
-          },
-        ],
-      },
-      member: { user: { id: 'mod-1', username: 'Moderator' } },
-    };
-
-    const response = await handleBanReasonModal(interaction, env, ctx);
-    const json = (await response.json()) as any;
-
-    expect(json.data.embeds[0].description).toContain('Invalid modal data');
-  });
-
-  it('should return error when target user ID is missing', async () => {
-    vi.mocked(presetApi.isModerator).mockReturnValue(true);
-
-    const interaction = {
-      id: 'int-1',
-      token: 'token-1',
-      application_id: 'app-123',
-      data: {
-        custom_id: 'ban_reason_modal_',
-        components: [
-          {
-            type: 1,
-            components: [
-              {
-                type: 4,
-                custom_id: 'ban_reason',
-                value: 'Valid ban reason here',
-              },
-            ],
-          },
-        ],
-      },
-      member: { user: { id: 'mod-1', username: 'Moderator' } },
-    };
-
-    const response = await handleBanReasonModal(interaction, env, ctx);
-    const json = (await response.json()) as any;
-
-    expect(json.data.embeds[0].description).toContain('Invalid target user');
-  });
-
-  it('should return error when reason is too short', async () => {
-    vi.mocked(presetApi.isModerator).mockReturnValue(true);
-
-    const interaction = {
-      id: 'int-1',
-      token: 'token-1',
-      application_id: 'app-123',
-      data: {
-        custom_id: 'ban_reason_modal_123456789012345678',
-        components: [
-          {
-            type: 1,
-            components: [
-              {
-                type: 4,
-                custom_id: 'ban_reason',
-                value: 'Too short',
-              },
-            ],
-          },
-        ],
-      },
-      member: { user: { id: 'mod-1', username: 'Moderator' } },
-    };
-
-    const response = await handleBanReasonModal(interaction, env, ctx);
-    const json = (await response.json()) as any;
-
-    expect(json.data.embeds[0].description).toContain('at least 10 characters');
-  });
-
-  it('should return error when reason is missing', async () => {
-    vi.mocked(presetApi.isModerator).mockReturnValue(true);
-
-    const interaction = {
-      id: 'int-1',
-      token: 'token-1',
-      application_id: 'app-123',
-      data: {
-        custom_id: 'ban_reason_modal_123456789012345678',
-        components: [],
-      },
-      member: { user: { id: 'mod-1', username: 'Moderator' } },
-    };
-
-    const response = await handleBanReasonModal(interaction, env, ctx);
-    const json = (await response.json()) as any;
-
-    expect(json.data.embeds[0].description).toContain('valid ban reason');
-  });
-
-  it('FINDING-007: resolves the target username from D1 when the custom_id carries only the id', async () => {
-    vi.setSystemTime(new Date('2025-01-15T12:00:00Z'));
-
-    vi.mocked(presetApi.isModerator).mockReturnValue(true);
-    // Once — vi.clearAllMocks() keeps implementations, so a sticky value would
-    // leak into the later tests that expect no author name on record
-    vi.mocked(banService.getPresetAuthorName).mockResolvedValueOnce('ResolvedFromDb');
-    vi.mocked(banService.banUser).mockResolvedValue({ success: true, presetsHidden: 2 });
-
-    const interaction = {
-      id: 'int-1',
-      token: 'token-1',
-      application_id: 'app-123',
-      data: {
-        custom_id: 'ban_reason_modal_123456789012345678',
-        components: [
-          {
-            type: 1,
-            components: [{ type: 4, custom_id: 'ban_reason', value: 'Repeatedly posted inappropriate content' }],
-          },
-        ],
-      },
-      member: { user: { id: 'mod-1', username: 'Moderator' } },
-    };
-
-    const response = await handleBanReasonModal(interaction, env, ctx);
-    const json = (await response.json()) as any;
-
-    expect(json.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
-    expect(json.data.embeds[0].description).toContain('ResolvedFromDb');
-    expect(banService.getPresetAuthorName).toHaveBeenCalledWith(env.DB, '123456789012345678');
-    expect(banService.banUser).toHaveBeenCalledWith(
-      env.DB,
-      '123456789012345678',
-      'ResolvedFromDb',
-      'mod-1',
-      'Repeatedly posted inappropriate content',
-    );
-  });
-
-  // FINDING-008: no author name on record → the stored name is the id (NOT NULL,
-  // searched by moderators), but no post shows it.
-  it('posts a neutral label, never the account id, when no author name is found', async () => {
-    vi.setSystemTime(new Date('2025-01-15T12:00:00Z'));
-    vi.mocked(presetApi.isModerator).mockReturnValue(true);
-    vi.mocked(banService.getPresetAuthorName).mockResolvedValueOnce(null);
-    vi.mocked(banService.banUser).mockResolvedValue({ success: true, presetsHidden: 0 });
-
-    const interaction = {
-      id: 'int-1',
-      token: 'token-1',
-      application_id: 'app-123',
-      data: {
-        custom_id: 'ban_reason_modal_123456789012345677',
-        components: [
-          {
-            type: 1,
-            components: [{ type: 4, custom_id: 'ban_reason', value: 'Vote manipulation across many presets' }],
-          },
-        ],
-      },
-      member: { user: { id: 'mod-1', username: 'Moderator' } },
-    };
-
-    const response = await handleBanReasonModal(interaction, env, ctx);
-    const json = (await response.json()) as any;
-    const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
-      vi.mocked(ctx.waitUntil).mock.calls.length - 1
-    ]?.[0];
-    if (waitUntilPromise) await waitUntilPromise;
-
-    expect(banService.banUser).toHaveBeenCalledWith(
-      env.DB,
-      '123456789012345677',
-      '123456789012345677',
-      'mod-1',
-      'Vote manipulation across many presets',
-    );
-    expect(json.data.embeds[0].description).toContain('an account with no author name');
-    expect(JSON.stringify(json)).not.toContain('123456789012345677');
-    const channelPost = JSON.stringify(vi.mocked(discordApi.sendMessage).mock.calls);
-    expect(channelPost).toContain('an account with no author name');
-    expect(channelPost).not.toContain('123456789012345677');
-  });
-
-  // BUG-001 path (a) (2026-09-16 deep-dive): this is the last gate in the
-  // ban_user flow (after the /preset command and the confirm button already
-  // accepted the target) — a UUID target must still reach `banService.banUser`
-  // here, not "Invalid modal data".
-  it('BUG-001 path (a): accepts a UUID target and calls banUser with it unchanged', async () => {
-    vi.setSystemTime(new Date('2025-01-15T12:00:00Z'));
-    const uuid = 'a1b2c3d4-e5f6-4789-a1b2-c3d4e5f67890';
-
-    vi.mocked(presetApi.isModerator).mockReturnValue(true);
-    vi.mocked(banService.getPresetAuthorName).mockResolvedValueOnce('XivauthOnlyAuthor');
-    vi.mocked(banService.banUser).mockResolvedValue({ success: true, presetsHidden: 1 });
-
-    const interaction = {
-      id: 'int-1',
-      token: 'token-1',
-      application_id: 'app-123',
-      data: {
-        custom_id: `ban_reason_modal_${uuid}`,
-        components: [
-          {
-            type: 1,
-            components: [{ type: 4, custom_id: 'ban_reason', value: 'Repeatedly posted inappropriate content' }],
-          },
-        ],
-      },
-      member: { user: { id: 'mod-1', username: 'Moderator' } },
-    };
-
-    const response = await handleBanReasonModal(interaction, env, ctx);
-    const json = (await response.json()) as any;
-
-    expect(json.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
-    expect(banService.banUser).toHaveBeenCalledWith(
-      env.DB,
-      uuid,
-      'XivauthOnlyAuthor',
-      'mod-1',
-      'Repeatedly posted inappropriate content',
-    );
-  });
-
-  it('should return processing message and ban user', async () => {
-    vi.setSystemTime(new Date('2025-01-15T12:00:00Z'));
-
-    vi.mocked(presetApi.isModerator).mockReturnValue(true);
-    vi.mocked(banService.banUser).mockResolvedValue({
-      success: true,
-      presetsHidden: 5,
-    });
-    vi.mocked(banService.getPresetAuthorName).mockResolvedValueOnce('BadUser');
-
-    const interaction = {
-      id: 'int-1',
-      token: 'token-1',
-      application_id: 'app-123',
-      data: {
-        custom_id: 'ban_reason_modal_123456789012345678',
-        components: [
-          {
-            type: 1,
-            components: [
-              {
-                type: 4,
-                custom_id: 'ban_reason',
-                value: 'Repeatedly posted inappropriate content',
-              },
-            ],
-          },
-        ],
-      },
-      member: { user: { id: 'mod-1', username: 'Moderator' } },
-    };
-
-    const response = await handleBanReasonModal(interaction, env, ctx);
-    const json = (await response.json()) as any;
-
-    expect(json.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
-    expect(json.data.embeds[0]).toEqual(
-      expect.objectContaining({
-        title: expect.stringContaining('Processing Ban'),
-        description: expect.stringContaining('BadUser'),
-        color: 0xfee75c,
-      }),
-    );
-    expect(json.data.components).toEqual([]);
-    expect(ctx.waitUntil).toHaveBeenCalled();
-  });
-
-  it('should ban user and send success message', async () => {
-    vi.setSystemTime(new Date('2025-01-15T12:00:00Z'));
-
-    vi.mocked(presetApi.isModerator).mockReturnValue(true);
-    vi.mocked(banService.banUser).mockResolvedValue({
-      success: true,
-      presetsHidden: 7,
-    });
-    vi.mocked(banService.getPresetAuthorName).mockResolvedValueOnce('SpamUser');
-
-    const interaction = {
-      id: 'int-1',
-      token: 'token-1',
-      application_id: 'app-123',
-      data: {
-        custom_id: 'ban_reason_modal_123456789012345679',
-        components: [
-          {
-            type: 1,
-            components: [
-              {
-                type: 4,
-                custom_id: 'ban_reason',
-                value: 'Spamming inappropriate presets',
-              },
-            ],
-          },
-        ],
-      },
-      member: { user: { id: 'mod-1', username: 'ModUser' } },
-    };
-
-    await handleBanReasonModal(interaction, env, ctx);
-    // Wait for waitUntil callback
-    const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
-      vi.mocked(ctx.waitUntil).mock.calls.length - 1
-    ]?.[0];
-    if (waitUntilPromise) await waitUntilPromise;
-
-    expect(banService.banUser).toHaveBeenCalledWith(
-      db,
-      '123456789012345679',
-      'SpamUser',
-      'mod-1',
-      'Spamming inappropriate presets',
-    );
-    expect(discordApi.sendMessage).toHaveBeenCalledWith(
-      'test-bot-token',
-      'channel-mod',
-      expect.objectContaining({
-        embeds: expect.arrayContaining([
-          expect.objectContaining({
-            title: expect.stringContaining('User Banned'),
-            description: expect.stringContaining('SpamUser'),
-            color: 0xed4245,
-            fields: expect.arrayContaining([
-              expect.objectContaining({ name: 'Presets Hidden', value: '7' }),
-              expect.objectContaining({ name: 'Banned By', value: 'ModUser' }),
-              expect.objectContaining({ name: 'Reason', value: 'Spamming inappropriate presets' }),
-            ]),
-          }),
-        ]),
-      }),
-    );
-    // FINDING-008: the channel post (kept in Discord history) never carries the
-    // banned account's id, in any field or in the text.
-    const channelPost = JSON.stringify(vi.mocked(discordApi.sendMessage).mock.calls);
-    expect(channelPost).not.toContain('123456789012345679');
-    expect(channelPost).not.toContain('User ID');
-  });
-
-  it('should not send message when moderation channel is not configured', async () => {
-    vi.mocked(presetApi.isModerator).mockReturnValue(true);
-    vi.mocked(banService.banUser).mockResolvedValue({
-      success: true,
-      presetsHidden: 3,
-    });
-
-    env.MODERATION_CHANNEL_ID = undefined as unknown as string;
-
-    const interaction = {
-      id: 'int-1',
-      token: 'token-1',
-      application_id: 'app-123',
-      data: {
-        custom_id: 'ban_reason_modal_123456789012345678',
-        components: [
-          {
-            type: 1,
-            components: [
-              {
-                type: 4,
-                custom_id: 'ban_reason',
-                value: 'Valid ban reason here',
-              },
-            ],
-          },
-        ],
-      },
-      member: { user: { id: 'mod-1', username: 'Moderator' } },
-    };
-
-    await handleBanReasonModal(interaction, env, ctx);
-    // Wait for waitUntil callback
-    const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
-      vi.mocked(ctx.waitUntil).mock.calls.length - 1
-    ]?.[0];
-    if (waitUntilPromise) await waitUntilPromise;
-
-    expect(discordApi.sendMessage).not.toHaveBeenCalled();
-  });
-
-  it('should handle ban failure', async () => {
-    vi.setSystemTime(new Date('2025-01-15T12:00:00Z'));
-
-    vi.mocked(presetApi.isModerator).mockReturnValue(true);
-    vi.mocked(banService.banUser).mockResolvedValue({
-      success: false,
-      presetsHidden: 0,
-      error: 'User is already banned',
-    });
-
-    const interaction = {
-      id: 'int-1',
-      token: 'token-1',
-      application_id: 'app-123',
-      data: {
-        custom_id: 'ban_reason_modal_123456789012345678',
-        components: [
-          {
-            type: 1,
-            components: [
-              {
-                type: 4,
-                custom_id: 'ban_reason',
-                value: 'Attempted to ban already banned user',
-              },
-            ],
-          },
-        ],
-      },
-      member: { user: { id: 'mod-1', username: 'Moderator' } },
-    };
-
-    await handleBanReasonModal(interaction, env, ctx);
-    // Wait for waitUntil callback
-    const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
-      vi.mocked(ctx.waitUntil).mock.calls.length - 1
-    ]?.[0];
-    if (waitUntilPromise) await waitUntilPromise;
-
-    expect(discordApi.sendMessage).toHaveBeenCalledWith('test-bot-token', 'channel-mod', {
-      embeds: [
-        {
-          color: 16711680,
-          description: 'User is already banned',
-          title: '❌ Ban Failed',
-        },
-      ],
-    });
-  });
-
-  it('should handle unexpected errors during ban', async () => {
-    vi.setSystemTime(new Date('2025-01-15T12:00:00Z'));
-
-    vi.mocked(presetApi.isModerator).mockReturnValue(true);
-    vi.mocked(banService.banUser).mockRejectedValue(new Error('Database connection lost'));
-
-    const interaction = {
-      id: 'int-1',
-      token: 'token-1',
-      application_id: 'app-123',
-      data: {
-        custom_id: 'ban_reason_modal_123456789012345678',
-        components: [
-          {
-            type: 1,
-            components: [
-              {
-                type: 4,
-                custom_id: 'ban_reason',
-                value: 'Valid ban reason here',
-              },
-            ],
-          },
-        ],
-      },
-      member: { user: { id: 'mod-1', username: 'Moderator' } },
-    };
-
-    await handleBanReasonModal(interaction, env, ctx);
-    // Wait for waitUntil callback
-    const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
-      vi.mocked(ctx.waitUntil).mock.calls.length - 1
-    ]?.[0];
-    if (waitUntilPromise) await waitUntilPromise;
-
-    expect(discordApi.sendMessage).toHaveBeenCalledWith(
-      'test-bot-token',
-      'channel-mod',
-      expect.objectContaining({
-        embeds: expect.arrayContaining([
-          expect.objectContaining({
-            title: expect.stringContaining('Failed'),
-            description: expect.stringContaining('Database connection lost'),
-          }),
-        ]),
-      }),
-    );
-  });
-
-  // DEAD-029 (2026-10-04 dead-code audit): the pre-FINDING-007 shape
-  // ban_reason_modal_{id}_{base64url username} is no longer parsed. Nothing
-  // emits it; should an old modal be submitted anyway, it is refused before any
-  // D1 read and bans nobody.
-  it('refuses a legacy custom_id that carries a base64 username suffix', async () => {
-    vi.mocked(presetApi.isModerator).mockReturnValue(true);
-
-    const interaction = {
-      id: 'int-1',
-      token: 'token-1',
-      application_id: 'app-123',
-      data: {
-        // 'VGVzdFVzZXI' is base64url('TestUser')
-        custom_id: 'ban_reason_modal_123456789012345680_VGVzdFVzZXI',
-        components: [
-          {
-            type: 1,
-            components: [{ type: 4, custom_id: 'ban_reason', value: 'Valid ban reason' }],
-          },
-        ],
-      },
-      member: { user: { id: 'mod-1', username: 'Moderator' } },
-    };
-
-    const response = await handleBanReasonModal(interaction, env, ctx);
-    const json = (await response.json()) as any;
-
-    expect(json.data.flags).toBe(64);
-    expect(json.data.embeds[0].description).toContain('Invalid modal data');
-    expect(banService.getPresetAuthorName).not.toHaveBeenCalled();
-    expect(banService.banUser).not.toHaveBeenCalled();
-    expect(ctx.waitUntil).not.toHaveBeenCalled();
-  });
-
-  it('should use fallback moderator name when username is missing', async () => {
-    vi.mocked(presetApi.isModerator).mockReturnValue(true);
-    vi.mocked(banService.banUser).mockResolvedValue({
-      success: true,
-      presetsHidden: 1,
-    });
-
-    const interaction = {
-      id: 'int-1',
-      token: 'token-1',
-      application_id: 'app-123',
-      data: {
-        custom_id: 'ban_reason_modal_123456789012345678',
-        components: [
-          {
-            type: 1,
-            components: [
-              {
-                type: 4,
-                custom_id: 'ban_reason',
-                value: 'Valid ban reason',
-              },
-            ],
-          },
-        ],
-      },
-      user: { id: 'mod-1', username: 'Moderator' },
-    };
-
-    await handleBanReasonModal(interaction, env, ctx);
-    // Wait for waitUntil callback
-    const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
-      vi.mocked(ctx.waitUntil).mock.calls.length - 1
-    ]?.[0];
-    if (waitUntilPromise) await waitUntilPromise;
-
-    expect(discordApi.sendMessage).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.any(String),
-      expect.objectContaining({
-        embeds: expect.arrayContaining([
-          expect.objectContaining({
-            fields: expect.arrayContaining([
-              expect.objectContaining({ name: 'Banned By', value: 'Moderator' }),
-            ]),
-          }),
-        ]),
-      }),
-    );
-  });
-
-  it('should display timestamp in success message', async () => {
-    vi.setSystemTime(new Date('2025-01-15T12:00:00Z'));
-
-    vi.mocked(presetApi.isModerator).mockReturnValue(true);
-    vi.mocked(banService.banUser).mockResolvedValue({
-      success: true,
-      presetsHidden: 4,
-    });
-
-    const interaction = {
-      id: 'int-1',
-      token: 'token-1',
-      application_id: 'app-123',
-      data: {
-        custom_id: 'ban_reason_modal_123456789012345678',
-        components: [
-          {
-            type: 1,
-            components: [
-              {
-                type: 4,
-                custom_id: 'ban_reason',
-                value: 'Valid ban reason',
-              },
-            ],
-          },
-        ],
-      },
-      member: { user: { id: 'mod-1', username: 'Moderator' } },
-    };
-
-    await handleBanReasonModal(interaction, env, ctx);
-    // Wait for waitUntil callback
-    const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
-      vi.mocked(ctx.waitUntil).mock.calls.length - 1
-    ]?.[0];
-    if (waitUntilPromise) await waitUntilPromise;
-
-    expect(discordApi.sendMessage).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.any(String),
-      expect.objectContaining({
-        embeds: expect.arrayContaining([
-          expect.objectContaining({
-            timestamp: '2025-01-15T12:00:00.000Z',
-          }),
-        ]),
-      }),
-    );
-  });
-
-  it('should include footer with instructions', async () => {
-    vi.mocked(presetApi.isModerator).mockReturnValue(true);
-    vi.mocked(banService.banUser).mockResolvedValue({
-      success: true,
-      presetsHidden: 2,
-    });
-
-    const interaction = {
-      id: 'int-1',
-      token: 'token-1',
-      application_id: 'app-123',
-      data: {
-        custom_id: 'ban_reason_modal_123456789012345678',
-        components: [
-          {
-            type: 1,
-            components: [
-              {
-                type: 4,
-                custom_id: 'ban_reason',
-                value: 'Valid ban reason',
-              },
-            ],
-          },
-        ],
-      },
-      member: { user: { id: 'mod-1', username: 'Moderator' } },
-    };
-
-    await handleBanReasonModal(interaction, env, ctx);
-    // Wait for waitUntil callback
-    const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
-      vi.mocked(ctx.waitUntil).mock.calls.length - 1
-    ]?.[0];
-    if (waitUntilPromise) await waitUntilPromise;
-
-    expect(discordApi.sendMessage).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.any(String),
-      expect.objectContaining({
-        embeds: expect.arrayContaining([
-          expect.objectContaining({
-            footer: expect.objectContaining({
-              text: expect.stringContaining('/preset unban_user'),
-            }),
-          }),
-        ]),
-      }),
-    );
-  });
+vi.mock('../../services/ban-confirmation-service.js', async () => ({
+  ...(await vi.importActual('../../services/ban-confirmation-service.js')),
+  loadBanReview: vi.fn(),
+}));
+vi.mock('../../utils/discord-api.js', () => ({ safeSendMessage: vi.fn() }));
+const MOD = '987654321098765432',
+  TARGET = '123456789012345678',
+  U = 'a0000000-0000-4000-8000-000000000001',
+  NONCE = 'b0000000-0000-4000-8000-000000000001';
+const validReview = {
+  nonce: NONCE,
+  actorId: MOD,
+  phase: 'review',
+  hash: 'a'.repeat(64),
+  createdAt: 1,
+  expiresAt: 2,
+  proposal: {
+    v: 1,
+    action: 'ban',
+    mode: 'new',
+    banId: NONCE,
+    inputs: [TARGET],
+    snapshots: [],
+    ids: [TARGET, U],
+    parentIds: [],
+    candidates: [],
+    scope: [],
+  },
+} as const;
+const modal = (
+  reason = 'Repeated spam submissions',
+  id = NONCE,
+  source = 'guild',
+): ModalInteraction => ({
+  id: 'i',
+  token: 't',
+  application_id: 'a',
+  ...(source === 'guild'
+    ? { member: { user: { id: MOD, username: '_AttributionSentinel_ @here' } } }
+    : { user: { id: MOD, username: '_AttributionSentinel_ @here' } }),
+  data: {
+    custom_id: `ban_reason_modal_${id}`,
+    components: [{ type: 1, components: [{ type: 4, custom_id: 'ban_reason', value: reason }] }],
+  },
 });
-
-describe('isBanReasonModal', () => {
-  it('should return true for ban reason modals', () => {
-    expect(isBanReasonModal('ban_reason_modal_123456789012345678')).toBe(true);
-    expect(isBanReasonModal('ban_reason_modal_456')).toBe(true);
-  });
-
-  it('should return false for other modals', () => {
-    expect(isBanReasonModal('preset_reject_modal_123')).toBe(false);
-    expect(isBanReasonModal('preset_revert_modal_456')).toBe(false);
-    expect(isBanReasonModal('other_modal')).toBe(false);
-  });
-
-  it('should return false for empty string', () => {
-    expect(isBanReasonModal('')).toBe(false);
-  });
-
-  it('should return false for partial match', () => {
-    expect(isBanReasonModal('ban_reason_modal')).toBe(false);
-  });
-});
-
-// ============================================================================
-// 2026-08-21 security audit — FINDING-019 / FINDING-034 (MOD-8)
-// ============================================================================
-describe('ban reason modal — security audit remediations', () => {
-  let env: Env;
-  let ctx: ExecutionContext;
-  let db: ReturnType<typeof createMockD1Database>;
-  const TARGET = '123456789012345678';
-
-  const modal = (reason: string, username = 'Moderator') => ({
-    id: 'int-1',
-    token: 'token-1',
-    application_id: 'app-123',
-    data: {
-      custom_id: `ban_reason_modal_${TARGET}`,
-      components: [{ type: 1, components: [{ type: 4, custom_id: 'ban_reason', value: reason }] }],
+let env: Env, ctx: ExecutionContext, pending: Promise<unknown>[];
+beforeEach(() => {
+  vi.clearAllMocks();
+  env = {
+    LINKED_BAN_CONFIRMATION_ENABLED: 'true',
+    MODERATOR_IDS: MOD,
+    DB: {} as D1Database,
+    DISCORD_TOKEN: 'token',
+    DISCORD_CLIENT_ID: 'app',
+    MODERATION_CHANNEL_ID: 'moderation',
+  } as Env;
+  pending = [];
+  ctx = {
+    waitUntil: (promise: Promise<unknown>) => {
+      pending.push(promise);
     },
-    member: { user: { id: 'mod-1', username } },
-  });
-
-  const flushWaitUntil = async () => {
-    const calls = vi.mocked(ctx.waitUntil).mock.calls;
-    const p = calls[calls.length - 1]?.[0];
-    if (p) await p;
-  };
-
-  beforeEach(() => {
-    db = createMockD1Database();
-    vi.clearAllMocks();
-    vi.mocked(presetApi.isModerator).mockReturnValue(true);
-    env = {
-      DISCORD_PUBLIC_KEY: 'test-key',
-      DISCORD_TOKEN: 'test-bot-token',
-      DISCORD_CLIENT_ID: 'app-123',
-      MODERATOR_IDS: 'mod-1,mod-2',
-      MODERATION_CHANNEL_ID: 'channel-mod',
-      SUBMISSION_LOG_CHANNEL_ID: 'channel-log',
-      BOT_API_SECRET: 'test-secret',
-      BOT_SIGNING_SECRET: 'test-signing-secret-padding-1234',
-      DB: db as unknown as D1Database,
-      KV: undefined as unknown as KVNamespace,
-      PRESETS_API: undefined,
-      PRESETS_API_URL: 'https://presets-api.example.com',
-    };
-    ctx = {
-      waitUntil: vi.fn((promise: Promise<any>) => promise),
-      passThroughOnException: vi.fn(),
-    } as unknown as ExecutionContext;
-  });
-
-  it('FINDING-019: the D1-sourced username, moderator name and reason are sanitised everywhere they render', async () => {
-    vi.mocked(banService.getPresetAuthorName).mockResolvedValueOnce('[Bad](https://evil.example) @everyone');
-    vi.mocked(banService.banUser).mockResolvedValueOnce({ success: true, presetsHidden: 2 });
-
+  } as ExecutionContext;
+  vi.mocked(confirmations.loadBanReview).mockResolvedValue(
+    structuredClone(validReview) as unknown as confirmations.BanReview,
+  );
+  vi.mocked(bans.getPresetAuthorName).mockResolvedValue('_Target_ @everyone');
+  vi.mocked(bans.banUser).mockResolvedValue({ success: true, presetsHidden: 7 });
+});
+describe('nonce-only ban modal', () => {
+  it.each(['false', undefined, 'TRUE'])(
+    'inactive legacy modal refuses before identity/name/storage or asynchronous work (%s)',
+    async (flag) => {
+      env.LINKED_BAN_CONFIRMATION_ENABLED = flag;
+      const response = await handleBanReasonModal(modal(undefined, TARGET), env, ctx);
+      expect(((await response.json()) as any).data.flags).toBe(64);
+      expect(confirmations.loadBanReview).not.toHaveBeenCalled();
+      expect(bans.getPresetAuthorName).not.toHaveBeenCalled();
+      expect(bans.banUser).not.toHaveBeenCalled();
+      expect(pending).toEqual([]);
+    },
+  );
+  it.each(['', 'short', ' '.repeat(20), ' short '.padEnd(40), 'x'.repeat(501)])(
+    'server-trims and enforces reason10..500 (%#)',
+    async (reason) => {
+      expect(
+        ((await (await handleBanReasonModal(modal(reason), env, ctx)).json()) as any).data.flags,
+      ).toBe(64);
+      expect(bans.banUser).not.toHaveBeenCalled();
+      expect(confirmations.loadBanReview).not.toHaveBeenCalled();
+    },
+  );
+  it('trimmed reason reaches audit write unchanged and posts sanitized text', async () => {
     const response = await handleBanReasonModal(
-      modal('**spam** <@&123456789012345678>\nline two', '@here Mod'),
+      modal(' \n **Repeated** @everyone spam \t'),
       env,
       ctx,
     );
-    const json = (await response.json()) as any;
-
-    // the immediate UPDATE_MESSAGE
-    expect(json.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
-    expect(json.data.allowed_mentions).toEqual({ parse: [] });
-    expect(json.data.embeds[0].description).not.toMatch(/\[Bad\]\(https:\/\/evil\.example\)/);
-    expect(json.data.embeds[0].description).not.toContain('@everyone');
-
-    await flushWaitUntil();
-
-    // the channel post
-    const post = vi.mocked(discordApi.sendMessage).mock.calls.at(-1)?.[2] as any;
-    const embed = post.embeds[0];
-    expect(embed.description).not.toMatch(/\[Bad\]\(https:\/\/evil\.example\)/);
-    expect(embed.description).not.toContain('@everyone');
-    const fields: Array<{ name: string; value: string }> = embed.fields;
-    expect(fields.find((f) => f.name === 'Banned By')!.value).not.toContain('@here');
-    expect(fields.find((f) => f.name === 'Reason')!.value).toBe(
-      '\\*\\*spam\\*\\* @123456789012345678\nline two',
+    await Promise.all(pending);
+    expect(bans.banUser).toHaveBeenCalledWith(
+      env,
+      NONCE,
+      MOD,
+      '**Repeated** @everyone spam',
+      '_Target_ @everyone',
+      undefined,
     );
-    // the stored reason is the moderator's raw text (sanitising is a render concern)
-    expect(banService.banUser).toHaveBeenCalledWith(
-      env.DB,
-      TARGET,
-      '[Bad](https://evil.example) @everyone',
-      'mod-1',
-      '**spam** <@&123456789012345678>\nline two',
-    );
+    expect(((await response.json()) as any).data.allowed_mentions).toEqual({ parse: [] });
+    expect(JSON.stringify(vi.mocked(discord.safeSendMessage).mock.calls)).toContain('Repeated');
   });
-
-  it('MOD-8: a failed ban posts only the service message and logs the cause', async () => {
-    const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() } as never;
-    vi.mocked(banService.getPresetAuthorName).mockResolvedValueOnce('Someone');
-    const cause = new Error('D1_ERROR: disk I/O error: SQLITE_IOERR');
-    vi.mocked(banService.banUser).mockResolvedValueOnce({
+  it.each([TARGET, U, 'garbage'])('old/forged ID %s has no target-only fallback', async (id) => {
+    vi.mocked(confirmations.loadBanReview).mockRejectedValue(new Error('unknown nonce'));
+    const response = await handleBanReasonModal(modal(undefined, id), env, ctx);
+    expect(((await response.json()) as any).data.flags).toBe(64);
+    expect(bans.banUser).not.toHaveBeenCalled();
+    expect(bans.getPresetAuthorName).not.toHaveBeenCalled();
+  });
+  it('a revoked moderator is refused before load', async () => {
+    env.MODERATOR_IDS = '899999999999999999';
+    const body = (await (await handleBanReasonModal(modal(), env, ctx)).json()) as any;
+    expect(body.data.flags).toBe(64);
+    expect(body.data.content).toBe('You do not have permission to ban users.');
+    expect(confirmations.loadBanReview).not.toHaveBeenCalled();
+  });
+  // Both disjuncts of the actor check refuse a missing actor; keeping MOD on the list proves
+  // the refusal does not depend on the list (e.g. a regressed fallback actor id).
+  it('a modal with no actor is refused even while the moderator list is current', async () => {
+    const interaction = modal();
+    delete interaction.member;
+    const body = (await (await handleBanReasonModal(interaction, env, ctx)).json()) as any;
+    expect(body.data.flags).toBe(64);
+    expect(body.data.content).toBe('You do not have permission to ban users.');
+    expect(confirmations.loadBanReview).not.toHaveBeenCalled();
+  });
+  // 'ban_reason_modal_' is 17 characters, so 84 more make a 101-character custom_id.
+  it.each(['preset_reject_modal_x', `ban_reason_modal_${'a'.repeat(84)}`])(
+    'custom_id guard refuses %s before load',
+    async (customId) => {
+      const interaction = modal();
+      interaction.data!.custom_id = customId;
+      const body = (await (await handleBanReasonModal(interaction, env, ctx)).json()) as any;
+      expect(body.data.flags).toBe(64);
+      expect(confirmations.loadBanReview).not.toHaveBeenCalled();
+      expect(bans.banUser).not.toHaveBeenCalled();
+    },
+  );
+  it('an expand review that hides nothing reports 0 hidden presets', async () => {
+    const review = structuredClone(validReview) as unknown as confirmations.BanReview;
+    review.proposal.mode = 'expand';
+    vi.mocked(confirmations.loadBanReview).mockResolvedValue(review);
+    vi.mocked(bans.banUser).mockResolvedValue({ success: true, presetsHidden: 0 });
+    const body = (await (await handleBanReasonModal(modal(), env, ctx)).json()) as any;
+    expect(body.data.embeds[0].fields).toContainEqual({
+      name: 'Presets Hidden',
+      value: '0',
+      inline: true,
+    });
+  });
+  it('unban review cannot be repurposed by a ban modal', async () => {
+    const review = structuredClone(validReview) as unknown as confirmations.BanReview;
+    review.proposal.action = 'unban';
+    vi.mocked(confirmations.loadBanReview).mockResolvedValue(review);
+    await handleBanReasonModal(modal(), env, ctx);
+    expect(bans.banUser).not.toHaveBeenCalled();
+  });
+  it('a failed nonce claim never posts success or any public failure identifier', async () => {
+    vi.mocked(bans.banUser).mockResolvedValue({
       success: false,
       presetsHidden: 0,
-      error: 'Failed to ban user.',
-      cause,
+      error: confirmations.REVIEW_UNAVAILABLE,
     });
-
-    await handleBanReasonModal(modal('A valid reason for the ban'), env, ctx, logger);
-    await flushWaitUntil();
-
-    const post = vi.mocked(discordApi.sendMessage).mock.calls.at(-1)?.[2] as any;
-    expect(post.embeds[0].description).toBe('Failed to ban user.');
-    expect(post.embeds[0].description).not.toContain('SQLITE');
-    expect((logger as any).error).toHaveBeenCalledWith(expect.stringContaining('Ban failed'), cause);
+    const response = await handleBanReasonModal(modal(), env, ctx);
+    expect(((await response.json()) as any).data.flags).toBe(64);
+    expect(discord.safeSendMessage).not.toHaveBeenCalled();
   });
-
-  it('MOD-8: a thrown D1 error is not echoed into the channel', async () => {
-    vi.mocked(banService.getPresetAuthorName).mockResolvedValueOnce('Someone');
-    vi.mocked(banService.banUser).mockRejectedValueOnce(
-      new Error('D1_ERROR: UNIQUE constraint failed: banned_users.discord_id: SQLITE_CONSTRAINT'),
+  it('thrown storage errors never appear in response or posts', async () => {
+    vi.mocked(bans.banUser).mockRejectedValue(new Error('D1 private token SQLITE'));
+    const text = await (await handleBanReasonModal(modal(), env, ctx)).text();
+    expect(text).not.toContain('SQLITE');
+    expect(text).not.toContain('token');
+    expect(discord.safeSendMessage).not.toHaveBeenCalled();
+  });
+  it('an unexpected failure is logged with a fixed message and no IDs or reason', async () => {
+    const logger = { info: vi.fn(), error: vi.fn() };
+    const failure = 'D1_ERROR: no such table: presets';
+    vi.mocked(bans.getPresetAuthorName).mockRejectedValue(new Error(failure));
+    const body = (await (
+      await handleBanReasonModal(modal(), env, ctx, logger as never)
+    ).json()) as any;
+    expect(body.data.content).toBe(confirmations.REVIEW_UNAVAILABLE);
+    expect(logger.error).toHaveBeenCalledTimes(1);
+    expect(logger.error).toHaveBeenCalledWith('Ban reason modal failed', expect.any(Error));
+    const logText = `${logger.error.mock.calls[0][0]} ${logger.error.mock.calls[0][1].message}`;
+    expect(logger.error.mock.calls[0][1].message).toBe(failure);
+    for (const secret of [MOD, TARGET, U, 'Repeated spam submissions'])
+      expect(logText).not.toContain(secret);
+  });
+  it('an expired or unknown review is not logged as an error', async () => {
+    const logger = { info: vi.fn(), error: vi.fn() };
+    vi.mocked(confirmations.loadBanReview).mockRejectedValue(
+      new Error(confirmations.REVIEW_UNAVAILABLE),
     );
-
-    await handleBanReasonModal(modal('A valid reason for the ban'), env, ctx);
-    await flushWaitUntil();
-
-    const post = vi.mocked(discordApi.sendMessage).mock.calls.at(-1)?.[2] as any;
-    expect(post.embeds[0].description).not.toContain('banned_users');
-    expect(post.embeds[0].description).not.toContain('SQLITE');
-    expect(post.embeds[0].description).toContain('An unexpected error occurred');
+    await handleBanReasonModal(modal(), env, ctx, logger as never);
+    expect(logger.error).not.toHaveBeenCalled();
   });
-
-  // FINDING-011 (2026-08-29 security audit)
-  it('FINDING-011: the ban log line carries ids, counts and a length — never the username or the reason', async () => {
-    const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() } as never;
-    vi.mocked(banService.getPresetAuthorName).mockResolvedValueOnce('DistinctiveBannedName');
-    vi.mocked(banService.banUser).mockResolvedValueOnce({ success: true, presetsHidden: 2 });
-    const reason = 'Repeatedly submitted harassing text as preset descriptions';
-
-    await handleBanReasonModal(modal(reason), env, ctx, logger);
-    await flushWaitUntil();
-
-    expect((logger as any).info).toHaveBeenCalledWith('User banned', {
-      targetUserId: TARGET,
-      moderatorId: 'mod-1',
-      presetsHidden: 2,
-      reasonLength: reason.length,
-    });
-
-    const context = (logger as any).info.mock.calls.at(-1)?.[1] as Record<string, unknown>;
-    expect(Object.keys(context)).not.toContain('targetUsername');
-    expect(Object.keys(context)).not.toContain('reason');
-    expect(JSON.stringify(context)).not.toContain('DistinctiveBannedName');
-    expect(JSON.stringify(context)).not.toContain('harassing');
-  });
-
-  // BUG-051 (2026-10-04 deep-dive): Discord's min_length counts spaces, so the
-  // ten-character floor has to be checked on the trimmed text.
-  it.each([
-    ['ten spaces', ' '.repeat(10)],
-    ['tabs and newlines', '\t\n \t\n \t\n \t\n'],
-    ['a short reason padded past ten characters', '   short    '],
-  ])('BUG-051: refuses %s as a ban reason and bans nobody', async (_label, reason) => {
-    const response = await handleBanReasonModal(modal(reason), env, ctx);
-    const json = (await response.json()) as any;
-
-    expect(json.data.flags).toBe(64);
-    expect(json.data.embeds[0].description).toContain('at least 10 characters');
-    expect(ctx.waitUntil).not.toHaveBeenCalled();
-    expect(banService.banUser).not.toHaveBeenCalled();
-  });
-
-  it('BUG-051: stores, posts and logs a padded reason without its surrounding whitespace', async () => {
-    const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() } as never;
-    vi.mocked(banService.getPresetAuthorName).mockResolvedValueOnce('Someone');
-    vi.mocked(banService.banUser).mockResolvedValueOnce({ success: true, presetsHidden: 1 });
-
-    await handleBanReasonModal(modal('  \n Repeated spam submissions \t\n'), env, ctx, logger);
-    await flushWaitUntil();
-
-    expect(banService.banUser).toHaveBeenCalledWith(
-      env.DB,
-      TARGET,
-      'Someone',
-      'mod-1',
+  it('unnamed author is rendered neutrally, stores target for private search only', async () => {
+    vi.mocked(bans.getPresetAuthorName).mockResolvedValue(null);
+    const body = (await (await handleBanReasonModal(modal(), env, ctx)).json()) as any;
+    await Promise.all(pending);
+    expect(body.data.embeds[0].description).toContain('an account with no author name');
+    expect(JSON.stringify(body)).not.toContain(TARGET);
+    expect(bans.banUser).toHaveBeenCalledWith(
+      env,
+      NONCE,
+      MOD,
       'Repeated spam submissions',
+      TARGET,
+      undefined,
     );
-    const post = vi.mocked(discordApi.sendMessage).mock.calls.at(-1)?.[2] as any;
-    const fields: Array<{ name: string; value: string }> = post.embeds[0].fields;
-    expect(fields.find((f) => f.name === 'Reason')!.value).toBe('Repeated spam submissions');
-    expect((logger as any).info).toHaveBeenCalledWith(
-      'User banned',
-      expect.objectContaining({ reasonLength: 'Repeated spam submissions'.length }),
+  });
+  it('logs counts and reason length only; no IDs, names or reason text', async () => {
+    const logger = { info: vi.fn() } as never;
+    await handleBanReasonModal(modal(), env, ctx, logger);
+    expect((logger as any).info).toHaveBeenCalledWith('Account ban applied', {
+      presetsHidden: 7,
+      reasonLength: 25,
+    });
+  });
+  it('prefix routing remains strict', () => {
+    expect(isBanReasonModal('ban_reason_modal_abc')).toBe(true);
+    expect(isBanReasonModal('ban_reason_modal')).toBe(false);
+    expect(isBanReasonModal('preset_reject_modal_x')).toBe(false);
+  });
+});
+describe('F001 neutral attribution', () => {
+  const cases = ['guild', 'dm'].flatMap((source) => [true, false].map((log) => ({ source, log })));
+  it.each(cases)('ban: $source, log=$log', async ({ source, log }) => {
+    env.SUBMISSION_LOG_CHANNEL_ID = log ? 'log' : undefined;
+    const reason = '**Repeated** @everyone spam';
+    const response = await handleBanReasonModal(modal(reason, NONCE, source), env, ctx);
+    const completion = ((await response.json()) as any).data;
+    await Promise.all(pending);
+    const post = vi.mocked(discord.safeSendMessage).mock.calls.at(-1)![2] as any;
+    expect(bans.banUser).toHaveBeenCalledWith(
+      env,
+      NONCE,
+      MOD,
+      reason,
+      '_Target_ @everyone',
+      undefined,
     );
+    for (const payload of [post, completion]) {
+      const text = JSON.stringify(payload);
+      expect.soft(text).not.toContain('_AttributionSentinel_ @here');
+      expect
+        .soft(text)
+        .not.toContain(JSON.stringify(String.raw`\_AttributionSentinel\_ @‍here`).slice(1, -1));
+      expect.soft(text).not.toContain('AttributionSentinel');
+      expect.soft(text).not.toContain(MOD);
+      expect.soft(text).not.toContain(TARGET);
+      expect.soft(text).not.toContain(U);
+      expect.soft(text).not.toContain('User ID');
+      expect
+        .soft(payload.embeds[0].fields.some((field: any) => field.name === 'Banned By'))
+        .toBe(false);
+      expect(payload.embeds[0].description).toBe(
+        '**\\_Target\\_ @‍everyone** has been banned from Preset Palettes.',
+      );
+      expect(payload.embeds[0].fields).toContainEqual({
+        name: 'Presets Hidden',
+        value: '7',
+        inline: true,
+      });
+    }
+    expect(completion.components).toEqual([]);
+    expect(completion.allowed_mentions).toEqual({ parse: [] });
+    expect(post.embeds[0].fields).toContainEqual({
+      name: 'Reason',
+      value: '\\*\\*Repeated\\*\\* @‍everyone spam',
+      inline: false,
+    });
   });
 });
