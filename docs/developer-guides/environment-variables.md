@@ -517,7 +517,7 @@ dataset = "xivdyetools_bot_analytics"   # og-worker: xivdyetools_og_analytics,
 | Unit | Variable | Prepared value and behavior |
 |---|---|---|
 | presets-api | `OAUTH_SESSION_CHECK_ENABLED` | `false` in both environments; exact `true` requires valid `OAUTH_IDENTITY.validateSession` and checks web sessions before authority |
-| moderation-worker | `LINKED_BAN_CONFIRMATION_ENABLED` | `false` in both environments; all new ban/unban/selection/button/modal paths refuse privately while inactive |
+| moderation-worker | `LINKED_BAN_CONFIRMATION_ENABLED` | `true` in production since 1.9.2, `false` on the dev worker; while `false`, all ban/unban/selection/button/modal paths refuse privately |
 
 Unset stays inactive; malformed values are configuration errors. `OAUTH_IDENTITY` is a private
 named service binding, not a secret or public endpoint. Enable consumers only after additive

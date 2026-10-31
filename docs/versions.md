@@ -29,7 +29,7 @@
 | **Web Application** | v5.16.5 | `xivdyetools-web-app` | Cloudflare Pages | Active |
 | **Discord Bot** | v5.9.8 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.5 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
-| **Moderation Bot** | v1.9.1 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
+| **Moderation Bot** | v1.9.2 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.2.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.8.2 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
 | **Public REST API** | v0.21.2 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
@@ -420,6 +420,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v1.9.2 | Oct 2026 | Activation: linked-ID ban confirmation is on in production (`LINKED_BAN_CONFIRMATION_ENABLED`); the development worker stays off |
 | v1.9.1 | Oct 2026 | Conditional Bot Logic 5 adoption; preserve sanitization, private replies and inactive confirmation behavior; registry/publication/consumer acceptance held |
 | v1.9.0 | Oct 2026 | Inactive private linked-ID confirmation, explicit partial-ban expansion, recorded-scope unban and neutral decision posts |
 | v1.8.4 | Oct 2026 | Complete path-only link reviews, revision-bound action guards and stale-message refresh; companion for later metadata-moderation activation |
@@ -745,6 +746,7 @@ and the [rollout runbook](operations/security-remediation-2026-09-15.md) for the
 | Consumer | Minimum Core Version | Notes |
 |----------|---------------------|-------|
 | xivdyetools-stoat-worker v0.3.5 | @xivdyetools/bot-logic v5.0.0; @xivdyetools/logger v2.4.0; @xivdyetools/types v3.3.0 | Conditional M source; not dependency isolation; publication, acceptance and activation held |
+| xivdyetools-moderation-worker v1.9.2 | @xivdyetools/auth v3.0.0; @xivdyetools/bot-logic v5.0.0; @xivdyetools/logger v2.4.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Activation release; merge only after the activation gates |
 | xivdyetools-moderation-worker v1.9.1 | @xivdyetools/auth v3.0.0; @xivdyetools/bot-logic v5.0.0; @xivdyetools/logger v2.4.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Conditional M source; not dependency isolation; publication, acceptance and activation held |
 | xivdyetools-discord-worker v5.9.8 | @xivdyetools/auth v3.0.0; @xivdyetools/bot-logic v5.0.0; @xivdyetools/svg v4.4.2; @xivdyetools/core v6.0.0; @xivdyetools/logger v2.4.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Conditional M source; not dependency isolation; publication, acceptance and activation held |
 | xivdyetools-og-worker v2.12.4 | @xivdyetools/core v6.0.0; @xivdyetools/svg v4.4.2; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Conditional M source; not dependency isolation; publication, acceptance and activation held |
