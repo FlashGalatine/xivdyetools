@@ -295,9 +295,11 @@ WHERE author_discord_id = '<TARGET>' AND status = 'hidden'
 ```
 
 As in 1.8.2, the unban audit row is written only when the update closed a ban (`changes() > 0`).
-Every statement also stops if any membership row exists, and the restore stops if the ban is still
-active, so a run after activation, or a repeated run, changes nothing. The last two `NOT EXISTS`
-guards leave a preset hidden when its dye combination is taken, as the bot does.
+Once any membership row exists, every statement is a no-op, and the restore does nothing while
+the ban is still active. Turning the flag on writes no membership by itself, so these guards do
+not replace the warning above. Unlike the bot, a repeated run is not refused: it writes no
+`unban` row, but it restores any preset whose dye combination has freed up since. The last two
+`NOT EXISTS` guards leave a preset hidden while its dye combination is taken, as the bot does.
 
 **5. Run it** from `apps/presets-api` in a checkout of `main`:
 
