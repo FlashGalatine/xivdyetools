@@ -1,8 +1,8 @@
 # FINDING-009: Superseded Cloudflare Pages deployments and the v4-ui-migration branch alias still serve old web-app builds with weaker or no CSP
-**Severity:** LOW · **Exposure:** INTERNET-UNAUTH · **Deploy unit:** web-app (Cloudflare Pages projects xiv-colorexplorer / xivdyetools-beta; live config, not repo) · **Rotation:** NONE · **Policy:** NONE · **CWE:** n/a
+**Severity:** LOW · **Exposure:** INTERNET-UNAUTH · **Deploy unit:** web-app (Cloudflare Pages projects `xivdyetools` / `xivdyetools-beta`; live config, not repo) · **Rotation:** NONE · **Policy:** NONE · **CWE:** n/a
 
 ## Location
-- `docs/superpowers/plans/2026-08-10-pages-smoke-test.md:791` — Superseded Cloudflare Pages deployments and the v4-ui-migration branch alias still serve old web-app builds with weaker or no CSP
+- `docs/superpowers/plans/2026-08-10-pages-smoke-test.md:791` — names the superseded hash host `66496174.xiv-colorexplorer.pages.dev` (project `xivdyetools`); live inventory in [live-state-cloudflare-2026-10-26.md](../evidence/live-state-cloudflare-2026-10-26.md) lines 31-32
 
 ## Evidence
 - 2026-10-26 GET v4-ui-migration / 66496174.xiv-colorexplorer.pages.dev: 200, csp "... connect-src 'self' https://universalis.app https://*.workers.dev https://*.xivdyetools.app ..."; ecc7fb76.xivdyetools-beta.pages.dev: 200, no content-security-policy header; xiv-colorexplorer.pages.dev and xivdyetools-beta.pages.dev: current CSP, connect-src 'self' https://*.xivdyetools.app.
@@ -16,4 +16,4 @@
 - **Maintainer decision:** Only the maintainer can delete the superseded Pages deployments and the v4-ui-migration branch alias, and set a retention policy, in the Cloudflare dashboard.
 
 ## Status
-OPEN
+PARTIAL 2026-10-26 — the authorized one-off cleanup is complete: 521 superseded production-project and 239 beta-project deployments deleted, including the v4-ui-migration alias. Exactly the original protected deployment remains in each project; six live URL HTML hashes/CSPs are unchanged, and the alias plus sampled retired hash hosts return 404. [Execution evidence](../evidence/remediation-finding-009-2026-10-26.md). OPS-PAGES-HISTORY is complete; automated retention and live-origin probe integration remain in R-CI, so the overall finding stays outstanding.

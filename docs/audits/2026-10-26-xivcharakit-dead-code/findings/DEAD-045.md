@@ -13,7 +13,7 @@
 - Still live: Manual only: pnpm --filter xivdyetools-api-worker run test:chara-runtime (package.json:22), which apps/api-worker/CLAUDE.md:202 and docs/projects/api-worker/overview.md:72 point to. No CI or turbo consumer.
 
 ## Fix
-- **KEEP** — revisit trigger: The next commit that touches apps/api-worker/src/chara/lookup-loader.ts or the POST /resolve handler in apps/api-worker/src/chara/router.ts, or the next wrangler major bump in apps/api-worker/package.json. When that happens, run pnpm --filter xivdyetools-api-worker run test:chara-runtime in that PR. If it passes, add it as a ci.yml step. If it cannot pass or be maintained, del…
+- **KEEP** — revisit trigger: The next commit that touches apps/api-worker/src/chara/lookup-loader.ts or the POST /resolve handler in apps/api-worker/src/chara/router.ts, or the next wrangler major bump in apps/api-worker/package.json. When that happens, run pnpm --filter xivdyetools-api-worker run test:chara-runtime in that PR. If it passes, add it as a ci.yml step. If it cannot pass or be maintained, delete it along with its two doc mentions.
 - Cascade: If deleted later, also remove: the package.json:22 script, the run sentence in apps/api-worker/CLAUDE.md:202, and the one in docs/projects/api-worker/overview.md:72. Leave the frozen audit docs as they are.
 
 ## Status

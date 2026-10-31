@@ -1,0 +1,11 @@
+{
+  "tag": "chara-v0.1.0-beta.2",
+  "message": "Published npm xivcharakit@0.1.0-beta.2\n\nSource commit: 8f30f7b4a20b857a5efa1aa1dc4c0b0d9ed1b48b\nTarball integrity: sha512-i0Kno7HGUeBs9h9pPVCVxanofG2tXb/O125/bB7tCjqj4qrYmXhmoF0sRhcRbBrg60veMCoUL7Tg0iUpUsOauw==\nPublication evidence: https://github.com/FlashGalatine/XIVCharaKit/actions/runs/39716330737/attempts/2\nEvidence basis: npm SLSA provenance subject matches registry integrity and expected workflow/repository/main\n\nRelease source tag backfilled on 2026-10-27.",
+  "object": "8f30f7b4a20b857a5efa1aa1dc4c0b0d9ed1b48b",
+  "type": "commit",
+  "tagger": {
+    "name": "FlashGalatine",
+    "email": "234854320+FlashGalatine@users.noreply.github.com",
+    "date": "2026-10-27T04:06:37Z"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "name": "xivcharakit",
+  "version": "0.1.0-beta.1",
+  "tag": "next",
+  "filename": "xivcharakit-0.1.0-beta.1.tgz",
+  "integrity": "sha512-gA5U4qvE/sYtwOn7Lo9X9B3Q0P6ZZK0gHy4nShR/wE62Eqcfo3FHQKfdI/ZRw2wKAM3Tmee4pgwD9KL8U1JTjw==",
+  "commit": "90abb4721b35b3c8d564e8c1a6855fd8c9de0e8a",
+  "repository": "FlashGalatine/XIVCharaKit"
+}

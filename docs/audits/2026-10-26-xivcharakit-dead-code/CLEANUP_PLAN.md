@@ -1,4 +1,6 @@
 # Cleanup Plan — XIVCharaKit-facing code (2026-10-26)
+> **Status note (2026-10-31):** statuses and version numbers here are as of main `13c386e5` (audit tree `6da3ff5b`). The October 2026 release-cut queue (#369–#411) carries parts of this plan: core 5.16.0 (#373), bot-logic 4.12.0 (#377), core 6.0.0 and bot-logic 5.0.0 (#391, #394). Treat the versions as provisional. Per-finding status is restated in the audit-docs companion after the queue lands.
+
 **Sources:** [2026-10-26-xivcharakit-dead-code](DEAD_CODE_REPORT.md) — 47 findings · **Status basis:** 47 total — 0 fixed, 24 scheduled, 0 superseded (one conditional, see *Conflicts*), 23 KEEP, 0 need rotation
 **Ordering:** 1. one deploy unit per sprint (a package change is one publish sprint, then the consumer deploys) 2. Confidence × Blast first — comments and internal app edits before anything published 3. cascades after their trigger (relocate live code, deprecate, then remove) 4. the MAJOR pair isolated and last
 
@@ -30,7 +32,7 @@ This plan accompanies [the security plan](../2026-10-26-security/REMEDIATION_PLA
 |---|---|---|
 | 1 | Legacy removal path ([DEAD-024](findings/DEAD-024.md), [DEAD-023](findings/DEAD-023.md)) | **DECIDED 2026-10-26:** deprecate now, then cut the core 6.0.0 + bot-logic 5.0.0 pair once beta acceptance closes (Sprints 4–7). This supersedes security FINDING-043. |
 | 2 | Parity harness | **DECIDED 2026-10-26:** drop the legacy `[host]` half with the legacy pair; keep the `[library]` half as the regression pin for each xivcharakit beta bump. |
-| 3 | `@public` KEEP rows resolved by the MAJOR ([DEAD-027](findings/DEAD-027.md)–[030](findings/DEAD-030.md)) | **Open:** take them in 6.0.0 or keep the published surface. Decide when Sprint 6 is planned. |
+| 3 | `@public` KEEP rows resolved by the MAJOR ([DEAD-027](findings/DEAD-027.md)–[030](findings/DEAD-030.md)) | **Open:** take them in 6.0.0 or keep the published surface. Decide when Sprint 6 is planned. DEAD-038 and DEAD-039 (bot-logic `@public`) are already scheduled in Sprint 7 with bot-logic 5.0.0 and need no separate decision. |
 | 4 | Starting work | Nothing starts until the maintainer names a sprint; no removal, version bump, publish or deploy happens before that explicit yes. |
 
 ## Sprint 1 — web-app (PATCH): protocol, resolve service and glamour cleanups
@@ -120,7 +122,7 @@ The maintainer chose the MAJOR path at the §8 gate on 2026-10-26. **Gated on:**
 
 ## KEEP register
 
-Unscheduled; each has a concrete revisit trigger. Five of them resolve in the Sprint 6–7 MAJOR pair if the maintainer takes it.
+Unscheduled; each has a concrete revisit trigger. Six of them (DEAD-027–030, DEAD-038, DEAD-039) resolve in the Sprint 6–7 MAJOR pair if the maintainer takes it.
 
 | ID | Item | Revisit trigger |
 |---|---|---|

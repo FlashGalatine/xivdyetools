@@ -10,7 +10,7 @@
 - The claim is accurate: the guards are unreachable from production today because router.ts:225 and the loader's own dedupe and owned-length checks already prevent an empty call. They still belong. They are 3 lines in total, they protect public methods of an exported class from sending a malformed `+()` search upstream, and they make the router's guard a convenience rather than the only thing standing in the way. Removing them saves almost nothing and adds risk.
 
 ## Fix
-- **KEEP** — revisit trigger: Re-check when either of these happens. (1) router.ts drops its `misses.length > 0` check at line 225: the loadRows guard then becomes the live path and must stay. (2) A caller other than lookup-loader.ts:55 starts calling searchItems, or one other than router.ts:225 starts calling loadRows (`git grep -n -w -e searchItems -e loadRows apps/api-worker/src ':!*.test.ts'` shows mor…
+- **KEEP** — revisit trigger: Re-check when either of these happens. (1) router.ts drops its `misses.length > 0` check at line 225: the loadRows guard then becomes the live path and must stay. (2) A caller other than lookup-loader.ts:55 starts calling searchItems, or one other than router.ts:225 starts calling loadRows (`git grep -n -w -e searchItems -e loadRows apps/api-worker/src ':!*.test.ts'` shows more than these two sites). In either case keep the guards.
 - Cascade: Removing them would also remove the empty-set tests at xivapi.test.ts:430-441 and lookup-loader.test.ts:115.
 
 ## Status
