@@ -18,8 +18,10 @@ redaction and diagnostic output, although public exports and call signatures are
   fields now receive the same protection as context values. Preserve the `Unknown` error
   label, primitive handling, ordinary Error behavior and source nonmutation.
 - Redact Discord webhook/follow-up and interaction callback token path shapes in messages,
-  error messages and nested context/array values. Context value-shape redaction remains
-  active when `sanitizeErrors` is false; free-text sanitization retains its existing opt-out.
+  error messages and nested context/array values. A context or array string that is such a
+  URL or path (no whitespace) becomes `[REDACTED]`; one that carries it inside longer text
+  keeps the text and loses only the token. Both stay active when `sanitizeErrors` is false;
+  free-text sanitization retains its existing opt-out.
 - Retain cycle, serializer depth/fan-out and stringify budgets. The documented pre-existing
   function/class-value `toJSON` exception remains; this release does not promise complete
   sanitization of arbitrary executable serializers.

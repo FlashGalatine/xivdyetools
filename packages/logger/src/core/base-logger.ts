@@ -454,10 +454,13 @@ export abstract class BaseLogger implements ExtendedLogger {
   /**
    * BUG-140 (2026-10-04 deep dive): redact one string VALUE (never a key).
    * The whole-value shape verdict runs first (a field that IS a Bearer header,
-   * a JWT, a Discord token or a 64+ hex run is replaced outright); otherwise,
-   * with `sanitizeErrors` on, the same free-text rules `message` and
-   * `error.message` get run over it, so a secret embedded in a longer string
-   * is redacted while the surrounding prose stays. A second pass is harmless
+   * a JWT, a Discord token, a 64+ hex run, or a Discord webhook/interaction
+   * URL or path with no whitespace is replaced outright). Otherwise every
+   * Discord webhook/interaction token span is replaced whether
+   * `sanitizeErrors` is on or off, and then, with `sanitizeErrors` on, the
+   * same free-text rules `message` and `error.message` get run over it, so a
+   * secret embedded in a longer string is redacted while the surrounding
+   * prose stays. A second pass is harmless
    * for every value the rules fully consume (`password=[REDACTED]` re-matches
    * to itself), so a value that is merged and redacted more than once is not
    * mangled. (A value with mixed quote characters, `password="x'y"`, is only
@@ -468,7 +471,8 @@ export abstract class BaseLogger implements ExtendedLogger {
     if (looksLikeSecretValue(value)) {
       return '[REDACTED]';
     }
-    return this.config.sanitizeErrors ? this.sanitizeErrorMessage(value) : value;
+    const spanned = redactDiscordUrlTokens(value);
+    return this.config.sanitizeErrors ? this.sanitizeErrorMessage(spanned) : spanned;
   }
 
   /**
@@ -880,19 +884,51 @@ const HEX64_VALUE_PATTERN = /^[A-Fa-f0-9]{64,}$/;
  * paths share one rule. The fixed slash-delimited prefix means failed starts
  * cannot overlap a digit/token run: this stays linear on malformed long IDs.
  * No global flag here: value-shape .test must not depend on lastIndex.
+ *
+ * Not in SECRET_VALUE_PATTERNS (L2, 2026-10-30 PR audit): unanchored there,
+ * it erased any context string that merely contained the shape. A value with
+ * no whitespace (the URL or path itself) is still a whole-value verdict
+ * (`isDiscordUrlValue`); longer text keeps its prose and loses only the token
+ * span (`redactDiscordUrlTokens`), as messages do when `sanitizeErrors` is on,
+ * and both apply with it off. Both are single linear scans (`/\s/` and this
+ * fixed-prefix pattern), so they add no backtracking surface.
  */
 const DISCORD_URL_VALUE_PATTERN = /(\/(?:webhooks|interactions)\/\d+\/)[A-Za-z0-9._-]+/;
+
+// Global copy for the span replace, built the way SANITIZE_RULES'
+// withGlobalFlag does (S10-R11): keep the source flags, add 'g' only when
+// missing. String.prototype.replace resets lastIndex, so sharing it is safe.
+const DISCORD_URL_TOKEN_SCAN = new RegExp(
+  DISCORD_URL_VALUE_PATTERN.source,
+  DISCORD_URL_VALUE_PATTERN.flags.includes('g')
+    ? DISCORD_URL_VALUE_PATTERN.flags
+    : `${DISCORD_URL_VALUE_PATTERN.flags}g`,
+);
+const WHITESPACE = /\s/;
+
+/** The value IS a Discord webhook/interaction URL or path: no whitespace, shape present. */
+function isDiscordUrlValue(value: string): boolean {
+  return !WHITESPACE.test(value) && DISCORD_URL_VALUE_PATTERN.test(value);
+}
+
+/** Replace only each token segment; prefix, suffix, query and prose stay. */
+function redactDiscordUrlTokens(value: string): string {
+  return value.replace(DISCORD_URL_TOKEN_SCAN, '$1[REDACTED]');
+}
 
 const SECRET_VALUE_PATTERNS: RegExp[] = [
   BEARER_VALUE_PATTERN,
   DISCORD_TOKEN_VALUE_PATTERN,
   HEX64_VALUE_PATTERN,
-  DISCORD_URL_VALUE_PATTERN,
 ];
 
 /** @internal */
 export function looksLikeSecretValue(value: string): boolean {
-  return containsJwt(value) || SECRET_VALUE_PATTERNS.some((re) => re.test(value));
+  return (
+    containsJwt(value) ||
+    SECRET_VALUE_PATTERNS.some((re) => re.test(value)) ||
+    isDiscordUrlValue(value)
+  );
 }
 
 /**
