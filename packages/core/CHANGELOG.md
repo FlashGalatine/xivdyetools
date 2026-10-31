@@ -25,7 +25,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Preserve emitted declarations for the five existing public utility helpers when building with `stripInternal`.
-- Reconcile the pending authoritative XIVAPI `Stain.Name` correction from PR #390 into this conditional candidate: German wording and French capitalization follow the captured source; other locale payloads, dye identities/colors and Facewear remain unchanged. This does not replace the earlier minor release or authorize publication.
 
 ## [5.16.0] - 2026-10-27
 
