@@ -1,14 +1,30 @@
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { URL } from 'node:url';
+import { join } from 'node:path';
+import { fileURLToPath, URL } from 'node:url';
 import { TextDecoder } from 'node:util';
 import { describe, expect, it, vi } from 'vitest';
 
 const require = createRequire(import.meta.url);
 const stockBytes = readFileSync(require.resolve('@cf-wasm/photon/photon.wasm'));
 const candidateBytes = readFileSync(new URL('../vendor/photon/photon-owned.wasm', import.meta.url));
-const expectedHash = 'f848bcd2a2794ef7dcea077ecdd3e4eaf06a2ace874a390d33800577968d2461';
+const expectedHash = 'dd3badf24c0231a0b9b63272829d714c7d5feccccd9f2ebdd76c61b5fc6f1bd1';
+const vendorDir = new URL('../vendor/photon/', import.meta.url);
+const manifestBytes = readFileSync(new URL('retention-manifest.json', vendorDir));
+// Pins the manifest itself, so a file cannot be swapped together with its recorded hash.
+const expectedManifestHash = '78e3ed2679335f358994962786f112c907b0b0ca8754088b3d9531622d657552';
+const sha256 = (bytes: Uint8Array): string => createHash('sha256').update(bytes).digest('hex');
+interface RetainedFile { path: string; bytes: number; retainedSHA256: string }
+const retained = (JSON.parse(manifestBytes.toString('utf8')) as { files: RetainedFile[] }).files;
+const byPath = new Map(retained.map((file) => [file.path, file]));
+const BUILD_INPUTS = ['source-patched.tar.gz', 'source-unmodified.tar.gz', 'ownership.patch', 'Cargo.lock',
+  'build.ps1', 'photon-owned.wasm', 'provenance.json', 'abi-signatures.json', 'LICENSE.md',
+  'notice-rebuild-2026-10-31.json'];
+// Current-context files outside the retained set (vendor/photon/README.md says why).
+const NOT_RETAINED = new Set(['.gitignore', 'README.md', 'retention-manifest.json']);
+// Mirrors vendor/photon/.gitignore: local build outputs and the isolated toolchain.
+const LOCAL_BUILD_DIR = /^(source|artifacts|logs|toolchain|target-.*)$/;
 // Workers type declarations prohibit runtime compilation; this test runs in Node.
 const NodeModule = WebAssembly.Module as unknown as { new(bytes: Uint8Array): WebAssembly.Module };
 
@@ -125,6 +141,51 @@ describe('retained Photon ownership artifact', () => {
     expect(candidate).toEqual(stock);
     expect(candidate).toEqual(receipt.variants.resize.abi);
     expect(stock).toEqual(receipt.installed);
+  });
+
+  it('pins the retention manifest', () => {
+    expect(sha256(manifestBytes)).toBe(expectedManifestHash);
+  });
+
+  it('records every build input and the accepted artifact', () => {
+    for (const path of BUILD_INPUTS) expect(byPath.has(path), path).toBe(true);
+    expect(byPath.get('photon-owned.wasm')?.retainedSHA256).toBe(expectedHash);
+  });
+
+  it('matches every retained file byte-for-byte', () => {
+    const bad = retained.filter((file) => {
+      const bytes = readFileSync(new URL(file.path, vendorDir));
+      return bytes.length !== file.bytes || sha256(bytes) !== file.retainedSHA256;
+    }).map((file) => file.path);
+    expect(bad).toEqual([]);
+  });
+
+  it('keeps the 2026-10-31 rebuild proof consistent with the retained inputs', () => {
+    const proof = JSON.parse(readFileSync(new URL('notice-rebuild-2026-10-31.json', vendorDir), 'utf8'));
+    const archive = sha256(readFileSync(new URL('source-patched.tar.gz', vendorDir)));
+    expect(proof.noticeRebuild.sourceArchiveSHA256).toBe(archive);
+    expect(proof.sourceChange.sourceArchive.sha256).toBe(byPath.get('source-patched.tar.gz')?.retainedSHA256);
+    expect(proof.sourceChange.ownershipPatch.sha256).toBe(byPath.get('ownership.patch')?.retainedSHA256);
+    expect(proof.buildScript.retainedSHA256).toBe(byPath.get('build.ps1')?.retainedSHA256);
+    expect([proof.noticeRebuild.acceptedWasmSHA256, proof.noticeRebuild.artifacts['photon_rs_bg.wasm']])
+      .toEqual([expectedHash, expectedHash]);
+  });
+
+  it('retains no unrecorded vendor file', () => {
+    const root = fileURLToPath(vendorDir);
+    const present: string[] = [];
+    const walk = (relative: string): void => {
+      for (const entry of readdirSync(join(root, relative), { withFileTypes: true })) {
+        const path = relative ? `${relative}/${entry.name}` : entry.name;
+        if (entry.isDirectory()) {
+          if (!(relative === '' && LOCAL_BUILD_DIR.test(entry.name))) walk(path);
+        } else if (statSync(join(root, path)).isFile()) {
+          present.push(path);
+        }
+      }
+    };
+    walk('');
+    expect(present.filter((path) => !byPath.has(path) && !NOT_RETAINED.has(path)).sort()).toEqual([]);
   });
 
   it('uses the stock wrapper with the owned artifact for pixel operations and round-trip decode', async () => {
