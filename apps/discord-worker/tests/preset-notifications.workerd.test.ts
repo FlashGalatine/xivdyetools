@@ -107,11 +107,16 @@ beforeAll(async () => {
       return { status: response.status, body: await response.json() };
     }),
   );
-  await harness.update(options('true', true));
+  // Test each configuration from a fresh runtime; multiworker hot reload can expose old vars.
+  await harness.close();
+  harness = createTestHarness(options('true', true));
+  await harness.listen();
   const shortResponse = await caller().fetch(`https://internal${path}`, init());
   shortSecretStatus = shortResponse.status;
   await shortResponse.arrayBuffer();
-  await harness.update(options('true'));
+  await harness.close();
+  harness = createTestHarness(options('true'));
+  await harness.listen();
 }, 60000);
 
 afterAll(async () => {

@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.21.1] - 2026-10-29
+
+### Security
+
+- Bound XIVAPI Item search and Glasses response bodies to 2 MiB and 32 KiB before parsing;
+  invalid JSON syntax, oversized bodies and failed reads become uncached upstream-unavailable responses.
+- Normalize upstream and regional names with one 128-code-point cleaner, stripping controls
+  and bidi formatting before cache/output. A new row shape excludes old unsanitized entries.
+- Add isolated Chara upstream-operation budgets: public 30/minute and service 600/minute in
+  production, with a 20× service multiplier. Existing row/Glasses waiters and cached data are
+  free of this additional budget; a waiter whose owner is denied takes the operation over under
+  its own budget, so one client's denial never reaches another; icon misses/revalidations pay
+  for each actual fetch. Runtime limiter failures retain the documented public-read fail-open
+  policy; these are soft limits.
+- Accept an explicit icon game key only when it matches the configured or discovered current
+  game version. Unknown query noise still shares storage; successful browser TTLs are unchanged.
+- Adopt worker-kit 1.6.0's IPv6 /64 key option across the existing API, telemetry and proxy
+  paths and the new Chara budget, preserving IPv4 and service classification.
+- Store only bounded numeric version triples in telemetry, discarding valid prerelease text.
+- Pin item-name builder inputs to immutable source commits and record exact-byte SHA256
+  provenance. Local CSV inputs must match their pinned commit. A controlled 2026-10-29 refresh
+  records per-language source provenance for ko/zh/ja, adds 65 Korean equipment names and strips
+  two invisible direction marks. Chinese/Japanese table bytes and all bundled fonts stay
+  unchanged; legacy shared metadata remains a historical snapshot.
+
+### Changed
+
+- Collect the lazy-table fixture's app import outside the request test budget. Hoisted
+  evaluation counters still reject eager loading of each real table; assertions and timeouts
+  are unchanged. Remove Discord's stale U+200F exception with the paired item-data cleanup.
+- Start each local Discord notification configuration check in a fresh workerd harness,
+  avoiding an unrelated multiworker hot-reload race while retaining every authentication,
+  capability-isolation and request-limit assertion. No notification runtime behavior changes.
+- Correct character resolver/cache/consumer documentation, remove the redundant 503 check
+  and drop the unused CharaTwinRules re-export, retaining its local import and field use.
+
 ## [0.21.0] - 2026-10-20
 
 ### Added

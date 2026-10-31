@@ -138,4 +138,31 @@ describe('retained icon refresh', () => {
     expect(result.bytes).toEqual(PNG);
     expect(result.cacheUpdate).toBeNull();
   });
+  it('fresh hits are free even if admission would deny; stale denials leave bytes and timestamp intact', async () => {
+    const admit = vi.fn(async () => { throw new Error('quota denied'); });
+    const fetchMock = vi.fn(async () => png());
+    vi.stubGlobal('fetch', fetchMock);
+    await seed(1);
+    expect((await loadIcon(client, context, 1, cache, admit)).cacheStatus).toBe('HIT');
+    expect(admit).not.toHaveBeenCalled();
+    await seed(7 * DAY);
+    await expect(loadIcon(client, context, 1, cache, admit)).rejects.toThrow('quota denied');
+    expect(admit).toHaveBeenCalledOnce();
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(await cache.get(context, 1)).toEqual({ bytes: PNG, etag: '"old"', cachedAt: now - 7 * DAY });
+  });
+  it('charges each real concurrent icon fetch and conditional 304', async () => {
+    const admit = vi.fn(async () => undefined);
+    const fetchMock = vi.fn(async () => png());
+    vi.stubGlobal('fetch', fetchMock);
+    await Promise.all([loadIcon(client, context, 1, cache, admit), loadIcon(client, context, 1, cache, admit)]);
+    expect(admit).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    await seed(7 * DAY);
+    fetchMock.mockResolvedValue(new Response(null, { status: 304 }));
+    const result = await loadIcon(client, context, 1, cache, admit);
+    expect(admit).toHaveBeenCalledTimes(3);
+    expect(result.cacheUpdate?.cachedAt).toBe(now);
+  });
+
 });

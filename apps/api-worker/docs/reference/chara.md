@@ -2,7 +2,7 @@
 
 <p class="xdt-meta">2 endpoints · .chara import · 6 languages</p>
 
-Resolve the equipment model keys stored in an Anamnesis / Ktisis / Brio `.chara` file to in-game item names (six languages), icons, and their families of visually identical items. This is what powers **Swatch Matcher → Dyes on this glamour** in the web app.
+Resolve the equipment model keys stored in an Anamnesis / Ktisis / Brio `.chara` file to in-game item names (six languages), icons, and their families of visually identical items. This powers the web app's **Glamour Reader**, facewear item links, and the bot's `/glamour` enrichment.
 
 ::: tip Why model keys, not item IDs?
 A `.chara` file never names the items a character wears — it stores each slot's `ModelBase` / `ModelVariant` (weapons add `ModelSet`), the lanes of the Item sheet's packed `ModelMain`. Those keys resolve deterministically, but the slot is a mandatory second key (one gear set shares a `ModelMain` across head/body/hands/legs/feet), and 35 % of keys are families of items that share one mesh (Augmented / Replica / +1 / role variants). This endpoint does that resolution once, server-side, and caches it per key.
@@ -72,7 +72,10 @@ Resolve every worn piece of one character in a single call. The body is the twel
 | `glasses` | Present only when the request carried `glasses`; `null` when the row does not exist |
 | `glasses.acquisition` | Where to obtain or purchase the "The Faces We Wear" unlock item for the worn facewear style, in the same English format as equipment acquisition lines. Shared by the base and all color variants. Omitted when the unlock source is unknown. |
 
-Names are never "cleaned": Augmented / Replica / +1 prefixes stay, because the naming is inconsistent across languages.
+Game naming such as Augmented, Replica and +1 is preserved within a 128-code-point display
+limit. All upstream and regional names receive whitespace normalization and removal of
+control/bidi characters and soft hyphens before storage or output. Item searches and
+Glasses bodies are bounded to 2 MiB and 32 KiB before JSON parsing.
 
 ### Caching
 
@@ -82,6 +85,24 @@ Names are never "cleaned": Augmented / Replica / +1 prefixes stay, because the n
 - Concurrent Item/Glasses misses share decoded data within one isolate. Partially overlapping requests fetch only their new keys in one batch; a 256-key pending limit falls back to ordinary fetches without dropping work. Errors and truncated pages are not persisted. Completed in-flight entries are removed; a request between completion and the asynchronous cache write can miss again. Cache contents are local to a Cloudflare data center, so this is not global deduplication. Row freshness remains seven days with the existing one-day stale-serving headroom; no background row refresh is added.
 - The POST response itself is `Cache-Control: no-store` — caching happens per key behind it, not on the envelope.
 
+### Upstream-operation budget
+
+The ordinary API admission limit still applies to every request. An additional Chara budget
+charges actual upstream data operations: one batched Item search, one Glasses fetch, or one
+icon fetch/revalidation. A completely cold resolve with both Item and Glasses work costs two
+units. Cached rows, cached empty/null results and existing Item/Glasses waiters cost zero.
+If the request a waiter joined is itself denied, the waiter performs that operation under its
+own budget (one unit) instead of receiving the other client's 429.
+Concurrent icon misses can each fetch and each consume a unit; retained stale icons consume
+one unit for conditional revalidation, including a successful 304.
+
+Production thresholds are 30 operations per 60 seconds for a public client and a separate
+600 per 60 seconds shared service key. These are approximate per-location soft thresholds;
+runtime limiter failures preserve the public-read fail-open policy. A configured malformed
+binding is an error, and an explicit denial stops that operation with a request-local 429,
+retry/budget headers and `Cache-Control: no-store`. Failed operations are not refunded or cached.
+Bounded, memoized Item/1 metadata discovery is outside this data-operation budget.
+
 ### Errors
 
 | Status | `error` | When |
@@ -89,7 +110,8 @@ Names are never "cleaned": Augmented / Replica / +1 prefixes stay, because the n
 | `400` | `INVALID_BODY` | Not JSON / not an object |
 | `400` | `VALIDATION_ERROR` | Bad slot, lane out of 0–65535, duplicate slot, empty piece, bad `glasses`, more than 12 entries — the message names the field |
 | `413` | `INVALID_BODY` | Body over 8 KB (enforced while the body streams in — `Content-Length` is not required) |
-| `503` | `UPSTREAM_UNAVAILABLE` | XIVAPI is down, timed out, or **re-indexing search after a game patch** (`details.upstreamStatus`). Retry later; treat as "names unavailable", never as a failed import — the dyes in the file are unaffected. |
+| `429` | `RATE_LIMITED` | API admission or the dedicated Chara upstream budget denied the request; honor `Retry-After` |
+| `503` | `UPSTREAM_UNAVAILABLE` | XIVAPI is down, timed out, **re-indexing search after a game patch**, or returns oversized bodies, invalid JSON syntax, or failed body reads (`details.upstreamStatus`). Retry later; treat as "names unavailable", never as a failed import — the dyes in the file are unaffected. |
 
 ## GET /v1/chara/icon/:iconId
 
@@ -97,16 +119,24 @@ The item's icon as PNG (the 80 px `_hr1` asset), proxied from XIVAPI and edge-ca
 
 <EndpointCard
   endpoint="/v1/chara/icon/:iconId"
-  summary="Item icon PNG; optional game-version pin."
+  summary="Item icon PNG; optional current game-version key."
   :params="[
     { name: 'iconId', in: 'path', required: true, default: '41716', description: 'From items.<slot>.iconId or glasses.iconId — canonical decimal, 1–999999 (no leading zeros, sign or trailing characters)' },
-    { name: 'version', in: 'query', default: '', description: 'Optional canonical game key: exactly 16 lower-case hexadecimal characters. Omit to follow the configured game version.' },
+    { name: 'version', in: 'query', default: '', description: 'Optional current canonical game key: exactly 16 lower-case hexadecimal characters, equal to the configured or discovered current game version. Omit to follow that version.' },
   ]"
 />
 
 Returns `image/png` (always — the upstream content type is never reflected; a 2xx upstream body that is not a PNG is refused) with `Cache-Control: public, max-age=300, must-revalidate` for the unversioned URL, or `public, max-age=2592000, immutable` when an explicit canonical `version` is supplied, `Content-Disposition: inline`, `Content-Security-Policy: sandbox` and an `X-Cache` header (`HIT` / `MISS`). `041716` and `41716abc` are `400 VALIDATION_ERROR`; `404 NOT_FOUND` when the upstream has no such asset; `503 UPSTREAM_UNAVAILABLE` when XIVAPI is down, answers with something other than a PNG, or exceeds the 1 MB ceiling. A missing icon should cost the tile, not the row.
 
-Asset fetches and internal edge keys share the same game version. Internal storage is separate from browser cache headers and never exposes upstream validators or cache timestamps. Malformed or repeated version parameters are 400; unrelated query parameters are ignored. Previously delivered immutable browser responses can keep their original 30-day lifetime; changing the server policy cannot revoke those entries.
+Asset fetches and internal edge keys share the same game version. An explicit key must equal
+the configured canonical game pin or captured current discovered key. A game pin alone is
+sufficient for this comparison; otherwise bounded metadata discovery may be needed. Known
+mismatch, malformed and repeated version parameters return 400 before icon-cache or asset
+access. An explicit version without an authoritative current key returns 503; unversioned
+requests retain their uncached bootstrap fallback. Dedicated-budget denial returns 429.
+Unrelated query parameters remain ignored. Internal storage is separate from browser cache
+headers and never exposes upstream validators or cache timestamps. Previously delivered
+immutable browser responses can keep their original 30-day lifetime.
 
 Validated PNGs are fresh internally for seven days and retained for up to 30 days. A retained stale entry is revalidated with the upstream ETag; a 304 reuses its existing body and is returned as a normal 200 PNG. A changed 200 must pass validation again. Missing/corrupt/expired bodies are fetched unconditionally. Failed refreshes preserve the old timestamp and return the existing error response; they do not silently serve stale success or extend freshness.
 
@@ -124,6 +154,11 @@ weapon              ModelMain = set  | base << 16 | variant << 32   (exceeds 2^3
 ## Languages
 
 `en` / `ja` / `de` / `fr` come from XIVAPI v2 in the same call. Korean and Chinese come from build-time tables generated from the community regional datamining exports (`scripts/build-item-names.mjs` — equippable rows only, same Item row IDs as global). The regional clients can lag a patch by weeks or months, so a brand-new item may have no `ko` / `zh` key for a while; fall back to `en`.
+
+The future builder pins source commits and records exact-byte hashes. This preparation
+retains the historical tables and their legacy metadata; source provenance for those old
+snapshots remains unresolved pending a controlled data/font refresh. Runtime name
+normalization protects responses without claiming to authenticate historical data.
 
 ### Retired item families
 

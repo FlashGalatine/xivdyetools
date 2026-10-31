@@ -5,9 +5,14 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import app from '../index';
+import { Hono } from 'hono';
+import { ApiError } from '../lib/api-error';
+import { createApiRateLimitMiddleware } from '../middleware/rate-limit';
+import type { Env } from '../types';
 import { createMockEnv } from '../../tests/test-utils';
 import { resetAllMocks, createMockExecutionContext } from '../universalis/test-setup';
-import { parseResolveBody } from './router';
+import { charaRouter, parseResolveBody } from './router';
+import { CharaLookupLoader } from './lookup-loader';
 
 // A real version key is its own cache namespace, so these tests stay about
 // resolution. The moving `latest` alias has its own block at the bottom (BUG-040).
@@ -616,7 +621,7 @@ describe('GET /v1/chara/icon/:iconId', () => {
       const response = await app.request(
         '/v1/chara/icon/41716?version=' + version,
         {},
-        createMockEnv({ XIVAPI_BASE: upstream }),
+        createMockEnv({ XIVAPI_BASE: upstream, XIVAPI_VERSION: version }),
         ctx,
       );
       expect(response.status).toBe(200);
@@ -930,5 +935,270 @@ describe('CORS', () => {
     );
     expect(res.headers.get('Access-Control-Allow-Methods')).toContain('POST');
     expect(res.headers.get('Access-Control-Allow-Origin')).toBe('*');
+  });
+});
+
+
+describe('chara upstream admission and current icon version', () => {
+  const PNG_BYTES = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1]);
+  let sequence = 0;
+  beforeEach(() => { resetAllMocks(); vi.restoreAllMocks(); });
+  afterEach(() => vi.unstubAllGlobals());
+  const setup = (extra = {}) => {
+    const budget = { limit: vi.fn(async () => ({ success: true })) };
+    const localEnv = createMockEnv({ XIVAPI_BASE: 'https://route-budget-' + ++sequence + '.test', XIVAPI_VERSION: V, XIVAPI_SCHEMA: S, CHARA_SERVICE_RATE_LIMITER: budget, ...extra });
+    return { budget, localEnv };
+  };
+  const resolve = (localEnv: typeof env, body: object, ctx = createMockExecutionContext(), locale = '', headers: Record<string, string> = {}) => app.request('/v1/chara/resolve' + locale, { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body) }, localEnv, ctx);
+  const gear = [{ slot: 'HeadGear', base: 361, variant: 5 }];
+  const upstream = () => vi.fn(async (url: string) => url.includes('/Glasses/') ? okJson({ row_id: 3, fields: { Name: 'G' } }) : okJson({ results: [BEECH_MASK] }));
+  it.each([
+    [{ gear }, 1], [{ gear: [], glasses: 3 }, 1], [{ gear, glasses: 3 }, 2],
+  ] as const)('charges real cold operations and zero repeat hits: %s', async (body, count) => {
+    const { budget, localEnv } = setup();
+    const fetchMock = upstream();
+    vi.stubGlobal('fetch', fetchMock);
+    const ctx = createMockExecutionContext();
+    expect((await resolve(localEnv, body, ctx)).status).toBe(200);
+    await flush(ctx);
+    expect(budget.limit).toHaveBeenCalledTimes(count);
+    budget.limit.mockResolvedValue({ success: false });
+    const hit = await resolve(localEnv, body);
+    expect(hit.status).toBe(200);
+    expect(hit.headers.get('X-Cache')).toBe('HIT');
+    expect(budget.limit).toHaveBeenCalledTimes(count);
+    expect(fetchMock).toHaveBeenCalledTimes(count);
+  });
+  it('negative Item and Glasses hits consume no upstream budget', async () => {
+    const { budget, localEnv } = setup();
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => url.includes('/Glasses/') ? new Response(null, { status: 404 }) : okJson({ results: [] })));
+    const ctx = createMockExecutionContext();
+    expect((await resolve(localEnv, { gear, glasses: 3 }, ctx)).status).toBe(200);
+    await flush(ctx);
+    budget.limit.mockResolvedValue({ success: false });
+    expect((await resolve(localEnv, { gear, glasses: 3 })).status).toBe(200);
+    expect(budget.limit).toHaveBeenCalledTimes(2);
+  });
+  it('mixed hits charge only the newly fetched Glasses operation', async () => {
+    const { budget, localEnv } = setup();
+    vi.stubGlobal('fetch', upstream());
+    const ctx = createMockExecutionContext();
+    await resolve(localEnv, { gear }, ctx);
+    await flush(ctx);
+    expect((await resolve(localEnv, { gear, glasses: 3 })).status).toBe(200);
+    expect(budget.limit).toHaveBeenCalledTimes(2);
+  });
+  it('denied owner and waiter each build 429 metadata from their own admission with quota headers and permit retry', async () => {
+    const { budget, localEnv } = setup();
+    let release!: () => void;
+    const gate = new Promise<void>((yes) => { release = yes; });
+    budget.limit.mockImplementation(async () => { await gate; return { success: false }; });
+    const fetchMock = upstream();
+    vi.stubGlobal('fetch', fetchMock);
+    const ownerCtx = createMockExecutionContext();
+    const waiterCtx = createMockExecutionContext();
+    const loaderCalls = vi.spyOn(CharaLookupLoader.prototype, 'loadRows');
+    const owner = resolve(localEnv, { gear }, ownerCtx, '?locale=ja');
+    await vi.waitFor(() => expect(budget.limit).toHaveBeenCalledOnce());
+    const waiter = resolve(localEnv, { gear }, waiterCtx, '?locale=fr');
+    await vi.waitFor(() => expect(loaderCalls).toHaveBeenCalledTimes(2));
+    release();
+    const responses = await Promise.all([owner, waiter]);
+    const bodies = [];
+    for (const response of responses) {
+      expect(response.status).toBe(429);
+      expect(response.headers.get('Cache-Control')).toBe('no-store');
+      expect(response.headers.get('Retry-After')).toMatch(/^[1-6]?[0-9]$/);
+      expect(response.headers.get('X-RateLimit-Limit')).toBe('1200');
+      expect(response.headers.get('X-RateLimit-Remaining')).toBe('0');
+      expect(response.headers.get('X-RateLimit-Reset')).toMatch(/^\d+$/);
+      const body = await response.json() as any;
+      expect(body.error).toBe('RATE_LIMITED');
+      expect(body.message).toBe('Too many upstream character-data requests. Please try again later.');
+      expect(body.meta.requestId).toBe(response.headers.get('X-Request-Id'));
+      bodies.push(body);
+    }
+    expect(bodies[0].meta.locale).toBe('ja');
+    expect(bodies[1].meta.locale).toBe('fr');
+    expect(bodies[0].meta.requestId).not.toBe(bodies[1].meta.requestId);
+    expect(budget.limit).toHaveBeenCalledTimes(2);
+    expect(fetchMock).not.toHaveBeenCalled();
+    await Promise.all([flush(ownerCtx), flush(waiterCtx)]);
+    budget.limit.mockResolvedValue({ success: true });
+    expect((await resolve(localEnv, { gear })).status).toBe(200);
+    expect(budget.limit).toHaveBeenCalledTimes(3);
+  });
+  it("a coalesced waiter from another client is not denied by the owner's quota", async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((yes) => { release = yes; });
+    const limit = vi.fn(async ({ key }: { key: string }) => { await gate; return { success: !key.includes('198.51.100.1') }; });
+    const { localEnv } = setup({ CHARA_RATE_LIMITER: { limit } });
+    const fetchMock = upstream();
+    vi.stubGlobal('fetch', fetchMock);
+    const ownerCtx = createMockExecutionContext();
+    const waiterCtx = createMockExecutionContext();
+    const loaderCalls = vi.spyOn(CharaLookupLoader.prototype, 'loadRows');
+    const owner = resolve(localEnv, { gear }, ownerCtx, '', { 'CF-Connecting-IP': '198.51.100.1' });
+    await vi.waitFor(() => expect(limit).toHaveBeenCalledOnce());
+    const waiter = resolve(localEnv, { gear }, waiterCtx, '', { 'CF-Connecting-IP': '203.0.113.9' });
+    await vi.waitFor(() => expect(loaderCalls).toHaveBeenCalledTimes(2));
+    release();
+    const [denied, served] = await Promise.all([owner, waiter]);
+    expect(denied.status).toBe(429);
+    expect(denied.headers.get('X-RateLimit-Limit')).toBe('60');
+    expect(served.status).toBe(200);
+    expect(((await served.json()) as any).data.items.HeadGear.itemId).toBe(18085);
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(limit).toHaveBeenCalledTimes(2);
+    expect(new Set(limit.mock.calls.map(([{ key }]) => key)).size).toBe(2);
+    await Promise.all([flush(ownerCtx), flush(waiterCtx)]);
+  });
+  it.each(['resolve', 'icon'])('malformed binding fails before discovery on %s', async (kind) => {
+    const { localEnv } = setup({ XIVAPI_VERSION: 'latest', CHARA_SERVICE_RATE_LIMITER: {} as RateLimit });
+    const fetchMock = upstream();
+    vi.stubGlobal('fetch', fetchMock);
+    const response = kind === 'resolve' ? await resolve(localEnv, { gear }) : await app.request('/v1/chara/icon/41716', {}, localEnv, createMockExecutionContext());
+    expect(response.status).toBe(500);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+  it.each(['search', 'glasses'] as const)('oversized/malformed/read-failed %s is uncached 503 and retry succeeds', async (kind) => {
+    for (const mode of ['oversize', 'malformed', 'stream']) {
+      resetAllMocks();
+      const { budget, localEnv } = setup();
+      const fetchMock = vi.fn(async (_url: string) => new Response(mode === 'oversize' ? ' '.repeat((kind === 'search' ? 2 * 1024 * 1024 : 32 * 1024) + 1) : mode === 'malformed' ? '{' : new ReadableStream({ pull(c) { c.error(new Error('read failure')); } })));
+      vi.stubGlobal('fetch', fetchMock);
+      const body = kind === 'search' ? { gear } : { gear: [], glasses: 3 };
+      const ctx = createMockExecutionContext();
+      expect((await resolve(localEnv, body, ctx)).status).toBe(503);
+      await flush(ctx);
+      expect(((await caches.open('chara-resolve')) as any).size).toBe(0);
+      fetchMock.mockImplementation(upstream());
+      expect((await resolve(localEnv, body)).status).toBe(200);
+      expect(budget.limit).toHaveBeenCalledTimes(2);
+    }
+  });
+  it('cleans new upstream names before persistence and cached replay', async () => {
+    const { localEnv } = setup();
+    vi.stubGlobal('fetch', vi.fn(async () => okJson({ results: [{ ...BEECH_MASK, fields: { ...BEECH_MASK.fields, Name: ' A\n\tB\u200f' } }] })));
+    const ctx = createMockExecutionContext();
+    const first = await resolve(localEnv, { gear }, ctx);
+    await flush(ctx);
+    const hit = await resolve(localEnv, { gear });
+    for (const response of [first, hit]) expect((await response.json() as any).data.items.HeadGear.names.en).toBe('A B');
+  });
+  it('canonical pin alone accepts matching version and rejects mismatch before cache or asset reads', async () => {
+    const { budget, localEnv } = setup({ XIVAPI_SCHEMA: undefined });
+    const fetchMock = vi.fn(async (_url: string) => new Response(PNG_BYTES));
+    vi.stubGlobal('fetch', fetchMock);
+    const open = vi.spyOn(caches, 'open');
+    const mismatch = await app.request('/v1/chara/icon/41716?version=bbbbbbbbbbbbbbbb', {}, localEnv, createMockExecutionContext());
+    expect(mismatch.status).toBe(400);
+    expect(await mismatch.json()).toMatchObject({ error: 'VALIDATION_ERROR', message: 'The icon version must match the current XIVAPI game version.' });
+    expect(open).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(budget.limit).not.toHaveBeenCalled();
+    const ctx = createMockExecutionContext();
+    const match = await app.request('/v1/chara/icon/41716?version=' + V + '&noise=ignored', {}, localEnv, ctx);
+    expect(match.status).toBe(200);
+    await flush(ctx);
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(new URL(fetchMock.mock.calls[0][0] as unknown as string).searchParams.has('noise')).toBe(false);
+    budget.limit.mockResolvedValue({ success: false });
+    expect((await app.request('/v1/chara/icon/41716?version=' + V + '&noise=other', {}, localEnv, createMockExecutionContext())).status).toBe(200);
+    expect(budget.limit).toHaveBeenCalledOnce();
+  });
+  it('compares explicit versions to discovered and last-known-good game keys; probes only deployment config', async () => {
+    let now = Date.now();
+    vi.spyOn(Date, 'now').mockImplementation(() => now);
+    const { budget, localEnv } = setup({ XIVAPI_VERSION: 'latest', XIVAPI_SCHEMA: undefined });
+    let fail = false;
+    const urls: string[] = [];
+    vi.stubGlobal('fetch', vi.fn(async (raw: string) => {
+      urls.push(raw);
+      if (raw.includes('/Item/1')) return fail ? new Response(null, { status: 503 }) : okJson({ row_id: 1, fields: { Name: 'Gil' } });
+      return new Response(PNG_BYTES);
+    }));
+    const call = (version: string, id = 41716) => app.request('/v1/chara/icon/' + id + '?version=' + version, {}, localEnv, createMockExecutionContext());
+    expect((await call('bbbbbbbbbbbbbbbb')).status).toBe(400);
+    expect(budget.limit).not.toHaveBeenCalled();
+    expect(urls).toHaveLength(1);
+    expect(new URL(urls[0]).searchParams.get('version')).toBe('latest');
+    expect((await call(V)).status).toBe(200);
+    fail = true;
+    now += 11 * 60_000;
+    expect((await call(V, 41717)).status).toBe(200);
+    expect((await call('bbbbbbbbbbbbbbbb', 41718)).status).toBe(400);
+    expect(budget.limit).toHaveBeenCalledTimes(2);
+    expect(urls.filter((url) => url.includes('/Item/1'))).toHaveLength(2);
+  });
+  it('bootstrap explicit version is 503 while unversioned fallback remains uncached and budgeted', async () => {
+    const { budget, localEnv } = setup({ XIVAPI_VERSION: 'latest', XIVAPI_SCHEMA: undefined });
+    const fetchMock = vi.fn(async (raw: string) => raw.includes('/Item/1') ? new Response(null, { status: 503 }) : new Response(PNG_BYTES));
+    vi.stubGlobal('fetch', fetchMock);
+    const explicit = await app.request('/v1/chara/icon/41716?version=' + V, {}, localEnv, createMockExecutionContext());
+    expect(explicit.status).toBe(503);
+    expect(await explicit.json()).toMatchObject({ message: 'XIVAPI game version is unavailable.' });
+    expect(budget.limit).not.toHaveBeenCalled();
+    for (let i = 0; i < 2; i++) expect((await app.request('/v1/chara/icon/41716', {}, localEnv, createMockExecutionContext())).status).toBe(200);
+    expect(budget.limit).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(((await caches.open('chara-icons')) as any).size).toBe(0);
+  });
+  it('icon quota denial performs no asset fetch', async () => {
+    const { budget, localEnv } = setup();
+    budget.limit.mockResolvedValue({ success: false });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const response = await app.request('/v1/chara/icon/41716', {}, localEnv, createMockExecutionContext());
+    expect(response.status).toBe(429);
+    expect(response.headers.get('Cache-Control')).toBe('no-store');
+    expect(budget.limit).toHaveBeenCalledOnce();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+
+describe('strict canonical icon inputs reject encoded final terminators', () => {
+  let sequence = 0;
+  beforeEach(() => { resetAllMocks(); vi.restoreAllMocks(); });
+  afterEach(() => vi.unstubAllGlobals());
+  it.each([
+    ['version', '%0A'], ['version', '%0D'], ['version', '%0D%0A'], ['version', '%E2%80%A8'], ['version', '%E2%80%A9'],
+    ['iconId', '%0A'], ['iconId', '%0D'], ['iconId', '%0D%0A'], ['iconId', '%E2%80%A8'], ['iconId', '%E2%80%A9'],
+  ])('rejects encoded final terminator on %s: %s before chara work', async (kind, suffix) => {
+    const generic = { limit: vi.fn(async () => ({ success: true })) };
+    const charaBudget = { limit: vi.fn(async () => ({ success: true })) };
+    const fetchMock = vi.fn(async () => new Response(null, { status: 503 }));
+    vi.stubGlobal('fetch', fetchMock);
+    const cacheOpen = vi.spyOn(caches, 'open');
+    const localEnv = createMockEnv({
+      XIVAPI_BASE: 'https://strict-icon-' + ++sequence + '.test',
+      XIVAPI_VERSION: 'latest',
+      SERVICE_RATE_LIMITER: generic,
+      CHARA_SERVICE_RATE_LIMITER: charaBudget,
+    });
+    const path = kind === 'version'
+      ? '/v1/chara/icon/41716?version=' + V + suffix
+      : '/v1/chara/icon/41716' + suffix;
+    // Fresh general-admission middleware keeps each case's binding observable;
+    // the production index intentionally memoizes its first backend per isolate.
+    const isolatedApp = new Hono<{ Bindings: Env }>();
+    isolatedApp.use('/v1/*', createApiRateLimitMiddleware());
+    isolatedApp.route('/v1/chara', charaRouter);
+    isolatedApp.onError((error) => {
+      if (error instanceof ApiError)
+        return new Response(JSON.stringify({ error: error.code }), {
+          status: error.statusCode,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      throw error;
+    });
+    const response = await isolatedApp.request(path, {}, localEnv, createMockExecutionContext());
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({ error: 'VALIDATION_ERROR' });
+    expect(generic.limit).toHaveBeenCalledOnce();
+    expect(charaBudget.limit).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(cacheOpen).not.toHaveBeenCalled();
   });
 });

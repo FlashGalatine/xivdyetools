@@ -509,3 +509,78 @@ describe('XivapiClient data requests', () => {
     });
   });
 });
+
+
+describe('bounded upstream data bodies', () => {
+  afterEach(() => vi.unstubAllGlobals());
+  const context = { base: 'https://bounded.test', version: 'latest', schema: undefined, cacheNamespace: null };
+  const client = new XivapiClient({ XIVAPI_BASE: context.base });
+  const maximumFor = (kind: 'search' | 'glasses') => kind === 'search' ? 2 * 1024 * 1024 : 32 * 1024;
+  const run = (kind: 'search' | 'glasses') => kind === 'search'
+    ? client.searchItems([{ field: 'Head', key: '1' }], context)
+    : client.getGlasses(3, context);
+  const paddedJson = (kind: 'search' | 'glasses', size: number) => {
+    const data = kind === 'search' ? { results: [], extra: '漢😀' } : { row_id: 3, fields: { Name: '漢😀' } };
+    const bytes = new Uint8Array(size).fill(32);
+    bytes.set(new TextEncoder().encode(JSON.stringify(data)));
+    return bytes;
+  };
+  const finiteStream = (bytes: Uint8Array) => new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(bytes.subarray(0, 13));
+      controller.enqueue(bytes.subarray(13));
+      controller.close();
+    },
+  });
+  it.each(['search', 'glasses'] as const)('finite exact byte cap succeeds for %s', async (kind) => {
+    const bytes = paddedJson(kind, maximumFor(kind));
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(finiteStream(bytes))));
+    await expect(run(kind)).resolves.toBeDefined();
+  });
+  it.each(['search', 'glasses'] as const)('finite cap-plus-one valid JSON is rejected for %s', async (kind) => {
+    const bytes = paddedJson(kind, maximumFor(kind) + 1);
+    expect(() => JSON.parse(new TextDecoder().decode(bytes))).not.toThrow();
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(finiteStream(bytes))));
+    await expect(run(kind)).rejects.toBeInstanceOf(UpstreamUnavailableError);
+  });
+  it.each(['search', 'glasses'] as const)('finite UTF-8 byte overflow valid JSON is rejected for %s', async (kind) => {
+    const maximum = maximumFor(kind);
+    const data = kind === 'search'
+      ? { results: [], extra: '漢'.repeat(Math.ceil(maximum / 2)) }
+      : { row_id: 3, fields: { Name: '漢'.repeat(Math.ceil(maximum / 2)) } };
+    const text = JSON.stringify(data);
+    const bytes = new TextEncoder().encode(text);
+    expect(text.length).toBeLessThan(maximum);
+    expect(bytes.byteLength).toBeGreaterThan(maximum);
+    expect(() => JSON.parse(text)).not.toThrow();
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(finiteStream(bytes))));
+    await expect(run(kind)).rejects.toBeInstanceOf(UpstreamUnavailableError);
+  });
+  it.each(['search', 'glasses'] as const)('cancels an open oversized stream for %s', async (kind) => {
+    const cancelled = vi.fn();
+    const bytes = paddedJson(kind, maximumFor(kind) + 1);
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(new ReadableStream<Uint8Array>({
+      start(controller) { controller.enqueue(bytes); },
+      cancel: cancelled,
+    }))));
+    await expect(run(kind)).rejects.toBeInstanceOf(UpstreamUnavailableError);
+    expect(cancelled).toHaveBeenCalledOnce();
+  });
+  it.each(['search', 'glasses'] as const)('maps malformed and failed body reads to unavailable for %s', async (kind) => {
+    const run = () => kind === 'search' ? client.searchItems([{ field: 'Head', key: '1' }], context) : client.getGlasses(3, context);
+    for (const body of ['{', new ReadableStream<Uint8Array>({ pull(c) { c.error(new Error('private')); } })]) {
+      vi.stubGlobal('fetch', vi.fn(async () => new Response(body)));
+      await expect(run()).rejects.toThrow('response body unavailable');
+    }
+  });
+});
+
+
+it.each([429, 500, 502, 503, 504])('maps raw icon upstream status %s without reading its body', async (status) => {
+  vi.stubGlobal('fetch', vi.fn(async () => new Response(null, { status })));
+  try {
+    await expect(new XivapiClient({}).fetchIcon(1, { base: 'https://raw-icon.test', version: 'aaaaaaaaaaaaaaaa', cacheable: true })).rejects.toMatchObject({ name: 'UpstreamUnavailableError', status });
+  } finally {
+    vi.unstubAllGlobals();
+  }
+});

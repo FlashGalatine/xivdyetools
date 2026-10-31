@@ -153,3 +153,58 @@ describe('Telemetry rate limiter wiring (BUG-037)', () => {
     expect(binding.limit).toHaveBeenCalledTimes(1);
   });
 });
+
+// Use a fresh module graph for each app isolate: middleware memoizes its backend.
+describe.each(['native', 'KV'])('Application IPv6 adoption (%s)', (backend) => {
+  it('shares /64 budgets on API and telemetry routes while retaining service classification', async () => {
+    vi.resetModules();
+    const { default: isolatedApp } = await import('../../src/index.js');
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(1_800_000_000_000);
+    const native = () => {
+      const counts = new Map<string, number>();
+      return { counts, limit: vi.fn(async ({ key }: { key: string }) => {
+        const used = (counts.get(key) ?? 0) + 1;
+        counts.set(key, used);
+        return { success: used <= 1 };
+      }) };
+    };
+    const api = native();
+    const telemetry = native();
+    const service = native();
+    const isolatedEnv = createMockEnv(backend === 'native' ? {
+      API_RATE_LIMITER: api, TELEMETRY_RATE_LIMITER: telemetry, SERVICE_RATE_LIMITER: service,
+    } : {});
+    const send = (path: string, ip?: string) => isolatedApp.request(path, {
+      method: path === '/v1/telemetry' ? 'POST' : 'GET',
+      headers: {
+        ...(ip ? { 'CF-Connecting-IP': ip } : {}),
+        'X-Forwarded-For': '198.51.100.99',
+        Origin: 'https://xivdyetools.app', 'Content-Type': 'text/plain',
+      },
+      ...(path === '/v1/telemetry' ? { body: JSON.stringify({ v: 1, events: [] }) } : {}),
+    }, isolatedEnv);
+    try {
+      for (const [path, limit, status] of [
+        ['/v1/dyes/categories', 65, 200], ['/v1/telemetry', 240, 204],
+      ] as const) {
+        for (let i = 0; i < (backend === 'native' ? 1 : limit); i++) {
+          expect((await send(path, '2001:db8:abcd:1234::1')).status).toBe(status);
+        }
+        expect((await send(path, '2001:0DB8:ABCD:1234:ffff::2')).status).toBe(429);
+        expect((await send(path, '2001:db8:abcd:1235::1')).status).toBe(status);
+      }
+      expect((await send('/v1/dyes/categories')).status).toBe(200);
+      if (backend === 'native') {
+        expect([...api.counts.keys()]).toEqual([
+          'api:ip:2001:db8:abcd:1234:::t65_60', 'api:ip:2001:db8:abcd:1235:::t65_60',
+        ]);
+        expect([...telemetry.counts.keys()]).toEqual([
+          'telemetry:ip:2001:db8:abcd:1234:::t240_60', 'telemetry:ip:2001:db8:abcd:1235:::t240_60',
+        ]);
+        expect([...service.counts.keys()]).toEqual(['api:svc:workers:t1300_60']);
+      }
+    } finally {
+      clock.mockRestore();
+    }
+  });
+});

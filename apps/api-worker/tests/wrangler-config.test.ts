@@ -7,6 +7,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { CHARA_PUBLIC_PRODUCTION_LIMIT, CHARA_PUBLIC_DEVELOPMENT_LIMIT, CHARA_WINDOW_SECONDS } from '../src/chara/rate-limit.js';
 import { SERVICE_BINDING_BUDGET_MULTIPLIER } from '../src/universalis/config/service-budget.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -58,8 +59,8 @@ describe('wrangler.toml', () => {
       /^\[\[env\.production\.ratelimits\]\]\nname = "TELEMETRY_RATE_LIMITER"\nnamespace_id = "\d+"\nsimple = \{ limit = 240, period = 60 \}$/m,
     );
     const ids = [...toml.matchAll(/^namespace_id = "(\d+)"$/gm)].map((m) => m[1]);
-    expect(ids).toHaveLength(10);
-    expect(new Set(ids).size).toBe(10);
+    expect(ids).toHaveLength(14);
+    expect(new Set(ids).size).toBe(14);
   });
 
   /**
@@ -152,5 +153,19 @@ describe('wrangler.toml', () => {
     expect(toml).not.toMatch(/^\s*logpush\s*=\s*true/m);
     expect(toml).not.toMatch(/tail_consumers/);
     expect(toml).not.toMatch(/head_sampling_rate|invocation_logs/);
+  });
+
+  it('pins dedicated chara native namespaces and limits to runtime configuration', () => {
+    for (const [text, header, publicLimit, publicId, serviceId] of [
+      [topLevel, 'ratelimits', CHARA_PUBLIC_DEVELOPMENT_LIMIT, '1062', '1064'],
+      [production, 'env.production.ratelimits', CHARA_PUBLIC_PRODUCTION_LIMIT, '1061', '1063'],
+    ] as const) {
+      for (const [name, id, limit] of [
+        ['CHARA_RATE_LIMITER', publicId, publicLimit],
+        ['CHARA_SERVICE_RATE_LIMITER', serviceId, publicLimit * SERVICE_BINDING_BUDGET_MULTIPLIER],
+      ]) {
+        expect(text).toContain(`[[${header}]]\nname = "${name}"\nnamespace_id = "${id}"\nsimple = { limit = ${limit}, period = ${CHARA_WINDOW_SECONDS} }`);
+      }
+    }
   });
 });

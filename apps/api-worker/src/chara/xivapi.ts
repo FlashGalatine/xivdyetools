@@ -18,6 +18,9 @@
  * - German names carry U+00AD soft hyphens — stripped at ingest.
  */
 
+import { ApiError, ErrorCode } from '../lib/api-error.js';
+import { cleanName } from './name-cleaner.mjs';
+export { cleanName } from './name-cleaner.mjs';
 import { readBoundedText } from '../lib/bounded-body.js';
 import { CHARA_WEAR_RACE_COLUMNS, charaWearMask } from '@xivdyetools/core';
 import type { CharaItemRules, GlassesRow, ItemRow, SlotLookup } from './types.js';
@@ -90,11 +93,6 @@ export class UpstreamUnavailableError extends Error {
     super(`XIVAPI unavailable: ${status} ${detail}`);
     this.name = 'UpstreamUnavailableError';
   }
-}
-
-/** Strip U+00AD soft hyphens (German names) and trim. */
-export function cleanName(value: unknown): string {
-  return typeof value === 'string' ? value.replace(/­/g, '').trim() : '';
 }
 
 /**
@@ -292,14 +290,37 @@ export class XivapiClient {
   }
 
   async resolveAssetContext(versionOverride?: string): Promise<XivapiAssetContext> {
-    const version = versionOverride ?? this.version;
-    if (isCanonicalVersion(version)) return { base: this.base, version, cacheable: true };
+    // A deployment's canonical game pin is authoritative even without a schema pin.
+    if (isCanonicalVersion(this.version)) {
+      this.validateAssetVersion(versionOverride, this.version);
+      return { base: this.base, version: this.version, cacheable: true };
+    }
     const context = await this.resolveContext();
+    if (versionOverride !== undefined && context.cacheNamespace === null)
+      throw new ApiError(ErrorCode.UPSTREAM_UNAVAILABLE, 'XIVAPI game version is unavailable.', 503);
+    this.validateAssetVersion(versionOverride, context.version);
     return {
       base: context.base,
       version: context.version,
       cacheable: context.cacheNamespace !== null,
     };
+  }
+
+  private validateAssetVersion(requested: string | undefined, current: string): void {
+    if (requested !== undefined && requested !== current)
+      throw new ApiError(
+        ErrorCode.VALIDATION_ERROR,
+        'The icon version must match the current XIVAPI game version.',
+        400,
+      );
+  }
+
+  private async readJson<T>(response: Response, maximum: number): Promise<T> {
+    try {
+      return JSON.parse(await readBoundedText(response.body, maximum)) as T;
+    } catch {
+      throw new UpstreamUnavailableError(0, 'response body unavailable');
+    }
   }
 
   private fallback(): XivapiContext {
@@ -396,7 +417,7 @@ export class XivapiClient {
     if (response.status >= 300 && response.status < 400) {
       throw new UpstreamUnavailableError(response.status, 'redirect refused');
     }
-    if (response.status === 503 || response.status >= 500 || response.status === 429) {
+    if (response.status >= 500 || response.status === 429) {
       throw new UpstreamUnavailableError(response.status, response.statusText || 'unavailable');
     }
     return response;
@@ -429,7 +450,7 @@ export class XivapiClient {
     if (!response.ok) {
       throw new UpstreamUnavailableError(response.status, response.statusText || 'search failed');
     }
-    const body = await response.json<RawSearchResponse>();
+    const body = await this.readJson<RawSearchResponse>(response, 2 * 1024 * 1024);
     const identity = this.identity(context, body);
     if (!Array.isArray(body.results))
       throw new UpstreamUnavailableError(0, 'missing search results');
@@ -450,7 +471,7 @@ export class XivapiClient {
     if (!response.ok) {
       throw new UpstreamUnavailableError(response.status, response.statusText || 'sheet failed');
     }
-    const body = await response.json<RawSheetRow>();
+    const body = await this.readJson<RawSheetRow>(response, 32 * 1024);
     if (body.row_id !== id) throw new UpstreamUnavailableError(0, 'incorrect Glasses row');
     return {
       ...this.identity(context, body),

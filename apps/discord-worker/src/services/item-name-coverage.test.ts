@@ -99,12 +99,6 @@ function isCjkScript(cp: number): boolean {
  * carries it any more, or a face now covers it) fails the stale-entry test.
  */
 const KNOWN_UNDRAWABLE = new Map<number, string>([
-  [
-    0x200f,
-    'RIGHT-TO-LEFT MARK: a stray invisible control inside two ko names in the Teamcraft source ' +
-      '(items 1200 and 1238, "…(황‏토색)"). No face maps it, so those two still draw in ' +
-      'English; stripping format characters belongs in build-item-names.mjs cleanName.',
-  ],
 ]);
 
 const hex = (cp: number): string => `U+${cp.toString(16).toUpperCase().padStart(4, '0')}`;
