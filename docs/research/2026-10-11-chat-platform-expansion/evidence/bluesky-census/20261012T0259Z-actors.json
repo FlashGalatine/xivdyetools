@@ -1,0 +1,62 @@
+{
+  "asOf": "2026-10-12T02:59:55.292Z",
+  "searchMatched": 46685,
+  "relevant": 42691,
+  "perTerm": {
+    "ffxiv": {
+      "hits": 21547,
+      "relevant": 21491,
+      "newRelevant": 21491,
+      "pages": 220,
+      "stop": "exhausted"
+    },
+    "ff14": {
+      "hits": 19222,
+      "relevant": 19214,
+      "newRelevant": 18839,
+      "pages": 195,
+      "stop": "exhausted"
+    },
+    "final fantasy xiv": {
+      "hits": 2962,
+      "relevant": 960,
+      "newRelevant": 798,
+      "pages": 30,
+      "stop": "dry"
+    },
+    "gpose": {
+      "hits": 2357,
+      "relevant": 2333,
+      "newRelevant": 1248,
+      "pages": 25,
+      "stop": "exhausted"
+    },
+    "eorzea": {
+      "hits": 459,
+      "relevant": 457,
+      "newRelevant": 300,
+      "pages": 5,
+      "stop": "exhausted"
+    },
+    "ＦＦ14": {
+      "hits": 1966,
+      "relevant": 1965,
+      "newRelevant": 0,
+      "pages": 20,
+      "stop": "dry"
+    },
+    "ファイナルファンタジー14": {
+      "hits": 1968,
+      "relevant": 59,
+      "newRelevant": 15,
+      "pages": 20,
+      "stop": "dry"
+    }
+  },
+  "followerBuckets": {
+    "under100": 34525,
+    "100to999": 7384,
+    "1000plus": 782
+  },
+  "publicationNote": "Historical aggregate-only publication. Account, profile, creator and post records are not retained. Contributor thresholds introduced for later collection cannot be verified from these retained aggregates."
+}
