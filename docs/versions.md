@@ -127,7 +127,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| v5.16.5 | Oct 2026 | Conditional Core 6/SVG adoption; preserve inspection-worker protocol, matching and bundle budget; registry/publication/consumer acceptance held |
+| v5.16.5 | Oct 2026 | Conditional Core 6/SVG adoption; preserve inspection-worker protocol, matching and bundle budget; restore development Hair/Skin loading while retaining native Node JSON attributes; registry/publication/consumer acceptance held |
 | v5.16.4 | Oct 2026 | Generic character-save names, named CSP connection hosts, validated previews/character replies and six-language privacy/Terms corrections |
 | v5.16.3 | Oct 2026 | Six-language identity-review, particular-ban continuity and recovery-retention privacy disclosures |
 | v5.16.2 | Oct 2026 | Six-language privacy alignment for preset metadata moderation, safe link snapshots and attempt/refund accounting |
