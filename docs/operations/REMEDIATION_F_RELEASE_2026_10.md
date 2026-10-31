@@ -94,7 +94,7 @@ provider cycle, migrations/recovery, disclosures/manual/delivery, command regist
 resource gate and approval of each selected workflow run also remain open. Keep all activation
 flags false, OAuth's outbound continuity binding absent, Pages retention dry-run and Stoat parked.
 No new hosted Image request, remote database probe, package publication, registration, secret
-deletion, workflow dispatch/approval or announcement is part of this preparation.
+deletion, workflow dispatch/approval or announcement is part of this preparation. **Ruling (2026-10-31, R1):** beta acceptance is retired for this wave. Production acceptance of the deployed A/R/H consumers (discord 5.9.7, API 0.21.1, web 5.16.4, OG 2.12.2 and moderation 1.9.0 with `LINKED_BAN_CONFIRMATION_ENABLED=false`; units 9 and 11-14 of the [unit acceptance checklist](REMEDIATION_UNIT_ACCEPTANCE_2026_10.md)) stands in for the deployed beta acceptance named above (the beta acceptance of the current facade and deprecated result contract that [M](REMEDIATION_M_RELEASE_2026_10.md) requires), before Core 6.0.0. Manual beta dispatch remains unauthorized, and the ruling authorizes no merge, publication, deployment or activation.
 
 Release order remains logger/auth, corrected Core minor/worker-kit, SVG minor, Bot Logic minor,
 accepted consumers/deprecations, then Core major, SVG compatibility, Bot Logic major, separately
