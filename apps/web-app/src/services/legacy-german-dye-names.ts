@@ -3,15 +3,18 @@
  * stainIDs, for the one-time legacy palette migration in collection-service.ts.
  *
  * Core 5.16.0 adopted XIVAPI's German names (PR #390): 118 lost their
- * inflected ending or changed case ("Schneeweißer" became "Schneeweiß",
- * "Metallic silberner" became "Metallic Silber"), so a 4.x palette saved under
+ * inflected ending, and the metallic ones also capitalize the color
+ * ("Schneeweißer" became "Schneeweiß", "Metallic silberner" became
+ * "Metallic Silber"), so a 4.x palette saved under
  * the German UI would otherwise drop those companions. The table also keeps
  * "Perlmutt-", Pearl White's name before 2026-09-03.
  *
  * FROZEN: this records names users saved in the past. Never regenerate it from
  * the current locale data. Built once (2026-10-31) from `main` at 13c386e5 and
  * the 4.x-era de.json at 7500ba2e~1. Keys are lowercase, as the migration
- * compares them, and none equals a current dye name in any locale.
+ * compares them. Once core 5.16.0's names are in place, none equals a current
+ * dye name in any locale; before that, 118 are the current German names, on
+ * the same stainIDs.
  */
 export const LEGACY_GERMAN_DYE_NAMES: ReadonlyMap<string, number> = new Map<string, number>([
   ['schneeweißer', 1],

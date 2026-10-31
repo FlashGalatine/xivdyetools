@@ -368,8 +368,8 @@ export class CollectionService {
       if (localized) byName.set(localized.toLowerCase(), dye.stainID);
     }
     // German names a 4.x palette could hold from before core 5.16.0's
-    // correction, in any UI locale: none equals a current name, and a current
-    // name always wins.
+    // correction, in any UI locale. A current name always wins; before 5.16.0
+    // most keys are the current German names, on the same stainIDs.
     for (const [legacyName, stainID] of LEGACY_GERMAN_DYE_NAMES) {
       if (!byName.has(legacyName)) byName.set(legacyName, stainID);
     }
