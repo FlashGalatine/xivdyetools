@@ -34,16 +34,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `chara-types`, with root names and legacy-module bridges preserved. The palette-free
   `/chara` entry no longer reaches the legacy parser at runtime. Stale export exemptions,
   entry-point descriptions and reader attribution are corrected.
+- **German and French dye names now match the game (XIVAPI `Stain.Name`, PR #390).** 118
+  German names change wording, mostly losing the inflected ending (`Schneeweißer` becomes
+  `Schneeweiß`, `Metallic silberner` becomes `Metallic Silber`); the 125 French names change
+  capitalization only (`blanc neige` becomes `Blanc neige`). A lookup or search by an earlier
+  full German name no longer matches, so type the in-game name; French matching is
+  case-insensitive and unaffected. stainIDs, itemIDs, English, Japanese, Korean and Chinese
+  names, colors, acquisition data and the Facewear collection are unchanged; only
+  `dyenames.csv` and the generated `de`/`fr` locale payloads change.
 
 ### Fixed
 
 - Preserve emitted declarations for the five existing public utility helpers when building with `stripInternal`; their runtime signatures and all legacy character APIs remain unchanged.
-
-- **German and French dye names follow the authoritative XIVAPI `Stain.Name` values (PR #390).**
-  German wording and French capitalization are corrected from a pinned, complete capture of
-  the 125 bundled dyes. English, Japanese, Korean and Chinese display names, dye identities,
-  colors, acquisition data and the separate Facewear collection are unchanged; only
-  `dyenames.csv` and the generated `de`/`fr` locale payloads change.
 
 - **Long imported nicknames and producer labels keep surrogate pairs intact.** Their cap
   remains 256 UTF-16 code units with no ellipsis; a pair crossing that boundary is omitted
