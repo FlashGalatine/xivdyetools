@@ -2,7 +2,7 @@
 **Severity:** LOW · **Exposure:** INTERNET-UNAUTH · **Deploy unit:** gap (upstream XIVAuth a4e6693; impact lands in apps/oauth + apps/presets-api) · **Rotation:** NONE · **Policy:** NONE · **CWE:** CWE-287
 
 ## Location
-- `other-sources/XIVAuth/app/controllers/users/omniauth_callbacks_controller.rb:109` — Upstream XIVAuth email auto-merge attaches a new provider identity to the email-matched account and signs in without MFA, so oauth mints a JWT with the victim's discord_id
+- `other-sources/XIVAuth/app/controllers/users/omniauth_callbacks_controller.rb:109` — Upstream XIVAuth email auto-merge attaches a new provider identity to the email-matched account and signs in without MFA, so oauth mints a JWT with the victim's discord_id (as of a4e6693; the MFA case is fixed upstream in `d27a8b2`, and the auto-link for accounts without MFA remains by design)
 - Upstream line references below are to the audited commit a4e6693. At the current upstream tip (XIVAuth `b06d3d4`, 2026-10-28) the same flow is `sign_in_via_unknown_identity` (`omniauth_callbacks_controller.rb:58-75`, email lookup at :68), and `bind_to_existing_user` refuses an account with MFA (:78) before it adds the identity (:80).
 
 ## Evidence
@@ -12,7 +12,7 @@
 - Live state the repo cannot show: Which omniauth providers are enabled in XIVAuth's production credentials (User.omniauth_providers = Devise configs intersected with credentials[:oauth] keys). The verified-email gating in the GitHub and Twitch gems is not vendored in the clone.
 
 ## Fix
-- Reported upstream on 2026-10-27 (see Status). Upstream fixed the MFA case the same day in `d27a8b2` ("fix: don't bind identity provider if MFA is enabled"), followed by `60ab1fa` (no automatic sign-in after a password reset when MFA is on). Its security policy's Hall of Fame credits the report (`app/views/legal/security_policy.html.erb`, commit `c5169fb`) as informational, CWE-288, with that fix. Accounts without MFA are still auto-linked by email: upstream treats this as intended, because whoever controls the email can already reset the password.
+- Reported upstream on 2026-10-27 (see Status). Upstream fixed the MFA case the same day in `d27a8b2` ("fix: don't bind identity provider if MFA is enabled"), followed by `60ab1fa` (no automatic sign-in after a password reset when MFA is on). Its security policy's Hall of Fame credits the report (`app/views/legal/security_policy.html.erb`, commit `c5169fb`) as informational, CWE-288, with that fix. Accounts without MFA are still auto-linked by email. Upstream's own spec asserts this as intended (`spec/controllers/users/omniauth_callbacks_controller_spec.rb:107-115`, "and an account without MFA has the provider's email"), and its Hall of Fame entry rates the impact minor because whoever controls the email can already reset the password.
 - On our side the impact can only be narrowed; see the 2026-10-31 addendum below.
 - **Maintainer decision:** reported upstream (2026-10-27). On 2026-10-31 the maintainer kept this write-up's detail, since upstream has fixed and disclosed the MFA case, and gated the xivdyetools-side narrowing on the oauth identity-split activation.
 
@@ -25,23 +25,28 @@ Earlier status: OPEN — private upstream report sent 2026-10-27 to XIVAuth's pu
 
 Rechecked against `main` (`13c386e5`) and the release-cut queue (oauth 3.2.0) after the upstream fix.
 Every path needs an attacker who controls a login-provider account carrying the victim's verified
-email, and a victim XIVAuth account without MFA.
+email, and a victim XIVAuth account without MFA. Source review only: none of these paths was
+reproduced against production or a real provider.
 
 - **Main path (open on `main` and in oauth 3.2.0):** an XIVAuth session as the victim resolves the
-  victim's row by `xivauth_id` (`apps/oauth/src/services/user-service.ts:73-77`), and the JWT carries
-  that row's `discord_id` (`jwt-service.ts:141`). presets-api then acts as the victim: their presets
-  can be edited, deleted and voted on, and moderator rights follow if the victim is in
-  `MODERATOR_IDS` (`apps/presets-api/src/middleware/auth.ts:281`, `:341`).
+  victim's row by `xivauth_id` (`apps/oauth/src/services/user-service.ts:73-77`). On `main`, a
+  Discord-only row is also reached through the Discord ID that XIVAuth asserts (`:80-86`). The JWT
+  carries that row's `discord_id` (`jwt-service.ts:141`). presets-api then acts as the victim: their
+  presets can be edited, deleted and voted on, and moderator rights follow if the victim is in
+  `MODERATOR_IDS` (`apps/presets-api/src/middleware/auth.ts:361-366`, the JWT path).
 - **Permanent attach (missed by the original audit):** when the victim's row has no `discord_id`,
   `main` attaches the Discord ID that XIVAuth asserts (`user-service.ts:183-198`), and presets-api's
   re-key moves the victim's records to it (`apps/presets-api/src/services/identity-rekey-service.ts`).
-  The attacker's own Discord sign-in then reaches that row even after the victim recovers XIVAuth.
+  The attach outlives the XIVAuth takeover: recovering the XIVAuth account does not undo it. This
+  supersedes answer 5 of `evidence/review-gap-xivauth-identity-claim.md`, which judged re-keying
+  onto a victim blocked.
   oauth 3.2.0 refuses this attach while `IDENTITY_SPLIT_ENABLED` is false. Turning the flag on allows
-  it again, behind the ban-continuity handoff. Rows already changed this way on `main` are neither
-  detected nor repaired.
+  it again, behind the ban-continuity handoff. A one-time read-only check for XIVAuth rows whose
+  Discord ID was attached on `main` is a follow-up (A-OAUTH).
 - **Narrowing options on our side:** (M1) attach a Discord ID that XIVAuth asserts, or resolve a row
   by it, only after proof from a direct Discord sign-in; (M2) grant moderator rights only to tokens
-  from a Discord sign-in. Neither closes the main path for an XIVAuth-only victim. Closing it needs
+  from a Discord sign-in. Neither closes the main path for a victim whose row already carries their
+  XIVAuth ID, whether XIVAuth-only or linked. Closing it needs
   XIVAuth-minted tokens that never act as the Discord ID, or a change of upstream design.
 - **Gate:** M1 must land before `IDENTITY_SPLIT_ENABLED` is activated. It is recorded with oauth
   3.2.0's acceptance checklist in the October 2026 remediation release documents.

@@ -106,7 +106,7 @@ Wire the `glamour` tier from Sprint 1; drop the moderator name from `preview-ima
 | [FINDING-032](findings/FINDING-032.md) | security | LOW / LOCAL · P3 | `[env.development]`: add `routes = []` and `workers_dev = false` (or an explicit dev route); extend `wrangler-config.test.ts`. |
 | [FINDING-036](findings/FINDING-036.md) | security | INFO / INTERNET-UNAUTH · P3 | Domain-separate the state HMAC from the JWT signing key (prefix or derived subkey) with a migration window for in-flight states. |
 
-Adopt Sprint 1's `/64` option in the oauth `/auth/*` limiter. Optionally narrow the upstream email-merge impact ([FINDING-008](findings/FINDING-008.md)) by re-verifying the link on sign-in.
+Adopt Sprint 1's `/64` option in the oauth `/auth/*` limiter. Narrow the upstream email-merge impact ([FINDING-008](findings/FINDING-008.md)): M1 (attach or resolve by a Discord ID that XIVAuth asserts only after direct Discord proof) is required before the oauth identity-split activation (AP-34 in the October 2026 release checklist); M2 (moderator rights only via Discord sign-in) is optional.
 **Ends with:** `pnpm turbo run build type-check lint test --filter=xivdyetools-oauth-worker...` → merge → deploy (production, same command).
 
 ## Sprint 7 — api-worker: XIVAPI bounds, cache-miss budget
