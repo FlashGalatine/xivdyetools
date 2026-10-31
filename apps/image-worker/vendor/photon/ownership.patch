@@ -1,0 +1,69 @@
+diff --git a/src/lib.rs b/src/lib.rs
+index 0f481a2e..473043f5 100644
+--- a/src/lib.rs
++++ b/src/lib.rs
+@@ -1,3 +1,7 @@
++// Modified by XIV Dye Tools on 2026-10-28 (Apache-2.0 section 4(b) notice added 2026-10-31):
++// PhotonImage::new_from_byteslice takes ownership of the decoded RGBA buffer instead of copying
++// it. Upstream: photon-rs as shipped in cf-wasm release a7423d01eacc7ce20359ad0df202d0ce58cf0347.
++// The complete change is ownership.patch in apps/image-worker/vendor/photon of XIV Dye Tools.
+ //! A high-performance image processing library, available for use both natively and on the web.
+ //!
+ //! #### Functions
+@@ -103,12 +107,14 @@ impl PhotonImage {
+ 
+         let img = image::load_from_memory(slice).unwrap();
+ 
+-        let raw_pixels = img.to_rgba8().to_vec();
++        let width = img.width();
++        let height = img.height();
++        let raw_pixels = img.into_rgba8().into_raw();
+ 
+         PhotonImage {
+             raw_pixels,
+-            width: img.width(),
+-            height: img.height(),
++            width,
++            height,
+         }
+     }
+ 
+diff --git a/src/transform.rs b/src/transform.rs
+index b58bc027..5d6be5b2 100644
+--- a/src/transform.rs
++++ b/src/transform.rs
+@@ -1,3 +1,7 @@
++// Modified by XIV Dye Tools on 2026-10-28 (Apache-2.0 section 4(b) notice added 2026-10-31):
++// crop and resize borrow the input pixels instead of cloning them. Upstream: photon-rs as
++// shipped in cf-wasm release a7423d01eacc7ce20359ad0df202d0ce58cf0347. The complete change is
++// ownership.patch in apps/image-worker/vendor/photon of XIV Dye Tools.
+ //! Image transformations, ie: scale, crop, resize, etc.,
+ 
+ use crate::helpers;
+@@ -40,10 +44,10 @@ pub fn crop(
+     x2: u32,
+     y2: u32,
+ ) -> PhotonImage {
+-    let img: RgbaImage = ImageBuffer::from_raw(
++    let img: ImageBuffer<image::Rgba<u8>, &[u8]> = ImageBuffer::from_raw(
+         photon_image.width,
+         photon_image.height,
+-        photon_image.raw_pixels.clone(),
++        photon_image.raw_pixels.as_slice(),
+     )
+     .unwrap();
+ 
+@@ -272,7 +276,12 @@ pub fn resize(
+ ) -> PhotonImage {
+     let sampling_filter = filter_type_from_sampling_filter(sampling_filter);
+ 
+-    let dyn_img = helpers::dyn_image_from_raw(photon_img);
++    let dyn_img: ImageBuffer<image::Rgba<u8>, &[u8]> = ImageBuffer::from_raw(
++        photon_img.width,
++        photon_img.height,
++        photon_img.raw_pixels.as_slice(),
++    )
++    .unwrap();
+     let resized_img = ImageRgba8(image::imageops::resize(
+         &dyn_img,
+         width,

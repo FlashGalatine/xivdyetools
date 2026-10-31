@@ -1,0 +1,120 @@
+{
+  "name": "notice-rebuild-2026-10-31",
+  "date": "2026-10-31",
+  "purpose": "Add top-of-file Apache-2.0 section 4(b) change notices to src/lib.rs and src/transform.rs inside source-patched.tar.gz, regenerate ownership.patch, and rebuild photon-owned.wasm with the pinned recipe. compact-exact-result.json and provenance.json remain the unedited 2026-10-28 proof of the previous artifact.",
+  "previous": {
+    "proof": "compact-exact-result.json",
+    "sourceArchiveSHA256": "8ba8510955a5e6bae10eed0b37500c51de9d72327bec305d285c7b9df6eac640",
+    "ownershipPatchSHA256": "a14839f8fa3033cb05b015a579b8ebf0b69d9a817a33faa2f6553462e9ca59ba",
+    "wasmSHA256": "f848bcd2a2794ef7dcea077ecdd3e4eaf06a2ace874a390d33800577968d2461",
+    "preOptSHA256": "4bc8f98a9f099e72ef799a80ebf2b3eaed48d1d934ddd36da49ccbb0240fc5c6",
+    "wasmBytes": 1571497
+  },
+  "host": {
+    "os": "Windows 11 Pro 10.0.26300 (x86_64)",
+    "shell": "Windows PowerShell 5.1",
+    "node": "v22.21.0",
+    "nodeZlib": "1.3.1-470d3a2",
+    "longPathsEnabled": true
+  },
+  "toolProvisioning": {
+    "policy": "Fresh downloads into the git-ignored vendor/photon/toolchain/ (the build.ps1 default). No tool binary, registry cache, target, source or output directory from the 2026-10-28 run was available or reused.",
+    "rust": "RUSTUP_HOME=toolchain/rustup CARGO_HOME=toolchain/cargo rustup toolchain install 1.96.1-x86_64-pc-windows-msvc --profile minimal --target wasm32-unknown-unknown (rustup 1.28.2; it then reported that rustup itself is not installed in the isolated Cargo home, as REBUILD.md records for 2026-10-28)",
+    "archives": {
+      "wasm-bindgen.tar.gz": {
+        "url": "https://github.com/wasm-bindgen/wasm-bindgen/releases/download/0.2.126/wasm-bindgen-0.2.126-x86_64-pc-windows-msvc.tar.gz",
+        "sha256": "5a3773c7e69cfb2d865e235e9210de184c8c3af1787720646ec1a8bbe09c6179",
+        "matchesProvenance": true
+      },
+      "binaryen.tar.gz": {
+        "url": "https://github.com/WebAssembly/binaryen/releases/download/version_123/binaryen-version_123-x86_64-windows.tar.gz",
+        "sha256": "7b3568424a0f871a52865d5c78177db646b1832a8c487321e27703103f936880",
+        "matchesProvenance": true
+      }
+    },
+    "crates": "cargo build --locked against the retained Cargo.lock; 99 crates downloaded fresh from crates.io into the empty isolated Cargo home and checked against the lock's checksums by Cargo.",
+    "toolHashes": {
+      "rustc": "16890077e256905165c66d49016eb318d6e5ca76a477e92007038cd259474697",
+      "cargo": "aaa2a484c6d5c1dc145e8fb965a8803b2489cd3c8d9157ef7cf0608fcff134c6",
+      "bindgen": "2d5de73be088f1b53764fb298fe24f9fd44f438fa02e5d208159780b20e858ed",
+      "binaryen": "9738733f02dc4b80ea42daeca89d7b8a0755656f3d2e405949ee1233bf473598",
+      "hostLinker": "21d542ef31ee7308dffb79f3e7ebf4ffa0f4a109874c95b8cc78190c36fccbbe"
+    },
+    "toolHashesMatchProvenance": true
+  },
+  "buildScript": {
+    "retainedSHA256": "59345b46af3554d0f961f50251f85f2ee039d53f9ad52c7decdef9d619fa468f",
+    "executedCopySHA256": "15879ec94d52140bd0b64fe49c0db53fb6ead6271b03db7f8fba8ee3c0af5d16",
+    "difference": "Line 2 only: $ErrorActionPreference='Continue' instead of 'Stop'. Under Windows PowerShell 5.1, redirecting cargo's stderr with *> under 'Stop' throws on cargo's first progress line ('Updating crates.io index'); the unmodified script failed that way. Every tool step still throws on a nonzero $LASTEXITCODE. The copy ran from vendor/photon so $PSScriptRoot, the remaps and all paths were those of build.ps1, and it was deleted afterwards.",
+    "command": "./build-ps51.ps1 -Variant patched -Clean (default -ToolchainDirectory, i.e. vendor/photon/toolchain)"
+  },
+  "controlRebuild": {
+    "description": "Unchanged 2026-10-28 source-patched.tar.gz rebuilt with the freshly downloaded tools and crates, before any source change.",
+    "sourceArchiveSHA256": "8ba8510955a5e6bae10eed0b37500c51de9d72327bec305d285c7b9df6eac640",
+    "compilerFinished": "    Finished `release` profile [optimized] target(s) in 1m 43s",
+    "artifacts": {
+      "photon_rs.d.ts": "c1f0c347d0c96879c9c1894f86386e56d5dbeba58ddb287aa77bb969adb28662",
+      "photon_rs.js": "3dc747d3a15245131bae17a19dfd5356a337e399e0d03dff8c36c785fb2f9923",
+      "photon_rs_bg.wasm": "f848bcd2a2794ef7dcea077ecdd3e4eaf06a2ace874a390d33800577968d2461",
+      "photon_rs_bg.wasm.d.ts": "05892879539d11e4208f1ecf82e2c481ff35bbccc1c8d672b9baa09927f9acd5",
+      "pre-opt.wasm": "4bc8f98a9f099e72ef799a80ebf2b3eaed48d1d934ddd36da49ccbb0240fc5c6"
+    },
+    "matchesProvenanceResizeArtifacts": true,
+    "conclusion": "The retained recipe reproduces the previous accepted artifact from fresh tool and crate downloads on this host. It is still one Windows host; cross-platform reproducibility is unproven."
+  },
+  "sourceChange": {
+    "changedFiles": {
+      "src/lib.rs": {
+        "previousSHA256": "501faf7bb5e91d0ae9f83224944dcf3bcfb607c4fdca831b041a0a746a3a3c88",
+        "sha256": "36b8f55d5e6dd9b6006eeae8b27cb1db17d23e495e7407df5f673334274e5cac",
+        "bytes": 17330
+      },
+      "src/transform.rs": {
+        "previousSHA256": "dc159d7f3810fdd12c1f19c243bfd4417f4b61d81e17ac170437d093e870e79f",
+        "sha256": "44b22cb3c53eaeb317f4b375f87c3d6f044f656b3f458d4e952d14f7533bdbcb",
+        "bytes": 31074
+      }
+    },
+    "change": "Four '//' comment lines prepended to each file; no other byte of either file changed. The other 33 source files are unchanged, at the hashes compact-exact-result.json records.",
+    "sourceArchive": {
+      "sha256": "cf726ec5df4ef7b15304eae5627eb9766ce0c9b39868e73b0d906c29d502fe85",
+      "bytes": 1485351,
+      "generator": "docs/audits/2026-10-26-security/evidence/scripts/photon-notice-rebuild-2026-10-31/retar-patched-source.mjs",
+      "generatorSHA256": "369f54e8b35826d127000f18655472304bea16d241a2f0cd6c032be864e6a8a2",
+      "command": "node retar-patched-source.mjs <2026-10-28 source-patched.tar.gz> <root holding the two noticed files> source-patched.tar.gz",
+      "deterministic": "Two runs produced identical bytes. Every other tar header and payload is copied byte-for-byte; the two replaced entries get the new size, mtime 2026-10-31T00:00:00Z and a recomputed checksum; gzip level 9, header mtime 0, OS byte 3 (Node v22.21.0, zlib 1.3.1-470d3a2)."
+    },
+    "ownershipPatch": {
+      "sha256": "bcccccc5af272069b9c988d1a831ae0f89570ae24667204b6c37fde6697c1d4c",
+      "bytes": 2538,
+      "recipe": "Fresh git repository (core.autocrlf false); commit the unmodified src/lib.rs and src/transform.rs from source-unmodified.tar.gz; copy the patched files over them; git diff --no-ext-diff --abbrev=8 with diff.algorithm=myers (git 2.55.0.windows.1). The same recipe reproduces the 2026-10-28 ownership.patch byte-for-byte, and the new patch applies to the unmodified sources with patch -p1 to give exactly the noticed files.",
+      "deterministic": "Two runs produced identical bytes."
+    }
+  },
+  "noticeRebuild": {
+    "sourceArchiveSHA256": "cf726ec5df4ef7b15304eae5627eb9766ce0c9b39868e73b0d906c29d502fe85",
+    "cleanBuilds": 2,
+    "compilerFinished": [
+      "    Finished `release` profile [optimized] target(s) in 1m 19s",
+      "    Finished `release` profile [optimized] target(s) in 1m 37s"
+    ],
+    "artifacts": {
+      "photon_rs.d.ts": "c1f0c347d0c96879c9c1894f86386e56d5dbeba58ddb287aa77bb969adb28662",
+      "photon_rs.js": "3dc747d3a15245131bae17a19dfd5356a337e399e0d03dff8c36c785fb2f9923",
+      "photon_rs_bg.wasm": "dd3badf24c0231a0b9b63272829d714c7d5feccccd9f2ebdd76c61b5fc6f1bd1",
+      "photon_rs_bg.wasm.d.ts": "05892879539d11e4208f1ecf82e2c481ff35bbccc1c8d672b9baa09927f9acd5",
+      "pre-opt.wasm": "c768821048ee197240efce4fd916e192556ad591ddffbf2f240e5209dbab1a90"
+    },
+    "twoCleanBuildsMatch": true,
+    "acceptedWasmSHA256": "dd3badf24c0231a0b9b63272829d714c7d5feccccd9f2ebdd76c61b5fc6f1bd1",
+    "wasmBytes": 1571497,
+    "jsGlueAndTypesUnchanged": true,
+    "differenceFromPrevious": "83 bytes differ, all inside 80 little-endian u32 panic-location line fields, each exactly +4. Each changed field follows a file-name length of 10 (src\\lib.rs, 23 fields) or 16 (src\\transform.rs, 57 fields). No other byte changed, so code, imports, exports and data layout are otherwise identical."
+  },
+  "abiParity": "vendor-photon.test.ts passes on the new artifact: every stock import and export, and every function signature, equals the installed @cf-wasm/photon 0.4.0 binary and abi-signatures.json variants.resize.abi (unchanged).",
+  "limits": [
+    "The memory, parity, cold/warm and concurrency observations in the 2026-10-28 evidence and in CHANGELOG 1.3.5 were taken on the previous artifact (f848bcd2...). The byte difference above is line-number constants only, but those measurements must be re-measured on this artifact at image acceptance.",
+    "Build logs embed absolute host paths and are not retained; the compiler finish lines are recorded instead.",
+    "This proves the recipe on one Windows host with fresh downloads. Cross-platform reproducibility is unproven."
+  ]
+}

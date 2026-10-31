@@ -12,7 +12,7 @@
  * @module services/image/photon
  */
 
-import { PhotonImage, SamplingFilter, resize, crop } from '@cf-wasm/photon';
+import { PhotonImage, SamplingFilter, resize, crop } from './photon-runtime.js';
 import { assertImageDimensionsFromHeader } from './validators.js';
 
 // REFACTOR-007: ONE `maxDimension` rule. It lives in validators.ts — which the
@@ -97,7 +97,8 @@ export function loadImage(buffer: Uint8Array): PhotonImage {
  * @param image - PhotonImage to resize
  * @param maxDimension - Maximum width or height
  * @param samplingFilter - Resampling algorithm
- * @returns New resized PhotonImage (caller must free both images)
+ * @returns Resized PhotonImage, or the original when no resize is needed.
+ *   The caller must free each distinct image once.
  */
 export function resizeImage(
   image: PhotonImage,
@@ -130,9 +131,8 @@ export function resizeImage(
 
   // No resize needed if already smaller
   if (newWidth === width && newHeight === height) {
-    // Return a copy to maintain consistent memory management
-    // The caller expects to free both original and resized
-    return PhotonImage.new_from_byteslice(image.get_bytes());
+    // Avoid a full PNG encode/decode and a second pixel allocation.
+    return image;
   }
 
   return resize(image, newWidth, newHeight, samplingFilter);
@@ -286,7 +286,28 @@ export function processImageForThumbnail(buffer: Uint8Array): Uint8Array {
     original = loadImage(buffer);
     const box = computeCropBox(original.get_width(), original.get_height());
     cropped = crop(original, box.x1, box.y1, box.x2, box.y2);
+    // The crop owns its pixels. Release the consumed full image before resize.
+    if (original !== cropped) {
+      const consumed = original;
+      original = null;
+      try {
+        consumed.free();
+      } catch {
+        // Preserve best-effort cleanup even if Photon rejects a free.
+      }
+    }
     resized = resize(cropped, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, SamplingFilter.Lanczos3);
+    // Encoding only needs the resized image; do not retain the larger crop.
+    if (cropped !== resized) {
+      const consumed = cropped;
+      if (original === consumed) original = null;
+      cropped = null;
+      try {
+        consumed.free();
+      } catch {
+        // Preserve best-effort cleanup even if Photon rejects a free.
+      }
+    }
     return resized.get_bytes_webp();
   } finally {
     // Distinct references only — freeing the same pointer twice corrupts the
