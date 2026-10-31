@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Acquisition generation captures and validates a canonical game/schema pair for every sheet, batch and search cursor. Record schema provenance in candidate metadata; legacy pinned inputs require an explicit schema and byte-identical acquisition/facewear data before enrollment.
-- Complete upstream review requests before adopting outputs, so late upstream failures leave existing files intact. Optional exact-request caching and offline replay support reproducibility checks; missing or invalid cached provenance fails without live fallback. Requests have a 30-second deadline and 64 MiB body ceiling.
+- Complete upstream review requests before adopting outputs, so late upstream failures leave existing files intact. Optional exact-request caching and offline replay support reproducibility checks; missing or invalid cached provenance fails without live fallback, and cache envelopes are written atomically (temp file + rename). Requests have a 30-second deadline and 64 MiB body ceiling.
 - Document XIVAPI's supplied game-data translations as authoritative. Existing runtime data and translation files are unchanged by this maintenance-only change.
 
 ## [0.21.0] - 2026-10-20

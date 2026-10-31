@@ -1,6 +1,6 @@
 /** Build-time transport: one immutable XIVAPI context and optional exact-URL replay. */
-import { createHash } from 'node:crypto';
-import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { createHash, randomUUID } from 'node:crypto';
+import { mkdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 export type Pins = { version: string; schema: string };
@@ -270,7 +270,15 @@ export class AcquisitionSource {
     const body = this.parse(text, url, validate);
     if (file) {
       await mkdir(this.cacheDir!, { recursive: true });
-      await writeFile(file, JSON.stringify({ url, body: text }), 'utf8');
+      // Write beside the target and rename, so an interrupted run never leaves a torn cache hit.
+      const temp = `${file}.${randomUUID()}.tmp`;
+      try {
+        await writeFile(temp, JSON.stringify({ url, body: text }), 'utf8');
+        await rename(temp, file);
+      } catch (error) {
+        await rm(temp, { force: true }).catch(() => {});
+        throw error;
+      }
     }
     return body as T;
   }
