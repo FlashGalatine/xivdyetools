@@ -50,7 +50,7 @@ GET /auth/discord?code_challenge=<base64url>&code_challenge_method=S256
 **Worker processing:**
 1. Validates PKCE challenge format
 2. Creates state object with CSRF token, challenge, redirect URI, and 10-minute expiry
-3. Signs state with HMAC-SHA256 using `JWT_SECRET`
+3. Signs `oauth-state-v1:` plus the encoded state with HMAC-SHA256 using `JWT_SECRET`
 4. **302 redirects** to Discord authorization URL with PKCE parameters
 
 ### Step 3: User Authorizes on Discord
@@ -131,6 +131,12 @@ not reach the provider: a missing one is `400 Missing state`.
 
 The state parameter prevents CSRF and tampering attacks.
 
+The wire format remains `encodedState.signature`; the prefix separates state signing input
+from JWT signing input. States signed by 3.1.x and earlier (no prefix) are rejected; the
+one-time compatibility window closed on 2026-10-28 before 3.2.0 shipped, so a sign-in in flight
+across that deployment must be restarted. Unsigned development GET compatibility is separate;
+POST exchanges require a signature.
+
 **Format:** `base64url(json).hmac_signature`
 
 **State data structure:**
@@ -196,11 +202,18 @@ What the worker does with that link is deliberately narrow (FINDING-013):
 - A Discord ID that **another local account already owns** is *not* claimed, and nothing is deleted.
   Linking two existing accounts needs an explicit, signed-in confirmation step, which does not
   exist — so it simply does not happen. The refusal is audit-logged without identifiers.
-- A Discord ID **nobody owns** is linked to the logging-in account (the social link is
-  OAuth-verified upstream, and there is no competing local identity).
-- An existing Discord link is **never overwritten** from an XIVAuth assertion.
-- The XIVAuth ID of the account actually logging in wins over a stale one left by an earlier link —
-  the Discord account is the anchor.
+- Existing relationship changes are refused while `IDENTITY_SPLIT_ENABLED` is false. The
+  initial provider release does not declare an outbound continuity binding.
+- The prepared enabled path attaches an unowned ID only through the conditional operation
+  protocol. It cannot silently expand an existing ban; uncovered scope requires moderator
+  confirmation first.
+- When XIVAuth no longer asserts the stored Discord ID, the prepared split retains the
+  Discord anchor and gives XIVAuth a fresh row. A displaced XIVAuth association is preserved
+  the same way. A later attachment requires a fresh authenticated assertion; no account is
+  overwritten or silently merged.
+
+See [stored identities and moderation continuity](../../architecture/identity-moderation.md)
+for the private provider, session revisions, handoff and activation prerequisites.
 
 Before this, the merge was driven solely by the asserted Discord link: another row could be deleted
 and its Discord ID — the presets-api identity and moderator key — claimed by this one.

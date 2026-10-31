@@ -32,7 +32,7 @@
     "tsx": "^4.23.15"
   },
   "engines": {
-    "node": ">=22.13.0"
+    "node": ">=22.16.0"
   },
   "packageManager": "pnpm@11.17.0"
 }

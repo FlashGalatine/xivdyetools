@@ -39,6 +39,11 @@ const createValidProductionEnv = (overrides: Partial<Env> = {}): Env => ({
 });
 
 describe('Environment Validation', () => {
+    it('requires a complete service binding only for exact true activation',()=>{
+        for(const flag of ['false','TRUE','1',undefined]) expect(validateEnv({...createValidEnv(),IDENTITY_SPLIT_ENABLED:flag}).valid).toBe(true);
+        expect(validateEnv({...createValidEnv(),IDENTITY_SPLIT_ENABLED:'true'}).valid).toBe(false);
+        expect(validateEnv({...createValidEnv(),IDENTITY_SPLIT_ENABLED:'true',BAN_CONTINUITY:{apply:async()=>({}),getOperation:async()=>({}),acknowledge:async()=>({})}}).valid).toBe(true);
+    });
     describe('validateEnv', () => {
         it('should pass with valid development environment', () => {
             const env = createValidEnv();

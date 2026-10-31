@@ -22,6 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Keep the presets test loader's `.js` alias limited to relative source imports, so Windows dependency filenames remain intact when validating intermediate release cuts. No presets runtime behavior changes in this bootstrap.
 - Prepare moderation's initial test-module loading in setup before its request-gate assertions. Every behavioral test still resets and reevaluates the real app; request assertions and timeouts remain unchanged.
 - Keep generated VitePress temporary JavaScript out of Knip's source project during concurrent docs builds. API source, docs configuration and theme files remain analyzed.
+- Raise the Node.js engine floor from 22.13 to 22.16 (root and oauth `engines`, README and developer guides): the oauth SQLite test double calls `node:sqlite`'s `StatementSync.columns()`, added in Node 22.16, so every oauth suite failed on 22.13-22.15. CI already runs the latest Node 22.
 
 ## [2.3.3] - 2026-10-13
 
