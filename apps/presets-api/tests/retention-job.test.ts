@@ -1,5 +1,5 @@
 /**
- * Daily retention job: all three prunes run, one failing never stops the
+ * Daily retention job: all prunes run, one failing never stops the
  * others, and the Cron entry point hands the work to ctx.waitUntil.
  *
  * BUG-066 (2026-10-04 deep-dive): every prune catches its own D1 error, so a
@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   events: vi.fn(),
   failed: vi.fn(),
   moderation: vi.fn(),
+  continuity: vi.fn(),
 }));
 
 vi.mock('../src/services/rate-limit-service', () => ({ pruneSubmissionEvents: mocks.events }));
@@ -21,6 +22,7 @@ vi.mock('../src/services/notification-service', () => ({ pruneFailedNotification
 vi.mock('../src/services/moderation-retention-service', () => ({
   pruneModerationRecords: mocks.moderation,
 }));
+vi.mock('../src/services/ban-continuity-retention', () => ({ pruneContinuityRecords: mocks.continuity }));
 
 import { runRetentionJob, scheduled } from '../src/retention-job';
 import { createMockEnv } from './test-utils';
@@ -34,16 +36,18 @@ describe('retention job', () => {
     mocks.events.mockResolvedValue(true);
     mocks.failed.mockResolvedValue(true);
     mocks.moderation.mockResolvedValue(true);
+    mocks.continuity.mockResolvedValue(true);
   });
 
-  it('invokes all three prunes with the database', async () => {
+  it('invokes all four prunes with the database', async () => {
     const db = {} as D1Database;
     const result = await runRetentionJob(db);
 
     expect(mocks.events).toHaveBeenCalledWith(db, expect.anything());
     expect(mocks.failed).toHaveBeenCalledWith(db, expect.anything());
     expect(mocks.moderation).toHaveBeenCalledWith(db, expect.anything());
-    expect(result).toEqual({ fulfilled: 3, rejected: 0, failed: [] });
+    expect(mocks.continuity).toHaveBeenCalledWith(db, expect.anything());
+    expect(result).toEqual({ fulfilled: 4, rejected: 0, failed: [] });
   });
 
   it('still runs the others when one prune throws, and logs only the error name', async () => {
@@ -55,7 +59,7 @@ describe('retention job', () => {
 
     expect(mocks.events).toHaveBeenCalledTimes(1);
     expect(mocks.moderation).toHaveBeenCalledTimes(1);
-    expect(result).toEqual({ fulfilled: 2, rejected: 1, failed: ['failed_notifications'] });
+    expect(result).toEqual({ fulfilled: 3, rejected: 1, failed: ['failed_notifications'] });
     expect(warn).toHaveBeenCalledWith('[retention-job] a prune threw', { cause: 'TypeError' });
     expect(error).toHaveBeenCalledWith('[retention-job] retention sweep failed', {
       failed: ['failed_notifications'],
@@ -73,7 +77,7 @@ describe('retention job', () => {
     const result = await runRetentionJob({} as D1Database, { warn, error });
 
     expect(result).toEqual({
-      fulfilled: 3,
+      fulfilled: 4,
       rejected: 0,
       failed: ['submission_events', 'moderation_records'],
     });
@@ -105,13 +109,14 @@ describe('retention job', () => {
     mocks.events.mockRejectedValue('boom');
     mocks.failed.mockRejectedValue(new Error('x'));
     mocks.moderation.mockRejectedValue(new Error('y'));
+    mocks.continuity.mockRejectedValue(new Error('z'));
 
     await expect(
       runRetentionJob({} as D1Database, { warn: vi.fn(), error: vi.fn() })
     ).resolves.toEqual({
       fulfilled: 0,
-      rejected: 3,
-      failed: ['submission_events', 'failed_notifications', 'moderation_records'],
+      rejected: 4,
+      failed: ['submission_events', 'failed_notifications', 'moderation_records', 'continuity_records'],
     });
   });
 

@@ -1,9 +1,15 @@
 # Content Moderation Pipeline
 
 Content moderation runs on preset submission (`POST`) and edit (`PATCH`) when the name or
-description changes. The pipeline uses a two-tier filtering strategy: a fast local profanity filter
-followed by an optional external toxicity check. On `PATCH`, a per-user daily cap is spent
-**before** either tier runs — see [Daily cap in front of the pipeline](#daily-cap-in-front-of-the-pipeline).
+description changes. Only exact `PRESET_METADATA_MODERATION_ENABLED=true` extends it to changed
+tags/example links and adds tags plus decoded URL path text to the scorer input. The flag remains
+explicitly false in both environments until both review consumers are deployed and verified,
+followed by a separate activation-only PR. Hostnames, credentials, query strings and fragments
+are excluded from derived link text; supplied URLs are never fetched.
+
+The pipeline uses a local profanity filter followed by an optional external toxicity check.
+Submission admission and the applicable `PATCH` text-edit cap are spent **before** either tier
+runs — see [Daily cap in front of the pipeline](#daily-cap-in-front-of-the-pipeline).
 
 ---
 
@@ -41,7 +47,8 @@ followed by an optional external toxicity check. On `PATCH`, a per-user daily ca
 
 `PATCH /api/v1/presets/:id` charges a `text_edit` slot (`DAILY_TEXT_EDIT_LIMIT` = 30 per UTC day,
 recorded in `submission_events`) **before** calling `moderateContent`, whenever `name` or
-`description` differs from the stored value — for every preset status. Text re-sent unchanged is
+`description` differs from the stored value (also changed tags/example links when extended checks
+are enabled) — for every preset status. Text re-sent unchanged is
 neither moderated again nor charged (BUG-065): it was judged when it was stored, and re-judging it
 pulled moderator-approved text back into the queue. Over the cap the edit is refused
 with `429 RATE_LIMITED` and nothing is moderated or written. The older `flagged_edit` cap (10/day)
@@ -68,8 +75,9 @@ Presets progress through the following states:
 
 ### New Submission
 
-1. User submits a preset.
-2. Content moderation runs (Tier 1 + Tier 2).
+1. User submits a preset; a known duplicate may become a vote without consuming a submission slot.
+2. Atomic admission reserves one of ten daily attempts before content moderation (Tier 1 + Tier 2).
+   Denied requests run neither tier. Once moderation starts, creation failure does not refund it.
 3. **If clean, the preset is auto-approved** — `status = moderationResult.passed ? 'approved' : 'pending'`.
    Only content that trips a tier (or that nobody could judge) lands as `pending`.
 4. A Discord notification is sent to the moderation channel (fire-and-forget via `waitUntil`).
@@ -78,7 +86,7 @@ Presets progress through the following states:
 
 ### Edit of an Approved Preset
 
-1. User edits the name or description.
+1. User changes a moderated field (name/description; tags/example links only when extended checks are enabled).
 2. Content moderation re-runs — only when the text actually changed (BUG-065).
 3. If flagged: stores the approved text in `previous_values` (write-once — an existing snapshot is
    kept), sets status to `pending`.
@@ -97,7 +105,13 @@ they can be told apart only by date.
 ### Revert
 
 - Moderators can revert flagged edits via `PATCH /api/v1/moderation/:id/revert`.
-- Restores all fields from `previous_values`.
+- Restores validated fields from `previous_values`, including any explicitly recorded example link
+  even after extended checks are disabled. An explicitly malformed link refuses the revert.
+- Missing legacy snapshot links preserve the current link while extended checks are disabled;
+  when enabled they clear it. Privileged review views show that effective target without rewriting
+  the raw snapshot used by SQL CAS. This does not retroactively score historic snapshots.
+- Approval and Revert check active author bans inside the same conditional SQL write, including
+  both stored identity columns. Stale/banned decisions create no moderation audit row.
 - Clears the `previous_values` column.
 - Sets status back to `approved`.
 - Refuses with `400 VALIDATION_ERROR` a snapshot whose dyes fail `validatePresetDyes` (a repeated
@@ -119,6 +133,15 @@ they can be told apart only by date.
   that exhausts its retries lands in `failed_notifications` (BUG-015).
 
 ---
+
+### Link review compatibility
+
+Discord submission notices and moderation refresh/typed-ID reviews display complete decoded path
+text with dangerous controls visibly escaped, plus the effective Revert path when offered.
+Missing metadata is unavailable, never assumed null. Query-only changes are identified without
+showing omitted URL parts. Unsafe or oversized required details withhold the relevant action;
+Reject remains available. Action handlers compare freshly fetched revision/status and displayed
+link details; stale or pre-upgrade messages must refresh before approval/Revert.
 
 ## Ban System
 
@@ -186,7 +209,7 @@ Nothing is sanitized — `src/services/validation-service.ts` **validates** and 
 |---------------|---------------------------------------------------------------|
 | Name | 2–50 characters — the minimum counts the text after trimming surrounding whitespace (so `"  "` fails), the maximum the value as sent (BUG-068). No C0 / DEL / C1 control characters, no zero-width, bidi-mark, bidi-override, bidi-isolate, BOM or line/paragraph-separator characters (FINDING-028) |
 | Description | 10–200 characters, minimum after trimming like the name. Same character rule, except TAB / LF / CR stay legal — a description is multi-line |
-| Tags | Max 10 tags, each max 30 characters, each matching `TAG_PATTERN`: starts and ends with a letter or digit, with letters / marks / digits / spaces / hyphens / underscores / apostrophes between (Unicode-aware, so CJK tags work). Markdown, brackets, URLs and other punctuation are out — a tag is rendered verbatim in Discord embeds and never passes content moderation (FINDING-019) |
+| Tags | Max 10 tags, each max 30 characters, each matching `TAG_PATTERN`: starts and ends with a letter or digit, with letters / marks / digits / spaces / hyphens / underscores / apostrophes between (Unicode-aware, so CJK tags work). Markdown, brackets, URLs and other punctuation are out. Tags join content moderation only when extended checks are enabled; the preparation flag remains false. Validation still applies in both modes. |
 | Dyes | 3–6 stainIDs, integers 1–254, each at most once — a repeat is a `400` (`Each dye may appear only once`, BUG-010), not de-duplicated |
 
 The one nuance in the invisible-character rule is U+200D (zero-width joiner): it is the glue inside

@@ -12,7 +12,7 @@ object).
 | Limit      | 100 requests per minute per client IP                        |
 | Backend    | The native Workers Rate Limiting binding `RL_PUBLIC` (`[[ratelimits]]`, 100 / 60 s) via `CloudflareRateLimiter`, key prefix `public:`. `MemoryRateLimiter` from `@xivdyetools/worker-kit/rate-limiter` is the per-isolate fallback used only when the binding is unbound (dev / tests) |
 | Scope      | `/api/*` (mounted before `authMiddleware`)                   |
-| Key        | `CF-Connecting-IP` only — never a caller-supplied header (BUG-044) |
+| Key        | `CF-Connecting-IP` only; IPv6 addresses share their /64, IPv4 is unchanged — never a caller-supplied header (BUG-044) |
 | Middleware | `src/middleware/rate-limit.ts` (`publicRateLimitMiddleware`) |
 
 A request with **no** `CF-Connecting-IP` skips this layer entirely. Cloudflare sets that header at
@@ -65,10 +65,10 @@ Four separate daily caps, all keyed on the acting Discord user and all reset at 
 
 | Kind | Cap | Charged on |
 |------|-----|------------|
-| `submission` | 10 / day | `POST /api/v1/presets` |
+| `submission` | 10 / day | Atomic admission before moderation; spent attempts remain counted even if creation fails |
 | `flagged_edit` | 10 / day | An edit that actually notifies a moderator |
 | `preview_upload` | 20 / day | `POST /api/v1/presets/:id/preview-image` |
-| `text_edit` | 30 / day | `PATCH /api/v1/presets/:id` when the `name` or `description` sent differs from what is stored (BUG-065) — checked **before** `moderateContent`, for every preset status (FINDING-005) |
+| `text_edit` | 30 / day | `PATCH /api/v1/presets/:id` when name/description differs from storage, plus changed tags/example links only when extended checks are enabled — checked **before** `moderateContent`, for every preset status (FINDING-005) |
 
 ### Storage
 
@@ -80,22 +80,28 @@ being read or written. Counting happens in two places:
   these rows, so deleting your own presets cannot refill a quota (FINDING-008).
 - the `presets` table itself — the surviving-row count for the current UTC day.
 
-The submission cap is enforced on `getEffectiveSubmissionCountToday()`, which is
-`max(presets rows today, submission_events 'submission' rows today)` — the higher of the two. The
-other three kinds count `submission_events` rows alone, through `reserveDailyEvent()` (presets-api
-2.3.5, BUG-015 of the 2026-09-16 deep-dive): the event row is inserted **first**, the day's rows
-are counted including it, and a count over the cap deletes that row and refuses — so two
-concurrent edits can no longer both pass a check-then-insert. A handler whose mutation fails after
-the reservation releases the row again (best effort). Two trades come with the shape: a refused
-request now costs a prune DELETE + INSERT + COUNT + DELETE where it used to cost one COUNT (bounded
-by the per-IP limiter), and a request abandoned between the reservation and its completion keeps
-its slot until UTC midnight. The reservation itself stays best-effort — a D1 write error leaves the
-cap inert for that request rather than failing the edit, as before. Concurrent requests racing for
-the same last free slot are settled deterministically: the count is bounded to rows with
-`id <= ` the reservation's own row id (presets-api 2.3.6, PR review fix round 2), so exactly one
-of them lands at or below the cap and wins — the earlier round counted every row regardless of id,
-so with one slot free and two or more concurrent requests, every single one of them observed the
-cap already exceeded and refused, and nobody got the slot.
+Submission admission uses a single conditional `INSERT … SELECT … RETURNING id` before
+moderation. Usage is the current UTC window's submission events **plus** same-user current-window
+preset rows not represented by any retained submission event for that same user/preset/kind.
+The anti-join has no window filter: an earlier retained event still represents a preset. Admission
+and `/rate-limit` reporting use the same formula. The denied request writes no event and calls no
+scorer, create, vote or notification. Admission database failure returns 503 before expensive work.
+Known duplicates found before moderation may convert to votes without spending an attempt;
+post-moderation collisions or create failures keep the spent attempt. Age-only pruning remains
+best-effort and never makes admission fail open. Event IDs use the preallocated preset ID.
+
+The other three kinds still use `reserveDailyEvent()`: insert first, count through the reservation's
+own ID, and release a refused reservation. Their backend failure policy remains fail-open; this
+sprint does not establish an unconditional ceiling for them. Text-edit attempts are spent before
+moderation even when a later edit fails. Identical moderated fields are free. Tag/link-only edits
+join this accounting only when extended checks are enabled (the preparation default is disabled).
+
+Preview uploads retain a slot on image-worker fetch/status/body/timeout or decoding failures.
+Cheap validation rejection and proven R2/DB/CAS failure refund; storage/database refunds can allow
+additional processing attempts. An unconfirmed database write retains its event and returns 503;
+a changed latest key alone does not prove that attachment never committed. Confirmed committed
+attachments remain charged even when subsequently replaced. Cleanup/refund failures do not mask
+the original result. D1 and R2 do not form one transaction.
 
 ### 429 body
 
@@ -126,16 +132,12 @@ On a successful preset submission, the response instead carries the remaining co
 | Layer | Failure Mode | Rationale |
 |-------|--------------|-----------|
 | Per-IP / per-user middleware | **Fail-open** (`onError: 'fail-open'`, the worker-kit default) | If the limiter backend errors, the request is allowed. Availability over accuracy. |
-| Daily quotas — `submission` (`checkSubmissionRateLimit`) | **Fail-closed** | The count is a D1 query awaited on the request path; a D1 error surfaces as a 500 and the mutation does not happen. |
+| Daily quotas — `submission` (`reserveSubmissionAdmission`) | **Fail-closed** | Conditional admission failure returns 503 before moderation; reporting query errors remain request failures. |
 | Daily quotas — `text_edit` / `flagged_edit` / `preview_upload` (`reserveDailyEvent`) | **Fail-open** | An INSERT or COUNT error logs a `[BUG-015]` warning and lets the request through unmetered, rather than 500ing a mutation because a hand-run migration (`0012_submission_events_text_edit.sql`) is missing in a given environment. |
 
-The `submission_events` **write** is best-effort, but the shape differs by kind. For `submission`,
-`recordSubmissionEvent` writes only *after* the preset row has already been created
-(`handlers/presets.ts`), so a failed insert there truly can never fail a mutation that already
-landed — there is nothing left it could roll back. For the three `reserveDailyEvent` kinds the
-order is reversed: the insert precedes the mutation it gates, so a failed INSERT or COUNT instead
-fails the *reservation* open (see the table above) rather than failing closed — the mutation that
-follows was never at risk of being undone, because it has not happened yet.
+Submission event admission is required; the separate three-kind reservation helper remains
+best-effort as described above. No post-create append or compensating preset deletion enforces
+the submission limit.
 
 ## Service-binding callers
 

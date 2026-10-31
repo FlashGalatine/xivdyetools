@@ -383,9 +383,9 @@ export async function createPreset(
   submission: PresetSubmission,
   authorDiscordId: string,
   authorName: string,
-  status: 'approved' | 'pending' = 'approved'
+  status: 'approved' | 'pending' = 'approved',
+  id: string = crypto.randomUUID()
 ): Promise<CommunityPreset> {
-  const id = crypto.randomUUID();
   const now = new Date().toISOString();
   const dyeSignature = generateDyeSignature(submission.dyes);
 
@@ -459,9 +459,16 @@ export function prepareStatusUpdate(
     UPDATE presets
     SET status = ?, updated_at = ?
     WHERE id = ? AND status = ? AND content_revision = ?
+      AND (? <> 'approved' OR NOT EXISTS (
+        SELECT 1 FROM banned_users b
+        WHERE (b.discord_id = presets.author_discord_id OR b.xivauth_id = presets.author_discord_id
+          OR EXISTS (SELECT 1 FROM ban_identity_memberships m
+            WHERE m.ban_id = b.id AND m.identity_id = presets.author_discord_id))
+          AND b.unbanned_at IS NULL
+      ))
     RETURNING *
   `;
-  return db.prepare(query).bind(status, now, id, expectedStatus, expectedRevision);
+  return db.prepare(query).bind(status, now, id, expectedStatus, expectedRevision, status);
 }
 
 /**
@@ -472,7 +479,7 @@ export function prepareStatusUpdate(
 export function prepareRevert(
   db: D1Database,
   id: string,
-  previous: PresetPreviousValues,
+  previous: PresetPreviousValues & { example_link?: string | null },
   expected: { contentRevision: number; status: CommunityPreset['status']; previousValuesRaw: string },
   now: string
 ): D1PreparedStatement {
@@ -481,8 +488,15 @@ export function prepareRevert(
   const query = `
     UPDATE presets
     SET name = ?, description = ?, dyes = ?, tags = ?, dye_signature = ?,
-        status = 'approved', previous_values = NULL, updated_at = ?
+        example_link = ?, status = 'approved', previous_values = NULL, updated_at = ?
     WHERE id = ? AND content_revision = ? AND status = ? AND previous_values = ?
+      AND NOT EXISTS (
+        SELECT 1 FROM banned_users b
+        WHERE (b.discord_id = presets.author_discord_id OR b.xivauth_id = presets.author_discord_id
+          OR EXISTS (SELECT 1 FROM ban_identity_memberships m
+            WHERE m.ban_id = b.id AND m.identity_id = presets.author_discord_id))
+          AND b.unbanned_at IS NULL
+      )
     RETURNING *
   `;
   return db
@@ -493,6 +507,7 @@ export function prepareRevert(
       JSON.stringify(previous.dyes),
       JSON.stringify(previous.tags),
       generateDyeSignature(previous.dyes),
+      previous.example_link ?? null,
       now,
       id,
       expected.contentRevision,

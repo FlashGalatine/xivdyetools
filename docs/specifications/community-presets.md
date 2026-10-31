@@ -1273,10 +1273,10 @@ async function migrate(db: D1Database) {
 
 | Action | Limit |
 |--------|-------|
-| Submit preset | 10 per day per user |
+| Submit preset | 10 admitted moderation attempts per day per user; spent failures remain counted |
 | Edit that is flagged for moderation | 10 per day per user |
-| Preview-image upload or replacement | 20 per day per user |
-| Name or description edit (counted before moderation) | 30 per day per user |
+| Preview-image upload or replacement | 20 per day per user; decode/timeouts retain, cheap/proven storage/DB failure refunds, unknown DB outcome retains |
+| Changed moderated field (counted before moderation) | 30 per day per user; names/descriptions, plus tags/example links only when extended checks are enabled (default off) |
 | Any `/api/*` request | 100 per minute per acting Discord user, and 100 per minute per client IP (the IP layer is skipped for Service-Binding callers, which send no `CF-Connecting-IP`) |
 | Vote | No vote-specific limit — only the two layers above |
 

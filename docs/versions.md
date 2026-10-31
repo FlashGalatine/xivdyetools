@@ -31,7 +31,7 @@
 | **Image Worker** | v1.3.4 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.8.2 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.2.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
-| **Presets API** | v2.6.1 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
+| **Presets API** | v2.8.1 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
 | **Public REST API** | v0.21.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
 | **OpenGraph Worker** | v2.12.0 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.3.3 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
@@ -306,6 +306,9 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v2.8.1 | Oct 2026 | Prepared base hardening and continuity release with default Discord notification binding retained; named-provider selection is a separate companion |
+| v2.8.0 | Oct 2026 | Private continuity receipts and membership enforcement; inactive OAuth session checks and additive migration |
+| v2.7.0 | Oct 2026 | Approved-only signed bot batch lookup; database ban guards, atomic pre-moderation quota, default-off tag/link-path moderation, safe snapshots and preview concurrency/refund fixes; IPv6 /64 and bounded pagination |
 | v2.6.1 | Oct 2026 | `expected_status` checked against `@xivdyetools/types`' `REVIEW_STATUSES` (2026-10-04 remediation, Sprint 26, REFACTOR-001); the two 404 bodies moderation-worker reads are pinned. No behavior change |
 | v2.6.0 | Oct 2026 | 2026-10-04 remediation, Sprint 9 — every PATCH notification carries `edited_from`, the text the edit replaced, so the moderation embed can diff an edit; `previous_values` stays the Revert target only |
 | v2.5.0 | Oct 2026 | 2026-10-04 remediation, Sprint 8 — a preset may not repeat a dye (BUG-010); a `null` / non-object JSON body is a 400 (BUG-064); resending unchanged text no longer re-moderates (BUG-065); a failed retention sweep fails its cron invocation (BUG-066); a self-rekey is a no-op (BUG-067); trimmed name/description minimums and example links (BUG-068, BUG-069); the moderation webhook says whether it is an edit and from which status (for BUG-003's Revert in discord-worker) |
@@ -712,6 +715,7 @@ and the [rollout runbook](operations/security-remediation-2026-09-15.md) for the
 
 | Consumer | Minimum Core Version | Notes |
 |----------|---------------------|-------|
+| xivdyetools-presets-api v2.8.1 | @xivdyetools/auth v3.0.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
 | xivdyetools-oauth-worker v3.2.0 | @xivdyetools/auth v3.0.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
 | @xivdyetools/bot-logic v4.12.0 | @xivdyetools/core v5.16.0; @xivdyetools/svg v4.4.1; @xivdyetools/types v3.3.0 | Prepared source; publication and deployed acceptance remain pending |
 | @xivdyetools/svg v4.4.1 | @xivdyetools/core v5.16.0; @xivdyetools/types v3.3.0 | Prepared source; publication and deployed acceptance remain pending |

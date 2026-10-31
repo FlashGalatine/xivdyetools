@@ -48,6 +48,7 @@ const STORED = {
   description: 'The stored description, long enough.',
   tags: ['stored'],
   dyes: [1, 2, 3],
+  example_link: null,
 };
 
 /** A snapshot written by an earlier edit. */
@@ -72,6 +73,7 @@ describe('the revert snapshot holds only approved text (BUG-003 follow-up)', () 
     bodies = [];
     pending = [];
     env = createMockEnv({
+      PRESET_METADATA_MODERATION_ENABLED: 'true',
       DB: d1 as unknown as D1Database,
       INTERNAL_WEBHOOK_SECRET: 'webhook-secret',
       DISCORD_WORKER: {
@@ -157,10 +159,10 @@ describe('the revert snapshot holds only approved text (BUG-003 follow-up)', () 
     expect(res.status).toBe(200);
     const row = await stored();
     expect(row.status).toBe('pending');
-    expect(JSON.parse(row.previous_values!)).toEqual(STORED);
+    expect(JSON.parse(row.previous_values!)).toEqual({ ...STORED, example_link: null });
     expect(bodies).toHaveLength(1);
     expect(bodies[0]).toMatchObject({ is_edit: true, edited_from_status: 'approved' });
-    expect(bodies[0].preset.previous_values).toEqual(STORED);
+    expect(bodies[0].preset.previous_values).toEqual({ ...STORED, example_link: null });
   });
 
   it('keeps an approved preset\'s existing snapshot (write-once)', async () => {
@@ -259,8 +261,8 @@ describe('the revert snapshot holds only approved text (BUG-003 follow-up)', () 
     const last = bodies[bodies.length - 1];
     expect(last).toMatchObject({ is_edit: true, edited_from_status: 'approved' });
     // The snapshot is the text the moderator approved — never the rejected one
-    expect(last.preset.previous_values).toEqual({ ...STORED, name: 'A resubmitted name' });
-    expect(JSON.parse((await stored()).previous_values!)).toEqual({ ...STORED, name: 'A resubmitted name' });
+    expect(last.preset.previous_values).toEqual({ ...STORED, name: 'A resubmitted name', example_link: null });
+    expect(JSON.parse((await stored()).previous_values!)).toEqual({ ...STORED, name: 'A resubmitted name', example_link: null });
     // …and the diff base is the text that further edit replaced
     expect(last.edited_from).toEqual({ ...STORED, name: 'A resubmitted name' });
   });
@@ -289,7 +291,7 @@ describe('the revert snapshot holds only approved text (BUG-003 follow-up)', () 
       // The diff base is what this edit replaced…
       expect(bodies[0].edited_from).toEqual(STORED);
       // …while Revert would still restore the older snapshot
-      expect(bodies[0].preset.previous_values).toEqual(OLDER_SNAPSHOT);
+      expect(bodies[0].preset.previous_values).toEqual({ ...OLDER_SNAPSHOT, example_link: null });
     });
 
     it('carries the replaced text on a pending preset\'s edit, which has no snapshot', async () => {

@@ -191,7 +191,12 @@
       // Knip normalizes this protocol import to the package name `cloudflare`.
       "ignoreDependencies": ["cloudflare"],
     },
-    "apps/presets-api": { "includeEntryExports": true },
+    "apps/presets-api": {
+      "includeEntryExports": true,
+      // Workers runtime builtin `cloudflare:workers`, not the cloudflare npm SDK.
+      // Knip normalizes this protocol import to the package name `cloudflare`.
+      "ignoreDependencies": ["cloudflare"],
+    },
     "apps/image-worker": { "includeEntryExports": true },
   },
 }

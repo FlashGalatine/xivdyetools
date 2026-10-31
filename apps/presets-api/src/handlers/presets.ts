@@ -12,7 +12,6 @@ import type {
   PresetFilters,
   PresetSubmission,
   PresetEditRequest,
-  PresetPreviousValues,
 } from '../types.js';
 import { requireAuth, requireUserContext } from '../middleware/auth.js';
 import { isUserBanned, requireNotBanned } from '../middleware/ban-check.js';
@@ -42,6 +41,7 @@ import {
   type PublicPreset,
 } from '../services/preset-service.js';
 import { moderateContent } from '../services/moderation-service.js';
+import { presetModerationInput, presetSnapshotView, metadataModerationEnabled, type PresetSnapshot } from '../services/preset-moderation-input.js';
 // PRESETS-REF-001 FIX: Import from centralized validation service
 import {
   validatePresetName,
@@ -55,20 +55,14 @@ import {
 } from '../services/validation-service.js';
 import { addVote } from './votes.js';
 import {
-  checkSubmissionRateLimit,
+  reserveSubmissionAdmission,
   getRemainingSubmissions,
-  getEffectiveSubmissionCountToday,
-  getNextResetUTC,
   DAILY_SUBMISSION_LIMIT,
-  // FINDING-008: append-only per-user quotas
-  recordSubmissionEvent,
-  // BUG-015 (2026-09-16 deep-dive): atomic reserve-then-act for the three
-  // caps below — see rate-limit-service.ts for why `submission` (just above)
-  // doesn't need this shape.
+  // Existing reservation behavior for edits and uploads is unchanged.
   reserveDailyEvent,
   DAILY_FLAGGED_EDIT_LIMIT,
   DAILY_PREVIEW_UPLOAD_LIMIT,
-  // FINDING-005: pre-moderation cap on name/description edits
+  // FINDING-005: pre-moderation cap on text and metadata edits
   DAILY_TEXT_EDIT_LIMIT,
 } from '../services/rate-limit-service.js';
 import type { DailyEventReservation } from '../services/rate-limit-service.js';
@@ -85,6 +79,7 @@ import {
   deletePreviewImage,
   getPresetImageState,
   MAX_PREVIEW_IMAGE_BYTES,
+  PreviewImageStoreError,
 } from '../services/preview-image-service.js';
 
 // REFACTOR-017: category cache moved to category-service; re-exported because
@@ -118,9 +113,9 @@ function stripAuditData<T extends { previous_values?: unknown }>(preset: T): Omi
 function presetForViewer(
   preset: CommunityPreset,
   auth: AuthContext,
-  { keepAuditData = false }: { keepAuditData?: boolean } = {}
+  { keepAuditData = false, metadataEnabled = false }: { keepAuditData?: boolean; metadataEnabled?: boolean } = {}
 ): PublicPreset {
-  return toPublicPreset(keepAuditData ? preset : stripAuditData(preset), auth);
+  return toPublicPreset(keepAuditData ? presetSnapshotView(preset, metadataEnabled) : stripAuditData(preset), auth);
 }
 
 // FINDING-017 (PAPI-9): the ban check covers EVERY mutating route on this
@@ -181,7 +176,7 @@ async function respondToDuplicate(
     const voteResult = await addVote(c.env.DB, duplicate.id, auth.userDiscordId!, c.get('logger'));
     return c.json({
       success: true,
-      duplicate: presetForViewer(duplicate, auth, { keepAuditData: isPrivileged }),
+      duplicate: presetForViewer(duplicate, auth, { keepAuditData: isPrivileged, metadataEnabled: metadataModerationEnabled(c.env) }),
       vote_added: voteResult.success && !voteResult.already_voted,
     });
   }
@@ -189,7 +184,7 @@ async function respondToDuplicate(
   if (isPrivileged) {
     return c.json({
       success: true,
-      duplicate: presetForViewer(duplicate, auth, { keepAuditData: true }),
+      duplicate: presetForViewer(duplicate, auth, { keepAuditData: true, metadataEnabled: metadataModerationEnabled(c.env) }),
       vote_added: false,
     });
   }
@@ -246,7 +241,7 @@ presetsRouter.get('/', async (c) => {
     sort: sort as PresetFilters['sort'],
     // BUG-016 (2026-07-18 audit): clamp pagination — a NaN bind is rejected by
     // D1 as a 500, and SQLite treats LIMIT -1 as "no limit", bypassing the cap.
-    page: Math.max(1, Number.parseInt(page ?? '', 10) || 1),
+    page: Math.min(10000, Math.max(1, Number.parseInt(page ?? '', 10) || 1)),
     limit: Math.min(Math.max(1, Number.parseInt(limit ?? '', 10) || 20), 50), // Cap at 50 for performance
     is_curated: is_curated === 'true' ? true : is_curated === 'false' ? false : undefined,
   };
@@ -255,7 +250,7 @@ presetsRouter.get('/', async (c) => {
   return c.json({
     ...response,
     presets: response.presets.map((preset) =>
-      presetForViewer(preset, auth, { keepAuditData: auth.isModerator })
+      presetForViewer(preset, auth, { keepAuditData: auth.isModerator, metadataEnabled: metadataModerationEnabled(c.env) })
     ),
   });
 });
@@ -295,7 +290,7 @@ presetsRouter.get('/mine', async (c) => {
   return c.json({
     // Every row here is the caller's own, so the id and the audit snapshot both
     // stay — this is the view the "My Submissions" page and the edit form read.
-    presets: presets.map((preset) => presetForViewer(preset, auth, { keepAuditData: true })),
+    presets: presets.map((preset) => presetForViewer(preset, auth, { keepAuditData: true, metadataEnabled: metadataModerationEnabled(c.env) })),
     total: presets.length,
   });
 });
@@ -438,8 +433,10 @@ presetsRouter.delete('/:id', async (c) => {
     return forbiddenResponse(c, "Cannot delete another user's preset");
   }
 
-  // Captured before the batch, since the row that holds it is about to go.
-  const previousKey = preset.preview_image_key;
+  // Each dependent delete rechecks current ownership inside the same atomic
+  // batch. A rekey after the read must not erase a new owner's history/votes.
+  const authorization = 'EXISTS (SELECT 1 FROM presets WHERE id = ? AND (author_discord_id = ? OR ? = 1))';
+  const moderator = auth.isModerator ? 1 : 0;
 
   // Delete votes, dead letters and preset in transaction
   // PRESETS-PERF-001: Using batch() for atomicity guarantee, not performance.
@@ -454,19 +451,28 @@ presetsRouter.delete('/:id', async (c) => {
   // `json_valid` guards the extract: SQLite raises on malformed JSON, and this
   // delete must not be the thing that fails an owner's DELETE. `$.preset.id` is
   // the pre-FINDING-017 shape, still present in rows that have not aged out.
-  await c.env.DB.batch([
-    c.env.DB.prepare('DELETE FROM votes WHERE preset_id = ?').bind(id),
+  const deletion = await c.env.DB.batch<{ preview_image_key: string | null }>([
+    c.env.DB.prepare(`DELETE FROM votes WHERE preset_id = ? AND ${authorization}`).bind(id, id, auth.userDiscordId, moderator),
     c.env.DB.prepare(
       `DELETE FROM failed_notifications
        WHERE json_valid(payload)
-         AND (json_extract(payload, '$.preset_id') = ? OR json_extract(payload, '$.preset.id') = ?)`
-    ).bind(id, id),
+         AND (json_extract(payload, '$.preset_id') = ? OR json_extract(payload, '$.preset.id') = ?)
+         AND ${authorization}`
+    ).bind(id, id, id, auth.userDiscordId, moderator),
     // FINDING-005: the audit rows live exactly as long as their preset. D1
     // enforces the FK's ON DELETE CASCADE, but the cascade is a foreign-key
     // setting, not something this delete should depend on — say it explicitly.
-    c.env.DB.prepare('DELETE FROM moderation_log WHERE preset_id = ?').bind(id),
-    c.env.DB.prepare('DELETE FROM presets WHERE id = ?').bind(id),
+    c.env.DB.prepare(`DELETE FROM moderation_log WHERE preset_id = ? AND ${authorization}`).bind(id, id, auth.userDiscordId, moderator),
+    c.env.DB.prepare('DELETE FROM presets WHERE id = ? AND (author_discord_id = ? OR ? = 1) RETURNING preview_image_key').bind(id, auth.userDiscordId, moderator),
   ]);
+  const removed = deletion[3].results[0];
+  if (!removed) {
+    const current = await getPresetImageState(c.env.DB, id);
+    return current ? previewImageChangedResponse(c) : notFoundResponse(c, 'Preset');
+  }
+  // RETURNING names the image actually removed, including an upload that won
+  // between the initial read and this batch. Never clean the stale read's key.
+  const previousKey = removed.preview_image_key;
 
   // DB write before the R2 delete, deliberately (same rule as the upload and
   // moderator-reject paths): if the batch throws, leaving the delete undone
@@ -523,7 +529,7 @@ function ownerEditOutcome(
     // Already in the queue — nothing to write, and moderators only need to
     // re-read it when the text they judge changed. (PRESETS-BUG-002's "any
     // edit re-queues" affordance was the workflow bypass FINDING-004 closed:
-    // `PATCH {"tags":["a"]}` used to be an uncapped moderation-channel ping.)
+    // Re-sending unchanged fields used to be an uncapped queue ping.)
     case 'pending':
       return { nextStatus: undefined, notifiesModerators: newTextToJudge };
 
@@ -539,8 +545,8 @@ function ownerEditOutcome(
     // editing the text IS the resubmission (the web app's "Resubmit" button
     // reopens the edit form and PATCHes it, and the user guide says so). It
     // re-enters the queue and is charged to the same daily cap as every other
-    // notifying edit. A tag / dye / category edit, or text re-sent unchanged,
-    // gives a moderator nothing new, so it still changes nothing.
+    // notifying edit. Dye/category edits and unchanged moderated fields still
+    // give a moderator nothing new.
     case 'rejected':
       return newTextToJudge
         ? { nextStatus: 'pending', notifiesModerators: true }
@@ -608,7 +614,7 @@ presetsRouter.patch('/:id', async (c) => {
   }
 
   // Validate provided fields
-  const validationError = await validateEditRequest(body, preset.category_id, c.env.DB);
+  const validationError = await validateEditRequest(body, preset, c.env.DB);
   if (validationError) {
     return validationErrorResponse(c, validationError);
   }
@@ -639,26 +645,30 @@ presetsRouter.patch('/:id', async (c) => {
     return forbiddenResponse(c, 'This preset cannot be edited');
   }
 
-  // Determine if content moderation is needed (name or description changed)
+  // Determine whether the effective moderated fields changed.
   // PRESETS-BUG-003: Vote counts are preserved during edits - this is intentional
   // as users voted on the dye combination, not just the name/description.
-  let previousValues: PresetPreviousValues | null | undefined;
+  let previousValues: PresetSnapshot | null | undefined;
   // Did the text *this* request supplied trip moderation? (A preset that is
   // merely still pending has not; see `ownerEditOutcome` above.)
   let flaggedByThisEdit = false;
 
-  // FINDING-004: the two fields a moderator actually reads. Tags, dyes, the
-  // category and the example link change nothing they judge, so an edit that
-  // touches only those brings them nothing new however often it is repeated.
+  // Compare stored values, including the full link: a query-only URL edit
+  // still changes stored content even when the projected path is identical.
+  const metadataEnabled = metadataModerationEnabled(c.env);
   const textChanged =
     (body.name !== undefined && body.name !== preset.name) ||
-    (body.description !== undefined && body.description !== preset.description);
+    (body.description !== undefined && body.description !== preset.description) ||
+    (metadataEnabled && (
+      (body.tags !== undefined && JSON.stringify(body.tags) !== JSON.stringify(preset.tags)) ||
+      (body.example_link !== undefined && body.example_link !== (preset.example_link ?? null))
+    ));
 
   // BUG-065 (2026-10-04 deep-dive): moderate only text that changed. This used
   // to run whenever the request merely carried a name or description, so
   // stored text re-sent as-is was judged again — and text a moderator approved
   // after a flag, or any text once no scorer answers (`unscored`), fails
-  // again: `/preset edit name:<same name> tags:x` pulled an approved preset
+  // again: re-sending all stored text pulled an approved preset
   // out of public view (or resubmitted a rejected one) and pinged a moderator
   // about nothing new. Unchanged text was already judged when it was stored,
   // so it spends neither a Perspective call nor a text-edit slot.
@@ -692,7 +702,7 @@ presetsRouter.patch('/:id', async (c) => {
         {
           success: false,
           error: ErrorCode.RATE_LIMITED,
-          message: `You've reached your daily limit of name and description edits (${DAILY_TEXT_EDIT_LIMIT} per day). Try again tomorrow.`,
+          message: `You've reached your daily limit of text edits (${DAILY_TEXT_EDIT_LIMIT} per day). Try again tomorrow.`,
           remaining: 0,
           reset_at: textEditReservation.resetAt.toISOString(),
         },
@@ -700,14 +710,15 @@ presetsRouter.patch('/:id', async (c) => {
       );
     }
 
-    // Run content moderation on the text as it will read after this edit —
-    // the pair is judged together even when only one of them changed.
-    const nameToCheck = body.name || preset.name;
-    const descriptionToCheck = body.description || preset.description;
-
+    const moderationInput = metadataEnabled ? presetModerationInput({
+      name: body.name ?? preset.name,
+      description: body.description ?? preset.description,
+      tags: body.tags ?? preset.tags,
+      example_link: body.example_link === undefined ? preset.example_link : body.example_link,
+    }) : { name: body.name ?? preset.name, description: body.description ?? preset.description };
     const moderationResult = await moderateContent(
-      nameToCheck,
-      descriptionToCheck,
+      moderationInput.name,
+      moderationInput.description,
       c.env,
       c.get('logger')
     );
@@ -740,6 +751,7 @@ presetsRouter.patch('/:id', async (c) => {
           description: preset.description,
           tags: preset.tags,
           dyes: preset.dyes,
+          ...(metadataEnabled ? { example_link: preset.example_link ?? null } : {}),
         };
       }
     }
@@ -885,18 +897,19 @@ presetsRouter.patch('/:id', async (c) => {
       // never creates it (so there is usually none), and the write-once
       // snapshot can be older than this text. Taken from
       // the same first read for the same reason as the status above: a name,
-      // description, tags or dyes change also bumps content_revision, so the
+      // description, tags, link or dyes change also bumps content_revision, so the
       // UPDATE succeeding proves this is exactly the text it overwrote.
       edited_from: {
         name: preset.name,
         description: preset.description,
         tags: preset.tags,
         dyes: preset.dyes,
+        example_link: preset.example_link ?? null,
       },
       preset: {
         // One read supplies both the text and the revision, so the buttons are
         // bound to exactly the text the embed shows.
-        ...rowToPreset(editedRow, c.get('logger')),
+        ...presetSnapshotView(rowToPreset(editedRow, c.get('logger')), metadataEnabled),
         content_revision: editedRow.content_revision,
         author_name: preset.author_name || 'Unknown User',
         author_discord_id: preset.author_discord_id,
@@ -945,7 +958,7 @@ presetsRouter.patch('/:id', async (c) => {
     success: true,
     // Owner-only route (see the ownership check above), so the caller always
     // gets their own id back and `is_owner: true`.
-    preset: presetForViewer(updatedPreset, auth, { keepAuditData: true }),
+    preset: presetForViewer(updatedPreset, auth, { keepAuditData: true, metadataEnabled: metadataModerationEnabled(c.env) }),
     ...(reportedStatus !== undefined && { moderation_status: reportedStatus }),
   });
 });
@@ -974,7 +987,7 @@ presetsRouter.get('/:id', async (c) => {
   const isPrivileged =
     auth.isModerator ||
     (auth.userDiscordId !== undefined && preset.author_discord_id === auth.userDiscordId);
-  return c.json(presetForViewer(preset, auth, { keepAuditData: isPrivileged }));
+  return c.json(presetForViewer(preset, auth, { keepAuditData: isPrivileged, metadataEnabled: metadataModerationEnabled(c.env) }));
 });
 
 /**
@@ -994,21 +1007,6 @@ presetsRouter.post('/', async (c) => {
 
   const auth = c.get('auth');
 
-  // Check rate limit (DAILY_SUBMISSION_LIMIT submissions per day)
-  const rateLimitResult = await checkSubmissionRateLimit(c.env.DB, auth.userDiscordId!);
-  if (!rateLimitResult.allowed) {
-    return c.json(
-      {
-        success: false,
-        error: ErrorCode.RATE_LIMITED,
-        message: `You've reached your daily submission limit (${DAILY_SUBMISSION_LIMIT} per day). Try again tomorrow.`,
-        remaining: 0,
-        reset_at: rateLimitResult.resetAt.toISOString(),
-      },
-      429
-    );
-  }
-
   // Parse request body (BUG-064: `null` or a non-object is a 400, not a TypeError)
   const body = await readJsonObject<PresetSubmission>(c);
   if (!body) {
@@ -1027,10 +1025,32 @@ presetsRouter.post('/', async (c) => {
     return respondToDuplicate(c, auth, duplicate);
   }
 
-  // Moderate content
+  const presetId = crypto.randomUUID();
+  let admission;
+  try {
+    admission = await reserveSubmissionAdmission(c.env.DB, auth.userDiscordId!, presetId, c.get('logger'));
+  } catch {
+    return c.json({
+      success: false,
+      error: ErrorCode.SERVICE_UNAVAILABLE,
+      message: 'Daily submission limits are temporarily unavailable. Please try again later.',
+    }, 503);
+  }
+  if (!admission.allowed) {
+    return c.json({
+      success: false,
+      error: ErrorCode.RATE_LIMITED,
+      message: `You've reached your daily submission limit (${DAILY_SUBMISSION_LIMIT} per day). Try again tomorrow.`,
+      remaining: 0,
+      reset_at: admission.resetAt.toISOString(),
+    }, 429);
+  }
+
+  // Admission is retained from this point, including failed writes/collisions.
+  const moderationInput = metadataModerationEnabled(c.env) ? presetModerationInput(body) : { name: body.name, description: body.description };
   const moderationResult = await moderateContent(
-    body.name,
-    body.description,
+    moderationInput.name,
+    moderationInput.description,
     c.env,
     c.get('logger')
   );
@@ -1051,7 +1071,8 @@ presetsRouter.post('/', async (c) => {
       body,
       auth.userDiscordId!,
       authorName,
-      status
+      status,
+      presetId
     );
   } catch (error) {
     // Check if this is a UNIQUE constraint violation on dye_signature
@@ -1068,47 +1089,9 @@ presetsRouter.post('/', async (c) => {
     throw error;
   }
 
-  // FINDING-008: append-only quota record — survives the author deleting the
-  // preset, so the daily cap cannot be refilled from the outside. Best-effort:
-  // a failed insert must not fail the submission that just landed.
-  try {
-    await recordSubmissionEvent(c.env.DB, auth.userDiscordId!, 'submission', preset.id, c.get('logger'));
-  } catch (err) {
-    c.get('logger')?.error('[FINDING-008] submission_events insert failed', err, { presetId: preset.id });
-  }
-
   // Auto-vote for own preset
-  await addVote(c.env.DB, preset.id, auth.userDiscordId!, c.get('logger'));
-
-  // BUG-049 (2026-07-18 audit): the pre-check above is check-then-insert, so N
-  // concurrent submissions at 9/10 quota could all pass. Re-count now that our
-  // INSERT landed — the count includes it, so anything over the limit means
-  // concurrent requests overshot and this one rolls itself back.
-  // OPT-016: this same count replaces the old getRemainingSubmissions re-query,
-  // so the happy path still issues one post-create COUNT, now load-bearing.
-  //
-  // BUG-042: it must be the EFFECTIVE count — max(rows, append-only events) —
-  // and was the bare row count. For a user who had deleted a preset today the
-  // rollback guard under-triggered (the very case `submission_events` exists
-  // to catch) and the `remaining_submissions` reported below disagreed with
-  // `GET /presets/rate-limit` by exactly the number of deletions.
-  const submissionsToday = await getEffectiveSubmissionCountToday(c.env.DB, auth.userDiscordId!);
-  if (submissionsToday > DAILY_SUBMISSION_LIMIT) {
-    await c.env.DB.batch([
-      c.env.DB.prepare('DELETE FROM votes WHERE preset_id = ?').bind(preset.id),
-      c.env.DB.prepare('DELETE FROM presets WHERE id = ?').bind(preset.id),
-    ]);
-    return c.json(
-      {
-        success: false,
-        error: ErrorCode.RATE_LIMITED,
-        message: `You've reached your daily submission limit (${DAILY_SUBMISSION_LIMIT} per day). Try again tomorrow.`,
-        remaining: 0,
-        reset_at: getNextResetUTC().toISOString(),
-      },
-      429
-    );
-  }
+  const vote = await addVote(c.env.DB, preset.id, auth.userDiscordId!, c.get('logger'));
+  if (vote.success && vote.new_vote_count !== undefined) preset.vote_count = vote.new_vote_count;
 
   // Send notification to Discord worker (non-blocking)
   // PRESETS-REF-002: Fire-and-forget notification - errors don't fail the request
@@ -1156,14 +1139,17 @@ presetsRouter.post('/', async (c) => {
   // 201 the author is waiting for.
   c.executionCtx.waitUntil(pruneFailedNotifications(c.env.DB, c.get('logger')));
 
+  // Reporting can observe later admissions, but never revokes this winner.
+  // The reporting helper captures count and reset from one current UTC day.
+  const { remaining } = await getRemainingSubmissions(c.env.DB, auth.userDiscordId!);
+
   return c.json(
     {
       success: true,
       // The submitter's own brand-new preset: their id comes back with it.
-      preset: presetForViewer(preset, auth, { keepAuditData: true }),
+      preset: presetForViewer(preset, auth, { keepAuditData: true, metadataEnabled: metadataModerationEnabled(c.env) }),
       moderation_status: status,
-      // OPT-016: derived from the enforcement count above — no extra query
-      remaining_submissions: Math.max(0, DAILY_SUBMISSION_LIMIT - submissionsToday),
+      remaining_submissions: remaining,
     },
     201
   );
@@ -1175,6 +1161,10 @@ presetsRouter.post('/', async (c) => {
  * Author-only: a preset's picture is the author's to choose. The upload lands
  * as 'pending' and is invisible until a moderator approves it.
  */
+function previewImageChangedResponse(c: Context): Response {
+  return c.json({ success: false, error: ErrorCode.CONFLICT, message: 'The preview image changed while your upload was processing. Please try again.' }, 409);
+}
+
 presetsRouter.post('/:id/preview-image', async (c) => {
   const authError = requireAuth(c);
   if (authError) return authError;
@@ -1215,13 +1205,9 @@ presetsRouter.post('/:id/preview-image', async (c) => {
   // FINDING-008: each upload costs an image-worker decode, an R2 write and a
   // moderation embed — cap per user per day before reading the body.
   //
-  // BUG-015 (2026-09-16 deep-dive): reserve-then-act. Unlike text-edit's
-  // reservation above, this one is released on EVERY failure exit below —
-  // a body that turns out empty, oversized, the wrong type, or that
-  // storePreviewImage/the DB UPDATE itself rejects — so a request that never
-  // actually stores an image never costs the author a slot, matching what
-  // the old check-then-record-at-the-end shape did (it simply never reached
-  // the record call on those paths).
+  // Reserve before reading/decoding. Cheap rejection and proven storage/CAS
+  // failure refund; processing failures and unconfirmed writes retain the slot.
+  // Existing reservation backend failures still use the helper's fail-open policy.
   const uploadReservation = await reserveDailyEvent(
     c.env.DB,
     auth.userDiscordId,
@@ -1290,36 +1276,52 @@ presetsRouter.post('/:id/preview-image', async (c) => {
   let key: string;
   try {
     key = await storePreviewImage(c.env, presetId, bytes);
-  } catch {
-    await uploadReservation.release?.();
+  } catch (error) {
+    if (error instanceof PreviewImageStoreError && error.stage === 'storage') {
+      try { await deletePreviewImage(c.env, error.key ?? null, c.get('logger')); } catch {
+        c.get('logger')?.error('[preview-image] cleanup of failed storage write failed', undefined, { presetId });
+      }
+      await uploadReservation.release?.();
+    }
+    const unavailable = error instanceof PreviewImageStoreError && error.stage === 'unavailable';
     return c.json(
-      { success: false, error: ErrorCode.VALIDATION_ERROR, message: 'Image could not be processed' },
-      400
+      { success: false, error: unavailable ? ErrorCode.SERVICE_UNAVAILABLE : ErrorCode.VALIDATION_ERROR, message: 'Image could not be processed' },
+      unavailable ? 503 : 400
     );
   }
 
-  // Capture the OLD key before the UPDATE overwrites it, so the delete below
-  // can never target the object we just wrote.
   const previousKey = preset.preview_image_key;
-
-  // DB UPDATE before the old-object delete, deliberately: if the UPDATE
-  // throws, leaving the delete undone just orphans the old object in R2
-  // (invisible, negligible cost, cleanable later). Doing it the other way
-  // round — delete then UPDATE — risks the opposite failure: a row left
-  // pointing at a key that no longer exists, so an approved preset's card
-  // starts 404ing on every view. Never trade a broken live image for a tidy
-  // bucket.
   try {
-    await c.env.DB.prepare(
-      `UPDATE presets SET preview_image_key = ?, preview_image_status = 'pending', updated_at = ? WHERE id = ?`
+    const attachment = await c.env.DB.prepare(
+      `UPDATE presets SET preview_image_key = ?, preview_image_status = 'pending', updated_at = ?
+       WHERE id = ? AND author_discord_id = ? AND preview_image_key IS ? AND preview_image_status IS ?`
     )
-      .bind(key, new Date().toISOString(), presetId)
+      .bind(key, new Date().toISOString(), presetId, auth.userDiscordId, previousKey, preset.preview_image_status)
       .run();
-  } catch (error) {
-    // BUG-015: the act failed — the image was decoded but never attached to
-    // the preset, so give the slot back before the error reaches the caller.
-    await uploadReservation.release?.();
-    throw error;
+    if (attachment.meta.changes === 0) {
+      // A returned zero-row CAS proves no attachment. Only our own unique new
+      // object is ours to remove; the captured previous image may still be live.
+      try { await deletePreviewImage(c.env, key, c.get('logger')); } catch {
+        c.get('logger')?.error('[preview-image] cleanup of losing upload failed', undefined, { presetId });
+      }
+      await uploadReservation.release?.();
+      const current = await getPresetImageState(c.env.DB, presetId);
+      return current ? previewImageChangedResponse(c) : notFoundResponse(c, 'Preset');
+    }
+  } catch {
+    // A transport exception is not proof of rollback. The unique key can prove
+    // a commit, but a changed/missing key may mean commit THEN replace/delete.
+    // No latest-state comparison can prove that such an attempt was never spent.
+    let current;
+    try { current = await getPresetImageState(c.env.DB, presetId); } catch { /* unknown: keep possibly live object */ }
+    if (current?.preview_image_key !== key) {
+      if (current !== undefined) {
+        try { await deletePreviewImage(c.env, key, c.get('logger')); } catch {
+          c.get('logger')?.error('[preview-image] cleanup of unconfirmed upload failed', undefined, { presetId });
+        }
+      }
+      return c.json({ success: false, error: ErrorCode.SERVICE_UNAVAILABLE, message: 'The upload result could not be confirmed. Please refresh the preset before retrying.' }, 503);
+    }
   }
 
   // Replace any previous image so an abandoned object is not orphaned.
@@ -1332,11 +1334,22 @@ presetsRouter.post('/:id/preview-image', async (c) => {
     c.get('logger')?.error('[preview-image] R2 delete of replaced image failed', err, { presetId });
   }
 
+  // Cleanup awaited external work after the attachment committed. Recheck now:
+  // moderation, replacement or deletion may already have superseded this image.
+  // An unreadable state suppresses notification, not the confirmed success or
+  // charge. This read does not make D1 and Discord a cross-service transaction.
+  let notify = false;
+  try {
+    const current = await getPresetImageState(c.env.DB, presetId);
+    notify = current?.preview_image_key === key && current.preview_image_status === 'pending';
+  } catch {
+    c.get('logger')?.error('[preview-image] notification state could not be confirmed', undefined, { presetId });
+  }
+
   // Same fire-and-forget notification path as a new submission: retries with
-  // backoff, and a dead-letter row when they are exhausted, so a moderator
-  // queue entry is never silently lost. Not awaited — the image is stored and
-  // pending either way, and a notification failure must not fail the upload
-  // the author just completed.
+  // backoff and a dead-letter row when exhausted. Queue only the unique image
+  // still observed pending immediately before enqueueing. A later notification
+  // failure must not fail the confirmed upload the author just completed.
   const imagePayload: PresetNotificationPayload = {
     type: 'preview_image',
     preview_image_key: key,
@@ -1346,7 +1359,7 @@ presetsRouter.post('/:id/preview-image', async (c) => {
       author_name: sanitizeAuthorName(auth.userName ?? ''),
     },
   };
-  c.executionCtx.waitUntil(
+  if (notify) c.executionCtx.waitUntil(
     notifyDiscordBot(c.env, imagePayload, c.get('logger')).catch(async (err) => {
       c.get('logger')?.error('[preview-image] Discord notification failed', err, { presetId });
       // FINDING-017: preset id only — never the R2 key or the author's name.
@@ -1409,11 +1422,16 @@ presetsRouter.delete('/:id/preview-image', async (c) => {
   // DB UPDATE before the R2 delete, as everywhere else in this file: a failed
   // delete orphans an invisible object, while the reverse leaves a row pointing
   // at a key that no longer exists.
-  await c.env.DB.prepare(
-    `UPDATE presets SET preview_image_key = NULL, preview_image_status = 'none', updated_at = ? WHERE id = ?`
+  const removal = await c.env.DB.prepare(
+    `UPDATE presets SET preview_image_key = NULL, preview_image_status = 'none', updated_at = ?
+     WHERE id = ? AND author_discord_id = ? AND preview_image_key IS ? AND preview_image_status IS ?`
   )
-    .bind(new Date().toISOString(), presetId)
+    .bind(new Date().toISOString(), presetId, auth.userDiscordId, previousKey, preset.preview_image_status)
     .run();
+  if (removal.meta.changes === 0) {
+    const current = await getPresetImageState(c.env.DB, presetId);
+    return current ? previewImageChangedResponse(c) : notFoundResponse(c, 'Preset');
+  }
 
   try {
     await deletePreviewImage(c.env, previousKey, c.get('logger'));
@@ -1474,12 +1492,11 @@ async function validateSubmission(body: PresetSubmission, db: D1Database): Promi
  * PRESETS-REF-001 FIX: Uses centralized validators from validation-service
  *
  * Async because category validation is DB-backed, exactly like validateSubmission.
- * `currentCategoryId` supplies the primary when the request does not change it —
- * otherwise adding a secondary equal to the unchanged primary would slip through.
+ * Merge category changes with stored values before validating the combination.
  */
 async function validateEditRequest(
   body: PresetEditRequest,
-  currentCategoryId: string,
+  current: Pick<CommunityPreset, 'category_id' | 'secondary_categories'>,
   db: D1Database
 ): Promise<string | null> {
   // All fields optional for edit, but validate if provided
@@ -1512,13 +1529,13 @@ async function validateEditRequest(
   if (body.category_id !== undefined || body.secondary_categories !== undefined) {
     const validCategories = await getValidCategories(db);
 
-    if (body.category_id !== undefined && !validCategories.includes(body.category_id)) {
+    const effectivePrimary = body.category_id === undefined ? current.category_id : body.category_id;
+    if (!validCategories.includes(effectivePrimary)) {
       return 'Invalid category';
     }
 
-    const effectivePrimary = body.category_id ?? currentCategoryId;
     const secondaryError = validateSecondaryCategories(
-      body.secondary_categories,
+      body.secondary_categories === undefined ? current.secondary_categories : body.secondary_categories,
       effectivePrimary,
       validCategories
     );

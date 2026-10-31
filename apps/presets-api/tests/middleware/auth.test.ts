@@ -221,6 +221,18 @@ describe('AuthMiddleware', () => {
 
     describe('JWT Authentication', () => {
         const JWT_SECRET = 'test-jwt-secret-that-is-at-least-32-bytes!!-that-is-at-least-32-bytes!!';
+        it.each(['padding', 'unused bits'] as const)('rejects a JWT signature %s alias while the canonical token authenticates', async alias => {
+            const jwt = await createTestJWT(JWT_SECRET, { sub: 'jwt-user-123', username: 'JWTUser' });
+            const [header, payload, signature] = jwt.split('.');
+            const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+            const alternate = alias === 'padding' ? `${signature}=`
+                : signature.slice(0, -1) + alphabet[alphabet.indexOf(signature.at(-1)!) + 1];
+            expect(Buffer.from(alternate, 'base64url')).toEqual(Buffer.from(signature, 'base64url'));
+            const rejected = await app.request('/test/auth', { headers: { Authorization: `Bearer ${header}.${payload}.${alternate}` } }, env);
+            expect(await rejected.json()).toMatchObject({ isAuthenticated: false });
+            const accepted = await app.request('/test/auth', { headers: { Authorization: `Bearer ${jwt}` } }, env);
+            expect(await accepted.json()).toMatchObject({ isAuthenticated: true, authSource: 'web', userDiscordId: 'jwt-user-123' });
+        });
 
         it('should authenticate with valid JWT', async () => {
             const jwt = await createTestJWT(JWT_SECRET, {
