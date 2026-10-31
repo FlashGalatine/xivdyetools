@@ -1,5 +1,7 @@
 # Dead-code audit — the XIVCharaKit-facing code (2026-10-26)
 
+> **Status note (2026-10-31):** statuses and version numbers here are as of main `13c386e5` (audit tree `6da3ff5b`). The October 2026 release-cut queue (#369–#411) carries parts of this plan: core 5.16.0 (#373), bot-logic 4.12.0 (#377), core 6.0.0 and bot-logic 5.0.0 (#391, #394). Treat the versions as provisional. Per-finding status is restated in the audit-docs companion after the queue lands.
+
 47 findings (24 actionable, 23 KEEP; ~4,211 lines removable) in the code where the monorepo interacts with xivcharakit. The migration is complete at runtime — no production code calls the legacy `parseCharaFile` / `resolveCharaColors` — but both are published API with no deprecation, so their removal is a MAJOR release pair (core 6.0.0, bot-logic 5.0.0) after a deprecation MINOR. **No source files were modified by the audit**, and no Fable agent was used. It accompanies the [2026-10-26 security audit](../2026-10-26-security/README.md).
 
 | File | Purpose |
@@ -17,3 +19,5 @@
 4. **[DEAD-011](findings/DEAD-011.md) (REMOVE WITH CAUTION)** — web-app: the protocol validates dye objects the worker can never send (~245 lines).
 5. **[DEAD-017](findings/DEAD-017.md) (REMOVE)** — bot-logic: a test fixture module ships in the published tarball.
 6. **[DEAD-003](findings/DEAD-003.md) / [DEAD-002](findings/DEAD-002.md) (REMOVE)** — core: seven stale `@public` tags and docs that still describe the legacy parser as the live path.
+
+2026-10-31: finding bullets re-rendered without the renderer's length cap (`evidence/scripts/render-findings.mjs`); text unchanged from `evidence/workflow-verify-result.json`, Status lines untouched.

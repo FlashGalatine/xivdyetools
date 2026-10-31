@@ -6,6 +6,8 @@ Reviewed at `6da3ff5b` in the isolated audit worktree. Assigned pair: `gpt-6.1-s
 
 See `candidates-content.json` for six independently verifiable candidates, source anchors, reproduction steps and proposed fixes. Priority is provisional for coordinator/verifier review.
 
+> Coordinator note (2026-10-31): the coordinator's final catalog (`evidence/final-catalog.json`) files CONTENT-004 as I18N-002 and CONTENT-006 as HC-002, both at P1; those filed tiers are final.
+
 | Candidate | Draft priority | Evidence that gates miss |
 |---|---|---|
 | CONTENT-001 | HC P1 | `main.ts:187` supplies an English-only error detail alongside localized fatal-screen chrome; `fatal-error.ts:61` paints it. |

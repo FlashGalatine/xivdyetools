@@ -1,5 +1,5 @@
 # Remediation Plan — 2026-10-26
-**Sources:** [2026-10-26-security](SECURITY_AUDIT_REPORT.md) — 56 findings (1 MEDIUM, 31 LOW, 24 INFO) · **Status basis:** 56 total — 0 fixed, 56 outstanding, 0 superseded (three carry forward a 2026-10-03 ID, see *Superseded findings*), 0 KEEP, 0 need rotation
+**Sources:** [2026-10-26-security](SECURITY_AUDIT_REPORT.md) — 56 findings (1 MEDIUM, 31 LOW, 24 INFO) · **Status basis:** 56 total — 7 fixed, 49 outstanding (FINDING-008 and -009 partial, FINDING-050 blocked), 0 superseded (three carry forward a 2026-10-03 ID and one a 2026-08-21 ID, see *Superseded findings*), 0 KEEP, 0 need rotation (basis 2026-10-31; see the report's Remediation status table)
 **Ordering:** 1. one deploy unit per sprint (a package change is one publish sprint, then one sprint per consumer deploy) 2. P0 first — there is none 3. Severity × Exposure, then hardening 4. terminal work last (CI and repo settings, docs and process)
 
 Tiers: **P2** = the MEDIUM, plus LOW findings with a reachable code path or a false statement users read. **P3** = hardening, INFO, LOCAL and process items. Nothing here is P0 or P1: no unauthenticated party can harm another user, and no secret is exposed.
@@ -20,6 +20,8 @@ Tiers: **P2** = the MEDIUM, plus LOW findings with a reachable code path or a fa
 | 8 | Plan gate | **DECIDED 2026-10-26:** review first, start nothing. No sprint, bump, publish or deploy runs until you say so. |
 
 ## Sprint 0 — Prerequisites and maintainer-only actions (no deploy; nothing exploitable now)
+> **2026-10-26/27:** executed except FINDING-050 (blocked) and the R-CI half of FINDING-009; FINDING-008 is PARTIAL (2026-10-31). See the report's Remediation status table.
+
 No finding is exploitable now by the skill's rule and no credential is exposed, so there is nothing to rotate. These items need the maintainer's Cloudflare dashboard or GitHub settings, not a code change, and can run in parallel with Sprint 1; do FINDING-054 first (a deletion, nothing depends on it).
 
 | ID | Source | Tier | Action |
@@ -199,6 +201,7 @@ Defence in depth for [FINDING-002](findings/FINDING-002.md) (tracked in Sprint 7
 | 2026-10-03-security/FINDING-023 | [FINDING-028](findings/FINDING-028.md) | Carried forward under a new ID, still open; the regression sweep verdict is PARTIAL |
 | 2026-10-03-security/FINDING-024 | [FINDING-051](findings/FINDING-051.md) | Residual (`enforce_admins`, `strict`) after its precondition PRs merged |
 | 2026-10-03-security/FINDING-027 | [FINDING-039](findings/FINDING-039.md) | Optional hardening (failed-auth throttle) not done |
+| 2026-08-21-security/FINDING-025 | [FINDING-054](findings/FINDING-054.md) | Its `workers_dev = false` half was fixed in the repo (`6e23014d`) but never reached the live dev script, which was not redeployed |
 
 ## KEEP register
 | ID | Item | Reason | Revisit trigger |
