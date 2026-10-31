@@ -18,8 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   1.6.0 gives it an explicit preset with no burst allowance, which Discord's shared lookup maps to
   the existing RL_5 binding; it previously inherited the 15/minute command default. The limit
   reaches production with the Discord run that worker-kit 1.6.0's merge starts (release cut 04,
-  #374), which redeploys 5.9.0, so 5.9.1 is the first version to record it. Command registration is
-  unchanged.
+  #374), which redeploys 5.9.0, so 5.9.1 is the first version to record it. The limit narrows the
+  load one caller can place on api-worker's shared service budget; it does not remove contention
+  between users in that budget. Command registration is unchanged.
 
 ## [5.9.0] - 2026-10-26
 
