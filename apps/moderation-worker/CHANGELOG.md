@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.2] - 2026-10-31
+
+Activation release, drafted ahead of time; set the release date when it is rebased onto `main`.
+Merge only after moderation 1.9.1 has been deployed and accepted with the flag off, presets-api
+migration 0016 is applied (AP-10), the OAuth `IdentityLookup` provider is deployed, presets
+compatibility (C2) is accepted, the six web and six bot privacy variants are live (AP-18), and the
+activation is approved (AP-17). The merge needs AP-01; its deploy run needs AP-05 and AP-15 (it
+re-registers the moderation commands). After the deploy, run the AP-16 checks with approved test
+identities only. The deploy's health check does not prove the provider is live; the first AP-16
+lookup does.
+
+### Changed
+
+- `LINKED_BAN_CONFIRMATION_ENABLED` is `"true"` in production. `/preset ban_user` and
+  `/preset unban_user`, their suggestions, buttons, selectors and modals now run the reviewed
+  confirmation flow instead of refusing. Ban controls on messages posted before 1.9.0 still write
+  nothing. The routeless development worker stays `"false"`: its `OAUTH_IDENTITY` binding targets
+  the production OAuth worker.
+- Setting the flag back to `"false"` (a new release) stops new confirmations but undoes nothing.
+  Bans and memberships written after activation stay enforced by presets-api, and pending reviews
+  are refused and expire. While the flag is off there is no ban or unban path, by bot or by hand,
+  so lifting such a ban needs re-activation or the coordinated recovery decision (AP-29), which
+  any code rollback or database restore also needs.
+
 ## [1.9.1] - 2026-10-29
 
 ### Changed

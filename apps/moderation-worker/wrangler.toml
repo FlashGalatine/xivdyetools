@@ -92,7 +92,9 @@ enabled = false
 ENVIRONMENT = "production"
 DISCORD_CLIENT_ID = "1453806659708129374"
 PRESETS_API_URL = "https://api.xivdyetools.app"
-LINKED_BAN_CONFIRMATION_ENABLED = "false"
+# Activated in 1.9.2, a separate release after the OAuth provider, presets migration
+# 0016 and the privacy disclosures were live. The routeless dev worker above stays "false".
+LINKED_BAN_CONFIRMATION_ENABLED = "true"
 
 [[env.production.kv_namespaces]]
 binding = "KV"
