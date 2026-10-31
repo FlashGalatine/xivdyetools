@@ -849,8 +849,8 @@ describe('localized embed copy', () => {
     expect(ja.title).toContain('スノウホワイト');
     expect(ja.title).not.toContain('Snow White');
     const de = await generateOGDataForTool('gradient', new URLSearchParams('start=1&end=102&steps=5'), mockEnv, 'de');
-    expect(de.title).toContain('Schneeweißer');
-    expect(de.title).toContain('Rabenschwarzer');
+    expect(de.title).toContain('Schneeweiß');
+    expect(de.title).toContain('Rabenschwarz');
   });
 
   it('extractor / presets / budget defaults take the ×6 deck names, not a formatted key (OG-I18N-004)', async () => {

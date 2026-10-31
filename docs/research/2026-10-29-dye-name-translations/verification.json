@@ -1,0 +1,22 @@
+{
+  "pins": {
+    "version": "0874aee069e1e7c4",
+    "schema": "exdschema@2:rev:e773c41a90aed788cf4c1c48469fa85618ef01fb"
+  },
+  "checkedGlobalNames": 500,
+  "checkedRegionalCells": 250,
+  "remainingDifferences": {
+    "color": 22,
+    "jsonName": 3
+  },
+  "sourceIssues": 0,
+  "preservedFiles": [
+    "dyes.json",
+    "facewear_colors.json",
+    "facewear-names.csv",
+    "locales/en.json",
+    "locales/ja.json",
+    "locales/ko.json",
+    "locales/zh.json"
+  ]
+}
