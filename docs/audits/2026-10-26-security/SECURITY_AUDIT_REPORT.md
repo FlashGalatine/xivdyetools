@@ -216,7 +216,7 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 | FINDING-005 | OPEN | — |
 | FINDING-006 | OPEN | — |
 | FINDING-007 | OPEN | — |
-| FINDING-008 | OPEN — private encrypted report sent 2026-10-27; upstream triage pending | Sent-copy recipient and attachment verified; private receipt outside Git; no mitigation applied |
+| FINDING-008 | PARTIAL — fixed upstream for MFA accounts (`d27a8b2`, 2026-10-27, credited publicly); non-MFA email auto-link remains by upstream design | Private report sent 2026-10-27; xivdyetools-side narrowing (M1/M2) not started and gated before the oauth identity-split activation (2026-10-31 addendum) |
 | FINDING-009 | PARTIAL 2026-10-26 — one-off history/alias cleanup complete; automated retention remains in R-CI | [760 deletion receipts and preservation verification](evidence/remediation-finding-009-2026-10-26.md) (no code commit) |
 | FINDING-010 | OPEN | — |
 | FINDING-011 | OPEN | — |

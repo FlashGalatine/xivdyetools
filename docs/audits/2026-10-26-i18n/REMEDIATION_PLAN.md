@@ -114,13 +114,13 @@ The maintainer authorized tagging published releases. Created annotated chara-v0
 
 **Ends with:** Explicit maintainer authorization at execution → narrowly scoped action/decision → read-only state verification recorded; no automatic action from this audit.
 
-## Sprint DECISION-UPSTREAM-MERGE — Upstream identity-merge decision — REPORT SENT 2026-10-27; upstream triage pending
+## Sprint DECISION-UPSTREAM-MERGE — Upstream identity-merge decision — REPORT SENT 2026-10-27; FIXED UPSTREAM FOR MFA ACCOUNTS
 
-The maintainer authorized review, preparation and then sending of the private upstream report. Rechecked current upstream source, obtained an independent security review and sent the report to XIVAuth's published security address with the policy-requested PGP-encrypted attachment. A fresh Gmail sent-copy read confirms the recipient and byte-identical attachment. The report, source snapshots and receipt remain outside Git. Upstream acknowledgement and triage are pending. FINDING-008 remains OPEN; local OAuth mitigation in A-OAUTH remains a separate decision.
+The maintainer authorized review, preparation and then sending of the private upstream report. Rechecked current upstream source, obtained an independent security review and sent the report to XIVAuth's published security address with the policy-requested PGP-encrypted attachment. A fresh Gmail sent-copy read confirms the recipient and byte-identical attachment. The report, source snapshots and receipt remain outside Git. Upstream fixed the MFA case on 2026-10-27 (`d27a8b2`) and credited the report in its security policy's Hall of Fame; the email auto-link for accounts without MFA remains by upstream design. FINDING-008 is PARTIAL. On 2026-10-31 the maintainer gated the local narrowing (M1, see FINDING-008's addendum) before the oauth identity-split activation; A-OAUTH carries it.
 
 | ID | Source | Sev/Pri | Action |
 |---|---|---|---|
-| [2026-10-26-security/FINDING-008](../2026-10-26-security/findings/FINDING-008.md) | 2026-10-26-security | P3 · LOW / INTERNET-UNAUTH | Report upstream to XIVAuth (MFA or owner confirmation on the email auto-merge path); decide whether oauth narrows its side (A-OAUTH). |
+| [2026-10-26-security/FINDING-008](../2026-10-26-security/findings/FINDING-008.md) | 2026-10-26-security | P3 · LOW / INTERNET-UNAUTH | Reported and fixed upstream for MFA accounts; narrow our side with M1 before the oauth identity-split activation (A-OAUTH). |
 
 **Ends with:** Explicit maintainer authorization at execution → narrowly scoped action/decision → read-only state verification recorded; no automatic action from this audit.
 
