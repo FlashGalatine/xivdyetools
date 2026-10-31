@@ -186,7 +186,7 @@ tests/
 | `SERVICE_RATE_LIMITER` | Rate Limiting binding (`[[ratelimits]]`, 1300 / 60 s) | Our own workers on `/v1/*` over a service binding (no client IP, one shared key) |
 | `UNIVERSALIS_RATE_LIMITER` | Rate Limiting binding (`[[ratelimits]]`, 30 / 60 s production, 60 development) | Universalis cache-miss budget |
 | `UNIVERSALIS_SERVICE_RATE_LIMITER` | Rate Limiting binding (`[[ratelimits]]`, 600 / 60 s production, 1200 development) | Separate shared service key for Universalis misses |
-| `CHARA_RATE_LIMITER` | Rate Limiting binding (`[[ratelimits]]`, 30 / 60 s production, 60 development) | Dedicated public Chara upstream-operation budget; cache hits and existing Item/Glasses waiters are free of this additional budget |
+| `CHARA_RATE_LIMITER` | Rate Limiting binding (`[[ratelimits]]`, 30 / 60 s production, 60 development) | Dedicated public Chara upstream-operation budget; cache hits and existing Item/Glasses waiters are free of this additional budget; a waiter whose owner is denied pays for the operation it takes over |
 | `CHARA_SERVICE_RATE_LIMITER` | Rate Limiting binding (`[[ratelimits]]`, 600 / 60 s production, 1200 development) | Separate shared service key, 20× the public Chara allowance |
 | `RATE_LIMIT` | KV Namespace | Fallback counters for API, telemetry, Universalis and Chara scopes, using isolated prefixes |
 | `ANALYTICS` | Analytics Engine dataset | `xivdyetools_web_analytics` (prod) / `_dev`; absent → telemetry accepts and discards |
