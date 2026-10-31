@@ -39,6 +39,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   errors move to the standalone localized copy; retain normalization and logging.
 - Remove unused spectral/dye-selector chunk rules and stale documentation. Fresh builds
   remain byte-identical; retain the generic future-vendor 30 KB guard and all active limits.
+- Do not cache a resolve answer whose item or facewear failed validation, so the next import
+  retries instead of keeping slot-only rows until reload.
 
 ### Security
 
