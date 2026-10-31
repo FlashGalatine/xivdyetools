@@ -160,7 +160,7 @@ const MAX_TO_JSON_DEPTH = 32;
  * Extend this class and implement the `write` method to create
  * custom logging adapters.
  *
- * @internal Implementation detail — consumers should use factory functions
+ * Implementation detail — consumers should use factory functions
  * (`createBrowserLogger`, `createWorkerLogger`, `createRequestLogger`,
  * `createLibraryLogger`) or pre-configured instances (`NoOpLogger`,
  * `ConsoleLogger`, `browserLogger`) instead.
