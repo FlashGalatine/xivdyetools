@@ -34,7 +34,7 @@ folding removal into those minor artifacts would defeat the required deprecation
 - Publish and verify the A/R/H prerequisite packages, including Core 5.16.0, SVG 4.4.1 and
   Bot Logic 4.12.0, with actual registry-artifact and consumer acceptance evidence.
 - Record the required beta and production acceptance of the current facade and deprecated
-  result contract. Source tests and local packs do not establish deployed acceptance.
+  result contract. Source tests and local packs do not establish deployed acceptance. **Ruling (2026-10-31, R1):** beta acceptance is retired for this wave. Production acceptance of the deployed A/R/H consumers (discord 5.9.7, API 0.21.1, web 5.16.4, OG 2.12.2 and moderation 1.9.0 with `LINKED_BAN_CONFIRMATION_ENABLED=false`; units 9 and 11-14 of the [unit acceptance checklist](REMEDIATION_UNIT_ACCEPTANCE_2026_10.md)) stands in for the beta acceptance of the current facade and deprecated result contract before Core 6.0.0. Manual beta dispatch remains unauthorized, and the ruling authorizes no merge, publication, deployment or activation.
 - Recheck external npm consumers before removing public APIs or the result field. Local
   zero-call-site searches cannot settle external use. Revisit removal if an active consumer
   still needs the field.
@@ -54,7 +54,7 @@ verification and version boundaries; they do not pin or delay dependency adoptio
 The existing production reviewer gate must hold every package-triggered app run. During a
 later explicitly authorized release, hold/cancel stale consumer runs and select only the
 intended app source/run after its prerequisites and acceptance checks. Approving a package
-publisher must not approve any app deployment. Do not treat draft status as an activation gate.
+publisher must not approve any app deployment. Do not treat draft status as an activation gate. **Rule (2026-10-31):** stale runs are no longer held: reject or cancel every stale run that is waiting for review or pending in its workflow's concurrency group before the next merge that matches the same workflow, and never cancel an approved run in progress, which can stop between `wrangler deploy` and `register-commands`. Each deploy workflow's single concurrency group has `cancel-in-progress: false`, so a stale run left waiting can hold up the selected one ([unit acceptance](REMEDIATION_UNIT_ACCEPTANCE_2026_10.md) AP-06).
 
 Push only flat `codex/release-cut-*` candidate refs, excluded by all three automatic beta
 workflows. Never push the private builder or local implementation branches. Manual beta
