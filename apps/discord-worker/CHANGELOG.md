@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Prepare the Japanese and Simplified Chinese fonts for the pending shared bot catalog while retaining every existing codepoint, glyph shape and metric. Add the three required characters without changing handlers, bindings or registered commands.
-- Keep this font-readiness deployment separate from the later bot-logic and private notification-provider adoption. Production activation remains held.
+- Its production deploy is not run on its own: the maintainer ruled on 2026-10-31 that Discord 5.9.7 (unit 9) carries these fonts. Production activation remains held.
 
 ### Security
 
