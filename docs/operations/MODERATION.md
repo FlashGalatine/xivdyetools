@@ -27,9 +27,10 @@ be live.
 **While it is off:**
 
 - `/preset ban_user` and `/preset unban_user` reply privately: "Account ban confirmations are not
-  active. No action was taken." Ban buttons, selectors and the reason modal give the same reply,
-  including those on messages posted before 1.9.0. Nothing is written.
-- The `user` and `additional_user` suggestions stay empty.
+  active. No action was taken." The confirm and cancel buttons, the parent-ban selector and the
+  reason modal give the same reply, including those on messages posted before 1.9.0. Nothing is
+  written.
+- The `user` and `additional_user` suggestions come back empty.
 - **Existing bans are still enforced.** A banned user still cannot submit, edit or vote; their
   hidden presets stay hidden; and Approve and Revert still refuse a preset whose author is
   banned.
@@ -74,9 +75,9 @@ The `user` option is a text field with autocomplete, not a Discord user picker. 
 2. If the IDs already match several active bans, asks you to choose one parent ban. More than 16 matching bans is refused for manual review
 3. Expands an existing ban only when you confirm the additional IDs. One ban covers at most 64 IDs
 4. On confirmation, opens a **modal** for the ban reason (10–500 characters, checked by the server)
-5. In one database transaction: records the ban, **hides every approved preset** by the IDs in the ban's scope, and writes the audit rows. A ban embed is posted in the moderation channel, without your name
+5. In one database transaction: records the ban, **hides every approved preset** by the IDs this confirmation adds (for a new ban, all of its IDs), and writes the audit rows. Expanding a ban by IDs it already covers changes nothing. A ban embed is posted in the moderation channel, without your name
 
-The review works once and only for you, and it expires after 15 minutes. If anything changed in the meantime (the matching bans, the scope, the expiry or the capacity), the transaction refuses and nothing is written.
+The review works once and only for you. It expires 10 minutes after you run the command, and choosing a parent ban does not extend it. If anything changed in the meantime (the matching bans, the scope, the expiry or the capacity), the transaction refuses and nothing is written.
 
 ---
 
@@ -97,7 +98,7 @@ Like `ban_user`, `user` is an autocomplete text field: pick a currently banned u
 3. **Restores hidden presets** in that scope (sets status back to 'approved'). A preset stays hidden when:
    - its author is still covered by another active ban; or
    - its dye combination is held by another approved or pending preset. If several hidden presets share a combination, only the lowest-ID one is restored.
-4. Posts the result in the moderation channel, with the restored and still-hidden counts
+4. Replaces your private review with the result: the restored and still-hidden counts. Nothing is posted in the moderation channel, so tell the other moderators yourself
 
 ---
 
@@ -121,7 +122,7 @@ Suggestions appear only for moderators, and only while the confirmation flow is 
 
 | Action | Effect |
 |--------|--------|
-| **Preset Status** | All 'approved' presets by the IDs in the ban's scope → 'hidden' |
+| **Preset Status** | All 'approved' presets by the IDs the ban adds → 'hidden' |
 | **Submit Access** | Cannot submit new presets |
 | **Vote Access** | Cannot vote on presets |
 | **Edit Access** | Cannot edit existing presets |
@@ -152,15 +153,20 @@ CREATE TABLE banned_users (
   username TEXT NOT NULL,
   moderator_discord_id TEXT NOT NULL,
   reason TEXT NOT NULL,
-  banned_at TEXT NOT NULL,
+  banned_at TEXT DEFAULT (datetime('now')),
   unbanned_at TEXT,
-  unban_moderator_discord_id TEXT
+  unban_moderator_discord_id TEXT,
+  CHECK (discord_id IS NOT NULL OR xivauth_id IS NOT NULL)
 );
+CREATE UNIQUE INDEX idx_banned_users_discord_active
+  ON banned_users(discord_id) WHERE discord_id IS NOT NULL AND unbanned_at IS NULL;
+CREATE UNIQUE INDEX idx_banned_users_xivauth_active
+  ON banned_users(xivauth_id) WHERE xivauth_id IS NOT NULL AND unbanned_at IS NULL;
 ```
 
 Key fields:
-- `unbanned_at` is NULL for active bans
-- `reason` must be 10–500 characters
+- `unbanned_at` is NULL for active bans; the two partial unique indexes allow one active ban per ID
+- `reason` must be 10–500 characters. The bot enforces this, not the database
 - Unbanning blanks the record's `username` and `reason` but keeps the row (with `unbanned_at`); presets-api deletes lifted bans 90 days after the unban (a daily cron, plus a best-effort sweep after its own moderation writes). The accountability history lives in the D1 `moderation_log` table, which keeps ban and unban rows for 12 months
 
 presets-api migration `0016_ban_identity_continuity.sql` adds three tables:
@@ -179,8 +185,10 @@ off. It writes production data by hand, so each run is its own decision. The SQL
 direct ban and unban of moderation-worker 1.8.2. presets-api 2.8.x enforces the rows it writes, and
 the confirmation flow can lift them after activation.
 
-> **Never use it once the flag is on.** A ban written this way has no memberships, and a manual
-> unban ignores memberships. Use the bot instead.
+> **Never use it once the flag is on.** A manual unban closes bans by their own ID columns only and
+> restores presets without the confirmation flow's check for other bans that cover the author
+> through memberships, so it could restore presets of a user who is still banned. Use the bot
+> instead.
 
 **1. Check that the manual path is still safe.** The count must be 0. Any membership row means
 the confirmation flow or the continuity handoff has run, so stop.
@@ -189,32 +197,46 @@ the confirmation flow or the continuity handoff has run, so stop.
 SELECT COUNT(*) AS memberships FROM ban_identity_memberships;
 ```
 
-**2. Find the exact ID.** It must be a Discord ID (17–20 digits) or an XIVAuth ID (a lowercase
-UUID), exactly as stored in `presets.author_discord_id`:
+**2. Find the exact ID.** It must be a Discord ID (17–20 digits) or an internal account UUID
+(lowercase; the JWT `sub`, which the bot labels `xivauth:`). Take it only from
+`presets.author_discord_id`, never from the oauth database's `users.xivauth_id`: that column holds
+the upstream XIVAuth identifier, and a ban on it matches nothing. Double any `'` in the search text.
 
 ```sql
-SELECT author_discord_id, author_name, COUNT(*) AS presets
+SELECT author_discord_id, COUNT(*) AS presets
 FROM presets WHERE author_name LIKE '%<part of name>%'
 GROUP BY author_discord_id ORDER BY presets DESC LIMIT 25;
 ```
 
-**3. Check the current ban state.** Before a ban the count must be 0; before an unban, 1 or more.
+Then read the name the ban records, which is the author's most recent one:
 
 ```sql
-SELECT COUNT(*) AS active FROM banned_users
-WHERE (discord_id = '<TARGET>' OR xivauth_id = '<TARGET>') AND unbanned_at IS NULL;
+SELECT author_name FROM presets WHERE author_discord_id = '<TARGET>'
+ORDER BY created_at DESC LIMIT 1;
 ```
 
-**4. Fill in a copy of the template.** Keep the copy outside the repository: it holds a user ID
-and a reason. In every value, double each `'`.
+**3. Check the current state.** Before a ban the count must be 0; before an unban, 1 or more.
+Keep the start time and the target's preset counts by status for step 6.
+
+```sql
+SELECT strftime('%Y-%m-%dT%H:%M:%fZ', 'now') AS start_time;
+SELECT COUNT(*) AS active FROM banned_users
+WHERE (discord_id = '<TARGET>' OR xivauth_id = '<TARGET>') AND unbanned_at IS NULL;
+SELECT status, COUNT(*) AS presets FROM presets
+WHERE author_discord_id = '<TARGET>' GROUP BY status;
+```
+
+**4. Fill in a copy of the template.** Keep the copy outside the repository, and delete it after
+step 6: it holds a user ID and a reason. In every value, double each `'`. Write a factual reason:
+it stays in `moderation_log` for 12 months.
 
 | Placeholder | Value |
 |---|---|
 | `<TARGET>` | the ID from step 2 |
 | `<XIVAUTH>` | `'<TARGET>'` (quoted) when the target is an XIVAuth UUID; `NULL` (unquoted) for a Discord ID |
-| `<USERNAME>` | the author name from step 2, or `<TARGET>` when there is none |
+| `<USERNAME>` | the most recent author name from step 2, or `<TARGET>` when there is none |
 | `<MODERATOR>` | your own Discord ID |
-| `<REASON>` | the ban reason, 10–500 characters |
+| `<REASON>` | the ban reason, 10–500 characters (the database does not check the length) |
 
 Ban template:
 
@@ -247,29 +269,35 @@ Unban template (the unban takes no reason):
 ```sql
 UPDATE banned_users
 SET unbanned_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now'), unban_moderator_discord_id = '<MODERATOR>', username = '', reason = ''
-WHERE (discord_id = '<TARGET>' OR xivauth_id = '<TARGET>') AND unbanned_at IS NULL;
+WHERE (discord_id = '<TARGET>' OR xivauth_id = '<TARGET>') AND unbanned_at IS NULL
+  AND NOT EXISTS (SELECT 1 FROM ban_identity_memberships);
 INSERT INTO moderation_log (id, preset_id, moderator_discord_id, action, reason, target_discord_id, created_at)
-VALUES (
+SELECT
   lower(hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-4' || substr(hex(randomblob(2)), 2) || '-' || substr('89ab', abs(random() % 4) + 1, 1) || substr(hex(randomblob(2)), 2) || '-' || hex(randomblob(6))),
   NULL, '<MODERATOR>', 'unban', NULL, '<TARGET>', strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
-);
+WHERE changes() > 0;
 INSERT INTO moderation_log (id, preset_id, moderator_discord_id, action, reason, target_discord_id, created_at)
 SELECT
   lower(hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-4' || substr(hex(randomblob(2)), 2) || '-' || substr('89ab', abs(random() % 4) + 1, 1) || substr(hex(randomblob(2)), 2) || '-' || hex(randomblob(6))),
   p.id, '<MODERATOR>', 'restore', NULL, '<TARGET>', strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
 FROM presets p
 WHERE p.author_discord_id = '<TARGET>' AND p.status = 'hidden'
+  AND NOT EXISTS (SELECT 1 FROM ban_identity_memberships)
+  AND NOT EXISTS (SELECT 1 FROM banned_users b WHERE (b.discord_id = '<TARGET>' OR b.xivauth_id = '<TARGET>') AND b.unbanned_at IS NULL)
   AND NOT EXISTS (SELECT 1 FROM presets o WHERE o.dye_signature = p.dye_signature AND o.id <> p.id AND o.status IN ('approved', 'pending'))
   AND NOT EXISTS (SELECT 1 FROM presets h WHERE h.author_discord_id = p.author_discord_id AND h.status = 'hidden' AND h.dye_signature = p.dye_signature AND h.id < p.id);
 UPDATE presets SET status = 'approved', updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
 WHERE author_discord_id = '<TARGET>' AND status = 'hidden'
+  AND NOT EXISTS (SELECT 1 FROM ban_identity_memberships)
+  AND NOT EXISTS (SELECT 1 FROM banned_users b WHERE (b.discord_id = '<TARGET>' OR b.xivauth_id = '<TARGET>') AND b.unbanned_at IS NULL)
   AND NOT EXISTS (SELECT 1 FROM presets o WHERE o.dye_signature = presets.dye_signature AND o.id <> presets.id AND o.status IN ('approved', 'pending'))
   AND NOT EXISTS (SELECT 1 FROM presets h WHERE h.author_discord_id = presets.author_discord_id AND h.status = 'hidden' AND h.dye_signature = presets.dye_signature AND h.id < presets.id);
 ```
 
-The unban audit row is written unconditionally. Step 3's count is what guarantees there was a
-ban to lift. The two `NOT EXISTS` guards leave a preset hidden when its dye combination is taken,
-as the bot does.
+As in 1.8.2, the unban audit row is written only when the update closed a ban (`changes() > 0`).
+Every statement also stops if any membership row exists, and the restore stops if the ban is still
+active, so a run after activation, or a repeated run, changes nothing. The last two `NOT EXISTS`
+guards leave a preset hidden when its dye combination is taken, as the bot does.
 
 **5. Run it** from `apps/presets-api` in a checkout of `main`:
 
@@ -277,19 +305,23 @@ as the bot does.
 pnpm exec wrangler d1 execute xivdyetools-presets --env production --remote --file <path to the filled-in copy>
 ```
 
-Do not assume `--file` runs all-or-nothing. If the command reports an error, run step 6 before
-anything else, then finish or reverse the remaining statements by hand.
+Remote `--file` runs through D1's import path: expect a confirmation prompt and a warning that the
+database may be briefly unavailable, so run it at a quiet time. Do not assume it is all-or-nothing.
+If the command reports an error, run step 6 before anything else, then finish or reverse the
+remaining statements by hand.
 
-**6. Verify.** Run step 3's count again: 1 after a ban, 0 after an unban. Then count the
-target's presets by status:
+**6. Verify.** Run step 3's queries again: the active count is 1 after a ban and 0 after an
+unban. After a ban there is no `approved` row; after an unban, any `hidden` presets are the ones
+whose dye combination is taken. Then check the audit rows written since step 3:
 
 ```sql
-SELECT status, COUNT(*) AS presets FROM presets
-WHERE author_discord_id = '<TARGET>' GROUP BY status;
+SELECT action, COUNT(*) AS n FROM moderation_log
+WHERE target_discord_id = '<TARGET>' AND created_at >= '<start_time from step 3>'
+GROUP BY action;
 ```
 
-After a ban there is no `approved` row. After an unban, any `hidden` presets are the ones whose
-dye combination is taken.
+After a ban expect one `ban` row and one `hide` row per preset that was approved. After an unban
+expect one `unban` row and one `restore` row per preset that came back.
 
 Then tell the moderators what was done. The bot posts nothing for a manual change.
 
