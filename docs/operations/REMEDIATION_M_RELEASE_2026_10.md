@@ -38,6 +38,7 @@ folding removal into those minor artifacts would defeat the required deprecation
 - Recheck external npm consumers before removing public APIs or the result field. Local
   zero-call-site searches cannot settle external use. Revisit removal if an active consumer
   still needs the field.
+  **2026-11-01:** the window is 14 days and the recheck runs no earlier than 2026-11-15T16:08:53Z (AP-43; unit acceptance section 6). M2 svg 4.4.2 is a patch that pins core exactly, so an `@xivdyetools/svg@^4` consumer receives core 6.0.0 without choosing it. The major-version protection in the external-consumer review does not cover that path; weigh it at M2.
 - Publish Core 6 and verify it before SVG compatibility publication; verify both before
   Bot Logic 5 publication. Select each package individually through the gated Actions publisher.
 - Select and accept each consumer release separately. Keep the original schema, provider,
