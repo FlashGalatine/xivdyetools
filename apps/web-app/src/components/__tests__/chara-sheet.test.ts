@@ -16,6 +16,7 @@ import {
   ToastService,
 } from '@services/index';
 import { CharaSessionService } from '@services/chara-session-service';
+import ja from '../../locales/ja.json';
 import { ThemeService } from '@services/theme-service';
 import { loadCharaFile } from '@services/chara-file-loader';
 import { inspectCharaBytes } from '@services/chara-inspection-service';
@@ -84,6 +85,21 @@ afterEach(() => {
 });
 
 describe('CharaSheet — THIS CHARACTER', () => {
+  it('includes an itemID-zero dye in the nearest dye shown on a slot', () => {
+    const existing = dyeService.getAllDyes()[0];
+    vi.spyOn(dyeService, 'getAllDyes').mockReturnValue([
+      { ...existing, itemID: 0, name: 'Nearest zero-item dye' },
+    ]);
+    CharaSessionService.setSession({
+      fileName: 'test.chara',
+      resolved: makeImportedCharacter({
+        slots: [makeImportedSlot({ slot: 'leftEye', displayHex: '#123456', matchHex: '#123456' })],
+      }),
+    });
+    const { container } = mountSheet();
+    expect(container.textContent).toContain('Nearest zero-item dye');
+  });
+
   it('stays empty until a file is loaded, then draws one card per slot', async () => {
     const { container } = mountSheet();
     expect(container.childElementCount).toBe(0);
@@ -305,14 +321,14 @@ describe('CharaSheet — THIS CHARACTER', () => {
 });
 
 describe('saveCharacterColors', () => {
-  it('saves the closest dye for each worn colour as a character record, named after the character', async () => {
+  it('saves the closest dye for each worn colour as a character record with the localized default name', async () => {
     const success = vi.spyOn(ToastService, 'success').mockImplementation(() => '');
     await load();
 
     saveCharacterColors(CharaSessionService.getSession()!);
 
     const saved = CollectionService.getCollections().find((c) => c.kind === 'character');
-    expect(saved?.name).toBe('Test Subject');
+    expect(saved?.name).toBe(LanguageService.t('swatch.characterDefaultName'));
     // Both eyes share one cell, so one colour — and one dye.
     expect(saved?.dyes).toHaveLength(1);
     expect(success).toHaveBeenCalledWith(LanguageService.t('swatch.characterSavedOne'));
@@ -333,11 +349,12 @@ describe('saveCharacterColors', () => {
     saveCharacterColors(session);
 
     expect(error).not.toHaveBeenCalled();
-    expect(characterRecords().map((c) => c.name)).toEqual(['Test Subject', 'Test Subject (1)']);
+    const base = LanguageService.t('swatch.characterDefaultName');
+    expect(characterRecords().map((c) => c.name)).toEqual([base, `${base} (1)`]);
     expect(success).toHaveBeenCalledTimes(2);
   });
 
-  it('numbers a 50-character name by trimming the name, never the suffix', async () => {
+  it('ignores even a long imported nickname when numbering default names', async () => {
     vi.spyOn(ToastService, 'success').mockImplementation(() => '');
     const long = 'N'.repeat(60);
     await load(JSON.stringify({ ...JSON.parse(FIXTURE), Nickname: long }));
@@ -346,10 +363,8 @@ describe('saveCharacterColors', () => {
     saveCharacterColors(session);
     saveCharacterColors(session);
 
-    expect(characterRecords().map((c) => c.name)).toEqual([
-      'N'.repeat(50),
-      `${'N'.repeat(46)} (1)`,
-    ]);
+    const base = LanguageService.t('swatch.characterDefaultName');
+    expect(characterRecords().map((c) => c.name)).toEqual([base, `${base} (1)`]);
   });
 
   it('says the collection limit is reached instead of "save failed" when there is no room', async () => {
@@ -367,8 +382,8 @@ describe('saveCharacterColors', () => {
 
   // BUG-082 (2026-10-04 deep-dive): `??` kept an empty or whitespace Nickname,
   // which trims to nothing, so createCollection rejected every save.
-  it.each(['', '   '])(
-    'names the record after the file when the Nickname is %j',
+  it.each(['', '   ', undefined])(
+    'uses the default without persisting the filename when the Nickname is %j',
     async (nickname) => {
       vi.spyOn(ToastService, 'success').mockImplementation(() => '');
       const error = vi.spyOn(ToastService, 'error').mockImplementation(() => '');
@@ -377,9 +392,49 @@ describe('saveCharacterColors', () => {
       saveCharacterColors(CharaSessionService.getSession()!);
 
       expect(error).not.toHaveBeenCalled();
-      expect(characterRecords().map((c) => c.name)).toEqual(['blank.chara']);
+      expect(characterRecords().map((c) => c.name)).toEqual([
+        LanguageService.t('swatch.characterDefaultName'),
+      ]);
     }
   );
+
+  it('saves with a default when neither nickname nor filename supplies a name', async () => {
+    await load(JSON.stringify({ ...JSON.parse(FIXTURE), Nickname: undefined }));
+    const session = CharaSessionService.getSession()!;
+
+    saveCharacterColors({ ...session, fileName: '' });
+
+    expect(characterRecords().map((c) => c.name)).toEqual([
+      LanguageService.t('swatch.characterDefaultName'),
+    ]);
+  });
+
+  it('uses the actual current locale default and leaves existing named records unchanged', async () => {
+    const existing = CollectionService.createCollection('Existing personal name', undefined, {
+      kind: 'character',
+    })!;
+    CollectionService.addDyeToCollection(existing.id, 1);
+    const before = JSON.parse(JSON.stringify(CollectionService.getCollections()));
+    const previousLocale = LanguageService.getCurrentLocale();
+    await load();
+    try {
+      await LanguageService.setLocale('ja');
+      expect(LanguageService.getCurrentLocale()).toBe('ja');
+      expect(LanguageService.t('swatch.characterDefaultName')).toBe(ja.swatch.characterDefaultName);
+
+      saveCharacterColors(CharaSessionService.getSession()!);
+
+      expect(characterRecords().map((c) => c.name)).toEqual([
+        'Existing personal name',
+        ja.swatch.characterDefaultName,
+      ]);
+      expect(CollectionService.getCollections().find((c) => c.id === existing.id)).toEqual(
+        before[0]
+      );
+    } finally {
+      await LanguageService.setLocale(previousLocale);
+    }
+  });
 });
 
 // ---------------------------------------------------------------------------

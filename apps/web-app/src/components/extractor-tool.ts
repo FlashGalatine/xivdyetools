@@ -2371,6 +2371,7 @@ export class ExtractorTool extends BaseComponent {
   private openPaletteExport(): void {
     openExportSheet({
       tool: 'extractor',
+      matchingMethod: this.matchingMethod,
       title: LanguageService.t('matcher.extractedPalette'),
       entries: this.roll.map((entry, index) => ({
         key: `pick-${index + 1}`,

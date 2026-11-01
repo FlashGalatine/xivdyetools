@@ -66,7 +66,7 @@ let container: HTMLElement;
 let tool: GlamourTool | null = null;
 
 beforeEach(() => {
-  resolveMock.mockResolvedValue({ items: {}, glasses: null, version: 'test' });
+  resolveMock.mockResolvedValue({ items: {}, glasses: null });
   container = createTestContainer('glamour-tool-host');
 });
 

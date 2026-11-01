@@ -30,6 +30,7 @@ import type { SavedPreset } from '@services/saved-presets-service';
 import type { CommunityPreset } from '@services/community-preset-service';
 import type { Collection } from '@services/collection-service';
 import type { PresetsConfig } from '@shared/tool-config-types';
+import type { EditResult } from '@services/preset-submission-service';
 
 // ============================================================================
 // Mocks
@@ -50,6 +51,10 @@ vi.mock('../preset-detail', () => ({
     `voteError:${code ?? fallbackKey}`,
 }));
 vi.mock('../preset-card', () => ({}));
+const showPresetEditFormMock = vi.hoisted(() =>
+  vi.fn<(preset: CommunityPreset, onEdit?: (result: EditResult) => void) => void>()
+);
+vi.mock('../../preset-edit-form', () => ({ showPresetEditForm: showPresetEditFormMock }));
 
 const languageServiceMock = {
   t: vi.fn((key: string) => key),
@@ -650,6 +655,70 @@ describe('PresetTool', () => {
     await flush(el);
     return el;
   }
+
+  describe('Mine after editing (BUG-023)', () => {
+    async function openEdit(el: PresetToolEl): Promise<void> {
+      const card = cards(el)[0];
+      card.dispatchEvent(
+        new CustomEvent('preset-select', { detail: { preset: card.data.preset } })
+      );
+      await el.updateComplete;
+      el.shadowRoot
+        .querySelector('v4-preset-detail')!
+        .dispatchEvent(new CustomEvent('edit-preset', { detail: { preset: card.data.preset } }));
+      await flush(el);
+    }
+
+    it('renders authoritative edited dyes and reopens with pending moderation metadata', async () => {
+      mySubmissionsMock = [makeCommunity()];
+      const el = await mountLoaded(true);
+      await clickTab(el, 'mine');
+      await openEdit(el);
+      const authoritative = makeCommunity({
+        name: 'Reviewed edit',
+        dyes: [4, 5, 6],
+        status: 'pending',
+        preview_image_status: 'pending',
+        previous_values: { name: 'Mine', description: 'My own preset', tags: [], dyes: [1, 2, 3] },
+      });
+      mySubmissionsMock = [authoritative];
+      showPresetEditFormMock.mock.calls.at(-1)![1]!({
+        success: true,
+        moderation_status: 'pending',
+      });
+      await flush(el);
+      expect(cards(el)[0].data.preset).toMatchObject({ name: 'Reviewed edit', dyes: [4, 5, 6] });
+      await openEdit(el);
+      expect(showPresetEditFormMock.mock.calls.at(-1)![0]).toEqual(authoritative);
+    });
+
+    it('keeps the newest Mine refresh when an older edit refresh arrives last', async () => {
+      mySubmissionsMock = [makeCommunity()];
+      const el = await mountLoaded(true);
+      await clickTab(el, 'mine');
+      await openEdit(el);
+      let resolveOld!: (value: { presets: CommunityPreset[] }) => void;
+      presetSubmissionServiceMock.getMySubmissions.mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveOld = resolve;
+          })
+      );
+      showPresetEditFormMock.mock.calls.at(-1)![1]!({ success: true });
+      await flush(el);
+      expect(presetSubmissionServiceMock.getMySubmissions).toHaveBeenCalledTimes(2);
+      await openEdit(el);
+      const newest = makeCommunity({ name: 'Latest authoritative title', dyes: [7, 8, 9] });
+      mySubmissionsMock = [newest];
+      showPresetEditFormMock.mock.calls.at(-1)![1]!({ success: true });
+      await flush(el);
+      resolveOld({ presets: [makeCommunity({ name: 'Older response' })] });
+      await flush(el);
+      expect(cards(el)[0].data.preset.name).toBe('Latest authoritative title');
+      await openEdit(el);
+      expect(showPresetEditFormMock.mock.calls.at(-1)![0]).toEqual(newest);
+    });
+  });
 
   // --------------------------------------------------------------------
   // BUG-029

@@ -40,7 +40,7 @@ describe('wrangler.toml', () => {
     ['top level', topLevel, ''],
     ['production', production, 'env\\.production\\.'],
   ])(
-    'routes %s Discord notifications to the default entrypoint on the existing production service',
+    'routes %s Discord notifications to the named entrypoint on the existing production service',
     (_environment, config, prefix) => {
       const services = [...config.matchAll(new RegExp(`^\\[\\[${prefix}services\\]\\]\\n([^\\[]*)`, 'gm'))];
       const discordBindings = services.filter((service) =>
@@ -49,14 +49,14 @@ describe('wrangler.toml', () => {
       expect(discordBindings).toHaveLength(1);
       expect(discordBindings[0]?.[1]).toMatch(/^service = "xivdyetools-discord-worker"$/m);
       // C2 precedes Discord's named provider. C4 restores the named assertion.
-      expect(discordBindings[0]?.[1]).not.toMatch(/^\s*entrypoint\s*=/m);
+      expect(discordBindings[0]?.[1]).toMatch(/^entrypoint = "PresetNotifications"$/m);
     }
   );
 
   it.each([
     ['top level', topLevel, '', 'xivdyetools-oauth-dev', '891bbbe834ba4055a06b672b589094be', '1012'],
     ['production', production, 'env\\.production\\.', 'xivdyetools-oauth', '0d6f3be3b4704e91a83e6387b9769e45', '1011'],
-  ])('preserves %s service and storage targets in the default-binding cut',
+  ])('preserves %s service and storage targets in the named-binding cut',
     (_environment, config, prefix, oauthService, blacklistId, ratelimitNamespace) => {
       const blocks = (table: string, binding: string, key = 'binding') =>
         [...config.matchAll(new RegExp(`^\\[\\[${prefix}${table}\\]\\]\\n([^\\[]*)`, 'gm'))]

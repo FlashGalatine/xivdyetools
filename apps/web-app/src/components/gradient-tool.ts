@@ -1,4 +1,4 @@
-﻿/**
+/**
  * XIV Dye Tools v4.0.0 - Gradient Tool Component (Gradient Builder)
  *
  * V4 Renamed: mixer-tool.ts → gradient-tool.ts
@@ -926,17 +926,19 @@ export class GradientTool extends BaseComponent {
   private buildEndpointCard(slot: 0 | 1): HTMLElement {
     const dye = slot === 0 ? this.startDye : this.endDye;
     const active = this.activeEndpoint === slot;
+    const needsStart = slot === 1 && !this.startDye;
     const card = this.createElement('button', {
       className: 'v5-grad-ep-card',
       attributes: {
         type: 'button',
         'data-testid': slot === 0 ? 'gradient-start-node' : 'gradient-end-node',
         title: LanguageService.t(
-          slot === 0 ? 'gradient.clickToSelectStart' : 'gradient.clickToSelectEnd'
+          slot === 0 || needsStart ? 'gradient.clickToSelectStart' : 'gradient.clickToSelectEnd'
         ),
         style: `flex: 1; min-width: 0; display: flex; align-items: center; gap: 9px; min-height: 52px; padding: 7px 9px; border-radius: 11px; cursor: pointer; text-align: left; font-family: inherit; background: var(--theme-card-background); border: 1px solid ${active ? ACCENT_BORDER : 'var(--theme-border)'};`,
       },
     }) as HTMLButtonElement;
+    card.disabled = needsStart;
 
     const swatch = this.createElement('span', {
       attributes: {
@@ -975,6 +977,7 @@ export class GradientTool extends BaseComponent {
     card.appendChild(col);
 
     this.on(card, 'click', () => {
+      if (needsStart) return;
       // Arm this endpoint: the next palette selection replaces it
       this.activeEndpoint = slot;
       this.updateEndpointCards();
@@ -1048,6 +1051,7 @@ export class GradientTool extends BaseComponent {
   private openGradientExport(): void {
     openExportSheet({
       tool: 'gradient',
+      matchingMethod: this.matchingMethod,
       title: LanguageService.t('gradient.gradientResults'),
       meta: [
         LanguageService.tInterpolate('gradient.exportMeta', {
@@ -1627,6 +1631,9 @@ export class GradientTool extends BaseComponent {
     }
 
     this.currentSteps = result;
+    // Pin and clear controls also calculate directly. Price the completed
+    // result here so every path uses the authoritative displayed dyes.
+    void this.fetchPricesForDisplayedDyes();
   }
 
   /**

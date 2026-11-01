@@ -2,7 +2,7 @@
 
 > Also available in: [日本語](TERMS_OF_SERVICE.ja.md) · [Deutsch](TERMS_OF_SERVICE.de.md) · [Français](TERMS_OF_SERVICE.fr.md) · [한국어](TERMS_OF_SERVICE.ko.md) · [中文](TERMS_OF_SERVICE.zh.md). This English version is the authoritative text.
 
-**Last updated:** 2026-10-12 · Covers **xivdyetools.app** and **beta.xivdyetools.app**. How we handle
+**Last updated:** 2026-10-28 · Covers **xivdyetools.app** and **beta.xivdyetools.app**. How we handle
 your data is a separate document: [`PRIVACY.md`](PRIVACY.md). The Discord bot has its own terms:
 [`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.md).
 
@@ -27,7 +27,7 @@ community presets.
 
 - Signing in goes through Discord or XIVAuth. We never see or store a password.
 - Signing in creates an account record holding your provider ID and a name. With Discord, the name
-  is your display name. With XIVAuth, the name is your verified character's name, or
+  is your display name, or your username if you have no display name. With XIVAuth, the name is your verified character's name, or
   "XIVAuth User" followed by the first 8 characters of your XIVAuth ID if no verified character is
   available when you sign in, as described in the Privacy Guide. If your XIVAuth account is linked
   to Discord, the record also holds that Discord user ID. The name in the record is shown as the
@@ -72,7 +72,8 @@ If you think your content was moderated wrongly, or you want something you submi
 
 1. Join the Discord: <https://discord.gg/5VUSKTZCe5>
 2. Ask in **#dyetools-issues-and-suggestions**, or DM "Flash Galatine"
-3. Include your Discord user ID and the name of the preset
+3. Say whether you sign in with Discord or XIVAuth, and include your Discord user ID or the
+   author name shown on your presets, plus the preset name
 
 Appeals are reviewed within 7 days. To have your account record and everything submitted under it
 removed, see [`PRIVACY.md`](PRIVACY.md).

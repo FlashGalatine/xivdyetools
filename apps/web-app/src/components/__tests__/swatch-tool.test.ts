@@ -21,6 +21,8 @@ import { makeImportedCharacter, makeImportedSlot } from '../../__tests__/mocks/i
 import { CharaSessionService, type CharaSession } from '@services/chara-session-service';
 import {
   ConfigController,
+  ColorService,
+  LanguageService,
   MarketBoardService,
   RouterService,
   StorageService,
@@ -686,6 +688,78 @@ describe('SwatchTool', () => {
       await flush();
       expect(getHairColors).toHaveBeenLastCalledWith('Raen', 'Female');
     });
+  });
+
+  describe('native metric precision (BUG-013)', () => {
+    it.each([
+      ['oklab', 0.024, '0.024', 'ΔEOK2'],
+      ['oklab', 0.004, '0.004', 'ΔEOK2'],
+      ['ciede2000', 12.346, '12.3', 'ΔE2000'],
+      ['cie76', 12.346, '12.3', 'ΔE76'],
+      ['redmean', 12.346, '12.3', 'REDMEAN'],
+      ['rgb', 12.346, '12.3', 'RGB DIST'],
+      ['distinguish', 12.346, '12', 'DISTINGUISH %'],
+    ] as const)(
+      'keeps the %s distance %s and metric beside the forward sentence',
+      async (matchingMethod, distance, expected, tag) => {
+        tool = mount();
+        await flush();
+        tool.setConfig({ matchingMethod });
+        mockCharaFindClosestDyes.mockReturnValue([{ dye: mockDyes[0], distance }]);
+        cells()[0].click();
+        const summary = (tool as unknown as { selectionCardContainer: HTMLElement })
+          .selectionCardContainer;
+        expect(
+          [...summary.querySelectorAll('div')].some((el) =>
+            el.textContent?.endsWith(`/${expected}`)
+          )
+        ).toBe(true);
+        expect(summary.textContent).toContain(tag);
+      }
+    );
+
+    it.each([0.024, 0.004])(
+      'keeps OKLAB %s on a loaded character slot summary',
+      async (distance) => {
+        CharaSessionService.setSession(charaSession());
+        tool = mount();
+        await flush();
+        tool.setConfig({ matchingMethod: 'oklab' });
+        vi.spyOn(ColorService, 'getDistanceForMethod').mockReturnValue(distance);
+        rightPanel.querySelector<HTMLButtonElement>('.chara-slots-grid > button')!.click();
+        const summary = (tool as unknown as { selectionCardContainer: HTMLElement })
+          .selectionCardContainer;
+        const expected = distance === 0.024 ? '/0.024' : '/0.004';
+        expect(
+          [...summary.querySelectorAll('div')].some((el) => el.textContent?.endsWith(expected))
+        ).toBe(true);
+        expect(summary.textContent).toContain('ΔEOK2');
+      }
+    );
+
+    it.each([
+      ['oklab', 0.024, 'Δ 0.024 · ΔEOK2'],
+      ['oklab', 0.004, 'Δ 0.004 · ΔEOK2'],
+      ['ciede2000', 12.346, 'Δ 12.3 · ΔE2000'],
+      ['cie76', 12.346, 'Δ 12.3 · ΔE76'],
+      ['redmean', 12.346, 'Δ 12.3 · REDMEAN'],
+      ['rgb', 12.346, 'Δ 12.3 · RGB DIST'],
+      ['distinguish', 12.346, 'Δ 12 · DISTINGUISH %'],
+    ] as const)(
+      'keeps the %s distance %s and metric on each reverse badge',
+      async (matchingMethod, distance, expected) => {
+        tool = mount();
+        await flush();
+        tool.setConfig({ matchingMethod });
+        vi.spyOn(ColorService, 'getDistanceForMethod').mockReturnValue(distance);
+        tool.selectDye(mockDyes[0]);
+        const rows = (tool as unknown as { reverseResultsContainer: HTMLElement })
+          .reverseResultsContainer;
+        expect(
+          [...rows.querySelectorAll('span.number')].filter((span) => span.textContent === expected)
+        ).toHaveLength(3);
+      }
+    );
   });
 
   describe('setConfig — matching controls', () => {
@@ -1911,6 +1985,60 @@ describe('SwatchTool', () => {
         expect(cards()[0].showPrice).toBe(true);
       });
     });
+  });
+
+  it('restores settled matches and Share after two locale events without reloading or rematching', async () => {
+    const subscribe = vi.mocked(LanguageService.subscribe);
+    const original = subscribe.getMockImplementation()!;
+    const active = new Set<Parameters<typeof LanguageService.subscribe>[0]>();
+    subscribe.mockImplementation((listener) => {
+      active.add(listener);
+      return () => {
+        active.delete(listener);
+      };
+    });
+    try {
+      const colors = vi.spyOn(CharacterColorService.prototype, 'getEyeColors');
+      tool = mount();
+      await flush();
+      mockCharaFindClosestDyes.mockReturnValue([{ dye: mockDyes[0], distance: 2 }]);
+      cells()[5].click();
+      expect(cards().map((card) => card.data?.dye.id)).toEqual([mockDyes[0].id]);
+      const listener = subscribe.mock.calls.at(-1)![0];
+      expect(active.size).toBe(2); // One tool listener and the mounted Share button.
+      colors.mockClear();
+      mockCharaFindClosestDyes.mockClear();
+
+      for (let event = 0; event < 2; event++) {
+        listener('fr');
+        expect(cards().map((card) => card.data?.dye.id)).toEqual([mockDyes[0].id]);
+        expect(share().disabled).toBe(false);
+        expect(share().shareParams).toEqual({
+          slot: 'eyeColors',
+          i: 5,
+          algo: 'ciede2000',
+          limit: 3,
+        });
+        expect(outlined()).toHaveLength(1);
+        expect(active.size).toBe(2);
+      }
+      expect(colors).not.toHaveBeenCalled();
+      expect(mockCharaFindClosestDyes).not.toHaveBeenCalled();
+      tool.destroy();
+      tool = null;
+      expect(active.size).toBe(0);
+    } finally {
+      subscribe.mockImplementation(original);
+    }
+  });
+
+  it('uses an itemID-zero dye as the nearest match in a character slot verdict', () => {
+    const nearest = { ...mockDyes[0], itemID: 0, name: 'Nearest zero-item dye' };
+    mockGetAllDyes.mockReturnValue([nearest]);
+    CharaSessionService.setSession(charaSession());
+    tool = mount();
+    rightPanel.querySelector<HTMLButtonElement>('.chara-slots-grid > button')!.click();
+    expect(rightPanel.textContent).toContain('Dye-0');
   });
 
   describe('lifecycle under interaction', () => {

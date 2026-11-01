@@ -22,6 +22,8 @@
  * `loadRegionalNames()` before resolving; `regionalNames` stays synchronous so
  * the resolver stays pure.
  */
+import { cleanName } from './name-cleaner.mjs';
+
 let ko: Record<string, string> | undefined;
 let zh: Record<string, string> | undefined;
 let loading: Promise<void> | undefined;
@@ -52,8 +54,8 @@ export function regionalNames(itemId: number): RegionalNames {
   if (!ko || !zh) throw new Error('regional name tables not loaded: await loadRegionalNames() first');
   const id = String(itemId);
   const out: RegionalNames = {};
-  const k = ko[id];
-  const z = zh[id];
+  const k = cleanName(ko[id]);
+  const z = cleanName(zh[id]);
   if (k) out.ko = k;
   if (z) out.zh = z;
   return out;

@@ -91,7 +91,14 @@ Web/Bot ──HTTPS──► Hono app
        env.DISCORD_WORKER (Service Binding) for notification fan-out
 ```
 
-The base release retains the default Discord notification binding in both configurations, with the existing production service target and Fetch/bearer/payload/retry protocol. Verify submission/edit/preview delivery through the default handler. The named-provider configuration companion follows Discord provider deployment and acceptance; public compatibility and binding-only activation remain separately gated. Dead-letter list/resolve endpoints provide visibility, not automatic redelivery.
+The notification binding selects Discord's private `PresetNotifications` entrypoint in both
+configurations, preserving the existing production service target and Fetch/bearer/payload/retry
+protocol. Deploy and verify that provider with `PRESET_WEBHOOK_BINDING_ONLY=false` (public
+compatibility enabled) before this companion.
+Verify actual submission/edit/preview delivery before separately enabling binding-only mode.
+Restore public compatibility before rolling this consumer back to a default binding; never
+remove the provider's named export while this configuration still selects it. Dead-letter
+list/resolve endpoints provide visibility, not automatic redelivery.
 
 ### Key Directories
 
