@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Advance the Worker image-cache version beyond 2.12.1, which already reached beta,
   so previously rendered default cards cannot reuse its seven-day cache entries.
   Existing browser and social-platform copies are not purged.
+- Regenerate the Simplified Chinese CJK subset (`src/fonts/NotoSansSC-Subset.ttf`) for the
+  corrected copy: the zh Harmony line now needs 十 (U+5341) and no longer needs 六 (U+516D),
+  so the subset swaps that one glyph and keeps 706 codepoints. The Japanese and Korean
+  subsets are unchanged, and `font-coverage.test.ts` checks the new character.
 
 ## [2.12.1] - 2026-10-27
 

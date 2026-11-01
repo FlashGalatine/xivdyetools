@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Keep companion dyes when a 4.x saved palette from the German UI is migrated. Core 5.16.0
+  adopts XIVAPI's German names (118 change, for example Schneeweißer to Schneeweiß), so the
+  one-time migration also accepts a frozen table of the earlier German names, in any UI
+  locale; a current name always wins.
 - Restore Swatch match cards and sharing after locale changes without reloading the
   character or duplicating live subscriptions. Close pending and open Glamour export
   sheets when the loaded character changes.
@@ -27,6 +31,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Localize every fatal startup sentence without requiring LanguageService, correct five
   Korean Hue terms, and truncate file names without splitting surrogate pairs within the
   existing 256 UTF-16-unit limit.
+- Restore Hair and Skin palette loading in Vite development after Core adopted native
+  JSON import attributes. A client-only transform adapts two compiled Core modules during
+  `vite dev`, retaining native Node imports, lazy loading, source maps and production
+  chunking. Regression tests assert actual race-specific colors and reject live module
+  errors.
 
 ### Maintenance
 
@@ -39,6 +48,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   errors move to the standalone localized copy; retain normalization and logging.
 - Remove unused spectral/dye-selector chunk rules and stale documentation. Fresh builds
   remain byte-identical; retain the generic future-vendor 30 KB guard and all active limits.
+- Do not cache a resolve answer whose item or facewear failed validation, so the next import
+  retries instead of keeping slot-only rows until reload.
 
 ### Security
 

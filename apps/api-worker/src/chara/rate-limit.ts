@@ -14,7 +14,7 @@ export const CHARA_PUBLIC_PRODUCTION_LIMIT = 30;
 export const CHARA_PUBLIC_DEVELOPMENT_LIMIT = 60;
 export const CHARA_WINDOW_SECONDS = 60;
 
-/** Only decoded quota data crosses a pending lookup; never an owner response/context. */
+/** A denial stays with the request whose own admission failed; pending lookups never carry it to another request. */
 export class CharaQuotaError extends Error {
   constructor(public readonly result: RateLimitResult) {
     super('Too many upstream character-data requests. Please try again later.');

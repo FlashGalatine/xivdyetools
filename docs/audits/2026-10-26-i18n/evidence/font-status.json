@@ -1,0 +1,152 @@
+{
+  "fonts": [
+    {
+      "unit": "og-worker",
+      "font": "NotoSansJP-Subset.ttf",
+      "locale": "ja",
+      "bytes": 227572,
+      "needed": 237,
+      "covered": 237,
+      "missing": [],
+      "stale": 0
+    },
+    {
+      "unit": "og-worker",
+      "font": "NotoSansSC-Subset.ttf",
+      "locale": "zh",
+      "bytes": 345656,
+      "needed": 422,
+      "covered": 422,
+      "missing": [],
+      "stale": 0
+    },
+    {
+      "unit": "og-worker",
+      "font": "NotoSansKR-Subset.ttf",
+      "locale": "ko",
+      "bytes": 114940,
+      "needed": 314,
+      "covered": 314,
+      "missing": [],
+      "stale": 0
+    },
+    {
+      "unit": "discord-worker",
+      "font": "NotoSansJP-Subset.ttf",
+      "locale": "ja",
+      "bytes": 482160,
+      "needed": 980,
+      "covered": 980,
+      "missing": [],
+      "stale": 0
+    },
+    {
+      "unit": "discord-worker",
+      "font": "NotoSansSC-Subset.ttf",
+      "locale": "zh",
+      "bytes": 858980,
+      "needed": 1985,
+      "covered": 1985,
+      "missing": [],
+      "stale": 0
+    },
+    {
+      "unit": "discord-worker",
+      "font": "NotoSansKR-Subset.ttf",
+      "locale": "ko",
+      "bytes": 206680,
+      "needed": 866,
+      "covered": 866,
+      "missing": [],
+      "stale": 0
+    }
+  ],
+  "union": [
+    {
+      "unit": "og-worker",
+      "locale": "en",
+      "needed": 61,
+      "covered": 61,
+      "missing": []
+    },
+    {
+      "unit": "og-worker",
+      "locale": "ja",
+      "needed": 281,
+      "covered": 281,
+      "missing": []
+    },
+    {
+      "unit": "og-worker",
+      "locale": "de",
+      "needed": 68,
+      "covered": 68,
+      "missing": []
+    },
+    {
+      "unit": "og-worker",
+      "locale": "fr",
+      "needed": 68,
+      "covered": 68,
+      "missing": []
+    },
+    {
+      "unit": "og-worker",
+      "locale": "ko",
+      "needed": 359,
+      "covered": 359,
+      "missing": []
+    },
+    {
+      "unit": "og-worker",
+      "locale": "zh",
+      "needed": 459,
+      "covered": 459,
+      "missing": []
+    },
+    {
+      "unit": "discord-worker",
+      "locale": "en",
+      "needed": 102,
+      "covered": 102,
+      "missing": []
+    },
+    {
+      "unit": "discord-worker",
+      "locale": "ja",
+      "needed": 1084,
+      "covered": 1084,
+      "missing": []
+    },
+    {
+      "unit": "discord-worker",
+      "locale": "de",
+      "needed": 111,
+      "covered": 111,
+      "missing": []
+    },
+    {
+      "unit": "discord-worker",
+      "locale": "fr",
+      "needed": 120,
+      "covered": 120,
+      "missing": []
+    },
+    {
+      "unit": "discord-worker",
+      "locale": "ko",
+      "needed": 970,
+      "covered": 969,
+      "missing": [
+        8207
+      ]
+    },
+    {
+      "unit": "discord-worker",
+      "locale": "zh",
+      "needed": 2087,
+      "covered": 2087,
+      "missing": []
+    }
+  ]
+}

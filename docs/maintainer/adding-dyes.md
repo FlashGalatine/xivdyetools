@@ -49,6 +49,8 @@ with IDs persisted before schema v2.
 - **Item sheet fallback:** if you must fetch Item names (en/ja/de/fr), strip the localized "Dye" prefix — try `prefix + ":"`, then `prefix + "："` (full-width colon U+FF1A), then the bare prefix, longest first (this was BUG-081's fix in the old GUI).
 - ko/zh names remain manually sourced into `dyenames.csv`.
 
+For existing dye-name corrections, prefer a complete pinned `audit:dyes` capture and its `Stain.Name` fields over the legacy Item-name fetcher. Match rows by canonical `stainID`, then retain the existing CSV key (`legacyItemID ?? stainID`). XIVAPI wins when en/ja/de/fr names differ from our translations; retain its capitalization and the locale generator's surrounding-whitespace trim. Preserve regional ko/zh cells. See the [terminology rule](../reference/ffxiv-terminology.md#dye-names-125-dyes) and [worked adoption receipt](../research/2026-10-29-dye-name-translations/README.md).
+
 ### Discovering and comparing dyes with XIVAPI
 
 Run the manual maintenance command from the repository root:

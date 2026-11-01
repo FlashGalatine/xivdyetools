@@ -28,7 +28,7 @@ export async function handleBanConfirmButton(
   interaction: BanInteraction,
   env: Env,
   _ctx: ExecutionContext,
-  _logger?: ExtendedLogger,
+  logger?: ExtendedLogger,
 ): Promise<Response> {
   if (!linkedBansEnabled(env)) return ephemeralResponse(INACTIVE_BANS);
   const actorId = actor(interaction, env);
@@ -40,7 +40,7 @@ export async function handleBanConfirmButton(
   try {
     const review = await loadBanReview(env, nonce, actorId, 'review');
     if (review.proposal.action === 'unban') {
-      const result = await unbanUser(env, nonce, actorId);
+      const result = await unbanUser(env, nonce, actorId, logger);
       if (!result.success) return ephemeralResponse(REVIEW_UNAVAILABLE);
       return updateMessageResponse({
         embeds: [
@@ -100,10 +100,11 @@ export async function handleBanCancelButton(
   const customId = interaction.data?.custom_id ?? '';
   if (!customId.startsWith('ban_cancel_') || customId.length > 100)
     return ephemeralResponse(REVIEW_UNAVAILABLE);
+  const nonce = customId.slice('ban_cancel_'.length);
   try {
-    const review = await loadBanReview(env, customId.slice('ban_cancel_'.length), actorId);
+    const review = await loadBanReview(env, nonce, actorId, 'review');
     const result = await env.DB.prepare(
-      "UPDATE moderation_ban_confirmations SET consumed_at=unixepoch(),outcome='applied' WHERE nonce=? AND actor_id=? AND action=? AND mode=? AND proposal_hash=? AND consumed_at IS NULL AND expires_at>unixepoch()",
+      "DELETE FROM moderation_ban_confirmations WHERE nonce=? AND actor_id=? AND action=? AND mode=? AND proposal_hash=? AND phase='review' AND consumed_at IS NULL AND outcome IS NULL AND expires_at>unixepoch()",
     )
       .bind(review.nonce, actorId, review.proposal.action, review.proposal.mode, review.hash)
       .run();

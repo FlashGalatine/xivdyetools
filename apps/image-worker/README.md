@@ -10,7 +10,7 @@ It has since become the monorepo's general photon host rather than a single-call
 
 This Worker has **no public routes and no `workers.dev` subdomain**. The only way in is an `IMAGE_WORKER` Service Binding — from `discord-worker` (`POST /extract`) or `presets-api` (`POST /thumbnail`). See [`docs/operations/IMAGE_WORKER_SPLIT.md`](../../docs/operations/IMAGE_WORKER_SPLIT.md).
 
-The runtime uses a [pinned Photon ownership patch](vendor/photon/REBUILD.md) through the
+The runtime uses a [pinned Photon ownership patch](vendor/photon/README.md) through the
 installed wrapper's manual initializer. Ordinary builds use the checked-in WASM; they do not
 download or compile Rust. Source, dependency lock, licenses and the rebuild recipe accompany it.
 
