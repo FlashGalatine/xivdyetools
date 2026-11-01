@@ -148,6 +148,21 @@ describe('Rate Limiter Service', () => {
     });
 
     describe('getClientIp', () => {
+        it.each([
+            ['2001:DB8:1234:5678::1', '2001:db8:1234:5678::'],
+            ['2001:0db8:1234:5678:0000:0000:0000:0001', '2001:db8:1234:5678::'],
+            ['2001:db8:1234:5678::abcd', '2001:db8:1234:5678::'],
+            ['2001:db8:1234:5679::1', '2001:db8:1234:5679::'],
+            ['198.51.100.7', '198.51.100.7'],
+            ['::ffff:198.51.100.7', '198.51.100.7'],
+            ['::ffff:c633:6408', '198.51.100.8'],
+        ])('normalizes trusted client %s to %s despite spoofed XFF', (input, expected) => {
+            const request = new Request('http://localhost/', {
+                headers: { 'CF-Connecting-IP': input, 'X-Forwarded-For': '203.0.113.99' },
+            });
+            expect(getClientIp(request)).toBe(expected);
+        });
+
         it('should use CF-Connecting-IP header first', () => {
             const request = new Request('http://localhost/', {
                 headers: {

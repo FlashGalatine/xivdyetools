@@ -30,7 +30,7 @@
 | **Discord Bot** | v5.9.1 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.4 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.8.2 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
-| **OAuth Worker** | v3.1.3 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
+| **OAuth Worker** | v3.2.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.6.1 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
 | **Public REST API** | v0.21.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
 | **OpenGraph Worker** | v2.12.0 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
@@ -278,6 +278,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v3.2.0 | Oct 2026 | Private stored-identity/session provider and inactive identity-transition preparation; migration required before deployment; state HMAC input separation with finite legacy compatibility, routeless development and IPv6 /64 keying; consumer verification before separate activation |
 | v3.1.3 | Oct 2026 | 2026-10-04 remediation Sprint 10 — `/auth/*` rate limiting keys and tiers on the decoded path, so a percent-encoded route spelling shares the real bucket (BUG-007); a non-object JSON body gets 400 on both callbacks (BUG-056); a malformed XIVAuth roster falls back to `XIVAuth User <id8>` instead of a 500 or an empty name (BUG-057); a non-empty callback body must be `application/json` (415), closing the `text/plain` bypass of the body guard (BUG-149, oauth half); dead `decodeJWT` wrapper and coverage excludes removed (DEAD-036, DEAD-037) |
 | v3.1.2 | Oct 2026 | 2026-10-03 security audit Sprint 6 — retired `xivdyetools.projectgalatine.com` origin removed from the redirect + CORS allowlist and the retired `auth.` custom-domain route dropped, both pinned by tests (FINDING-006); `[observability] enabled = false` pinned and asserted (FINDING-022) |
 | v3.1.1 | Sep 2026 | 2026-09-16 deep-dive Sprint 14 — the security-headers middleware is registered before env validation, so the misconfiguration 500 carries nosniff / no-store / HSTS (BUG-017); body-size and JSON-depth middleware come from `@xivdyetools/worker-kit/body-guards`, error bodies unchanged (REFACTOR-009) |
@@ -711,6 +712,7 @@ and the [rollout runbook](operations/security-remediation-2026-09-15.md) for the
 
 | Consumer | Minimum Core Version | Notes |
 |----------|---------------------|-------|
+| xivdyetools-oauth-worker v3.2.0 | @xivdyetools/auth v3.0.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
 | @xivdyetools/bot-logic v4.12.0 | @xivdyetools/core v5.16.0; @xivdyetools/svg v4.4.1; @xivdyetools/types v3.3.0 | Prepared source; publication and deployed acceptance remain pending |
 | @xivdyetools/svg v4.4.1 | @xivdyetools/core v5.16.0; @xivdyetools/types v3.3.0 | Prepared source; publication and deployed acceptance remain pending |
 | @xivdyetools/worker-kit v1.6.0 | @xivdyetools/logger v2.4.0 | Prepared source; publication and deployed acceptance remain pending |

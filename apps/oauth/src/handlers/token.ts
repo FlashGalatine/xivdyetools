@@ -15,6 +15,8 @@
 import { Hono } from 'hono';
 import { getLogger } from '@xivdyetools/worker-kit';
 import type { Env, UserInfoResponse } from '../types.js';
+import { validateSession } from '../services/identity-service.js';
+import { IdentityError } from '../services/identity-contract.js';
 import {
   getAvatarUrl,
   verifyJWTSignatureOnly,
@@ -57,6 +59,10 @@ tokenRouter.get('/me', async (c) => {
       c.env.WORKER_URL
     );
 
+    const session = await validateSession(c.env.DB, { sub: payload.sub, identityRevision: payload.identity_revision, authProvider: payload.auth_provider, discordId: payload.discord_id });
+    if (session.status === 'pending') return c.json<UserInfoResponse>({ success: false, error: 'Authentication temporarily unavailable' }, 503);
+    if (session.status !== 'valid') return c.json<UserInfoResponse>({ success: false, error: 'Invalid token' }, 401);
+
     return c.json<UserInfoResponse>({
       success: true,
       user: {
@@ -76,6 +82,7 @@ tokenRouter.get('/me', async (c) => {
       },
     });
   } catch (err) {
+    if (err instanceof IdentityError) return c.json<UserInfoResponse>({ success: false, error: 'Authentication temporarily unavailable' }, 503);
     const message = err instanceof Error ? err.message : 'Invalid token';
 
     return c.json<UserInfoResponse>(
