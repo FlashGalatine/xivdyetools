@@ -6,8 +6,25 @@
 
 import { describe, it, expect } from 'vitest';
 import { scopeRateLimitKey } from './key-scope.js';
+import { getClientIp } from './ip.js';
 
 describe('scopeRateLimitKey', () => {
+  it.each([
+    ['2001:0DB8:abcd:1234:5678::1', '2001:db8:abcd:1234::'],
+    ['0:0:0:0:0:0:0:1', '::'],
+    ['::ffff:c000:201', '192.0.2.1'],
+  ])('redacts generated prefix-mode key from %s to only the ip class', (input, expected) => {
+    const key = getClientIp(
+      new Request('https://example.com', {
+        headers: { 'CF-Connecting-IP': input },
+      }),
+      { ipv6Prefix64: true },
+    );
+    expect(key).toBe(expected);
+    expect(scopeRateLimitKey(key)).toBe('ip');
+    expect(scopeRateLimitKey(key, '')).toBe('ip');
+  });
+
   describe('with a configured keyPrefix', () => {
     it('returns the prefix trimmed of its trailing separator, discarding the key entirely', () => {
       expect(scopeRateLimitKey('1.2.3.4', 'public:ip:')).toBe('public:ip');

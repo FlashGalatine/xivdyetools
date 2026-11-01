@@ -2,6 +2,28 @@
 
 All notable changes to `@xivdyetools/worker-kit` (formerly `@xivdyetools/worker-middleware`) will be documented in this file.
 
+## [1.6.0] - 2026-10-27
+
+### Hardening adoption
+
+- **H-WORKER-KIT-ADOPT preparation:** pack logger 2.4.0 for request-scoped middleware logging, including guarded object-error redaction and Discord token-path sanitization. Publish only after logger 2.4.0 is available.
+
+### Added
+
+- **Opt-in IPv6 /64 rate-limit keys (2026-10-26 security FINDING-004).**
+  `getClientIp(request, { ipv6Prefix64: true })` groups valid IPv6 addresses by their first
+  64 bits, including equivalent compressed, expanded and IPv4-embedded spellings. IPv4-mapped
+  IPv6 addresses resolve to their embedded IPv4 address so unrelated IPv4 clients retain
+  separate buckets. The option defaults to false; existing callers retain their output and
+  header trust rules. Malformed addresses retain the existing lowercase pass-through.
+
+### Security
+
+- **`/glamour` now has an explicit 5-request/minute preset without burst allowance
+  (2026-10-26 security FINDING-017).** It previously inherited the 15/minute command default.
+  Discord's existing shared lookup selects its RL_5 binding automatically. Other command
+  limits and unknown-command fallback are unchanged.
+
 ## [1.5.0] - 2026-10-06
 
 Sprint 16 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-deep-dive`). Minor rather than
