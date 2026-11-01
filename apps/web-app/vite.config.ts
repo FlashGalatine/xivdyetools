@@ -39,7 +39,8 @@ export default defineConfig({
           }
           if (id.includes('node_modules')) {
             if (id.includes('lit') || id.includes('@lit')) return 'vendor-lit';
-            if (id.includes('spectral.js')) return 'vendor-spectral';
+            // Preserve the generic dependency chunk's deliberate budget for
+            // future packages; spectral.js currently merges into modals.
             return 'vendor';
           }
           if (

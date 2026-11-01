@@ -85,7 +85,12 @@ then verify provider, disclosures and consumers before later OAuth splitting. Se
 
 When a preset is submitted, this Worker calls back into `discord-worker` over the `DISCORD_WORKER` Service Binding to post an embed in the moderation channel. Delivery failures are recorded and surfaced through `/api/v1/moderation/failed-notifications` rather than silently dropped.
 
-Both notification bindings retain the default Discord entrypoint and their existing production service target for this base release. The Fetch/bearer/payload/retry protocol is unchanged. Verify submission, edit and preview delivery through the default handler. A separate configuration companion selects `PresetNotifications` only after that named provider is deployed and accepted, with public compatibility retained. Binding-only activation remains held.
+Both bindings select the private `PresetNotifications` entrypoint, using the existing Fetch
+request and bearer protocol. Deploy the Discord provider with public compatibility retained
+before deploying this configuration; verify submission, edit and preview notifications before
+separately enabling its binding-only gate. The default and production bindings retain their
+existing production service target. Before rolling this consumer back to the default binding,
+restore and verify public compatibility; retain the named provider export until no consumer uses it.
 
 ## Quotas and metadata rollout
 

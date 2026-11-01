@@ -167,7 +167,7 @@ describe('parseTelemetryBatch', () => {
     ]);
   });
 
-  it('accepts beta as an env and clamps ver to 16 characters', () => {
+  it('accepts beta as an env and emits only the numeric version triple', () => {
     const parsed = parseTelemetryBatch(
       batch([{ n: 'tool_view', p: { tool: 'harmony', entry: 'nav' } }], {
         env: 'beta',
@@ -175,7 +175,39 @@ describe('parseTelemetryBatch', () => {
       }),
     );
     expect(parsed!.points[0].blobs[8]).toBe('beta');
-    expect(parsed!.points[0].blobs[7]).toBe('5.0.3-beta.20260');
+    expect(parsed!.points[0].blobs[7]).toBe('5.0.3');
+  });
+
+  it.each([
+    ['1.0.0-abcdefghij', '1.0.0'],
+    ['5.0.3-beta.20260829.1234', '5.0.3'],
+    ['0.0.0', '0.0.0'],
+    ['0001.02.0003-preview.A1', '0001.02.0003'],
+    ['9999.9999.9999', '9999.9999.9999'],
+  ])('normalizes version %s on every valid batch point', (ver, expected) => {
+    const parsed = parseTelemetryBatch(batch([
+      { n: 'tool_view', p: { tool: 'harmony', entry: 'nav' } },
+      { n: 'theme_change', p: { to: 'standard-light' } },
+      { n: 'chara_parse', p: { ok: true, producer: 'brio' } },
+      { n: 'tool_leave', p: { tool: 'mixer', entry: 'nav' }, d: 42 },
+      { n: 'dye_pick', p: { tool: 'comparison', stainID: 102, via: 'grid' } },
+    ], { ver }));
+    expect(parsed!.dropped).toBe(0);
+    expect(parsed!.points.map((point) => point.blobs[7])).toEqual(Array(5).fill(expected));
+  });
+
+  it.each([
+    '12345.1.1', '1.12345.1', '1.1.12345', '1.0', '1..0', '.1.0',
+    '1.0.0-', '1.0.0-beta-1', '\uFF11.0.0', '1.0.0-beta_name',
+    '1.0.0+build.1', '1.0.0 free text', '1.0.0-beta free text',
+    ' 1.0.0', '1.0.0 ', '1.0.0\n', '1.0.0-beta\n', '1.0.0\r\n',
+    'version 1.0.0', '', null, undefined, 100, {}, ['1.0.0'],
+  ])('rejects the entire invalid version input %j', (ver) => {
+    const parsed = parseTelemetryBatch(batch([
+      { n: 'tool_view', p: { tool: 'harmony', entry: 'nav' } },
+      { n: 'theme_change', p: { to: 'standard-light' } },
+    ], { ver }));
+    expect(parsed!.points.map((point) => point.blobs[7])).toEqual(['invalid', 'invalid']);
   });
 
   it('lets a server-derived env override the body without touching the other columns', () => {

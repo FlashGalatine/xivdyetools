@@ -27,6 +27,7 @@ database_id = "e17d68a1-5a44-4c88-b02b-07d053cbe321"
 [[services]]
 binding = "DISCORD_WORKER"
 service = "xivdyetools-discord-worker"
+entrypoint = "PresetNotifications"
 
 [[r2_buckets]]
 binding = "THUMBNAILS"
@@ -96,6 +97,7 @@ database_id = "e17d68a1-5a44-4c88-b02b-07d053cbe321"
 [[env.production.services]]
 binding = "DISCORD_WORKER"
 service = "xivdyetools-discord-worker"
+entrypoint = "PresetNotifications"
 
 [[env.production.r2_buckets]]
 binding = "THUMBNAILS"

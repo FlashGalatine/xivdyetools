@@ -1964,6 +1964,19 @@ describe('ExtractorTool', () => {
       expect(exportButton().disabled).toBe(false);
     });
 
+    it('exports the selected OKLAB method from the actual export action (BUG-013)', async () => {
+      const { openExportSheet } = await import('@components/export-sheet');
+      tool = mount();
+      tool.setConfig({ matchingMethod: 'oklab' });
+      await loadImage();
+      exportButton().click();
+      expect(vi.mocked(openExportSheet).mock.calls.at(-1)?.[0]).toMatchObject({
+        tool: 'extractor',
+        matchingMethod: 'oklab',
+        entries: expect.any(Array),
+      });
+    });
+
     it('exports the whole roll — extracted colours and picks — as source/dye pairs', async () => {
       const { openExportSheet } = await import('@components/export-sheet');
       tool = mount();

@@ -2,7 +2,7 @@
 
 > Dies ist eine zur Verständlichkeit bereitgestellte Übersetzung. Maßgeblich ist die englische Fassung; weichen beide voneinander ab, gilt die englische Fassung. [Englisch](PRIVACY.md)
 
-**Zuletzt aktualisiert:** 2026-10-12 · Gilt für **xivdyetools.app** und **beta.xivdyetools.app**. Der
+**Zuletzt aktualisiert:** 2026-10-28 · Gilt für **xivdyetools.app** und **beta.xivdyetools.app**. Der
 Discord-Bot hat eine eigene Richtlinie: [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.de.md).
 
 XIV Dye Tools läuft in deinem Browser. Die Farbwerkzeuge — Paletten-Extraktor, Harmonie-Explorer,
@@ -33,18 +33,22 @@ vollständige Liste.
 
 - Eine `.chara`-Datei (Anamnesis, Ktisis, Brio) wird auf deinem Gerät ausgelesen. Ihr Charaktername
   wird niemals irgendwohin gesendet und niemals als Vorlagenname, Autorenname oder irgendetwas
-  anderes verwendet, das andere Spieler sehen können. Um eine Projektion bei den Community-Vorlagen
+  anderes verwendet, das andere Personen sehen können. Um eine Projektion bei den Community-Vorlagen
   einzureichen, musst du selbst einen Namen eingeben — das Feld ist absichtlich leer, denn sowohl
   der Charaktername als auch der Dateiname sind Orte, an denen Spieler ihren echten Namen ablegen.
-- **Eine Ausnahme, und die bleibt auf deinem Gerät.** Wenn du eine Projektion oder ihre Palette in
-  diesem Browser speicherst, ohne einen Namen einzugeben, greift der gespeicherte Eintrag auf den
-  Spitznamen des Charakters zurück, dann auf den Namen der `.chara`-Datei. Dieser Name liegt im
-  Speicher deines Browsers neben deinen anderen gespeicherten Sammlungen. Er wird niemals
-  hochgeladen, und der Community-Pfad oben liest ihn nie. Benenne den Eintrag um, lösche ihn, oder
-  lösche deine Website-Daten, und er ist verschwunden.
+- **Auf diesem Gerät gespeicherte Namen.** Neu gespeicherte Charakterfarben im Farbmuster-Matcher
+  erhalten einen allgemeinen Namen in deiner Sprache. Ältere Charaktereinträge können weiterhin
+  ihren gespeicherten Spitznamen oder Dateinamen tragen. Wenn du eine Projektion oder ihre Palette
+  ohne Namenseingabe speicherst, kann dieser Eintrag weiterhin auf den Spitznamen des Charakters
+  und danach auf den Namen der `.chara`-Datei zurückgreifen. Diese Namen bleiben im Speicher deines
+  Browsers; sie werden nie hochgeladen und vom Community-Pfad oben nie gelesen. Die App hat keine
+  Steuerung zum Umbenennen oder Löschen einzelner Einträge. **Erweiterte Einstellungen →
+  Gespeicherte Paletten löschen** entfernt alle gespeicherten Palettensammlungen. Um
+  Charaktersammlungen zu löschen, musst du die Website-Daten in deinem Browser löschen; dabei
+  werden auch deine anderen lokal gespeicherten Arbeiten und dein Anmeldetoken gelöscht.
 - Um die Ausrüstung im Projektionsleser zu benennen, fragt die App unsere API nach dem Gegenstand
   hinter jedem Slot. Die Anfrage enthält nur die **Modellnummern** der Ausrüstung aus der Datei
-  und die ID ihres Gesichtsaccessoires (ein Dutzend kleiner Ganzzahlen pro Datei) — nicht die
+  und die ID ihres Gesichtsaccessoires (bis zu 27 kleine Ganzzahlen und 12 feste Slotnamen pro Datei) — nicht die
   Datei, nicht den Namen, nicht die Farben, nicht die Farbstoffe. Unsere API schlägt diese Nummern
   bei [XIVAPI](https://xivapi.com/) nach, einem Community-Dienst für Spieldaten, der die Nummern
   erhält und nichts über dich. Die Gegenstandsnamen, die Bezugsquelle jedes Gegenstands und die
@@ -65,6 +69,9 @@ einen Teil:
 - **Erweiterte Einstellungen → Favoriten löschen** löscht deine favorisierten Farbstoffe.
 - **Erweiterte Einstellungen → Gespeicherte Paletten löschen** löscht alle deine gespeicherten
   Paletten auf einmal. Die App hat kein Steuerelement, das eine einzelne Palette löscht.
+- **Gemerkte Community-Vorlagen** im Vorlagen-Tool sind davon getrennt. „Gespeicherte Paletten
+  löschen“ entfernt sie nicht. Mit dem Merken-Schalter der jeweiligen Vorlage entfernst du
+  ihre gespeicherte Kopie; über die Website-Daten-Steuerung deines Browsers entfernst du alle.
 - Tausche, die du in den Budget-Vorschlägen speicherst, und Charakterfarben, die du im
   Farbmuster-Matcher speicherst, haben in der App kein Steuerelement zum Löschen; die
   Website-Daten-Steuerung deines Browsers löscht sie.
@@ -89,7 +96,9 @@ erlaubt nichts anderes) sowie den unten genannten Drittanbietern:
    gehen an unseren Proxy unter `data.xivdyetools.app`, der von [Universalis](https://universalis.app)
    abruft.
 2. **Ausrüstungsnamen und -symbole für `.chara`-Importe** — `data.xivdyetools.app` (siehe oben).
-3. **Community-Vorlagen** (`api.xivdyetools.app`): Das Durchsuchen sendet nichts über dich. Die
+3. **Community-Vorlagen** (`api.xivdyetools.app`): Beim Durchsuchen ohne Anmeldung werden keine Kontoinformationen gesendet. Wenn du angemeldet
+   bist und eine Vorlage öffnest, wird dein Anmeldetoken gesendet, um zu prüfen, ob du bereits
+   abgestimmt hast. Diese Prüfung speichert keinen Eintrag über deinen Aufruf. Die
    Anmeldung über `auth.xivdyetools.app` mit Discord oder XIVAuth legt sofort einen
    Kontodatensatz an, unabhängig davon, ob du anschließend etwas einreichst oder abstimmst. Bei
    Discord enthält der Datensatz deine Discord-Benutzer-ID und deinen Anzeigenamen (deinen
@@ -105,17 +114,12 @@ erlaubt nichts anderes) sowie den unten genannten Drittanbietern:
    du einreichst, werden unter diesem Konto gespeichert. Das Einreichen einer Vorlage zählt als
    deine Stimme dafür; hat eine veröffentlichte Vorlage bereits dieselben Farbstoffe, wird deine
    Einreichung stattdessen zu einer Stimme für diese Vorlage. Eine Vorlage enthält, was du im
-   Formular eingibst — und, falls unsere automatische Kontrolle den neuen Namen oder die neue
-   Beschreibung einer Bearbeitung zur Prüfung zurückhält, die Fassung vor der ersten solchen
+   Formular eingibst — und, falls unsere automatische Kontrolle beim Bearbeiten einer bereits veröffentlichten Vorlage den neuen Namen, die neue Beschreibung, die Tags oder den Beispiellink zur Prüfung zurückhält, die Fassung vor der ersten solchen
    Bearbeitung, aufbewahrt, bis ein Moderator diese Fassung wiederherstellt oder die Vorlage gelöscht wird —
    plus das optionale Vorschaubild, das oben unter Bilder beschrieben ist. Um ein Vorschaubild zu
    entfernen, nutze das Bearbeitungsformular der
    Vorlage; wenn du eine Vorlage unter **Meine Einreichungen** löschst, wird auch ihr Vorschaubild
-   gelöscht. Wenn du eine Vorlage einreichst oder bearbeitest, können ihr Name und ihre Beschreibung
-   zusätzlich an Googles [Perspective API](https://perspectiveapi.com/) für eine
-   Moderationsbewertung gesendet werden (optional — nur zur Inhaltsmoderation); die Anfrage weist
-   Google an, sie nicht zu speichern (`doNotStore`), und sonst wird nichts — auch keine
-   Kontoidentität — dorthin gesendet. Was sonst noch zu deinen Vorlagen aufbewahrt wird und wie
+   gelöscht. Wenn du eine Vorlage einreichst oder bearbeitest, können ihr Name, ihre Beschreibung, ihre Tags und der Pfadtext des Beispiellinks für eine Moderationsbewertung an Googles [Perspective API](https://perspectiveapi.com/) gesendet werden (optional — nur zur Inhaltsmoderation). Die Anfrage weist Google an, diese Texte nicht zu speichern (`doNotStore`). URL-Abfrageparameter, Fragmente, Zugangsdaten und Hostnamen werden aus dem Linktext ausgeschlossen. Wir senden keine Konto-IDs mit dem Text und rufen den angegebenen Beispiellink niemals ab. Was sonst noch zu deinen Vorlagen aufbewahrt wird und wie
    lange, steht unten unter *Community-Vorlagen: was wir aufbewahren*; wie du es löschst,
    unter *Deine Daten löschen*. Vorschaubilder von Vorlagen werden von `shots.xivdyetools.app`
    ausgeliefert; Avatare laden vom CDN von Discord.
@@ -160,11 +164,7 @@ Discord-Server.
 
 - **Dein Kontodatensatz, deine Vorlagen und Stimmen** (Punkt 3 oben) werden aufbewahrt, bis du sie
   löschst oder uns um ihre Löschung bittest (siehe *Deine Daten löschen*).
-- **Tageslimits.** Jede Vorlage, die du einreichst, jede von dir abgesendete Bearbeitung von Name
-  oder Beschreibung einer Vorlage und jedes Vorschaubild, das du hochlädst, wird gezählt, damit
-  die Tageslimits durchgesetzt werden können. Der Zähler enthält deine Konto-ID, die Art der
-  Aktion, die Vorlage und den Zeitpunkt und wird nach **30 Tagen** gelöscht; das Löschen der
-  Vorlage löscht ihn nicht früher.
+- **Tageslimits.** Die Tageslimits zählen Einreichungsversuche, die die Moderation erreichen, Änderungen an Name oder Beschreibung einer Vorlage und Verarbeitungsversuche von Vorschaubildern. Änderungen an Tags oder Beispiellinks zählen nur bei aktivierten erweiterten Prüfungen als Bearbeitungen; nur dann können Tags und Linkpfadtexte zur Moderation gesendet werden. Unveränderte Textfelder verbrauchen keinen Bearbeitungsplatz. Fehlgeschlagene Bilddekodierungen und Zeitüberschreitungen bleiben gezählt. Nur bei Vorschaubildversuchen werden frühe Validierungsablehnungen sowie Fehler bei der Bildspeicherung oder Datenbankoperation nicht angerechnet. Kann das Ergebnis eines Datenbankschreibvorgangs nicht bestätigt werden, bleibt der Versuch gezählt. Ein Einreichungsversuch bleibt ab Beginn der Moderation gezählt, auch wenn keine Vorlage erstellt wird. Der Zähler enthält deine Konto-ID, die Art der Aktion, die Vorlage und den Zeitpunkt und wird nach **30 Tagen** gelöscht; das Löschen der Vorlage löscht ihn nicht früher.
 - **Beiträge auf unserem Discord-Server.** Unsere Moderatoren arbeiten in zwei privaten Kanälen
   unseres Discord-Servers. Der Moderationskanal erhält jede Vorlage, jede Bearbeitung und jedes
   Vorschaubild, die geprüft werden müssen: Der Beitrag zeigt die Vorlage (etwa Name, Beschreibung,
@@ -206,6 +206,16 @@ Discord-Server.
 
 Der Discord-Bot bewahrt dieselben Datensätze für Vorlagen auf, die über ihn eingereicht werden;
 siehe [seine Richtlinie](../discord-worker/PRIVACY_POLICY.de.md).
+
+### Gespeicherte Identitäten und Umfang von Sperren
+
+Unser Anmeldedienst speichert bei deinem Konto eine Sitzungsrevision. Autorisierte Dienste können deine gespeicherte interne Konto-ID, eine gegebenenfalls verknüpfte Discord-Benutzer-ID und die Revision privat abrufen oder prüfen, ob eine Sitzung noch zu den gespeicherten Anmeldeverknüpfungen passt. Die Abfrage liefert keine XIVAuth-ID, Namen, Charakterliste oder Anbieter-Tokens. Gespeicherte Verknüpfungen sind keine neue Bestätigung durch den externen Anbieter. Eine nicht sicher ausführbare Änderung wird abgelehnt; das Verschieben von Presets, Stimmen und Tageslimit-Zählern setzt eine sicher angenommene Verknüpfung voraus und kann keine aktive Sperre umgehen.
+
+Wenn die Moderation verknüpfter Identitäten aktiviert ist, prüft ein autorisierter Moderator die genauen IDs privat, bevor er eine Sperre erstellt oder erweitert oder eine bestimmte Sperre aufhebt. Eine Sperre kann mehrere interne Konto-IDs und Discord-Benutzer-IDs umfassen, die für diese Sperre bestätigt oder bei einer Änderung der Verknüpfung beibehalten wurden. Bestehende Einschränkungen bleiben nach dem Trennen bestehen, bis sie nach einer Moderationsprüfung aufgehoben werden; spätere Sperren erstrecken sich nicht automatisch auf zuvor getrennte Identitäten. Diese Zuordnungen setzen nur die jeweilige Sperre durch und gewähren keinen Kontozugriff. Für sie gilt die Aufbewahrung des Sperrdatensatzes: Löschung 90 Tage nach Aufhebung.
+
+Die ID-Prüfung erfolgt über nur für Moderatoren sichtbare, ephemere Discord-Antworten, getrennt von den in dieser Richtlinie beschriebenen gewöhnlichen Kanalbeiträgen. Wir versprechen keinen Zeitpunkt, zu dem Discord diese Antworten löscht. Unsere Preset-Datenbank speichert kurzzeitig die ID des handelnden Moderators, geprüfte IDs und Revisionen, die ausgewählte Sperre und Aktion, den Vorschlags-Hash, eine Nonce, das Ergebnis und Fristen. Bestätigungsdatensätze enthalten keine Namen, Anbieter-Tokens oder frei formulierten Gründe. Sie laufen innerhalb von 15 Minuten ab und werden dann für begrenzte, anfragegesteuerte und tägliche Bereinigungen freigegeben; die Löschung kann bis zu einem erfolgreichen Bereinigungslauf warten.
+
+Wenn die Wiederherstellung unterbrochener Kontoverknüpfungen aktiviert ist, speichert unser Anmeldedienst betroffene Anbieter-/Konto-IDs, erwartete Zuordnungen und Revisionen, die beabsichtigte Änderung, den Status und Fristen; der Preset-Dienst speichert eine passende Vorgangsquittung. Keiner dieser Wiederherstellungsdatensätze enthält Namen, Anbieter-Tokens, Charakterlisten oder frei formulierte Gründe. Die Vorgangsfrist beträgt höchstens 15 Minuten. Abgeschlossene oder abgelehnte Datensätze werden 24 Stunden nach dem späteren Zeitpunkt aus Frist und Bestätigung zur Bereinigung freigegeben; ein Abbruch, für den das Fehlen einer entfernten Quittung bestätigt wurde, verwendet statt der Bestätigung seinen Abschlusszeitpunkt. Die Bereinigung erfolgt nach bestem Bemühen. Angewendete oder unbekannte, noch ungeklärte Änderungen bleiben nach Ablauf der Frist zur Prüfung durch den Betreiber ausstehend, auch bevor ihre Wiederherstellungsdatensätze aufgrund eines Löschantrags entfernt werden.
 
 ## Nutzungsanalyse (Opt-in)
 

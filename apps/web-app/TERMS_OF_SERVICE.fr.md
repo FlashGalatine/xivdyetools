@@ -2,7 +2,7 @@
 
 > Ceci est une traduction fournie à titre pratique. La version anglaise fait foi ; en cas de divergence, c'est elle qui prévaut. [Anglais](TERMS_OF_SERVICE.md)
 
-**Dernière mise à jour :** 2026-10-12 · Couvre **xivdyetools.app** et **beta.xivdyetools.app**. La
+**Dernière mise à jour :** 2026-10-28 · Couvre **xivdyetools.app** et **beta.xivdyetools.app**. La
 façon dont nous traitons vos données fait l'objet d'un document séparé : [`PRIVACY.md`](PRIVACY.fr.md).
 Le bot Discord a ses propres conditions :
 [`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.fr.md).
@@ -32,7 +32,7 @@ pour soumettre, modifier ou voter sur des préréglages communautaires.
 - La connexion se fait via Discord ou XIVAuth. Nous ne voyons ni ne stockons jamais de mot de
   passe.
 - La connexion crée un enregistrement de compte contenant votre identifiant de fournisseur et un
-  nom. Avec Discord, le nom est votre nom d'affichage. Avec XIVAuth, le nom est celui de votre
+  nom. Avec Discord, le nom est votre nom d'affichage, ou votre nom d'utilisateur si vous n'avez pas de nom d'affichage. Avec XIVAuth, le nom est celui de votre
   personnage vérifié, ou « XIVAuth User » suivi des 8 premiers caractères de votre
   identifiant XIVAuth si aucun personnage vérifié n'est disponible lors de votre connexion, comme
   décrit dans le Guide de confidentialité. Si votre compte XIVAuth est lié
@@ -82,7 +82,9 @@ chose que vous avez soumis :
 
 1. Rejoignez le Discord : <https://discord.gg/5VUSKTZCe5>
 2. Posez la question dans **#dyetools-issues-and-suggestions**, ou envoyez un DM à « Flash Galatine »
-3. Indiquez votre identifiant utilisateur Discord et le nom du préréglage
+3. Précisez si vous vous connectez avec Discord ou XIVAuth, et indiquez votre identifiant
+   utilisateur Discord ou le nom d’auteur affiché sur vos préréglages, ainsi que le nom du
+   préréglage
 
 Les recours sont examinés sous 7 jours. Pour faire supprimer votre enregistrement de compte et tout
 ce qui a été soumis sous celui-ci, consultez [`PRIVACY.md`](PRIVACY.fr.md).

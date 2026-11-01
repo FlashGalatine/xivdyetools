@@ -242,3 +242,152 @@ describe('api-worker rate-limit middleware backend selection', () => {
     expect(kv.puts).toBe(1);
   });
 });
+
+// These exercise the application's extractors and selectors, not just the IP helper.
+describe.each([
+  { name: 'API', path: '/v1/ping', method: 'GET', status: 200, limit: 65, prefix: 'api:ip:', tier: 't65_60' },
+  { name: 'telemetry', path: '/v1/telemetry', method: 'POST', status: 204, limit: 240, prefix: 'telemetry:ip:', tier: 't240_60' },
+])('$name client identity', ({ path, method, status, limit, prefix, tier }) => {
+  const first = '2001:db8:abcd:1234::1';
+  const same = '2001:0DB8:ABCD:1234:ffff:ffff:ffff:ffff';
+  const other = '2001:db8:abcd:1235::1';
+
+  it('shares a native budget within /64 and separates other networks', async () => {
+    const counts = new Map<string, number>();
+    const binding = {
+      limit: vi.fn(async ({ key }: { key: string }) => {
+        const count = (counts.get(key) ?? 0) + 1;
+        counts.set(key, count);
+        return { success: count <= 1 };
+      }),
+    };
+    const env = baseEnv({ API_RATE_LIMITER: binding, TELEMETRY_RATE_LIMITER: binding });
+    const app = buildAppWithTelemetry();
+    const statuses = [];
+    for (const ip of [first, same, other]) {
+      statuses.push((await app.request(path, { method, headers: {
+        'CF-Connecting-IP': ip, 'X-Forwarded-For': '198.51.100.99',
+      } }, env)).status);
+    }
+    expect(statuses).toEqual([status, 429, status]);
+    expect([...counts.keys()]).toEqual([
+      `${prefix}2001:db8:abcd:1234:::${tier}`,
+      `${prefix}2001:db8:abcd:1235:::${tier}`,
+    ]);
+  });
+
+  it('shares and exhausts the KV budget within /64 while another network remains free', async () => {
+    // A fixed clock prevents a slow CI run from crossing the fixed-window boundary.
+    const now = vi.spyOn(Date, 'now').mockReturnValue(1_800_000_000_000);
+    try {
+      const env = baseEnv({});
+      const app = buildAppWithTelemetry();
+      const send = (ip: string) => app.request(path, { method, headers: { 'CF-Connecting-IP': ip } }, env);
+      for (let i = 0; i < limit; i++) expect((await send(first)).status).toBe(status);
+      expect((await send(same)).status).toBe(429);
+      expect((await send(other)).status).toBe(status);
+    } finally {
+      now.mockRestore();
+    }
+  });
+
+  it('shares mapped IPv4 KV identity and keeps XFF-only traffic on its existing scope', async () => {
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(1_800_000_000_000);
+    try {
+      const env = baseEnv({});
+      const app = buildAppWithTelemetry();
+      const send = (ip?: string) => app.request(path, { method, headers: {
+        ...(ip ? { 'CF-Connecting-IP': ip } : {}), 'X-Forwarded-For': first,
+      } }, env);
+      for (const [ip, remaining] of [
+        ['203.0.113.9', limit - 1], ['::ffff:203.0.113.9', limit - 2],
+        ['::ffff:cb00:7109', limit - 3], ['203.0.113.10', limit - 1],
+      ] as const) {
+        const res = await send(ip);
+        expect(res.status).toBe(status);
+        expect(res.headers.get('X-RateLimit-Remaining')).toBe(String(remaining));
+      }
+      const noIp = await send();
+      const xffOnlyAgain = await send();
+      expect([noIp.status, xffOnlyAgain.status]).toEqual([status, status]);
+      expect(noIp.headers.get('X-RateLimit-Limit')).toBe(String(method === 'GET' ? 1300 : limit));
+      expect(xffOnlyAgain.headers.get('X-RateLimit-Remaining')).toBe(String(method === 'GET' ? 1298 : limit - 2));
+    } finally {
+      clock.mockRestore();
+    }
+  });
+
+  it('retains dotted IPv4 identity for mapped clients and ignores spoofed XFF', async () => {
+    const binding = fakeBinding([true]);
+    const service = fakeBinding([true]);
+    const env = baseEnv({ API_RATE_LIMITER: binding, TELEMETRY_RATE_LIMITER: binding, SERVICE_RATE_LIMITER: service });
+    const app = buildAppWithTelemetry();
+    for (const ip of ['203.0.113.9', '::ffff:203.0.113.9', '::ffff:cb00:7109', '203.0.113.10']) {
+      expect((await app.request(path, { method, headers: {
+        'CF-Connecting-IP': ip, 'X-Forwarded-For': '198.51.100.99',
+      } }, env)).status).toBe(status);
+    }
+    expect(binding.calls).toEqual([
+      `${prefix}203.0.113.9:${tier}`, `${prefix}203.0.113.9:${tier}`,
+      `${prefix}203.0.113.9:${tier}`, `${prefix}203.0.113.10:${tier}`,
+    ]);
+    // XFF alone must not assign a public identity to an IP-less service request.
+    expect((await app.request(path, { method, headers: { 'X-Forwarded-For': first } }, env)).status).toBe(status);
+    if (method === 'GET') {
+      expect(service.calls).toEqual(['api:svc:workers:t1300_60']);
+      expect(binding.calls).toHaveLength(4);
+    } else {
+      expect(binding.calls[4]).toBe('telemetry:ip:unknown:t240_60');
+      expect(service.calls).toEqual([]);
+    }
+  });
+});
+
+
+describe('downstream quota header ownership', () => {
+  it.each([false, true])('preserves downstream 429 budget headers (service: %s)', async (service) => {
+    const app = new Hono<{ Bindings: Env }>();
+    app.use('*', createApiRateLimitMiddleware());
+    app.get('/quota', (c) => c.json({ error: 'RATE_LIMITED' }, 429, {
+      'X-RateLimit-Limit': '30', 'X-RateLimit-Remaining': '0',
+      'X-RateLimit-Reset': '1234567890', 'Retry-After': '12', 'Cache-Control': 'no-store',
+    }));
+    const binding = fakeBinding([true]);
+    const response = await app.request('/quota', service ? {} : { headers: { 'CF-Connecting-IP': '192.0.2.1' } }, baseEnv({ API_RATE_LIMITER: binding, SERVICE_RATE_LIMITER: binding }));
+    expect(response.status).toBe(429);
+    expect(response.headers.get('X-RateLimit-Limit')).toBe('30');
+    expect(response.headers.get('X-RateLimit-Remaining')).toBe('0');
+    expect(response.headers.get('X-RateLimit-Reset')).toBe('1234567890');
+    expect(response.headers.get('Retry-After')).toBe('12');
+    expect(response.headers.get('Cache-Control')).toBe('no-store');
+  });
+  it.each([200, 429])('keeps general admission headers when downstream status %s has no quota headers', async (status) => {
+    const app = new Hono<{ Bindings: Env }>();
+    app.use('*', createApiRateLimitMiddleware());
+    app.get('/quota', () => new Response('result', { status }));
+    const response = await app.request('/quota', { headers: { 'CF-Connecting-IP': '192.0.2.1' } }, baseEnv({ API_RATE_LIMITER: fakeBinding([true]) }));
+    expect(response.status).toBe(status);
+    expect(response.headers.get('X-RateLimit-Limit')).toBe('65');
+    expect(response.headers.get('X-RateLimit-Remaining')).toBe('64');
+    expect(response.headers.get('Retry-After')).toBeNull();
+  });
+  it('retains the general budget on success even if the handler sets a rate header', async () => {
+    const app = new Hono<{ Bindings: Env }>();
+    app.use('*', createApiRateLimitMiddleware());
+    app.get('/quota', () => new Response('ok', { headers: { 'X-RateLimit-Limit': '30' } }));
+    const response = await app.request('/quota', {}, baseEnv({ SERVICE_RATE_LIMITER: fakeBinding([true]) }));
+    expect(response.status).toBe(200);
+    expect(response.headers.get('X-RateLimit-Limit')).toBe('1300');
+  });
+  it('general admission denial stops the handler and reports its own budget', async () => {
+    const app = new Hono<{ Bindings: Env }>();
+    const handler = vi.fn(() => new Response('unreachable'));
+    app.use('*', createApiRateLimitMiddleware());
+    app.get('/quota', handler);
+    const response = await app.request('/quota', {}, baseEnv({ SERVICE_RATE_LIMITER: fakeBinding([false]) }));
+    expect(response.status).toBe(429);
+    expect(response.headers.get('X-RateLimit-Limit')).toBe('1300');
+    expect(response.headers.get('X-RateLimit-Remaining')).toBe('0');
+    expect(handler).not.toHaveBeenCalled();
+  });
+});

@@ -1985,6 +1985,7 @@ export class MixerTool extends BaseComponent {
 
     openExportSheet({
       tool: 'mixer',
+      matchingMethod: this.matchingMethod,
       title: LanguageService.t('mixer.matchingDyes'),
       meta: [
         LanguageService.tInterpolate('mixer.exportMeta', {
