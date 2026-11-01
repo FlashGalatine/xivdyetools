@@ -8,7 +8,6 @@
  */
 
 import { AppError, ErrorCode } from '@xivdyetools/types';
-import { ERROR_MESSAGES } from './constants';
 import { logger } from './logger';
 
 // ============================================================================
@@ -63,27 +62,6 @@ export class ErrorHandler {
     }
 
     return new AppError(ErrorCode.UNKNOWN_ERROR, 'An unknown error occurred', 'error');
-  }
-
-  /**
-   * Create a user-friendly error message
-   */
-  static createUserMessage(error: AppError | unknown): string {
-    const appError = error instanceof AppError ? error : this.normalize(error);
-
-    // Map error codes to user messages
-    const messageMap: Partial<Record<string, string>> = {
-      [ErrorCode.INVALID_HEX_COLOR]: ERROR_MESSAGES.INVALID_HEX,
-      [ErrorCode.INVALID_RGB_VALUE]: ERROR_MESSAGES.INVALID_RGB,
-      [ErrorCode.DYE_NOT_FOUND]: ERROR_MESSAGES.DYE_NOT_FOUND,
-      [ErrorCode.DATABASE_LOAD_FAILED]: ERROR_MESSAGES.DATABASE_LOAD_FAILED,
-      [ErrorCode.STORAGE_QUOTA_EXCEEDED]: ERROR_MESSAGES.STORAGE_FULL,
-      [ErrorCode.API_CALL_FAILED]: ERROR_MESSAGES.API_FAILURE,
-      [ErrorCode.INVALID_THEME]: ERROR_MESSAGES.THEME_INVALID,
-      [ErrorCode.IMAGE_LOAD_FAILED]: ERROR_MESSAGES.IMAGE_LOAD_FAILED,
-    };
-
-    return messageMap[appError.code] || ERROR_MESSAGES.UNKNOWN_ERROR;
   }
 
   /**

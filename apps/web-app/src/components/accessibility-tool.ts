@@ -234,6 +234,7 @@ export class AccessibilityTool extends BaseComponent {
     // Initialize card display options (for v4-result-cards)
     this.cardDisplayOptions = {
       ...DEFAULT_DISPLAY_OPTIONS,
+      ...ConfigController.getInstance().getConfig('accessibility').displayOptions,
       showPrice: false,
       showDeltaE: false,
       showAcquisition: false,

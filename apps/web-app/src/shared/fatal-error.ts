@@ -8,14 +8,14 @@
  * (`script-src 'self'`, no 'unsafe-inline') blocks — so the one control on
  * the screen did nothing and logged a CSP violation (2026-08-21 security
  * audit, WEB-9). The default copy is plain English because LanguageService
- * may be the very thing that failed to initialise; main.ts passes a
+ * may be the very thing that failed to initialize; main.ts passes a
  * `navigator.language`-picked translation (its own table, no service
  * dependency) through `copy`.
  *
  * @module shared/fatal-error
  */
 
-/** The three user-facing strings on the fatal screen. */
+/** Localized heading, explanation and button; the detail is passed separately. */
 export interface FatalErrorCopy {
   title: string;
   body: string;
@@ -32,7 +32,7 @@ const DEFAULT_COPY: FatalErrorCopy = {
  * Replace `container`'s content with the fatal-error screen.
  *
  * @param container - The app root (`#app`)
- * @param message - User-facing detail (from ErrorHandler.createUserMessage); rendered as text
+ * @param message - Safe localized detail chosen by the caller; rendered as text
  * @param onReload - What the Reload button does; defaults to a full page reload
  * @param copy - Heading / explanation / button text; defaults to English
  */
