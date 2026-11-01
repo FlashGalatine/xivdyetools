@@ -3,6 +3,7 @@ import { verifyJwtData } from '../services/jwt-service.js';
 import { signState, verifyState, type StateData } from '../utils/state-signing.js';
 
 const SECRET = 'state-test-secret-at-least-32-bytes';
+// Historical: the raw-HMAC issuance cutoff of the closed 3.1.x -> 3.2.0 window (no longer in code).
 const CUTOFF = Date.parse('2026-10-28T00:00:00Z') / 1000;
 
 function payload(overrides: Record<string, unknown> = {}): StateData {
@@ -40,7 +41,7 @@ function at(seconds: number): void {
   vi.setSystemTime(seconds * 1000);
 }
 
-describe('OAuth state HMAC domain separation and finite legacy migration', () => {
+describe('OAuth state HMAC domain separation', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     at(CUTOFF);
@@ -66,51 +67,14 @@ describe('OAuth state HMAC domain separation and finite legacy migration', () =>
     await expect(verifyState(await fixture(state, 'oauth-state-v1:'), SECRET)).resolves.toEqual(state);
   });
 
-  it.each([
-    { now: CUTOFF - 1, iat: CUTOFF - 600, exp: CUTOFF },
-    { now: CUTOFF, iat: CUTOFF, exp: CUTOFF + 600 },
-    { now: CUTOFF + 1, iat: CUTOFF, exp: CUTOFF + 600 },
-    { now: CUTOFF + 600, iat: CUTOFF, exp: CUTOFF + 600 },
-    { now: CUTOFF, iat: CUTOFF - 1, exp: CUTOFF },
-  ])('accepts in-flight legacy state at the inclusive boundaries: %o', async ({ now, iat, exp }) => {
-    at(now);
-    const state = payload({ iat, exp });
-    await expect(verifyState(await fixture(state), SECRET)).resolves.toEqual(state);
-  });
-
-  it('rejects legacy state issued after the fixed cutoff even while otherwise fresh', async () => {
-    at(CUTOFF + 1);
-    await expect(verifyState(await fixture(payload({ iat: CUTOFF + 1, exp: CUTOFF + 600 })), SECRET)).rejects.toThrow();
-  });
-
-  it('rejects freshly issued legacy state after the final migration deadline', async () => {
-    at(CUTOFF + 601);
-    await expect(verifyState(await fixture(payload({ iat: CUTOFF + 1, exp: CUTOFF + 601 })), SECRET)).rejects.toThrow();
-  });
-
-  it('rejects an expired legacy state after the inclusive final deadline', async () => {
-    at(CUTOFF + 601);
-    await expect(verifyState(await fixture(payload()), SECRET)).rejects.toThrow();
-  });
-
-  it.each([
-    ['future iat', { iat: CUTOFF, exp: CUTOFF + 1 }, CUTOFF - 1],
-    ['missing iat', { iat: undefined }, CUTOFF],
-    ['missing exp', { exp: undefined }, CUTOFF],
-    ['string iat', { iat: String(CUTOFF) }, CUTOFF],
-    ['string exp', { exp: String(CUTOFF + 600) }, CUTOFF],
-    ['fractional iat', { iat: CUTOFF - 0.5 }, CUTOFF],
-    ['fractional exp', { exp: CUTOFF + 0.5 }, CUTOFF],
-    ['null iat', { iat: null }, CUTOFF],
-    ['nonfinite exp serialized as null', { exp: Infinity }, CUTOFF],
-    ['oversized lifetime', { iat: CUTOFF - 1 }, CUTOFF],
-    ['zero lifetime', { exp: CUTOFF }, CUTOFF],
-    ['negative lifetime', { exp: CUTOFF - 1 }, CUTOFF],
-    ['expired', { iat: CUTOFF - 600, exp: CUTOFF - 1 }, CUTOFF],
-  ])('rejects legacy %s', async (_name, overrides, now) => {
-    at(now as number);
-    await expect(verifyState(await fixture(payload(overrides as Record<string, unknown>)), SECRET)).rejects.toThrow();
-  });
+  it.each([CUTOFF - 600, CUTOFF - 1, CUTOFF, CUTOFF + 600, CUTOFF + 601])(
+    'rejects a correctly keyed raw-HMAC (unprefixed) state at %i',
+    async (now) => {
+      at(now);
+      const state = payload({ iat: now, exp: now + 600 });
+      await expect(verifyState(await fixture(state), SECRET)).rejects.toThrow('Invalid state signature');
+    }
+  );
 
   it.each(['', 'oauth-state-v1:'])('rejects tampering and wrong keys for prefix %s', async (prefix) => {
     const signed = await fixture(payload(), prefix);
@@ -119,7 +83,7 @@ describe('OAuth state HMAC domain separation and finite legacy migration', () =>
     await expect(verifyState(signed, SECRET + '-wrong')).rejects.toThrow('Invalid state signature');
   });
 
-  it('verifies HMAC before decoding an untrusted legacy payload', async () => {
+  it('verifies HMAC before decoding an untrusted payload', async () => {
     await expect(verifyState(`${encode('not json')}.${await rawHmac('different bytes')}`, SECRET)).rejects.toThrow('Invalid state signature');
   });
 
@@ -135,7 +99,7 @@ describe('OAuth state HMAC domain separation and finite legacy migration', () =>
     await expect(verifyState(await fixture(state, 'oauth-state-v1:'), SECRET)).resolves.toEqual(state);
   });
 
-  it('keeps unsigned compatibility explicit and independent of the signed migration deadline', async () => {
+  it('keeps unsigned compatibility explicit and independent of signed-state verification', async () => {
     at(CUTOFF + 601);
     const state = payload({ exp: undefined });
     const unsigned = btoa(JSON.stringify(state));

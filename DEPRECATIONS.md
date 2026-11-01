@@ -56,13 +56,21 @@ wrangler secret delete PERSPECTIVE_API_KEY --env production
 - [ ] Confirm on the `…-dev` worker (no key set) that a new preset lands as `pending` (the
       `unscored` path, shipped in presets-api 2.4.0), or is scored by the replacement
 - [ ] Delete the `PERSPECTIVE_API_KEY` production secret **before 2026-12-31**
-- [ ] **Same day:** edit both privacy policies so neither names Perspective any more, all six
-      languages each:
-  - bot `apps/discord-worker/PRIVACY_POLICY.md` §6 (the Perspective API row of Third-Party
-    Services);
-  - web `apps/web-app/PRIVACY.md` item 3 (the Perspective sentence).
+- [ ] **Same day as key deletion:** update both privacy policies and both Terms of Service,
+      all six languages each:
+  - bot `apps/discord-worker/PRIVACY_POLICY.md` §6: remove the Perspective API row of Third-Party
+    Services;
+  - web `apps/web-app/PRIVACY.md` item 3: remove the Perspective sentence;
+  - bot `apps/discord-worker/TERMS_OF_SERVICE.md` §5, Content Moderation → Community Presets:
+    replace the "Those that clear it are published immediately" claim;
+  - web `apps/web-app/TERMS_OF_SERVICE.md`, Moderation:
+    replace the "A submission that clears them is published straight away and logged for audit" claim.
 
-  Bump every variant's `Last updated` and run
+  Without a replacement scorer, both Terms of Service must say that every new or text-edited
+  preset is held for moderator review. If a replacement scorer is used, describe its verified
+  behavior instead. Make these policy changes on key-deletion day, not before.
+
+  Bump every variant's `Last updated` to the same date and run
   `python .agents/skills/audit-shared/scripts/policy-locale-parity.py` (exit 0).
 - [ ] Remove `checkWithPerspective`, `PERSPECTIVE_ENDPOINT`, `moderationUnavailable()`, the
       `perspective_unavailable` method value and the `PERSPECTIVE_API_KEY` `Env` field once the
@@ -159,7 +167,7 @@ never shadow API paths on data.*). The docs now deploy atomically with the API t
 - [x] Content moved to `apps/api-worker/docs/`; vitepress build wired into the api-worker deploy (2026-07-31)
 - [x] `deploy-api-docs.yml` deleted (2026-07-31)
 - [x] Pages-project domain cutover (steps 1–3) — verified live 2026-08-21: `developers.xivdyetools.app` is no longer attached to the `xivdyetools-api-docs` Pages project (only its `pages.dev` alias remains) and serves api-worker's Workers-Static-Assets build
-- [ ] Delete the `xivdyetools-api-docs` Pages project after the cutover window (step 4; tracked in `docs/operations/OPEN_ITEMS.md` §2)
+- [x] Deleted the `xivdyetools-api-docs` Pages project and its 22 deployments on 2026-10-26 after rechecking the cutover; project and deployment-list GETs return 404, while developers.xivdyetools.app still serves the production API worker's docs ([verification](docs/audits/2026-10-26-security/evidence/remediation-finding-056-2026-10-26.md)).
 
 ---
 
@@ -197,7 +205,7 @@ global `cors({ origin: '*' })` replaces the proxy's allowlist CORS (strictly mor
 - [x] discord-worker binding + web-app fallback URL + preconnect hints flipped (2026-07-31)
 - [x] deploy-universalis-proxy.yml deleted (api-worker's workflow covers the moved code)
 - [x] Production domain cutover, steps 1–3 — verified live 2026-08-21: both proxy hosts answer api-worker (`/v1/dyes` 200, `/api/v2/data-centers` 200). Steps 4–5 (web-app + discord-worker production deploys) *are* the 5.0 merge
-- [ ] Delete the old `xivdyetools-universalis-proxy` worker after the cutover window (still exists, last deploy 2026-07-13 — tracked in `docs/operations/OPEN_ITEMS.md` §2)
+- [x] Deleted the old `xivdyetools-universalis-proxy` worker on 2026-10-26 after rechecking routes and all worker bindings; settings GET returns 404 / 10007, while both current proxy URLs still serve the expected data-centers JSON ([verification](docs/audits/2026-10-26-security/evidence/remediation-finding-056-2026-10-26.md)).
 
 ---
 
