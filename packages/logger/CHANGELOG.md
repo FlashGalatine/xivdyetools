@@ -31,6 +31,15 @@ handling for non-Error values; this formatter change does not add field redactio
 
 The app context-as-error call-site corrections remain in their own adoption sprints.
 
+### Fixed
+
+- Preserve emitted declarations for the six public exports whose JSDoc carried `@internal`
+  while the package barrels re-export them as published API: `ConsoleAdapter`, `JsonAdapter`,
+  `NoopAdapter`, `BaseLogger`, `LogEntry` and `createWorkerLogger`. Building with
+  `stripInternal` deleted those declarations but kept the re-exports, so a consumer compiling
+  with `skipLibCheck: false` met TS2305 errors inside the package's own `.d.ts` files. Runtime
+  behavior, signatures and the export set are unchanged, and the guidance text stays.
+
 ## [2.3.0] - 2026-10-06
 
 Sprint 12 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-deep-dive`): BUG-140, BUG-141, OPT-010,
