@@ -8,6 +8,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [2.3.4] - 2026-10-31
+
+A production image-worker release can be held without approving or rejecting runs by hand.
+Patch: no workspace, package or worker code changes. No deploy workflow's paths include
+`.github/`, so **merging starts no deploy**, production or beta.
+
+### Added
+
+- **`IMAGE_WORKER_DEPLOY_HOLD` repository variable**: while it is `true`, a push to `main` skips
+  the deploy job in `deploy-image-worker.yml`, so a merge that matches its paths (a lockfile bump
+  included) queues no production approval. A manual dispatch still deploys, behind the
+  `production` reviewer. Without it, held image-worker source (the 2026-10-26 security audit's
+  image cut) could only stay undeployed if every queued run were rejected by hand. Usage and
+  timing: `docs/operations/DEPLOY_ENVIRONMENTS.md`, "Update 2026-10-31".
+- **`scripts/check-workflows.test.ts`** pins the guard, the job's `production` environment and the
+  `workflow_dispatch` trigger.
+
 ## [2.3.3] - 2026-10-13
 
 The three beta deploys follow the branch's own changes. Patch: no workspace, package or worker code changes, and no
