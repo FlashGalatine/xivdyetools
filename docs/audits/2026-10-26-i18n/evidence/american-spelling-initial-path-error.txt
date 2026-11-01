@@ -1,0 +1,7 @@
+node.exe : ! no such path: apps/og-worker/src/og-embed.ts
+At C:\dev\XIVProjects\xivdyetools\.claude\worktrees\deep-i18n-audits-20261026\docs\audits\2026-10-26-i18n\evidence\scri
+pts\run-gates.ps1:7 char:3
++   & $exe @arguments *> "$out/$id.txt"
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (! no such path:...src/og-embed.ts:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
