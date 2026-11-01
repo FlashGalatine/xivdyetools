@@ -12,7 +12,7 @@
  */
 
 /** Discord inline-markdown characters that need a backslash to render literally. */
-const MARKDOWN_SPECIALS = /([*_~`|>#\\[\]()])/g;
+const MARKDOWN_SPECIALS = /([*_~`|><#\\[\]()])/g;
 
 /**
  * C0/C1 controls (whitespace is collapsed separately), zero-width and
@@ -21,8 +21,8 @@ const MARKDOWN_SPECIALS = /([*_~`|>#\\[\]()])/g;
  */
 const INVISIBLE = new RegExp(
   '[\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F\\u007F-\\u009F' +
-    '\\u200B-\\u200F\\u202A-\\u202E\\u2060-\\u2064\\uFEFF]',
-  'g',
+    '\\u061C\\u200B-\\u200F\\u202A-\\u202E\\u2060-\\u2064\\u2066-\\u2069\\uFEFF\\u{E0000}-\\u{E007F}]',
+  'gu',
 );
 
 /** Zero-width joiner — inserted after `@` to defuse mass mentions. */
@@ -66,7 +66,8 @@ export function sanitizeEmbedText(text: unknown, maxLength = 256): string {
   if (maxLength <= 0 || chars.length <= maxLength) return escaped;
   // Do not end on a dangling backslash that would escape the ellipsis
   let cut = chars.slice(0, Math.max(0, maxLength - 1)).join('');
-  if (cut.endsWith('\\')) cut = cut.slice(0, -1);
+  const trailing = cut.match(/\\+$/)?.[0].length ?? 0;
+  if (trailing % 2 === 1) cut = cut.slice(0, -1);
   return `${cut}…`;
 }
 

@@ -192,6 +192,24 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = join(HERE, '..', '..', '..', '..');
 const BOT_LOCALES_DIR = join(REPO_ROOT, 'packages', 'bot-logic', 'src', 'i18n', 'locales');
 
+function collectBotCardStrings(bot: Record<string, unknown>): string[] {
+  const { meta: _botMeta, ...botRest } = bot;
+  // I18N-001 / A-DISCORD: options and choices feed Discord's client-side
+  // command picker, never resvg. Keep commands.<cmd>.description, which cards
+  // CAN render. Match subset-cjk-fonts.py's exact exclusion.
+  const commandsBlock = botRest.commands as
+    Record<string, { options?: unknown; choices?: unknown }> | undefined;
+  if (commandsBlock) {
+    for (const cmd of Object.values(commandsBlock)) {
+      delete cmd.options;
+      delete cmd.choices;
+    }
+  }
+  const out: string[] = [];
+  collectStrings(botRest, out);
+  return out;
+}
+
 /** Runtime strings per locale: core locale data + bot-logic UI strings + code tables. */
 function stringsFor(locale: LocaleCode): string[] {
   const out: string[] = [];
@@ -202,18 +220,7 @@ function stringsFor(locale: LocaleCode): string[] {
     string,
     unknown
   >;
-  const { meta: _botMeta, ...botRest } = bot;
-  // I18N-001: commands.<cmd>.options.*.description feeds Discord's own
-  // command-picker tooltips, never resvg — exclude it here so this gate
-  // agrees with subset-cjk-fonts.py's identical exclusion (both keep
-  // commands.<cmd>.description, which the card system CAN render).
-  const commandsBlock = botRest.commands as Record<string, { options?: unknown }> | undefined;
-  if (commandsBlock) {
-    for (const cmd of Object.values(commandsBlock)) {
-      delete cmd.options;
-    }
-  }
-  collectStrings(botRest, out);
+  out.push(...collectBotCardStrings(bot));
   for (const entry of Object.values(CONSOLIDATED_DYES)) out.push(entry.names[locale] ?? "");
   collectStrings(Object.values(MATCHING_METHOD_TAGS), out);
   return out;
@@ -262,6 +269,24 @@ const fmt = (cps: number[]): string =>
 // ---------------------------------------------------------------------------
 
 describe('bundled fonts cover every string the cards can render', () => {
+  it('excludes only command option/choice metadata while retaining drawable descriptions', () => {
+    // Same fixture as subset-cjk-fonts.py's doctest: neither scanner may drop
+    // command descriptions or similarly named fields outside commands.<cmd>.
+    expect(
+      collectBotCardStrings({
+        commands: {
+          swatch: {
+            description: 'card-description',
+            options: { order: { description: 'picker-option' } },
+            choices: { order: { slots: 'picker-choice' } },
+          },
+        },
+        choices: { label: 'card-choice' },
+        card: { options: 'card-option' },
+      }),
+    ).toEqual(['card-description', 'card-choice', 'card-option']);
+  });
+
   it('parses every bundled family (sanity: Latin in the brand fonts, CJK in the subsets)', () => {
     expect(cmaps.onest.has('A'.codePointAt(0)!)).toBe(true);
     expect(cmaps.fragmentMono.has('#'.codePointAt(0)!)).toBe(true);

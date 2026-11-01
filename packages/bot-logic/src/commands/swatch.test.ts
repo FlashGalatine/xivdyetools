@@ -4,9 +4,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import {
-  CharacterColorService,
-  parseCharaFile,
-  resolveCharaColors,
+  inspectCharaForTools,
   resolveCharaForTools,
 } from '@xivdyetools/core';
 import { generateSwatchCard } from '@xivdyetools/svg';
@@ -23,14 +21,11 @@ vi.mock('@xivdyetools/svg', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@xivdyetools/svg')>();
   return { ...actual, generateSwatchCard: vi.fn(actual.generateSwatchCard) };
 });
-// The same for the resolvers, so a test can make the bot side of the read throw.
-// The read goes through core's library-backed facade (Task 6); the legacy
-// resolver stays wrapped for the tests that compute expectations with it.
+// The facade stays wrapped so a test can force a bot-side read failure.
 vi.mock('@xivdyetools/core', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@xivdyetools/core')>();
   return {
     ...actual,
-    resolveCharaColors: vi.fn(actual.resolveCharaColors),
     resolveCharaForTools: vi.fn(actual.resolveCharaForTools),
   };
 });
@@ -75,18 +70,12 @@ const HETEROCHROMIA_OFF_GRID = JSON.stringify({
   RightEyeColor: '1, 0, 0',
 });
 
-/**
- * Same shape, but both eyes share index 42 (`eyesShareIndex: true`) — only
- * the left eye carries a divergent float, which is enough: the right eye row
- * never renders when the indices match (`executeSwatch` merges it away), so
- * this fixture covers the "shared-index off grid" arm of BUG-006 (the `·LR`
- * label badge) independent of what the right eye's own verdict would have
- * been.
- */
+/** Equal live blue eyes share one row even when both are off grid. */
 const HETEROCHROMIA_SHARED_OFF_GRID = JSON.stringify({
   IsExtendedAppearanceValid: true,
   REyeColor: 42,
   LEyeColor: 42,
+  RightEyeColor: '0, 0, 1',
   LeftEyeColor: '0, 0, 1',
 });
 
@@ -223,7 +212,7 @@ describe('executeSwatch', () => {
 
   describe('chara-name privacy (PRIVACY_POLICY §3)', () => {
     it('the nickname fixture really carries the nickname — guards the guards below', () => {
-      expect(parseCharaFile(WITH_NICKNAME).nickname).toBe('Real Name');
+      expect(inspectCharaForTools(WITH_NICKNAME).metadata.Nickname.value).toBe('Real Name');
     });
 
     it('never displays the character name on the card or the embed', async () => {
@@ -352,7 +341,7 @@ describe('executeSwatch', () => {
       expect(result.svgString.match(/网格外</g)?.length).toBe(2);
     });
 
-    it('merges shared-index off-grid eyes into one row with an ·LR LABEL marker', async () => {
+    it('merges equal-colour off-grid eyes into one row with an ·LR LABEL marker', async () => {
       const result = await executeSwatch({
         fileText: HETEROCHROMIA_SHARED_OFF_GRID,
         locale: 'en',
@@ -377,26 +366,17 @@ describe('executeSwatch', () => {
 describe('the lip line', () => {
   // The export stores Mouth 2 (lip-colour bit clear), which the library reads
   // as a disabled lip; setting the bit (130) keeps the lip live, so these
-  // tests still pin the blend line. The legacy resolver never read Mouth, so
-  // its expectations below are the same for 2 and 130.
+  // tests still pin the blend line against independent literal colours.
   const LIP_ON = { ...parsedFixture('duskwight-heterochromia.chara'), Mouth: 130 };
 
   it('names the color the blend was made from: the creator swatch for an unedited lip', async () => {
     const text = JSON.stringify(LIP_ON);
-    const resolved = await resolveCharaColors(parseCharaFile(text), new CharacterColorService());
-    const lip = resolved.slots.find((s) => s.slot === 'lip');
-    // The file stores the shader color, the sheet holds the creator's: they differ,
-    // and an unedited lip is judged on the index
-    expect(lip?.verdict).toBe('index');
-    expect(lip?.floatHex).not.toBe(lip?.indexHex);
-
     const result = await executeSwatch({ fileText: text, locale: 'en' });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.embed.description).toContain(
-      `raw ${lip?.indexHex}, blended ${lip?.blendHex}`
+      'raw #621C33, blended #AE8F98'
     );
-    expect(result.embed.description).not.toContain(`raw ${lip?.floatHex}`);
   });
 
   /**
@@ -406,20 +386,19 @@ describe('the lip line', () => {
    * lip-sheet entry.
    */
   it('names the file’s own color as raw once it won the verdict', async () => {
+    // Independently computed: fixture SkinColor decodes to #F0D5DE;
+    // linear-sRGB composite of #0000FF at 0.6 over that skin is #9F8DF3.
     const text = JSON.stringify({ ...LIP_ON, MouthColor: '0, 0, 1, 0.6' });
-    const resolved = await resolveCharaColors(parseCharaFile(text), new CharacterColorService());
-    const lip = resolved.slots.find((s) => s.slot === 'lip');
-    expect(lip?.verdict).toBe('offGrid');
-    expect(lip?.floatHex).toBe('#0000FF');
-    expect(lip?.blendHex).toBeTruthy();
-
     const result = await executeSwatch({ fileText: text, locale: 'en' });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.embed.description).toContain(
-      `Lip α 0.60 — raw #0000FF, blended ${lip?.blendHex}`,
+      'Lip α 0.60 — raw #0000FF, blended #9F8DF3',
     );
-    expect(result.embed.description).not.toContain(`raw ${lip?.indexHex}`);
+    expect(result.embed.description).not.toContain('raw #621C33');
+    const target = await executeSwatch({ fileText: text, locale: 'en', slot: 'lip' });
+    if (!target.ok) throw new Error(target.errorMessage);
+    expect(target.embed.description).toContain('LIP `#9F8DF3`');
   });
 });
 
@@ -451,8 +430,7 @@ describe('slots the file leaves without an index', () => {
    */
   it('a file with no live colour slot is refused with NO_LIVE_SLOTS', async () => {
     const text = JSON.stringify({ EnableHighlights: false, Highlights: 36 });
-    const resolved = await resolveCharaColors(parseCharaFile(text), new CharacterColorService());
-    expect(resolved.slots.find((s) => s.slot === 'highlights')?.verdict).toBe('inert');
+    expect(JSON.parse(text).EnableHighlights).toBe(false);
 
     const en = await executeSwatch({ fileText: text, locale: 'en' });
     expect(en).toEqual({

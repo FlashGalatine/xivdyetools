@@ -48,7 +48,7 @@
 | **Logger** | v2.4.0 | `@xivdyetools/logger` | npm | Active |
 | **Worker Kit** (middleware + `/rate-limiter`) | v1.6.0 | `@xivdyetools/worker-kit` | npm | Active |
 | **SVG** | v4.4.1 | `@xivdyetools/svg` | npm | Active |
-| **Bot Logic** (incl. `/i18n`) | v4.11.0 | `@xivdyetools/bot-logic` | npm | Active |
+| **Bot Logic** (incl. `/i18n`) | v4.12.0 | `@xivdyetools/bot-logic` | npm | Active |
 | **Test Utils** | v3.0.0 | `@xivdyetools/test-utils` | workspace-private | Active (never published) |
 
 ### Deprecated
@@ -576,6 +576,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v4.12.0 | Oct 2026 | A-BOT-LOGIC: metric-correct harmony distances, effective-color eye pairing, bounded glamour descriptions and shared sanitizer hardening; deprecated but retained legacy swatch result, legacy-oracle/fixture cleanup and five preparatory choice keys in six locales. Includes A-DISCORD favorite-list/neutral-preview locale companion; publish that source after core 5.16.0 and SVG 4.4.1, before the Discord consumer |
 | v4.11.0 | Oct 2026 | `/swatch` and `/glamour` read through core 5.15.0's `xivcharakit` facade: optional `fileBytes` input (wins over `fileText`), matching on `matchHex` alone with the lip on its live blend, `SwatchCharacter` keeps its shape and carries no color for a slot `matchHex` excludes, four fixed lines in six languages (`card.swatchActivityUnknown`, `card.swatchUnusable`, `card.glamourGearSkipped`, `card.glamourDyeInvalid`); intentional differences in `docs/research/2026-10-22-xivcharakit-integration.md` |
 | v4.10.0 | Oct 2026 | `card.charaFileReason.tooLarge` takes `{kb}` (was `{mb}`) and says to re-save an Anamnesis export without its attached image; new `card.charaFileReason.notChara`; the `/manual` Character File topic states the `.chara` name and 8 KB limits, all six languages |
 | v4.9.0 | Oct 2026 | `/glamour`'s GPOSERS list applies core 5.12.0's `gposersOmittedSlots` (invisible pieces, unsupported Off Hand); `GlamourResolvedItem.uiCategory`; the card is unchanged |
@@ -710,6 +711,7 @@ and the [rollout runbook](operations/security-remediation-2026-09-15.md) for the
 
 | Consumer | Minimum Core Version | Notes |
 |----------|---------------------|-------|
+| @xivdyetools/bot-logic v4.12.0 | @xivdyetools/core v5.16.0; @xivdyetools/svg v4.4.1; @xivdyetools/types v3.3.0 | Prepared source; publication and deployed acceptance remain pending |
 | @xivdyetools/svg v4.4.1 | @xivdyetools/core v5.16.0; @xivdyetools/types v3.3.0 | Prepared source; publication and deployed acceptance remain pending |
 | @xivdyetools/worker-kit v1.6.0 | @xivdyetools/logger v2.4.0 | Prepared source; publication and deployed acceptance remain pending |
 | @xivdyetools/core v5.16.0 | @xivdyetools/logger v2.4.0; @xivdyetools/types v3.3.0 | Prepared source; publication and deployed acceptance remain pending |

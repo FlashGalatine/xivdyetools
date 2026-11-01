@@ -3,8 +3,9 @@
  *
  * The error's class and, for an AppError, its code — never its message. A
  * message can quote what it was given: core's colour helpers quote the hex
- * ("Invalid hex color: …"), which can be what the user typed, and the .chara
- * parser quotes field values from the player's file (PRIVACY_POLICY §3). A
+ * ("Invalid hex color: …"), and runtime or injected resolver errors can carry
+ * input. The current .chara facade uses fixed library refusals; the logging
+ * boundary still excludes all messages (PRIVACY_POLICY §3). A
  * thrown non-Error is named by its type alone, for the same reason.
  *
  * Internal to the commands — not part of the package's public API.

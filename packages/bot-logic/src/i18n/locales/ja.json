@@ -296,7 +296,10 @@
       "listTitle": "お気に入りプリセット",
       "listTitleCount": "お気に入りプリセット（{n}/{max}）",
       "empty": "まだお気に入りのプリセットがありません。`/preset favorite add` で追加できます。",
-      "allRemoved": "お気に入りのプリセットはすべて削除されたようです。`/preset favorite remove` で項目を整理してください。"
+      "allRemoved": "保存済みのプリセットは現在どれも利用できません。お気に入りは保持されています。",
+      "unavailableSummary": "現在利用できない保存済みプリセット：{count}件。",
+      "truncated": "このメッセージに収まらないため省略した利用可能なプリセット：{count}件。",
+      "lookupFailed": "お気に入りを読み込めませんでした。しばらくしてからもう一度お試しください。"
     },
     "noValidDyes": "このプリセットに有効なカララントはありません"
   },
@@ -463,8 +466,8 @@
     "invalidButton": "無効なボタン操作です。",
     "notPermitted": "プレビュー画像を審査する権限がありません。",
     "actionFailed": "プレビュー画像の更新に失敗しました。もう一度お試しください。",
-    "approvedFooter": "{moderator} がプレビュー画像を承認しました",
-    "rejectedFooter": "{moderator} がプレビュー画像を却下しました（プリセット自体は変更されません）"
+    "approvedFooter": "プレビュー画像を承認しました",
+    "rejectedFooter": "プレビュー画像を却下しました — プリセットへの影響はありません"
   },
   "matchImage": {
     "missingImage": "分析する画像を添付してください。",
@@ -500,7 +503,7 @@
     "supportedFormats": "対応フォーマット",
     "supportedFormatsContent": "• PNG\n• JPG/JPEG\n• GIF\n• WebP\n• BMP",
     "fileLimits": "ファイル制限",
-    "fileLimitsContent": "• 最大サイズ：10MB",
+    "fileLimitsContent": "• 最大サイズ：5MB",
     "matchQualityRatings": "マッチ距離",
     "matchQualityRatingsContent": "一覧の各マッチには色からの距離が表示されます - 数値が低いほど近い色です。\n\n6つのマッチング方式とその帯の仕組み：`/manual` トピック {topic}",
     "poweredBy": "Photon WASM画像処理を使用"
@@ -846,6 +849,12 @@
         "slot": {
           "description": "代わりに1つのスロットの最も近い5色を表示"
         }
+      },
+      "choices": {
+        "order": {
+          "slots": "スロット — ファイル順（既定）",
+          "hardest": "難しい順 — 一致度の低い順"
+        }
       }
     },
     "glamour": {
@@ -1133,6 +1142,13 @@
               "description": "お気に入りのプリセットを一覧表示"
             }
           }
+        }
+      },
+      "choices": {
+        "sort": {
+          "popular": "人気順",
+          "recent": "新着順",
+          "name": "アルファベット順"
         }
       }
     },
