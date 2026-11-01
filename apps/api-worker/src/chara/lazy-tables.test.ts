@@ -22,11 +22,12 @@ vi.mock('./data/item-names.zh.json', () => {
 
 import { createMockEnv } from '../../tests/test-utils';
 import { createMockExecutionContext, resetAllMocks } from '../universalis/test-setup';
+// Hoisted table mocks observe this import; collection keeps runner loading outside request timing.
+import app from '../index';
 
 describe('chara tables load lazily (OPT-002)', () => {
   it('are not evaluated by importing the app or serving other routes', async () => {
     resetAllMocks();
-    const { default: app } = await import('../index');
     const env = createMockEnv();
     const health = await app.request('/health', {}, env, createMockExecutionContext());
     expect(health.status).toBe(200);
@@ -66,7 +67,6 @@ describe('chara tables load lazily (OPT-002)', () => {
         );
       }),
     );
-    const { default: app } = await import('../index');
     const env = createMockEnv({
       XIVAPI_BASE: 'https://lazy.test',
       XIVAPI_VERSION: 'aaaaaaaaaaaaaaaa',

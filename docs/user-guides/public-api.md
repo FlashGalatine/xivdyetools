@@ -147,11 +147,17 @@ curl -X POST "https://data.xivdyetools.app/v1/chara/resolve" \
   -H "Content-Type: application/json" \
   -d '{"gear":[{"slot":"HeadGear","base":361,"variant":5},{"slot":"MainHand","set":634,"base":19,"variant":1}],"glasses":40}'
 
-# The icon for a resolved item (PNG, long-cached)
+# The unversioned icon (PNG, five-minute browser freshness)
 curl -o mask.png "https://data.xivdyetools.app/v1/chara/icon/41716"
 ```
 
 `items.<slot>` is `null` when the key has no Item row (NPC / prop models); `503 UPSTREAM_UNAVAILABLE` means XIVAPI is down or re-indexing after a patch — retry later. Full reference: [developers.xivdyetools.app/reference/chara](https://developers.xivdyetools.app/reference/chara).
+
+An explicit canonical `?version=` must equal the configured or discovered current game key;
+accepted versioned icons have a 30-day immutable browser policy. Character-data cache misses
+also draw on a dedicated soft upstream budget (30 operations/minute per public client in
+production); cached rows/icons are free of that additional budget. A denied miss returns
+429 with retry information, while the ordinary API admission limit still applies.
 
 ### 7. Get Categories
 

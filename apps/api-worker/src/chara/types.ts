@@ -16,7 +16,7 @@ import type {
   CharaTwinRules,
 } from '@xivdyetools/core';
 
-export type { CharaGearModel, CharaGearSlotId, CharaItemRules, CharaTwinRules };
+export type { CharaGearModel, CharaGearSlotId, CharaItemRules };
 
 /** en/ja/de/fr come from XIVAPI in the same call; ko/zh merge from the build-time tables when known. */
 export interface ItemNames {

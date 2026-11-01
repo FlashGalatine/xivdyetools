@@ -99,7 +99,7 @@ Dye data is deterministic and changes only with FFXIV patches, so aggressive cac
 | `/v1/dyes/*` | `public, max-age=3600, s-maxage=86400` |
 | `/v1/match/*` | `public, max-age=3600, s-maxage=86400` |
 | `POST /v1/chara/resolve` | `no-store` on the envelope — each (slot, key) is cached ~7 days behind it; `X-Cache: HIT` / `MISS` |
-| `/v1/chara/icon/:iconId` | `public, max-age=2592000, immutable` + `X-Cache` |
+| `/v1/chara/icon/:iconId` | Unversioned: `public, max-age=300, must-revalidate`; accepted current `?version=`: `public, max-age=2592000, immutable`; both carry `X-Cache` |
 
 The `Age` header (set by Cloudflare) tells you how old the cached response is. A fresh cache hit means sub-millisecond response time at the nearest PoP. Note that `X-Cache` and `Age` are **not** in the CORS `Access-Control-Expose-Headers` list, so browser code cannot read them — they are for curl, servers, plugins and bots; the headers a browser can read are the ones in the table above.
 
