@@ -10,6 +10,7 @@ import {
 import { generateSwatchCard } from '@xivdyetools/svg';
 import { executeSwatch, type SwatchInput } from './swatch.js';
 import { createTranslator } from '../i18n/index.js';
+import { readCharaForTools } from './chara-identity.js';
 import {
   DUSKWIGHT_HETEROCHROMIA,
   HROTHGAR_HELIONS,
@@ -430,7 +431,11 @@ describe('slots the file leaves without an index', () => {
    */
   it('a file with no live colour slot is refused with NO_LIVE_SLOTS', async () => {
     const text = JSON.stringify({ EnableHighlights: false, Highlights: 36 });
-    expect(JSON.parse(text).EnableHighlights).toBe(false);
+    // Sanity: the fixture really resolves to a switched-off highlights slot with nothing to match.
+    const highlights = (await readCharaForTools({ fileText: text })).slots.find(
+      (s) => s.slot === 'highlights',
+    );
+    expect(highlights).toMatchObject({ active: false, interpretation: 'inactive', matchHex: null });
 
     const en = await executeSwatch({ fileText: text, locale: 'en' });
     expect(en).toEqual({

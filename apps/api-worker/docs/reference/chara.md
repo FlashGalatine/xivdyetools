@@ -91,6 +91,8 @@ The ordinary API admission limit still applies to every request. An additional C
 charges actual upstream data operations: one batched Item search, one Glasses fetch, or one
 icon fetch/revalidation. A completely cold resolve with both Item and Glasses work costs two
 units. Cached rows, cached empty/null results and existing Item/Glasses waiters cost zero.
+If the request a waiter joined is itself denied, the waiter performs that operation under its
+own budget (one unit) instead of receiving the other client's 429.
 Concurrent icon misses can each fetch and each consume a unit; retained stale icons consume
 one unit for conditional revalidation, including a successful 304.
 

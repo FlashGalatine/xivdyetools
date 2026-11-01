@@ -38,8 +38,9 @@ identity splitting is disabled, and this release declares no outbound continuity
   changing the association or minting its stale Discord identity. Matching sign-ins and new
   accounts continue. Safe automatic splitting remains pending consumer rollout and activation.
 - Sign OAuth state over `oauth-state-v1:` plus its encoded payload, separate from JWT input.
-  The two-part wire shape is unchanged. Legacy issuance ends 2026-10-28 00:00:00 UTC and legacy
-  acceptance ends at 00:10:00 UTC; a deployment afterward requires old in-flight sign-ins to retry.
+  The two-part wire shape is unchanged. States signed by 3.1.x are no longer accepted: the
+  one-time raw-HMAC window closed 2026-10-28 00:10 UTC before this release shipped, so its
+  compatibility path was removed, and a sign-in started before the deployment must be restarted once.
 - Explicitly remove development routes and disable development workers.dev, preserving the
   top-level production auth domain.
 - Opt into IPv6 /64 rate-limit keys while preserving IPv4, mapped-address and header behavior.
@@ -56,6 +57,12 @@ identity splitting is disabled, and this release declares no outbound continuity
   deployment or activation is performed by preparing this release.
 - Document the [identity and moderation contract](../../docs/architecture/identity-moderation.md)
   and test the private entrypoint with the actual local Workers runtime and transactional SQLite.
+- Identity refusals on both provider callbacks log their refusal code through the request logger
+  (no message, internal, Discord or XIVAuth IDs) before the unchanged generic 503. Workers Logs
+  stay off, so the line is visible only in a live `wrangler tail`.
+- Local test runs need Node.js 22.16+ (`node:sqlite` `StatementSync.columns()` in the SQLite test
+  double); the oauth `engines` floor now says so. The workerd runtime tests keep Wrangler's
+  profile, cache and logs in a fresh OS temp directory removed after the run, not in the checkout.
 
 ## [3.1.3] - 2026-10-06
 

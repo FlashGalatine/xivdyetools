@@ -11,6 +11,7 @@ import { describe, it, expect } from 'vitest';
 import {
   escapeDiscordMarkdown,
   sanitizeEmbedText,
+  sanitizeLineValue,
   ALLOWED_MENTIONS_NONE,
 } from './discord-markdown.js';
 
@@ -97,6 +98,39 @@ describe('sanitizeEmbedText', () => {
 
   it('returns an empty string for non-string input', () => {
     expect(sanitizeEmbedText(undefined as unknown as string)).toBe('');
+  });
+});
+
+describe('sanitizeLineValue', () => {
+  it('leaves parentheses, # and > bare, so a copied acquisition line carries no backslashes', () => {
+    expect(sanitizeLineValue('Crafted (WVR Lvl. 1) / Vendor - Zone #2 > Outpost', 700)).toBe(
+      'Crafted (WVR Lvl. 1) / Vendor - Zone #2 > Outpost',
+    );
+  });
+
+  it('still neutralises masked links, inline markup and angle tokens', () => {
+    expect(sanitizeLineValue('[Claim](https://evil.example)', 700)).toBe('\\[Claim\\](https://evil.example)');
+    expect(sanitizeLineValue('*b* _i_ ~s~ `c` ||x|| a\\b', 700)).toBe(
+      '\\*b\\* \\_i\\_ \\~s\\~ \\`c\\` \\|\\|x\\|\\| a\\\\b',
+    );
+    expect(sanitizeLineValue('<#123> <t:1:R> <:e:1>', 700)).toBe('\\<#123> \\<t:1:R> \\<:e:1>');
+  });
+
+  it('defuses mentions and collapses controls and line breaks like sanitizeEmbedText', () => {
+    expect(sanitizeLineValue('a\u0000b​\r\n# Admin @everyone <@123>', 700)).toBe(
+      'ab # Admin @‍everyone @123',
+    );
+  });
+
+  it('caps by code points and never ends on a split escape', () => {
+    expect(sanitizeLineValue('ab[cdef', 4)).toBe('ab…');
+    const out = sanitizeLineValue('a' + '\\'.repeat(400), 700);
+    expect(out).toBe('a' + '\\'.repeat(698) + '…');
+    expect([...out]).toHaveLength(700);
+  });
+
+  it('returns an empty string for non-string input', () => {
+    expect(sanitizeLineValue(undefined, 700)).toBe('');
   });
 });
 
