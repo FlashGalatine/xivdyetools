@@ -4,6 +4,8 @@
 publication, remote migration, deployment, activation, workflow dispatch or announcement is
 authorized by this document. Each execution gate below requires a later explicit authorization.
 
+**Execution began 2026-11-01.** What has merged, published and deployed is recorded in the [merge-day receipt](../audits/2026-10-26-security/evidence/merge-day-2026-11-01.json) and in the [unit acceptance checklist](REMEDIATION_UNIT_ACCEPTANCE_2026_10.md), sections 3 and 6. Every gate not recorded there stays held.
+
 Reference source: `cea587fa276b502a246f6c5fe0d1cfe9a03ef55f` ([PR #365](https://github.com/FlashGalatine/xivdyetools/pull/365)).
 Release-cut baseline: `13c386e5983fe58ff17ac08fb5712239feb2e696`. Recheck main before execution.
 The [isolated-cut evidence](../audits/2026-10-26-security/evidence/remediation-isolated-cuts-2026-10-29.md)
