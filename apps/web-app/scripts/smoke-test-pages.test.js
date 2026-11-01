@@ -283,14 +283,33 @@ describe('FINDING-009 exact current and retired origin probes', () => {
       /970e253a.*CSP/i
     );
   });
-  it('accepts equivalent directive/token ordering but rejects added policy allowances', async () => {
-    const reordered = expectedCsp.split(';').filter(Boolean).reverse().join(';') + ';';
+  it('accepts equivalent directive and token ordering but rejects an added allowance on the same origin', async () => {
+    const reordered =
+      expectedCsp
+        .split(';')
+        .filter(Boolean)
+        .reverse()
+        .map((directive) => {
+          const [name, ...tokens] = directive.trim().split(/\s+/);
+          return [name, ...tokens.reverse()].join(' ');
+        })
+        .join(';') + ';';
     const service = origins({
       'https://xiv-colorexplorer.pages.dev/': response(200, BODY, {
         'content-security-policy': reordered,
       }),
     });
     expect(await smoke.checkPagesOrigins({ ...originOptions, ...service })).toEqual([]);
+    const widened = reordered.replace('connect-src ', 'connect-src https://*.workers.dev ');
+    expect(widened).not.toBe(reordered);
+    const bad = origins({
+      'https://xiv-colorexplorer.pages.dev/': response(200, BODY, {
+        'content-security-policy': widened,
+      }),
+    });
+    expect((await smoke.checkPagesOrigins({ ...originOptions, ...bad })).join('\n')).toMatch(
+      /xiv-colorexplorer\.pages\.dev\/.*CSP/i
+    );
   });
   it.each([200, 301, 302, 403, 500])(
     'does not accept HTTP %s as retired-host closure',

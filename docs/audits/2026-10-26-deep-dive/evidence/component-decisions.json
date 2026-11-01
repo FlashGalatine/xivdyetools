@@ -1,0 +1,11 @@
+{
+  "wcomp-001": {"confirmed": true},
+  "wcomp-002": {"confirmed": true},
+  "wcomp-003": {"confirmed": true, "qualification": "Scope is supported display fields only; intentional Accessibility price/acquisition restrictions remain valid."},
+  "wcomp-004": {"confirmed": true, "qualification": "The sidebar mirror intentionally emits no config-change bridge event (config-sidebar.ts:748); direct sidebar edits do not prove reset/import works."},
+  "wcomp-005": {"confirmed": true, "overlap": "Different from 2026-10-04-deep-dive/BUG-039 (api-worker rate-limit tests) and 2026-09-16-deep-dive/BUG-039 (merge-test quality); neither covers these Comparison switches.", "qualification": "Only Stain/Spectrum are claimed. Comparison's deliberate acquisition and pair DeltaE rows remain unchanged."},
+  "wcomp-006": {"confirmed": true, "qualification": "Exclude restored/shared Comparison selections, which explicitly fetch. The finding covers live v4 Comparison picks and Gradient recomputation/restored endpoints. DyeSelector.setSelectedDyes emits no selection event, so it supplies no indirect fetch."},
+  "wcomp-007": {"confirmed": true, "qualification": "Correct test path: apps/web-app/src/components/__tests__/v4/preset-card.test.ts:214. Independent verification used static native event semantics; the worker's extracted-handler DOM probe is not a full browser run."},
+  "wcomp-008": {"confirmed": true, "qualification": "Confirmed UI promise: enabled TO button and tooltip Click to select end color at gradient-tool.ts:929/934 and en.json:493. Preventing or explaining empty End arming can fix the contract while retaining the dense model; no sparse-model redesign is required.", "locations": ["apps/web-app/src/components/gradient-tool.ts:929", "apps/web-app/src/components/gradient-tool.ts:1770", "apps/web-app/src/components/gradient-tool.ts:1902"]},
+  "wcomp-009": {"confirmed": true, "qualification": "showTab at preset-tool.ts:1006 refreshes Community/Official only. Owner-visible edited values change even if moderation is pending, so Mine's stale baseline is observable."}
+}
