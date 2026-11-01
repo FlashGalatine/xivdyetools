@@ -60,13 +60,13 @@ const DEFAULT_MATCH_COUNT = 3;
 // =============================================================================
 // Eager imports for shared colors (always needed, loaded at build time)
 // =============================================================================
-import eyeColorsData from '../data/character_colors/shared/eye_colors.json';
-import highlightColorsData from '../data/character_colors/shared/highlight_colors.json';
-import lipColorsDarkData from '../data/character_colors/shared/lip_colors_dark.json';
-import lipColorsLightData from '../data/character_colors/shared/lip_colors_light.json';
-import tattooColorsData from '../data/character_colors/shared/tattoo_colors.json';
-import facePaintDarkData from '../data/character_colors/shared/face_paint_dark.json';
-import facePaintLightData from '../data/character_colors/shared/face_paint_light.json';
+import eyeColorsData from '../data/character_colors/shared/eye_colors.json' with { type: 'json' };
+import highlightColorsData from '../data/character_colors/shared/highlight_colors.json' with { type: 'json' };
+import lipColorsDarkData from '../data/character_colors/shared/lip_colors_dark.json' with { type: 'json' };
+import lipColorsLightData from '../data/character_colors/shared/lip_colors_light.json' with { type: 'json' };
+import tattooColorsData from '../data/character_colors/shared/tattoo_colors.json' with { type: 'json' };
+import facePaintDarkData from '../data/character_colors/shared/face_paint_dark.json' with { type: 'json' };
+import facePaintLightData from '../data/character_colors/shared/face_paint_light.json' with { type: 'json' };
 
 /**
  * Internal type for race-specific color data structure
@@ -179,7 +179,9 @@ export class CharacterColorService {
 
     // Deduplicate concurrent loads
     if (!this.hairColorsLoading) {
-      this.hairColorsLoading = import('../data/character_colors/race_specific/hair_colors.json')
+      this.hairColorsLoading = import('../data/character_colors/race_specific/hair_colors.json', {
+        with: { type: 'json' },
+      })
         .then((module) => {
           this.hairColorsData = module.default;
           this.hairColorsLoading = null;
@@ -206,7 +208,9 @@ export class CharacterColorService {
 
     // Deduplicate concurrent loads
     if (!this.skinColorsLoading) {
-      this.skinColorsLoading = import('../data/character_colors/race_specific/skin_colors.json')
+      this.skinColorsLoading = import('../data/character_colors/race_specific/skin_colors.json', {
+        with: { type: 'json' },
+      })
         .then((module) => {
           this.skinColorsData = module.default;
           this.skinColorsLoading = null;
