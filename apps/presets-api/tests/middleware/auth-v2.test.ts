@@ -199,6 +199,21 @@ describe('bot auth v2 signature', () => {
             expect(putSpy).toHaveBeenCalledWith(`botnonce:${nonce}`, '1', { expirationTtl: 120 });
         });
 
+        it('rejects an uppercase equivalent signature before nonce access, then accepts its canonical form', async () => {
+            const getSpy = vi.spyOn(kv, 'get'); const putSpy = vi.spyOn(kv, 'put');
+            const headers = await v2Headers('GET', PROTECTED_PATH, undefined, { nonce: 'canonical-case-control' });
+            const canonical = headers['X-Request-Signature-V2'];
+            const uppercase = canonical.toUpperCase();
+            expect(uppercase).not.toBe(canonical);
+            expect(Buffer.from(uppercase, 'hex')).toEqual(Buffer.from(canonical, 'hex'));
+            const rejected = await app.request(PROTECTED_PATH, { headers: { ...headers, 'X-Request-Signature-V2': uppercase } }, kvEnv);
+            expect(rejected.status).toBe(401);
+            expect(getSpy).not.toHaveBeenCalled(); expect(putSpy).not.toHaveBeenCalled();
+            const accepted = await app.request(PROTECTED_PATH, { headers }, kvEnv);
+            expect(accepted.status).toBe(200);
+            expect(putSpy).toHaveBeenCalledExactlyOnceWith('botnonce:canonical-case-control', '1', { expirationTtl: 120 });
+        });
+
         it('rejects the same signed request replayed with the same nonce', async () => {
             const headers = await v2Headers('GET', PROTECTED_PATH, undefined, { nonce: 'replayed-nonce' });
 

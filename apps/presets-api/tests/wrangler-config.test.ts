@@ -36,6 +36,71 @@ const oauthToml = readFileSync(join(__dirname, '..', '..', 'oauth', 'wrangler.to
 );
 
 describe('wrangler.toml', () => {
+  it.each([
+    ['top level', topLevel, ''],
+    ['production', production, 'env\\.production\\.'],
+  ])(
+    'routes %s Discord notifications to the default entrypoint on the existing production service',
+    (_environment, config, prefix) => {
+      const services = [...config.matchAll(new RegExp(`^\\[\\[${prefix}services\\]\\]\\n([^\\[]*)`, 'gm'))];
+      const discordBindings = services.filter((service) =>
+        /^binding = "DISCORD_WORKER"$/m.test(service[1])
+      );
+      expect(discordBindings).toHaveLength(1);
+      expect(discordBindings[0]?.[1]).toMatch(/^service = "xivdyetools-discord-worker"$/m);
+      // C2 precedes Discord's named provider. C4 restores the named assertion.
+      expect(discordBindings[0]?.[1]).not.toMatch(/^\s*entrypoint\s*=/m);
+    }
+  );
+
+  it.each([
+    ['top level', topLevel, '', 'xivdyetools-oauth-dev', '891bbbe834ba4055a06b672b589094be', '1012'],
+    ['production', production, 'env\\.production\\.', 'xivdyetools-oauth', '0d6f3be3b4704e91a83e6387b9769e45', '1011'],
+  ])('preserves %s service and storage targets in the default-binding cut',
+    (_environment, config, prefix, oauthService, blacklistId, ratelimitNamespace) => {
+      const blocks = (table: string, binding: string, key = 'binding') =>
+        [...config.matchAll(new RegExp(`^\\[\\[${prefix}${table}\\]\\]\\n([^\\[]*)`, 'gm'))]
+          .map(match => match[1])
+          .filter(body => new RegExp(`^${key} = "${binding}"$`, 'm').test(body));
+      const only = (table: string, binding: string, key = 'binding') => {
+        const matches = blocks(table, binding, key);
+        expect(matches).toHaveLength(1);
+        return matches[0] ?? '';
+      };
+      const image = only('services', 'IMAGE_WORKER');
+      expect(image).toMatch(/^service = "xivdyetools-image-worker"$/m);
+      expect(image).not.toMatch(/^\s*entrypoint\s*=/m);
+      const oauth = only('services', 'OAUTH_IDENTITY');
+      expect(oauth).toMatch(new RegExp(`^service = "${oauthService}"$`, 'm'));
+      expect(oauth).toMatch(/^entrypoint = "IdentityLookup"$/m);
+      const database = only('d1_databases', 'DB');
+      expect(database).toMatch(/^database_name = "xivdyetools-presets"$/m);
+      expect(database).toMatch(/^database_id = "e17d68a1-5a44-4c88-b02b-07d053cbe321"$/m);
+      expect(only('r2_buckets', 'THUMBNAILS')).toMatch(
+        /^bucket_name = "xivdyetools-presets-preview-thumbnails"$/m
+      );
+      expect(only('kv_namespaces', 'TOKEN_BLACKLIST')).toMatch(
+        new RegExp(`^id = "${blacklistId}"$`, 'm')
+      );
+      const limiter = only('ratelimits', 'RL_PUBLIC', 'name');
+      expect(limiter).toMatch(new RegExp(`^namespace_id = "${ratelimitNamespace}"$`, 'm'));
+      expect(limiter).toMatch(/^simple = \{ limit = 100, period = 60 \}$/m);
+    }
+  );
+
+  it('registers the private continuity wrapper and inactive named OAuth providers in both environments', () => {
+    expect(topLevel).toMatch(/^main = "src\/worker.ts"$/m);
+    expect(topLevel).toMatch(/^OAUTH_SESSION_CHECK_ENABLED = "false"$/m);
+    expect(production).toMatch(/^vars\s*=\s*\{[^\n]*OAUTH_SESSION_CHECK_ENABLED\s*=\s*"false"/m);
+    const block=(text:string,prefix:string)=>text.match(new RegExp('^\\[\\['+prefix+'services\\]\\]\\n(?:(?!^\\[)[\\s\\S])*?binding = "OAUTH_IDENTITY"\\nservice = "([^"\\n]+)"\\nentrypoint = "([^"\\n]+)"','m'));
+    expect(block(topLevel,'' )?.slice(1)).toEqual(['xivdyetools-oauth-dev','IdentityLookup']);
+    expect(block(production,'env\\.production\\.')?.slice(1)).toEqual(['xivdyetools-oauth','IdentityLookup']);
+  });
+  it('prepares metadata moderation disabled explicitly in both environments', () => {
+    const devVars = topLevel.match(/^\[vars\]\n([\s\S]*?)(?=^\[|$(?![\s\S]))/m)?.[1] ?? '';
+    expect(devVars).toMatch(/^PRESET_METADATA_MODERATION_ENABLED = "false"$/m);
+    expect(production).toMatch(/^vars\s*=\s*\{[^\n]*PRESET_METADATA_MODERATION_ENABLED\s*=\s*"false"/m);
+  });
   it('keeps the top-level worker a routeless dev worker', () => {
     expect(productionStart).toBeGreaterThan(-1);
     const name = topLevel.match(/^name = "([^"]+)"$/m)?.[1];

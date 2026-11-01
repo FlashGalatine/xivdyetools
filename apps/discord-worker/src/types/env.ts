@@ -74,6 +74,9 @@ export interface Env {
    */
   ENVIRONMENT?: string;
 
+  /** Default false during producer cutover; true hides the public preset webhook. */
+  PRESET_WEBHOOK_BINDING_ONLY?: string;
+
   // =========================================================================
   // Bindings (configured in wrangler.toml)
   // =========================================================================

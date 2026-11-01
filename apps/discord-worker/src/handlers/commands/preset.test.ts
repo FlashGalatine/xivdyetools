@@ -132,6 +132,7 @@ vi.mock('@xivdyetools/svg', async (importOriginal) => {
 const mockIsApiEnabled = vi.fn().mockReturnValue(true);
 const mockGetPresets = vi.fn().mockResolvedValue({ presets: [mockPreset], total: 1 });
 const mockGetPreset = vi.fn().mockResolvedValue(mockPreset);
+const mockGetPresetBatch = vi.fn();
 const mockGetPresetByName = vi.fn().mockResolvedValue(null);
 const mockGetRandomPreset = vi.fn().mockResolvedValue(mockPreset);
 const mockSubmitPreset = vi
@@ -149,6 +150,7 @@ vi.mock('../../services/preset-api.js', () => ({
   isApiEnabled: (...args: unknown[]) => mockIsApiEnabled(...args),
   getPresets: (...args: unknown[]) => mockGetPresets(...args),
   getPreset: (...args: unknown[]) => mockGetPreset(...args),
+  getPresetBatch: (...args: unknown[]) => mockGetPresetBatch(...args),
   getPresetByName: (...args: unknown[]) => mockGetPresetByName(...args),
   getRandomPreset: (...args: unknown[]) => mockGetRandomPreset(...args),
   submitPreset: (...args: unknown[]) => mockSubmitPreset(...args),
@@ -166,6 +168,14 @@ const translator = {
   t: (key: string, vars?: Record<string, unknown>) => {
     const map: Record<string, string> = {
       'common.error': 'Error',
+      'common.unknownError': 'Something went wrong.',
+      'preset.favorite.listTitle': 'Your Favorites',
+      'preset.favorite.listTitleCount': 'Favorites ({n}/{max})',
+      'preset.favorite.empty': 'You have no saved presets.',
+      'preset.favorite.allRemoved': 'None of your saved presets are currently available. Your favorites have been kept.',
+      'preset.favorite.lookupFailed': 'We could not load your favorites. Please try again later.',
+      'preset.favorite.unavailableSummary': 'Unavailable saved presets: {count}.',
+      'preset.favorite.truncated': 'Available presets omitted to fit this message: {count}.',
       'common.footer': 'Footer',
       'errors.missingInput': 'Missing input',
       'preset.title': 'Community Presets',
@@ -2213,5 +2223,141 @@ describe('/preset command', () => {
         expect.any(String),
       );
     });
+  });
+});
+
+
+// Regression breaks: per-ID fanout, swallowed outages, unchecked edits, and
+// description truncation that splits escaped names or omits the wrong count.
+describe('/preset favorite list batch regressions', () => {
+  const otherId = '22345678-1234-4123-8123-123456789abc';
+  const missingId = '32345678-1234-4123-8123-123456789abc';
+  const interaction = (): DiscordInteraction => ({
+    ...baseInteraction,
+    data: { ...baseInteraction.data, options: [
+      { type: 2, name: 'favorite', options: [{ type: 1, name: 'list' }] },
+    ] },
+  });
+  function favoriteEnv(ids: string[]) {
+    const kv = {
+      get: vi.fn().mockResolvedValue(JSON.stringify(ids.map((id) => ({ id, name: 'Saved' })))),
+      put: vi.fn(), delete: vi.fn(),
+    };
+    return { kv, bindings: { ...env, KV: kv as unknown as KVNamespace } };
+  }
+  async function run(ids: string[]) {
+    const event = interaction();
+    const { startCommandTrace } = await import('../../services/command-trace.js');
+    const trace = startCommandTrace(event, {
+      command: 'preset', subcommand: 'favorite_list', userId: 'user-1', locale: 'en',
+    });
+    const { kv, bindings } = favoriteEnv(ids);
+    const response = await handlePresetCommand(event, bindings, ctx);
+    expect((await response.json() as InteractionResponseBody).type).toBe(5);
+    await settleBackgroundWork();
+    expect(kv.put).not.toHaveBeenCalled();
+    expect(kv.delete).not.toHaveBeenCalled();
+    return { trace, event, bindings };
+  }
+  function description(call = 0): string {
+    const payload = mockEditOriginalResponse.mock.calls[call][2] as {
+      embeds: Array<{ description: string }>;
+    };
+    return payload.embeds[0].description;
+  }
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockIsApiEnabled.mockReturnValue(true);
+    mockEditOriginalResponse.mockReset().mockResolvedValue(true);
+    mockGetPresetBatch.mockReset().mockResolvedValue({ presets: [mockPreset], missing_ids: [] });
+  });
+  it.each([1, 10, 50])('uses one acting-user batch for %i favorites without fanout', async (count) => {
+    const ids = Array.from({ length: count }, (_, i) => `saved-${i}`);
+    mockGetPresetBatch.mockResolvedValue({
+      presets: ids.map((id) => ({ ...mockPreset, id })), missing_ids: [],
+    });
+    const { event, bindings } = await run(ids);
+    expect(mockGetPresetBatch).toHaveBeenCalledExactlyOnceWith(bindings, ids, 'user-1', {
+      requestId: event.id, logger: undefined,
+    });
+    expect(mockGetPreset).not.toHaveBeenCalled();
+  });
+  it('keeps found presets in saved order and explains valid missing IDs', async () => {
+    mockGetPresetBatch.mockResolvedValue({
+      presets: [{ ...mockPreset, name: 'First' }, { ...mockPreset, id: otherId, name: 'Second' }],
+      missing_ids: [missingId],
+    });
+    const { trace } = await run([otherId, missingId, PRESET_ID]);
+    expect(description()).toBe('**1.** Second — *glamour*\n**2.** First — *glamour*\nUnavailable saved presets: 1.');
+    expect(trace.outcome).toBeNull();
+  });
+  it.each([401, 404, 429, 503])('reports batch %i as an upstream failure, never removed', async (status) => {
+    const { PresetAPIError } = await import('../../types/preset.js');
+    mockGetPresetBatch.mockRejectedValue(new PresetAPIError(status, 'Unavailable'));
+    const { trace } = await run([PRESET_ID]);
+    expect(description()).toBe('We could not load your favorites. Please try again later.');
+    expect(trace.outcome).toBe('upstream_presets');
+    expect(mockGetPreset).not.toHaveBeenCalled();
+    expect(mockEditOriginalResponse).toHaveBeenCalledTimes(1);
+  });
+  it('shows valid all-missing as unavailable without an outage mark', async () => {
+    mockGetPresetBatch.mockResolvedValue({ presets: [], missing_ids: [PRESET_ID] });
+    const { trace } = await run([PRESET_ID]);
+    expect(description()).toBe('None of your saved presets are currently available. Your favorites have been kept.');
+    expect(trace.outcome).toBeNull();
+  });
+  it('avoids the batch entirely for an empty favorites list', async () => {
+    await run([]);
+    expect(description()).toBe('You have no saved presets.');
+    expect(mockGetPresetBatch).not.toHaveBeenCalled();
+  });
+  it('budgets complete sanitized Unicode lines and both notices at 4096 UTF-16 units', async () => {
+    const ids = Array.from({ length: 50 }, (_, i) => `saved-${i}`);
+    mockGetPresetBatch.mockResolvedValue({
+      presets: ids.slice(0, 49).map((id) => ({ ...mockPreset, id, name: '_'.repeat(48) + '🎨🎨' })),
+      missing_ids: [ids[49]],
+    });
+    await run(ids);
+    const text = description();
+    expect(text.length).toBeLessThanOrEqual(4096);
+    const lines = text.split('\n');
+    const rows = lines.filter((line) => line.startsWith('**'));
+    // Each complete row ends with its category; no partial Unicode/escape tail.
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.length).toBeLessThan(49);
+    for (const row of rows) {
+      expect(row).toMatch(/^\*\*\d+\.\*\* (?:\\_){48}🎨🎨 — \*glamour\*$/u);
+    }
+    expect(lines.at(-2)).toBe('Unavailable saved presets: 1.');
+    expect(lines.at(-1)).toBe(`Available presets omitted to fit this message: ${49 - rows.length}.`);
+    // Reserving notices must retain the largest fitting prefix, with a correct count.
+    const next = `**${rows.length + 1}.** ${'\\_'.repeat(48)}🎨🎨 — *glamour*`;
+    expect([...rows, next, lines.at(-2), `Available presets omitted to fit this message: ${48 - rows.length}.`].join('\n').length).toBeGreaterThan(4096);
+  });
+  it('sanitizes hostile names and category fallbacks before budgeting', async () => {
+    mockGetPresetBatch.mockResolvedValue({ presets: [{
+      ...mockPreset, name: '[link](evil) @everyone\u202e', category_id: '[fake](evil)',
+    }], missing_ids: [] });
+    await run([PRESET_ID]);
+    expect(description()).toContain('\\[link\\]\\(evil\\) @\u200deveryone');
+    expect(description()).toContain('*\\[fake\\]\\(evil\\)*');
+    expect(description()).not.toContain('\u202e');
+  });
+  it.each(['empty', 'missing', 'results', 'error'])('marks failed %s delivery even if one fallback succeeds', async (branch) => {
+    if (branch === 'missing') mockGetPresetBatch.mockResolvedValue({ presets: [], missing_ids: [PRESET_ID] });
+    if (branch === 'error') mockGetPresetBatch.mockRejectedValue(new Error('network'));
+    mockEditOriginalResponse.mockResolvedValueOnce(false).mockResolvedValueOnce(true);
+    const { trace } = await run(branch === 'empty' ? [] : [PRESET_ID]);
+    expect(mockEditOriginalResponse).toHaveBeenCalledTimes(2);
+    expect(description(1)).toBe('Something went wrong.');
+    expect(trace.outcome).toBe(branch === 'error' ? 'upstream_presets' : 'unknown');
+    expect(trace.served).toBe(false);
+  });
+  it('stops after a failed short fallback', async () => {
+    mockEditOriginalResponse.mockResolvedValue(false);
+    const { trace } = await run([PRESET_ID]);
+    expect(mockEditOriginalResponse).toHaveBeenCalledTimes(2);
+    expect(trace.outcome).toBe('unknown');
+    expect(trace.served).toBe(false);
   });
 });

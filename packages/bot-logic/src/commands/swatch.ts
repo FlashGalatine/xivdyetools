@@ -98,6 +98,8 @@ export interface SwatchInput {
  * that rule (unknown activation included, which reads `inert` with no
  * `inertReason`) carries no `indexHex`, `floatHex`, `gridAddress` or
  * `blendHex`, so no colour the card excludes can be matched from here.
+ *
+ * @deprecated Since 4.12.0. Use svgString/embed for presentation. Planned removal in bot-logic 5.0.0 after the published minor and consumer-acceptance gates in DEPRECATIONS.md.
  */
 export type SwatchCharacter = Omit<ResolvedCharaCharacter, 'nickname'>;
 
@@ -106,7 +108,10 @@ export type SwatchResult =
       ok: true;
       svgString: string;
       embed: EmbedData;
-      /** Never carries the character's name — see PRIVACY_POLICY §3. */
+      /**
+       * Never carries the character's name — see PRIVACY_POLICY §3.
+       * @deprecated Since 4.12.0. Use svgString/embed for presentation. Planned removal in bot-logic 5.0.0 after the published minor and consumer-acceptance gates in DEPRECATIONS.md.
+       */
       character: SwatchCharacter;
     }
   | {
@@ -122,7 +127,7 @@ export type SwatchResult =
 const ROW_CAP = 5;
 
 /** kind → slot-short locale key (leftEye/rightEye share the eyes label). */
-const SLOT_KEYS: Record<string, string> = {
+const SLOT_KEYS: Record<ImportedCharaSlot['kind'], string> = {
   skin: 'card.slotSkin',
   hair: 'card.slotHair',
   highlights: 'card.slotHl',
@@ -420,11 +425,16 @@ export async function executeSwatch(input: SwatchInput): Promise<SwatchResult> {
 
   try {
     // Matched rows in file order; merged eyes are one row, heterochromia two.
+    const leftEye = projected.slots.find((s) => s.slot === 'leftEye');
+    const rightEye = projected.slots.find((s) => s.slot === 'rightEye');
+    const leftHex = leftEye ? winningHex(leftEye) : null;
+    const rightHex = rightEye ? winningHex(rightEye) : null;
+    const mergeEyes = leftHex !== null && rightHex !== null && leftHex.toUpperCase() === rightHex.toUpperCase();
     const rows: LiveRow[] = [];
     for (const slot of projected.slots) {
       const hex = winningHex(slot);
       if (hex === null) continue;
-      if (slot.slot === 'rightEye' && projected.eyesShareIndex && rows.some((r) => r.slot.slot === 'leftEye')) {
+      if (slot.slot === 'rightEye' && mergeEyes) {
         continue;
       }
 
@@ -443,9 +453,9 @@ export async function executeSwatch(input: SwatchInput): Promise<SwatchResult> {
       // state — the ~5px overhang past the 56px budget is absorbed by the
       // 10px gutter before the swatch pair, with no collision and no
       // ellipsis, which is what makes the marker survive.
-      let label = t.t(SLOT_KEYS[slot.kind] ?? 'card.slotSkin');
+      let label = t.t(SLOT_KEYS[slot.kind]);
       if (slot.slot === 'leftEye' || slot.slot === 'rightEye') {
-        if (projected.eyesShareIndex) label += '·LR';
+        if (mergeEyes) label += '·LR';
         else label += slot.slot === 'leftEye' ? '·L' : '·R';
       }
       rows.push({

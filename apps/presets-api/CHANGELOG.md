@@ -5,6 +5,81 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.1] - 2026-10-27
+
+### Hardening adoption
+
+- **H-PRESETS preparation:** retain structured diagnostic context in its third logger argument for preview-image and moderation failures. Adopt auth 3.0.0 and worker-kit 1.6.0/logger 2.4.0 in the pending release; upstream publication and all existing activation prerequisites remain required.
+
+### Fixed
+
+- Return a generic 503 when preview-image processing is unavailable, including overload,
+  binding timeouts and failed response reads. Invalid-image responses remain 400. Both
+  failures retain the reserved attempt; existing storage/validation refunds are unchanged,
+  and unavailable processing never attaches or stores a preview image.
+- Restrict the test loader's `.js` alias to relative source imports so Windows
+  dependency paths retain their real filenames. Add a dependency/source-import
+  integration check; application behavior and test thresholds are unchanged.
+
+### Security
+
+- Retain the default Discord notification binding for this base release, preserving the Fetch/bearer/payload/retry protocol. The named-provider selection follows as a separate compatible release after Discord provider acceptance.
+
+## [2.8.0] - 2026-10-27
+
+### Added
+
+- Named private `BanContinuity` RPC with canonical hashed requests, transactional active-ban
+  snapshots, immutable applied/refused receipts and stable acknowledgement/recovery. DETACH
+  preserves only each matched ban's fresh-UUID coverage; ATTACH refuses unconfirmed expansion.
+- Per-ban identity memberships and actor-bound confirmation storage in additive migration
+  `0016_ban_identity_continuity.sql`, with capacity/null-safe constraints and scheduled bounded
+  expiry/acknowledged-terminal cleanup. Apply once before either dependent consumer deployment.
+
+### Security
+
+- Enforce active legacy/member scope in middleware, all five identity-rekey statements and
+  approval/Revert conditional SQL while preserving revision/status/snapshot and audit guards.
+- Prepare bounded private OAuth session validation after JWT cryptography/revocation and before
+  ownership/moderator context. `OAUTH_SESSION_CHECK_ENABLED` remains false in both environments;
+  separate activation requires deployed provider, schema and all disclosures. Bot HMAC is unchanged.
+
+### Operations
+
+- Preserve HTTP and cron through the wrapper, add no public continuity route, and keep metadata
+  moderation disabled. Consumer verification precedes a later OAuth split/binding activation;
+  that activation also requires the documented bounded-RPC/global-cleanup correction.
+
+## [2.7.0] - 2026-10-27
+
+### Added
+
+- A signed bot-only batch lookup returns approved presets in request order, with separate missing
+  IDs and request failures. It accepts up to 50 IDs and retains acting-user rate limits.
+
+### Security
+
+- Enforce active-author bans inside approval/revert SQL while preserving revision guards and
+  atomic moderation audit rows. Adopt IPv6 /64 grouping without changing service exemptions.
+- Reserve submission attempts atomically before moderation, preserving historical row accounting
+  and charging spent moderation even when creation fails. Denied admission makes no scorer call.
+- Prepare tag and example-link path moderation behind `PRESET_METADATA_MODERATION_ENABLED`.
+  The flag remains explicitly `false` until both review consumers are deployed and verified;
+  enabling it requires a later activation-only change. URL queries, fragments,
+  credentials and hostnames stay outside derived link text; supplied URLs are never fetched.
+  When enabled, changed metadata uses the text-edit quota and new snapshots include example links.
+  Explicitly recorded snapshot links remain validated and restored even after disabling the flag.
+- Retain daily preview slots on decoding/processing failures and timeouts; refund cheap validation
+  rejections and proven image-storage/database failures. Unconfirmed database writes retain their
+  slot and return a retryable error. Storage/database refunds can permit extra decode work.
+
+### Fixed
+
+- Bound pagination before offset arithmetic, validate effective primary/secondary categories,
+  and return the committed auto-vote count after creation.
+- Compare image state before attaching/removing previews and clean only objects owned by the
+  winning operation. Cleanup remains best-effort across D1/R2 failures.
+
 ## [2.6.1] - 2026-10-06
 
 Sprint 26 of the 2026-10-04 remediation plan: deep-dive REFACTOR-001. Internal refactor.

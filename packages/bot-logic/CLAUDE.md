@@ -49,7 +49,8 @@ src/
 ├── localization.ts                # initializeLocale + per-locale getLocalized* lookups (dye name, category, acquisition, currency, harmony, wheel, vision, race, clan)
 ├── css-colors.ts                  # CSS named-color → hex (BlueViolet, coral, ...)
 ├── moderators.ts                  # parseModeratorIds / isModeratorId / isValidDiscordSnowflake (shared MODERATOR_IDS grammar)
-├── discord-markdown.ts            # escapeDiscordMarkdown / sanitizeEmbedText / ALLOWED_MENTIONS_NONE (user-sourced text in bot-authored embeds)
+├── discord-markdown.ts            # escapeDiscordMarkdown / sanitizeEmbedText / ALLOWED_MENTIONS_NONE (user-sourced text in bot-authored embeds);
+│                                  #   sanitizeLineValue (internal): /glamour list values, escapes only mid-line markup
 ├── i18n/                          # Bot UI Translator + six locale JSONs — subpath @xivdyetools/bot-logic/i18n
 └── commands/
     ├── types.ts                   # EmbedData, EmbedField (platform-neutral)
@@ -86,6 +87,8 @@ type ResolveColorOptions = { excludeFacewear?; findClosestForHex?; locale? };
 async function initializeLocale(locale: LocaleCode): Promise<void>;
 function getLocalizedDyeName(itemID: number, fallbackName: string, locale?: LocaleCode): string;
 function getLocalizedCategory(category: string, locale?: LocaleCode): string;
+function getLocalizedRace(key: RaceKey, locale?: LocaleCode): string;
+function getLocalizedClan(key: ClanKey, locale?: LocaleCode): string;
 type LocaleCode;  // re-exported from ./i18n (formerly @xivdyetools/bot-i18n): 'en'|'ja'|'de'|'fr'|'ko'|'zh'
 
 // @xivdyetools/bot-logic/i18n — the locale layer both Discord bots share (REFACTOR-001)
@@ -165,6 +168,11 @@ executeAccessibility(input: AccessibilityInput): Promise<AccessibilityResult>
 ### Discriminated-union result contract
 `{ ok: true, ... } | { ok: false, error: <code>, errorMessage }`. Adapters branch on `result.ok` — on the failure path `errorMessage` is already localized and ready to render, and `error` is a short string literal that adapters can use to set embed colors or log levels (e.g., `'NO_MATCHES' → yellow warn`, `'GENERATION_FAILED' → red error`).
 
+`SwatchResult.character` and `SwatchCharacter` are deprecated in the prepared 4.12.0 minor.
+Use `svgString`/`embed` for presentation. Keep the required field, both success returns,
+legacy shape/back-mapping and compatibility/privacy tests until the bot-logic 5.0.0 removal
+gates in root `DEPRECATIONS.md` pass; tags alone do not harden the legacy producer metadata.
+
 ### Failure logging (BUG-125)
 Every `*Input` takes an optional `logger?: TranslatorLogger` (`{ warn(msg) }`). It hears the Translator's missing-key warnings, harmony's `[harmony] unknown colour wheel "<wheel>" — using rgb` (which echoes the caller's value, the one line that does), and one line per caught failure, written by `failureKind(error)` in `commands/failure-kind.ts` (internal, not exported):
 
@@ -175,7 +183,7 @@ Every `*Input` takes an optional `logger?: TranslatorLogger` (`{ warn(msg) }`). 
 [glamour] resolve failed: <Name>[ (status N)]  RESOLVE_FAILED only; 429 and 400/413/422 are answers, not logged
 ```
 
-`<Name>` is the error's class, plus its `code` when it carries a string one: an `AppError`'s (`AppError INVALID_HEX_COLOR`), but also a runtime error's (`Error ECONNREFUSED`). A thrown non-Error is named by its `typeof` (`string`). The error's **message is never logged**: core's color helpers quote the hex they were given, which can be what the user typed, and the `.chara` parser quotes field values from the player's file (PRIVACY_POLICY §3). New catches use `failureKind`, never `` `${error.name}: ${error.message}` ``. Glamour's parse catch logs the same way; only a `PARSE_FAILED` from api-worker refusing the body (400/413/422) is an answer and is not logged.
+`<Name>` is the error's class, plus its `code` when it carries a string one: an `AppError`'s (`AppError INVALID_HEX_COLOR`), but also a runtime error's (`Error ECONNREFUSED`). A thrown non-Error is named by its `typeof` (`string`). The current `.chara` facade uses fixed library refusals (for example `CharaInputError INVALID_JSON`), rather than legacy value-quoting parser messages. The error's **message is never logged**: core/runtime and injected resolver errors can still contain user input (PRIVACY_POLICY §3). New catches use `failureKind`, never `` `${error.name}: ${error.message}` ``. Glamour's parse catch logs the same way; only a `PARSE_FAILED` from api-worker refusing the body (400/413/422) is an answer and is not logged.
 
 ### `EmbedData` is platform-neutral
 Discord adapters map `EmbedData` onto `APIEmbed` (`title → title`, `color → number`, `fields → fields[]`, etc.). Revolt's adapter maps it onto its own message structure. **Never** put Discord-specific types like `APIEmbed`, `Snowflake`, or interaction objects in this package.

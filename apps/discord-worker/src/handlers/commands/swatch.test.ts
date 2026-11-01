@@ -6,8 +6,8 @@
  * the host allowlist, timeout, no-redirect and post-download cap are
  * defence-in-depth against a lying `size`, a slow CDN or a future change
  * that lets a non-Discord URL reach the handler. The parse-error path is
- * a PUBLIC edit of the deferred message, and the parser echoes `.chara`
- * field VALUES — attacker-controlled file content — into it.
+ * a PUBLIC edit of the deferred message. The current facade returns fixed
+ * refusals; a hostile injected error still tests adapter defense in depth.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { escapeDiscordMarkdown } from '@xivdyetools/bot-logic';
@@ -210,12 +210,12 @@ describe('/swatch attachment handling', () => {
       expect(lastEditEmbed().description).toContain('it is larger than 8 KB');
     });
 
-    it('hands the downloaded text to executeSwatch when it is within the cap', async () => {
+    it('hands the downloaded bytes to executeSwatch when it is within the cap', async () => {
       await handleSwatchCommand(makeInteraction(CDN_URL), env, ctx);
       await settle();
 
       expect(mockExecuteSwatch).toHaveBeenCalledWith(
-        expect.objectContaining({ fileText: '{"SkinColor":1}' }),
+        expect.objectContaining({ fileBytes: new TextEncoder().encode('{"SkinColor":1}') }),
       );
       // The attachment filename must never reach the renderer — players name
       // exports "Firstname Lastname.chara" (chara-name privacy, bot-logic 3.0.0).
@@ -244,7 +244,7 @@ describe('/swatch attachment handling', () => {
   });
 
   describe('public parse-error embed (FINDING-019)', () => {
-    it('sanitises the parser message (file values are attacker-controlled) before the public edit', async () => {
+    it('sanitises an injected hostile error before the public edit', async () => {
       const hostile = '[Free gil, click](https://phish.example) @everyone **now**';
       mockExecuteSwatch.mockResolvedValue({
         ok: false,

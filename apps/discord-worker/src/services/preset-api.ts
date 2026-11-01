@@ -245,6 +245,70 @@ export async function getPreset(env: Env, id: string): Promise<CommunityPreset |
   }
 }
 
+/** The fields favorites actually consume from the public batch response. */
+export interface FavoriteListPreset {
+  id: string;
+  name: string;
+  category_id: string;
+  status: 'approved';
+}
+
+/**
+ * One signed logical read for favorites. Every unique requested ID must be
+ * classified exactly once; an invalid/incomplete reply is an upstream failure,
+ * never evidence that a saved preset disappeared.
+ */
+export async function getPresetBatch(
+  env: Env,
+  ids: string[],
+  userDiscordId: string,
+  options: { requestId?: string; logger?: ExtendedLogger } = {},
+): Promise<{ presets: FavoriteListPreset[]; missing_ids: string[] }> {
+  if (
+    !env.BOT_SIGNING_SECRET || !userDiscordId || ids.length < 1 || ids.length > 50 ||
+    ids.some((id) => typeof id !== 'string' || id.length === 0 || id.length > 128)
+  ) {
+    throw new PresetAPIError(503, 'Invalid signed favorite batch context');
+  }
+  const uniqueIds = [...new Set(ids)];
+  const data = await request<unknown>(env, 'POST', '/api/v1/presets/batch', {
+    ...options, userDiscordId, body: { ids: uniqueIds },
+  });
+  const invalid = (): never => { throw new PresetAPIError(502, 'Invalid preset batch response'); };
+  if (typeof data !== 'object' || data === null || !('success' in data) || data.success !== true ||
+    !('presets' in data) || !Array.isArray(data.presets) ||
+    !('missing_ids' in data) || !Array.isArray(data.missing_ids)) {
+    return invalid();
+  }
+  const requested = new Set(uniqueIds);
+  const classified = new Set<string>();
+  const found = new Map<string, FavoriteListPreset>();
+  for (const row of data.presets as unknown[]) {
+    if (typeof row !== 'object' || row === null ||
+      !('id' in row) || typeof row.id !== 'string' ||
+      !('name' in row) || typeof row.name !== 'string' ||
+      !('category_id' in row) || typeof row.category_id !== 'string' ||
+      !('status' in row) || row.status !== 'approved' ||
+      !requested.has(row.id) || classified.has(row.id)) {
+      return invalid();
+    }
+    classified.add(row.id);
+    found.set(row.id, { id: row.id, name: row.name, category_id: row.category_id, status: row.status });
+  }
+  for (const id of data.missing_ids as unknown[]) {
+    if (typeof id !== 'string' || !requested.has(id) || classified.has(id)) return invalid();
+    classified.add(id);
+  }
+  if (classified.size !== requested.size) return invalid();
+  return {
+    presets: uniqueIds.flatMap((id) => {
+      const preset = found.get(id);
+      return preset ? [preset] : [];
+    }),
+    missing_ids: uniqueIds.filter((id) => !found.has(id)),
+  };
+}
+
 /**
  * Search for a preset by name
  *

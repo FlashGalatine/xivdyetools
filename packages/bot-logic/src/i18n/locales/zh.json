@@ -296,7 +296,10 @@
       "listTitle": "您的收藏预设",
       "listTitleCount": "您的收藏预设（{n}/{max}）",
       "empty": "您还没有收藏任何预设。使用 `/preset favorite add` 添加一个。",
-      "allRemoved": "您收藏的预设似乎已全部被删除。使用 `/preset favorite remove` 清理条目。"
+      "allRemoved": "您保存的预设当前均不可用。您的收藏仍会保留。",
+      "unavailableSummary": "当前不可用的已保存预设：{count}个。",
+      "truncated": "因本条消息空间不足而省略的可用预设：{count}个。",
+      "lookupFailed": "无法加载您的收藏。请稍后重试。"
     },
     "noValidDyes": "此预设中没有有效的染剂"
   },
@@ -463,8 +466,8 @@
     "invalidButton": "无效的按钮交互。",
     "notPermitted": "您没有权限审核预览图片。",
     "actionFailed": "更新预览图片失败，请重试。",
-    "approvedFooter": "预览图片已由 {moderator} 批准",
-    "rejectedFooter": "预览图片已由 {moderator} 拒绝（预设本身未受影响）"
+    "approvedFooter": "预览图已批准",
+    "rejectedFooter": "预览图已拒绝 — 预设不受影响"
   },
   "matchImage": {
     "missingImage": "请附加一张图片进行分析。",
@@ -500,7 +503,7 @@
     "supportedFormats": "支持的格式",
     "supportedFormatsContent": "• PNG\n• JPG/JPEG\n• GIF\n• WebP\n• BMP",
     "fileLimits": "文件限制",
-    "fileLimitsContent": "• 最大大小：10MB",
+    "fileLimitsContent": "• 最大大小：5MB",
     "matchQualityRatings": "匹配距离",
     "matchQualityRatingsContent": "列出的每个匹配结果都会显示与您颜色的距离 - 数值越低越接近。\n\n六种匹配方式及其分档的运作方式：`/manual` 主题 {topic}",
     "poweredBy": "由 Photon WASM 图像处理驱动"
@@ -846,6 +849,12 @@
         "slot": {
           "description": "改为显示单个部位的五个最接近染剂"
         }
+      },
+      "choices": {
+        "order": {
+          "slots": "部位——文件顺序（默认）",
+          "hardest": "最难匹配——匹配度最差的优先"
+        }
       }
     },
     "glamour": {
@@ -1133,6 +1142,13 @@
               "description": "列出您收藏的预设"
             }
           }
+        }
+      },
+      "choices": {
+        "sort": {
+          "popular": "最受欢迎",
+          "recent": "最新优先",
+          "name": "按字母排序"
         }
       }
     },

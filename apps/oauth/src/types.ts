@@ -19,7 +19,11 @@ export type { AuthProvider } from '@xivdyetools/types';
  * @deprecated Import directly from '@xivdyetools/types' instead.
  * These re-exports will be removed in the next major version.
  */
-export type { JWTPayload } from '@xivdyetools/types';
+import type { JWTPayload as SharedJWTPayload } from '@xivdyetools/types';
+import type { BanContinuity } from './services/identity-contract.js';
+export interface JWTPayload extends SharedJWTPayload {
+  identity_revision?: number;
+}
 
 /**
  * @deprecated Import directly from '@xivdyetools/types' instead.
@@ -58,6 +62,8 @@ export interface Env {
   FRONTEND_URL: string;
   WORKER_URL: string;
   JWT_EXPIRY: string;
+  IDENTITY_SPLIT_ENABLED?: string;
+  BAN_CONTINUITY?: BanContinuity;
 
   // Secrets
   DISCORD_CLIENT_SECRET: string;
@@ -98,4 +104,5 @@ export interface UserRow {
   username: string;
   created_at: string;
   updated_at: string;
+  identity_revision?: number;
 }

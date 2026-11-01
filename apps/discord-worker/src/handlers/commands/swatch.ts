@@ -4,17 +4,17 @@
  * The 4.x index/grid subcommands are replaced by a required `file:`
  * attachment (.chara). This worker DOES receive the file — it downloads the
  * attachment (size-capped), passes its bytes to bot-logic's executeSwatch
- * (core parse rules: key presence not TypeName, gamma on the floats, flag
+ * (the xivcharakit-backed facade: key presence not TypeName, gamma on the floats, flag
  * gating, never Base64Image), and posts the rendered card. A file that fails
  * to parse is embed text in the reader's language, never a frame (since
  * HC-002 it no longer carries the parser's English reason).
  *
  * FINDING-033 (2026-08-21 security audit): the download is hardened the way
  * image-worker hardens `/extractor image` — the guards live in
- * `utils/chara-attachment.ts`, shared with `/glamour`. FINDING-019: the
- * parser echoes `.chara` field VALUES into its message. bot-logic stopped
- * relaying that message in HC-002, but the reply lands in a PUBLIC embed, so
- * it still goes through the shared embed sanitiser first (defense in depth).
+ * `utils/chara-attachment.ts`, shared with `/glamour`. The current facade
+ * returns fixed library refusals; bot-logic does not relay legacy parser
+ * messages or raw field values. Replies still pass through the shared embed
+ * sanitiser before the PUBLIC edit (FINDING-019, defense in depth).
  *
  * @module handlers/commands/swatch
  */
@@ -71,7 +71,6 @@ export async function handleSwatchCommand(
   }
 
   const input: SwatchInput = {
-    fileText: '',
     locale: t.getLocale(),
     logger,
   };
@@ -97,7 +96,7 @@ async function processSwatchCommand(
   const t = createTranslator(locale);
 
   try {
-    const file = await downloadCharaAttachment(fileUrl, t, true);
+    const file = await downloadCharaAttachment(fileUrl, t);
     if (!file.ok) {
       markCommandOutcome(interaction, 'image_input');
       await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
@@ -105,9 +104,7 @@ async function processSwatchCommand(
       });
       return;
     }
-    // The bytes are what bot-logic reads (invalid UTF-8 is refused there,
-    // not re-encoded); the text stays for callers that read it
-    input.fileText = file.text;
+    // Preserve malformed UTF-8 for the reader's validation.
     input.fileBytes = file.bytes;
   } catch (error) {
     // Only the CDN fetch and the capped read live in this try: a network
@@ -129,9 +126,9 @@ async function processSwatchCommand(
     if (result.error === 'PARSE_FAILED') markCommandOutcome(interaction, 'image_input');
     if (result.error === 'GENERATION_FAILED') markCommandOutcome(interaction, 'render');
     if (logger) logger.warn('Swatch command failed', { error: result.error });
-    // FINDING-019: the parser names the offending field VALUE (file content)
-    // and this edit is public. bot-logic no longer relays the parser's message
-    // (HC-002), but the sanitiser stays as defense in depth — escape markdown /
+    // FINDING-019: the facade returns fixed library refusals and bot-logic
+    // does not relay raw parser values. This edit is public, so sanitise
+    // the result as defense in depth — escape markdown /
     // masked links, defuse mentions, strip controls and cap it before it goes out.
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [

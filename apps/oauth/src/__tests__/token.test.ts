@@ -5,11 +5,17 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { SELF, env, fetchWithEnv, createEnvWithKV } from './mocks/cloudflare-test.js';
-import { createJWTForUser, revokeToken, isTokenRevoked } from '../services/jwt-service.js';
+import { SELF, env, fetchWithEnv, createEnvWithKV, resetMockDB } from './mocks/cloudflare-test.js';
+import { createJWTForUser as mintForUser, revokeToken, isTokenRevoked, signPayload, verifyJWT } from '../services/jwt-service.js';
 import { resetRateLimiter } from '../services/rate-limit.js';
 import type { DiscordUser, Env } from '../types.js';
 
+// Existing endpoint fixtures now seed the authoritative row before minting.
+async function createJWTForUser(...args: Parameters<typeof mintForUser>): ReturnType<typeof mintForUser> {
+    const [row, tokenEnv] = args;
+    await tokenEnv.DB.prepare('INSERT OR REPLACE INTO users (id,discord_id,xivauth_id,auth_provider,username) VALUES (?,?,?,?,?)').bind(row.id,row.discord_id,row.xivauth_id,row.auth_provider,row.username).run();
+    return mintForUser(...args);
+}
 // Get environment from test context
 const getEnv = (): Env => env;
 
@@ -46,6 +52,7 @@ describe('Token Handler', () => {
     let mockUser: DiscordUser;
 
     beforeEach(() => {
+        resetMockDB();
         mockEnv = getEnv();
         mockUser = createMockUser();
         vi.useFakeTimers();
@@ -84,6 +91,38 @@ describe('Token Handler', () => {
     });
 
     describe('GET /auth/me', () => {
+        it('denies stale revisions and accepts a legacy missing revision only at current zero', async () => {
+            const {token}=await createJWT(mockUser,mockEnv);
+            const claims=await verifyJWT(token,mockEnv.JWT_SECRET);
+            delete claims.identity_revision;
+            const legacy=await signPayload(claims,mockEnv.JWT_SECRET);
+            expect((await SELF.fetch('http://localhost/auth/me',{headers:{Authorization:`Bearer ${legacy.token}`}})).status).toBe(200);
+            await mockEnv.DB.prepare('UPDATE users SET identity_revision=1 WHERE id=?').bind(mockUser.id).run();
+            for(const value of [token,legacy.token]) {
+                const response=await SELF.fetch('http://localhost/auth/me',{headers:{Authorization:`Bearer ${value}`}});
+                expect(response.status).toBe(401);expect(await response.json()).toEqual({success:false,error:'Invalid token'});
+            }
+        });
+        it('pending sessions receive temporary unavailability without bound IDs',async()=>{
+            const {token}=await createJWT(mockUser,mockEnv);
+            await mockEnv.DB.prepare("INSERT INTO identity_operations (id,payload_json,payload_hash,state,created_at,expires_at) VALUES (?,'{}',?,'pending',1,2)").bind('pending-test','a'.repeat(64)).run();
+            await mockEnv.DB.prepare('INSERT INTO identity_operation_locks (resource_key,operation_id) VALUES (?,?)').bind(`user:${mockUser.id}`,'pending-test').run();
+            const response=await SELF.fetch('http://localhost/auth/me',{headers:{Authorization:`Bearer ${token}`}});
+            expect(response.status).toBe(503);expect(await response.json()).toEqual({success:false,error:'Authentication temporarily unavailable'});
+        });
+        it('malformed identity claim types and missing rows cannot authenticate',async()=>{
+            const {token}=await createJWT(mockUser,mockEnv);
+            const claims=await verifyJWT(token,mockEnv.JWT_SECRET);
+            const malformed=await signPayload({...claims,identity_revision:'0' as unknown as number},mockEnv.JWT_SECRET);
+            expect((await SELF.fetch('http://localhost/auth/me',{headers:{Authorization:`Bearer ${malformed.token}`}})).status).toBe(401);
+            await mockEnv.DB.prepare('DELETE FROM users WHERE id=?').bind(mockUser.id).run();
+            expect((await SELF.fetch('http://localhost/auth/me',{headers:{Authorization:`Bearer ${token}`}})).status).toBe(401);
+        });
+        it('identity database failure remains distinct from an unauthorized token',async()=>{
+            const {token}=await createJWT(mockUser,mockEnv);
+            const response=await fetchWithEnv({...mockEnv,DB:{prepare:()=>{throw new Error('private SQL details');}} as unknown as D1Database},'http://localhost/auth/me',{headers:{Authorization:`Bearer ${token}`}});
+            expect(response.status).toBe(503);expect(await response.text()).not.toContain('private SQL details');
+        });
         it('should reject missing Authorization header', async () => {
             const response = await SELF.fetch('http://localhost/auth/me');
             const json = (await response.json()) as Record<string, any>;

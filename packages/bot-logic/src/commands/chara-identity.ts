@@ -24,13 +24,13 @@ import { getLocalizedClan, type LocaleCode } from '../localization.js';
  * whose mock lacks the class.
  */
 let characterColors: CharacterColorService | null = null;
-export function getCharacterColors(): CharacterColorService {
+function getCharacterColors(): CharacterColorService {
   characterColors ??= new CharacterColorService();
   return characterColors;
 }
 
 /** The attachment as a command receives it: the capped bytes, its decoded text, or both. */
-export interface CharaFileSource {
+interface CharaFileSource {
   fileText?: string;
   fileBytes?: Uint8Array;
 }
