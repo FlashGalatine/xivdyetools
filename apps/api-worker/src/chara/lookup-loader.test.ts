@@ -416,7 +416,11 @@ describe('owned-operation quota admission', () => {
     expect(search).toHaveBeenCalledTimes(2);
     expect(glasses).toHaveBeenCalledTimes(2);
   });
-  it.each(['rows', 'glasses'] as const)('shares typed denials, performs no data fetch, and clears pending %s for retry', async (kind) => {
+  const quotaError = async (retryAfter = 10) => {
+    const { CharaQuotaError } = await import('./rate-limit');
+    return new CharaQuotaError({ allowed: false, remaining: 0, limit: 30, resetAt: new Date(), retryAfter });
+  };
+  it.each(['rows', 'glasses'] as const)("keeps a denied owner's quota error local and lets its waiter claim the %s work", async (kind) => {
     const { make, search, glasses, flush } = setup();
     const gate = deferred<void>();
     const deny = vi.fn(() => gate.promise);
@@ -425,19 +429,92 @@ describe('owned-operation quota admission', () => {
     const work = [run(deny), run(free)];
     const settled = Promise.allSettled(work);
     expect(free).not.toHaveBeenCalled();
-    const { CharaQuotaError } = await import('./rate-limit');
-    const error = new CharaQuotaError({ allowed: false, remaining: 0, limit: 30, resetAt: new Date(), retryAfter: 10 });
+    const error = await quotaError();
     gate.reject(error);
-    const results = await settled;
-    for (const result of results) {
-      expect(result.status).toBe('rejected');
-      if (result.status === 'rejected') expect(result.reason).toBe(error);
-    }
+    const [owner, waiter] = await settled;
+    expect(owner.status).toBe('rejected');
+    if (owner.status === 'rejected') expect(owner.reason).toBe(error);
+    expect(waiter.status).toBe('fulfilled');
+    expect(free).toHaveBeenCalledOnce();
+    const [used, unused] = kind === 'rows' ? [search, glasses] : [glasses, search];
+    expect(used).toHaveBeenCalledOnce();
+    expect(unused).not.toHaveBeenCalled();
+    await flush();
+    await run(free);
+    expect(free).toHaveBeenCalledTimes(2);
+    expect(used).toHaveBeenCalledTimes(2);
+  });
+  it.each(['rows', 'glasses'] as const)('a %s waiter that takes over and is itself denied returns its own error', async (kind) => {
+    const { make, search, glasses, flush } = setup();
+    const gate = deferred<void>();
+    const first = await quotaError(10);
+    const second = await quotaError(20);
+    const deny = vi.fn(() => gate.promise);
+    const denyAgain = vi.fn(() => { throw second; });
+    const run = (admit: () => Promise<void>) => kind === 'rows' ? make(admit).loadRows([A]) : make(admit).loadGlasses(3);
+    const settled = Promise.allSettled([run(deny), run(denyAgain)]);
+    expect(denyAgain).not.toHaveBeenCalled();
+    gate.reject(first);
+    const [owner, waiter] = await settled;
+    expect(owner.status === 'rejected' && owner.reason).toBe(first);
+    expect(waiter.status === 'rejected' && waiter.reason).toBe(second);
+    expect(waiter.status === 'rejected' && waiter.reason).not.toBe(first);
+    expect(denyAgain).toHaveBeenCalledOnce();
     expect(search).not.toHaveBeenCalled();
     expect(glasses).not.toHaveBeenCalled();
     await flush();
-    await run(free);
-    expect(free).toHaveBeenCalledOnce();
-    expect(kind === 'rows' ? search : glasses).toHaveBeenCalledOnce();
+  });
+  it('waiters of a denied owner coalesce onto one claimant', async () => {
+    const { make, search, flush } = setup();
+    const gate = deferred<void>();
+    const deny = vi.fn(() => gate.promise);
+    const freeOne = vi.fn(async () => undefined);
+    const freeTwo = vi.fn(async () => undefined);
+    const settled = Promise.allSettled([make(deny).loadRows([A]), make(freeOne).loadRows([A]), make(freeTwo).loadRows([A])]);
+    gate.reject(await quotaError());
+    const results = await settled;
+    expect(results.map((result) => result.status)).toEqual(['rejected', 'fulfilled', 'fulfilled']);
+    expect(freeOne).toHaveBeenCalledOnce();
+    expect(freeTwo).not.toHaveBeenCalled();
+    expect(search).toHaveBeenCalledOnce();
+    await flush();
+  });
+  it('handed-off keys are claimed as one newly owned batch', async () => {
+    const { make, search, flush } = setup();
+    const gate = deferred<void>();
+    const deny = vi.fn(() => gate.promise);
+    const free = vi.fn(async () => undefined);
+    const settled = Promise.allSettled([make(deny).loadRows([A, B]), make(free).loadRows([A, B, C])]);
+    gate.reject(await quotaError());
+    const [owner, waiter] = await settled;
+    expect(owner.status).toBe('rejected');
+    expect(waiter.status).toBe('fulfilled');
+    if (waiter.status === 'fulfilled') expect([...waiter.value.rows.keys()]).toEqual(['Head:1', 'Body:2', 'Feet:3']);
+    expect(free).toHaveBeenCalledTimes(2);
+    expect(search.mock.calls.map(([lookups]) => lookups)).toEqual([[C], [A, B]]);
+    await flush();
+  });
+  it('the handoff sentinel never escapes to a caller', async () => {
+    const { CharaQuotaError } = await import('./rate-limit');
+    const upstream = new Error('upstream down');
+    for (const kind of ['rows', 'glasses'] as const) {
+      for (const takeover of ['free', 'denied', 'upstream'] as const) {
+        const { make, search, glasses, flush } = setup();
+        if (takeover === 'upstream') {
+          search.mockRejectedValue(upstream);
+          glasses.mockRejectedValue(upstream);
+        }
+        const gate = deferred<void>();
+        const deny = vi.fn(() => gate.promise);
+        const second = vi.fn(async () => { if (takeover === 'denied') throw await quotaError(20); });
+        const run = (admit: () => Promise<void>) => kind === 'rows' ? make(admit).loadRows([A, B]) : make(admit).loadGlasses(3);
+        const settled = Promise.allSettled([run(deny), run(second), run(second)]);
+        gate.reject(await quotaError());
+        for (const result of await settled)
+          if (result.status === 'rejected')
+            expect(result.reason instanceof CharaQuotaError || result.reason === upstream).toBe(true);
+        await flush();
+      }
+    }
   });
 });

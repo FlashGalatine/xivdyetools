@@ -10,7 +10,7 @@
 
 | Tool | Version | Installation |
 |------|---------|--------------|
-| **Node.js** | 22+ | [nodejs.org](https://nodejs.org/) |
+| **Node.js** | 22.16+ | [nodejs.org](https://nodejs.org/) |
 | **pnpm** | 11+ | `corepack enable && corepack prepare pnpm@latest --activate` (the root `packageManager` field pins the exact version) |
 | **Git** | 2.40+ | [git-scm.com](https://git-scm.com/) |
 
