@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.9.1] - 2026-10-29
+
+### Changed
+
+- Prepare the Japanese and Simplified Chinese fonts for the pending shared bot catalog while retaining every existing codepoint, glyph shape and metric. Add the three required characters without changing handlers, bindings or registered commands.
+- Keep this font-readiness deployment separate from the later bot-logic and private notification-provider adoption. Production activation remains held.
+
 ## [5.9.0] - 2026-10-26
 
 `/swatch` and `/glamour` read the attachment through core 5.15.0's `xivcharakit` facade, with
