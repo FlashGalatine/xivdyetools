@@ -37,7 +37,7 @@ export interface WorkerLoggerOptions {
  * - Request correlation ID support
  * - Secret redaction
  *
- * @internal Lower-level factory — consumers should use {@link createRequestLogger}
+ * Lower-level factory — consumers should use {@link createRequestLogger}
  * which provides a more convenient API for Hono middleware patterns.
  *
  * @example
