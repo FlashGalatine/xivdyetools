@@ -5,6 +5,93 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.9.7] - 2026-10-27
+
+### Hardening adoption
+
+- **H-DISCORD preparation:** record interaction dispatch diagnostics as structured logger context instead of a synthetic error. The pending release adopts auth 3.0.0, bot-logic 4.12.0, SVG 4.4.1, core 5.16.0, worker-kit 1.6.0 and logger 2.4.0 after their upstream publication; existing activation holds remain.
+
+### Fixed
+
+- Retain the existing U+200F coverage exception for the two current Korean item names, with
+  stale-exception and glyph-coverage assertions active. The later API equipment-name refresh
+  removes those marks and co-owns removing the exception; it requires no new font bytes.
+- Stabilize the cross-button throttle regression's clock inside its minute window. The
+  existing German plural assertion and all dispatch/tracking/ephemeral checks are retained;
+  a valid one-second singular reply no longer causes a CI-only fixture failure.
+
+- Favorite lists use one signed, acting-user batch lookup for up to 50 saved IDs, preserve
+  order and distinguish unavailable presets from service failure. Complete escaped lines and
+  notices fit Discord's description limit; failed delivery is recorded and gets one short fallback.
+- Glamour delivery checks the Discord edit result and records a failed delivery even when a
+  short fallback arrives. Character attachments pass their original capped bytes without decoding
+  an unused text copy.
+- Clan autocomplete and validation use official localized race/clan labels while keeping canonical
+  saved values. Command registration localizes Swatch order/slots and preset sort choices.
+- Retry an /extractor image once, after 500 ms, when image-worker reports its single processing
+  slot busy (503 "Image processing unavailable"), inside the same 10 s request budget; a second
+  busy reply keeps the generic localized failure. No other failure is retried.
+
+### Security
+
+- Add a private named notification entrypoint and a separately activated binding-only gate for
+  the public webhook. Keep compatibility enabled until the presets binding companion is deployed
+  and verified. Button interactions check their per-user tier before analytics and dispatch.
+- New preview-image decisions omit the moderator name and ID fallback from posts; database
+  attribution remains. Six-language privacy corrections describe public character-card details
+  and approved-only edit snapshots. Beta instructions forbid production bot API credentials.
+
+## [5.9.6] - 2026-10-27
+
+### Changed
+
+- Align all six privacy variants with private stored-ID review, particular-ban memberships and
+  continuity, ephemeral moderator responses, short-lived confirmations and interrupted-link
+  recovery retention. These disclosures precede separately activated consumer behavior.
+
+## [5.9.5] - 2026-10-27
+
+### Changed
+
+- Show complete, safely escaped example-link paths and effective Revert targets in preset reviews.
+  Preserve unknown legacy metadata, recognize query-only changes without exposing query text, and
+  withhold publishing controls when required content cannot be reviewed within Discord's limits.
+- Align all six privacy-policy variants with preset tag/link-path moderation, link snapshots,
+  submission-attempt accounting and preview-processing failure/refund boundaries.
+
+## [5.9.4] - 2026-10-27
+
+### Fixed
+
+- Adopt bot-logic 4.12.0: harmony displays the selected distance metric consistently; swatch
+  retains distinct active eye colors and accurate L/R labels; glamour bounds oversized notes
+  while preserving help/share links. Existing command choices and selection order remain.
+
+### Security
+
+- Adopt hardened shared and glamour text sanitization for angle tokens, masked links, mentions
+  and additional invisible/bidi controls. Character-file adapter comments describe the current
+  facade's fixed refusals; the public-error sanitizer remains defense in depth.
+
+The six-language order/sort labels are prepared in bot-logic for the later A-DISCORD metadata
+adoption; this patch does not register translated choices early.
+
+## [5.9.3] - 2026-10-27
+
+### Security
+
+- Adopt SVG 4.4.1's linear card-text fitting through the shared generators. Card output,
+  font measurements and command registration remain unchanged. This follows the separate
+  core 5.16.0 / Discord 5.9.2 release in the remediation stack.
+
+## [5.9.2] - 2026-10-27
+
+### Security
+
+- Adopt core 5.16.0's linear GPOSERS value joining for `/glamour`, preserving output and
+  ring grouping. Character nicknames remain excluded from Discord output. Command
+  registration is unchanged.
+
 ## [5.9.1] - 2026-10-29
 
 ### Changed

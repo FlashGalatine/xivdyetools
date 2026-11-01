@@ -2,7 +2,7 @@
 
 > Ceci est une traduction fournie à titre pratique. La version anglaise fait foi ; en cas de divergence, c'est elle qui prévaut. [Anglais](PRIVACY_POLICY.md)
 
-**Dernière mise à jour** : 2026-10-12
+**Dernière mise à jour** : 2026-10-27
 
 ## 1. Introduction
 
@@ -28,12 +28,12 @@ Nous nous engageons à protéger votre vie privée et à être transparents sur 
 | Préférences | Langue, mode de mélange, méthode de correspondance, nombre de résultats, clan, genre, Monde / centre de données par défaut, si les prix du tableau des ventes doivent être affichés par défaut, bascules d'affichage des couleurs, thème, et quelles catégories de teintures exclure des résultats de recherche (teintures métalliques, pastel, sombres, cosmiques, ishgardaises, coûteuses, vendues par un marchand, artisanales), ainsi que le moment où vous les avez modifiées pour la dernière fois | Jusqu'à réinitialisation ou demande de suppression |
 | Préréglages favoris | Jusqu'à 50 préréglages communautaires que vous marquez avec `/preset favorite add` — l'id du préréglage et le nom qu'il portait quand vous l'avez enregistré | Jusqu'à leur retrait ou demande de suppression |
 | Repère de premier lancement | Un repère par utilisateur indiquant que le Bot a effectué sa vérification unique de l'avis de bienvenue 5.0. Il est posé la première fois que vous exécutez une commande, que l'avis soit envoyé ou non (il n'est pas envoyé si vous avez déjà des préférences enregistrées) ; ne porte aucun contenu | Expire automatiquement après 180 jours |
-| Soumissions de préréglages | Nom, description, teintures, étiquettes, catégorie — et, si notre vérification automatique retient pour examen le nouveau nom ou la nouvelle description d'une modification, la version antérieure à la première modification de ce type, conservée jusqu'à ce qu'un modérateur la restaure ou que le préréglage soit supprimé | Jusqu'à ce que vous le supprimiez (dans Mes soumissions de l'application web, connecté avec le même compte Discord) ou demandiez la suppression |
+| Soumissions de préréglages | Nom, description, teintures, étiquettes, catégorie, lien d'exemple — et, si notre vérification automatique retient pour examen une modification du nom, de la description, des étiquettes ou du lien d'exemple d'un préréglage publié (approuvé), la version antérieure à la première modification de ce type, conservée jusqu'à ce qu'un modérateur la restaure ou que le préréglage soit supprimé | Jusqu'à ce que vous le supprimiez (dans Mes soumissions de l'application web, connecté avec le même compte Discord) ou demandiez la suppression |
 | Votes | Vos votes sur les préréglages communautaires. Soumettre un préréglage compte comme votre vote pour lui ; si un préréglage publié a déjà les mêmes teintures, votre soumission devient un vote pour ce préréglage à la place | Jusqu'à leur retrait ou demande de suppression |
 
 ### Données de limitation de débit
 
-- Les compteurs par utilisateur et par commande sont conservés par le service de limitation de débit des Workers de Cloudflare pendant la fenêtre de 60 secondes et ne sont jamais écrits dans KV.
+- Les compteurs par utilisateur pour les commandes et les boutons sont conservés par le service de limitation de débit des Workers de Cloudflare pendant la fenêtre de 60 secondes et ne sont jamais écrits dans KV.
 - **Repli** : sur un déploiement sans les liaisons natives de limitation de débit, les compteurs sont conservés dans Cloudflare KV à la place, sous une clé contenant votre identifiant utilisateur Discord et le nom de la commande, avec une expiration de 120 secondes. La production et la bêta lient toutes deux le service natif, ce chemin n'y est donc pas utilisé.
 - Le Bot ne voit ni n'utilise jamais votre adresse IP pour la limitation de débit — il vous identifie par votre identifiant utilisateur Discord, car les commandes arrivent depuis les serveurs de Discord plutôt que directement de vous.
 - Aucun tiers n'est impliqué.
@@ -58,6 +58,16 @@ Les préréglages communautaires sont modérés. Pour faire respecter les bannis
 - **Le journal de modération.** Chaque action de modération est consignée avec l'identifiant utilisateur Discord du modérateur, l'action, un motif facultatif et l'heure. Une action portant sur un préréglage (par exemple approuver, rejeter ou annuler une modification) désigne ce préréglage. Un bannissement, une levée de bannissement, un masquage ou une restauration désigne aussi l'utilisateur concerné.
 
 La durée de conservation de chaque enregistrement est indiquée à la section *Conservation des données*.
+
+### Vérification des identités enregistrées et portée des bannissements
+
+Notre service de connexion conserve une révision de session avec votre compte. Les services autorisés peuvent récupérer en privé votre identifiant de compte interne enregistré, l'identifiant utilisateur Discord associé s'il existe et la révision, ou vérifier qu'une session correspond toujours aux associations de connexion enregistrées. Cette recherche ne renvoie ni identifiant XIVAuth, ni nom, ni liste de personnages, ni jeton du fournisseur. Les associations enregistrées ne constituent pas une nouvelle vérification auprès du fournisseur externe. Une modification qui ne peut pas être effectuée en toute sécurité est refusée ; le déplacement des presets, votes et compteurs de limites quotidiennes exige une association acceptée en toute sécurité et ne peut pas contourner un bannissement actif.
+
+Lorsque la modération des identités associées est activée, un modérateur autorisé examine en privé les identifiants exacts avant de créer ou d'étendre un bannissement, ou de lever un bannissement précis. Un bannissement peut couvrir plusieurs identifiants de compte internes et identifiants utilisateur Discord confirmés pour ce bannissement ou conservés lors d'un changement d'association. Les restrictions existantes subsistent après la dissociation jusqu'à leur levée après examen par la modération ; les bannissements ultérieurs ne s'étendent pas automatiquement aux identités précédemment dissociées. Ces associations servent uniquement à appliquer ce bannissement et n'accordent aucun accès au compte. Elles suivent la conservation du dossier de bannissement : suppression 90 jours après sa levée.
+
+L'examen des identifiants utilise des réponses Discord éphémères réservées aux modérateurs, distinctes des publications ordinaires dans les salons décrites dans cette politique. Nous ne promettons pas de délai de suppression de ces réponses par Discord. Notre base de presets conserve brièvement l'identifiant du modérateur agissant, les identifiants et révisions examinés, le bannissement et l'action sélectionnés, l'empreinte de la proposition, un nonce, le résultat et les échéances. Les confirmations ne contiennent aucun nom, jeton du fournisseur ou motif en texte libre. Elles expirent sous 15 minutes et deviennent admissibles à des nettoyages quotidiens et déclenchés par les requêtes, effectués en lots limités ; leur suppression peut attendre un passage réussi.
+
+Lorsque la récupération des associations de compte interrompues est activée, notre service de connexion conserve les identifiants fournisseur/compte concernés, les associations et révisions attendues, la modification prévue, l'état et les échéances ; le service de presets conserve un reçu d'opération correspondant. Aucun de ces enregistrements de récupération ne contient de nom, de jeton du fournisseur, de liste de personnages ou de motif en texte libre. L'échéance de l'opération est d'au plus 15 minutes. Les enregistrements terminés ou refusés deviennent admissibles au nettoyage 24 heures après le plus tardif de l'échéance ou de l'accusé de réception ; une annulation dont l'absence de reçu distant est confirmée utilise sa date de fin au lieu de l'accusé de réception. Le nettoyage est effectué au mieux. Les modifications appliquées ou au résultat inconnu qui restent non résolues demeurent en attente d'examen par l'opérateur après l'échéance, y compris avant d'effacer leurs enregistrements de récupération dans le cadre d'une demande de suppression.
 
 ## 3. Données que nous NE collectons PAS
 
@@ -85,7 +95,7 @@ Lorsque vous utilisez `/extractor image`, votre image téléversée est :
 
 Lorsque vous utilisez `/swatch` ou `/glamour`, votre fichier `.chara` téléversé est :
 1. Téléchargé depuis Discord et lu en mémoire sur les serveurs de périphérie de Cloudflare
-2. Lu pour en extraire les couleurs, les teintures et l'équipement
+2. Lu pour en extraire les couleurs, les teintures, l'équipement, le clan, le genre et l'outil qui a enregistré le fichier. La carte publiée dans le canal affiche aussi le clan, le genre et un libellé d'outil figurant sur une liste autorisée
 3. **Immédiatement supprimé** après traitement
 4. **Jamais stocké** sur nos serveurs
 
@@ -115,7 +125,7 @@ Pour nommer l'équipement, `/glamour` envoie les numéros de modèle de l'équip
 | Cloudflare Workers Analytics Engine | Télémétrie d'utilisation des commandes (voir *Statistiques d'utilisation*) | Infrastructure analytique de Cloudflare |
 | Discord | Messages publiés dans deux salons privés de notre serveur Discord. Le salon de modération reçoit chaque préréglage, modification ou image d'aperçu qui nécessite une vérification : le message montre le préréglage (par exemple son nom, sa description, sa catégorie et ses teintures) et le nom de l'auteur ou, pour une image d'aperçu, le nom du préréglage et l'image, et il est mis à jour lorsqu'un modérateur tranche. Si un modérateur vous bannit, le salon de modération reçoit aussi un message avec votre nom d'auteur, le motif et le nombre de vos préréglages qui ont été masqués. Les modérateurs peuvent aussi publier dans le salon de modération la liste des préréglages en attente de vérification, avec le nom de leurs auteurs. Le salon de journal des soumissions reçoit chaque préréglage publié sans vérification, avec le nom de son auteur, et une note nommant le préréglage lorsqu'un modérateur en approuve ou en rejette un, ou en annule une modification, avec le motif d'un rejet ou d'une annulation. Les messages publiés après le 2026-10-05 ne montrent pas votre identifiant utilisateur Discord ; ceux publiés à cette date ou avant peuvent le montrer | Infrastructure de Discord |
 
-Tout, sauf ces messages Discord, est stocké sur l'infrastructure de Cloudflare. Voir la [politique de confidentialité de Cloudflare](https://www.cloudflare.com/privacypolicy/) pour plus d'informations. Les messages Discord restent dans ces salons, soumis à la [politique de confidentialité de Discord](https://discord.com/privacy), jusqu'à ce qu'un modérateur les supprime ou jusqu'à ce que vous demandiez la suppression (voir *Vos droits*).
+Tout, sauf ces messages Discord et les réponses éphémères réservées aux modérateurs, est stocké sur l'infrastructure de Cloudflare. Voir la [politique de confidentialité de Cloudflare](https://www.cloudflare.com/privacypolicy/) pour plus d'informations. Les messages Discord restent dans ces salons, soumis à la [politique de confidentialité de Discord](https://discord.com/privacy), jusqu'à ce qu'un modérateur les supprime ou jusqu'à ce que vous demandiez la suppression (voir *Vos droits*).
 
 ### Sécurité des données
 
@@ -140,7 +150,7 @@ Le Bot s'intègre à ces services tiers :
 | Cloudflare | Hébergement, stockage des données (KV, D1), limitation de débit, analytique | [Politique de confidentialité de Cloudflare](https://www.cloudflare.com/privacypolicy/) |
 | Universalis | Données du tableau des ventes FFXIV | [Universalis](https://universalis.app/) |
 | XIVAPI | Noms d'objets FFXIV pour `/glamour` | [XIVAPI](https://xivapi.com/) |
-| Perspective API | Modération de contenu (facultatif) | [Politique de confidentialité de Google](https://policies.google.com/privacy) |
+| Perspective API | Modération facultative des noms, descriptions, étiquettes et textes du chemin des liens d'exemple des préréglages. Les paramètres de requête, fragments, identifiants de connexion et noms d'hôte de l'URL sont exclus du texte du lien ; aucun identifiant de compte n'est joint et les liens fournis ne sont jamais consultés. La requête utilise `doNotStore`. | [Politique de confidentialité de Google](https://policies.google.com/privacy) |
 
 Nous ne vendons, n'échangeons, ni ne partageons vos données personnelles avec des tiers à des fins de marketing.
 
@@ -172,6 +182,8 @@ Pour demander la suppression de toutes vos données :
 Nous traiterons les demandes de suppression sous 30 jours. Une demande de suppression supprime aussi de notre serveur Discord les messages vous concernant et concernant vos préréglages, à l'exception du message sur un bannissement toujours actif. Un enregistrement de bannissement actif n'est pas supprimé sur demande ; une fois le bannissement levé, l'enregistrement suit la durée de conservation indiquée à la section *Conservation des données*.
 
 ## 8. Conservation des données
+
+Les limites quotidiennes comptent les tentatives de soumission qui atteignent la modération, les changements du nom ou de la description d'un préréglage, et les tentatives de traitement des images d'aperçu. Les changements d'étiquettes ou de lien d'exemple ne comptent comme modifications que lorsque les vérifications étendues sont activées ; les étiquettes et le texte du chemin du lien ne peuvent être envoyés pour modération que dans ce cas. Les champs textuels inchangés ne consomment pas de place de modification. Les échecs de décodage d'image et les délais dépassés restent comptés. Pour les tentatives de traitement d'image d'aperçu uniquement, les rejets de validation précoce et les erreurs de stockage d'image ou de base de données ne sont pas décomptés du quota. Si le résultat d'une écriture en base de données ne peut pas être confirmé, la tentative reste comptée. Une tentative de soumission reste comptée dès le début de la modération, même si aucun préréglage n'est créé.
 
 | Type de donnée | Durée de conservation |
 |-----------|-----------------|

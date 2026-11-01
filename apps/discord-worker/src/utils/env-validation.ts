@@ -23,6 +23,9 @@ export interface EnvValidationResult {
  */
 export const PRODUCTION_ENV_ERROR_PREFIX = 'Missing required env var in production: ';
 
+/** Fatal in every environment; do not echo malformed configuration values. */
+export const PRESET_WEBHOOK_FLAG_ERROR = 'Invalid PRESET_WEBHOOK_BINDING_ONLY configuration';
+
 /**
  * Shortest `INTERNAL_WEBHOOK_SECRET` production accepts (2026-10-03 security
  * audit, FINDING-027). The bearer secret is the only gate on the public
@@ -47,6 +50,14 @@ export const MIN_WEBHOOK_SECRET_LENGTH = 32;
  */
 export function validateEnv(env: Env): EnvValidationResult {
   const errors: string[] = [];
+
+  if (
+    env.PRESET_WEBHOOK_BINDING_ONLY !== undefined &&
+    env.PRESET_WEBHOOK_BINDING_ONLY !== 'false' &&
+    env.PRESET_WEBHOOK_BINDING_ONLY !== 'true'
+  ) {
+    errors.push(PRESET_WEBHOOK_FLAG_ERROR);
+  }
 
   // Check required string environment variables (secrets)
   const requiredSecrets: Array<keyof Env> = ['DISCORD_TOKEN', 'DISCORD_PUBLIC_KEY'];

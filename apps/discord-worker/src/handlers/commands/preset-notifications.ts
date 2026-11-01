@@ -35,9 +35,10 @@ import { sanitizePresetName, sanitizePresetDescription } from '../../utils/sanit
 import { createTranslator } from '../../services/bot-i18n.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { buildReviewCustomIdOrLegacy, type PresetPreviousValues } from '@xivdyetools/types';
+import { INCOMPLETE_LINK_REVIEW, projectPresetLink, type PresetLinkMetadata } from '../../utils/preset-link-review.js';
 
 /** Subset of preset fields the notifications need (CommunityPreset satisfies it) */
-export interface ModerationPresetInfo {
+export interface ModerationPresetInfo extends PresetLinkMetadata {
   id: string;
   name: string;
   description: string;
@@ -81,7 +82,7 @@ export interface ModerationNotificationOptions {
    * be older than the text this edit replaced (approved A → flagged edit B
    * snapshots A → B approved → a flagged edit C still reverts to A).
    */
-  revertTo?: PresetPreviousValues;
+  revertTo?: PresetPreviousValues & PresetLinkMetadata;
   /** Optional display name for the category (falls back to category_id) */
   categoryName?: string;
   /** Extra fields appended to the embed (e.g. the webhook path's source field) */
@@ -106,16 +107,21 @@ function moderationToken(env: Env): { token: string; buttonsRoutable: boolean } 
 // one module in @xivdyetools/types (preset/review-custom-id.ts), no longer a
 // hand-copied set kept "in step" here.
 
-/** The four text fields an edit's diff and a Revert snapshot cover. */
-type PresetText = Pick<ModerationPresetInfo, 'name' | 'description' | 'dyes' | 'tags'>;
+/** The reviewed text and optional link metadata in diffs and Revert snapshots. */
+type PresetText = Pick<ModerationPresetInfo, 'name' | 'description' | 'dyes' | 'tags' | 'example_link'>;
 
-/** Which of the four text fields differ between `a` and `b`, in display order. */
+/** Which known review fields differ between `a` and `b`, in display order. */
 function differingFields(a: PresetText, b: PresetText): string[] {
   const fields: string[] = [];
   if (a.name !== b.name) fields.push('name');
   if (a.description !== b.description) fields.push('description');
   if (JSON.stringify(a.tags ?? []) !== JSON.stringify(b.tags ?? [])) fields.push('tags');
   if (JSON.stringify(a.dyes) !== JSON.stringify(b.dyes)) fields.push('dyes');
+  const linkA = projectPresetLink(a);
+  const linkB = projectPresetLink(b);
+  if (linkA.identity !== undefined && linkB.identity !== undefined && linkA.identity !== linkB.identity) {
+    fields.push('example_link');
+  }
   return fields;
 }
 
@@ -125,7 +131,7 @@ function differingFields(a: PresetText, b: PresetText): string[] {
  * IS the text this edit replaced, which needs a real diff base to tell.
  */
 function revertLine(
-  revertTo: PresetPreviousValues,
+  revertTo: PresetPreviousValues & PresetLinkMetadata,
   original: ModerationPresetInfo | undefined,
   originalIsRevertSnapshot: boolean
 ): string {
@@ -135,6 +141,9 @@ function revertLine(
   }
   const differing = differingFields(revertTo, original);
   if (differing.length === 0) {
+    if (projectPresetLink(revertTo).identity === undefined || projectPresetLink(original).identity === undefined) {
+      return `**Revert:** restores the saved approved version "${safeName}" and approves it. It may be older than the text this edit replaced.`;
+    }
     return `**Revert:** restores "${safeName}", the text this edit replaced, and approves it.`;
   }
   return `**Revert:** restores the saved approved version "${safeName}" and approves it. It is older than the text this edit replaced (they differ in: ${differing.join(', ')}), so Revert does not just undo this edit.`;
@@ -158,6 +167,8 @@ export function buildModerationNotification(
   // BUG-003: Revert is an explicit opt-in on an edit — being an edit alone
   // never shows it — and it is described whenever it is offered.
   const revertTo = opts.kind === 'edit' ? opts.revertTo : undefined;
+  const currentLink = projectPresetLink(preset);
+  const targetLink = revertTo ? projectPresetLink(revertTo, true) : undefined;
 
   const lines: string[] = [];
   if (opts.kind === 'edit' && original) {
@@ -175,6 +186,14 @@ export function buildModerationNotification(
     }
     if (JSON.stringify(preset.tags ?? []) !== JSON.stringify(original.tags ?? [])) {
       changes.push(`**${adminT.t('webhook.fields.tags')}:** Updated`);
+    }
+    const oldLink = projectPresetLink(original);
+    if (currentLink.identity === undefined || oldLink.identity === undefined) {
+      changes.push('Link details unavailable.');
+    } else if (currentLink.identity !== oldLink.identity) {
+      changes.push(currentLink.text === oldLink.text
+        ? 'Link path is unchanged; other URL parts changed and are not shown.'
+        : 'Link changed; only path text is shown.');
     }
 
     lines.push(
@@ -213,7 +232,11 @@ export function buildModerationNotification(
         ? `✏️ ${adminT.t('webhook.editPending')}`
         : `🟡 ${adminT.t('webhook.newPresetPending')}`,
     description: lines.join('\n'),
-    ...(opts.extraFields ? { fields: opts.extraFields } : {}),
+    fields: [
+      { name: adminT.t('about.links'), value: currentLink.text, inline: false },
+      ...(targetLink ? [{ name: 'Revert link', value: targetLink.text, inline: false }] : []),
+      ...(opts.extraFields ?? []),
+    ],
     // Our accent (#EA4133) and Discord's fixed danger red (#DA373C) are
     // four hex points apart, so an accent bar above a Reject button reads
     // as one colour carrying two meanings. Button styles are fixed on this
@@ -224,6 +247,23 @@ export function buildModerationNotification(
     timestamp: new Date().toISOString(),
   };
 
+  // Corrupted legacy surrounding text must not cause Discord to reject the
+  // whole message or push required paths out of view. Keep complete paths,
+  // disclose the incomplete review, and leave Reject as the only action.
+  const fields = embed.fields!;
+  const total = (embed.title?.length ?? 0) + (embed.description?.length ?? 0)
+    + (embed.footer?.text.length ?? 0)
+    + fields.reduce((sum, field) => sum + field.name.length + field.value.length, 0);
+  const budgetSafe = (embed.description?.length ?? 0) <= 4096
+    && (embed.title?.length ?? 0) <= 256 && (embed.footer?.text.length ?? 0) <= 2048
+    && fields.length <= 25 && fields.every((field) => field.name.length <= 256 && field.value.length <= 1024)
+    && total <= 6000;
+  if (!budgetSafe) {
+    embed.description = INCOMPLETE_LINK_REVIEW;
+    embed.fields = fields.slice(0, targetLink ? 2 : 1);
+    embed.footer = { text: `ID: ${sanitizePresetName(preset.id)}` };
+  }
+
   if (!buttonsRoutable) {
     return { embeds: [embed] };
   }
@@ -231,9 +271,9 @@ export function buildModerationNotification(
   const buttons: DiscordActionRow = {
     type: 1, // Action Row
     components: [
-      {
-        type: 2, // Button
-        style: 3, // Success (green)
+      ...(currentLink.complete && budgetSafe ? [{
+        type: 2 as const, // Button
+        style: 3 as const, // Success (green)
         label: adminT.t('webhook.buttons.approve'),
         custom_id: buildReviewCustomIdOrLegacy(
           'approve',
@@ -242,7 +282,7 @@ export function buildModerationNotification(
           preset.status
         ),
         emoji: { name: '✅' },
-      },
+      }] : []),
       {
         type: 2, // Button
         style: 4, // Danger (red)
@@ -256,7 +296,7 @@ export function buildModerationNotification(
         emoji: { name: '❌' },
       },
       // BUG-003: an explicit opt-in, so being an edit alone never shows Revert
-      ...(revertTo
+      ...(revertTo && targetLink?.complete && currentLink.complete && budgetSafe
         ? [
             {
               type: 2 as const, // Button
