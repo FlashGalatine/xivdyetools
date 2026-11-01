@@ -1,0 +1,2 @@
+$ tsx scripts/check-doc-versions.ts
+  checked 34 version claims across README.md, docs/versions.md — all match package.json

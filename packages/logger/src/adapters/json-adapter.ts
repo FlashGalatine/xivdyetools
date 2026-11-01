@@ -17,7 +17,7 @@ import type { LogEntry, LoggerConfig } from '../types.js';
  * This format is ideal for log aggregation services like
  * Cloudflare Logs, Datadog, or ELK stack.
  *
- * @internal Implementation detail — consumers should use `createWorkerLogger`
+ * Implementation detail — consumers should use `createWorkerLogger`
  * or `createRequestLogger` instead.
  *
  * @example
