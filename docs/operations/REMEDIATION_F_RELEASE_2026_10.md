@@ -39,17 +39,51 @@ binds the corpus/source/font hashes and scratch regeneration results.
 
 ## F-OG — separate implementation boundary
 
-Prepare locale-aware font fallback after the Discord proof. Japanese cards require JP-first;
-Chinese cards require SC-first. Thread the resolved locale through every image route and the
-renderer, verify actual bundled-font pixels, and advance the app-version cache identity.
-Do not regenerate unchanged subsets or claim that old social-platform/browser copies are purged.
+Prepared in [PR #405](https://github.com/FlashGalatine/xivdyetools/pull/405), after the
+[text/F-DISCORD boundary #404](https://github.com/FlashGalatine/xivdyetools/pull/404).
+Every image route passes its resolved locale through the renderer. Japanese uses JP-first;
+Chinese and the other/default locales use SC-first, matching Discord's intended fallback.
+The two cached arrays share the existing font bytes. The app-version bump selects a fresh
+Worker cache namespace; old social-platform/browser copies are not purged.
+
+The 14 route scenarios and actual bundled-font renders cover regional normalization, invalid
+locale fallback and the real Japanese/Chinese accessibility routes. Eight representative
+English/German/French/Korean accessibility cards across both frames preserve the former pixels;
+this sample is not an exhaustive every-card claim. Global JP-first, dropped-renderer-locale
+and forced-English-route mutations each fail. All 889 OG tests and coverage pass; the full
+repository graph passes 62 tasks, with 17,548 tests across 17 workspaces. The compile-only OG
+bundle is 1,953.97 KiB gzip; the separate Discord check is 2,737.62 KiB, both below 3,072 KiB.
+
+## Offline adoption acceptance
+
+The [redacted source/adoption receipt](../audits/2026-10-26-i18n/evidence/f-adoption-preparation-2026-10-30.json)
+binds the source heads, validated trees, native archives, seeds, source invariants and exact-head
+source CI. Original A/R/H/M refs and receipts remain immutable.
+
+| Gate | Local result | Limit |
+|---|---|---|
+| Final Core/SVG/Bot artifacts | Fresh packs, exact internal pins, offline installs under Node 22 and pnpm 11; strict declarations with `skipLibCheck:false` | Local artifacts, not registry releases or CI provenance |
+| Consumer resolution | 36 distinct public exports imported; all 12 dependency edges resolve inside the isolated consumer | No workspace aliases or network-install fallback |
+| Text adoption | All six packed Core payloads match source; 750 runtime names and 250 pinned authoritative German/French names pass | No new upstream data capture |
+| Bot and manual | Four successful result cases, six error cases and 69 manual strings per locale across six locales | Deployed manual delivery remains open |
+| Logger/Auth/Worker Kit | Hash-verified unchanged archives adopted; actual private producer passes valid, wrong-secret and expired JWT cases | Rerun against published auth; test-utils remains private |
+| Schema/provider/application contracts | Current full graph passes the synthetic tests; protected runtime source trees and inactive configurations remain unchanged from M | No remote probe, migration, real-provider delivery or recovery rehearsal |
+| Release controls | Draft refs excluded from beta; production reviewer/main policy read back; announcement/workflow source unchanged | No run dispatched or approved; each later app needs separate selection |
+
+Select the Core major source containing #404's final text before its publisher. The new Core
+archive replaces the older local M archive as evidence for this candidate's locale bytes.
+The new Bot archive has identical dist bytes and semantically identical packed manifest to
+the old M proof; its tarball hash differs because dependency keys serialize in a different
+order. Use the fresh exact hash and consumer evidence recorded here. SVG's archive is unchanged.
+If #390 is integrated into an earlier minor candidate, refresh that candidate's artifacts and
+consumer proof too; the corrected minor receipts establish only their frozen sources.
 
 ## Adoption and release hold
 
-Local artifacts and synthetic provider/schema tests can establish source compatibility only.
-Refresh source-specific package identities after this text reconciliation; do not reuse an older
-Core archive as evidence for these different locale bytes. Preserve the existing corrected
-minor declaration companions and the required deprecation-release sequence before the majors.
+Local artifacts and synthetic provider/schema tests establish source compatibility only.
+Preserve the corrected minor declaration companions and required deprecation-release sequence
+before the majors. F-DISCORD and F-OG are implemented/verified as conditional sources; terminal
+release acceptance remains open until the actual selected M/text stack has been adopted.
 
 Actual registry artifact/attestation/native installs, the private producer against published
 auth, external npm-consumer review and deployed beta/production acceptance remain open. The

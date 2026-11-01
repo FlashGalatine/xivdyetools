@@ -266,3 +266,10 @@ aggregate references in the audit evidence. A blank or mismatched required field
 On missing registry versions, unexpected source/configuration, provider absence, resource error,
 wrong delivery or unknown identity outcome: stop the dependent release and preserve receipts.
 Successful local tests or HTTP health alone do not close these acceptance gates.
+
+The later [conditional F and offline adoption packet](REMEDIATION_F_RELEASE_2026_10.md) records
+the final selected text, Discord font verification, OG regional fallback/cache fix and refreshed
+native major artifacts. It supplements source preparation only. This runbook's earlier minor
+publication, provider/schema/disclosure/manual and separately authorized deployment/activation
+requirements remain open. Use each receipt only for its frozen source; changes integrated into
+an earlier minor candidate require refreshed artifact/consumer verification there too.
