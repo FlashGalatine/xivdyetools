@@ -373,6 +373,44 @@ describe('FINDING-047: Discord webhook and interaction URL shapes', () => {
     },
   );
 
+  // L2 (2026-10-30 PR audit): a context or array string that IS a URL or path
+  // (no whitespace) is still a whole-value '[REDACTED]' (the test above); one
+  // that carries the shape inside longer text keeps its prose and loses only
+  // the token segment, with sanitizeErrors on or off.
+  it.each([true, false])(
+    'keeps prose around an embedded Discord URL and replaces only the token (sanitizeErrors=%s)',
+    (sanitizeErrors) => {
+      const { lines } = capture();
+      const logger = new JsonAdapter({ level: 'debug', sanitizeErrors });
+      const prose = `follow-up POST ${paths[1]} returned 404 after 3 tries`;
+      const both = `${paths[0]} then ${paths[5]}`;
+      const masked = (s: string): string => s.replaceAll(credential, '[REDACTED]');
+      logger.info('context', {
+        note: prose,
+        items: [prose, [both]],
+        nested: { both },
+        other: 'GET /webhooks/123/status ok',
+        // A URL object logs as its href, which has no whitespace: whole value.
+        at: new URL(paths[0]),
+      });
+      logger.error('failed', [{ detail: prose }]);
+      expect(JSON.parse(lines()[0]).context).toEqual({
+        note: masked(prose),
+        items: [masked(prose), [masked(both)]],
+        nested: { both: masked(both) },
+        other: 'GET /webhooks/123/[REDACTED] ok',
+        at: '[REDACTED]',
+      });
+      expect(JSON.parse(JSON.parse(lines()[1]).error.message)).toEqual([
+        { detail: masked(prose) },
+      ]);
+      expect(lines().join('')).not.toContain(credential);
+      // A second pass is a no-op: '[' is not in the token class.
+      logger.info('again', { note: masked(prose) });
+      expect(JSON.parse(lines()[2]).context.note).toBe(masked(prose));
+    },
+  );
+
   it('preserves suffixes and ordinary URL negatives, respecting free-text opt-out', () => {
     const { logger, lines } = capture();
     const negatives = [
@@ -1181,6 +1219,9 @@ describe('Sprint 12 release blockers (2026-10-06)', () => {
       ['webhook token run', '/webhooks/123/' + rep('x')],
       ['interaction ID without token separator', '/interactions/' + rep('1')],
       ['interaction token run', '/interactions/123/' + rep('x') + '/callback'],
+      // L2: the whole-value path (no whitespace) and the token-span path.
+      ['repeated webhook paths', rep('/webhooks/1/x')],
+      ['repeated webhook paths in prose', rep('/webhooks/1/x ')],
     ];
 
     it.each(inputs)(
