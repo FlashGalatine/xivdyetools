@@ -1,0 +1,890 @@
+[
+ {
+  "members": [
+   "api-worker-chara-02",
+   "injection-sweep-02",
+   "gap-upstream-game-data-trust-01"
+  ],
+  "title": "XIVAPI item/Glasses names have no length cap or control stripping, response body unbounded, cached 7 d, quadratic sinks",
+  "sev": "MEDIUM",
+  "exposure": "INTERNET-UNAUTH",
+  "unit": "gap",
+  "file": "apps/api-worker/src/chara/xivapi.ts",
+  "line": 432,
+  "gid": "G01"
+ },
+ {
+  "members": [
+   "pii-bot-01"
+  ],
+  "title": "Moderator Discord username written into persistent moderation and submission-log posts, not listed in the privacy policy",
+  "sev": "MEDIUM",
+  "exposure": "INTERNET-AUTH",
+  "unit": "moderation-worker + discord-worker",
+  "file": "apps/moderation-worker/src/handlers/buttons/preset-moderation.ts",
+  "line": 220,
+  "gid": "G02"
+ },
+ {
+  "members": [
+   "gap-upstream-game-data-trust-02",
+   "r2-bot-chara-second-look-02"
+  ],
+  "title": "Bot /glamour embed lets masked links and markdown headings through from upstream names",
+  "sev": "LOW",
+  "exposure": "INTERNET-AUTH",
+  "unit": "gap",
+  "file": "packages/bot-logic/src/commands/glamour.ts",
+  "line": 384,
+  "gid": "G03"
+ },
+ {
+  "members": [
+   "web-app-chara-01",
+   "policy-web-en-01"
+  ],
+  "title": "Swatch 'Save character' persists the .chara nickname/file name; policy exception names only glamour saves",
+  "sev": "LOW",
+  "exposure": "LOCAL",
+  "unit": "web-app",
+  "file": "apps/web-app/src/components/chara-sheet.ts",
+  "line": 211,
+  "gid": "G04"
+ },
+ {
+  "members": [
+   "presets-api-routes-02",
+   "wrangler-secrets-config-02"
+  ],
+  "title": "Dev worker (ENVIRONMENT=development, production D1/R2) does not pin preview_urls = false, unlike api-worker/image-worker",
+  "sev": "LOW",
+  "exposure": "LOCAL",
+  "unit": "presets-api",
+  "file": "apps/presets-api/wrangler.toml",
+  "line": 16,
+  "gid": "G05"
+ },
+ {
+  "members": [
+   "ci-supply-chain-01",
+   "regression-b-01"
+  ],
+  "title": "FINDING-023 still open: production Discord bot tokens remain repository-scope Actions secrets 21 days after the deletion precondition was met",
+  "sev": "LOW",
+  "exposure": "LOCAL",
+  "unit": "CI + repo settings",
+  "file": "docs/operations/SECRET_ROTATION.md",
+  "line": 64,
+  "gid": "G06"
+ },
+ {
+  "members": [
+   "policy-de-02",
+   "policy-fr-02"
+  ],
+  "title": "de web privacy narrows 'other people' to 'other players' in the character-name never-clause",
+  "sev": "LOW",
+  "exposure": "INTERNET-UNAUTH",
+  "unit": "policy translation de",
+  "file": "apps/web-app/PRIVACY.de.md",
+  "line": 36,
+  "gid": "G07"
+ },
+ {
+  "members": [
+   "moderation-worker-01",
+   "r2-presets-api-moderation-auth-01"
+  ],
+  "title": "Banned-author check before approve/revert is a non-atomic pre-check; presets-api status/revert routes carry no ban guard",
+  "sev": "LOW",
+  "exposure": "INTERNET-AUTH",
+  "unit": "moderation-worker",
+  "file": "apps/moderation-worker/src/handlers/buttons/preset-moderation.ts",
+  "line": 186,
+  "gid": "G08"
+ },
+ {
+  "members": [
+   "presets-api-routes-01",
+   "r2-presets-api-moderation-auth-02"
+  ],
+  "title": "Tags and example_link bypass content moderation; a tag/link-only edit of an approved preset stays public with no review or daily cap",
+  "sev": "LOW",
+  "exposure": "INTERNET-AUTH",
+  "unit": "presets-api",
+  "file": "apps/presets-api/src/handlers/presets.ts",
+  "line": 653,
+  "gid": "G09"
+ },
+ {
+  "members": [
+   "gap-upstream-game-data-trust-03",
+   "r2-build-time-and-docs-sinks-01"
+  ],
+  "title": "Item-name build not pinned or validated; ko/zh from Teamcraft staging branch head",
+  "sev": "LOW",
+  "exposure": "LOCAL",
+  "unit": "gap",
+  "file": "apps/api-worker/scripts/build-item-names.mjs",
+  "line": 63,
+  "gid": "G10"
+ },
+ {
+  "members": [
+   "discord-worker-commands-01"
+  ],
+  "title": "/glamour has no tier of its own and spends one shared api-worker service key",
+  "sev": "LOW",
+  "exposure": "INTERNET-AUTH",
+  "unit": "discord-worker + bot-logic",
+  "file": "packages/worker-kit/src/rate-limiter/presets/configs.ts",
+  "line": 102,
+  "gid": "G11"
+ },
+ {
+  "members": [
+   "presets-api-services-01"
+  ],
+  "title": "POST /presets spends a Perspective call before reserving quota; a same-dye concurrent burst is charged one submission",
+  "sev": "LOW",
+  "exposure": "INTERNET-AUTH",
+  "unit": "presets-api",
+  "file": "apps/presets-api/src/handlers/presets.ts",
+  "line": 1031,
+  "gid": "G12"
+ },
+ {
+  "members": [
+   "presets-api-services-02"
+  ],
+  "title": "Preview-upload daily slot is refunded when the image-worker decode fails, so decode work is uncapped per day",
+  "sev": "LOW",
+  "exposure": "INTERNET-AUTH",
+  "unit": "presets-api",
+  "file": "apps/presets-api/src/handlers/presets.ts",
+  "line": 1293,
+  "gid": "G13"
+ },
+ {
+  "members": [
+   "oauth-01"
+  ],
+  "title": "Per-IP /auth/* limiter keys on the full IPv6 address, so one /64 gets an unlimited number of independent buckets",
+  "sev": "LOW",
+  "exposure": "INTERNET-UNAUTH",
+  "unit": "oauth",
+  "file": "packages/worker-kit/src/rate-limiter/ip.ts",
+  "line": 87,
+  "gid": "G14"
+ },
+ {
+  "members": [
+   "api-worker-chara-01"
+  ],
+  "title": "No cache-miss upstream budget on /v1/chara/*; new icon ?version= gives a per-request cache bypass",
+  "sev": "LOW",
+  "exposure": "INTERNET-UNAUTH",
+  "unit": "api-worker",
+  "file": "apps/api-worker/src/chara/xivapi.ts",
+  "line": 296,
+  "gid": "G15"
+ },
+ {
+  "members": [
+   "api-worker-public-01"
+  ],
+  "title": "Invalid world/DC names cause uncharged upstream list fetches",
+  "sev": "LOW",
+  "exposure": "INTERNET-UNAUTH",
+  "unit": "api-worker",
+  "file": "apps/api-worker/src/universalis/router.ts",
+  "line": 166,
+  "gid": "G16"
+ },
+ {
+  "members": [
+   "image-worker-01"
+  ],
+  "title": "16-bit PNG within the pixel cap overruns the isolate memory limit (pixel budget assumes 4 B/px)",
+  "sev": "LOW",
+  "exposure": "INTERNET-AUTH",
+  "unit": "image-worker",
+  "file": "apps/image-worker/src/validators.ts",
+  "line": 104,
+  "gid": "G17"
+ },
+ {
+  "members": [
+   "pkg-security-01"
+  ],
+  "title": "Logger: a non-Error `error` argument skips key-name redaction (cookie, session_id, webhook_url, nested keys)",
+  "sev": "LOW",
+  "exposure": "INTERNAL",
+  "unit": "logger",
+  "file": "packages/logger/src/core/base-logger.ts",
+  "line": 268,
+  "gid": "G18"
+ },
+ {
+  "members": [
+   "pkg-botlogic-svg-types-01"
+  ],
+  "title": "sanitizeEmbedText does not strip bidi isolates, Arabic letter mark or tag characters",
+  "sev": "LOW",
+  "exposure": "INTERNET-AUTH",
+  "unit": "bot-logic + svg + types + test-utils",
+  "file": "packages/bot-logic/src/discord-markdown.ts",
+  "line": 22,
+  "gid": "G19"
+ },
+ {
+  "members": [
+   "pkg-botlogic-svg-types-02"
+  ],
+  "title": "escapeDiscordMarkdown leaves Discord angle-bracket syntax live",
+  "sev": "LOW",
+  "exposure": "INTERNET-AUTH",
+  "unit": "bot-logic + svg + types + test-utils",
+  "file": "packages/bot-logic/src/discord-markdown.ts",
+  "line": 14,
+  "gid": "G20"
+ },
+ {
+  "members": [
+   "trust-boundaries-01"
+  ],
+  "title": "Beta bot deployed from any unreviewed branch can hold production's moderator-equivalent presets-api signing pair",
+  "sev": "LOW",
+  "exposure": "LOCAL",
+  "unit": "cross-unit",
+  "file": "docs/operations/DEPLOY_ENVIRONMENTS.md",
+  "line": 284,
+  "gid": "G21"
+ },
+ {
+  "members": [
+   "ci-supply-chain-02"
+  ],
+  "title": "vitepress>vite override floor '>=6.4.3 <7' keeps vulnerable vite 6.4.3 locked; 5 Dependabot alerts (1 HIGH) open since 2026-10-20, nightly report-only audit stays green",
+  "sev": "LOW",
+  "exposure": "LOCAL",
+  "unit": "CI + repo settings (api-worker docs dev tree)",
+  "file": "pnpm-workspace.yaml",
+  "line": 26,
+  "gid": "G22"
+ },
+ {
+  "members": [
+   "wrangler-secrets-config-01"
+  ],
+  "title": "oauth [env.development] inherits the production custom-domain route",
+  "sev": "LOW",
+  "exposure": "LOCAL",
+  "unit": "all workers",
+  "file": "apps/oauth/wrangler.toml",
+  "line": 59,
+  "gid": "G23"
+ },
+ {
+  "members": [
+   "pii-web-01"
+  ],
+  "title": "PRIVACY.md says single saved palettes and Swatch character colors cannot be deleted in-app, but the Collection Manager deletes any single collection",
+  "sev": "LOW",
+  "exposure": "INTERNET-UNAUTH",
+  "unit": "web-app",
+  "file": "apps/web-app/PRIVACY.md",
+  "line": 59,
+  "gid": "G24"
+ },
+ {
+  "members": [
+   "policy-web-en-02"
+  ],
+  "title": "PRIVACY.md 'Rename or delete the record' offers controls the app does not have",
+  "sev": "LOW",
+  "exposure": "INTERNET-UNAUTH",
+  "unit": "web-app (policy)",
+  "file": "apps/web-app/PRIVACY.md",
+  "line": 39,
+  "gid": "G25"
+ },
+ {
+  "members": [
+   "policy-web-en-03"
+  ],
+  "title": "Sign-in modal says browsing has 'no rate limit'; presets-api limits every /api/* request to 100/min per IP",
+  "sev": "LOW",
+  "exposure": "INTERNET-UNAUTH",
+  "unit": "web-app (policy)",
+  "file": "apps/web-app/src/locales/en.json",
+  "line": 1009,
+  "gid": "G26"
+ },
+ {
+  "members": [
+   "policy-bot-en-01"
+  ],
+  "title": "Bot policy §3 says a .chara file is read only for colors, dyes and equipment, but /swatch and /glamour also read the clan, gender and producing tool and print them on the public card",
+  "sev": "LOW",
+  "exposure": "INTERNET-AUTH",
+  "unit": "discord-worker (policy)",
+  "file": "apps/discord-worker/PRIVACY_POLICY.md",
+  "line": 88,
+  "gid": "G27"
+ },
+ {
+  "members": [
+   "policy-ko-01"
+  ],
+  "title": "ko swatch.charaHint promises 'nothing is transmitted' where English says only 'Nothing is uploaded'",
+  "sev": "LOW",
+  "exposure": "INTERNET-UNAUTH",
+  "unit": "policy translation ko",
+  "file": "apps/web-app/src/locales/ko.json",
+  "line": 1166,
+  "gid": "G28"
+ },
+ {
+  "members": [
+   "policy-de-01"
+  ],
+  "title": "de preset example-link caption drops the 'NOT UPLOADED' assurance",
+  "sev": "LOW",
+  "exposure": "INTERNET-UNAUTH",
+  "unit": "policy translation de",
+  "file": "apps/web-app/src/locales/de.json",
+  "line": 982,
+  "gid": "G29"
+ },
+ {
+  "members": [
+   "policy-fr-01"
+  ],
+  "title": "fr UI uses 'palettes enregistrées' for saved presets, so PRIVACY.fr.md promises 'Effacer les palettes sauvegardées' deletes them",
+  "sev": "LOW",
+  "exposure": "INTERNET-UNAUTH",
+  "unit": "policy translation fr",
+  "file": "apps/web-app/PRIVACY.fr.md",
+  "line": 70,
+  "gid": "G30"
+ },
+ {
+  "members": [
+   "gap-xivauth-identity-claim-01"
+  ],
+  "title": "Upstream XIVAuth email auto-merge links a new provider identity to an existing account and signs in with no owner confirmation or MFA; via oauth this yields a presets-api JWT carrying the victim's discord_id",
+  "sev": "LOW",
+  "exposure": "INTERNET-UNAUTH",
+  "unit": "gap (upstream XIVAuth a4e6693; impact lands in oauth + presets-api)",
+  "file": "other-sources/XIVAuth/app/controllers/users/omniauth_callbacks_controller.rb",
+  "line": 109,
+  "gid": "G31"
+ },
+ {
+  "members": [
+   "gap-xivauth-identity-claim-02"
+  ],
+  "title": "oauth never clears or re-checks a row's Discord link, so a Discord id once attached stays the presets-api identity after XIVAuth stops asserting it",
+  "sev": "LOW",
+  "exposure": "INTERNET-AUTH",
+  "unit": "oauth",
+  "file": "apps/oauth/src/services/user-service.ts",
+  "line": 182,
+  "gid": "G32"
+ },
+ {
+  "members": [
+   "gap-hosting-dns-inventory-01"
+  ],
+  "title": "Superseded Pages deployments and branch aliases remain publicly served with an older CSP",
+  "sev": "LOW",
+  "exposure": "INTERNET-UNAUTH",
+  "unit": "gap",
+  "file": "docs/superpowers/plans/2026-08-10-pages-smoke-test.md",
+  "line": 791,
+  "gid": "G33"
+ },
+ {
+  "members": [
+   "gap-hosting-dns-inventory-02"
+  ],
+  "title": "presets-api production CORS still trusts the legacy pages.dev origin",
+  "sev": "LOW",
+  "exposure": "INTERNET-AUTH",
+  "unit": "gap",
+  "file": "apps/presets-api/wrangler.toml",
+  "line": 76,
+  "gid": "G34"
+ },
+ {
+  "members": [
+   "r2-discord-handlers-01"
+  ],
+  "title": "/preset favorite list fans out 50 userless presets-api reads that skip both presets-api limiters",
+  "sev": "LOW",
+  "exposure": "INTERNET-AUTH",
+  "unit": "discord-worker",
+  "file": "apps/discord-worker/src/handlers/commands/preset.ts",
+  "line": 1310,
+  "gid": "G35"
+ },
+ {
+  "members": [
+   "r2-moderation-worker-deep-01"
+  ],
+  "title": "Ban keyed on one identity leaves the author's other-identity presets public and approvable",
+  "sev": "LOW",
+  "exposure": "INTERNET-AUTH",
+  "unit": "moderation-worker",
+  "file": "apps/moderation-worker/src/services/ban-service.ts",
+  "line": 686,
+  "gid": "G36"
+ },
+ {
+  "members": [
+   "r2-bot-chara-second-look-01"
+  ],
+  "title": "/glamour embed truncation math fails when the notes tail exceeds the budget; the failed edit is silent",
+  "sev": "LOW",
+  "exposure": "INTERNET-AUTH",
+  "unit": "bot-logic + discord-worker",
+  "file": "packages/bot-logic/src/commands/glamour.ts",
+  "line": 607,
+  "gid": "G37"
+ },
+ {
+  "members": [
+   "r2-policy-claims-second-pass-01"
+  ],
+  "title": "v5_saved_presets store (other authors' names, survives author deletion) missing from the web privacy policy's device-storage inventory and deletion section",
+  "sev": "LOW",
+  "exposure": "INTERNET-UNAUTH",
+  "unit": "web-app + discord-worker (policy)",
+  "file": "apps/web-app/PRIVACY.md",
+  "line": 50,
+  "gid": "G38"
+ },
+ {
+  "members": [
+   "web-app-chara-02",
+   "r2-web-chara-second-look-02"
+  ],
+  "title": "Page validator accepts any 256-unit string as tribe, which is then persisted to swatch config and used as an object key",
+  "sev": "INFO",
+  "exposure": "LOCAL",
+  "unit": "web-app",
+  "file": "apps/web-app/src/services/chara-inspection-protocol.ts",
+  "line": 739,
+  "gid": "G39"
+ },
+ {
+  "members": [
+   "policy-web-en-09",
+   "r2-policy-claims-second-pass-04"
+  ],
+  "title": "Perspective sunset checklist omits the web ToS moderation paragraph (dated 2026-12-31)",
+  "sev": "INFO",
+  "exposure": "INTERNET-UNAUTH",
+  "unit": "web-app (policy)",
+  "file": "DEPRECATIONS.md",
+  "line": 59,
+  "gid": "G40"
+ },
+ {
+  "members": [
+   "discord-worker-core-01"
+  ],
+  "title": "v2 bot signature binds URL pathname only; GET query string (status/search/sort/page/limit) is unsigned",
+  "sev": "INFO",
+  "exposure": "INTERNAL",
+  "unit": "discord-worker",
+  "file": "apps/discord-worker/src/services/preset-api.ts",
+  "line": 120,
+  "gid": "G41"
+ },
+ {
+  "members": [
+   "discord-worker-core-02"
+  ],
+  "title": "Message-component interactions bypass the per-user rate limiter",
+  "sev": "INFO",
+  "exposure": "INTERNET-AUTH",
+  "unit": "discord-worker",
+  "file": "apps/discord-worker/src/index.ts",
+  "line": 1483,
+  "gid": "G42"
+ },
+ {
+  "members": [
+   "oauth-02"
+  ],
+  "title": "OAuth state is HMAC'd with the JWT signing key: an unauthenticated signing oracle under JWT_SECRET with no domain separation",
+  "sev": "INFO",
+  "exposure": "INTERNET-UNAUTH",
+  "unit": "oauth",
+  "file": "apps/oauth/src/utils/state-signing.ts",
+  "line": 38,
+  "gid": "G43"
+ },
+ {
+  "members": [
+   "stoat-worker-01"
+  ],
+  "title": "Unused Upstash credentials and admin roster loaded into config",
+  "sev": "INFO",
+  "exposure": "LOCAL",
+  "unit": "stoat-worker (parked)",
+  "file": "apps/stoat-worker/src/config.ts",
+  "line": 49,
+  "gid": "G44"
+ },
+ {
+  "members": [
+   "web-app-sinks-01"
+  ],
+  "title": "Preset edit form renders preview_image_url without the https read-path guard",
+  "sev": "INFO",
+  "exposure": "INTERNET-AUTH",
+  "unit": "web-app",
+  "file": "apps/web-app/src/components/preset-edit-form.ts",
+  "line": 580,
+  "gid": "G45"
+ },
+ {
+  "members": [
+   "pkg-security-02"
+  ],
+  "title": "Logger value-shape redaction misses Discord webhook / interaction-token URLs",
+  "sev": "INFO",
+  "exposure": "INTERNAL",
+  "unit": "logger",
+  "file": "packages/logger/src/core/base-logger.ts",
+  "line": 839,
+  "gid": "G46"
+ },
+ {
+  "members": [
+   "pkg-security-03"
+  ],
+  "title": "JWT and V2 bot signatures accept non-canonical encodings (signature malleability)",
+  "sev": "INFO",
+  "exposure": "INTERNET-AUTH",
+  "unit": "auth",
+  "file": "packages/auth/src/encoding/base64.ts",
+  "line": 254,
+  "gid": "G47"
+ },
+ {
+  "members": [
+   "pkg-security-04"
+  ],
+  "title": "getClientIp JSDoc says X-Forwarded-For is trusted by default; the code defaults to false",
+  "sev": "INFO",
+  "exposure": "LOCAL",
+  "unit": "worker-kit",
+  "file": "packages/worker-kit/src/rate-limiter/ip.ts",
+  "line": 46,
+  "gid": "G48"
+ },
+ {
+  "members": [
+   "pkg-core-chara-01"
+  ],
+  "title": "GPOSERS text() regex is quadratic on long non-newline whitespace runs",
+  "sev": "INFO",
+  "exposure": "INTERNAL",
+  "unit": "core",
+  "file": "packages/core/src/services/chara/chara-gposers.ts",
+  "line": 120,
+  "gid": "G49"
+ },
+ {
+  "members": [
+   "pkg-core-chara-02"
+  ],
+  "title": "Legacy parseCharaFile is still a published export without the facade's bounds and echoes input in errors",
+  "sev": "INFO",
+  "exposure": "LOCAL",
+  "unit": "core",
+  "file": "packages/core/src/index.ts",
+  "line": 184,
+  "gid": "G50"
+ },
+ {
+  "members": [
+   "pkg-botlogic-svg-types-03"
+  ],
+  "title": "bot-logic dist ships a test fixture module",
+  "sev": "INFO",
+  "exposure": "LOCAL",
+  "unit": "bot-logic + svg + types + test-utils",
+  "file": "packages/bot-logic/tsconfig.build.json",
+  "line": 6,
+  "gid": "G51"
+ },
+ {
+  "members": [
+   "trust-boundaries-02"
+  ],
+  "title": "service-bindings.md misdescribes the inter-worker auth contract (unsigned example, 'Internal only', UNIVERSALIS_PROXY scope)",
+  "sev": "INFO",
+  "exposure": "INTERNAL",
+  "unit": "cross-unit",
+  "file": "docs/architecture/service-bindings.md",
+  "line": 268,
+  "gid": "G52"
+ },
+ {
+  "members": [
+   "injection-sweep-01"
+  ],
+  "title": "presets-api GET /api/v1/presets `page` has no upper bound: Infinity / >int64 OFFSET reaches the D1 bind",
+  "sev": "INFO",
+  "exposure": "INTERNET-UNAUTH",
+  "unit": "presets-api",
+  "file": "apps/presets-api/src/handlers/presets.ts",
+  "line": 249,
+  "gid": "G53"
+ },
+ {
+  "members": [
+   "ci-supply-chain-03"
+  ],
+  "title": "publish job grants id-token: write to the whole job, including pnpm install, turbo build and test of dev-tree code",
+  "sev": "INFO",
+  "exposure": "LOCAL",
+  "unit": "CI + repo settings",
+  "file": ".github/workflows/publish-packages.yml",
+  "line": 102,
+  "gid": "G54"
+ },
+ {
+  "members": [
+   "ci-supply-chain-04"
+  ],
+  "title": "Secret scanning non-provider patterns and validity checks are disabled",
+  "sev": "INFO",
+  "exposure": "LOCAL",
+  "unit": "CI + repo settings",
+  "file": ".gitleaks.toml",
+  "line": 17,
+  "gid": "G55"
+ },
+ {
+  "members": [
+   "pii-web-02"
+  ],
+  "title": "Telemetry blob8 'ver' is regex-validated, not allowlisted, so a sender can write about 10 free alphanumeric characters",
+  "sev": "INFO",
+  "exposure": "INTERNET-UNAUTH",
+  "unit": "api-worker",
+  "file": "apps/api-worker/src/telemetry/schema.ts",
+  "line": 62,
+  "gid": "G56"
+ },
+ {
+  "members": [
+   "pii-web-03"
+  ],
+  "title": "Extractor logs the uploaded image's file name to the browser console",
+  "sev": "INFO",
+  "exposure": "LOCAL",
+  "unit": "web-app",
+  "file": "apps/web-app/src/components/extractor-tool.ts",
+  "line": 1322,
+  "gid": "G57"
+ },
+ {
+  "members": [
+   "policy-web-en-04"
+  ],
+  "title": "'browsing sends nothing about you' is false for signed-in viewers (JWT sent on every preset-detail open)",
+  "sev": "INFO",
+  "exposure": "INTERNET-AUTH",
+  "unit": "web-app (policy)",
+  "file": "apps/web-app/PRIVACY.md",
+  "line": 82,
+  "gid": "G58"
+ },
+ {
+  "members": [
+   "policy-web-en-05"
+  ],
+  "title": "Resolve request described as 'a dozen small integers per file'; it can carry about 27 plus slot names",
+  "sev": "INFO",
+  "exposure": "INTERNET-UNAUTH",
+  "unit": "web-app (policy)",
+  "file": "apps/web-app/PRIVACY.md",
+  "line": 43,
+  "gid": "G59"
+ },
+ {
+  "members": [
+   "policy-web-en-06"
+  ],
+  "title": "'the site's Content-Security-Policy allows nothing else' vs connect-src wildcard *.xivdyetools.app",
+  "sev": "INFO",
+  "exposure": "INTERNET-UNAUTH",
+  "unit": "web-app (policy)",
+  "file": "apps/web-app/public/_headers",
+  "line": 31,
+  "gid": "G60"
+ },
+ {
+  "members": [
+   "policy-web-en-07"
+  ],
+  "title": "ToS appeals require a Discord user ID; XIVAuth-only accounts have none and PRIVACY accepts the author name",
+  "sev": "INFO",
+  "exposure": "INTERNET-UNAUTH",
+  "unit": "web-app (policy)",
+  "file": "apps/web-app/TERMS_OF_SERVICE.md",
+  "line": 75,
+  "gid": "G61"
+ },
+ {
+  "members": [
+   "policy-web-en-08"
+  ],
+  "title": "ToS says the Discord account name is 'your display name'; oauth falls back to username",
+  "sev": "INFO",
+  "exposure": "INTERNET-UNAUTH",
+  "unit": "web-app (policy)",
+  "file": "apps/web-app/TERMS_OF_SERVICE.md",
+  "line": 29,
+  "gid": "G62"
+ },
+ {
+  "members": [
+   "regression-b-02"
+  ],
+  "title": "main branch protection still has enforce_admins and strict off after the PRs that deferred them merged",
+  "sev": "INFO",
+  "exposure": "LOCAL",
+  "unit": "CI",
+  "file": "docs/operations/OPEN_ITEMS.md",
+  "line": 36,
+  "gid": "G63"
+ },
+ {
+  "members": [
+   "regression-b-03"
+  ],
+  "title": "Public /webhooks/preset-submission still has no failed-auth throttle or binding-only check (FINDING-027 optional hardening not done)",
+  "sev": "INFO",
+  "exposure": "INTERNET-UNAUTH",
+  "unit": "discord-worker",
+  "file": "apps/discord-worker/src/index.ts",
+  "line": 293,
+  "gid": "G64"
+ },
+ {
+  "members": [
+   "gap-upstream-game-data-trust-04"
+  ],
+  "title": "Bidi/format characters not stripped in upstream names",
+  "sev": "INFO",
+  "exposure": "INTERNET-UNAUTH",
+  "unit": "gap",
+  "file": "apps/api-worker/src/chara/data/item-names.ko.json",
+  "line": 1,
+  "gid": "G65"
+ },
+ {
+  "members": [
+   "r2-presets-api-moderation-auth-03"
+  ],
+  "title": "Stale Perspective-sunset comment says no key means the local list decides; code queues everything (FINDING-019)",
+  "sev": "INFO",
+  "exposure": "LOCAL",
+  "unit": "presets-api",
+  "file": "apps/presets-api/src/services/moderation-service.ts",
+  "line": 212,
+  "gid": "G66"
+ },
+ {
+  "members": [
+   "r2-xivcharakit-source-01"
+  ],
+  "title": ".chara Nickname/TypeName projection can be ill-formed UTF-16 (lone or split surrogates)",
+  "sev": "INFO",
+  "exposure": "INTERNET-AUTH",
+  "unit": "core (xivcharakit dependency)",
+  "file": "packages/core/src/services/chara/chara-library.ts",
+  "line": 148,
+  "gid": "G67"
+ },
+ {
+  "members": [
+   "r2-xivcharakit-source-02"
+  ],
+  "title": "xivcharakit releases have no git tags; source traceability relies only on npm provenance",
+  "sev": "INFO",
+  "exposure": "LOCAL",
+  "unit": "core (xivcharakit dependency)",
+  "file": "packages/core/package.json",
+  "line": 78,
+  "gid": "G68"
+ },
+ {
+  "members": [
+   "r2-web-chara-second-look-01"
+  ],
+  "title": "Resolve-API response adopted without shape validation before reaching CSS url(), link builders and Intl.ListFormat",
+  "sev": "INFO",
+  "exposure": "INTERNAL",
+  "unit": "web-app",
+  "file": "apps/web-app/src/services/chara-resolve-service.ts",
+  "line": 226,
+  "gid": "G69"
+ },
+ {
+  "members": [
+   "r2-bot-chara-second-look-03"
+  ],
+  "title": "Published SwatchResult.character carries the raw TypeName (producer) free text",
+  "sev": "INFO",
+  "exposure": "LOCAL",
+  "unit": "bot-logic",
+  "file": "packages/bot-logic/src/commands/swatch.ts",
+  "line": 102,
+  "gid": "G70"
+ },
+ {
+  "members": [
+   "r2-policy-claims-second-pass-02"
+  ],
+  "title": "Previous-version snapshot wording broader than code (snapshot taken only from approved presets)",
+  "sev": "INFO",
+  "exposure": "INTERNET-AUTH",
+  "unit": "web-app + discord-worker (policy)",
+  "file": "apps/presets-api/src/handlers/presets.ts",
+  "line": 737,
+  "gid": "G71"
+ },
+ {
+  "members": [
+   "r2-policy-claims-second-pass-03"
+  ],
+  "title": "30-day deletion and 'full data export' promises have no runbook enumerating the stores to purge",
+  "sev": "INFO",
+  "exposure": "LOCAL",
+  "unit": "web-app + discord-worker (policy)",
+  "file": "apps/discord-worker/PRIVACY_POLICY.md",
+  "line": 154,
+  "gid": "G72"
+ },
+ {
+  "members": [
+   "r2-build-time-and-docs-sinks-02"
+  ],
+  "title": "Third-party Teamcraft/XIVAPI strings enter acquisition.en.json without markup stripping",
+  "sev": "INFO",
+  "exposure": "LOCAL",
+  "unit": "api-worker + core + web-app (build time)",
+  "file": "apps/api-worker/scripts/build-acquisition.ts",
+  "line": 552,
+  "gid": "G73"
+ }
+]

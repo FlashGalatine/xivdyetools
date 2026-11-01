@@ -1,0 +1,13 @@
+apps/discord-worker/scripts/gen-option-description-keys.ts:36:// `fileURLToPath(new URL(relative, import.meta.url))` does not type-check in
+apps/web-app/e2e/fixtures/navigation.ts:116:  readFileSync(new URL('../../package.json', import.meta.url), 'utf8')
+apps/web-app/src/services/chara-inspection-service.ts:216:    worker.postMessage(reply);
+apps/web-app/src/services/chara-inspection-service.ts:291:      call.worker = new Worker(new URL('../workers/chara-inspection.worker.ts', import.meta.url), {
+apps/web-app/src/services/chara-inspection-service.ts:300:    worker.addEventListener('message', (event: MessageEvent) =>
+apps/web-app/src/services/chara-inspection-service.ts:309:      worker.postMessage(request, [bytes]);
+apps/web-app/src/workers/chara-inspection.worker.ts:19: * new Worker(new URL(…, import.meta.url)), which the bundler follows and an import scan cannot see.
+apps/web-app/src/workers/chara-inspection.worker.ts:146:          globalThis.postMessage(message);
+apps/web-app/src/workers/chara-inspection.worker.ts:184:    globalThis.postMessage(response);
+apps/web-app/src/workers/chara-inspection.worker.ts:193:      globalThis.postMessage(failure);
+apps/web-app/src/workers/chara-inspection.worker.ts:212:  globalThis.addEventListener('message', (event: MessageEvent) => {
+packages/core/scripts/audit-dyes.ts:19:const coreRoot = fileURLToPath(new URL('../', import.meta.url));
+scripts/coverage-report.ts:60:const __dirname = fileURLToPath(new URL('.', import.meta.url));
