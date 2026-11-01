@@ -10,7 +10,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Prepare the Japanese and Simplified Chinese fonts for the pending shared bot catalog while retaining every existing codepoint, glyph shape and metric. Add the three required characters without changing handlers, bindings or registered commands.
-- Keep this font-readiness deployment separate from the later bot-logic and private notification-provider adoption. Production activation remains held.
+- Its production deploy is not run on its own: the maintainer ruled on 2026-10-31 that Discord 5.9.7 (unit 9) carries these fonts. Production activation remains held.
+
+### Security
+
+- **`/glamour` is limited to 5 requests per minute** (2026-10-26 security FINDING-017). Worker-kit
+  1.6.0 gives it an explicit preset with no burst allowance, which Discord's shared lookup maps to
+  the existing RL_5 binding; it previously inherited the 15/minute command default. The limit
+  reaches production with the first approved Discord run after worker-kit 1.6.0 merges (release
+  cut 04, #374, whose run redeploys 5.9.0), so 5.9.1 is the first version to record it. It narrows the
+  load one caller can place on api-worker's shared service budget; it does not remove contention
+  between users in that budget. Command registration is unchanged.
 
 ## [5.9.0] - 2026-10-26
 
