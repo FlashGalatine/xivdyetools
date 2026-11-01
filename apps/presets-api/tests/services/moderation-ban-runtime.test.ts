@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
-import { mkdirSync } from 'node:fs';
-import { resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { moderationRouter } from '../../src/handlers/moderation';
 import { authMiddleware } from '../../src/middleware/auth';
@@ -21,17 +21,14 @@ const owner = 'f46d94d5-b206-4010-b45f-4c0806639145';
 describe('moderation ban and audit on real local D1', () => {
   let runtime: Awaited<ReturnType<typeof import('../d1-runtime').createD1Runtime>>;
   const savedEnvironment = new Map<string, string | undefined>();
+  let scratch: string | undefined;
   let db: D1Database;
   let env: Env;
   let app: Hono<{ Bindings: Env; Variables: { auth: AuthContext } }>;
   beforeAll(async () => {
-    const root = fileURLToPath(
-      new URL(
-        `../../../../.superpowers/sdd/REMEDIATION_PLAN/stream-2-runtime-${process.pid}`,
-        import.meta.url,
-      ).toString(),
-    );
-    mkdirSync(root, { recursive: true });
+    // Fresh OS temp profile: Wrangler's config, cache and logs stay out of the checkout.
+    const root = mkdtempSync(join(tmpdir(), 'xivdyetools-presets-moderation-'));
+    scratch = root;
     for (const [key, value] of Object.entries({
       USERPROFILE: root,
       APPDATA: resolve(root, 'roaming'),
@@ -59,6 +56,7 @@ describe('moderation ban and audit on real local D1', () => {
         if (value === undefined) delete process.env[key];
         else process.env[key] = value;
       }
+      if (scratch) rmSync(scratch, { recursive: true, force: true, maxRetries: 5 });
     }
   });
   beforeEach(async () => {

@@ -1,0 +1,256 @@
+09cbbefa 2026-10-26 Merge pull request #331 from FlashGalatine/feat/chara-bot-import
+6fb5e6ff 2026-10-26 Merge main into docs/xivapi-offloading-research (after #325 and #327)
+bbec9321 2026-10-26 Merge main into feat/chara-bot-import (after #330); add the discord-worker 5.9.0 compatibility row
+1fd01192 2026-10-26 Merge origin/main into feat/chara-bot-import
+012e0508 2026-10-26 feat(web-app): ship the xivcharakit license notice and link it from About (Task 7)
+e0199e01 2026-10-26 docs(web-app): document the .chara inspection worker, the palette bridge and the new evidence states
+00fd47ef 2026-10-26 chore(web-app): release 5.16.0 (the xivcharakit-backed .chara reader and its Web Worker)
+7b07ed66 2026-10-26 fix(web-app): the .chara worker leaves core's barrel; prefetch palettes; close the verifier's gaps (Task 5)
+f7decf1e 2026-10-26 feat(web-app): read .chara files through the inspection worker; render the new evidence states (Task 5)
+8de08611 2026-10-26 feat(web-app): the inspection worker uses resolveCharaWithProvider; pin the bridge's cleanup paths
+89a9ccbd 2026-10-26 feat(web-app): the inspection worker asks the page for palette colors; dyes attach on the page (Task 4b)
+04ebcb9b 2026-10-26 feat(web-app): add the cancellable .chara inspection worker and service (Task 4)
+231b39d0 2026-10-26 Merge pull request #327 from FlashGalatine/feat/chara-library-core
+07fb6d3a 2026-10-26 Merge pull request #325 from FlashGalatine/docs/xivapi-worker-improvements-plan
+1f28cf16 2026-10-26 Merge pull request #326 from FlashGalatine/fix/web-app-log-hygiene
+caedbd83 2026-10-26 docs(core): bring the xivcharakit register, index and release notes in line with the 524/524 gate
+331efd1c 2026-10-26 chore(deps): Bump @cloudflare/workers-types
+c465f5d6 2026-10-26 fix(docs): drop the Square Enix icon texture from the audit evidence; file the audit:dyes line under Unreleased
+4453cf8c 2026-10-26 chore(release): bot-logic 4.11.0 and discord-worker 5.9.0 (the xivcharakit-backed /swatch and /glamour)
+b6ba8366 2026-10-26 feat(discord-worker): pass the capped attachment bytes to /swatch and /glamour (Task 6)
+af2cec96 2026-10-26 feat(bot-logic): read .chara files for /swatch and /glamour through core's xivcharakit facade (Task 6)
+89d73657 2026-10-26 docs(core): list the xivcharakit-backed import in the services doc; record the NOTICE and the packed-consumer check
+234d5964 2026-10-26 fix(core): tag the ./chara subpath entry as an entrypoint for the reachability gate
+685b85c5 2026-10-26 docs(core): document the @xivdyetools/core/chara subpath and the provider's read of the shader tables
+6dad3760 2026-10-26 feat(core): add the @xivdyetools/core/chara subpath for consumers that bring their own palette provider
+286b773e 2026-10-26 chore(deps-dev): Bump the dev-deps group with 7 updates
+72e41474 2026-10-26 refactor(core): resolveCharaWithProvider has no path to the palette tables
+466d48b2 2026-10-26 feat(core): add indexGap to the chara projection; accept a palette provider in resolveCharaForTools
+f5406886 2026-10-26 fix(core): keep the xivcharakit adapter out of consumers' shared chunk until it is imported
+71c401e2 2026-10-26 chore(core): release 5.15.0 (xivcharakit import, additive)
+d9bccc36 2026-10-26 feat(core): add the xivcharakit-backed chara reader and application projection (Task 3)
+a1bb8159 2026-10-26 feat(core): bridge host palettes to the xivcharakit PaletteProvider (Task 2)
+14742fb7 2026-10-26 feat(core): add xivcharakit@0.1.0-beta.4 and close the Task 1 compatibility gate
+91a2b92c 2026-10-25 chore(web-app): release 5.15.6 (log hygiene, description validation)
+7e5e570f 2026-10-25 fix(web-app): keep imported labels and raw exceptions out of logs; validate imported descriptions
+dc09ef8e 2026-10-25 test(core): add the xivcharakit parity comparison and difference register (Task 1 steps 1-3)
+c1ddc968 2026-10-20 fix(api-worker): check partial snapshot identity
+d1d46ad5 2026-10-20 perf(api-worker): coalesce chara lookup misses
+a272ee91 2026-10-20 perf(api-worker): revalidate cached icons
+4b03e9e8 2026-10-20 fix(api-worker): version icon cache entries
+1b3fabd4 2026-10-20 fix(api-worker): pin lookup cache identity
+e0e48bf5 2026-10-20 fix(core): require dye CSV headers
+626531a5 2026-10-20 Merge remote-tracking branch 'origin/main' into docs/xivapi-offloading-research
+9163e297 2026-10-20 feat(core): add replayable dye audit CLI
+bafc2494 2026-10-20 feat(core): fetch complete pinned Stain sheets
+7ee2f64c 2026-10-20 feat(core): compare captured Stain data
+ca854ac8 2026-10-20 Merge branch 'rollout/pr320-20261020' into rollout/pr321-20261020
+102153e3 2026-10-20 Merge branch 'rollout/pr319-20261020' into rollout/pr320-20261020
+1bb0015b 2026-10-20 Merge remote-tracking branch 'origin/main' into rollout/pr319-20261020
+e361b329 2026-10-20 fix(api-worker): omit redundant Poetics upgrade vendors
+8bf0c901 2026-10-19 chore(deps-dev): Bump tsup from 8.5.1 to 9.0.0
+d8b4581c 2026-10-19 chore(deps-dev): Bump the dev-deps group with 13 updates
+8e8a5731 2026-10-19 chore(deps): Bump @cloudflare/workers-types
+4264b735 2026-10-16 test(web-app): run under msw 3 — onUnhandledFrame, and no request in flight at teardown
+d77fad3f 2026-10-16 Merge remote-tracking branch 'origin/main' into review/243-msw3
+06deba57 2026-10-16 docs(web-app): say why the .chara picker keeps application/json
+9e54109a 2026-10-16 docs(chara): versions, changelogs and living docs for the 8 KiB .chara cap
+e7919b2f 2026-10-16 fix(chara): accept only *.chara files and cap them at 8 KiB
+d8490205 2026-10-16 fix(core): bound .chara error messages and the float-color split
+c2890a36 2026-10-13 chore(deps-dev): Bump msw from 2.15.0 to 3.0.3
+6970ec70 2026-10-13 Merge branch 'main' into dependabot/npm_and_yarn/dev-deps-c9ae19240d
+0bd241c2 2026-10-13 chore(deps-dev): Bump the dev-deps group across 1 directory with 2 updates
+cf89983b 2026-10-13 chore(deps): Bump the production-deps group with 2 updates
+729bc2f7 2026-10-12 chore(deps-dev): the dev-deps group (#282's 14 updates), turbo's agentGuidance opt-out, and a source-map-js security floor
+152bc8f1 2026-10-12 Merge pull request #241 from FlashGalatine/dependabot/npm_and_yarn/production-deps-2f177c097f
+361aee10 2026-10-12 Merge pull request #302 from FlashGalatine/docs/claude-md-freshness
+673761e6 2026-10-12 Merge main into the GPOSERS omitted-slots branch: the doc remediation chain landed (web-app 5.15.3, discord-worker 5.8.13)
+f661a71c 2026-10-12 Merge main into Sprint 1: #284 and #285 landed (web-app 5.15.1/5.15.2, discord-worker 5.8.12)
+0ad77c5a 2026-10-12 docs(glamour): the bot's Off Hand change is described as it is; recounted corpus figures in versions.md
+902d49e1 2026-10-12 Merge #285's guide wording and #284's What's New fix into the GPOSERS omitted-slots branch
+22890012 2026-10-12 Merge #284's What's New wording fix into the twin-naming branch
+b3a42e07 2026-10-12 docs(web-app): 5.15.1 What's New says how the 803 lines were checked, without overclaiming official sources
+5ba47bd8 2026-10-12 docs(claude-md): review follow-ups — Perspective unset queues submissions; the modals budget and core's GPOSERS exports follow #300
+3aed1596 2026-10-12 docs(web-app,discord-worker): re-date the 24 policy variants to the merge date (2026-10-12)
+ee30b092 2026-10-12 fix(glamour): review follow-ups — the web list skips an Off Hand that is the main hand's own model; /manual says what the list leaves out
+9da606ca 2026-10-12 Merge #285's review follow-ups into the GPOSERS omitted-slots branch
+2bc46a6c 2026-10-12 fix(core): review follow-ups — no-pass fallback stays among judged twins; one announcement per batch
+6eb8960f 2026-10-12 Merge #284's review follow-ups into the twin-naming branch
+85afafaf 2026-10-12 fix(api-worker): review follow-ups — What's New counts the 15 hand-decided lines; event-year bound follows the table
+a055a22a 2026-10-11 docs: CLAUDE.md files match the checkout — 191 stale or wrong claims fixed
+0dd8a3a5 2026-10-11 chore(discord-worker): 5.8.14 for bot-logic 4.9.0's tidier /glamour list
+d1ca7a3d 2026-10-11 feat(bot-logic): /glamour's GPOSERS list applies gposersOmittedSlots
+9ab1606d 2026-10-11 feat(web-app): the GPOSERS list leaves out invisible pieces and an unsupported Off Hand
+f1414d24 2026-10-11 feat(api-worker): uiCategory on resolved items; row cache shape 5
+12759fd3 2026-10-11 feat(core): gposersOmittedSlots — leave invisible and unsupported off-hand slots out of the GPOSERS list
+64655add 2026-10-11 docs(web-app,discord-worker): 5.15.3 / 5.8.13 changelogs and version rows (Sprint 1)
+133c677f 2026-10-11 docs(web-app,discord-worker): live Discord invite and two corrected claims in all 24 policy files (DOC-001, DOC-073)
+7ed4ce64 2026-10-11 chore(discord-worker): 5.8.12 for core 5.11.0's /glamour twin pick
+54dcbc37 2026-10-11 fix(web-app): name the obtainable twin; key saved edits on the lowest row
+496eda63 2026-10-11 feat(api-worker): name a model family by its lowest twin with a line
+02fe0535 2026-10-11 feat(core): defaultCharaTwin prefers a twin with an acquisition line
+d6eb816d 2026-10-11 docs(web-app): American spelling in the English policy documents (DOC-079)
+d1f7d000 2026-10-11 docs(web-app): 5.15.1 — What's New note for the 803 new Acquisition lines
+926142c7 2026-10-11 fix(api-worker): FANTASIAN store sets and the Mad Bird Ring get lines (maintainer decision)
+2bf4429b 2026-10-11 fix(api-worker): 0.18.1 — 788 researched acquisition lines for Glamour Reader blanks
+27a10616 2026-10-09 merge: #276 stacks on the merge-day chain — REFACTOR-009 keeps both halves
+d8cd25fc 2026-10-09 merge: #277 stacks on the merge-day chain (main + every PR before it)
+d99e5e10 2026-10-09 merge: #278 stacks on the merge-day chain (main + every PR before it)
+3c35e230 2026-10-09 merge: #275 stacks on the merge-day chain (main + every PR before it)
+66c52fab 2026-10-09 merge: #274 stacks on the merge-day chain (main + every PR before it)
+eb216e44 2026-10-09 merge: #273 stacks on the merge-day chain — api-worker CLAUDE.md keeps both notes
+3add01bd 2026-10-09 merge: #272 stacks on the merge-day chain (main + every PR before it)
+783e0a2e 2026-10-09 merge: #271 stacks on the merge-day chain (main + every PR before it)
+167b94fe 2026-10-09 merge: #270 stacks on the merge-day chain (main + every PR before it)
+fb1fcdc8 2026-10-09 merge: #279 picks up #251's main sync
+64224b49 2026-10-09 merge: main into #251 — root notes 5.10.20 above #268's 5.10.19
+7da4e03b 2026-10-09 Merge pull request #266 from FlashGalatine/fix/web-app-glamour-drop-zone
+25bc5585 2026-10-09 Merge pull request #265 from FlashGalatine/fix/discord-worker-resvg-free
+d9a57b5a 2026-10-09 merge: #266 into #251 — the base picked up merge day's main sync
+88a91fcf 2026-10-09 merge: #266 picks up the main sync from its base (#249's merge-date line)
+a8a1bdcb 2026-10-09 merge: #265 picks up the main sync from its base (#249's merge-date line)
+febd9f6b 2026-10-09 merge: #268 picks up the main sync from its base (#249's merge-date line)
+12ad1337 2026-10-09 merge: #263 picks up the main sync from its base (#249's merge-date line)
+723d00f7 2026-10-09 merge: #262 picks up the main sync from its base (#249's merge-date line)
+298173ee 2026-10-09 merge: #261 picks up the main sync from its base (#249's merge-date line)
+6a2f44c9 2026-10-09 merge: #260 picks up the main sync from its base (#249's merge-date line)
+c0e9ee0b 2026-10-09 merge: #259 picks up the main sync from its base (#249's merge-date line)
+ceae5bf9 2026-10-09 merge: #258 picks up the main sync from its base (#249's merge-date line)
+3619a1e5 2026-10-09 merge: main into #257 — #249's merge-date line in the 5.8.3 entry
+ec826453 2026-10-09 merge: main into #246 (the join) — keep #249's merge-date line beside the 5.8.2 entry
+f9000881 2026-10-09 Merge pull request #255 from FlashGalatine/fix/remediation-2026-10-04-sprint29
+4c370340 2026-10-09 Merge pull request #254 from FlashGalatine/fix/remediation-2026-10-04-sprint27
+7347c0bc 2026-10-09 Merge pull request #253 from FlashGalatine/fix/remediation-2026-10-04-sprint23
+c745b5a9 2026-10-09 Merge pull request #252 from FlashGalatine/fix/remediation-2026-10-04-sprint22
+147a8e4a 2026-10-09 docs(api-worker,web-app): api-worker 0.18.0, web-app 5.15.0 dated 2026-10-09, What's New and version rows
+8f57c1e8 2026-10-09 fix(api-worker,web-app): name a retired-only family instead of answering null
+adc9946e 2026-10-09 merge: #273 (api-worker 0.17.0) into #278 — stack the acquisition work on the lazy table
+12bd71b1 2026-10-09 docs(web-app): 5.14.12 changelogs and version rows (review follow-ups)
+ae815cda 2026-10-09 fix(web-app): custom-color menu, active palette chip, slot pick while a palette loads
+2c07739a 2026-10-09 docs(web-app,discord-worker): policy documents last updated on the merge date
+ce5dbd60 2026-10-09 fix(api-worker): fill researched acquisition sources
+de4d9aad 2026-10-09 fix(api-worker): resolve coffer rewards and vendor locations
+34b6b570 2026-10-09 fix(api-worker): replace retired glamour gear
+2428f144 2026-10-08 feat(web-app): resolve facewear unlock sources
+9d9e1425 2026-10-07 fix(api-worker): omit Mewazunte acquisition costs
+3e2efeb8 2026-10-07 fix(api-worker): omit Varsarudh acquisition costs
+83a2ea6a 2026-10-07 fix(api-worker): list Enie for fiend costume acquisition
+78f98527 2026-10-06 merge: restack on the remediation chain tip (#266); versions follow it
+50f466e1 2026-10-06 fix(bot-logic,discord-worker): the character-file topic names the OK verdict too
+f45b3f04 2026-10-06 build(web-app): re-budget the core runtime chunk for logger 2.3.0 (+1.48 KB measured)
+64e1f212 2026-10-06 fix(stoat-worker): 0.3.3 — honest about/help, broad names resolve to every match, locale-aware resolver (Sprint 24)
+1fbff533 2026-10-06 fix(oauth): keep the verifiedCharacter?.name shape web-app's privacy parity test pins
+ed460f33 2026-10-06 fix(worker-kit): 1.5.0 — body guard, formatError headers, KV reset paging (Sprint 16)
+8d2649d7 2026-10-06 fix(logger): 2.3.0 — redact secrets inside context strings, serialize toJSON values, linear rules (Sprint 12)
+26e43a64 2026-10-06 fix(ci): 2.3.2 — CI concurrency, deploy path filters, publish loop, gate scripts (Sprint 20)
+cb32ab3a 2026-10-06 chore(image-worker): 1.3.4 — remove the unused @ path alias (Sprint 21)
+c73b702f 2026-10-06 fix(test-utils): 3.0.0 — D1 first() null, sorted KV/R2 list, dead exports and integration suite removed (Sprint 19)
+6818070b 2026-10-06 fix(api-worker): 0.17.0 — telemetry charged once, strict numeric params, patch-aware chara cache, lazy tables (Sprint 18)
+35f502db 2026-10-06 fix(oauth): 3.1.3 — limiter keys on the routed path, null bodies, roster fallback, JSON-only callbacks (Sprint 10)
+261f1a13 2026-10-06 fix(og-worker): 2.12.0 — gradient, extractor and harmony previews follow the page (Sprint 11)
+e42fa406 2026-10-06 docs(discord-worker): no FinalizationRegistry at 2024-12-01, so the pixmap leaked too
+d5ac5362 2026-10-06 docs(web-app): 5.14.11 changelogs and version rows (Glamour Reader drop zone)
+031458ae 2026-10-06 fix(web-app): the Glamour Reader's drop zone describes the reader, not the Swatch Matcher
+9a1d3d6b 2026-10-06 docs(discord-worker): 5.8.10 measurements used a synthetic test SVG
+3e6d787c 2026-10-06 chore(discord-worker): release 5.8.10
+412e3884 2026-10-06 fix(discord-worker): free resvg-wasm allocations after every card render
+32d11f7f 2026-10-06 docs: discord-worker 5.8.9 notes cover Japanese item names and letterforms (Sprint 30)
+fa56ae8a 2026-10-06 fix(discord-worker): Japanese item names and Japanese letterforms on /glamour and every ja card (FONT-001 follow-up)
+6cc934c3 2026-10-06 feat(api-worker): a Japanese item-name table for the bot's font subset (FONT-001 follow-up)
+b28b9ae9 2026-10-06 docs: discord-worker 5.8.9 changelog and version rows (Sprint 30)
+00390333 2026-10-06 fix(discord-worker): /glamour cards name items in Korean and Chinese (2026-10-04 remediation, Sprint 30: FONT-001)
+019abd41 2026-10-06 docs: types 3.3.0, moderation-worker 1.8.2, discord-worker 5.8.8, presets-api 2.6.1 changelogs and version rows (Sprint 26)
+e92ea01f 2026-10-06 refactor(moderation-worker, discord-worker, presets-api): one review custom_id grammar from @xivdyetools/types (2026-10-04 remediation, Sprint 26: REFACTOR-001)
+20587699 2026-10-06 feat(types): the moderation review custom_id grammar and status list (2026-10-04 remediation, Sprint 26: REFACTOR-001)
+36a16de8 2026-10-06 docs: moderation-worker 1.8.1 changelog and version rows (Sprint 17)
+8fbb2969 2026-10-06 test(presets-api): pin the two 404 bodies moderation-worker tells apart (2026-10-04 remediation, Sprint 17: BUG-054)
+667f3ef9 2026-10-06 fix(moderation-worker): review edge cases, refresh Revert label, dead code (2026-10-04 remediation, Sprint 17)
+60843097 2026-10-06 docs: core 5.10.0, bot-logic 4.8.2, web-app 5.14.10, og-worker 2.11.3, discord-worker 5.8.7 changelogs and version rows (Sprint 13)
+290b1bb7 2026-10-06 fix(og-worker, discord-worker): CJK subsets for core 5.10.0's sheet names; de/fr preview wording (2026-10-04 remediation, Sprint 13)
+49e6f31a 2026-10-06 fix(bot-logic, web-app): a grey gradient endpoint keeps the other end's hue (2026-10-04 remediation, Sprint 13)
+e48dd7ab 2026-10-06 fix(core): grey mixes, real palettes, a checked locale build, client sheet names (2026-10-04 remediation, Sprint 13)
+da0ce19e 2026-10-06 docs: svg 4.4.0, bot-logic 4.8.1 and discord-worker 5.8.6 changelogs and version rows (Sprints 14+28)
+07c69bce 2026-10-06 refactor(discord-worker): pack the /budget ledger with svg's geometry (2026-10-04 remediation, Sprint 28: REFACTOR-003)
+7562d177 2026-10-06 fix(bot-logic): one printed contrast ratio, localized /compare readouts (2026-10-04 remediation, Sprints 14+28)
+4d7df6c2 2026-10-06 fix(svg): ratios never print across a cut, whole step ranges, glamour footer, a scanner that fails closed (2026-10-04 remediation, Sprints 14+28)
+79fb4005 2026-10-06 docs: bot-logic 4.8.0 and discord-worker 5.8.5 changelogs and version rows (Sprint 15)
+c1f60ec8 2026-10-06 fix(discord-worker): loggers to bot-logic, /budget's six-digit rule, too-few-dyes replies (2026-10-04 remediation, Sprint 15)
+b43e757a 2026-10-06 fix(bot-logic): six-digit hex, filters before the search, GPOSERS placeholders, failure logging (2026-10-04 remediation, Sprint 15)
+2d353699 2026-10-06 fix(bot-logic): /swatch names a missing slot in the reader's language (2026-10-04 remediation, Sprint 9)
+d40b06f7 2026-10-06 docs: discord-worker 5.8.4, bot-logic 4.7.0, presets-api 2.6.0 changelogs and version rows (Sprint 9)
+a9dac980 2026-10-06 fix(discord-worker): one moderation path, edit diffs, KV failure handling (2026-10-04 remediation, Sprint 9)
+d9fdb57c 2026-10-06 refactor(discord-worker): remove CommandRegistryEntry.deprecated (2026-10-04 remediation, Sprint 9: DEAD-024)
+f1174a47 2026-10-06 feat(presets-api): send the pre-edit text on the moderation webhook (2026-10-04 remediation, Sprint 9)
+b7b8500b 2026-10-06 docs(presets-api): 2.5.0 changelog and version rows (Sprint 8)
+a33842cc 2026-10-06 refactor(presets-api): remove test-only exports and a dead branch (2026-10-04 remediation, Sprint 8: DEAD-031..034)
+8c264798 2026-10-06 fix(presets-api): repeated dyes, null bodies, unchanged-text edits, retention signal, edit marker (2026-10-04 remediation, Sprint 8)
+54e40458 2026-10-06 Merge Sprints 2+3 (#246) into the web stack tip (#255) — join branch for the discord-worker sprints
+80393a08 2026-10-05 docs(web-app): 5.14.9 changelog and version rows (Sprint 29)
+7c187084 2026-10-05 refactor(web-app): remove what the two refactors left without readers (2026-10-04 remediation, Sprint 29)
+ccda155f 2026-10-05 refactor(web-app): Swatch Matcher draws one workspace (2026-10-04 remediation, Sprint 29: REFACTOR-005)
+51a058de 2026-10-05 refactor(web-app): Gradient Builder draws one workspace (2026-10-04 remediation, Sprint 29: REFACTOR-005)
+d7f80034 2026-10-05 docs(web-app): 5.14.8 changelogs and version rows (Sprint 27, with core 5.9.0)
+647d8f9c 2026-10-05 fix(web-app): report market-board outages; dyeable slots from core (2026-10-04 remediation, Sprint 27: BUG-090, REFACTOR-004)
+742a3061 2026-10-05 feat(core): 5.9.0 — batch price outcome, CN/KR data centers, CHARA_DYEABLE_SLOTS (2026-10-04 remediation, Sprint 27)
+dde82ec7 2026-10-05 docs(web-app): 5.14.7 changelog and version rows (Sprint 23)
+fcc0b76f 2026-10-05 refactor(web-app): remove 21 orphaned locale keys from all six locales (2026-10-04 remediation, Sprint 23: DEAD-007, DEAD-010)
+bf1611a0 2026-10-05 refactor(web-app): remove the six legacy context actions and their handlers (2026-10-04 remediation, Sprint 23: DEAD-003)
+60e89446 2026-10-05 refactor(web-app): remove the state icons only the dead presets used (2026-10-04 remediation, Sprint 23: DEAD-009)
+85a16dcf 2026-10-05 refactor(web-app): remove six test-only empty-state presets (2026-10-04 remediation, Sprint 23: DEAD-008)
+7763d4e1 2026-10-05 test: move two web-app cases into core and types, drop the web app's copies (2026-10-04 remediation, Sprint 23: DEAD-021, DEAD-022)
+057cba2f 2026-10-05 refactor(web-app): remove test-only service methods (2026-10-04 remediation, Sprint 23: DEAD-017, DEAD-018, DEAD-019, DEAD-020, DEAD-023)
+9dc5f75d 2026-10-05 refactor(web-app): remove dead styles and write-only Lit state (2026-10-04 remediation, Sprint 23: DEAD-005, DEAD-006, DEAD-011)
+c6d67f64 2026-10-05 docs(web-app): Sprint 22 fixed 41 of 42 rows, not 40 of 41
+d92dd5b2 2026-10-05 docs(web-app): 5.14.6 changelogs and version rows (Sprint 22)
+2023108b 2026-10-05 fix(web-app): validate-i18n reads wrapped calls, aliases, maps and fallbacks (2026-10-04 remediation, Sprint 22, BUG-074)
+8a826c40 2026-10-05 fix(web-app): service LOWs — sign-out, collections, IndexedDB, locale, exports (2026-10-04 remediation, Sprint 22)
+3d5b84bd 2026-10-05 fix(web-app): keyboard, overlays and shell LOWs (2026-10-04 remediation, Sprint 22)
+ccfc0d81 2026-10-05 fix(web-app): tool LOWs — theme redraws, price-row gating, pair and endpoint state (2026-10-04 remediation, Sprint 22)
+641257c5 2026-10-05 fix(bot-logic,discord-worker): /manual explains every /glamour verdict and names Brio
+c85fd23a 2026-10-05 docs(web-app,discord-worker): 5.14.5 / 5.8.3 changelogs, version rows, glossary and the policy guardrail (Sprint 7)
+ea041c74 2026-10-05 docs(discord-worker): Terms of Service, all six languages — Korean moderator word, French and German preset words (2026-10-04 remediation, Sprint 7)
+4e891868 2026-10-05 docs(discord-worker): Privacy Policy, all six languages — fixed Discord-ID date (2026-10-04 remediation, Sprint 7)
+e7ad0bc8 2026-10-05 docs(web-app): Terms of Service, all six languages — all ten tools, by their UI titles (2026-10-04 remediation, Sprint 7)
+bf332ddd 2026-10-05 docs(web-app): Privacy Guide, all six languages — fixed Discord-ID date, tool titles, About path (2026-10-04 remediation, Sprint 7)
+c88d51c6 2026-10-05 fix(web-app): Sprint 6 review follow-ups — wording, docs, plural keys in the i18n gate
+03979111 2026-10-05 docs(web-app): 5.14.4 changelogs and version rows
+31c8914f 2026-10-05 fix(web-app,core): translations and terminology (2026-10-04 remediation, Sprint 6)
+1e6242b1 2026-10-05 docs(web-app): 5.14.3 changelogs and version row
+ad87be42 2026-10-05 fix(web-app): Sprint 5 review follow-ups
+07c8a22e 2026-10-05 refactor(web-app): remove the shell's dead Accessibility CSS block (dead-code DEAD-004, from Sprint 23)
+665bf564 2026-10-05 fix(web-app): tool correctness (2026-10-04 remediation, Sprint 5)
+159a1dd5 2026-10-05 fix(bot-logic,discord-worker): Sprint 2+3 review follow-ups
+409c6250 2026-10-05 docs(discord-worker): 5.8.2 changelogs, version rows
+f538b4f5 2026-10-05 fix(bot-logic,discord-worker): the bot speaks the user's language (2026-10-04 remediation, Sprints 2+3)
+eab54eb2 2026-10-05 docs(web-app): 5.14.2 changelogs and version row
+b667d98d 2026-10-05 fix(web-app): Sprint 4 review follow-ups
+10f6f881 2026-10-05 test(web-app): the 500 e2e checks the Community tab says the feed is unavailable (BUG-029)
+e5a612b5 2026-10-05 refactor(web-app): remove the dead preset-service code (dead-code DEAD-012 to DEAD-016)
+ce5d71cf 2026-10-05 fix(web-app): presets and collections (2026-10-04 remediation, Sprint 4)
+a6fbd078 2026-10-05 feat(web-app): hide Enable Market Board on Budget, which loads its own prices
+924a1c35 2026-10-05 docs(web-app): 5.14.1 changelog — say which new tests were red before the fix
+68599b74 2026-10-05 fix(web-app): Sprint 1 review follow-ups; the Privacy Guide says Budget always loads prices
+f20683f8 2026-10-05 fix(web-app): tool settings have one owner, ConfigController (2026-10-04 remediation, Sprint 1)
+62cd892a 2026-10-05 chore(deps): Bump the production-deps group with 2 updates
+009283ba 2026-10-05 merge: main into fix/core-race-clan-names (batch merged; versions follow it)
+e30a6e26 2026-10-05 merge: main into fix/security-2026-10-03-sprint8 (version rows, player notes)
+62ebed1e 2026-10-05 merge: main into fix/security-2026-10-03-sprint5 (version rows, player notes)
+f6405547 2026-10-05 merge: main into fix/security-2026-10-03-sprint4 (version rows)
+fa14beb3 2026-10-05 merge: main into fix/security-2026-10-03-sprint3 (version rows)
+7f8758dc 2026-10-05 Merge pull request #229 from FlashGalatine/fix/security-2026-10-03-sprint7
+5e3b000d 2026-10-05 Merge pull request #223 from FlashGalatine/fix/security-2026-10-03-sprint2
+6ac9b0d2 2026-10-05 merge: main into fix/security-2026-10-03-sprint7 (version rows)
+fa25c0aa 2026-10-05 Merge pull request #228 from FlashGalatine/fix/security-2026-10-03-sprint6
+5a54c540 2026-10-05 merge: main into fix/security-2026-10-03-sprint9 (version rows)
+e409c0c4 2026-10-05 Merge pull request #232 from FlashGalatine/fix/security-2026-10-03-sprint10
+fd70736d 2026-10-05 merge: #223's pre-release corrections into fix/security-2026-10-03-sprint8
+3f662657 2026-10-05 fix(web-app): Privacy Guide — one retention rule per log entry, the ban record's account ID (I18N-005, C07, I18N-006)
+5805bf8a 2026-10-05 fix(discord-worker): bot policy — XIVAuth author names, the ban record's account ID, retention row (C06, C07, I18N-004/006)
+91de5f8d 2026-10-05 fix(web-app): name the XIVAuth User fallback in the sign-in note and Terms (C02, TERM-014/015)
+d3bf312a 2026-10-05 refactor(discord-worker): drop the unread ModerationPresetInfo.author_discord_id (DEAD-002)
+d1f9e5c5 2026-10-05 fix(api-worker): drop the retired proxy.xivdyetools.projectgalatine.com route
+6f2bb05c 2026-10-05 fix(moderation-worker): drop the retired moderation-bot.xivdyetools.projectgalatine.com route; queue footer drops <reason>
+12e7f887 2026-10-05 fix(presets-api): drop the retired api.xivdyetools.projectgalatine.com route; changelog names migration 0015
+a4a769f5 2026-10-05 fix(core): 5.8.1 — Korean race names and Korean / Chinese clan names from the game clients
+ea264d49 2026-10-04 chore(moderation-worker): drop five strings the confirm-button rewrite orphaned (DEAD-001)
+10a1cb77 2026-10-04 fix(presets-api): reword a comment that broke moderation-worker's stats contract test

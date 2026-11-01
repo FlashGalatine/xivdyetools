@@ -1,0 +1,941 @@
+{
+ "findings": [
+  {
+   "id": "DEAD-001",
+   "gid": "D08",
+   "merged": [],
+   "candidates": [
+    "web-app-07"
+   ],
+   "rec": "REMOVE",
+   "confidence": "HIGH",
+   "blast": "NONE",
+   "semver": "NONE",
+   "unit": "web-app",
+   "title": "Comments and docs describing behavior that no longer exists (web-app) — ~5 lines",
+   "lines": 5,
+   "decision": "",
+   "trigger": "",
+   "prerequisite": "None"
+  },
+  {
+   "id": "DEAD-002",
+   "gid": "D12",
+   "merged": [
+    "D29"
+   ],
+   "candidates": [
+    "core-legacy-08",
+    "core-legacy-09",
+    "core-facade-05",
+    "supply-harness-08",
+    "supply-harness-09",
+    "supply-harness-10",
+    "supply-harness-06"
+   ],
+   "rec": "REMOVE",
+   "confidence": "HIGH",
+   "blast": "NONE",
+   "semver": "NONE",
+   "unit": "core (comments + npm README/NOTICE text) and docs; no code or API change",
+   "title": "Stale comments and docs around the xivcharakit facade still describe the legacy parser as the live path, and two @entrypoint tags are inert",
+   "lines": 0,
+   "decision": "",
+   "trigger": "",
+   "prerequisite": ""
+  },
+  {
+   "id": "DEAD-003",
+   "gid": "D28",
+   "merged": [],
+   "candidates": [
+    "supply-harness-04"
+   ],
+   "rec": "REMOVE",
+   "confidence": "HIGH",
+   "blast": "NONE",
+   "semver": "NONE",
+   "unit": "core (packages/core; comment-only, no release needed)",
+   "title": "Seven stale @public tags on core barrel chara-facade exports that now have production in-repo consumers",
+   "lines": 0,
+   "decision": "",
+   "trigger": "",
+   "prerequisite": ""
+  },
+  {
+   "id": "DEAD-004",
+   "gid": "D13",
+   "merged": [],
+   "candidates": [
+    "api-og-01",
+    "api-og-02",
+    "api-og-03",
+    "api-og-06"
+   ],
+   "rec": "REMOVE",
+   "confidence": "HIGH",
+   "blast": "NONE",
+   "semver": "NONE",
+   "unit": "api-worker (docs + comments only; hub docs/ copies ride along)",
+   "title": "Stale api-worker chara docs/comments: icon caching, resolve consumer, /api/version, misplaced OPT-004 note — ~4 lines",
+   "lines": 4,
+   "decision": "",
+   "trigger": "",
+   "prerequisite": "None."
+  },
+  {
+   "id": "DEAD-005",
+   "gid": "D24",
+   "merged": [],
+   "candidates": [
+    "bot-discord-11"
+   ],
+   "rec": "REMOVE WITH CAUTION",
+   "confidence": "HIGH",
+   "blast": "NONE",
+   "semver": "NONE",
+   "unit": "bot-logic + discord-worker (comment/README only; no runtime change)",
+   "title": "Comments and README describe the legacy parser's errors and value echoes",
+   "lines": 0,
+   "decision": "",
+   "trigger": "",
+   "prerequisite": ""
+  },
+  {
+   "id": "DEAD-006",
+   "gid": "D16",
+   "merged": [],
+   "candidates": [
+    "web-app-04"
+   ],
+   "rec": "REMOVE",
+   "confidence": "HIGH",
+   "blast": "LOW",
+   "semver": "NONE",
+   "unit": "web-app",
+   "title": "The ISSUE_KEY entry for EYE_PAIRING_UNCONFIRMED cannot be reached and duplicates the default — ~2 lines",
+   "lines": 2,
+   "decision": "",
+   "trigger": "",
+   "prerequisite": ""
+  },
+  {
+   "id": "DEAD-007",
+   "gid": "D18",
+   "merged": [],
+   "candidates": [
+    "web-app-03"
+   ],
+   "rec": "REMOVE",
+   "confidence": "HIGH",
+   "blast": "LOW",
+   "semver": "NONE",
+   "unit": "web-app",
+   "title": "The facewear-era `dye.itemID <= 0` guard in the swatch matching loops is always false — ~1 lines",
+   "lines": 1,
+   "decision": "",
+   "trigger": "",
+   "prerequisite": ""
+  },
+  {
+   "id": "DEAD-008",
+   "gid": "D15",
+   "merged": [],
+   "candidates": [
+    "web-app-08"
+   ],
+   "rec": "REFACTOR FIRST",
+   "confidence": "HIGH",
+   "blast": "LOW",
+   "semver": "NONE",
+   "unit": "web-app (unpublished app, ships with the next web-app release)",
+   "title": "swatch-tool redefines MONO and SANS, which chara-ui already exports — ~3 lines",
+   "lines": 3,
+   "decision": "",
+   "trigger": "",
+   "prerequisite": "Extend the existing chara-ui import at swatch-tool.ts:64 with MONO and SANS before deleting the local constants."
+  },
+  {
+   "id": "DEAD-009",
+   "gid": "D14",
+   "merged": [],
+   "candidates": [
+    "web-app-06"
+   ],
+   "rec": "REMOVE WITH CAUTION",
+   "confidence": "HIGH",
+   "blast": "LOW",
+   "semver": "NONE",
+   "unit": "web-app",
+   "title": "CharaResolveUnavailableError.status is never read and no caller checks the error type — ~7 lines",
+   "lines": 7,
+   "decision": "",
+   "trigger": "Keep it if a caller is added that branches on the HTTP status, for example a retry or backoff on 429/503, or a distinct note for re-indexing.",
+   "prerequisite": ""
+  },
+  {
+   "id": "DEAD-010",
+   "gid": "D07",
+   "merged": [],
+   "candidates": [
+    "web-app-05"
+   ],
+   "rec": "REMOVE WITH CAUTION",
+   "confidence": "HIGH",
+   "blast": "LOW",
+   "semver": "NONE",
+   "unit": "web-app",
+   "title": "CharaResolveResult.version is stored but never read — ~25 lines",
+   "lines": 25,
+   "decision": "",
+   "trigger": "",
+   "prerequisite": "Confirm no planned client use of the XIVAPI version key (e.g. cache invalidation) before dropping it."
+  },
+  {
+   "id": "DEAD-011",
+   "gid": "D04",
+   "merged": [],
+   "candidates": [
+    "web-app-01"
+   ],
+   "rec": "REMOVE WITH CAUTION",
+   "confidence": "HIGH",
+   "blast": "LOW",
+   "semver": "NONE",
+   "unit": "web-app",
+   "title": "Protocol validates non-null dye objects that the worker can never send — ~245 lines",
+   "lines": 245,
+   "decision": "",
+   "trigger": "",
+   "prerequisite": "Keep the worker's dye-null assertions (worker.test.ts:188-209) green, because they become the guard for the stricter rule."
+  },
+  {
+   "id": "DEAD-012",
+   "gid": "D09",
+   "merged": [],
+   "candidates": [
+    "web-app-02"
+   ],
+   "rec": "REFACTOR FIRST",
+   "confidence": "HIGH",
+   "blast": "LOW",
+   "semver": "NONE",
+   "unit": "web-app",
+   "category": "Dead Path",
+   "title": "GlamourBlock code paths for a missing host (no actionsHost or onSubmitPalette) — ~7 lines",
+   "lines": 7,
+   "decision": "",
+   "trigger": "",
+   "prerequisite": "Refactor the test suites to pass a host element and an onSubmitPalette spy before the callbacks are made required."
+  },
+  {
+   "id": "DEAD-013",
+   "gid": "D10",
+   "merged": [],
+   "candidates": [
+    "supply-harness-07"
+   ],
+   "rec": "REMOVE WITH CAUTION",
+   "confidence": "MEDIUM",
+   "blast": "LOW",
+   "semver": "NONE",
+   "unit": "web-app (check-bundle-size.js gates deploy-web-app.yml and deploy-web-app-beta.yml; a merge triggers a web-app deploy with byte-identical output)",
+   "title": "Bundle-budget rows match no emitted chunk (vendor-spectral, other vendor, dye selector) — ~8 lines",
+   "lines": 8,
+   "decision": "",
+   "trigger": "Revisit if a build emits a vendor-* chunk other than vendor-core or vendor-lit (a new npm dependency in the page bundle), or a dye-selector-* chunk (Rolldown names shared chunks after the module graph). Either would then need its own row again. The optional check that every named row matched a file would catch this automatically.",
+   "prerequisite": ""
+  },
+  {
+   "id": "DEAD-014",
+   "gid": "D06",
+   "merged": [],
+   "candidates": [
+    "bot-discord-03"
+   ],
+   "rec": "REMOVE",
+   "confidence": "HIGH",
+   "blast": "LOW",
+   "semver": "NONE",
+   "unit": "discord-worker",
+   "title": "downloadCharaAttachment text-only shape and adapters' fileText pass-through are dead in production — ~15 lines",
+   "lines": 15,
+   "decision": "",
+   "trigger": "",
+   "prerequisite": "Re-point adapter tests to assert fileBytes before dropping fileText, so the live bytes path stays covered."
+  },
+  {
+   "id": "DEAD-015",
+   "gid": "D19",
+   "merged": [],
+   "candidates": [
+    "bot-discord-06"
+   ],
+   "rec": "REMOVE",
+   "confidence": "HIGH",
+   "blast": "LOW",
+   "semver": "NONE",
+   "unit": "bot-logic (ships to discord-worker; internal const, no export touched)",
+   "title": "Unreachable ?? 'card.slotSkin' fallback for the slot label",
+   "lines": 0,
+   "decision": "",
+   "trigger": "",
+   "prerequisite": "Apply the SLOT_KEYS retype in the same change as the fallback removal."
+  },
+  {
+   "id": "DEAD-016",
+   "gid": "D23",
+   "merged": [],
+   "candidates": [
+    "bot-discord-07"
+   ],
+   "rec": "REMOVE",
+   "confidence": "HIGH",
+   "blast": "LOW",
+   "semver": "NONE",
+   "unit": "bot-logic",
+   "title": "Redundant export on module-internal getCharacterColors and CharaFileSource",
+   "lines": 0,
+   "decision": "",
+   "trigger": "",
+   "prerequisite": ""
+  },
+  {
+   "id": "DEAD-017",
+   "gid": "D22",
+   "merged": [],
+   "candidates": [
+    "bot-discord-02"
+   ],
+   "rec": "REMOVE",
+   "confidence": "HIGH",
+   "blast": "NONE",
+   "semver": "NONE",
+   "unit": "bot-logic (packaging only; ships with the next bot-logic version bump, no worker redeploy needed)",
+   "title": "Test fixture module __fixtures__/chara-fixtures ships in the published bot-logic tarball",
+   "lines": 0,
+   "decision": "",
+   "trigger": "",
+   "prerequisite": ""
+  },
+  {
+   "id": "DEAD-018",
+   "gid": "D26",
+   "merged": [],
+   "candidates": [
+    "api-og-07"
+   ],
+   "rec": "REMOVE",
+   "confidence": "HIGH",
+   "blast": "LOW",
+   "semver": "NONE",
+   "unit": "api-worker (app, unpublished; 0.21.0)",
+   "title": "Redundant status === 503 test in XivapiClient.get",
+   "lines": 0,
+   "decision": "",
+   "trigger": "",
+   "prerequisite": ""
+  },
+  {
+   "id": "DEAD-019",
+   "gid": "D27",
+   "merged": [],
+   "candidates": [
+    "api-og-08"
+   ],
+   "rec": "REMOVE",
+   "confidence": "HIGH",
+   "blast": "LOW",
+   "semver": "NONE",
+   "unit": "api-worker",
+   "title": "types.ts re-exports CharaTwinRules, which nothing imports through it",
+   "lines": 0,
+   "decision": "",
+   "trigger": "",
+   "prerequisite": ""
+  },
+  {
+   "id": "DEAD-020",
+   "gid": "D20",
+   "merged": [],
+   "candidates": [
+    "core-legacy-01"
+   ],
+   "rec": "REFACTOR FIRST",
+   "confidence": "HIGH",
+   "blast": "LOW",
+   "semver": "NONE",
+   "unit": "core",
+   "title": "Move MAX_CHARA_FILE_BYTES out of the legacy parser (only runtime edge from the live facade into chara-parser.ts)",
+   "lines": 0,
+   "decision": "",
+   "trigger": "Do it in the PR that removes the legacy parser (core-legacy-03), or earlier.",
+   "prerequisite": "None. This is itself the first step, and it lands in the same PR as core-legacy-03 or before it."
+  },
+  {
+   "id": "DEAD-021",
+   "gid": "D21",
+   "merged": [],
+   "candidates": [
+    "core-legacy-02"
+   ],
+   "rec": "REFACTOR FIRST",
+   "confidence": "HIGH",
+   "blast": "MEDIUM",
+   "semver": "NONE",
+   "unit": "core",
+   "title": "Relocate live type contracts declared in chara-parser.ts / chara-resolver.ts",
+   "lines": 0,
+   "decision": "",
+   "trigger": "Do it in or before the PR that removes the legacy parser and resolver (core-legacy-03, planned core 6.0.0).",
+   "prerequisite": "None. It is itself the prerequisite for 03. Before merging, capture the export list of dist/index.d.ts so it can be compared after the change."
+  },
+  {
+   "id": "DEAD-022",
+   "gid": "D11",
+   "merged": [],
+   "candidates": [
+    "core-legacy-06",
+    "core-legacy-07",
+    "bot-discord-04",
+    "bot-discord-05",
+    "supply-harness-03"
+   ],
+   "rec": "REFACTOR FIRST",
+   "confidence": "HIGH",
+   "blast": "NONE",
+   "semver": "NONE",
+   "unit": "bot-logic (test file only; tsconfig.build.json excludes **/*.test.ts, so nothing published changes)",
+   "title": "bot-logic swatch.test.ts uses the legacy parseCharaFile/resolveCharaColors as an oracle for facade output, and keeps a vi.fn wrapper on resolveCharaColors that nothing uses — ~4 lines",
+   "lines": 4,
+   "decision": "",
+   "trigger": "Do the oracle swap no later than the PR that deprecates or removes parseCharaFile/resolveCharaColors from @xivdyetools/core (the next core MAJOR). The wrapper at :33 can go now.",
+   "prerequisite": "Rewrite the four oracle sites (:226, :386, :410, :454) as inspectCharaForTools or literal expectations before the legacy imports at :8-9 can go."
+  },
+  {
+   "id": "DEAD-023",
+   "gid": "D03",
+   "merged": [],
+   "candidates": [
+    "bot-discord-01"
+   ],
+   "rec": "REFACTOR FIRST",
+   "confidence": "HIGH",
+   "blast": "MEDIUM",
+   "semver": "MAJOR",
+   "unit": "bot-logic (published @xivdyetools/bot-logic 4.11.0)",
+   "title": "SwatchResult.character and its legacy ResolvedCharaSlot back-mapping are read by no adapter — ~324 lines",
+   "lines": 324,
+   "decision": "Cut bot-logic 5.0.0 to drop SwatchResult.character (cancel the removal if an npm consumer of result.character turns up).",
+   "trigger": "Keep until the next @xivdyetools/bot-logic major (5.0.0) is cut. Cancel the removal if an npm consumer of result.character turns up.",
+   "prerequisite": "First ship @deprecated tags in a 4.x minor. Then rewrite swatch-library.test.ts §1 (lines 270-406) and the privacy canary (line 845) to assert on the card and embed instead of character.slots."
+  },
+  {
+   "id": "DEAD-024",
+   "gid": "D01",
+   "merged": [
+    "D02",
+    "D05"
+   ],
+   "candidates": [
+    "core-legacy-03",
+    "core-facade-01",
+    "supply-harness-01",
+    "core-legacy-05",
+    "supply-harness-02",
+    "core-legacy-04"
+   ],
+   "rec": "REFACTOR FIRST",
+   "confidence": "HIGH",
+   "blast": "HIGH",
+   "semver": "MAJOR",
+   "unit": "core (6.0.0); bot-logic test-only edit (swatch.test.ts, semver NONE)",
+   "title": "Legacy parseCharaFile / resolveCharaColors pair, its legacy-only public types and the parity harness [host] half are reachable only from tests: deprecate in core 5.16, remove in core 6.0 — ~3,561 lines",
+   "lines": 3561,
+   "decision": "Cut core 6.0.0 to remove the legacy parser and resolver. Gate it on a shipped @deprecated MINOR with a DEPRECATIONS.md entry and on closed beta acceptance (web-app 5.16.0 and discord-worker 5.9.0 confirmed in production).",
+   "trigger": "Remove in core 6.0.0 only after (1) a MINOR has shipped @deprecated plus a DEPRECATIONS.md entry and (2) web-app 5.16.0 and discord-worker 5.9.0 on the xivcharakit path are confirmed in production (beta acceptance closed).",
+   "prerequisite": "A MINOR @deprecated release, the type and constant relocation, and closed beta acceptance of the xivcharakit integration."
+  },
+  {
+   "id": "DEAD-025",
+   "gid": "D17",
+   "merged": [],
+   "candidates": [
+    "api-og-05"
+   ],
+   "rec": "KEEP",
+   "confidence": "HIGH",
+   "blast": "LOW",
+   "semver": "NONE",
+   "unit": "api-worker",
+   "title": "Chara row cache's stale-while-revalidate window never revalidates",
+   "lines": 0,
+   "decision": "",
+   "trigger": "The next change to CHARA_CACHE_CONFIG or CHARA_ROW_SHAPE_VERSION, a maintainer decision to add real background revalidation or a strict 7-day TTL, or a report of stale item names that outlived a game patch.",
+   "prerequisite": ""
+  },
+  {
+   "id": "DEAD-026",
+   "gid": "D25",
+   "merged": [],
+   "candidates": [
+    "api-og-04"
+   ],
+   "rec": "KEEP",
+   "confidence": "HIGH",
+   "blast": "NONE",
+   "semver": "NONE",
+   "unit": "api-worker",
+   "title": "Eight api-worker chara exports referenced only in their own file (live symbols, redundant export keyword)",
+   "lines": 0,
+   "decision": "",
+   "trigger": "Revisit if knip.jsonc ignoreExportsUsedInFile is changed to false, or if knip starts flagging these exports in api-worker's lint:dead. At that point, un-export only the four constants.",
+   "prerequisite": "A change to the repo's knip policy, ignoreExportsUsedInFile at knip.jsonc:43."
+  },
+  {
+   "id": "DEAD-027",
+   "gid": "D30",
+   "merged": [],
+   "candidates": [
+    "core-facade-04"
+   ],
+   "rec": "KEEP",
+   "confidence": "HIGH",
+   "blast": "MEDIUM",
+   "semver": "MAJOR",
+   "unit": "core + bot-logic (+ web-app follow-on)",
+   "title": "ImportedCharaCharacter.extendedValid / extendedDeclared are filled but no production code reads them (KEEP: published type contract)",
+   "lines": 52,
+   "decision": "Remove extendedValid/extendedDeclared in the core 6.0.0 + bot-logic 5.0.0 release pair, optionally @deprecated in the next MINORs.",
+   "trigger": "Release planning for @xivdyetools/core 6.0.0 together with @xivdyetools/bot-logic 5.0.0 (e.g. the major that removes the legacy chara-parser/chara-resolver). Remove both fields in that release pair. Optionally add @deprecated in the next core/bot-logic minor.",
+   "prerequisite": ""
+  },
+  {
+   "id": "DEAD-028",
+   "gid": "D31",
+   "merged": [],
+   "candidates": [
+    "core-facade-02"
+   ],
+   "rec": "KEEP",
+   "confidence": "HIGH",
+   "blast": "HIGH",
+   "semver": "MAJOR",
+   "unit": "core",
+   "title": "Provider arm of resolveCharaForTools (isPaletteProvider) is test-only in-repo but is published, documented 5.15.0 API: KEEP until core 6.0.0",
+   "lines": 32,
+   "decision": "At core 6.0.0, decide whether to narrow resolveCharaForTools to CharacterColorService only, pointing provider users to resolveCharaWithProvider (optionally @deprecated in a 5.x MINOR first).",
+   "trigger": "Revisit when core 6.0.0 (the next MAJOR) is being planned. Narrow it then only if git grep -n -w resolveCharaForTools still shows every non-test caller passing a CharacterColorService. Optionally, tag it @deprecated in a 5.x MINOR first, pointing provider users to resolveCharaWithProvider.",
+   "prerequisite": "A core 6.0.0 MAJOR release window with a MAJOR CHANGELOG entry."
+  },
+  {
+   "id": "DEAD-029",
+   "gid": "D32",
+   "merged": [],
+   "candidates": [
+    "core-facade-03",
+    "supply-harness-05"
+   ],
+   "rec": "KEEP",
+   "confidence": "HIGH",
+   "blast": "HIGH",
+   "semver": "MAJOR",
+   "unit": "core",
+   "title": "Barrel re-export of resolveCharaWithProvider duplicates the ./chara subpath; in-repo barrel use is test-only",
+   "lines": 5,
+   "decision": "At core 6.0.0, decide whether the barrel keeps resolveCharaWithProvider or the ./chara subpath becomes the sole supported route.",
+   "trigger": "When packages/core/package.json is bumped to 6.0.0 (the next core MAJOR release prep): decide then whether the barrel keeps resolveCharaWithProvider, or earlier mark it @deprecated in a MINOR if the subpath is declared the sole supported route.",
+   "prerequisite": "A core 6.0.0 major release."
+  },
+  {
+   "id": "DEAD-030",
+   "gid": "D33",
+   "merged": [],
+   "candidates": [
+    "core-facade-06"
+   ],
+   "rec": "KEEP",
+   "confidence": "HIGH",
+   "blast": "HIGH",
+   "semver": "MAJOR",
+   "unit": "core",
+   "title": "CHARA_WEAPON_SLOTS exported @public with no consumer outside its own module",
+   "lines": 1,
+   "decision": "Fold the removal of the CHARA_WEAPON_SLOTS barrel export into core 6.0.0, or keep it as published API.",
+   "trigger": "Revisit when the core 6.0.0 major-bump PR is opened (packages/core/package.json version goes to 6.x). Fold this into that PR's removals of @public exports that have no consumer.",
+   "prerequisite": ""
+  },
+  {
+   "id": "DEAD-031",
+   "gid": "D34",
+   "merged": [],
+   "candidates": [
+    "bot-discord-10"
+   ],
+   "rec": "KEEP",
+   "confidence": "HIGH",
+   "blast": "LOW",
+   "semver": "NONE",
+   "unit": "bot-logic (ships to discord-worker)",
+   "title": "FIXED_KEYS.noItem entry cannot be reached",
+   "lines": 1,
+   "decision": "",
+   "trigger": "A core release changes the CharaPieceProblem union (chara-game-rules.ts:132), OR git grep \"push('noItem')\" packages/core/src/services/chara returns a hit.",
+   "prerequisite": ""
+  },
+  {
+   "id": "DEAD-032",
+   "gid": "D35",
+   "merged": [],
+   "candidates": [
+    "core-legacy-10"
+   ],
+   "rec": "KEEP",
+   "confidence": "HIGH",
+   "blast": "HIGH",
+   "semver": "NONE",
+   "unit": "core",
+   "title": "KEEP shader tables + chara-shader-colors.ts (live via palette bridge; deliberate duplicate of xivcharakit corpus)",
+   "lines": 0,
+   "decision": "",
+   "trigger": "Re-audit when either of two conditions holds. (a) An xivcharakit release after 0.1.0-beta.4 exports a lazy, shader-only PaletteProvider entry, and switching core to it keeps web-app `run build:check` within budget. (b) A core MAJOR removes both createCharaPaletteProvider and the legacy resolveCharaColors. Before removing anything, git grep -w charaShaderHex must show no production caller.",
+   "prerequisite": ""
+  },
+  {
+   "id": "DEAD-033",
+   "gid": "D36",
+   "merged": [],
+   "candidates": [
+    "core-legacy-11"
+   ],
+   "rec": "KEEP",
+   "confidence": "HIGH",
+   "blast": "HIGH",
+   "semver": "MAJOR",
+   "unit": "core",
+   "title": "KEEP CharacterColorService, interface sheets, build-character-colors script, .chara fixtures, chara-models helpers",
+   "lines": 0,
+   "decision": "",
+   "trigger": "Fixtures: revisit when the core 6.0.0 release that removes parseCharaFile/resolveCharaColors (core-legacy-03) lands AND `git ls-files | xargs grep -l 'fixtures/.*\\.chara\\|lalafell-dunesfolk'` returns no test in packages/core, packages/bot-logic, apps/web-app or apps/discord-worker. Script + sheets: revisit only if production switches to xivcharakit's createDefaultPaletteProvider (i.e. createCharaPaletteProvider and CharacterColorService get no non-test import). gearModelKey/weaponModelKey/CHARA_WEAPON_SLOTS exports: revisit at the next planned core MAJOR (6.0.0).",
+   "prerequisite": ""
+  },
+  {
+   "id": "DEAD-034",
+   "gid": "D37",
+   "merged": [],
+   "candidates": [
+    "core-facade-07"
+   ],
+   "rec": "KEEP",
+   "confidence": "HIGH",
+   "blast": "LOW",
+   "semver": "NONE",
+   "unit": "core",
+   "title": "matchHexFor's interpretation==='inactive' arm is unreachable under xivcharakit 0.1.0-beta.4",
+   "lines": 0,
+   "decision": "",
+   "trigger": "When core's exact xivcharakit pin (packages/core/package.json:78) moves off 0.1.0-beta.4: re-grep dist/appearance.js for \"inactive\". Simplify only if that release's appearance/types.d.ts encodes the invariant, for example as a discriminated union where interpretation 'inactive' implies active false.",
+   "prerequisite": ""
+  },
+  {
+   "id": "DEAD-035",
+   "gid": "D38",
+   "merged": [],
+   "candidates": [
+    "core-facade-08"
+   ],
+   "rec": "KEEP",
+   "confidence": "HIGH",
+   "blast": "HIGH",
+   "semver": "NONE",
+   "unit": "core",
+   "title": "Palette provider guards (table, palette type, shader lipsLight/facePaint) the library never trips",
+   "lines": 0,
+   "decision": "",
+   "trigger": "Revisit :109/:110 only at a core MAJOR that removes createCharaPaletteProvider from the published barrel (drops the @public export at index.ts:278), and only if every remaining caller validates the request first (web-app parsePaletteRequestMessage does). Keep :133 for as long as charaShaderHex throws for a palette outside SHADER_PALETTES.",
+   "prerequisite": ""
+  },
+  {
+   "id": "DEAD-036",
+   "gid": "D39",
+   "merged": [],
+   "candidates": [
+    "web-app-09"
+   ],
+   "rec": "KEEP",
+   "confidence": "HIGH",
+   "blast": "LOW",
+   "semver": "NONE",
+   "unit": "web-app",
+   "title": "Exports used in their own file that exist only as test seams (web-app-09): KEEP",
+   "lines": 0,
+   "decision": "",
+   "trigger": "Re-audit a symbol when symrefs.sh apps/web-app <sym> shows prod<=1 (its in-file caller was deleted, so the body is dead) or tests=0 (no test imports it, so the export can be dropped), or when knip.jsonc ignoreExportsUsedInFile is set to false.",
+   "prerequisite": ""
+  },
+  {
+   "id": "DEAD-037",
+   "gid": "D40",
+   "merged": [],
+   "candidates": [
+    "web-app-10"
+   ],
+   "rec": "KEEP",
+   "confidence": "HIGH",
+   "blast": "LOW",
+   "semver": "NONE",
+   "unit": "web-app",
+   "title": "config-controller scrub of the retired swatch.fileProvided key",
+   "lines": 0,
+   "decision": "",
+   "trigger": "Remove it when either of these becomes true: (a) loadFromStorage passes stored values through sanitizeConfigPartial, so undeclared keys are dropped as importConfigs already does at :426, which makes the delete redundant; or (b) CONFIG_STORAGE_PREFIX changes from 'xivdyetools_v4_config_', which abandons all pre-5.12.7 storage. Either can be checked with a git grep on config-controller.ts.",
+   "prerequisite": ""
+  },
+  {
+   "id": "DEAD-038",
+   "gid": "D41",
+   "merged": [],
+   "candidates": [
+    "bot-discord-08"
+   ],
+   "rec": "KEEP",
+   "confidence": "HIGH",
+   "blast": "MEDIUM",
+   "semver": "MAJOR",
+   "unit": "bot-logic (+ discord-worker call sites in the same change)",
+   "title": "Published SwatchInput/GlamourInput.fileText and the NO_INPUT guard: KEEP until bot-logic 5.0.0",
+   "lines": 0,
+   "decision": "Make fileBytes required and drop fileText and NO_INPUT in bot-logic 5.0.0.",
+   "trigger": "When packages/bot-logic/package.json is bumped to 5.0.0, the first MAJOR after 4.11.0 (for example, the release that removes SwatchCharacter under bot-discord-01): make fileBytes required and drop fileText and NO_INPUT in that same release.",
+   "prerequisite": "bot-logic 5.0.0 major release window"
+  },
+  {
+   "id": "DEAD-039",
+   "gid": "D42",
+   "merged": [],
+   "candidates": [
+    "bot-discord-09"
+   ],
+   "rec": "KEEP",
+   "confidence": "HIGH",
+   "blast": "MEDIUM",
+   "semver": "MAJOR",
+   "unit": "bot-logic",
+   "title": "familySize ?? twins.length fallback is dead for this repo's api-worker",
+   "lines": 0,
+   "decision": "Make familySize required in bot-logic 5.0.0, bundled with D41.",
+   "trigger": "The release of @xivdyetools/bot-logic 5.0.0 (bundle it with the bot-discord-08 fileText removal), or GlamourResolvedItem losing its @public tag or export in index.ts:117. Whichever comes first, make familySize required and drop the `?? twins.length` fallback.",
+   "prerequisite": ""
+  },
+  {
+   "id": "DEAD-040",
+   "gid": "D43",
+   "merged": [],
+   "candidates": [
+    "api-og-09"
+   ],
+   "rec": "KEEP",
+   "confidence": "HIGH",
+   "blast": "LOW",
+   "semver": "NONE",
+   "unit": "api-worker",
+   "title": "Unreachable guard for a 304 with no retained ETag in loadIcon",
+   "lines": 0,
+   "decision": "",
+   "trigger": "Revisit when any of these happens: apps/api-worker/src/chara/xivapi.ts get() stops refusing a 304 without allowNotModified (lines 395-397); fetchIcon gets a caller other than icons.ts:25; or fetchIcon's allowNotModified is no longer Boolean(ifNoneMatch). If one does, the guard becomes reachable and needs a direct test. It does not become removable.",
+   "prerequisite": ""
+  },
+  {
+   "id": "DEAD-041",
+   "gid": "D44",
+   "merged": [],
+   "candidates": [
+    "api-og-10"
+   ],
+   "rec": "KEEP",
+   "confidence": "HIGH",
+   "blast": "LOW",
+   "semver": "NONE",
+   "unit": "api-worker (0.21.0, unpublished app)",
+   "title": "Empty-lookup guards in searchItems and loadRows are reached only by tests",
+   "lines": 0,
+   "decision": "",
+   "trigger": "Re-check when either of these happens. (1) router.ts drops its `misses.length > 0` check at line 225: the loadRows guard then becomes the live path and must stay. (2) A caller other than lookup-loader.ts:55 starts calling searchItems, or one other than router.ts:225 starts calling loadRows (`git grep -n -w -e searchItems -e loadRows apps/api-worker/src ':!*.test.ts'` shows more than these two sites). In either case keep the guards.",
+   "prerequisite": ""
+  },
+  {
+   "id": "DEAD-042",
+   "gid": "D45",
+   "merged": [],
+   "candidates": [
+    "api-og-11"
+   ],
+   "rec": "KEEP",
+   "confidence": "HIGH",
+   "blast": "MEDIUM",
+   "semver": "NONE",
+   "unit": "api-worker",
+   "title": "Resolve response field 'version' is read by no in-repo client",
+   "lines": 0,
+   "decision": "",
+   "trigger": "Revisit when either of these happens. (a) api-worker adds a /v2/chara/resolve route, or meta.apiVersion moves past 'v1' (apps/api-worker/src/index.ts and docs/reference/chara.md). (b) chara.md's field table marks `version` as deprecated. Until then, removing it is a breaking v1 change.",
+   "prerequisite": ""
+  },
+  {
+   "id": "DEAD-043",
+   "gid": "D46",
+   "merged": [],
+   "candidates": [
+    "api-og-12"
+   ],
+   "rec": "KEEP",
+   "confidence": "HIGH",
+   "blast": "MEDIUM",
+   "semver": "NONE",
+   "unit": "api-worker",
+   "title": "Icon ?version= branch has no in-repo caller",
+   "lines": 0,
+   "decision": "",
+   "trigger": "Revisit in either of two cases. (1) web-app's charaIconUrl (chara-resolve-service.ts:124) starts appending the resolve result's version: the branch is then live in-repo, so close the item. (2) The api-worker CHANGELOG and docs/reference/chara.md announce a deprecation of the /v1/chara/icon version query, or the /v1/chara/icon route is removed: drop the branch in that release.",
+   "prerequisite": ""
+  },
+  {
+   "id": "DEAD-044",
+   "gid": "D47",
+   "merged": [],
+   "candidates": [
+    "api-og-13"
+   ],
+   "rec": "KEEP",
+   "confidence": "HIGH",
+   "blast": "LOW",
+   "semver": "NONE",
+   "unit": "api-worker",
+   "title": "Exported unit-test seams in the chara resolver",
+   "lines": 0,
+   "decision": "",
+   "trigger": "Re-audit when the CI `pnpm dead-code:check` step (ci.yml:244) reports any of these nine symbols under apps/api-worker/src/chara, or when a PR removes one of the production call sites: router.ts:193, router.ts:216, lookup-loader.ts:56, resolver.ts:135, resolver.ts:212, xivapi.ts:186-189, :422, :439, :468.",
+   "prerequisite": ""
+  },
+  {
+   "id": "DEAD-045",
+   "gid": "D48",
+   "merged": [],
+   "candidates": [
+    "api-og-14"
+   ],
+   "rec": "KEEP",
+   "confidence": "HIGH",
+   "blast": "NONE",
+   "semver": "NONE",
+   "unit": "api-worker",
+   "title": "chara-concurrency.test.mjs is run by no CI job or turbo task (manual workerd check, deliberately kept)",
+   "lines": 0,
+   "decision": "",
+   "trigger": "The next commit that touches apps/api-worker/src/chara/lookup-loader.ts or the POST /resolve handler in apps/api-worker/src/chara/router.ts, or the next wrangler major bump in apps/api-worker/package.json. When that happens, run pnpm --filter xivdyetools-api-worker run test:chara-runtime in that PR. If it passes, add it as a ci.yml step. If it cannot pass or be maintained, delete it along with its two doc mentions.",
+   "prerequisite": ""
+  },
+  {
+   "id": "DEAD-046",
+   "gid": "D49",
+   "merged": [],
+   "candidates": [
+    "api-og-15"
+   ],
+   "rec": "KEEP",
+   "confidence": "HIGH",
+   "blast": "LOW",
+   "semver": "NONE",
+   "unit": "api-worker",
+   "category": "Dead Asset (rejected framing: live generated data, correct by design)",
+   "title": "facewear-unlocks.json maps 12 Glasses rows (709-720) to unlock item 52447, which has no acquisition line",
+   "lines": 0,
+   "decision": "",
+   "trigger": "acquisition.en.json gains key \"52447\" (Thick-rimmed Goggles gets a confirmed source) on a build-acquisition.ts run. acquisition.test.ts:38 (known === 720) and :57 (undefined for the 12 variants) then fail, so update those expectations.",
+   "prerequisite": ""
+  },
+  {
+   "id": "DEAD-047",
+   "gid": "D50",
+   "merged": [],
+   "candidates": [
+    "api-og-16"
+   ],
+   "rec": "KEEP",
+   "confidence": "HIGH",
+   "blast": "NONE",
+   "semver": "NONE",
+   "unit": "api-worker",
+   "title": "acquisition.meta.json provenance keys read by no code",
+   "lines": 0,
+   "decision": "",
+   "trigger": "Revisit only if a commit to build-acquisition.ts removes the human review pause: its printReview call, or the user-approval step in the 2026-09-27 plan. Also revisit if regeneration moves to an unattended CI job that nobody reads. Either change would be visible as a diff to build-acquisition.ts lines 539-557. Even then, cut the keys in the generator, not in the JSON.",
+   "prerequisite": ""
+  }
+ ],
+ "order": [
+  "D08",
+  "D12",
+  "D29",
+  "D28",
+  "D13",
+  "D24",
+  "D17",
+  "D16",
+  "D18",
+  "D15",
+  "D14",
+  "D07",
+  "D04",
+  "D09",
+  "D10",
+  "D06",
+  "D19",
+  "D23",
+  "D22",
+  "D26",
+  "D27",
+  "D20",
+  "D21",
+  "D11",
+  "D03",
+  "D41",
+  "D42",
+  "D01",
+  "D02",
+  "D05",
+  "D30",
+  "D31",
+  "D32",
+  "D33"
+ ],
+ "versionPlan": [
+  "web-app PATCH (no API impact): D04, D07, D08, D09, D10 (re-run build:check), D14, D15, D16, D18. A merge redeploys web-app plus the beta.",
+  "discord-worker PATCH: D06 (adapters assert fileBytes) plus the D24 comment edits. It must merge before bot-logic 5.0.0 so that D41's narrowing hits no live call site.",
+  "api-worker PATCH: D13 docs, the D17 cache.ts:20 comment correction, D26, D27. The v1 HTTP contract is unchanged (D45/D46 stay).",
+  "core 5.16.0 MINOR: @deprecated plus a DEPRECATIONS.md entry on parseCharaFile, resolveCharaColors, ParsedCharaFile, CharaColorSlotRaw, CharaGearDye, OFF_GRID_DELTA_E2000 (D01/D05). The D20 and D21 relocations ship with the barrel unchanged (diff dist/index.d.ts). Optional @deprecated on extendedValid/extendedDeclared (D30), the resolveCharaForTools provider arm (D31), the barrel resolveCharaWithProvider (D32) and CHARA_WEAPON_SLOTS (D33). The D12/D28/D29 comment and README edits ride along.",
+  "bot-logic 4.12.0 MINOR: @deprecated on SwatchResult.character (D03), SwatchInput/GlamourInput.fileText and NO_INPUT (D41), and the familySize fallback (D42). D19 and D23 internals, D22 packaging, the D24 README and the D11 test oracle swap ride along. It depends on core ^5.16.0.",
+  "core 6.0.0 MAJOR (maintainer decision, gated on beta acceptance of web-app 5.16.0 and discord-worker 5.9.0 in production): remove the legacy parser/resolver and the legacy-only public symbols (D01 with D02 and D05 merged), the [host] parity half, and extendedValid/extendedDeclared (D30). D31, D32 and D33 go in only if the maintainer chooses. Update core CLAUDE.md:191, services.md:309-310 and overview.md:113 in the same PR.",
+  "bot-logic 5.0.0 MAJOR (maintainer decision, same coordinated PR as core 6.0.0, published after core 6.0.0 reaches npm): remove SwatchResult.character and its ResolvedCharaSlot back-mapping (D03, which also drops the D30 reads at swatch.ts:102,369-372), make fileBytes required and drop fileText/NO_INPUT (D41), and make familySize required (D42). Depends on core ^6.0.0.",
+  "Apps riding the MAJOR pair (workspace:*): discord-worker MINOR (swatch/glamour adapters on bot-logic 5.0.0), web-app PATCH (protocol validator, mocks/imported-chara.ts and the protocol test lose the D30 fields; the D32 test import moves to the ./chara subpath if the barrel drops it), og-worker and api-worker rebuild against core 6.0.0 with no source change. The merge redeploys all production workers."
+ ],
+ "inconsistencies": [
+  "D06 calls bot-logic's CharaFileSource 'published API', but CharaFileSource is not in packages/bot-logic/src/index.ts (only the fileText field on the published SwatchInput/GlamourInput is). D23, which un-exports it as module-internal, is correct.",
+  "D41's cascade lists discord-worker call sites (swatch.ts:74,110; glamour.ts:137,146,157) that D06 already rewrites. After D06 lands, D41's discord-worker cascade shrinks to the type change alone.",
+  "D30 (fields on a published core type) was graded HIGH blast while D03, D41 and D42 (fields on published bot-logic types) were graded MEDIUM or LOW. All four are normalized to MEDIUM per the rubric clause 'a type in a published signature'. D42 also paired LOW blast with MAJOR semver.",
+  "The KEEP rows used two semver conventions: D30-D33, D41 and D42 carry the removal's MAJOR, while D36, whose CharacterColorService and chara-models helpers are barrel exports, carried NONE. Normalized so a KEEP row carries the semver of the removal its trigger contemplates. D35 and D38 stay NONE because the tables and guards are not exports.",
+  "D45 (public v1 response field, LOW) and D46 (public v1 query branch, MEDIUM) graded the same kind of public HTTP contract differently. Both are now MEDIUM. D47 graded app-internal api-worker exports HIGH, which the rubric does not support (now LOW).",
+  "D11 says the vi.fn wrapper at swatch.test.ts:33 'can go now', while D01's cascade schedules its removal inside the core 6.0.0 PR.",
+  "D12 edits core CLAUDE.md:191, services.md:309-311 and the parity test header :11-13 now. D01 and D02 edit the same lines again at 6.0.0. D12 also rewords chara-library-types.ts:30-33, whose provider statement D31 says stays true until core 6.0.0.",
+  "D12 and D29 both reword the chara.ts:9-12 @entrypoint docblock, so D29 is merged into D12. D29's REFACTOR FIRST rec contradicted its own 'nothing has to land first' prerequisite.",
+  "D08 and D13 both list apps/web-app/CLAUDE.md:136 and chara-resolve-service.ts:3 (D13 lists them as a 'web-app slice' cascade). Apply them once, in D08.",
+  "D05 was rated REMOVE WITH CAUTION by verifier a and REFACTOR FIRST by verifier b, although it shares D01's prerequisite (the D21 retype of ResolvedCharaCharacter.race). It is normalized to REFACTOR FIRST and merged into D01.",
+  "Blast NONE vs LOW was applied unevenly to production-code edits that have no comment-only character (D15, D16, D19, D23, D26, D27, D34, D37, D43 were rated NONE) and to test-only changes (D02, D11, D48 were rated LOW). This is normalized to NONE = comments, docs or tests only, and LOW = internal production code.",
+  "The advisor was not consulted. The user's global CLAUDE.md gates advisor (Fable) use on a usage check that this read-only verifier did not run."
+ ],
+ "mergedInto": {
+  "D02": "D01",
+  "D05": "D01",
+  "D29": "D12"
+ }
+}

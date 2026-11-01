@@ -1,0 +1,15 @@
+[
+  {
+    "candidate_id": "web-root-001",
+    "title": "SWAP does not cancel an export sheet still waiting for its chunk",
+    "kind": "BUG",
+    "severity": "LOW",
+    "type": "State",
+    "unit": "apps/web-app",
+    "locations": ["apps/web-app/src/components/glamour-block.ts:351", "apps/web-app/src/components/glamour-block.ts:801", "apps/web-app/src/components/chara-file-card.ts:371"],
+    "evidence": "openSheet captures listSource and sheetOpenToken before import(). show(null), reached by SWAP, clears the visible file and actions but neither increments the sheet token nor checks the captured session in the import callback. The old character's export sheet opens after the chunk arrives. Dedicated source-level Vitest probe passes while asserting this observed defect; see repro-web.txt and scripts/repro-web.test.ts.",
+    "repro": "Load a glamour, click Copy list while its chunk is cold, then SWAP before the chunk arrives. The file is cleared but the old file's sheet still opens.",
+    "test_gap": "Existing lifecycle guards cover destroy/repeated opens; the audit's separate deferred import probe demonstrates the missing session-clear guard.",
+    "fix": "Invalidate sheetOpenToken and close any open export sheet on session replacement/clear, or bind the pending open to the captured session identity. Test SWAP and a replacement file during the import."
+  }
+]
