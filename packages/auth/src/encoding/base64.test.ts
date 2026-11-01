@@ -43,6 +43,42 @@ describe('base64UrlDecode', () => {
 });
 
 describe('base64UrlEncodeBytes / base64UrlDecodeBytes', () => {
+  // Removing canonical validation must admit these byte-equivalent aliases again.
+  it.each([
+    'Zg==',
+    'Zm8=',
+    '+/8',
+    '-/8',
+    '+_8',
+    ' Zg',
+    'Zg ',
+    'Z\tg',
+    'Z\ng',
+    'Z\rg',
+    'Z\fg',
+    'Zh',
+    'Zm9',
+    'A',
+  ])('rejects noncanonical input %j in both decoder APIs', (input) => {
+    expect(() => base64UrlDecodeBytes(input)).toThrow();
+    expect(() => base64UrlDecode(input)).toThrow();
+  });
+
+  it.each([
+    ['', []],
+    ['Zg', [102]],
+    ['Zm8', [102, 111]],
+    ['Zm9v', [102, 111, 111]],
+    ['-_8', [251, 255]],
+  ] as const)('preserves canonical bytes for %j', (input, expected) => {
+    expect(Array.from(base64UrlDecodeBytes(input))).toEqual(expected);
+  });
+
+  it('preserves the empty string codec', () => {
+    expect(base64UrlDecode('')).toBe('');
+    expect(base64UrlEncode('')).toBe('');
+  });
+
   it('roundtrips bytes correctly', () => {
     const original = new Uint8Array([0x48, 0x65, 0x6c, 0x6c, 0x6f]); // 'Hello'
     const encoded = base64UrlEncodeBytes(original);

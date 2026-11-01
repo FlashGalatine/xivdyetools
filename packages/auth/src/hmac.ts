@@ -52,7 +52,7 @@ const CRYPTO_KEY_CACHE_MAX = 10;
  */
 export async function getOrCreateHmacKey(
   secret: string,
-  usage: 'sign' | 'verify' | 'both'
+  usage: 'sign' | 'verify' | 'both',
 ): Promise<CryptoKey> {
   const cacheKey = `${secret}:${usage}`;
   const cached = cryptoKeyCache.get(cacheKey);
@@ -91,7 +91,7 @@ export async function getOrCreateHmacKey(
  */
 export async function createHmacKey(
   secret: string,
-  usage: 'sign' | 'verify' | 'both' = 'both'
+  usage: 'sign' | 'verify' | 'both' = 'both',
 ): Promise<CryptoKey> {
   const encoder = new TextEncoder();
   const keyData = encoder.encode(secret);
@@ -101,15 +101,14 @@ export async function createHmacKey(
     throw new Error('HMAC secret must be at least 32 bytes (256 bits)');
   }
 
-  const keyUsages: ('sign' | 'verify')[] =
-    usage === 'both' ? ['sign', 'verify'] : [usage];
+  const keyUsages: ('sign' | 'verify')[] = usage === 'both' ? ['sign', 'verify'] : [usage];
 
   return crypto.subtle.importKey(
     'raw',
     keyData,
     { name: 'HMAC', hash: 'SHA-256' },
     false,
-    keyUsages
+    keyUsages,
   );
 }
 
@@ -144,10 +143,7 @@ export async function hmacSign(data: string, secret: string): Promise<string> {
  * const signature = await hmacSignHex('timestamp:userId:userName', secret);
  * ```
  */
-export async function hmacSignHex(
-  data: string,
-  secret: string
-): Promise<string> {
+export async function hmacSignHex(data: string, secret: string): Promise<string> {
   const key = await getOrCreateHmacKey(secret, 'sign');
   const encoder = new TextEncoder();
   const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(data));
@@ -165,7 +161,7 @@ export async function hmacSignHex(
 export async function hmacVerify(
   data: string,
   signature: string,
-  secret: string
+  secret: string,
 ): Promise<boolean> {
   try {
     const key = await getOrCreateHmacKey(secret, 'verify');
@@ -173,12 +169,7 @@ export async function hmacVerify(
     const signatureBytes = base64UrlDecodeBytes(signature);
 
     // Use crypto.subtle.verify() which is inherently timing-safe
-    return crypto.subtle.verify(
-      'HMAC',
-      key,
-      signatureBytes,
-      encoder.encode(data)
-    );
+    return crypto.subtle.verify('HMAC', key, signatureBytes, encoder.encode(data));
   } catch {
     return false;
   }
@@ -188,26 +179,23 @@ export async function hmacVerify(
  * Verify HMAC-SHA256 signature (hex-encoded).
  *
  * @param data - The original data that was signed
- * @param signature - Hex-encoded signature to verify
+ * @param signature - Canonical lowercase 64-character hex signature to verify
  * @param secret - The secret key
  * @returns true if signature is valid
  */
 export async function hmacVerifyHex(
   data: string,
   signature: string,
-  secret: string
+  secret: string,
 ): Promise<boolean> {
+  // FINDING-042: generic hex decoding accepts case aliases; signatures do not.
+  if (!/^[0-9a-f]{64}$/.test(signature)) return false;
   try {
     const key = await getOrCreateHmacKey(secret, 'verify');
     const encoder = new TextEncoder();
     const signatureBytes = hexToBytes(signature);
 
-    return crypto.subtle.verify(
-      'HMAC',
-      key,
-      signatureBytes,
-      encoder.encode(data)
-    );
+    return crypto.subtle.verify('HMAC', key, signatureBytes, encoder.encode(data));
   } catch {
     return false;
   }
@@ -249,7 +237,10 @@ export const BOT_SIGNATURE_NONCE_HEADER = 'X-Request-Nonce';
  */
 export interface BotSignatureV2Request {
   method: string;
-  /** URL path only (no origin, no query) */
+  /**
+   * URL path only (no origin, no query). Query values are not authenticated by
+   * v2: authorize their effects independently against the signed identity.
+   */
   path: string;
   body?: string | Uint8Array | ArrayBuffer | null;
   /** Unix seconds as a string (the value sent in X-Request-Timestamp) */
@@ -304,7 +295,7 @@ async function canonicalV2(req: BotSignatureV2Request): Promise<string> {
  */
 export async function createBotSignatureV2(
   req: BotSignatureV2Request,
-  secret: string
+  secret: string,
 ): Promise<string> {
   return hmacSignHex(await canonicalV2(req), secret);
 }
@@ -318,10 +309,11 @@ export async function verifyBotSignatureV2(
   signature: string | undefined | null,
   req: BotSignatureV2Request,
   secret: string,
-  options: BotSignatureOptions = {}
+  options: BotSignatureOptions = {},
 ): Promise<boolean> {
   const { maxAgeMs = BOT_SIGNATURE_V2_MAX_AGE_MS, clockSkewMs = 60 * 1000 } = options;
-  if (!signature || !req.timestamp) return false;
+  // Reject malformed signatures before hashing or reading the request body.
+  if (!signature || !/^[0-9a-f]{64}$/.test(signature) || !req.timestamp) return false;
 
   const timestampNum = parseInt(req.timestamp, 10);
   if (!Number.isFinite(timestampNum)) return false;

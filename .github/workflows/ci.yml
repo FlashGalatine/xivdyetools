@@ -99,9 +99,10 @@ jobs:
   # pull_request the action scans exactly the commits of the event (the
   # pre-commit detect-secrets config it replaces never ran anywhere). Rules +
   # allowlist live in `.gitleaks.toml` at the repo root. This is a personal-
-  # account repository, so no GITLEAKS_LICENSE is required. GitHub's own
-  # secret scanning + push protection (repo settings) is the complement that
-  # covers full history and blocks pushes.
+  # account repository, so no GITLEAKS_LICENSE is required. Gitleaks includes
+  # generic/non-provider patterns. GitHub's provider-pattern secret scanning
+  # and push protection complement it; native non-provider patterns and
+  # validity checks remain eligibility-blocked (OPS-SECRET-SCANNING).
   secret-scan:
     name: Secret scan (gitleaks)
     runs-on: ubuntu-latest

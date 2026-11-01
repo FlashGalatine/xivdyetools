@@ -76,6 +76,12 @@ test('Beta guard: there are 3 beta deploy workflows', () => {
 for (const file of betas) {
   const yaml = read(file);
 
+  test(`Release preparation: ${file} excludes isolated release-cut pushes`, () => {
+    const push = /^ {2}push:\n([\s\S]*?)(?=^ {2}\S|^\S)/m.exec(yaml)?.[1] ?? '';
+    const branches = /^ {4}branches-ignore:\n([\s\S]*?)(?=^ {4}\S)/m.exec(push)?.[1] ?? '';
+    assert.match(branches, /^ {6}- 'codex\/release-cut-\*'$/m);
+  });
+
   test(`Beta guard: ${file} guard pathspec mirrors push.paths`, () => {
     const filter = pushPaths(yaml)
       .filter((p) => !p.startsWith('!'))
@@ -141,6 +147,23 @@ for (const file of betas) {
     assert.equal(top, `${shared}-\${{ github.ref }}`, 'the workflow-level group must be per ref');
   });
 }
+
+// The image-worker hold is a repository variable read by the deploy job, so a merge
+// during the hold queues no production approval. A manual dispatch must still deploy.
+test('Image hold: deploy-image-worker.yml skips push runs while IMAGE_WORKER_DEPLOY_HOLD is true', () => {
+  const yaml = read('deploy-image-worker.yml');
+  const deploy = jobBlock(yaml, 'deploy');
+  assert.match(
+    deploy,
+    /^ {4}if: github\.event_name == 'workflow_dispatch' \|\| vars\.IMAGE_WORKER_DEPLOY_HOLD != 'true'$/m,
+  );
+  assert.match(
+    deploy,
+    /^ {4}environment: production$/m,
+    'the reviewer gate stays on the deploy job',
+  );
+  assert.match(yaml, /^ {2}workflow_dispatch:\s*$/m, 'a manual dispatch must remain available');
+});
 
 test('BUG-152: ci.yml cancels only superseded pull_request runs', () => {
   const yaml = read('ci.yml');

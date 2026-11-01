@@ -1,0 +1,39 @@
+{
+  "records": [
+    {
+      "local_path": "docs\\audits\\2026-10-26-security\\evidence\\xivcharakit-0.0.0-stage.tgz",
+      "version": "0.0.0-stage",
+      "bytes": 364,
+      "integrity": "sha512-E+Ia68Lw1ElZ3LGxRQv5Ob1RW5vfaXfJMOwNc+C+JxHyzLOZJkOKUBPNYfqipXWO63CLC0kw80Jg9VPRfbDjrA==",
+      "integrity_matches_registry": true,
+      "file_count": 2,
+      "stub": true,
+      "files": [
+        "package/package.json",
+        "package/README.md"
+      ]
+    },
+    {
+      "local_path": "docs\\audits\\2026-10-26-security\\evidence\\xivcharakit-0.1.0-beta.1.tgz",
+      "version": "0.1.0-beta.1",
+      "bytes": 85475,
+      "integrity": "sha512-gA5U4qvE/sYtwOn7Lo9X9B3Q0P6ZZK0gHy4nShR/wE62Eqcfo3FHQKfdI/ZRw2wKAM3Tmee4pgwD9KL8U1JTjw==",
+      "integrity_matches_registry": true,
+      "file_count": 42,
+      "stub": false,
+      "files": null
+    },
+    {
+      "local_path": "docs\\audits\\2026-10-26-security\\evidence\\xivcharakit-beta1-reviewed-candidate\\xivcharakit-0.1.0-beta.1.tgz",
+      "version": "0.1.0-beta.1",
+      "bytes": 85475,
+      "integrity": "sha512-gA5U4qvE/sYtwOn7Lo9X9B3Q0P6ZZK0gHy4nShR/wE62Eqcfo3FHQKfdI/ZRw2wKAM3Tmee4pgwD9KL8U1JTjw==",
+      "integrity_matches_registry": true,
+      "file_count": 42,
+      "stub": false,
+      "files": null
+    }
+  ],
+  "beta1_reviewed_candidate_byte_identical_to_npm": true,
+  "placeholder_has_no_library_code": true
+}

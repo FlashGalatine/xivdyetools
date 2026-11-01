@@ -1,8 +1,10 @@
 # Version Matrix
 
+**Isolated release preparation:** these versions describe this candidate source. Package publication, app deployment and production activation remain held.
+
 **Single source of truth for all XIV Dye Tools project versions**
 
-*Last Updated: October 11, 2026*
+*Last Updated: October 29, 2026*
 
 > **Versions below match each project's `package.json` in this checkout** and are checked
 > against it by `pnpm docs:check-versions` (`scripts/check-doc-versions.ts`, run in CI), so
@@ -25,7 +27,7 @@
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
 | **Web Application** | v5.16.8 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v5.9.0 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
+| **Discord Bot** | v5.9.1 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.4 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.8.2 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.3 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
@@ -40,12 +42,12 @@
 
 | Package | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Core** (incl. `/blending` + schema-v2 data) | v5.15.0 | `@xivdyetools/core` | npm | Active |
+| **Core** (incl. `/blending` + schema-v2 data) | v5.16.0 | `@xivdyetools/core` | npm | Active |
 | **Types** | v3.3.0 | `@xivdyetools/types` | npm | Active |
-| **Auth** (incl. `/encoding`) | v2.0.2 | `@xivdyetools/auth` | npm | Active |
-| **Logger** | v2.3.0 | `@xivdyetools/logger` | npm | Active |
-| **Worker Kit** (middleware + `/rate-limiter`) | v1.5.0 | `@xivdyetools/worker-kit` | npm | Active |
-| **SVG** | v4.4.0 | `@xivdyetools/svg` | npm | Active |
+| **Auth** (incl. `/encoding`) | v3.0.0 | `@xivdyetools/auth` | npm | Active |
+| **Logger** | v2.4.0 | `@xivdyetools/logger` | npm | Active |
+| **Worker Kit** (middleware + `/rate-limiter`) | v1.6.0 | `@xivdyetools/worker-kit` | npm | Active |
+| **SVG** | v4.4.1 | `@xivdyetools/svg` | npm | Active |
 | **Bot Logic** (incl. `/i18n`) | v4.11.0 | `@xivdyetools/bot-logic` | npm | Active |
 | **Test Utils** | v3.0.0 | `@xivdyetools/test-utils` | workspace-private | Active (never published) |
 
@@ -70,7 +72,8 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| v5.15.0 | Oct 2026 | `.chara` import on `xivcharakit@0.1.0-beta.4` (exact pin): `inspectCharaForTools` / `resolveCharaForTools` / `resolveCharaWithProvider` / `createCharaPaletteProvider` and the `ImportedCharaCharacter` projection (with `indexGap`; `resolveCharaWithProvider` takes a palette provider and never reaches the palette tables), additive beside the legacy parser and resolver. Nothing consumes it yet |
+| v5.16.0 | Oct 2026 | A-CORE remediation: legacy character APIs deprecated for core 6 after release/acceptance gates; shared limit and nine live types relocated with unchanged exports; imported labels preserve surrogate pairs within 256 UTF-16 units; GPOSERS newline joining made linear with unchanged output; facade docs and xivcharakit attribution refreshed |
+| v5.15.0 | Oct 2026 | `.chara` import on `xivcharakit@0.1.0-beta.4` (exact pin): `inspectCharaForTools` / `resolveCharaForTools` / `resolveCharaWithProvider` / `createCharaPaletteProvider` and the `ImportedCharaCharacter` projection (with `indexGap`; `resolveCharaWithProvider` takes a palette provider and never reaches the palette tables), additive beside the legacy parser and resolver. Adopted by web 5.16.0 and Discord 5.9.0 |
 | v5.14.0 | Oct 2026 | `MAX_CHARA_FILE_BYTES` (8,192): the largest `.chara` file the web app and the bot accept, enforced by them on the original bytes (2026-10-15 import review). Exports without an attached image measured 1,837–2,777 bytes; the corpus's one larger file carried an image attached in Anamnesis (3,128,021 bytes) |
 | v5.13.0 | Oct 2026 | `.chara` error messages are bounded (2026-10-15 import audit, FINDING-002): a value is quoted only up to 64 characters, otherwise described by kind and size, and nothing walks it, so a nested palette index that fits in 8 KiB no longer overflows the stack and a 1 MiB Tribe value no longer becomes a 1 MiB message. A float color string over 128 characters is refused before it is split |
 | v5.12.0 | Oct 2026 | `gposersOmittedSlots` + `CHARA_OFF_HAND_MAIN_CATEGORIES`: the GPOSERS list leaves out invisible pieces (an Emperor's New twin in the family; the Gloves and, unless the character is known female, the Robe are kept) and an Off Hand under a main hand outside ItemUICategory 2/6/8/12–32 even/113; unknown keeps the slot. Corpus, with the callers' `viaMainHand` skip: 2,765 invisible slots and 357 more off-hands (354 by this rule, 3 a crafting tool's own model) leave the list across 913 of 1,093 files |
@@ -207,6 +210,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.9.1 | Oct 2026 | Prepared font readiness: preserve all existing Japanese/Simplified Chinese glyphs and add characters needed by the pending shared bot catalog; runtime handlers and bindings unchanged |
 | v5.9.0 | Oct 2026 | Core 5.15.0 + bot-logic 4.11.0: `/swatch` and `/glamour` pass the attachment's capped bytes to the `xivcharakit`-backed reader (invalid UTF-8 refused), `/glamour` opens gear-only files, unmatched or unreadable colors, gear and dyes get a fixed line; attachment guards unchanged; no command shape change; bundle 2,732.6 KiB gzip (88.9 % of the cap) |
 | v5.8.15 | Oct 2026 | Core 5.13.0 + 5.14.0, bot-logic 4.10.0 (2026-10-15 import review): `/swatch` and `/glamour` refuse an attachment not named `.chara` before deferring, and the cap is 8 KiB (was 1 MiB) on the reported size and the streamed download, with an 8 KB message; no command shape changes |
 | v5.8.14 | Oct 2026 | bot-logic 4.9.0 (no source change here): `/glamour`'s list leaves out invisible pieces and an Off Hand the main hand doesn't take; the card is unchanged; no command shape changes |
@@ -377,6 +381,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v2.4.0 | Oct 2026 | H-LOGGER source prepared: non-Error object/array error arguments use guarded field/value redaction; Discord webhook/interaction URL tokens redact across log entry points. MINOR follows the observable-output precedent; publication and consumer adoption remain separate |
 | v2.3.0 | Oct 2026 | 2026-10-04 remediation Sprint 12 — minor, because log output changes (the rule 2.2.0 set): a context string gets the free-text redaction pass, so a secret inside a longer string is redacted (BUG-140; `sanitizeErrors: false` keeps the old output); a `Date`, `URL` or other `toJSON` value logs as its serialized, redacted form instead of `{}`, bounded and never throwing (BUG-141); URL user-info passwords redacted; the redact set is built once per logger (OPT-010) |
 | v2.2.1 | Sep 2026 | 2026-09-16 deep-dive Sprint 9 — the browser preset's error-tracker wrapper serializes a non-`Error` value with `safeStringify`, so a circular or BigInt-bearing value no longer throws inside `logger.error()` (BUG-020; latent — no app configures a tracker) |
 | **v2.2.0** | **Sep 2026** | **2026-09-02 deep-dive (Sprint 13) — a secret reachable only through a cycle is redacted (the cycle guards returned the raw original node, BUG-004); `sanitizeErrorMessage` output changes shape for non-`Bearer` auth schemes** |
@@ -494,6 +499,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v3.0.0 | Oct 2026 | H-AUTH source prepared: canonical unpadded Base64URL and lowercase 64-hex signatures; MAJOR because the exported hex verifier no longer accepts uppercase/mixed-case digests. Generic hex decoding and v2 signing bytes remain unchanged; publication/adoption pending |
 | v2.0.2 | Sep 2026 | Enforce Discord byte caps during streaming, cancel early, verify original bytes |
 | v2.0.1 | Sep 2026 | knip dead-code gate — 17 barrel exports tagged `@public` (the four encoding helpers are live via `@xivdyetools/auth/encoding`, only the root re-export is unreferenced) |
 | **v2.0.0** | **Aug 2026** | **BREAKING — 2026-08-29 security audit (FINDING-015): `verifyBotSignature` (v1 bot request signature, `timestamp:userId:userName`, no request binding) removed from `hmac.ts` and the barrel; `createBotSignatureV2`/`verifyBotSignatureV2` (1.4.0) are now the only signature scheme. No in-repo caller remained — `presets-api` 2.2.0, `discord-worker` 5.1.0 and `moderation-worker` 1.6.0 had already stopped accepting/sending v1** |
@@ -520,6 +526,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v1.6.0 | Oct 2026 | Opt-in `getClientIp` IPv6 /64 network keys with mapped-IPv4 and malformed-input compatibility; existing callers stay opted out; explicit `/glamour` 5/minute preset without burst selects Discord's existing RL_5 binding |
 | v1.5.0 | Oct 2026 | 2026-10-04 remediation Sprint 16 — minor, for behavior changes (as 1.2.0 and 1.3.0): `jsonDepthLimit` recognizes JSON case-insensitively and `+json` while still guarding anything the old substring test did (BUG-149); a `formatError` response gets the computed `X-RateLimit-*` / `Retry-After` headers it lacks (BUG-150); `KVRateLimiter.reset()` / `resetAll()` page the KV cursor and delete the whole prefix (BUG-151); pins logger 2.3.0 |
 | v1.4.1 | Sep 2026 | Packaging patch — the optional `@cloudflare/workers-types` peer range admits 5.x as well as 4.x (was `^4.0.0`, so `npm install` next to the 5.x line every Worker here uses failed with `ERESOLVE`); the optional `hono` peer stays at 1.4.0's `^4.13.7`; no code change — the published files differ from 1.4.0 only in `package.json` and the README line quoting the peer ranges |
 | v1.4.0 | Sep 2026 | 2026-09-16 deep-dive Sprint 13 — two new subpaths: `/body-guards` (`bodyGuards({ maxSize, maxDepth, onTooLarge, onInvalidJson, exempt })` → `bodySizeLimit` + `jsonDepthLimit`, the oauth and presets-api copies folded in, REFACTOR-009) and `/image-sniff` (`detectImageFormat`, `sniffImageType(bytes, accept)`, `IMAGE_MAGIC_BYTES` — image-worker's table is the source of truth, REFACTOR-008); `body-guards` is subpath-only (it imports `hono/body-limit` at runtime and `hono` is an optional peer) |
@@ -547,6 +554,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v4.4.1 | Oct 2026 | A-SVG security companion: `fitText` scans code-point prefixes in linear time with identical legacy output, numeric behavior, widths and public API; core 5.16.0 publication precedes this publish |
 | v4.4.0 | Oct 2026 | 2026-10-04 remediation, Sprints 14+28 — `formatContrastRatio`, one floored printer for card, embed and `/compare` (BUG-142); whole gradient step ranges (BUG-146); glamour footer wraps at clauses with an 11 px look label (I18N-015, BUG-145); the frame-budget gate covers every card (BUG-144); `scanEmittedGlyphs` fails closed (BUG-143); `LEDGER_GROUP_H` / `LEDGER_ROW_H` back in the barrel (REFACTOR-003) |
 | v4.3.0 | Sep 2026 | `generateGlamourCard` — the /glamour card (2a): pieces in slot order, a second row kind beside measuredRow |
 | v4.2.0 | Sep 2026 | The Glamour Reader glyph (1a: a tunic with the dye on a chest chip), compact + detail |
@@ -703,6 +711,9 @@ and the [rollout runbook](operations/security-remediation-2026-09-15.md) for the
 
 | Consumer | Minimum Core Version | Notes |
 |----------|---------------------|-------|
+| @xivdyetools/svg v4.4.1 | @xivdyetools/core v5.16.0; @xivdyetools/types v3.3.0 | Prepared source; publication and deployed acceptance remain pending |
+| @xivdyetools/worker-kit v1.6.0 | @xivdyetools/logger v2.4.0 | Prepared source; publication and deployed acceptance remain pending |
+| @xivdyetools/core v5.16.0 | @xivdyetools/logger v2.4.0; @xivdyetools/types v3.3.0 | Prepared source; publication and deployed acceptance remain pending |
 | Web App v5.16.0+ | @xivdyetools/core v5.15.0+ | `@xivdyetools/core/chara` (`inspectCharaForTools`, `resolveCharaWithProvider`) — the `.chara` inspection Web Worker imports it, and the xivcharakit-backed reader replaces the in-page parse |
 | Web App v5.15.5+ | @xivdyetools/core v5.14.0+ | `MAX_CHARA_FILE_BYTES` — the `.chara` cap, and core 5.13.0's bounded parse errors |
 | Web App v5.15.4 | @xivdyetools/core v5.12.0+ | `gposersOmittedSlots` — the GPOSERS list leaves out invisible pieces and an Off Hand the main hand doesn't take |

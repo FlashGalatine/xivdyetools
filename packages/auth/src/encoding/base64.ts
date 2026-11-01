@@ -44,10 +44,7 @@ export function base64UrlEncodeBytes(bytes: Uint8Array): string {
   const parts: string[] = [];
   for (let i = 0; i < bytes.length; i += CHUNK) {
     parts.push(
-      String.fromCharCode.apply(
-        null,
-        bytes.subarray(i, i + CHUNK) as unknown as number[]
-      )
+      String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK) as unknown as number[]),
     );
   }
   return btoa(parts.join('')).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -58,6 +55,7 @@ export function base64UrlEncodeBytes(bytes: Uint8Array): string {
  *
  * @param str - The Base64URL string to decode
  * @returns Decoded bytes as Uint8Array
+ * @throws Error if the input is not canonical unpadded Base64URL
  *
  * @example
  * ```typescript
@@ -65,6 +63,11 @@ export function base64UrlEncodeBytes(bytes: Uint8Array): string {
  * ```
  */
 export function base64UrlDecodeBytes(str: string): Uint8Array {
+  // FINDING-042: atob accepts several spellings of the same bytes. Require
+  // the URL-safe alphabet and a possible unpadded length before decoding.
+  if (!/^[A-Za-z0-9_-]*$/.test(str) || str.length % 4 === 1) {
+    throw new Error('Invalid canonical Base64URL encoding');
+  }
   // Convert from Base64URL to standard Base64
   let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
 
@@ -83,6 +86,10 @@ export function base64UrlDecodeBytes(str: string): Uint8Array {
     bytes[i] = binary.charCodeAt(i);
   }
 
+  // Alphabet/length checks alone do not reject non-zero unused trailing bits.
+  if (base64UrlEncodeBytes(bytes) !== str) {
+    throw new Error('Invalid canonical Base64URL encoding');
+  }
   return bytes;
 }
 
@@ -91,6 +98,7 @@ export function base64UrlDecodeBytes(str: string): Uint8Array {
  *
  * @param str - The Base64URL string to decode
  * @returns Decoded UTF-8 string
+ * @throws Error if the input is not canonical unpadded Base64URL
  *
  * @example
  * ```typescript
