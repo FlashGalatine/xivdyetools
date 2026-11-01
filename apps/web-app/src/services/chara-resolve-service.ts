@@ -127,7 +127,10 @@ export function itemNameFor(names: CharaItemNames, locale: string): string {
   return localized && localized.length > 0 ? localized : names.en;
 }
 
-/** Same file imported twice in a session is one request. */
+/**
+ * Same file imported twice in a session is one request, unless the answer
+ * carried an off-contract item or facewear row: that one is not cached.
+ */
 const sessionCache = new Map<string, CharaResolveResult>();
 
 function signatureOf(gear: readonly CharaGearModel[], glassesId: number | null): string {
@@ -348,15 +351,24 @@ export async function resolveCharaEquipment(
     throw new CharaResolveUnavailableError('Malformed resolve envelope');
   }
 
+  // A value that is present but off-contract is answered as null for this import only:
+  // caching it would hide every name until reload if api-worker's shape drifts.
+  let rejected = false;
   const items: CharaResolveResult['items'] = { ...outOfRange };
   for (const model of sendable) {
-    items[model.slot] = readItem(envelope.data.items[model.slot]);
+    const raw = envelope.data.items[model.slot];
+    const item = readItem(raw);
+    if (item === null && raw !== null && raw !== undefined) rejected = true;
+    items[model.slot] = item;
   }
-  const result: CharaResolveResult = {
-    items,
-    glasses: glasses === null ? null : readGlasses(envelope.data.glasses),
-  };
-  sessionCache.set(signature, result);
+  const rawGlasses = envelope.data.glasses;
+  const readGlass = glasses === null ? null : readGlasses(rawGlasses);
+  if (glasses !== null && readGlass === null && rawGlasses !== null && rawGlasses !== undefined) {
+    rejected = true;
+  }
+  const result: CharaResolveResult = { items, glasses: readGlass };
+  if (rejected) logger.warn('[CharaResolve] api-worker sent an off-contract item; not cached');
+  else sessionCache.set(signature, result);
   return result;
 }
 

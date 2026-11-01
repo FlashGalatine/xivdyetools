@@ -194,10 +194,10 @@ Partial unique indexes on `discord_id` and `xivauth_id` enforce per-provider uni
 
 `signState(payload, env.JWT_SECRET)` produces `<base64url-json>.<base64url-hmac>`; `verifyState` verifies the signature over `oauth-state-v1:` plus the base64url-encoded portion (`crypto.subtle.verify`, timing-safe), then rejects a state with no `exp` or an `exp` in the past (`exp` is minted as `iat + STATE_EXPIRY_SECONDS (600)`). Without a valid signature the callback returns 400. The state carries the `redirect_uri`, `return_path`, and original `state` value supplied by the SPA.
 
-Legacy signed states have a fixed issuance cutoff of 2026-10-28 00:00:00 UTC and maximum
-600-second lifetime; final acceptance ends at 00:10:00 UTC. This deadline never resets with an
-isolate. Deployment afterward makes an old in-flight sign-in retry once. Development unsigned
-GET compatibility stays separate; POST requires signed state.
+States signed without the `oauth-state-v1:` prefix (3.1.x and earlier) are rejected; the
+one-time raw-HMAC window closed 2026-10-28 00:10 UTC, before 3.2.0 shipped, so its code was
+removed. Never reintroduce a raw-HMAC fallback. A sign-in in flight across the 3.2.0 deployment
+restarts once. Development unsigned GET compatibility stays separate; POST requires signed state.
 
 ### JWT Service
 

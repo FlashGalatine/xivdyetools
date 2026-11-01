@@ -28,6 +28,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `LINKED_BAN_CONFIRMATION_ENABLED` remains false in both environments. All new ban/unban paths
   refuse privately until separate activation after provider, additive presets migration and
   disclosures are live. The optional slash argument registers through the existing deploy workflow.
+- Cancel on a ban review deletes the actor's live review-phase nonce instead of marking it applied;
+  a selection nonce cannot be canceled. No migration, schema or retention change.
+
+### Fixed
+
+- A typed `/preset moderate approve` whose link cannot be reviewed now says approval is unavailable
+  instead of telling the moderator to click a missing Approve button.
+- Unexpected failures while creating, loading or applying an account ban review are logged
+  server-side as a fixed message plus the error text, with no IDs, names or reason text added;
+  moderators still see the same private refusal. Expected refusals such as an expired review are
+  not logged as errors.
+- The `ban_user` author search no longer retries an identical query after a failure; the error is
+  logged by the autocomplete handler.
+- A failing `unban_user` search is now logged instead of silently showing an empty list.
 
 ## [1.8.4] - 2026-10-27
 
