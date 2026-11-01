@@ -19,6 +19,8 @@
 
 Nothing in this audit is exploitable by an unauthenticated party to the detriment of another user. The most consequential item is a privacy-policy gap ([FINDING-001](findings/FINDING-001.md), graded MEDIUM by the skill's personal-data rule; the maintainer chose the code fix). The most visible new item is a stale dev api-worker that is still public on `workers.dev` because the repo's pin never reached the live script ([FINDING-054](findings/FINDING-054.md)). The rest are bounded hardening gaps, policy or UI text that no longer matches the code, and repository-settings residue. All 2026-10-03 and 2026-10-15 fixes still hold at HEAD except 2026-10-03/FINDING-023, which is still open ([FINDING-028](findings/FINDING-028.md)).
 
+> **Status 2026-10-31:** this summary is as found on 2026-10-26. Since then 7 findings are FIXED (FINDING-028, -035, -051, -052, -054, -055, -056) and 2 are PARTIAL (FINDING-008, -009); FINDING-050 is blocked. See *Remediation status*.
+
 ## Catalog
 
 | ID | Title | Sev | Exposure | Deploy unit | Rotation |
@@ -111,7 +113,7 @@ Every row is a **six-file edit per document** (English + `.ja/.ko/.zh/.de/.fr`),
 | [FINDING-034](findings/FINDING-034.md) | web `locales/de.json` `preset.shotSlot` | — | CORRECT (UI copy, one locale) | no |
 | [FINDING-035](findings/FINDING-035.md) | web + bot `TERMS_OF_SERVICE.md` | Moderation (auto-publish sentences) | CORRECT **on the day the Perspective key is deleted (by 2026-12-31)** | no |
 
-[FINDING-053](findings/FINDING-053.md) is a process gap (no deletion/export runbook), not a policy edit. The other 38 findings carry no policy field. A fixed-code resolution of a Step 3a case-1 finding makes the existing text true and needs no edit.
+[FINDING-053](findings/FINDING-053.md) is a process gap (no deletion/export runbook), not a policy edit. The other 41 findings carry `Policy: NONE`. A fixed-code resolution of a Step 3a case-1 finding makes the existing text true and needs no edit.
 
 ## Live state
 
@@ -145,7 +147,7 @@ Also settled: the deployed D1 carries migrations 0012 and 0014 (the `content_rev
 | Translation meaning (verifier-model readers, 5 languages × 4 documents) | no divergence in ja or zh; ko 1, de 2, fr 2 raised → 4 groups: 3 filed ([FINDING-007](findings/FINDING-007.md), [-033](findings/FINDING-033.md), [-034](findings/FINDING-034.md)), 1 rejected (the ko "nothing is transmitted" wording: English "Nothing is uploaded" is equally absolute) |
 | Live headers (`curl -sI`, read-only) | production, beta, `xiv-colorexplorer.pages.dev`, `xivdyetools-beta.pages.dev`: CSP, HSTS, XFO, nosniff, Permissions-Policy all present and identical ([txt](evidence/live-headers.txt)); old hash/branch deployments: [txt](evidence/live-headers-old-deployments.txt) → [FINDING-009](findings/FINDING-009.md) |
 | GitHub settings (GET-only `gh api`) | SHA pinning enforced, Dependabot alerts on (5 open, all dev-tree vite), `Secret scan (gitleaks)` required, bot tokens still repository-scope, `enforce_admins` / `strict` still off ([ci-supply-chain review](evidence/review-ci-supply-chain.md)) |
-| Regression sweep | **no control regressed.** 2026-10-03 FINDING-001…031 and 2026-10-15 FINDING-001…003: all HOLDS except FINDING-023 (PARTIAL → [FINDING-028](findings/FINDING-028.md)), FINDING-024 (residual → [FINDING-051](findings/FINDING-051.md)) and FINDING-027 (optional hardening → [FINDING-039](findings/FINDING-039.md)); the 2026-09-15 and 2026-08-29 fix lists also hold ([review-regression-a.md](evidence/review-regression-a.md), [review-regression-b.md](evidence/review-regression-b.md)). Guard tests were identified by reading, not executed |
+| Regression sweep | **no control regressed.** 2026-10-03 FINDING-001…031 and 2026-10-15 FINDING-001…003: all HOLDS except FINDING-023 (PARTIAL → [FINDING-028](findings/FINDING-028.md)), FINDING-024 (residual → [FINDING-051](findings/FINDING-051.md)) and FINDING-027 (optional hardening → [FINDING-039](findings/FINDING-039.md)); the 2026-09-15 and 2026-08-29 fix lists also hold ([review-regression-a.md](evidence/review-regression-a.md), [review-regression-b.md](evidence/review-regression-b.md)); 2026-08-21/FINDING-025's `workers_dev = false` half held in config only, because the live dev script was never redeployed ([FINDING-054](findings/FINDING-054.md)). Guard tests were identified by reading, not executed |
 | Cloudflare (read-only API) | 16 workers, 4 D1 databases, 8 Pages projects, 12 DNS records and the zone routes and settings read; three new findings, one re-grade (FINDING-030), the deployed D1 schema confirmed ([evidence](evidence/live-state-cloudflare-2026-10-26.md), [captures](evidence/live-headers-http-and-retired.txt)) |
 | Fan-out | 46 reviews, 85 candidates → 73 groups → 53 filed (merges and rejections below), 9 rejected, 7 routed; plus 3 filed from the live-state pass (56 total) ([workflow-verify-result.json](evidence/workflow-verify-result.json), [candidates.json](evidence/candidates.json), [candidate-groups.json](evidence/candidate-groups.json)) |
 | Third-party dependency | `xivcharakit@0.1.0-beta.4`: exact pin, lockfile integrity equals the registry, SLSA provenance, no install hooks, no runtime dependencies, no eval / fs / process, `fetch` only in an XIVAPI client no workspace imports; hostile-input probes at the 8 KiB cap finished in < 6 ms ([review-r2-xivcharakit-source.md](evidence/review-r2-xivcharakit-source.md)); releases carry no git tags → [FINDING-052](findings/FINDING-052.md) |
@@ -216,8 +218,8 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 | FINDING-005 | OPEN | — |
 | FINDING-006 | OPEN | — |
 | FINDING-007 | OPEN | — |
-| FINDING-008 | OPEN | — |
-| FINDING-009 | OPEN | — |
+| FINDING-008 | PARTIAL 2026-10-31 — fixed upstream for MFA accounts (`d27a8b2`, 2026-10-27, credited publicly); non-MFA email auto-link remains by upstream design | Private report sent 2026-10-27; xivdyetools-side narrowing (M1/M2) not started and gated before the oauth identity-split activation (2026-10-31 addendum) |
+| FINDING-009 | PARTIAL 2026-10-26 — one-off history/alias cleanup complete; automated retention remains in R-CI | [760 deletion receipts and preservation verification](evidence/remediation-finding-009-2026-10-26.md) (no code commit) |
 | FINDING-010 | OPEN | — |
 | FINDING-011 | OPEN | — |
 | FINDING-012 | OPEN | — |
@@ -236,14 +238,14 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 | FINDING-025 | OPEN | — |
 | FINDING-026 | OPEN | — |
 | FINDING-027 | OPEN | — |
-| FINDING-028 | OPEN | — |
+| FINDING-028 | FIXED 2026-10-26 | Repository secret copies deleted; environment copies preserved; [verification](evidence/remediation-finding-028-2026-10-26.md) (no code commit) |
 | FINDING-029 | OPEN | — |
 | FINDING-030 | OPEN | — |
 | FINDING-031 | OPEN | — |
 | FINDING-032 | OPEN | — |
 | FINDING-033 | OPEN | — |
 | FINDING-034 | OPEN | — |
-| FINDING-035 | OPEN | — |
+| FINDING-035 | FIXED 2026-10-27 — checklist omission closed; actual policy changes remain scheduled for key deletion | [Perspective-sunset checklist](../../../DEPRECATIONS.md) (documentation only) |
 | FINDING-036 | OPEN | — |
 | FINDING-037 | OPEN | — |
 | FINDING-038 | OPEN | — |
@@ -258,13 +260,13 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 | FINDING-047 | OPEN | — |
 | FINDING-048 | OPEN | — |
 | FINDING-049 | OPEN | — |
-| FINDING-050 | OPEN | — |
-| FINDING-051 | OPEN | — |
-| FINDING-052 | OPEN | — |
+| FINDING-050 | OPEN — BLOCKED 2026-10-26 on feature eligibility; both options remain disabled | [Attempt and verification](evidence/remediation-finding-050-2026-10-26.md); no accepted deferral |
+| FINDING-051 | FIXED 2026-10-26 — enforce_admins and strict enabled | [Live settings and preservation verification](evidence/remediation-finding-051-2026-10-26.md) (no code commit) |
+| FINDING-052 | FIXED 2026-10-27 — four published library releases have verified source tags; registry stub excluded | [Version/commit mapping and remote verification](evidence/remediation-finding-052-2026-10-27.md) |
 | FINDING-053 | OPEN | — |
-| FINDING-054 | OPEN | — |
-| FINDING-055 | OPEN | — |
-| FINDING-056 | OPEN | — |
+| FINDING-054 | FIXED 2026-10-26 | Live Cloudflare deletion; [verification](evidence/remediation-finding-054-2026-10-26.md) (no code commit) |
+| FINDING-055 | FIXED 2026-10-26 (zone settings) | Live Cloudflare settings; [verification](evidence/remediation-finding-055-2026-10-26.md) (no code commit); HSTS-comment wording follows in app sprints |
+| FINDING-056 | FIXED 2026-10-26 | Live Cloudflare project and worker deletions; [verification](evidence/remediation-finding-056-2026-10-26.md) (no code commit) |
 
 ## Next steps
 

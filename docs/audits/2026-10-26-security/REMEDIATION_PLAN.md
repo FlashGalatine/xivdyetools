@@ -1,5 +1,5 @@
 # Remediation Plan — 2026-10-26
-**Sources:** [2026-10-26-security](SECURITY_AUDIT_REPORT.md) — 56 findings (1 MEDIUM, 31 LOW, 24 INFO) · **Status basis:** 56 total — 0 fixed, 56 outstanding, 0 superseded (three carry forward a 2026-10-03 ID, see *Superseded findings*), 0 KEEP, 0 need rotation
+**Sources:** [2026-10-26-security](SECURITY_AUDIT_REPORT.md) — 56 findings (1 MEDIUM, 31 LOW, 24 INFO) · **Status basis:** 56 total — 7 fixed, 49 outstanding (FINDING-008 and -009 partial, FINDING-050 blocked), 0 superseded (three carry forward a 2026-10-03 ID and one a 2026-08-21 ID, see *Superseded findings*), 0 KEEP, 0 need rotation (basis 2026-10-31; see the report's Remediation status table)
 **Ordering:** 1. one deploy unit per sprint (a package change is one publish sprint, then one sprint per consumer deploy) 2. P0 first — there is none 3. Severity × Exposure, then hardening 4. terminal work last (CI and repo settings, docs and process)
 
 Tiers: **P2** = the MEDIUM, plus LOW findings with a reachable code path or a false statement users read. **P3** = hardening, INFO, LOCAL and process items. Nothing here is P0 or P1: no unauthenticated party can harm another user, and no secret is exposed.
@@ -20,6 +20,8 @@ Tiers: **P2** = the MEDIUM, plus LOW findings with a reachable code path or a fa
 | 8 | Plan gate | **DECIDED 2026-10-26:** review first, start nothing. No sprint, bump, publish or deploy runs until you say so. |
 
 ## Sprint 0 — Prerequisites and maintainer-only actions (no deploy; nothing exploitable now)
+> **2026-10-26/27:** executed except FINDING-050 (blocked) and the R-CI half of FINDING-009; FINDING-008 is PARTIAL (2026-10-31). See the report's Remediation status table.
+
 No finding is exploitable now by the skill's rule and no credential is exposed, so there is nothing to rotate. These items need the maintainer's Cloudflare dashboard or GitHub settings, not a code change, and can run in parallel with Sprint 1; do FINDING-054 first (a deletion, nothing depends on it).
 
 | ID | Source | Tier | Action |
@@ -29,7 +31,7 @@ No finding is exploitable now by the skill's rule and no credential is exposed, 
 | [FINDING-056](findings/FINDING-056.md) | security | P3 · INFO / INTERNET-UNAUTH | Delete the retired Pages project `xivdyetools-api-docs` and the retired worker `xivdyetools-universalis-proxy`; tick `DEPRECATIONS.md:162,200` and `OPEN_ITEMS.md` §2. |
 | [FINDING-028](findings/FINDING-028.md) | security | P3 · LOW / LOCAL | `gh secret delete` the repository-scope `DISCORD_TOKEN`, `MODERATION_DISCORD_TOKEN`, `BETA_DISCORD_TOKEN`, `BETA_DISCORD_GUILD_ID` (the environment copies already exist and every consuming job declares `environment:`); check off FINDING-023 in `docs/operations/OPEN_ITEMS.md`. Optional token reset. |
 | [FINDING-009](findings/FINDING-009.md) | security | P2 · LOW / INTERNET-UNAUTH | Bulk-delete the superseded Pages deployments (522 in `xivdyetools`, 240 in `xivdyetools-beta`, each at its own `<hash>.pages.dev` host; the `ecc7fb76` beta deployment serves no CSP, XFO or HSTS) and the `v4-ui-migration` alias, keeping the current production and beta deployments. Add a retention step to `deploy-web-app*.yml` in Sprint 8. |
-| [FINDING-008](findings/FINDING-008.md) | security | P3 · LOW / INTERNET-UNAUTH | Report upstream to XIVAuth (MFA or owner confirmation on the email auto-merge path); decide whether oauth narrows its side (Sprint 6). |
+| [FINDING-008](findings/FINDING-008.md) | security | P3 · LOW / INTERNET-UNAUTH | Reported 2026-10-27; fixed upstream for MFA accounts (`d27a8b2`). Narrow our side: M1 (Discord IDs asserted by XIVAuth need direct Discord proof) before the oauth identity-split activation; M2 (moderator rights only via Discord sign-in) optional (Sprint 6). |
 | [FINDING-035](findings/FINDING-035.md) | security | P3 · INFO / INTERNET-UNAUTH | **Dated: before 2026-12-31.** Add both Terms-of-Service auto-publish sentences to the `DEPRECATIONS.md` Perspective-sunset checklist (doc-only); the six-file CORRECTs land on key-deletion day. |
 | [FINDING-050](findings/FINDING-050.md) | security | P3 · INFO / LOCAL | Enable secret-scanning non-provider patterns and validity checks, or record the choice. |
 | [FINDING-051](findings/FINDING-051.md) | security | P3 · INFO / LOCAL | Turn on `enforce_admins` and `strict` on `main` now that the 2026-10-03 remediation PRs merged, or record the deferral. |
@@ -106,7 +108,7 @@ Wire the `glamour` tier from Sprint 1; drop the moderator name from `preview-ima
 | [FINDING-032](findings/FINDING-032.md) | security | LOW / LOCAL · P3 | `[env.development]`: add `routes = []` and `workers_dev = false` (or an explicit dev route); extend `wrangler-config.test.ts`. |
 | [FINDING-036](findings/FINDING-036.md) | security | INFO / INTERNET-UNAUTH · P3 | Domain-separate the state HMAC from the JWT signing key (prefix or derived subkey) with a migration window for in-flight states. |
 
-Adopt Sprint 1's `/64` option in the oauth `/auth/*` limiter. Optionally narrow the upstream email-merge impact ([FINDING-008](findings/FINDING-008.md)) by re-verifying the link on sign-in.
+Adopt Sprint 1's `/64` option in the oauth `/auth/*` limiter. Narrow the upstream email-merge impact ([FINDING-008](findings/FINDING-008.md)): M1 (attach or resolve by a Discord ID that XIVAuth asserts only after direct Discord proof) is required before the oauth identity-split activation (AP-34 in the October 2026 release checklist); M2 (moderator rights only via Discord sign-in) is optional.
 **Ends with:** `pnpm turbo run build type-check lint test --filter=xivdyetools-oauth-worker...` → merge → deploy (production, same command).
 
 ## Sprint 7 — api-worker: XIVAPI bounds, cache-miss budget
@@ -199,6 +201,7 @@ Defence in depth for [FINDING-002](findings/FINDING-002.md) (tracked in Sprint 7
 | 2026-10-03-security/FINDING-023 | [FINDING-028](findings/FINDING-028.md) | Carried forward under a new ID, still open; the regression sweep verdict is PARTIAL |
 | 2026-10-03-security/FINDING-024 | [FINDING-051](findings/FINDING-051.md) | Residual (`enforce_admins`, `strict`) after its precondition PRs merged |
 | 2026-10-03-security/FINDING-027 | [FINDING-039](findings/FINDING-039.md) | Optional hardening (failed-auth throttle) not done |
+| 2026-08-21-security/FINDING-025 | [FINDING-054](findings/FINDING-054.md) | Its `workers_dev = false` half was fixed in the repo (`6e23014d`) but never reached the live dev script, which was not redeployed |
 
 ## KEEP register
 | ID | Item | Reason | Revisit trigger |

@@ -34,6 +34,8 @@ const t = (s, n) => {
   const x = (s ?? '').replace(/\s+/g, ' ').trim();
   return x.length > n ? x.slice(0, n - 1).trimEnd() + '…' : x;
 };
+// 2026-10-31: bullet text is no longer length-capped (t() now caps only the Location bullets).
+const full = (s) => (s ?? '').replace(/\s+/g, ' ').trim();
 const pad = (n) => String(n).padStart(3, '0');
 mkdirSync(`${OUT}/findings`, { recursive: true });
 
@@ -61,28 +63,29 @@ all.forEach((gid, i) => {
     }
   }
   const locBullets = locs.slice(0, 3).map((x) => `- \`${t(x, 330)}\``);
-  const refuter = r.b && r.b.verdict === 'PARTIAL' ? ` Refuter's narrowing: ${t(r.b.why, 330)}` : '';
+  const refuter = r.b && r.b.verdict === 'PARTIAL' ? `- Refuter (PARTIAL verdict): ${full(r.b.why)}` : '';
   const ev = [
-    `- ${t(lead.proof, 720)}`,
-    `- ${t(lead.why, 620)}${refuter}`,
+    `- ${full(lead.proof)}`,
+    `- ${full(lead.why)}`,
   ];
-  if (lead.live_consumer) ev.push(`- Still live: ${t(lead.live_consumer, 360)}`);
+  if (refuter) ev.push(refuter);
+  if (lead.live_consumer) ev.push(`- Still live: ${full(lead.live_consumer)}`);
   const fix = [];
   const recLine =
     c.rec === 'KEEP'
-      ? `**KEEP** — revisit trigger: ${t(c.maintainer_decision || lead.keep_trigger || '', 380) || t(lead.keep_trigger, 380)}`
-      : `**${c.rec}** — ${t(lead.steps, 560)}`;
+      ? `**KEEP** — revisit trigger: ${full(c.maintainer_decision || lead.keep_trigger || '') || full(lead.keep_trigger)}`
+      : `**${c.rec}** — ${full(lead.steps)}`;
   fix.push(`- ${recLine}`);
-  if (c.rec === 'KEEP' && lead.keep_trigger && c.maintainer_decision) fix.push(`- Trigger as verified: ${t(lead.keep_trigger, 360)}`);
-  if (lead.prerequisite && c.rec !== 'KEEP') fix.push(`- Prerequisite: ${t(lead.prerequisite, 300)}`);
-  if (lead.cascade) fix.push(`- Cascade: ${t(lead.cascade, 420)}`);
-  if (lead.published_note) fix.push(`- Published: ${t(lead.published_note, 320)}`);
-  if (c.rec !== 'KEEP' && c.maintainer_decision) fix.push(`- **Maintainer decision:** ${t(c.maintainer_decision, 380)}`);
+  if (c.rec === 'KEEP' && lead.keep_trigger && c.maintainer_decision) fix.push(`- Trigger as verified: ${full(lead.keep_trigger)}`);
+  if (lead.prerequisite && c.rec !== 'KEEP') fix.push(`- Prerequisite: ${full(lead.prerequisite)}`);
+  if (lead.cascade) fix.push(`- Cascade: ${full(lead.cascade)}`);
+  if (lead.published_note) fix.push(`- Published: ${full(lead.published_note)}`);
+  if (c.rec !== 'KEEP' && c.maintainer_decision) fix.push(`- **Maintainer decision:** ${full(c.maintainer_decision)}`);
   const extra = [];
   if (mergedGroups.length > 1) extra.push(`**Merged:** ${mergedGroups.slice(1).join(', ')} (same root cause, per the calibration pass)`);
-  if (c.changed) extra.push(`**Calibration:** ${t(c.reason, 300)}`);
+  if (c.changed) extra.push(`**Calibration:** ${full(c.reason)}`);
   const md = `# ${id}: ${title}
-**Confidence:** ${c.confidence} · **Blast radius:** ${c.blast} · **Deploy unit:** ${t(lead.deploy_unit, 110)} · **Semver:** ${c.semver} · **Category:** ${lead.category || 'Legacy'}
+**Confidence:** ${c.confidence} · **Blast radius:** ${c.blast} · **Deploy unit:** ${full(lead.deploy_unit)} · **Semver:** ${c.semver} · **Category:** ${lead.category || 'Legacy'}
 ${extra.length ? extra.join(' · ') + '\n' : ''}
 ## Location
 ${locBullets.join('\n')}

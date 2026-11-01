@@ -147,7 +147,7 @@ No group was rejected on verification. Two were narrowed: [DEAD-025](findings/DE
 4. **Gate the published tarball's file list** (`npm pack --dry-run`) so a test fixture cannot ship again ([DEAD-017](findings/DEAD-017.md)); exclude `__fixtures__/` in `tsconfig.build.json`.
 5. **Check that every bundle-budget row matches an emitted chunk** ([DEAD-013](findings/DEAD-013.md)).
 6. **Keep the parity harness's library half** as the case-level regression pin for each `xivcharakit` beta bump; drop only the legacy half.
-7. **Re-run `symrefs.sh` on the KEEP register** when the 6.0.0 / 5.0.0 pair is planned: five KEEP rows (the `extended*` fields, the provider arm, the barrel duplicate, `CHARA_WEAPON_SLOTS`, `fileText`) resolve in that release.
+7. **Re-run `symrefs.sh` on the KEEP register** when the 6.0.0 / 5.0.0 pair is planned: six KEEP rows (the `extended*` fields, the provider arm, the barrel duplicate, `CHARA_WEAPON_SLOTS`, `fileText`, the `familySize` fallback) resolve in that release.
 8. **Re-audit this slice after xivcharakit leaves beta** — its palette provider guards and `inactive` arm are KEEP only because the beta's behavior is not yet frozen ([DEAD-034](findings/DEAD-034.md), [DEAD-035](findings/DEAD-035.md)).
 
 ## Limits
@@ -155,6 +155,8 @@ No group was rejected on verification. Two were narrowed: [DEAD-025](findings/DE
 Source / configuration audit; read-only. No build, bundle measurement or workerd run was made, and npm consumers of the published `@public` exports are unknowable from the repo (that is exactly why their removal is MAJOR). Reviewers read the largest files (`glamour-block.ts`, the 8,186-line parity harness) by structure and targeted sections, not line by line; the verifiers re-ran the reference counts for every removal candidate. `knip --production` (the test-only tier) was not run for web-app. The other five locale files rely on the existing key-parity gate.
 
 ## Remediation status
+
+> **Status note (2026-10-31):** statuses and version numbers here are as of main `13c386e5` (audit tree `6da3ff5b`). The October 2026 release-cut queue (#369–#411) carries parts of this plan: core 5.16.0 (#373), bot-logic 4.12.0 (#377), core 6.0.0 and bot-logic 5.0.0 (#391, #394). Treat the versions as provisional. Per-finding status is restated in the audit-docs companion after the queue lands.
 
 | ID | Status | Commit |
 |---|---|---|

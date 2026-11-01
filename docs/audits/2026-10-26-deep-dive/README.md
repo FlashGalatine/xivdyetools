@@ -1,6 +1,6 @@
 # Deep-dive audit — 2026-10-26
 
-This audit appends to [PR #333](https://github.com/FlashGalatine/xivdyetools/pull/333) and [PR #334](https://github.com/FlashGalatine/xivdyetools/pull/334): **24 findings (20 LOW, 4 MEDIUM), all OPEN**. No source files were modified by the audit. The [merged remediation plan](../2026-10-26-i18n/REMEDIATION_PLAN.md) reconciles both preceding catalogs and both new catalogs; no remediation sprint has started.
+This audit appends to [PR #333](https://github.com/FlashGalatine/xivdyetools/pull/333) and [PR #334](https://github.com/FlashGalatine/xivdyetools/pull/334): **24 findings (20 LOW, 4 MEDIUM), all OPEN**. No source files were modified by the audit. The [merged remediation plan](../2026-10-26-i18n/REMEDIATION_PLAN.md) reconciles both preceding catalogs and both new catalogs; no remediation sprint had started when the audit was written (main `13c386e5`). Sprint 0's maintainer actions were recorded on 2026-10-26/27, and code fixes ship through the release-cut queue (#369–#411); per-finding status is restated in the audit-docs companion.
 
 **Scope:** all 17 workspace units; six locales for i18n. **Branch:** `codex/deep-i18n-audits-20261026` at `6da3ff5b047188e6f8c08be2ea47f99f02e7a8d1`. PR #334 contains #333; both prior PRs are documentation-only and share main's runtime tree at `13c386e5`. Date follows the maintainer's local 2026-10-26 session; some evidence timestamps are UTC 2026-10-27.
 

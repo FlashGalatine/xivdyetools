@@ -10,7 +10,7 @@
 - Still live: apps/web-app/src/services/chara-inspection-service.ts:84; packages/bot-logic/src/commands/chara-identity.ts:51 (swatch.ts:405, glamour.ts:444); packages/core/src/services/chara/chara-resolver.ts:403
 
 ## Fix
-- **KEEP** — revisit trigger: Re-audit when either of two conditions holds. (a) An xivcharakit release after 0.1.0-beta.4 exports a lazy, shader-only PaletteProvider entry, and switching core to it keeps web-app `run build:check` within budget. (b) A core MAJOR removes both createCharaPaletteProvider and the legacy resolveCharaColors. Before removing anything, git grep -w charaShaderHex must show no produc…
+- **KEEP** — revisit trigger: Re-audit when either of two conditions holds. (a) An xivcharakit release after 0.1.0-beta.4 exports a lazy, shader-only PaletteProvider entry, and switching core to it keeps web-app `run build:check` within budget. (b) A core MAJOR removes both createCharaPaletteProvider and the legacy resolveCharaColors. Before removing anything, git grep -w charaShaderHex must show no production caller.
 - Cascade: Removing these files would break createCharaPaletteProvider, resolveCharaForTools and resolveCharaColors. That breaks the web-app .chara import and the discord /swatch and /glamour commands.
 - Published: @xivdyetools/core 5.15.0 exports createCharaPaletteProvider and resolveCharaForTools as @public, and resolveCharaColors is published too. All three depend on this module, so any removal is MAJOR.
 

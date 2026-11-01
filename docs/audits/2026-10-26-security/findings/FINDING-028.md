@@ -18,4 +18,4 @@
 - **Maintainer decision:** Only the maintainer can act on the live state: delete the repository-scope DISCORD_TOKEN, MODERATION_DISCORD_TOKEN, BETA_DISCORD_TOKEN and BETA_DISCORD_GUILD_ID now that every consuming job declares environment:.
 
 ## Status
-OPEN
+FIXED 2026-10-26 — maintainer-authorized deletion of the repository-scope DISCORD_TOKEN, MODERATION_DISCORD_TOKEN, BETA_DISCORD_TOKEN and BETA_DISCORD_GUILD_ID; each DELETE returned 204. Fresh listings confirm their absence, both environment inventories and secret metadata unchanged, and CLOUDFLARE_ACCOUNT_ID retained. Successful production registration and current workflow environment references were checked first; [execution evidence](../evidence/remediation-finding-028-2026-10-26.md). No rotation, deploy or code commit was required.

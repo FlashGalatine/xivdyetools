@@ -95,7 +95,7 @@ No group was rejected on verification. Two were narrowed: [DEAD-025](findings/DE
 4. **Gate the published tarball's file list** (\`npm pack --dry-run\`) so a test fixture cannot ship again ([DEAD-017](findings/DEAD-017.md)); exclude \`__fixtures__/\` in \`tsconfig.build.json\`.
 5. **Check that every bundle-budget row matches an emitted chunk** ([DEAD-013](findings/DEAD-013.md)).
 6. **Keep the parity harness's library half** as the case-level regression pin for each \`xivcharakit\` beta bump; drop only the legacy half.
-7. **Re-run \`symrefs.sh\` on the KEEP register** when the 6.0.0 / 5.0.0 pair is planned: five KEEP rows (the \`extended*\` fields, the provider arm, the barrel duplicate, \`CHARA_WEAPON_SLOTS\`, \`fileText\`) resolve in that release.
+7. **Re-run \`symrefs.sh\` on the KEEP register** when the 6.0.0 / 5.0.0 pair is planned: six KEEP rows (the \`extended*\` fields, the provider arm, the barrel duplicate, \`CHARA_WEAPON_SLOTS\`, \`fileText\`, the \`familySize\` fallback) resolve in that release.
 8. **Re-audit this slice after xivcharakit leaves beta** — its palette provider guards and \`inactive\` arm are KEEP only because the beta's behavior is not yet frozen ([DEAD-034](findings/DEAD-034.md), [DEAD-035](findings/DEAD-035.md)).
 
 ## Limits

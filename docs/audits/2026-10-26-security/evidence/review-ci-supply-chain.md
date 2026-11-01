@@ -29,7 +29,7 @@ Only collaborator: FlashGalatine (admin). No deploy keys. No direct (non-merge) 
 ### ci-supply-chain-01 — FINDING-023 still open: production bot tokens remain repository-scope secrets (LOW, LOCAL)
 - `gh api repos/FlashGalatine/xivdyetools/actions/secrets` → `BETA_DISCORD_GUILD_ID, BETA_DISCORD_TOKEN, CLOUDFLARE_ACCOUNT_ID, DISCORD_TOKEN (updated 2026-05-26), MODERATION_DISCORD_TOKEN (2026-08-29)`. Environment copies exist (`production`: DISCORD_TOKEN updated 2026-10-05, MODERATION_DISCORD_TOKEN 2026-10-04).
 - The stated precondition for deleting the copies (docs/operations/OPEN_ITEMS.md:44-48; 2026-10-03 FINDING-023 Status) is met: PRs #225/#227/#233 merged 2026-10-05; deploy-discord-worker.yml and deploy-moderation-worker.yml ran green on main repeatedly, latest 2026-10-26 20:54Z.
-- Docs claim the opposite state: docs/operations/SECRET_ROTATION.md:64 and DEPLOY_ENVIRONMENTS.md:121-124 say no repository-level copy is left.
+- The docs state the target, not a finished move: docs/operations/SECRET_ROTATION.md:64 and DEPLOY_ENVIRONMENTS.md:121-124 require that no repository-level copy is left and say the maintainer makes the move; OPEN_ITEMS.md:44-49 still lists deleting the four repository copies as to-do.
 - Reach: any workflow run that does not declare `environment:` (e.g. a workflow edited on a pushed feature branch) can read the repo copies; only writers can push (one admin). Whether the 2026-05-26 repo `DISCORD_TOKEN` value is still valid (the env copy was updated 2026-10-05) cannot be confirmed from GitHub.
 - Fix: delete the four repository copies (Settings → Secrets → Actions), tick OPEN_ITEMS.md. Rotation only if a branch run ever read them.
 

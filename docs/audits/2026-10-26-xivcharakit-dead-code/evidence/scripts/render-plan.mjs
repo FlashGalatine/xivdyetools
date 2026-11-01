@@ -149,7 +149,7 @@ This plan accompanies [the security plan](../2026-10-26-security/REMEDIATION_PLA
 |---|---|---|
 | 1 | Legacy removal path ([DEAD-024](findings/DEAD-024.md), [DEAD-023](findings/DEAD-023.md)) | **DECIDED 2026-10-26:** deprecate now, then cut the core 6.0.0 + bot-logic 5.0.0 pair once beta acceptance closes (Sprints 4–7). This supersedes security FINDING-043. |
 | 2 | Parity harness | **DECIDED 2026-10-26:** drop the legacy \`[host]\` half with the legacy pair; keep the \`[library]\` half as the regression pin for each xivcharakit beta bump. |
-| 3 | \`@public\` KEEP rows resolved by the MAJOR ([DEAD-027](findings/DEAD-027.md)–[030](findings/DEAD-030.md)) | **Open:** take them in 6.0.0 or keep the published surface. Decide when Sprint 6 is planned. |
+| 3 | \`@public\` KEEP rows resolved by the MAJOR ([DEAD-027](findings/DEAD-027.md)–[030](findings/DEAD-030.md)) | **Open:** take them in 6.0.0 or keep the published surface. Decide when Sprint 6 is planned. DEAD-038 and DEAD-039 (bot-logic \`@public\`) are already scheduled in Sprint 7 with bot-logic 5.0.0 and need no separate decision. |
 | 4 | Starting work | Nothing starts until the maintainer names a sprint; no removal, version bump, publish or deploy happens before that explicit yes. |
 
 ${sprintBlocks}
@@ -160,7 +160,7 @@ ${sprintBlocks}
 
 ## KEEP register
 
-Unscheduled; each has a concrete revisit trigger. Five of them resolve in the Sprint 6–7 MAJOR pair if the maintainer takes it.
+Unscheduled; each has a concrete revisit trigger. Six of them (DEAD-027–030, DEAD-038, DEAD-039) resolve in the Sprint 6–7 MAJOR pair if the maintainer takes it.
 
 | ID | Item | Revisit trigger |
 |---|---|---|

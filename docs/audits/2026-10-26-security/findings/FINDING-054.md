@@ -17,4 +17,4 @@
 - Tick `OPEN_ITEMS.md:74-75` with the HEAD probe as evidence, and add a `*.workers.dev` reachability probe for every worker name to the live-origin checklist: the same drift can hide on any worker whose last deploy predates its pin.
 
 ## Status
-OPEN
+FIXED 2026-10-26 — maintainer-authorized Cloudflare deletion of `xivdyetools-api-worker-dev`; no code deploy or removal of its KV namespace. Inventory absence, settings 404 / 10007 and public HEAD 404 verified; [execution evidence](../evidence/remediation-finding-054-2026-10-26.md). No repository commit was needed for the live action.

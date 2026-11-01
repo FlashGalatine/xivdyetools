@@ -103,6 +103,8 @@ These percentages apply to each configured coverage include/exclude set. They do
 
 ## Remediation status
 
+> **Status note (2026-10-31):** statuses here are as of main `13c386e5`. Sprint 0's maintainer actions were recorded on 2026-10-26/27, and code fixes ship through the release-cut queue (#369–#411); per-finding status is restated in the audit-docs companion after the queue lands.
+
 | ID | Status | Commit |
 |---|---|---|
 | [BUG-001](findings/BUG-001.md) | OPEN | — |
