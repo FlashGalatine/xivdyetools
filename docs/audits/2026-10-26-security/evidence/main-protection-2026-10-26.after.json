@@ -1,0 +1,61 @@
+{
+  "url": "https://api.github.com/repos/FlashGalatine/xivdyetools/branches/main/protection",
+  "required_status_checks": {
+    "url": "https://api.github.com/repos/FlashGalatine/xivdyetools/branches/main/protection/required_status_checks",
+    "strict": true,
+    "contexts": [
+      "Lint, Type-check, Test, Build",
+      "Security audit (production dependencies)",
+      "E2E (Playwright, chromium)",
+      "Secret scan (gitleaks)"
+    ],
+    "contexts_url": "https://api.github.com/repos/FlashGalatine/xivdyetools/branches/main/protection/required_status_checks/contexts",
+    "checks": [
+      {
+        "context": "Lint, Type-check, Test, Build",
+        "app_id": 15368
+      },
+      {
+        "context": "Security audit (production dependencies)",
+        "app_id": 15368
+      },
+      {
+        "context": "E2E (Playwright, chromium)",
+        "app_id": 15368
+      },
+      {
+        "context": "Secret scan (gitleaks)",
+        "app_id": 15368
+      }
+    ]
+  },
+  "required_signatures": {
+    "url": "https://api.github.com/repos/FlashGalatine/xivdyetools/branches/main/protection/required_signatures",
+    "enabled": false
+  },
+  "enforce_admins": {
+    "url": "https://api.github.com/repos/FlashGalatine/xivdyetools/branches/main/protection/enforce_admins",
+    "enabled": true
+  },
+  "required_linear_history": {
+    "enabled": false
+  },
+  "allow_force_pushes": {
+    "enabled": false
+  },
+  "allow_deletions": {
+    "enabled": false
+  },
+  "block_creations": {
+    "enabled": false
+  },
+  "required_conversation_resolution": {
+    "enabled": false
+  },
+  "lock_branch": {
+    "enabled": false
+  },
+  "allow_fork_syncing": {
+    "enabled": false
+  }
+}
