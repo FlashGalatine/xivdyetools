@@ -1,0 +1,51 @@
+$ vitest run --coverage
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - `__dirname` (vitest.config.ts:31:25). Use `import.meta.dirname` instead
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.5 C:/dev/XIVProjects/xivdyetools/.claude/worktrees/deep-i18n-audits-20261026/apps/moderation-worker
+      Coverage enabled with v8
+
+(node:27300) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  31 passed (31)
+      Tests  757 passed (757)
+   Start at  20:33:39
+   Duration  6.07s (transform 63%, import 26%, tests 7%, worker 4%)
+
+ % Coverage report from v8
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s
+-------------------|---------|----------|---------|---------|-------------------
+All files          |   92.84 |    86.01 |    93.5 |   93.45 |
+ handlers          |   98.11 |       90 |     100 |     100 |
+  ...ew-message.ts |   98.11 |       90 |     100 |     100 | 167,192,259,326
+ handlers/buttons  |    98.8 |     90.9 |     100 |   98.76 |
+  ...nfirmation.ts |     100 |    94.44 |     100 |     100 | 61
+  ...moderation.ts |   98.41 |    89.83 |     100 |   98.33 | 251
+ handlers/commands |    92.8 |    78.21 |    91.3 |   92.53 |
+  preset.ts        |    92.8 |    78.21 |    91.3 |   92.53 | ...45,613,686,695
+ handlers/modals   |   96.94 |    77.35 |     100 |   96.89 |
+  ban-reason.ts    |   96.15 |     73.8 |     100 |   96.15 | 82,237
+  ...-rejection.ts |   97.46 |    79.68 |     100 |    97.4 | 195,340
+ middleware        |     100 |       90 |     100 |     100 |
+  rate-limit.ts    |     100 |       90 |     100 |     100 | 135
+ services          |   94.03 |    83.73 |   97.72 |   94.11 |
+  ban-service.ts   |   94.93 |    80.76 |      95 |   94.66 | 96,174,300-313
+  bot-i18n.ts      |   96.29 |    93.75 |     100 |   96.29 | 116
+  preset-api.ts    |   92.85 |    83.67 |     100 |   93.13 | ...01,228-229,561
+ utils             |   86.39 |    93.17 |   84.09 |   88.04 |
+  discord-api.ts   |   58.33 |    72.22 |   41.66 |   57.35 | 61-102,219-269
+  embed-text.ts    |      95 |     87.5 |     100 |     100 | 59
+  response.ts      |     100 |    96.42 |     100 |     100 | 332
+  safe-json.ts     |    98.3 |    98.43 |     100 |    98.3 | 294
+  url-sanitizer.ts |     100 |     87.5 |     100 |     100 | 128
+-------------------|---------|----------|---------|---------|-------------------
+
+=============================== Coverage summary ===============================
+Statements   : 92.84% ( 856/922 )
+Branches     : 86.01% ( 615/715 )
+Functions    : 93.5% ( 144/154 )
+Lines        : 93.45% ( 814/871 )
+================================================================================
