@@ -83,10 +83,29 @@ function decodeJwtPayload(token: string): Record<string, unknown> {
     return JSON.parse(atob(base64));
 }
 
+/**
+ * What GET /api/v1/characters really sends under the `character` scope this
+ * worker requests ('user user:social character refresh'): the boolean
+ * `verified` is emitted ONLY for `character:manage` tokens
+ * (app/views/api/v1/characters/_character_registration.json.jbuilder:10-13 in
+ * XIVAuth), while `verified_at` is always emitted (same file, line 15) — an ISO
+ * 8601 timestamp, or null for an unverified registration. The helper keeps the
+ * readable `verified: boolean` fixture input and translates it to that shape.
+ */
+const UPSTREAM_VERIFIED_AT = '2026-10-01T12:34:56.789Z';
+function upstreamCharacter<T extends { verified: boolean }>(
+    c: T
+): Omit<T, 'verified'> & { verified_at: string | null } {
+    const { verified, ...rest } = c;
+    return { ...rest, verified_at: verified ? UPSTREAM_VERIFIED_AT : null };
+}
+
 interface XIVAuthFixture {
     userId?: string;
     socialIdentities?: Array<{ provider: string; external_id: string }>;
     characters?: Array<{ lodestone_id: number; name: string; home_world: string; verified: boolean }>;
+    /** Raw /characters roster, sent as-is: mostly shapes this scope never gets, to test failing closed. */
+    rawCharacters?: unknown[];
     tokenStatus?: number;
     tokenErrorBody?: string;
     userStatus?: number;
@@ -126,7 +145,7 @@ function mockXIVAuth(fixture: XIVAuthFixture = {}): ReturnType<typeof vi.fn> {
             }), { status: 200 }));
         }
         if (url.includes('xivauth.net/api/v1/characters')) {
-            return Promise.resolve(new Response(JSON.stringify(fixture.characters ?? []), { status: 200 }));
+            return Promise.resolve(new Response(JSON.stringify(fixture.rawCharacters ?? (fixture.characters ?? []).map(upstreamCharacter)), { status: 200 }));
         }
         return originalFetch(url);
     });
@@ -817,7 +836,7 @@ describe('XIVAuth Handler', () => {
                             lodestone_id: 12345678,
                             name: "Test Character",
                             home_world: "Excalibur",
-                            verified: true,
+                            verified_at: UPSTREAM_VERIFIED_AT,
                         },
                     ]), { status: 200 }));
                 }
@@ -1030,7 +1049,7 @@ describe('XIVAuth Handler', () => {
             lodestone_id: 1,
             name,
             home_world: 'X',
-            verified: true,
+            verified_at: UPSTREAM_VERIFIED_AT,
             ...extra,
         });
 
@@ -1187,13 +1206,13 @@ describe('XIVAuth Handler', () => {
                             lodestone_id: 11111111,
                             name: "Unverified Character",
                             home_world: "Balmung",
-                            verified: false,
+                            verified_at: null,
                         },
                         {
                             lodestone_id: 22222222,
                             name: "Verified Character",
                             home_world: "Excalibur",
-                            verified: true,
+                            verified_at: UPSTREAM_VERIFIED_AT,
                         },
                     ]), { status: 200 }));
                 }
@@ -1474,6 +1493,114 @@ describe('XIVAuth Handler', () => {
             expect(json.user.username).toBe('Verified Character');
             expect(json.user.global_name).toBe('Verified Character');
             expect(decodeJwtPayload(json.token).username).toBe('Verified Character');
+        });
+    });
+
+    /**
+     * The `character` scope this worker requests never gets the boolean
+     * `verified` field (XIVAuth emits it for `character:manage` only,
+     * _character_registration.json.jbuilder:10-13) but always gets
+     * `verified_at` (line 15; ISO 8601, or null). It also lists only verified
+     * registrations (filters_authorized_characters.rb:21-22). Identity is read
+     * from `verified_at`, and anything unexpected fails closed.
+     */
+    describe('POST /auth/xivauth/callback — verified_at, the field the character scope really sends', () => {
+        let seq = 0;
+        const signIn = async (rawCharacters: unknown[]) => {
+            mockXIVAuth({ userId: `xivauth-verified-at-user-${++seq}`, rawCharacters });
+            const response = await postXIVAuthCallback({ code: 'valid_code', code_verifier: VALID_CODE_VERIFIER, state: await boundState() });
+            return { response, json: (await response.json()) as Record<string, any> };
+        };
+        const entry = (name: string, extra: Record<string, unknown>) => ({
+            persistent_key: 'pk',
+            lodestone_id: 1,
+            name,
+            home_world: 'Excalibur',
+            data_center: 'Aether',
+            created_at: '2026-09-01T00:00:00.000Z',
+            updated_at: '2026-10-01T00:00:00.000Z',
+            ...extra,
+        });
+        const FALLBACK = 'XIVAuth User';
+
+        it('uses the character name when only verified_at is sent (no verified field)', async () => {
+            const row = entry('Real Shape Hero', { verified_at: '2026-10-01T12:34:56.789Z' });
+            expect(row).not.toHaveProperty('verified');
+            const { response, json } = await signIn([row]);
+
+            expect(response.status).toBe(200);
+            expect(json.user.username).toBe('Real Shape Hero');
+            expect(json.user.global_name).toBe('Real Shape Hero');
+            expect(decodeJwtPayload(json.token).global_name).toBe('Real Shape Hero');
+        });
+
+        it('falls back when verified_at is null', async () => {
+            const { json } = await signIn([entry('Null Stamp', { verified_at: null })]);
+
+            expect(json.user.username).toContain(FALLBACK);
+            expect(json.user.global_name).toBeNull();
+            expect(JSON.stringify(json.user)).not.toContain('Null Stamp');
+        });
+
+        it('falls back when neither verified nor verified_at is present', async () => {
+            const { json } = await signIn([entry('No Fields', {})]);
+
+            expect(json.user.username).toContain(FALLBACK);
+            expect(json.user.global_name).toBeNull();
+        });
+
+        it('fails closed when verified is false even though verified_at is set', async () => {
+            const { json } = await signIn([
+                entry('Contradiction', { verified: false, verified_at: '2026-10-01T12:34:56.789Z' }),
+            ]);
+
+            expect(json.user.username).toContain(FALLBACK);
+            expect(json.user.global_name).toBeNull();
+        });
+
+        it.each([
+            ['an empty string', ''],
+            ['a blank string', '   '],
+            ['an unparseable string', 'not-a-date'],
+            ['a number', 1790000000],
+            ['true', true],
+            ['an object', {}],
+        ])('falls back when verified_at is %s', async (_label, verifiedAt) => {
+            const { response, json } = await signIn([entry('Odd Stamp', { verified_at: verifiedAt })]);
+
+            expect(response.status).toBe(200);
+            expect(json.user.username).toContain(FALLBACK);
+            expect(json.user.global_name).toBeNull();
+        });
+
+        // XIVAuth sends `verified` only for character:manage, and then always
+        // with verified_at (jbuilder:10-15) — the boolean alone is never a
+        // shape upstream produces, so it is not enough on its own.
+        it('does not trust a bare verified: true without verified_at', async () => {
+            const { json } = await signIn([entry('Bare Boolean', { verified: true })]);
+
+            expect(json.user.username).toContain(FALLBACK);
+            expect(json.user.global_name).toBeNull();
+        });
+
+        it('accepts a character:manage-shaped entry (verified: true plus verified_at)', async () => {
+            const { json } = await signIn([
+                entry('Manage Shape', { verified: true, verified_at: '2026-10-01T12:34:56.789Z' }),
+            ]);
+
+            expect(json.user.username).toBe('Manage Shape');
+            expect(json.user.global_name).toBe('Manage Shape');
+        });
+
+        it('does not let an unverified entry listed first win over a verified one', async () => {
+            const { json } = await signIn([
+                entry('Unverified First', { verified_at: null }),
+                entry('Verified Second', { verified_at: '2026-10-01T12:34:56.789Z' }),
+            ]);
+
+            expect(json.user.username).toBe('Verified Second');
+            expect(json.user.global_name).toBe('Verified Second');
+            expect(JSON.stringify(json.user)).not.toContain('Unverified First');
         });
     });
 

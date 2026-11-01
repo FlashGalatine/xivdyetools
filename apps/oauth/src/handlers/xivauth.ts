@@ -37,6 +37,36 @@ const XIVAUTH_TOKEN_URL = 'https://xivauth.net/oauth/token';
 const XIVAUTH_USER_URL = 'https://xivauth.net/api/v1/user';
 const XIVAUTH_CHARACTERS_URL = 'https://xivauth.net/api/v1/characters';
 
+/**
+ * One entry of GET /api/v1/characters as this worker's `character` scope sees
+ * it. XIVAuth emits the boolean `verified` only for `character:manage` tokens,
+ * but always emits `verified_at` (ISO 8601, null when unverified) — see
+ * app/views/api/v1/characters/_character_registration.json.jbuilder:10-15.
+ * The published `XIVAuthCharacterRegistration` type claims a required
+ * `verified: boolean`, so it is narrowed here: both fields are `unknown`
+ * because nothing about the body is trusted.
+ */
+type XIVAuthRosterEntry = Omit<XIVAuthCharacterRegistration, 'verified'> & {
+  verified?: unknown;
+  verified_at?: unknown;
+};
+
+const ISO_8601_TIMESTAMP = /^\d{4}-\d{2}-\d{2}T/;
+
+/**
+ * Is this registration verified? Only `verified_at` counts: a non-blank ISO
+ * 8601 timestamp that parses. An explicit `verified: false` vetoes it (a
+ * contradictory entry fails closed); a bare `verified: true` is not enough,
+ * because upstream never sends the boolean without `verified_at`.
+ */
+function isVerifiedRegistration(ch: XIVAuthRosterEntry): boolean {
+  if (ch.verified === false) return false;
+  const stamp = ch.verified_at;
+  return (
+    typeof stamp === 'string' && ISO_8601_TIMESTAMP.test(stamp) && !Number.isNaN(Date.parse(stamp))
+  );
+}
+
 // Scopes to request from XIVAuth
 // - user: Basic user info (User ID, username)
 // - user:social: Discord ID for moderation compatibility
@@ -286,7 +316,7 @@ xivauthRouter.post('/xivauth/callback', async (c) => {
     });
 
     // Fetch characters separately (user endpoint doesn't include them)
-    let characters: XIVAuthCharacterRegistration[] = [];
+    let characters: XIVAuthRosterEntry[] = [];
     try {
       const charactersResponse = await fetch(XIVAUTH_CHARACTERS_URL, {
         headers: {
@@ -316,7 +346,7 @@ xivauthRouter.post('/xivauth/callback', async (c) => {
         // usable string name.
         characters = Array.isArray(roster)
           ? roster.filter(
-              (ch): ch is XIVAuthCharacterRegistration => typeof ch === 'object' && ch !== null
+              (ch): ch is XIVAuthRosterEntry => typeof ch === 'object' && ch !== null
             )
           : [];
         if (!Array.isArray(roster)) {
@@ -326,7 +356,7 @@ xivauthRouter.post('/xivauth/callback', async (c) => {
         }
         logger?.debug('XIVAuth characters fetched', {
           count: characters.length,
-          verifiedCount: characters.filter((ch) => ch.verified).length,
+          verifiedCount: characters.filter(isVerifiedRegistration).length,
         });
       } else {
         logger?.warn('Failed to fetch XIVAuth characters', { status: charactersResponse.status });
@@ -355,8 +385,8 @@ xivauthRouter.post('/xivauth/callback', async (c) => {
 
     // FINDING-013 / OAUTH-8: only a VERIFIED character may become the display
     // identity (username / global_name — the preset author name downstream);
-    // otherwise the opaque label is used (XIVAuth does not expose an account
-    // name).
+    // otherwise the opaque label is used (the XIVAuth account's own
+    // display_name is deliberately not used).
     //
     // FINDING-001 / FINDING-002 (2026-08-29 security audit): the roster is read
     // in memory to make exactly that choice and is then discarded. Nothing else
@@ -369,7 +399,7 @@ xivauthRouter.post('/xivauth/callback', async (c) => {
     // verified character whose name is a non-blank string wins, trimmed.
     const verifiedCharacter =
       characters.find(
-        (ch) => ch.verified && typeof ch.name === 'string' && ch.name.trim().length > 0
+        (ch) => isVerifiedRegistration(ch) && typeof ch.name === 'string' && ch.name.trim().length > 0
       ) ?? null;
     // Spelled `verifiedCharacter?.name`: web-app's privacy-copy-parity test reads
     // this file for that shape to pin the sign-in privacy copy to what is stored.

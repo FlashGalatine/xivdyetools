@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.1] - 2026-11-01
+
+### Fixed
+
+- **XIVAuth display name:** a verified character's name now becomes the sign-in's `username` and
+  `global_name`. The handler read the boolean `verified` field, which XIVAuth emits on
+  `GET /api/v1/characters` only for `character:manage` tokens; the `character` scope this worker
+  requests never receives it, so every XIVAuth user got the `XIVAuth User <id8>` fallback. The handler
+  now treats a registration as verified only when `verified_at` is an ISO 8601 timestamp that parses,
+  and an explicit `verified: false`, a null, blank, non-string or unparseable `verified_at`, or a bare
+  `verified: true` without `verified_at` all fail closed to the fallback. The same check feeds the
+  debug count of verified characters. No route, token claim, D1 column or scope changed.
+- **What players see:** an existing XIVAuth user's stored name changes from the fallback to their
+  verified character's name at their next sign-in. The web app's author refresh then writes that name
+  onto all of their published presets, including, on an account linked to Discord, presets submitted
+  through the bot. A failed roster fetch still gives the fallback for that sign-in.
+- Test fixtures now send the character roster in the shape XIVAuth sends for the `character` scope
+  (`verified_at`, no `verified`) instead of a field the real API never sent here. They are still
+  hand-written, so they would not notice a future upstream rename.
+
 ## [3.2.0] - 2026-10-27
 
 ### Hardening adoption
