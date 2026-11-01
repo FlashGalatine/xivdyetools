@@ -1,0 +1,139 @@
+Review: gpt-6.1-sol / high; instruction-only worker contract. Snapshot 6da3ff5b.
+Assigned non-test source files: 53. All read in ordered semantic batches.
+Method: original line numbers; comments, css tagged templates and long literal fragments were elided; in later batches whole style properties were elided. Runtime statements, event callbacks, state/config code, awaits, subscriptions and template expressions were reviewed. No tests/builds/gates run.
+For exact limits see review-web-components.md. No assigned runtime file remains unread.
+
+ASSIGNED SOURCE
+apps/web-app/src/components/about-modal.ts [semantic pass complete; 543 lines]
+apps/web-app/src/components/accessibility-tool.ts [semantic pass complete; 2047 lines]
+apps/web-app/src/components/add-to-collection-menu.ts [semantic pass complete; 278 lines]
+apps/web-app/src/components/advanced-options-panel.ts [semantic pass complete; 397 lines]
+apps/web-app/src/components/base-component.ts [semantic pass complete; 737 lines]
+apps/web-app/src/components/budget-tool.ts [semantic pass complete; 2080 lines]
+apps/web-app/src/components/changelog-modal.ts [semantic pass complete; 463 lines]
+apps/web-app/src/components/collapsible-panel.ts [semantic pass complete; 205 lines]
+apps/web-app/src/components/collection-manager-modal.ts [semantic pass complete; 652 lines]
+apps/web-app/src/components/comparison-tool.ts [semantic pass complete; 2581 lines]
+apps/web-app/src/components/dye-grid.ts [semantic pass complete; 540 lines]
+apps/web-app/src/components/dye-search-box.ts [semantic pass complete; 320 lines]
+apps/web-app/src/components/dye-selector.ts [semantic pass complete; 773 lines]
+apps/web-app/src/components/empty-state.ts [semantic pass complete; 184 lines]
+apps/web-app/src/components/export-sheet.ts [semantic pass complete; 176 lines]
+apps/web-app/src/components/extractor-tool.ts [semantic pass complete; 2384 lines]
+apps/web-app/src/components/gradient-tool.ts [semantic pass complete; 1971 lines]
+apps/web-app/src/components/harmony-tool.ts [semantic pass complete; 2094 lines]
+apps/web-app/src/components/image-zoom-controller.ts [semantic pass complete; 937 lines]
+apps/web-app/src/components/item-links-menu.ts [semantic pass complete; 377 lines]
+apps/web-app/src/components/market-board.ts [semantic pass complete; 496 lines]
+apps/web-app/src/components/metric-help.ts [semantic pass complete; 381 lines]
+apps/web-app/src/components/mixer-tool.ts [semantic pass complete; 2254 lines]
+apps/web-app/src/components/modal-container.ts [semantic pass complete; 658 lines]
+apps/web-app/src/components/my-submissions-modal.ts [semantic pass complete; 301 lines]
+apps/web-app/src/components/offline-banner.ts [semantic pass complete; 190 lines]
+apps/web-app/src/components/preset-category-selector.ts [semantic pass complete; 191 lines]
+apps/web-app/src/components/preset-edit-form.ts [semantic pass complete; 897 lines]
+apps/web-app/src/components/preset-submission-form.ts [semantic pass complete; 804 lines]
+apps/web-app/src/components/shortcuts-panel.ts [semantic pass complete; 155 lines]
+apps/web-app/src/components/signin-modal.ts [semantic pass complete; 80 lines]
+apps/web-app/src/components/swatch-tool.ts [semantic pass complete; 2746 lines]
+apps/web-app/src/components/toast-container.ts [semantic pass complete; 315 lines]
+apps/web-app/src/components/tutorial-spotlight.ts [semantic pass complete; 701 lines]
+apps/web-app/src/components/v4-layout.ts [semantic pass complete; 765 lines]
+apps/web-app/src/components/v4/base-lit-component.ts [semantic pass complete; 99 lines]
+apps/web-app/src/components/v4/config-sidebar.ts [semantic pass complete; 2169 lines]
+apps/web-app/src/components/v4/display-options-v4.ts [semantic pass complete; 535 lines]
+apps/web-app/src/components/v4/dye-filters-v4.ts [semantic pass complete; 394 lines]
+apps/web-app/src/components/v4/dye-palette-drawer.ts [semantic pass complete; 1374 lines]
+apps/web-app/src/components/v4/language-modal.ts [semantic pass complete; 251 lines]
+apps/web-app/src/components/v4/preset-card.ts [semantic pass complete; 456 lines]
+apps/web-app/src/components/v4/preset-detail.ts [semantic pass complete; 1128 lines]
+apps/web-app/src/components/v4/preset-tool.ts [semantic pass complete; 1433 lines]
+apps/web-app/src/components/v4/range-slider-v4.ts [semantic pass complete; 350 lines]
+apps/web-app/src/components/v4/result-card.ts [semantic pass complete; 1997 lines]
+apps/web-app/src/components/v4/share-button.ts [semantic pass complete; 371 lines]
+apps/web-app/src/components/v4/theme-modal.ts [semantic pass complete; 207 lines]
+apps/web-app/src/components/v4/toggle-switch-v4.ts [semantic pass complete; 228 lines]
+apps/web-app/src/components/v4/v4-app-header.ts [semantic pass complete; 701 lines]
+apps/web-app/src/components/v4/v4-color-wheel.ts [semantic pass complete; 566 lines]
+apps/web-app/src/components/v4/v4-layout-shell.ts [semantic pass complete; 855 lines]
+apps/web-app/src/components/welcome-modal.ts [semantic pass complete; 291 lines]
+
+SUPPLEMENTAL READS (scope noted)
+CLAUDE.md
+apps/web-app/CLAUDE.md
+DEPRECATIONS.md
+.codex/agents/xivdye-worker.toml
+.agents/skills/deep-dive-analysis/SKILL.md
+.agents/skills/audit-shared/model-routing.md
+.agents/skills/audit-shared/conventions.md
+.agents/skills/audit-shared/units.md
+.agents/skills/audit-shared/traps/shell.md
+.agents/skills/audit-shared/traps/tests-coverage.md
+.agents/skills/audit-shared/traps/knip-and-dead-verdicts.md
+docs/audits/2026-10-04-deep-dive/README.md
+docs/audits/2026-10-04-deep-dive/DEEP_DIVE_REPORT.md [catalog and positive/rejected sections]
+docs/audits/2026-10-04-dead-code/README.md
+docs/audits/2026-10-04-dead-code/DEAD_CODE_REPORT.md [positive/rejected sections and web catalog]
+docs/audits/2026-10-26-xivcharakit-dead-code/README.md
+docs/audits/2026-10-26-xivcharakit-dead-code/DEAD_CODE_REPORT.md [catalog and positive/rejected sections]
+docs/audits/2026-10-26-security/README.md
+docs/audits/2026-10-26-security/SECURITY_AUDIT_REPORT.md [catalog, positive/rejected sections, relevant overlaps]
+apps/web-app/src/services/config-controller.ts [getConfig/subscribe/reset/import methods]
+apps/web-app/src/components/__tests__/gradient-tool.test.ts [selected endpoint/config/price regressions]
+apps/web-app/src/components/__tests__/harmony-tool.test.ts [selected canonical/direct config and lifecycle regressions]
+apps/web-app/src/components/__tests__/accessibility-tool.test.ts [selected display configuration regressions]
+apps/web-app/src/components/__tests__/comparison-tool.test.ts [selected config/price/selection regressions]
+apps/web-app/src/components/__tests__/swatch-tool.test.ts [selected locale/session/market/lifecycle regressions]
+apps/web-app/src/components/__tests__/preset-edit-form.test.ts [selected deferred edit, labels and baseline regressions]
+apps/web-app/src/components/__tests__/v4/preset-card.test.ts [complete]
+apps/web-app/src/components/v4/__tests__/preset-tool.test.ts [selected Mine/auth/vote/history regressions]
+
+ELIDED STATIC/STYLE REGIONS (conservative superset; some inspected raw during traces)
+apps/web-app/src/components/accessibility-tool.ts: 627-627(style), 637-637(style), 643-643(style), 650-650(style), 657-657(style), 721-721(style), 726-726(style), 751-761(style), 771-771(style), 777-777(style), 784-784(style), 796-796(style), 805-805(style), 813-823(style), 871-871(style), 878-879(style), 888-889(style), 897-897(style), 901-902(style), 906-906(style), 920-921(style), 932-932(style), 940-940(style), 959-966(style), 973-982(style), 990-1004(style), 1021-1032(style), 1036-1040(long literal), 1046-1052(style), 1066-1078(style), 1085-1093(style), 1102-1109(style), 1351-1351(long literal), 1358-1360(style), 1368-1368(style), 1374-1374(style), 1380-1380(style), 1389-1389(style), 1425-1425(style), 1434-1434(style), 1443-1443(style), 1452-1453(style), 1502-1502(style), 1509-1510(style), 1517-1517(style), 1527-1527(style), 1534-1535(style), 1547-1547(style), 1558-1558(style), 1700-1700(style), 1710-1710(style), 1716-1716(style), 1723-1723(style), 1730-1730(style), 1815-1815(style), 1820-1820(style)
+apps/web-app/src/components/add-to-collection-menu.ts: 46-46(long literal), 88-88(long literal), 92-92(long literal), 205-205(long literal), 224-224(long literal)
+apps/web-app/src/components/base-component.ts: 350-353(long literal)
+apps/web-app/src/components/budget-tool.ts: 815-815(style), 821-821(style), 853-854(style), 865-865(style), 893-894(style), 907-907(style), 915-915(style), 923-923(style), 943-943(style), 984-984(style), 995-995(style), 1005-1007(style), 1014-1014(style), 1022-1023(style), 1031-1031(style), 1061-1062(style), 1070-1070(style), 1078-1078(style), 1093-1093(style), 1105-1105(style), 1134-1134(style), 1142-1142(style), 1179-1179(style), 1186-1186(style), 1192-1192(style), 1197-1197(style), 1250-1250(style), 1296-1297(style), 1304-1304(style), 1314-1315(style), 1475-1475(style), 1480-1480(style), 1486-1486(style), 1494-1495(style), 1503-1503(style), 1510-1510(style), 1516-1516(style), 1524-1524(style), 1533-1533(style), 1585-1586(style), 1589-1599(long literal), 1600-1603(long literal), 1641-1642(style), 1667-1667(style), 1674-1674(style), 1682-1682(style), 1690-1691(style), 1699-1699(style), 1762-1762(style), 1768-1768(style), 1777-1777(style), 1789-1789(style), 1798-1798(style), 1808-1808(style), 1818-1818(style), 1826-1826(style), 1842-1842(style), 1856-1856(style), 1879-1879(style), 1906-1906(style), 1912-1912(style), 1918-1918(style), 1926-1927(style), 1937-1937(style), 1947-1947(style), 1957-1957(style), 1988-1988(style), 2003-2004(style)
+apps/web-app/src/components/collapsible-panel.ts: 46-46(style), 55-55(style), 83-85(long literal), 87-87(style), 98-98(style), 105-105(style)
+apps/web-app/src/components/collection-manager-modal.ts: 161-161(long literal), 171-171(long literal), 182-182(long literal), 281-281(long literal), 299-299(long literal), 372-372(long literal), 390-390(long literal)
+apps/web-app/src/components/comparison-tool.ts: 635-635(style), 645-645(style), 651-651(style), 658-658(style), 665-665(style), 684-684(style), 737-743(style), 751-757(style), 783-783(style), 789-796(style), 804-804(style), 811-823(style), 829-842(style), 895-901(style), 916-917(style), 926-930(style), 947-947(style), 952-952(style), 964-965(style), 973-973(style), 977-978(style), 988-989(style), 995-995(style), 1002-1002(style), 1021-1028(style), 1035-1044(style), 1052-1066(style), 1083-1094(style), 1098-1102(long literal), 1108-1114(style), 1128-1140(style), 1147-1155(style), 1164-1171(style), 1360-1360(style), 1366-1367(style), 1373-1373(style), 1383-1384(style), 1393-1393(style), 1403-1404(style), 1440-1441(style), 1449-1449(style), 1455-1456(style), 1464-1465(style), 1471-1471(style), 1477-1477(style), 1495-1496(style), 1508-1508(style), 1515-1515(style), 1569-1569(style), 1573-1573(style), 1580-1581(style), 1587-1587(style), 1594-1594(style), 1651-1651(style), 1657-1657(style), 1663-1663(style), 1670-1670(style), 1678-1678(style), 1686-1686(style), 1715-1715(style), 1727-1727(style), 1731-1732(style), 1736-1736(style), 1751-1752(style), 1765-1765(style), 1836-1836(style), 1841-1842(style), 1849-1850(style), 1859-1860(style), 1869-1870(style), 1881-1881(style), 1885-1886(style), 1901-1902(style), 1909-1909(style), 1927-1928(style), 1937-1941(style), 1949-1950(style), 1958-1959(style), 1967-1967(style), 2269-2269(style), 2280-2280(style), 2285-2285(style), 2291-2291(style), 2298-2298(style), 2377-2377(style)
+apps/web-app/src/components/dye-grid.ts: 122-122(long literal), 155-155(long literal), 163-163(long literal), 171-171(long literal), 184-184(long literal), 185-185(long literal), 195-195(style), 367-367(long literal), 368-368(long literal)
+apps/web-app/src/components/dye-search-box.ts: 54-54(long literal), 64-64(style), 89-89(style), 128-128(long literal), 163-163(long literal)
+apps/web-app/src/components/dye-selector.ts: 123-123(style), 365-365(style), 517-517(long literal), 559-559(long literal), 654-654(style)
+apps/web-app/src/components/empty-state.ts: 114-114(long literal), 128-128(long literal)
+apps/web-app/src/components/export-sheet.ts: 56-56(long literal)
+apps/web-app/src/components/extractor-tool.ts: 157-204(long literal), 564-564(style), 584-584(style), 625-625(style), 633-640(style), 647-647(style), 658-658(style), 668-669(style), 678-679(style), 690-694(style), 710-715(style), 720-720(style), 744-749(style), 754-754(style), 772-777(style), 782-782(style), 803-807(style), 812-813(style), 823-823(style), 839-839(style), 848-848(style), 874-874(style), 882-882(style), 895-903(style), 911-915(style), 922-926(style), 935-935(style), 949-949(style), 954-954(style), 971-971(style), 976-976(style), 995-999(style), 1004-1004(style), 1010-1010(long literal), 1014-1014(style), 1019-1019(style), 1024-1024(style), 1046-1046(style), 1071-1072(style), 1079-1082(style), 1092-1097(style), 1115-1118(style), 1126-1127(style), 1133-1133(style), 1139-1139(style), 1150-1154(style), 1181-1181(style), 1447-1447(style), 1749-1761(style), 1769-1772(style), 1793-1798(style), 1803-1803(style), 1811-1811(style), 1956-1956(style)
+apps/web-app/src/components/gradient-tool.ts: 183-183(long literal), 185-185(long literal), 186-186(long literal), 187-187(long literal), 189-189(long literal), 693-696(long literal), 696-700(long literal), 706-707(style), 713-713(style), 720-721(style), 730-730(style), 736-737(style), 744-745(style), 751-751(style), 762-762(style), 767-767(style), 771-772(style), 777-777(style), 790-791(style), 800-801(style), 807-808(style), 813-814(style), 829-833(style), 858-858(style), 907-907(style), 937-937(style), 943-945(style), 953-953(style), 960-961(style), 971-971(style), 1003-1003(style), 1009-1009(style), 1022-1022(style), 1029-1029(style), 1102-1103(style), 1117-1117(style), 1151-1151(style), 1158-1158(style), 1165-1165(style), 1172-1172(style), 1181-1181(style), 1224-1224(style), 1240-1240(style), 1253-1253(style), 1261-1262(style), 1740-1741(style)
+apps/web-app/src/components/harmony-tool.ts: 705-705(style), 710-710(style), 726-726(style), 790-792(style), 855-855(style), 999-999(style), 1004-1004(style), 1129-1129(style), 1135-1135(style), 1144-1145(style), 1159-1160(style), 1184-1184(style), 1271-1271(long literal), 1288-1294(style), 1300-1300(style), 1339-1340(style), 1469-1469(style), 1474-1474(style), 1828-1828(style), 1834-1834(style), 1840-1840(style)
+apps/web-app/src/components/image-zoom-controller.ts: 109-110(style), 138-153(style), 158-169(long literal), 182-182(style), 194-194(style), 204-204(style), 215-215(style), 225-225(style), 232-232(style), 245-245(style), 254-254(style), 261-261(long literal), 265-265(style)
+apps/web-app/src/components/item-links-menu.ts: 120-120(long literal), 147-147(long literal), 156-156(long literal), 344-344(long literal), 357-357(long literal)
+apps/web-app/src/components/market-board.ts: 97-97(long literal), 100-100(style), 150-150(long literal), 152-152(style), 187-187(long literal), 190-190(style), 347-350(long literal)
+apps/web-app/src/components/metric-help.ts: 145-145(long literal), 157-157(long literal), 185-185(long literal), 210-210(long literal), 322-322(long literal), 332-332(long literal), 355-355(long literal)
+apps/web-app/src/components/mixer-tool.ts: 360-360(style), 412-412(style), 430-430(style), 437-437(style), 449-449(style), 457-457(style), 464-464(style), 482-483(style), 516-516(style), 522-522(style), 535-535(style), 1284-1285(style), 1298-1298(style), 1313-1313(style), 1325-1326(style), 1333-1334(style), 1345-1345(style), 1360-1360(style), 1392-1394(style), 1404-1404(style), 1435-1435(style), 1441-1442(style), 1492-1501(long literal), 1507-1508(style), 1514-1514(style), 1522-1522(style), 1529-1529(style), 1536-1536(style), 1542-1542(style), 1553-1553(style), 1560-1564(style), 1622-1628(style), 1635-1641(style), 1654-1654(style), 1671-1671(style), 1686-1693(style), 1703-1709(style), 1729-1746(style), 1756-1770(style), 1779-1793(style), 1802-1806(style), 1834-1849(style), 1858-1869(style), 1879-1888(style), 1897-1901(style)
+apps/web-app/src/components/modal-container.ts: 38-125(long literal), 125-152(long literal), 426-426(style), 494-494(long literal)
+apps/web-app/src/components/my-submissions-modal.ts: 51-53(long literal), 53-54(long literal), 64-64(long literal), 172-172(long literal), 181-183(long literal), 183-184(long literal), 184-185(long literal), 185-186(long literal)
+apps/web-app/src/components/offline-banner.ts: 85-93(long literal)
+apps/web-app/src/components/preset-category-selector.ts: 66-66(long literal), 154-154(long literal)
+apps/web-app/src/components/preset-edit-form.ts: 211-211(long literal), 255-255(long literal), 360-360(long literal), 461-461(long literal), 503-503(long literal), 648-648(long literal)
+apps/web-app/src/components/preset-submission-form.ts: 148-148(long literal), 181-181(long literal), 194-194(long literal), 288-288(long literal), 333-333(long literal), 454-454(long literal), 543-543(long literal), 576-576(long literal)
+apps/web-app/src/components/shortcuts-panel.ts: 103-103(long literal)
+apps/web-app/src/components/signin-modal.ts: 17-19(long literal), 19-21(long literal), 35-36(long literal), 36-37(long literal), 37-39(long literal), 43-50(long literal), 50-57(long literal), 57-62(long literal)
+apps/web-app/src/components/swatch-tool.ts: 862-870(style), 876-883(style), 890-895(style), 901-908(style), 916-919(style), 934-944(style), 965-981(style), 989-996(style), 1004-1010(style), 1020-1024(style), 1033-1036(style), 1047-1054(style), 1087-1098(long literal), 1105-1105(style), 1115-1124(style), 1134-1148(style), 1155-1160(style), 1170-1176(style), 1186-1186(style), 1196-1201(style), 1210-1216(style), 1223-1228(style), 1234-1234(style), 1245-1250(style), 1259-1259(style), 1266-1271(style), 1279-1285(style), 1291-1291(style), 1297-1297(style), 1303-1303(style), 1337-1340(long literal), 1354-1354(style), 1585-1597(style), 1603-1603(style), 1607-1607(style), 1640-1640(style), 1649-1655(style), 1670-1671(style), 1682-1684(style), 1789-1796(style), 1809-1810(style), 1987-1988(style), 1993-1994(style), 2001-2001(style), 2005-2005(style), 2011-2011(style), 2019-2021(style), 2030-2030(style), 2038-2038(style), 2051-2051(style), 2058-2058(style), 2085-2086(style), 2095-2097(style), 2107-2109(style), 2118-2118(style), 2127-2131(style), 2195-2195(style), 2201-2201(style), 2219-2221(style), 2227-2228(style)
+apps/web-app/src/components/toast-container.ts: 21-23(long literal), 24-26(long literal), 27-29(long literal), 30-32(long literal), 182-182(long literal), 187-189(long literal), 216-221(long literal), 229-229(style)
+apps/web-app/src/components/tutorial-spotlight.ts: 414-419(long literal), 426-431(long literal), 449-458(long literal), 477-486(long literal), 504-514(long literal), 531-538(long literal)
+apps/web-app/src/components/v4-layout.ts: 365-456(long literal), 567-571(long literal), 739-744(long literal), 755-760(long literal)
+apps/web-app/src/components/v4/base-lit-component.ts: 34-49(css)
+apps/web-app/src/components/v4/config-sidebar.ts: 325-731(css), 1016-1020(long literal), 1068-1073(long literal), 1144-1149(long literal), 1164-1170(long literal), 1196-1201(long literal), 1257-1262(long literal), 1265-1270(long literal), 1273-1278(long literal), 1281-1287(long literal), 1321-1326(long literal), 1360-1365(long literal), 1567-1576(long literal), 1649-1654(long literal), 1775-1781(long literal), 1783-1789(long literal), 1913-1916(long literal), 2041-2046(long literal), 2135-2139(long literal), 2139-2143(long literal), 2145-2153(long literal)
+apps/web-app/src/components/v4/display-options-v4.ts: 198-300(css), 410-415(long literal), 418-423(long literal), 426-431(long literal), 434-439(long literal), 467-472(long literal), 475-480(long literal), 483-488(long literal), 491-496(long literal)
+apps/web-app/src/components/v4/dye-filters-v4.ts: 115-203(css), 292-297(long literal), 300-305(long literal), 308-313(long literal), 316-321(long literal), 324-329(long literal), 332-337(long literal), 365-370(long literal)
+apps/web-app/src/components/v4/dye-palette-drawer.ts: 130-724(css), 1034-1038(long literal), 1073-1088(long literal), 1166-1171(long literal), 1172-1180(long literal), 1183-1192(long literal), 1192-1196(long literal), 1196-1201(long literal), 1204-1210(long literal), 1211-1217(long literal), 1272-1276(long literal), 1277-1281(long literal), 1289-1294(long literal), 1295-1303(long literal), 1308-1317(long literal), 1338-1351(long literal)
+apps/web-app/src/components/v4/language-modal.ts: 217-217(long literal)
+apps/web-app/src/components/v4/preset-card.ts: 74-253(css), 375-379(long literal), 399-403(long literal)
+apps/web-app/src/components/v4/preset-detail.ts: 180-446(css), 447-612(css), 933-937(long literal), 951-957(long literal), 998-1002(long literal), 1007-1011(long literal), 1070-1075(long literal)
+apps/web-app/src/components/v4/preset-tool.ts: 230-449(css), 1253-1258(long literal), 1355-1358(long literal)
+apps/web-app/src/components/v4/range-slider-v4.ts: 105-258(css)
+apps/web-app/src/components/v4/result-card.ts: 353-904(css), 906-1010(css), 1594-1599(long literal), 1629-1633(long literal), 1663-1673(long literal), 1706-1709(long literal), 1720-1723(long literal), 1725-1728(long literal), 1734-1738(long literal), 1739-1742(long literal), 1772-1776(long literal), 1798-1804(long literal), 1807-1811(long literal), 1813-1818(long literal), 1822-1827(long literal), 1831-1835(long literal), 1836-1840(long literal), 1845-1848(long literal), 1855-1859(long literal), 1866-1868(long literal), 1868-1873(long literal), 1875-1880(long literal), 1882-1887(long literal), 1889-1894(long literal), 1896-1901(long literal), 1903-1907(long literal), 1909-1913(long literal), 1913-1918(long literal), 1924-1928(long literal), 1940-1945(long literal), 1945-1950(long literal), 1950-1957(long literal), 1957-1964(long literal), 1964-1971(long literal), 1971-1977(long literal)
+apps/web-app/src/components/v4/share-button.ts: 21-37(long literal), 42-54(long literal), 135-244(css)
+apps/web-app/src/components/v4/toggle-switch-v4.ts: 68-160(css), 205-209(long literal)
+apps/web-app/src/components/v4/v4-app-header.ts: 97-492(css), 572-577(long literal), 609-613(long literal), 617-624(long literal), 646-652(long literal), 656-662(long literal), 667-673(long literal), 677-683(long literal)
+apps/web-app/src/components/v4/v4-color-wheel.ts: 121-295(css), 523-528(long literal)
+apps/web-app/src/components/v4/v4-layout-shell.ts: 137-446(css), 455-476(css), 703-706(long literal), 712-720(long literal), 731-738(long literal), 744-749(long literal), 755-763(long literal), 763-771(long literal), 790-793(long literal), 793-798(long literal), 817-824(long literal), 826-830(long literal), 837-845(long literal)
