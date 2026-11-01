@@ -37,6 +37,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Preserve emitted declarations for the five existing public utility helpers when building with `stripInternal`; their runtime signatures and all legacy character APIs remain unchanged.
+
 - **Long imported nicknames and producer labels keep surrogate pairs intact.** Their cap
   remains 256 UTF-16 code units with no ellipsis; a pair crossing that boundary is omitted
   as a whole rather than leaving a broken character (BUG-003).
