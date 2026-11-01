@@ -47,7 +47,7 @@ cd xivdyetools
 pnpm install                 # installs every workspace project
 ```
 
-Requires Node 22+ and pnpm 11.
+Requires Node 22.16+ and pnpm 11.
 
 ### 2. Verify the workspace builds
 

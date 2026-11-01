@@ -1,0 +1,45 @@
+[
+  {
+    "candidate_id": "web-services-001",
+    "title": "Non-default match metrics lose units and precision in exports and swatch summaries",
+    "kind": "BUG",
+    "severity": "LOW",
+    "type": "Logic",
+    "unit": "apps/web-app",
+    "locations": [
+      "apps/web-app/src/shared/palette-export.ts:158",
+      "apps/web-app/src/shared/palette-export.ts:277",
+      "apps/web-app/src/components/extractor-tool.ts:2379",
+      "apps/web-app/src/components/gradient-tool.ts:1062",
+      "apps/web-app/src/components/mixer-tool.ts:1978",
+      "apps/web-app/src/components/swatch-tool.ts:1938",
+      "apps/web-app/src/components/swatch-tool.ts:1045"
+    ],
+    "evidence": "ExportEntry carries only a delta number and no matchingMethod; describeEntry always renders DeltaE plus toFixed(1), and JSON writes deltaE rounded to two decimals. Extractor, gradient and mixer forward distances from the currently selected metric unchanged. For OKLAB, e.g. 0.024 becomes DeltaE 0.0 in CSS/SCSS/Tailwind, and 0.004 becomes numeric 0 in JSON. The matching metric is not supplied in the export metadata, so exported measures also cannot be interpreted reliably. Swatch selection sentences independently round the same method-dispatched distance to one decimal (:1938/:1943), while reverse badges use two (:1045); generic Delta alone is not asserted to be a false DeltaE label.",
+    "repro": "Select OKLAB and a source color with nonzero nearest-dye distance below 0.05; export from Extractor, Mixer or Gradient. Commented output reports DeltaE 0.0, while main cards support three OKLAB decimals. A swatch with such a match also says the dye sits 0.0 away. Use a distance below 0.005 to expose JSON rounding to zero. Static trace only; no runtime repro executed.",
+    "test_gap": "shared/__tests__/palette-export.test.ts:38 uses only delta 3.42; :53 pins DeltaE 3.4 and :96 pins deltaE 3.42. No method field or small OKLAB value is exercised. Components reviewer supplied swatch precision sinks; reviewed tests do not establish method-aware summaries.",
+    "fix": "Carry matchingMethod through export payloads, preserve its identity in JSON and format with the core metric vocabulary/precision (BAND_METHOD_DP gives OKLAB three places). Use the same precision in swatch summaries and reverse badges. Keep generic Delta labels where intended but identify the selected metric nearby.",
+    "overlap": "Component reviewer independently identified swatch-tool precision drift and left it for this combined candidate. Earlier 2026-10-04 palette-export local-date finding is unrelated and already fixed."
+  },
+  {
+    "candidate_id": "web-services-002",
+    "title": "A delayed vote check can repopulate invalidated cache after a vote succeeds",
+    "kind": "BUG",
+    "severity": "LOW",
+    "type": "State",
+    "unit": "apps/web-app",
+    "locations": [
+      "apps/web-app/src/services/community-preset-service.ts:535",
+      "apps/web-app/src/services/community-preset-service.ts:559",
+      "apps/web-app/src/services/community-preset-service.ts:457",
+      "apps/web-app/src/services/community-preset-service.ts:509",
+      "apps/web-app/src/components/v4/preset-detail.ts:687",
+      "apps/web-app/src/components/v4/preset-detail.ts:800"
+    ],
+    "evidence": "The shared request() helper snapshots cacheGeneration and refuses to cache answers spanning an invalidation (:292/:314), but hasVoted bypasses that helper and unconditionally caches its response at :559. voteForPreset/removeVote invalidate presets and delete vote:<id> when successful (:457-458/:509-510). A check initiated before that mutation can finish later and reinsert the old has_voted and vote_count for five minutes. The component generation guard avoids applying that late result immediately, but reopening the detail calls hasVoted again and receives the stale cached answer.",
+    "repro": "Hold an authenticated GET votes/p/check returning the pre-vote false state; complete POST votes/p successfully; then release the old GET. Close and reopen the preset detail within five minutes. It shows the pre-vote button/count from cache, even though the successful POST response had already updated it. Equivalent sequence exists for removing a vote. Static asynchronous trace only; no runtime repro executed.",
+    "test_gap": "services/__tests__/community-preset-service.integration.test.ts:445-457 covers in-flight getPresets answers across invalidatePresets()/clearCache(), but not hasVoted. Its hasVoted cases :288-342 check ordinary success/failure/authentication. preset-detail.ts:696-700 has a tested component generation guard for BUG-026, which hides the immediate overwrite but does not protect the service cache on reopening.",
+    "fix": "Snapshot cacheGeneration (and preferably authenticated identity) when starting hasVoted, and cache only if unchanged when its response arrives; invalidate on vote mutations/auth changes. Add a deferred check-versus-successful-vote test that verifies a subsequent hasVoted actually fetches fresh state.",
+    "overlap": "Related to earlier BUG-026 component race and BUG-031 list invalidation fixes, but this is their remaining service-cache resurrection path. Not a duplicate of BUG-108 failed-check count clearing."
+  }
+]

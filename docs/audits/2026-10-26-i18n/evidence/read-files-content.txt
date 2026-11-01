@@ -1,0 +1,128 @@
+Instructions/reference (read; sections where applicable)
+CLAUDE.md
+.codex/agents/xivdye-worker.toml
+.agents/skills/i18n-manager/SKILL.md
+.agents/skills/audit-shared/model-routing.md
+.agents/skills/audit-shared/conventions.md
+.agents/skills/audit-shared/traps/shell.md
+.agents/skills/audit-shared/traps/i18n-fonts.md
+.agents/skills/audit-shared/american-english.md
+.agents/skills/audit-shared/policy-documents.md
+docs/reference/ffxiv-terminology.md
+docs/reference/glossary.md
+apps/web-app/CLAUDE.md
+packages/core/CLAUDE.md
+packages/bot-logic/CLAUDE.md
+apps/discord-worker/CLAUDE.md
+apps/og-worker/CLAUDE.md
+apps/stoat-worker/CLAUDE.md
+
+Prior/current audit context (read relevant sections)
+docs/audits/2026-10-04-i18n/README.md
+docs/audits/2026-10-04-i18n/I18N_AUDIT_2026-10-04.md
+docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md
+docs/audits/2026-10-04-i18n/evidence/catalog.json
+docs/audits/2026-10-04-i18n/findings/HC-001.md
+docs/audits/2026-10-04-i18n/findings/FONT-001.md
+docs/audits/2026-09-19-i18n/I18N_AUDIT_2026-09-19.md
+docs/audits/2026-09-19-i18n/evidence/review-open-items-apply.md
+docs/audits/2026-08-16-web-app-dead-code/evidence/agent-report-i18n.md
+docs/audits/2026-10-26-security/README.md
+docs/audits/2026-10-26-security/SECURITY_AUDIT_REPORT.md
+docs/audits/2026-10-26-security/findings/FINDING-034.md
+docs/audits/2026-10-26-xivcharakit-dead-code/README.md
+docs/audits/2026-10-26-xivcharakit-dead-code/DEAD_CODE_REPORT.md
+
+Locale sets loaded in full as JSON; content review concentrated on terminology and changed/runtime-selected values
+packages/core/src/data/locales/en.json
+packages/core/src/data/locales/ja.json
+packages/core/src/data/locales/de.json
+packages/core/src/data/locales/fr.json
+packages/core/src/data/locales/ko.json
+packages/core/src/data/locales/zh.json
+packages/bot-logic/src/i18n/locales/en.json
+packages/bot-logic/src/i18n/locales/ja.json
+packages/bot-logic/src/i18n/locales/de.json
+packages/bot-logic/src/i18n/locales/fr.json
+packages/bot-logic/src/i18n/locales/ko.json
+packages/bot-logic/src/i18n/locales/zh.json
+apps/web-app/src/locales/en.json
+apps/web-app/src/locales/ja.json
+apps/web-app/src/locales/de.json
+apps/web-app/src/locales/fr.json
+apps/web-app/src/locales/ko.json
+apps/web-app/src/locales/zh.json
+
+Runtime source/tests read (whole file or relevant sections)
+apps/web-app/src/main.ts
+apps/web-app/src/shared/error-handler.ts
+apps/web-app/src/shared/constants.ts
+apps/web-app/src/shared/fatal-error.ts
+apps/web-app/src/shared/item-links.ts
+apps/web-app/src/services/index.ts
+apps/web-app/src/services/language-service.ts
+apps/web-app/src/services/harmony-generator.ts
+apps/web-app/src/components/chara-ui.ts
+apps/web-app/src/components/chara-file-card.ts
+apps/web-app/src/components/glamour-tool.ts
+apps/web-app/src/components/glamour-block.ts
+apps/web-app/src/components/swatch-tool.ts
+apps/web-app/src/components/metric-help.ts
+apps/web-app/src/components/v4/config-sidebar.ts
+apps/web-app/src/styles/globals.css
+packages/bot-logic/src/commands/chara-identity.ts
+packages/bot-logic/src/commands/swatch.ts
+packages/bot-logic/src/commands/dye-info.ts
+packages/bot-logic/src/localization.ts
+packages/svg/src/base.ts
+packages/svg/src/frame.ts
+apps/discord-worker/src/index.ts
+apps/discord-worker/src/commands/schemas.ts
+apps/discord-worker/src/commands/localize.ts
+apps/discord-worker/src/commands/localize.test.ts
+apps/discord-worker/src/types/preferences.ts
+apps/discord-worker/src/handlers/commands/preferences.ts
+apps/discord-worker/src/handlers/commands/budget.ts
+apps/discord-worker/src/services/budget/quick-picks.ts
+apps/discord-worker/src/services/fonts.ts
+apps/discord-worker/src/services/font-load-order.test.ts
+apps/og-worker/src/index.ts
+apps/og-worker/src/og-params.ts
+apps/og-worker/src/og-data-generator.ts
+apps/og-worker/src/services/translator.ts
+apps/og-worker/src/services/og-strings.ts
+apps/og-worker/src/services/og-embed.ts
+apps/og-worker/src/services/fonts.ts
+apps/og-worker/src/services/renderer.ts
+apps/og-worker/src/services/svg/tokens.ts
+apps/og-worker/src/services/svg/band.ts
+apps/og-worker/src/services/svg/default-card.ts
+apps/og-worker/src/services/svg/accessibility.ts
+apps/og-worker/src/services/svg/harmony.ts
+apps/og-worker/src/services/svg/swatch.ts
+apps/og-worker/scripts/subset-cjk-fonts.py
+apps/stoat-worker/src/services/response-formatter.ts
+apps/web-app/PRIVACY.md
+apps/discord-worker/TERMS_OF_SERVICE.md
+
+Binary inputs read by read-only font probe
+apps/og-worker/src/fonts/*.ttf (all 10 files)
+apps/discord-worker/src/fonts/NotoSansJP-Subset.ttf
+apps/discord-worker/src/fonts/NotoSansSC-Subset.ttf
+apps/discord-worker/src/fonts/NotoSansKR-Subset.ttf
+@resvg/resvg-wasm/index_bg.wasm (local installed dependency)
+
+Additional tracked-source regex scans
+apps/web-app/src/**/*.ts (non-test source)
+packages/bot-logic/src/**/*.ts (non-test source)
+apps/discord-worker/src/**/*.ts (non-test source)
+apps/og-worker/src/**/*.ts (non-test source)
+apps/stoat-worker/src/**/*.ts (non-test source)
+Only matching lines from these broad scans were inspected; this is not a claim that every source file was read in full.
+
+Historical comparisons
+git log since 2026-10-04 over locale/OG/generator paths
+git diff 50165ec6..HEAD over web and bot locale files, policy files and selected .chara UI modules
+
+Memory navigation only
+C:/Users/DrawF/.codex/memories/MEMORY.md:1225 (prior audit authority; reverified in checkout)
