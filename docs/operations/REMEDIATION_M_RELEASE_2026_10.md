@@ -42,6 +42,15 @@ folding removal into those minor artifacts would defeat the required deprecation
   Bot Logic 5 publication. Select each package individually through the gated Actions publisher.
 - Select and accept each consumer release separately. Keep the original schema, provider,
   disclosure, identity/session, metadata-moderation, notification and rollback gates intact.
+- **Ruled 2026-11-01:** the M-API, M-WEB, M-DISCORD and M-MODERATION deploys wait until #404
+  and #405 are on `main` and M-CORE, M-SVG and M-BOT-LOGIC are published. With
+  e-02 on `main`, #404's merge changes only docs and #405's starts only an og-worker run, so
+  each of these four deploys from the last run its own M merge starts (#395, #402, #398 and
+  #399), held in the production gate until then and accepted one at a time. Reject or cancel
+  every earlier run of each workflow before the next merge that matches it. M-OG gets no
+  selected run of its own: reject #397's og 2.12.3 run, and #405's og 2.12.4 run carries it, so
+  it is accepted with F-OG ([unit acceptance](REMEDIATION_UNIT_ACCEPTANCE_2026_10.md) AP-05,
+  AP-06).
 - Keep all activation flags false, OAuth's outbound continuity binding absent, Pages retention
   dry-run, the independent Image CPU/resource/manual hold, and Stoat parked.
 
