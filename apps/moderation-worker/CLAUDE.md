@@ -175,7 +175,16 @@ Both fail open (allow on backend error) and use `ctx.waitUntil()` for the increm
 
 ### Revision-Bound Review Buttons (FINDING-017)
 
-Approve / reject / revert buttons and the reject / revert modals carry what the moderator reviewed in their `custom_id`: `preset_approve_<uuid>:<revision>:<status>` (likewise `preset_reject_`, `preset_revert_`, `preset_reject_modal_`, `preset_revert_modal_`). `parseReviewCustomId` / `buildReviewCustomId` from `@xivdyetools/types` (`preset/review-custom-id.ts`) are the one strict parser (≤ 100 chars; revision = non-negative integer, no leading zeros; status = full status word) and the only builder — the same module discord-worker builds its buttons with, so the two cannot drift (REFACTOR-001); there is no local copy. The status words (`REVIEW_STATUSES` / `isReviewStatus`) come from there too, including `services/preset-api.ts`'s check of a 409's `current`. Import them from the root `@xivdyetools/types`, not `/preset` (knip counts only root-barrel imports as using both barrels). The values go to presets-api as `expected_revision` / `expected_status`, and a `409` means the text or status changed. A legacy bare id (`preset_approve_<uuid>`) or a `409` never acts: `handlers/review-message.ts` fetches the current preset, edits the message to show its current text with fresh revision-bound buttons, and tells the moderator to review and click again. Every message edit there passes `components` (empty list when nothing is actionable) — omitting them leaves the old live buttons in place. A preset that is no longer pending is the exception to "show its current text" (BUG-052): a channel message gets no `embeds` — so a concurrent winner's "Approved by" / "Reason" survives whichever edit lands last — only `components: []` and a `content` line stating the status; the ephemeral `/preset moderate` confirmation (`flags & 64`), which no other moderator can have edited, is rebuilt from the current preset. A presets-api load failure (including a route 404, BUG-054) edits nothing and keeps the buttons.
+Approve / reject / revert buttons and the reject / revert modals carry what the moderator reviewed in their `custom_id`: `preset_approve_<uuid>:<revision>:<status>` (likewise `preset_reject_`, `preset_revert_`, `preset_reject_modal_`, `preset_revert_modal_`). `parseReviewCustomId` / `buildReviewCustomId` from `@xivdyetools/types` (`preset/review-custom-id.ts`) are the one strict parser (≤ 100 chars; revision = non-negative integer, no leading zeros; status = full status word) and the only builder — the same module discord-worker builds its buttons with, so the two cannot drift (REFACTOR-001); there is no local copy. The status words (`REVIEW_STATUSES` / `isReviewStatus`) come from there too, including `services/preset-api.ts`'s check of a 409's `current`. Import them from the root `@xivdyetools/types`, not `/preset` (knip counts only root-barrel imports as using both barrels). The values go to presets-api as `expected_revision` / `expected_status`, and a `409` means the text or status changed. A legacy bare id (`preset_approve_<uuid>`) or a `409` never acts: `handlers/review-message.ts` fetches the current preset, edits the message to show its current text with fresh revision-bound buttons, and tells the moderator to review and click again. Every message edit there passes `components` (empty list when nothing is actionable) — omitting them leaves the old live buttons in place. A preset that is no longer pending is the exception to "show its current text" (BUG-052): a channel message gets no `embeds` — so a concurrent winner's "Action" / "Reason" survives whichever edit lands last — only `components: []` and a `content` line stating the status; the ephemeral `/preset moderate` confirmation (`flags & 64`), which no other moderator can have edited, is rebuilt from the current preset. A presets-api load failure (including a route 404, BUG-054) edits nothing and keeps the buttons.
+
+### Moderator attribution in posts (FINDING-001)
+
+New approval, rejection and revert result posts use neutral action labels; ban posts
+omit the acting moderator field. Do not copy the acting moderator's username or
+Discord ID into these moderation-channel edits or submission-log posts. Retain the
+moderator ID for authorization and existing API/D1 moderation-log attribution.
+This changes future generated attribution; it does not rewrite historical posts.
+The Discord preview-image companion is scheduled separately in A-DISCORD.
 
 ### Ban Storage and Unban Restore
 
@@ -308,3 +317,41 @@ npx vitest run -t "ban"                                   # Pattern match
 5. `npm run deploy:production`.
 6. If slash command schemas changed: `npm run register-commands` (with prod `DISCORD_CLIENT_ID = 1453806659708129374`). The Sprint 4 (FINDING-017) release removed the `reason` option from `/preset moderate`, so re-register against **both** the dev and production moderation apps — Discord keeps showing the old option until then.
 7. Confirm `https://moderation-bot.xivdyetools.app/health` returns `{ status: 'ok' }`.
+
+## A-PRESETS link review companion
+
+Preset review messages show complete decoded example-link path text in `Links` and, when offered,
+the effective target in `Revert link`. Do not render hostname, credentials, query or fragment or
+fetch supplied links. Escape dangerous controls visibly inside one inline-code pair; never silently
+truncate required paths. Missing link metadata is unavailable, distinct from explicit null.
+Keep Reject available when required unsafe/oversized content withholds Approve/Revert. The
+moderation consumer re-checks fresh revision/status and displayed link fields before publishing,
+refreshing old messages before action. Typed-ID confirmations use the same completeness guard.
+No command registration or public shared type change accompanies this patch.
+
+Presets API extended metadata moderation remains default off. Verify both consumer production
+deployments before preparing a separate activation-only API PR. Explicitly recorded snapshot links
+remain validated/restored even after disabling the API flag; missing legacy links preserve current
+state while disabled and clear it while enabled. This companion grants no manual deployment.
+
+## Prepared linked-ID ban confirmation
+
+`LINKED_BAN_CONFIRMATION_ENABLED` is false in both environments and gates all new ban/unban
+command, selection, button and modal paths. There is no unsafe single-ID fallback. Private
+`OAUTH_IDENTITY.lookupStoredIdentity` has a 1.2-second caller deadline; pending/error/malformed
+results cannot create a review. An authoritative missing record permits only the explicit ID.
+`additional_user` is optional on ban_user and resolves independently; do not describe its two
+input records as freshly verified or necessarily currently linked.
+
+`ban-confirmation-service.ts` owns immutable actor-bound proposals and one-use D1 claims.
+Parent choice creates a fresh review nonce atomically. SQL checks exact scope and matching-parent
+set equality in both directions, database-time expiry, selected parent activity and the 64-ID
+cap before any write/audit. Unban uses one parent's recorded scope, excludes other active bans
+and picks a deterministic eligible hidden twin across the whole restoring scope. Counts use
+matching audit inserts so the content-revision trigger cannot inflate the reported preset count.
+
+New private confirmation storage/displays require all privacy disclosures live before activation.
+Apply presets migration `0016_ban_identity_continuity.sql` before deploying either consumer;
+verify OAuth provider before consumer bindings. Deployment registers the changed optional slash
+argument automatically; no manual registration is selected. See the
+[contract and release order](../../docs/architecture/identity-moderation.md).

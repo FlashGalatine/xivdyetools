@@ -87,6 +87,7 @@ describe('FINDING-017 — rejection / revert modals', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(presetApi.getModerationPreset).mockResolvedValue({ preset: preset(), revision: 8 } as any);
     vi.mocked(presetApi.isModerator).mockReturnValue(true);
     vi.mocked(banService.isPresetAuthorBanned).mockResolvedValue(false);
     vi.mocked(discordApi.safeEditMessage).mockResolvedValue(true);
@@ -105,6 +106,43 @@ describe('FINDING-017 — rejection / revert modals', () => {
   });
 
   describe('revision-bound submit', () => {
+    it.each([
+      ['missing target marker', 'https://example.com/before', undefined],
+      ['stale target', 'https://example.com/before', '`/stale`'],
+      ['unsafe target', 7, '`/before`'],
+      ['old missing became null', null, 'Link details unavailable for this older snapshot.'],
+    ])('revert refuses %s even with a matching current marker', async (_scenario, target, value) => {
+      vi.mocked(presetApi.getModerationPreset).mockResolvedValue({ preset: preset({ example_link: 'https://example.com/current', previous_values: { name: 'Before', description: 'old', tags: [], dyes: [1], example_link: target } }), revision: 8 } as any);
+      vi.mocked(presetApi.revertPreset).mockResolvedValue({ id: ID, name: 'N' } as any);
+      await handlePresetRevertModal(submit(`preset_revert_modal_${ID}${BOUND}`, 'revert_reason', REASON, { message: { id: 'msg-1', embeds: [{ fields: [{ name: 'Links', value: '`/current`' }, ...(value ? [{ name: 'Revert link', value }] : [])] }] } }), env, ctx);
+      await flush();
+      expect(presetApi.revertPreset).not.toHaveBeenCalled();
+      expect(discordApi.safeSendMessage).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['https://example.com/before?private=hidden', '`/before`'],
+      [null, 'No example link.'],
+      [undefined, 'Link details unavailable for this older snapshot.'],
+    ])('revert accepts the exact fresh effective target %s', async (target, value) => {
+      vi.mocked(presetApi.getModerationPreset).mockResolvedValue({ preset: preset({ example_link: 'https://example.com/current', previous_values: { name: 'Before', description: 'old', tags: [], dyes: [1], ...(target === undefined ? {} : { example_link: target }) } }), revision: 8 } as any);
+      vi.mocked(presetApi.revertPreset).mockResolvedValue({ id: ID, name: 'N' } as any);
+      await handlePresetRevertModal(submit(`preset_revert_modal_${ID}${BOUND}`, 'revert_reason', REASON, { message: { id: 'msg-1', embeds: [{ fields: [{ name: 'Links', value: '`/current`' }, { name: 'Revert link', value }] }] } }), env, ctx);
+      await flush();
+      expect(presetApi.revertPreset).toHaveBeenCalledExactlyOnceWith(env, ID, REASON, 'mod-1', { revision: 8, status: 'pending' });
+      expect(lastEdit().components).toEqual([]);
+      expect(JSON.stringify(lastEdit())).not.toContain('private=hidden');
+    });
+
+    it('revert refuses a pre-upgrade modal before any API write or audit', async () => {
+      vi.mocked(presetApi.getModerationPreset).mockResolvedValue({ preset: preset({ example_link: 'https://private.example/current', previous_values: { name: 'Before', description: 'x', tags: [], dyes: [1], example_link: null } }), revision: 8 } as any);
+      vi.mocked(presetApi.revertPreset).mockResolvedValue({ id: ID, name: 'N' } as any);
+      await handlePresetRevertModal(submit(`preset_revert_modal_${ID}${BOUND}`, 'revert_reason', REASON), env, ctx);
+      await flush();
+      expect(presetApi.revertPreset).not.toHaveBeenCalled();
+      expect(discordApi.safeSendMessage).not.toHaveBeenCalled();
+      expect(lastEdit().embeds[0].fields).toContainEqual({ name: 'Revert link', value: 'No example link.', inline: false });
+    });
     it('reject: sends the revision and status carried in the modal custom_id', async () => {
       vi.mocked(presetApi.rejectPreset).mockResolvedValue({ id: ID, name: 'N' } as any);
 
@@ -126,6 +164,7 @@ describe('FINDING-017 — rejection / revert modals', () => {
     });
 
     it('revert: sends the revision and status carried in the modal custom_id', async () => {
+      vi.mocked(presetApi.getModerationPreset).mockResolvedValue({ preset: preset({ status: 'flagged' }), revision: 3 } as any);
       vi.mocked(presetApi.revertPreset).mockResolvedValue({ id: ID, name: 'N' } as any);
 
       await handlePresetRevertModal(

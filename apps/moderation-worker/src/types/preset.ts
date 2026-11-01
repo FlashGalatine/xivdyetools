@@ -16,7 +16,7 @@
 // PROJECT-SPECIFIC TYPES
 // ============================================================================
 
-import type { PresetStatus, CommunityPreset } from '@xivdyetools/types';
+import type { PresetStatus, CommunityPreset, PresetPreviousValues } from '@xivdyetools/types';
 
 /**
  * Custom error class for preset API errors
@@ -67,6 +67,7 @@ export class PresetReviewConflictError extends PresetAPIError {
  */
 export interface ModerationPresetView extends CommunityPreset {
   moderation_status: 'flagged' | 'unknown';
+  previous_values?: (PresetPreviousValues & { example_link?: string | null }) | null;
 }
 
 // ============================================================================

@@ -58,29 +58,6 @@ const enLocale: LocaleData = {
     },
   },
   ban: {
-    confirmTitle: 'Confirm User Ban',
-    confirmDesc:
-      'Are you sure you want to ban this user from Preset Palettes?\n\nThis will **hide all their presets** and prevent them from submitting, voting, or editing presets.',
-    username: 'Username',
-    discordId: 'Discord ID',
-    // A4 (2026-09-16 PR review, BUG-001 path (a)): the ban-confirmation
-    // embed's id field is Discord-only labeled even when the target is an
-    // XIVAuth-only account (no Discord ID, banned by their oauth `sub`
-    // UUID) — `handlers/commands/preset.ts` picks between this and
-    // `discordId` above by `isValidSnowflake(user.discordId)`.
-    xivauthId: 'XIVAuth ID',
-    totalPresets: 'Total Presets',
-    recentPresets: 'Recent Presets',
-    confirmFooter: 'Click "Yes" to proceed with the ban, or "No" to cancel.',
-    yesBan: 'Yes, Ban User',
-    cancel: 'Cancel',
-    userUnbanned: 'User Unbanned',
-    presetsRestored: 'Presets Restored',
-    presetsStillHidden: 'Presets Still Hidden',
-    presetsStillHiddenWhy:
-      'another approved or pending preset already uses the same dye combination, so restoring it would duplicate that preset.',
-    notBanned: 'User is not currently banned.',
-    userNotFound: 'User not found or has no presets.',
     channelRestricted: 'This command can only be used in the moderation channel.',
     permissionDenied: 'You do not have permission to perform this action.',
   },
