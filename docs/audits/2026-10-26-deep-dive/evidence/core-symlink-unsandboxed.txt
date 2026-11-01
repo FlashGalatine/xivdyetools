@@ -1,0 +1,8 @@
+
+ RUN  v5.0.5 C:/dev/XIVProjects/xivdyetools/.claude/worktrees/deep-i18n-audits-20261026/packages/core
+
+
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+   Start at  20:29:55
+   Duration  718ms (tests 85%, import 9%, transform 4%, worker 3%)

@@ -42,7 +42,7 @@ Start at [`docs/index.md`](docs/index.md): architecture overviews, per-project d
 ## Quick Start
 
 ```bash
-# Prerequisites: Node.js 22.13+, pnpm 11+
+# Prerequisites: Node.js 22.16+, pnpm 11+
 pnpm install           # Install all workspace dependencies
 pnpm turbo run build   # Build all packages
 pnpm turbo run test    # Run all tests (Vitest, ~480 test files across 17 workspaces)

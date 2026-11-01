@@ -6,12 +6,12 @@
  * - Lighter than full JWT (no header, simplified structure)
  * - Reuses crypto primitives from jwt-service.ts
  * - Domain-separates new state signatures from JWT signing
- * - Accepts signed legacy states only during a fixed, finite migration window
+ * - Accepts only domain-separated signatures (the one-time raw-HMAC window closed
+ *   2026-10-28 00:10 UTC, before 3.2.0 shipped)
  */
 
 // OAUTH-REF-003: Import base64UrlDecode from jwt-service to avoid duplication
 import { base64UrlEncode, base64UrlDecode, signJwtData, verifyJwtData } from '../services/jwt-service.js';
-import { LEGACY_STATE_ISSUANCE_CUTOFF_SECONDS, STATE_EXPIRY_SECONDS } from '../constants/oauth.js';
 
 const STATE_SIGNING_PREFIX = 'oauth-state-v1:';
 
@@ -46,7 +46,7 @@ export async function signState(state: StateData, secret: string): Promise<strin
 
 /**
  * Verify and decode signed state
- * Supports a finite signed-legacy migration and explicit development unsigned states
+ * Supports explicit development unsigned states
  *
  * @param signedState - Signed state string or legacy base64 state
  * @param secret - HMAC secret (typically JWT_SECRET)
@@ -65,39 +65,16 @@ export async function verifyState(
   if (parts.length === 2) {
     const [encodedState, providedSignature] = parts;
 
-    // FINDING-001: Use crypto.subtle.verify (constant-time) instead of string !=
-    const isCurrentSignature = await verifyJwtData(
-      STATE_SIGNING_PREFIX + encodedState, providedSignature, secret
-    );
-    const now = Math.floor(Date.now() / 1000);
-
-    if (!isCurrentSignature) {
-      // FINDING-036: raw-HMAC compatibility has a fixed deadline, independent
-      // of deploy/module/request timing. Authenticate before reading timestamps.
-      if (
-        now > LEGACY_STATE_ISSUANCE_CUTOFF_SECONDS + STATE_EXPIRY_SECONDS ||
-        !(await verifyJwtData(encodedState, providedSignature, secret))
-      ) {
-        throw new Error('Invalid state signature');
-      }
+    // FINDING-001: crypto.subtle.verify (constant-time). FINDING-036: only the
+    // domain-separated input is accepted. A state minted by 3.1.x (raw HMAC) fails
+    // here and that sign-in restarts once; the cutoff is never reintroduced.
+    if (!(await verifyJwtData(STATE_SIGNING_PREFIX + encodedState, providedSignature, secret))) {
+      throw new Error('Invalid state signature');
     }
 
     // Signature verified - decode state
     const json = base64UrlDecode(encodedState);
     const state = JSON.parse(json) as StateData;
-
-    if (!isCurrentSignature) {
-      if (
-        !Number.isInteger(state.iat) ||
-        !Number.isInteger(state.exp) ||
-        state.iat > now ||
-        state.iat > LEGACY_STATE_ISSUANCE_CUTOFF_SECONDS ||
-        state.exp - state.iat <= 0 ||
-        state.exp - state.iat > STATE_EXPIRY_SECONDS
-      ) {
-        throw new Error('Invalid legacy state timestamps');
-      }
-    }
 
     // REFACTOR-007 (2026-07-18 audit): the replay-window invariant is enforced
     // here at the primitive, not by per-caller discipline — the two callbacks
@@ -106,6 +83,7 @@ export async function verifyState(
     if (!state.exp) {
       throw new Error('State missing expiration timestamp');
     }
+    const now = Math.floor(Date.now() / 1000);
     if (state.exp < now) {
       throw new Error('OAuth state expired. Please try logging in again.');
     }
