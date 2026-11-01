@@ -1,0 +1,18 @@
+
+===== HEAD https://v4-ui-migration.xiv-colorexplorer.pages.dev/ (2026-10-26T22:45Z) =====
+HTTP/1.1 200 OK
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+content-security-policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://cdn.discordapp.com; connect-src 'self' https://universa
+x-frame-options: DENY
+x-robots-tag: noindex
+
+===== HEAD https://66496174.xiv-colorexplorer.pages.dev/ (2026-10-26T22:45Z) =====
+HTTP/1.1 200 OK
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+content-security-policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://cdn.discordapp.com; connect-src 'self' https://universa
+x-frame-options: DENY
+x-robots-tag: noindex
+
+===== HEAD https://ecc7fb76.xivdyetools-beta.pages.dev/ (2026-10-26T22:45Z) =====
+HTTP/1.1 200 OK
+x-robots-tag: noindex, nofollow

@@ -17,4 +17,4 @@
 - Re-check with `gh api repos/FlashGalatine/xivdyetools/branches/main/protection` and tick the dated item in OPEN_ITEMS.md
 
 ## Status
-FIXED 2026-10-04 (settings) — `Secret scan (gitleaks)` is a required status check on `main` (verified, `evidence/gh-settings-2026-10-04.txt`). `strict` and `enforce_admins` are deliberately held off until the remediation PRs are merged; revisit then. `OPEN_ITEMS.md` updated in `4925659e` (PR #233).
+FIXED 2026-10-04 (settings) — `Secret scan (gitleaks)` is a required status check on `main` (verified, `evidence/gh-settings-2026-10-04.txt`); `OPEN_ITEMS.md` updated in `4925659e` (PR #233). Residual deferral CLOSED 2026-10-26: the maintainer authorized enabling `strict` and `enforce_admins`; both are now true, with all other protection settings preserved ([carried-forward FINDING-051 execution evidence](../../2026-10-26-security/evidence/remediation-finding-051-2026-10-26.md)).

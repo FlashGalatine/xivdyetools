@@ -1,0 +1,88 @@
+[
+  {
+    "id": "web-validate",
+    "command": "pnpm --filter xivdyetools-web-app run validate:i18n",
+    "exit": 0,
+    "seconds": 2.3
+  },
+  {
+    "id": "web-unused",
+    "command": "pnpm --filter xivdyetools-web-app run i18n:unused",
+    "exit": 0,
+    "seconds": 2.9
+  },
+  {
+    "id": "web-i18n-tests",
+    "command": "pnpm --filter xivdyetools-web-app exec vitest run scripts/i18n-parity-gate.test.js src/__tests__/i18n-orphans.test.ts src/components/__tests__/v4/locale-switch.test.ts --coverage.enabled=false",
+    "exit": 0,
+    "seconds": 37.8
+  },
+  {
+    "id": "bot-i18n-tests",
+    "command": "pnpm --filter @xivdyetools/bot-logic exec vitest run src/i18n --coverage.enabled=false",
+    "exit": 0,
+    "seconds": 5.3
+  },
+  {
+    "id": "core-locale-tests",
+    "command": "pnpm --filter @xivdyetools/core exec vitest run scripts/build-locales.test.ts band-vocabulary.parity.test.ts DyeSearch.parity.test.ts --coverage.enabled=false",
+    "exit": 0,
+    "seconds": 15.7
+  },
+  {
+    "id": "og-i18n-font-tests",
+    "command": "pnpm --filter xivdyetools-og-worker exec vitest run src/services/og-strings.test.ts src/services/svg/roles-i18n.test.ts src/services/svg/harmony.deck-fit.test.ts src/og-data-generator.test.ts src/services/font-coverage.test.ts src/services/font-faces.test.ts --coverage.enabled=false",
+    "exit": 0,
+    "seconds": 5.7
+  },
+  {
+    "id": "discord-i18n-font-tests",
+    "command": "pnpm --filter xivdyetools-discord-worker exec vitest run src/services/bot-i18n.test.ts src/services/i18n.test.ts src/services/locale-and-fonts.test.ts src/services/font-coverage.test.ts src/services/font-faces.test.ts --coverage.enabled=false",
+    "exit": 0,
+    "seconds": 4.5
+  },
+  {
+    "id": "policy-parity",
+    "command": "python .agents/skills/audit-shared/scripts/policy-locale-parity.py",
+    "exit": 0,
+    "seconds": 1.8
+  },
+  {
+    "id": "locale-diff-web",
+    "command": "python docs/audits/2026-10-26-i18n/evidence/scripts/locale-diff.py apps/web-app/src/locales",
+    "exit": 0,
+    "seconds": 0.1
+  },
+  {
+    "id": "locale-diff-bot",
+    "command": "python docs/audits/2026-10-26-i18n/evidence/scripts/locale-diff.py packages/bot-logic/src/i18n/locales",
+    "exit": 0,
+    "seconds": 0.1
+  },
+  {
+    "id": "locale-diff-core",
+    "command": "python docs/audits/2026-10-26-i18n/evidence/scripts/locale-diff.py packages/core/src/data/locales",
+    "exit": 0,
+    "seconds": 0.1
+  },
+  {
+    "id": "script-inventory",
+    "command": "python docs/audits/2026-10-26-i18n/evidence/scripts/script-inventory.py packages/core/src/data/locales packages/bot-logic/src/i18n/locales apps/og-worker/src/services/og-strings.ts",
+    "exit": 0,
+    "seconds": 0.1
+  },
+  {
+    "id": "american-spelling",
+    "command": "node .agents/skills/audit-shared/scripts/american-spelling.mjs . --all apps/web-app/src/locales/en.json packages/bot-logic/src/i18n/locales/en.json packages/core/src/data/locales/en.json apps/og-worker/src/services/og-strings.ts apps/og-worker/src/services/og-embed.ts",
+    "exit": 1,
+    "seconds": null,
+    "initial_exit": 2,
+    "assessment": "Only Grey candidate: protected official game term; rejected. Initial bad path retained separately; corrected run scanned all five files."
+  },
+  {
+    "id": "web-eslint",
+    "command": "pnpm --filter xivdyetools-web-app exec eslint src -f json",
+    "exit": 0,
+    "seconds": 34.9
+  }
+]
