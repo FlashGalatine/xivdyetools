@@ -15,6 +15,15 @@
 const MARKDOWN_SPECIALS = /([*_~`|><#\\[\]()])/g;
 
 /**
+ * The subset of {@link MARKDOWN_SPECIALS} that still forms markup in the middle
+ * of a line: emphasis, backtick, `|`, backslash, the `[`/`]` a masked link
+ * needs and the `<` of a mention, channel, emoji or timestamp token. `(` and
+ * `)` only matter after a `[…]` label, and `#` and `>` only at the start of a
+ * line, so they stay bare.
+ */
+const MID_LINE_SPECIALS = /([*_~`|<\\[\]])/g;
+
+/**
  * C0/C1 controls (whitespace is collapsed separately), zero-width and
  * bidi-control code points. Written with escapes — raw control characters in
  * a regex literal do not survive every transform.
@@ -59,9 +68,28 @@ function defuseMentions(text: string): string {
  * @param maxLength  code-point cap INCLUDING the ellipsis (default 256)
  */
 export function sanitizeEmbedText(text: unknown, maxLength = 256): string {
+  return sanitizeWith(text, maxLength, escapeDiscordMarkdown);
+}
+
+/**
+ * {@link sanitizeEmbedText} for a value that always follows a label on its own
+ * line, such as the /glamour GPOSERS list a player copies: the same control
+ * stripping, whitespace collapse (so the value never starts a line), mention
+ * defusing and cap, but it escapes only {@link MID_LINE_SPECIALS}. Masked links
+ * and mention tokens stay inert, and an acquisition line like
+ * "Crafted (WVR Lvl. 1)" carries no backslashes.
+ *
+ * @param text  anything — non-strings yield ''
+ * @param maxLength  code-point cap INCLUDING the ellipsis
+ */
+export function sanitizeLineValue(text: unknown, maxLength: number): string {
+  return sanitizeWith(text, maxLength, (s) => s.replace(MID_LINE_SPECIALS, '\\$1'));
+}
+
+function sanitizeWith(text: unknown, maxLength: number, escape: (s: string) => string): string {
   if (typeof text !== 'string') return '';
   const cleaned = defuseMentions(text.replace(INVISIBLE, '').replace(/\s+/g, ' ').trim());
-  const escaped = escapeDiscordMarkdown(cleaned);
+  const escaped = escape(cleaned);
   const chars = [...escaped];
   if (maxLength <= 0 || chars.length <= maxLength) return escaped;
   // Do not end on a dangling backslash that would escape the ellipsis
