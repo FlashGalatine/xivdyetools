@@ -1,7 +1,8 @@
 import { beforeAll, afterAll, it, expect } from 'vitest';
 import type { TestHarness } from 'wrangler';
-import { mkdirSync, readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import type * as Caller from './fixtures/identity-lookup-caller.js';
 const D = '123456789012345678',
@@ -9,12 +10,11 @@ const D = '123456789012345678',
   MOD = '999999999999999999';
 let harness: TestHarness, oauth: D1Database, presets: D1Database;
 const saved = new Map<string, string | undefined>();
+let scratch: string | undefined;
 beforeAll(async () => {
-  const root = resolve(
-    import.meta.dirname,
-    `../../../.superpowers/sdd/REMEDIATION_PLAN/stream-3-runtime-${process.pid}`,
-  );
-  mkdirSync(root, { recursive: true });
+  // Fresh OS temp root: Wrangler's profile, cache, logs and .wrangler stay out of the checkout.
+  const root = mkdtempSync(join(tmpdir(), 'xivdyetools-moderation-identity-'));
+  scratch = root;
   for (const [key, value] of Object.entries({
     USERPROFILE: root,
     APPDATA: resolve(root, 'roaming'),
@@ -129,6 +129,7 @@ afterAll(async () => {
       if (value === undefined) delete process.env[key];
       else process.env[key] = value;
     }
+    if (scratch) rmSync(scratch, { recursive: true, force: true, maxRetries: 5 });
   }
 });
 const call = (path: string, input: unknown) =>

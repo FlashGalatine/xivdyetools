@@ -358,6 +358,6 @@ identity. Matching sign-ins and new-account creation continue. The additive user
 must precede deployment, and later consumer/disclosure verification must precede activation.
 
 State signatures use `oauth-state-v1:` before the encoded signing input, with unchanged
-two-part wire format. The one-time legacy issuance cutoff is 2026-10-28 00:00:00 UTC; final
-legacy acceptance ends at 00:10:00 UTC. Old in-flight sign-ins retry once if deployment occurs
-after that window. Both provider POST exchanges continue to require signed state and PKCE.
+two-part wire format. Unprefixed (3.1.x) states are rejected; a sign-in in flight across the
+3.2.0 deployment retries once. Both provider POST exchanges continue to require signed state and
+PKCE.
