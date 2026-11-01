@@ -16,12 +16,15 @@
  * STALE_REVIEW and must be re-read. Fail-closed, and intended.
  */
 
-// Appended to every statement: no active ban on either id, in either ban column.
+// Appended to every statement: no active ban on either id, in legacy columns or membership.
 // ALL FIVE statements need it. Guarding only the votes move would leave the
 // decrement and the DELETE treating every un-moved vote as a collision.
 const NOT_BANNED = `NOT EXISTS (
-  SELECT 1 FROM banned_users
-  WHERE (discord_id IN (?, ?) OR xivauth_id IN (?, ?)) AND unbanned_at IS NULL
+  SELECT 1 FROM banned_users b
+  WHERE (b.discord_id IN (?, ?) OR b.xivauth_id IN (?, ?) OR EXISTS (
+    SELECT 1 FROM ban_identity_memberships m
+    WHERE m.ban_id = b.id AND m.identity_id IN (?, ?)
+  )) AND b.unbanned_at IS NULL
 )`;
 
 /**
@@ -44,7 +47,7 @@ export async function rekeyIdentity(db: D1Database, fromId: string, toId: string
   // already skips equal ids; this keeps the service safe on its own.
   if (fromId === toId) return false;
 
-  const ban = [fromId, toId, fromId, toId] as const;
+  const ban = [fromId, toId, fromId, toId, fromId, toId] as const;
   const results = await db.batch([
     db
       .prepare(`UPDATE presets SET author_discord_id = ? WHERE author_discord_id = ? AND ${NOT_BANNED}`)
