@@ -17,3 +17,5 @@
 
 ## Status
 PARTIAL 2026-10-26 — the authorized one-off cleanup is complete: 521 superseded production-project and 239 beta-project deployments deleted, including the v4-ui-migration alias. Exactly the original protected deployment remains in each project; six live URL HTML hashes/CSPs are unchanged, and the alias plus sampled retired hash hosts return 404. [Execution evidence](../evidence/remediation-finding-009-2026-10-26.md). OPS-PAGES-HISTORY is complete; automated retention and live-origin probe integration remain in R-CI, so the overall finding stays outstanding.
+
+PARTIAL update 2026-10-28 — retention and current/retired-origin CSP/HTML checks implemented and independently reviewed. Both workflows retain dry-run calls; apply activation and successful live post-deploy inventory/preservation/404 receipts remain outstanding. No new live deletion; the earlier observation above remains dated. [R-sprint evidence](../evidence/remediation-repository-2026-10-28.md); [activation runbook](../../../operations/PAGES_RETENTION.md).
