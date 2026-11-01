@@ -88,7 +88,7 @@ export function searchDyesByName(query: string, locale: LocaleCode = 'en'): Dye[
   if (locale === 'en') return english;
   // I18N-005 (2026-09-19 audit): fold both sides so an accented, ß-bearing or
   // half-width query matches a localized name that carries the same
-  // diacritic/width difference (e.g. 'schneeweiss' → 'Schneeweißer').
+  // diacritic/width difference (e.g. 'schneeweiss' → 'Schneeweiß').
   const q = foldForSearch(text);
   if (q.length === 0) return english;
   const seen = new Set(english.map((d) => d.id));
