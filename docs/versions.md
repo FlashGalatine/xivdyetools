@@ -27,11 +27,11 @@
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
 | **Web Application** | v5.16.7 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v5.9.1 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
+| **Discord Bot** | v5.9.7 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.4 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.8.2 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
-| **OAuth Worker** | v3.1.3 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
-| **Presets API** | v2.6.1 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
+| **OAuth Worker** | v3.2.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
+| **Presets API** | v2.8.1 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
 | **Public REST API** | v0.21.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
 | **OpenGraph Worker** | v2.12.0 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.3.3 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
@@ -48,7 +48,7 @@
 | **Logger** | v2.4.0 | `@xivdyetools/logger` | npm | Active |
 | **Worker Kit** (middleware + `/rate-limiter`) | v1.6.0 | `@xivdyetools/worker-kit` | npm | Active |
 | **SVG** | v4.4.1 | `@xivdyetools/svg` | npm | Active |
-| **Bot Logic** (incl. `/i18n`) | v4.11.0 | `@xivdyetools/bot-logic` | npm | Active |
+| **Bot Logic** (incl. `/i18n`) | v4.12.0 | `@xivdyetools/bot-logic` | npm | Active |
 | **Test Utils** | v3.0.0 | `@xivdyetools/test-utils` | workspace-private | Active (never published) |
 
 ### Deprecated
@@ -210,6 +210,12 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.9.7 | Oct 2026 | A-DISCORD: one-request favorite lists, bounded/checkable delivery, localized choices/clan labels, byte-only attachments, preview attribution removal and native request guards; bot-logic 4.12.0 locale companion must publish first |
+| v5.9.6 | Oct 2026 | Six-language identity-review, particular-ban continuity and recovery-retention privacy disclosures |
+| v5.9.5 | Oct 2026 | Complete path-only preset reviews and Revert targets; six-language privacy alignment for optional metadata moderation and attempt/refund accounting |
+| v5.9.4 | Oct 2026 | Bot-logic 4.12.0: harmony distances use the selected metric, eyes merge only for equal eligible colors, bounded and sanitized glamour descriptions; command-choice localization remains in A-DISCORD |
+| v5.9.3 | Oct 2026 | SVG 4.4.1: shared card text fitting is linear while preserving existing card content, widths and truncation; security-only patch after the separate core deployment |
+| v5.9.2 | Oct 2026 | Core 5.16.0: `/glamour` GPOSERS text joins newlines in linear time while retaining prior output; command schema unchanged; imported nicknames remain excluded from bot output |
 | v5.9.1 | Oct 2026 | Prepared font readiness: preserve all existing Japanese/Simplified Chinese glyphs and add characters needed by the pending shared bot catalog; runtime handlers and bindings unchanged |
 | v5.9.0 | Oct 2026 | Core 5.15.0 + bot-logic 4.11.0: `/swatch` and `/glamour` pass the attachment's capped bytes to the `xivcharakit`-backed reader (invalid UTF-8 refused), `/glamour` opens gear-only files, unmatched or unreadable colors, gear and dyes get a fixed line; attachment guards unchanged; no command shape change; bundle 2,732.6 KiB gzip (88.9 % of the cap) |
 | v5.8.15 | Oct 2026 | Core 5.13.0 + 5.14.0, bot-logic 4.10.0 (2026-10-15 import review): `/swatch` and `/glamour` refuse an attachment not named `.chara` before deferring, and the cap is 8 KiB (was 1 MiB) on the reported size and the streamed download, with an 8 KB message; no command shape changes |
@@ -279,6 +285,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v3.2.0 | Oct 2026 | Private stored-identity/session provider and inactive identity-transition preparation; migration required before deployment; state HMAC input separation with finite legacy compatibility, routeless development and IPv6 /64 keying; consumer verification before separate activation |
 | v3.1.3 | Oct 2026 | 2026-10-04 remediation Sprint 10 — `/auth/*` rate limiting keys and tiers on the decoded path, so a percent-encoded route spelling shares the real bucket (BUG-007); a non-object JSON body gets 400 on both callbacks (BUG-056); a malformed XIVAuth roster falls back to `XIVAuth User <id8>` instead of a 500 or an empty name (BUG-057); a non-empty callback body must be `application/json` (415), closing the `text/plain` bypass of the body guard (BUG-149, oauth half); dead `decodeJWT` wrapper and coverage excludes removed (DEAD-036, DEAD-037) |
 | v3.1.2 | Oct 2026 | 2026-10-03 security audit Sprint 6 — retired `xivdyetools.projectgalatine.com` origin removed from the redirect + CORS allowlist and the retired `auth.` custom-domain route dropped, both pinned by tests (FINDING-006); `[observability] enabled = false` pinned and asserted (FINDING-022) |
 | v3.1.1 | Sep 2026 | 2026-09-16 deep-dive Sprint 14 — the security-headers middleware is registered before env validation, so the misconfiguration 500 carries nosniff / no-store / HSTS (BUG-017); body-size and JSON-depth middleware come from `@xivdyetools/worker-kit/body-guards`, error bodies unchanged (REFACTOR-009) |
@@ -306,6 +313,9 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v2.8.1 | Oct 2026 | Prepared base hardening and continuity release with default Discord notification binding retained; named-provider selection is a separate companion |
+| v2.8.0 | Oct 2026 | Private continuity receipts and membership enforcement; inactive OAuth session checks and additive migration |
+| v2.7.0 | Oct 2026 | Approved-only signed bot batch lookup; database ban guards, atomic pre-moderation quota, default-off tag/link-path moderation, safe snapshots and preview concurrency/refund fixes; IPv6 /64 and bounded pagination |
 | v2.6.1 | Oct 2026 | `expected_status` checked against `@xivdyetools/types`' `REVIEW_STATUSES` (2026-10-04 remediation, Sprint 26, REFACTOR-001); the two 404 bodies moderation-worker reads are pinned. No behavior change |
 | v2.6.0 | Oct 2026 | 2026-10-04 remediation, Sprint 9 — every PATCH notification carries `edited_from`, the text the edit replaced, so the moderation embed can diff an edit; `previous_values` stays the Revert target only |
 | v2.5.0 | Oct 2026 | 2026-10-04 remediation, Sprint 8 — a preset may not repeat a dye (BUG-010); a `null` / non-object JSON body is a 400 (BUG-064); resending unchanged text no longer re-moderates (BUG-065); a failed retention sweep fails its cron invocation (BUG-066); a self-rekey is a no-op (BUG-067); trimmed name/description minimums and example links (BUG-068, BUG-069); the moderation webhook says whether it is an edit and from which status (for BUG-003's Revert in discord-worker) |
@@ -577,6 +587,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v4.12.0 | Oct 2026 | A-BOT-LOGIC: metric-correct harmony distances, effective-color eye pairing, bounded glamour descriptions and shared sanitizer hardening; deprecated but retained legacy swatch result, legacy-oracle/fixture cleanup and five preparatory choice keys in six locales. Includes A-DISCORD favorite-list/neutral-preview locale companion; publish that source after core 5.16.0 and SVG 4.4.1, before the Discord consumer |
 | v4.11.0 | Oct 2026 | `/swatch` and `/glamour` read through core 5.15.0's `xivcharakit` facade: optional `fileBytes` input (wins over `fileText`), matching on `matchHex` alone with the lip on its live blend, `SwatchCharacter` keeps its shape and carries no color for a slot `matchHex` excludes, four fixed lines in six languages (`card.swatchActivityUnknown`, `card.swatchUnusable`, `card.glamourGearSkipped`, `card.glamourDyeInvalid`); intentional differences in `docs/research/2026-10-22-xivcharakit-integration.md` |
 | v4.10.0 | Oct 2026 | `card.charaFileReason.tooLarge` takes `{kb}` (was `{mb}`) and says to re-save an Anamnesis export without its attached image; new `card.charaFileReason.notChara`; the `/manual` Character File topic states the `.chara` name and 8 KB limits, all six languages |
 | v4.9.0 | Oct 2026 | `/glamour`'s GPOSERS list applies core 5.12.0's `gposersOmittedSlots` (invisible pieces, unsupported Off Hand); `GlamourResolvedItem.uiCategory`; the card is unchanged |
@@ -711,6 +722,10 @@ and the [rollout runbook](operations/security-remediation-2026-09-15.md) for the
 
 | Consumer | Minimum Core Version | Notes |
 |----------|---------------------|-------|
+| xivdyetools-discord-worker v5.9.7 | @xivdyetools/auth v3.0.0; @xivdyetools/bot-logic v4.12.0; @xivdyetools/svg v4.4.1; @xivdyetools/core v5.16.0; @xivdyetools/logger v2.4.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
+| xivdyetools-presets-api v2.8.1 | @xivdyetools/auth v3.0.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
+| xivdyetools-oauth-worker v3.2.0 | @xivdyetools/auth v3.0.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
+| @xivdyetools/bot-logic v4.12.0 | @xivdyetools/core v5.16.0; @xivdyetools/svg v4.4.1; @xivdyetools/types v3.3.0 | Prepared source; publication and deployed acceptance remain pending |
 | @xivdyetools/svg v4.4.1 | @xivdyetools/core v5.16.0; @xivdyetools/types v3.3.0 | Prepared source; publication and deployed acceptance remain pending |
 | @xivdyetools/worker-kit v1.6.0 | @xivdyetools/logger v2.4.0 | Prepared source; publication and deployed acceptance remain pending |
 | @xivdyetools/core v5.16.0 | @xivdyetools/logger v2.4.0; @xivdyetools/types v3.3.0 | Prepared source; publication and deployed acceptance remain pending |

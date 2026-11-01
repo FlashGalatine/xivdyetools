@@ -25,6 +25,17 @@ describe('Environment Validation', () => {
     }
 
     describe('validateEnv', () => {
+        it('enables session checks only with an exact flag and callable provider binding', () => {
+            for (const flag of [undefined, 'false']) {
+                expect(validateEnv(createValidEnv({ OAUTH_SESSION_CHECK_ENABLED: flag })).valid).toBe(true);
+            }
+            for (const flag of ['', 'TRUE', ' true', '0']) {
+                expect(validateEnv(createValidEnv({ OAUTH_SESSION_CHECK_ENABLED: flag })).errors).toContain('Invalid OAUTH_SESSION_CHECK_ENABLED flag');
+            }
+            expect(validateEnv(createValidEnv({ OAUTH_SESSION_CHECK_ENABLED: 'true' })).errors).toContain('Missing or invalid OAUTH_IDENTITY binding');
+            expect(validateEnv(createValidEnv({ OAUTH_SESSION_CHECK_ENABLED: 'true', OAUTH_IDENTITY: {} as Env['OAUTH_IDENTITY'] })).valid).toBe(false);
+            expect(validateEnv(createValidEnv({ OAUTH_SESSION_CHECK_ENABLED: 'true', OAUTH_IDENTITY: { validateSession: async () => ({ version: 1, status: 'valid' }) } })).valid).toBe(true);
+        });
         describe('required string environment variables', () => {
             it('should pass with all required variables set', () => {
                 const env = createValidEnv();

@@ -2,7 +2,7 @@
 
 > Also available in: [日本語](PRIVACY_POLICY.ja.md) · [Deutsch](PRIVACY_POLICY.de.md) · [Français](PRIVACY_POLICY.fr.md) · [한국어](PRIVACY_POLICY.ko.md) · [中文](PRIVACY_POLICY.zh.md). This English version is the authoritative text.
 
-**Last Updated**: October 12, 2026
+**Last Updated**: October 27, 2026
 
 ## 1. Introduction
 
@@ -28,12 +28,12 @@ We are committed to protecting your privacy and being transparent about our data
 | Preferences | Language, blending mode, matching algorithm, result count, clan, gender, default world / data center, whether to show Market Board prices by default, color-display toggles, theme, and which dye categories to exclude from search results (metallic, pastel, dark, cosmic, Ishgardian, expensive, vendor-sold, crafted), plus the time you last changed them | Until you reset them or request deletion |
 | Preset favorites | Up to 50 community presets you mark with `/preset favorite add` — the preset's id and the name it had when you saved it | Until you remove them or request deletion |
 | First-run notice flag | A per-user marker that the Bot has made its one-time check for the 5.0 welcome notice. It is set the first time you run a command, whether or not the notice is sent (it is not sent if you already have stored preferences); carries no content | Expires automatically after 180 days |
-| Preset Submissions | Name, description, dyes, tags, category — and, if our automatic check holds an edit's new name or description for review, the version from before the first such edit, kept until a moderator restores it or the preset is deleted | Until you delete it (in the web app's My Submissions, signed in with the same Discord account) or request deletion |
+| Preset Submissions | Name, description, dyes, tags, category, example link — and, if our automatic check holds an edit of a published (approved) preset's name, description, tags or example link for review, the version from before the first such edit, kept until a moderator restores it or the preset is deleted | Until you delete it (in the web app's My Submissions, signed in with the same Discord account) or request deletion |
 | Votes | Your votes on community presets. Submitting a preset counts as your vote for it; if a published preset already has the same dyes, your submission becomes a vote for that preset instead | Until you remove vote or request deletion |
 
 ### Rate Limiting Data
 
-- Per-user, per-command counters are held by Cloudflare's Workers rate-limiting service for the 60-second window and are never written to KV.
+- Per-user command and button counters are held by Cloudflare's Workers rate-limiting service for the 60-second window and are never written to KV.
 - **Fallback**: on a deployment without the native rate-limiting bindings, the counters are kept in Cloudflare KV instead, under a key containing your Discord User ID and the command name, with a 120-second expiry. Both production and beta bind the native service, so this path is not in use there.
 - The Bot never sees or uses your IP address for rate limiting — it identifies you by Discord User ID, because commands arrive from Discord's servers rather than from you directly.
 - No third party is involved.
@@ -58,6 +58,16 @@ Community presets are moderated. To enforce bans and to keep moderation accounta
 - **The moderation log.** Each moderation action is logged with the moderator's Discord User ID, the action, an optional reason, and the time. An action on a preset (such as approve, reject or revert) names the preset. A ban, unban, hide or restore also names the user it applied to.
 
 How long each record is kept is listed under *Data Retention*.
+
+### Stored identity checks and ban scope
+
+Our sign-in service keeps a session revision with your account. Authorized services can privately retrieve your stored internal account ID, linked Discord user ID if present, and revision, or check whether a session still matches the stored sign-in links. The lookup returns no XIVAuth ID, name, character roster or provider token. Stored links are not fresh upstream verification. An unsafe link change is refused; moving presets, votes and daily-limit counts requires a safely accepted link and cannot bypass an active ban.
+
+When linked-identity moderation is enabled, an authorized moderator privately reviews the exact IDs before creating or expanding a ban, or lifting one particular ban. A ban can cover several internal account IDs and Discord user IDs confirmed for that ban or preserved when a link changes. Existing restrictions survive unlinking until moderator review lifts them; later bans do not automatically spread to previously detached identities. These associations enforce only that ban and grant no account access. They follow the ban record's retention: deletion 90 days after lifting.
+
+ID review uses moderator-only ephemeral Discord responses, separate from the ordinary channel posts described in this policy. We do not promise when Discord deletes these responses. Our presets database briefly stores the acting moderator's ID, reviewed IDs and revisions, selected ban and action, proposal hash, nonce, outcome and deadlines. Confirmation records contain no names, provider tokens or freeform reasons. They expire within 15 minutes and become eligible for bounded request-triggered and daily cleanup; deletion can wait until a successful sweep.
+
+When account-link recovery is enabled, our sign-in service stores affected provider/account IDs, expected associations and revisions, intended change, status and deadlines; the presets service stores a matching operation receipt. Neither recovery record contains names, provider tokens, character rosters or freeform reasons. The operation deadline is at most 15 minutes. Completed or refused records become eligible for cleanup 24 hours after the later of the deadline or acknowledgement; an abort confirmed to have no remote receipt uses its finish time instead of acknowledgement. Cleanup is best-effort. Unresolved changes with an applied or unknown remote result remain pending for operator review after the deadline, including before erasing their recovery records for a deletion request.
 
 ## 3. Data We Do NOT Collect
 
@@ -85,7 +95,7 @@ When you use `/extractor image`, your uploaded image is:
 
 When you use `/swatch` or `/glamour`, your uploaded `.chara` file is:
 1. Downloaded from Discord and read in-memory on Cloudflare's edge servers
-2. Read for its colors, dyes and equipment
+2. Read for its colors, dyes, equipment, clan, gender and the tool that saved the file. The card posted in the channel also shows the clan, gender and an allowlisted tool label
 3. **Immediately discarded** after processing
 4. **Never stored** on our servers
 
@@ -115,7 +125,7 @@ To name the gear, `/glamour` sends the equipment model numbers from the file and
 | Cloudflare Workers Analytics Engine | Command usage telemetry (see *Usage Analytics*) | Cloudflare's analytics infrastructure |
 | Discord | Posts in two private channels of our Discord server. The moderation channel gets each preset, edit or preview image that needs review: the post shows the preset (such as its name, description, category and dyes) and the author name, or, for a preview image, the preset's name and the image, and it is updated when a moderator decides. If a moderator bans you, the moderation channel also gets a post with your author name, the reason and how many of your presets were hidden. Moderators can also post the list of presets waiting for review, with their author names, in the moderation channel. The submission-log channel gets each preset published without review, with its author name, and a note naming the preset when a moderator approves, rejects or reverts one, with the reason for a rejection or a revert. Posts made after 2026-10-05 do not show your Discord User ID; posts made on or before that date may | Discord's infrastructure |
 
-Everything except those Discord posts is stored on Cloudflare's infrastructure. See [Cloudflare's Privacy Policy](https://www.cloudflare.com/privacypolicy/) for more information. The Discord posts stay in those channels, under [Discord's Privacy Policy](https://discord.com/privacy), until a moderator deletes them or until you request deletion (see *Your Rights*).
+Everything except those Discord posts and the ephemeral moderator responses is stored on Cloudflare's infrastructure. See [Cloudflare's Privacy Policy](https://www.cloudflare.com/privacypolicy/) for more information. The Discord posts stay in those channels, under [Discord's Privacy Policy](https://discord.com/privacy), until a moderator deletes them or until you request deletion (see *Your Rights*).
 
 ### Data Security
 
@@ -140,7 +150,7 @@ The Bot integrates with these third-party services:
 | Cloudflare | Hosting, data storage (KV, D1), rate limiting, analytics | [Cloudflare Privacy Policy](https://www.cloudflare.com/privacypolicy/) |
 | Universalis | FFXIV market board data | [Universalis](https://universalis.app/) |
 | XIVAPI | FFXIV item names for `/glamour` | [XIVAPI](https://xivapi.com/) |
-| Perspective API | Content moderation (optional) | [Google Privacy Policy](https://policies.google.com/privacy) |
+| Perspective API | Optional moderation of preset names, descriptions, tags and example-link path text. URL query strings, fragments, credentials and hostnames are excluded from the derived link text; no account identifiers are attached, and supplied links are never fetched. The request uses `doNotStore`. | [Google Privacy Policy](https://policies.google.com/privacy) |
 
 We do not sell, trade, or share your personal data with third parties for marketing purposes.
 
@@ -172,6 +182,8 @@ To request deletion of all your data:
 We will process deletion requests within 30 days. A deletion request also removes the posts about you and your presets from our Discord server, except the post about a ban that is still active. An active ban record is not deleted on request; once the ban is lifted, the record follows the retention under *Data Retention*.
 
 ## 8. Data Retention
+
+Daily limits count submission attempts that reach moderation, changes to a preset's name or description, and preview-image processing attempts. Changes to tags or the example link count as edits, and tags/link-path text may be sent for moderation, only while extended checks are enabled. Unchanged text fields do not use an edit slot. Failed image decoding and timeouts remain counted. For preview-image attempts only, cheap validation rejections and image-storage/database failures are refunded. If the result of a database write cannot be confirmed, the attempt remains counted. A submission attempt remains counted once moderation starts, even if no preset is created.
 
 | Data Type | Retention Period |
 |-----------|-----------------|

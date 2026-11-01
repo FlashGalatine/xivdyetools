@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest';
-import app from './index.js';
+import app, { fetchPresetNotification } from './index.js';
 import {
   InteractionType,
   InteractionResponseType,
@@ -11,6 +11,24 @@ import {
 } from './types/env.js';
 import type { Env } from './types/env.js';
 import type { CommunityPreset } from '@xivdyetools/types/preset';
+
+// Observe dispatch while preserving the real shared logger and its output.
+const contextErrorCalls = vi.hoisted(() => vi.fn());
+vi.mock('@xivdyetools/logger/worker', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@xivdyetools/logger/worker')>();
+  return {
+    ...actual,
+    createRequestLogger: (...args: Parameters<typeof actual.createRequestLogger>) => {
+      const logger = actual.createRequestLogger(...args);
+      const error = logger.error.bind(logger);
+      logger.error = (...params) => {
+        contextErrorCalls(...params);
+        error(...params);
+      };
+      return logger;
+    },
+  };
+});
 
 // Mock dependencies
 vi.mock('@xivdyetools/auth', () => ({
@@ -97,15 +115,20 @@ vi.mock('./services/announcements.js', () => ({
   sendAnnouncement: vi.fn().mockResolvedValue({ ok: true }),
 }));
 
-vi.mock('./services/i18n.js', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./services/i18n.js')>()),
-  getLocalizedDyeName: vi.fn((_itemId: number, name: string) => name),
-  resolveUserLocale: vi.fn().mockResolvedValue('en'),
-  initializeLocale: vi.fn().mockResolvedValue(undefined),
-}));
+vi.mock('./services/i18n.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./services/i18n.js')>();
+  return {
+    ...actual,
+    getLocalizedDyeName: vi.fn((_itemId: number, name: string) => name),
+    resolveUserLocale: vi.fn().mockResolvedValue('en'),
+    // Clan autocomplete needs the real initialized locale cache.
+    initializeLocale: vi.fn(actual.initializeLocale),
+  };
+});
 
 // Mock DyeService
-vi.mock('@xivdyetools/core', () => {
+vi.mock('@xivdyetools/core', async (importOriginal) => {
+  const { LocalizationService } = await importOriginal<typeof import('@xivdyetools/core')>();
   class MockDyeService {
     getDyeById(id: number) {
       return {
@@ -135,6 +158,7 @@ vi.mock('@xivdyetools/core', () => {
   }
 
   return {
+    LocalizationService,
     DyeService: MockDyeService,
     dyeDatabase: {},
     // `commands/schemas.ts` builds COLOR_WHEEL_CHOICES at module scope from
@@ -207,6 +231,111 @@ describe('index.ts', () => {
       });
       expect((data as any).timestamp).toBeDefined();
     });
+  });
+
+  describe('H-DISCORD context-only errors', () => {
+    let lines: string[];
+    beforeEach(() => {
+      lines = [];
+      vi.spyOn(console, 'log').mockImplementation((line: unknown) => lines.push(String(line)));
+    });
+    afterEach(() => vi.restoreAllMocks());
+
+    function expectContext(message: string, context: Record<string, unknown>) {
+      expect(contextErrorCalls).toHaveBeenCalledWith(message, undefined, context);
+      const entry = lines.map((line) => JSON.parse(line)).find((row) => row.message === message);
+      expect(entry).toBeDefined();
+      expect(entry.error).toBeUndefined();
+      expect(entry.context).toMatchObject(context);
+      expect(entry.context.requestId).toEqual(expect.any(String));
+    }
+
+    it('retains the production webhook minimum as context without a fake error', async () => {
+      const env: Env = {
+        ...mockEnv,
+        ENVIRONMENT: 'production',
+        RL_5: { limit: vi.fn() },
+        RL_10: { limit: vi.fn() },
+        RL_15: { limit: vi.fn() },
+        RL_20: { limit: vi.fn() },
+        RL_30: { limit: vi.fn() },
+        RL_70: { limit: vi.fn() },
+      };
+      const response = await app.fetch(
+        new Request('http://localhost/webhooks/preset-submission', {
+          method: 'POST',
+          body: '{}',
+        }),
+        env,
+        mockCtx,
+      );
+      expect(response.status).toBe(503);
+      expectContext('Webhook secret is shorter than the production minimum', { minimum: 32 });
+    });
+
+    it('retains a failed changelog fetch status as context without a fake error', async () => {
+      const { verifyGitHubSignature } = await import('./utils/github-verify.js');
+      vi.mocked(verifyGitHubSignature).mockResolvedValue(true);
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('', { status: 503 }));
+      const response = await app.fetch(
+        new Request('http://localhost/webhooks/github', {
+          method: 'POST',
+          headers: { 'X-Hub-Signature-256': 'sha256=mock', 'X-GitHub-Event': 'push' },
+          body: JSON.stringify({
+            repository: { full_name: 'FlashGalatine/xivdyetools' },
+            ref: 'refs/heads/main',
+            commits: [{ added: [], modified: ['CHANGELOG-laymans.md'] }],
+            head_commit: null,
+          }),
+        }),
+        {
+          ...mockEnv,
+          GITHUB_WEBHOOK_SECRET: 'synthetic-github-secret',
+          ANNOUNCEMENT_CHANNEL_ID: 'channel',
+        },
+        mockCtx,
+      );
+      expect(response.status).toBe(502);
+      expectContext('Failed to fetch changelog', { status: 503 });
+    });
+
+    it.each([
+      'diagnostic',
+      'Bearer synthetic-bearer',
+      'https://discord.com/api/webhooks/123/synthetic-webhook',
+      'https://discord.com/api/interactions/456/synthetic-interaction/callback',
+    ])(
+      'preserves safe context and redacts credentials for missing-user commands (%s)',
+      async (commandName) => {
+        const { verifyDiscordRequest } = await import('@xivdyetools/auth');
+        vi.mocked(verifyDiscordRequest).mockResolvedValue({
+          isValid: true,
+          error: '',
+          body: JSON.stringify({ type: 2, data: { name: commandName } }),
+        });
+        const response = await app.fetch(
+          new Request('http://localhost/', { method: 'POST' }),
+          mockEnv,
+          mockCtx,
+        );
+        expect(response.status).toBe(200);
+        expect(contextErrorCalls).toHaveBeenCalledWith(
+          'Unable to identify user from interaction',
+          undefined,
+          { commandName },
+        );
+        const entry = lines
+          .map((line) => JSON.parse(line))
+          .find((row) => row.message === 'Unable to identify user from interaction');
+        expect(entry.error).toBeUndefined();
+        expect(entry.context.commandName).toBe(
+          commandName === 'diagnostic' ? 'diagnostic' : '[REDACTED]',
+        );
+        for (const secret of ['synthetic-bearer', 'synthetic-webhook', 'synthetic-interaction']) {
+          expect(lines.join('\n')).not.toContain(secret);
+        }
+      },
+    );
   });
 
   /**
@@ -288,6 +417,25 @@ describe('index.ts', () => {
       expect(await res.json()).toEqual({ error: 'Service misconfigured' });
     });
 
+    it('still refuses the webhook with 500 when production is missing RL_30', async () => {
+      const env = {
+        ...mockEnv,
+        ENVIRONMENT: 'production',
+        ...boundTiers('RL_30'),
+        PRESET_WEBHOOK_BINDING_ONLY: 'true',
+      };
+      const response = await app.fetch(
+        new Request('https://internal/webhooks/preset-submission', {
+          method: 'POST',
+          body: '{}',
+        }),
+        env,
+        mockCtx,
+      );
+      expect(response.status).toBe(500);
+      expect(await response.json()).toEqual({ error: 'Service misconfigured' });
+    });
+
     it('serves an interaction when production binds all six tiers', async () => {
       const res = await postCommand({
         ...mockEnv,
@@ -328,6 +476,9 @@ describe('index.ts', () => {
   });
 
   describe('POST /webhooks/preset-submission', () => {
+    beforeEach(() => {
+      mockEnv.RL_30 = { limit: vi.fn().mockResolvedValue({ success: true }) };
+    });
     it('should reject unauthorized requests', async () => {
       const { timingSafeEqual } = await import('@xivdyetools/auth');
       vi.mocked(timingSafeEqual).mockResolvedValue(false);
@@ -340,6 +491,217 @@ describe('index.ts', () => {
 
       const res = await app.fetch(req, mockEnv, mockCtx);
       expect(res.status).toBe(401);
+    });
+
+    describe('binding-only rollout gate (FINDING-039)', () => {
+      it.each([true, false])(
+        'hides the public route before bearer/body work, even when auth would pass=%s',
+        async (authPass) => {
+          const { timingSafeEqual } = await import('@xivdyetools/auth');
+          vi.mocked(timingSafeEqual).mockResolvedValue(authPass);
+          const request = new Request('https://bot.xivdyetools.app/webhooks/preset-submission', {
+            method: 'POST',
+            headers: { Authorization: 'Bearer supplied-secret-canary' },
+            body: 'invalid json',
+          });
+          const read = vi.spyOn(request.body!, 'getReader');
+          const env = { ...mockEnv, PRESET_WEBHOOK_BINDING_ONLY: 'true' };
+          const response = await app.fetch(request, env, mockCtx);
+          expect(response.status).toBe(404);
+          expect(await response.json()).toEqual({ error: 'Not found' });
+          expect(timingSafeEqual).not.toHaveBeenCalled();
+          expect(read).not.toHaveBeenCalled();
+          expect(mockEnv.RL_30!.limit).not.toHaveBeenCalled();
+        },
+      );
+
+      it.each([undefined, 'false'])(
+        'keeps the public bearer/JSON protocol in compatibility mode %s without webhook quotas',
+        async (flag) => {
+          const { timingSafeEqual } = await import('@xivdyetools/auth');
+          vi.mocked(timingSafeEqual).mockResolvedValue(true);
+          mockEnv.RL_30 = { limit: vi.fn().mockResolvedValue({ success: false }) };
+          const response = await app.fetch(
+            new Request('https://internal/webhooks/preset-submission', {
+              method: 'POST',
+              headers: { Authorization: 'Bearer test-webhook-secret' },
+              body: JSON.stringify({
+                type: 'preview_image',
+                preset: { id: '12345678-1234-4123-8123-123456789abc', name: 'test' },
+                preview_image_key:
+                  '12345678-1234-4123-8123-123456789abc/abcdefab-cdef-4def-8abc-defabcdefabc.webp',
+              }),
+            }),
+            { ...mockEnv, PRESET_WEBHOOK_BINDING_ONLY: flag, MODERATION_CHANNEL_ID: undefined },
+            mockCtx,
+          );
+          expect(response.status).toBe(200);
+          expect(await response.json()).toEqual({ success: true });
+          expect(mockEnv.RL_30.limit).not.toHaveBeenCalled();
+          expect(timingSafeEqual).toHaveBeenCalledWith(
+            'Bearer test-webhook-secret',
+            'Bearer test-webhook-secret',
+          );
+        },
+      );
+
+      it('fails closed on a malformed configured flag without disclosing its value', async () => {
+        const { timingSafeEqual } = await import('@xivdyetools/auth');
+        vi.mocked(timingSafeEqual).mockResolvedValue(true);
+        const response = await app.fetch(
+          new Request('https://internal/webhooks/preset-submission', {
+            method: 'POST',
+            body: 'invalid json',
+          }),
+          { ...mockEnv, PRESET_WEBHOOK_BINDING_ONLY: 'invalid-canary' },
+          mockCtx,
+        );
+        expect(response.status).toBe(500);
+        expect(await response.json()).toEqual({ error: 'Service misconfigured' });
+        expect(timingSafeEqual).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('private preset notification dispatch', () => {
+      const body = JSON.stringify({
+        type: 'preview_image',
+        preset: { id: '12345678-1234-4123-8123-123456789abc', name: 'Test' },
+        preview_image_key:
+          '12345678-1234-4123-8123-123456789abc/abcdefab-cdef-4def-8abc-defabcdefabc.webp',
+      });
+      const request = (payload = body, auth = 'Bearer test-webhook-secret') =>
+        new Request('https://internal/webhooks/preset-submission', {
+          method: 'POST',
+          headers: { Authorization: auth, 'Content-Type': 'application/json' },
+          body: payload,
+        });
+      beforeEach(async () => {
+        mockEnv.PRESET_WEBHOOK_BINDING_ONLY = 'true';
+        mockEnv.MODERATION_CHANNEL_ID = undefined;
+        const { timingSafeEqual } = await import('@xivdyetools/auth');
+        vi.mocked(timingSafeEqual).mockResolvedValue(true);
+      });
+
+      it('keeps private/public requests isolated when they overlap and never mutates the binding env', async () => {
+        const { timingSafeEqual } = await import('@xivdyetools/auth');
+        const before = Reflect.ownKeys(mockEnv);
+        const [privateReply, publicReply] = await Promise.all([
+          fetchPresetNotification(request(), mockEnv, mockCtx),
+          app.fetch(request(), mockEnv, mockCtx),
+        ]);
+        expect(privateReply.status).toBe(200);
+        expect(await privateReply.json()).toEqual({ success: true });
+        expect(publicReply.status).toBe(404);
+        expect(await publicReply.json()).toEqual({ error: 'Not found' });
+        expect(Reflect.ownKeys(mockEnv)).toEqual(before);
+        expect(Object.getOwnPropertySymbols(mockEnv)).toEqual([]);
+        expect(timingSafeEqual).toHaveBeenCalledTimes(1);
+        expect(mockEnv.RL_30!.limit).not.toHaveBeenCalled();
+        expect((await app.fetch(request(), mockEnv, mockCtx)).status).toBe(404);
+      });
+
+      it.each<{ suffix: string; headers: Record<string, string> }>([
+        { suffix: '?presetNotificationEntrypoint=true&binding=true', headers: {} },
+        {
+          suffix: '',
+          headers: { 'X-Preset-Notification-Entrypoint': 'true', 'X-Internal-Webhook': 'true' },
+        },
+        {
+          suffix: '',
+          headers: { 'CF-Connecting-IP': '127.0.0.1', 'X-Forwarded-For': '127.0.0.1' },
+        },
+      ])('does not accept request-supplied transport hints %j', async ({ suffix, headers }) => {
+        const { timingSafeEqual } = await import('@xivdyetools/auth');
+        const req = new Request(`https://internal/webhooks/preset-submission${suffix}`, {
+          method: 'POST',
+          headers: { ...headers, Authorization: 'Bearer test-webhook-secret' },
+          body: JSON.stringify({ presetNotificationEntrypoint: true, binding: true }),
+        });
+        const read = vi.spyOn(req.body!, 'getReader');
+        const response = await app.fetch(req, mockEnv, mockCtx);
+        expect(response.status).toBe(404);
+        expect(timingSafeEqual).not.toHaveBeenCalled();
+        expect(read).not.toHaveBeenCalled();
+      });
+
+      it('still authenticates named requests before reading the body', async () => {
+        const { timingSafeEqual } = await import('@xivdyetools/auth');
+        vi.mocked(timingSafeEqual).mockResolvedValue(false);
+        const req = request('not json', 'Bearer bad');
+        const read = vi.spyOn(req.body!, 'getReader');
+        const response = await fetchPresetNotification(req, mockEnv, mockCtx);
+        expect(response.status).toBe(401);
+        expect(await response.json()).toEqual({ error: 'Unauthorized' });
+        expect(read).not.toHaveBeenCalled();
+      });
+
+      it('retains the production secret floor and global missing-RL_30 failure on private dispatch', async () => {
+        const { timingSafeEqual } = await import('@xivdyetools/auth');
+        const tiers = Object.fromEntries(
+          ['RL_5', 'RL_10', 'RL_15', 'RL_20', 'RL_30', 'RL_70'].map((name) => [
+            name,
+            {
+              limit: vi.fn().mockResolvedValue({ success: true }),
+            },
+          ]),
+        );
+        const env = {
+          ...mockEnv,
+          ...tiers,
+          ENVIRONMENT: 'production',
+          INTERNAL_WEBHOOK_SECRET: 'x'.repeat(31),
+        };
+        const response = await fetchPresetNotification(request(), env, mockCtx);
+        expect(response.status).toBe(503);
+        expect(await response.json()).toEqual({ error: 'Webhook misconfigured' });
+        expect(timingSafeEqual).not.toHaveBeenCalled();
+        expect(
+          (await fetchPresetNotification(request(), { ...env, RL_30: undefined }, mockCtx)).status,
+        ).toBe(500);
+      });
+
+      it.each([
+        ['not json', { error: 'Invalid JSON body' }],
+        [JSON.stringify({ type: 'wrong' }), { error: 'Invalid payload' }],
+        [JSON.stringify({ type: 'submission' }), { error: 'Invalid payload' }],
+      ])('retains malformed JSON/payload rejection for %s', async (payload, expected) => {
+        const response = await fetchPresetNotification(request(payload), mockEnv, mockCtx);
+        expect(response.status).toBe(400);
+        expect(await response.json()).toEqual(expected);
+      });
+
+      it('caps received multibyte body bytes on private dispatch', async () => {
+        const req = request(JSON.stringify({ type: 'submission', text: '😀'.repeat(3000) }));
+        expect(req.headers.get('content-length')).toBeNull();
+        const response = await fetchPresetNotification(req, mockEnv, mockCtx);
+        expect(response.status).toBe(413);
+        expect(await response.json()).toEqual({ error: 'Payload too large' });
+      });
+
+      it('awaits notification delivery and preserves rejected-delivery 502', async () => {
+        const { sendMessage } = await import('./utils/discord-api.js');
+        mockEnv.MODERATION_CHANNEL_ID = 'test-channel';
+        let finish!: (response: Response) => void;
+        vi.mocked(sendMessage).mockImplementation(
+          () =>
+            new Promise<Response>((resolve) => {
+              finish = resolve;
+            }),
+        );
+        let settled = false;
+        const pending = fetchPresetNotification(request(), mockEnv, mockCtx).then((response) => {
+          settled = true;
+          return response;
+        });
+        await vi.waitFor(() => expect(sendMessage).toHaveBeenCalledTimes(1));
+        expect(settled).toBe(false);
+        finish(new Response(null, { status: 500 }));
+        const response = await pending;
+        expect(response.status).toBe(502);
+        expect(await response.json()).toEqual({
+          error: 'Failed to deliver preview-image notification',
+        });
+      });
     });
 
     // FINDING-027 (2026-10-03 security audit): the bearer secret is the route's
@@ -400,7 +762,11 @@ describe('index.ts', () => {
         vi.mocked(timingSafeEqual).mockResolvedValue(true);
         const secret = 'x'.repeat(32);
 
-        const res = await app.fetch(webhookRequest(secret, 'invalid json'), productionEnv(secret), mockCtx);
+        const res = await app.fetch(
+          webhookRequest(secret, 'invalid json'),
+          productionEnv(secret),
+          mockCtx,
+        );
 
         // Past authentication: the body is what gets rejected now.
         expect(res.status).toBe(400);
@@ -525,11 +891,7 @@ describe('index.ts', () => {
         }),
       });
 
-      const res = await app.fetch(
-        req,
-        { ...mockEnv, MODERATION_BOT_TOKEN: 'mod-token' },
-        mockCtx,
-      );
+      const res = await app.fetch(req, { ...mockEnv, MODERATION_BOT_TOKEN: 'mod-token' }, mockCtx);
       expect(res.status).toBe(200);
 
       const call = vi.mocked(sendMessage).mock.calls.at(-1)?.[2] as {
@@ -594,12 +956,17 @@ describe('index.ts', () => {
         expect(token).toBe('mod-token');
         expect(channel).toBe('test-moderation-channel');
         const sent = message as {
-          embeds: Array<{ title?: string; description?: string }>;
+          embeds: Array<{
+            title?: string;
+            description?: string;
+            fields?: Array<{ name: string; value: string }>;
+          }>;
           components: Array<{ components: Array<{ custom_id: string }> }>;
         };
         return {
           title: sent.embeds[0].title ?? '',
           description: sent.embeds[0].description ?? '',
+          fields: sent.embeds[0].fields ?? [],
           ids: sent.components[0].components.map((c) => c.custom_id),
         };
       }
@@ -609,8 +976,96 @@ describe('index.ts', () => {
         `preset_reject_${EDIT_ID}:9:pending`,
       ];
 
+      it('preserves current, edited_from and effective snapshot links in the outgoing review', async () => {
+        const sent = await post({
+          is_edit: true,
+          edited_from_status: 'approved',
+          edited_from: { ...snapshot, example_link: 'https://private.example/previous?secret=old' },
+          preset: editedPreset({
+            ...snapshot,
+            example_link: 'https://private.example/current?secret=new',
+            previous_values: {
+              ...snapshot,
+              example_link: 'https://private.example/saved%20look?secret=saved',
+            },
+          }),
+        });
+        expect(sent.fields).toContainEqual({ name: 'Links', value: '`/current`', inline: false });
+        expect(sent.fields).toContainEqual({
+          name: 'Revert link',
+          value: '`/saved look`',
+          inline: false,
+        });
+        expect(sent.description).toContain('Link changed; only path text is shown.');
+        expect(sent.description).toContain('they differ in: example_link');
+        expect(JSON.stringify(sent)).not.toContain('private.example');
+        expect(JSON.stringify(sent)).not.toContain('secret=');
+      });
+
+      it('preserves explicit null target and does not inherit current metadata into a missing diff link', async () => {
+        const sent = await post({
+          is_edit: true,
+          edited_from_status: 'approved',
+          edited_from: snapshot,
+          preset: editedPreset({
+            ...snapshot,
+            example_link: 'https://private.example/current',
+            previous_values: { ...snapshot, example_link: null },
+          }),
+        });
+        expect(sent.fields).toContainEqual({
+          name: 'Revert link',
+          value: 'No example link.',
+          inline: false,
+        });
+        expect(sent.description).toContain('Link details unavailable.');
+        expect(sent.description).not.toContain('No visible changes');
+        expect(sent.description).toContain('may be older');
+      });
+
+      it('keeps old snapshot links unavailable rather than reporting removal', async () => {
+        const sent = await post({
+          is_edit: true,
+          edited_from_status: 'approved',
+          preset: editedPreset({ example_link: null }),
+        });
+        expect(sent.fields).toContainEqual({
+          name: 'Links',
+          value: 'No example link.',
+          inline: false,
+        });
+        expect(sent.fields).toContainEqual({
+          name: 'Revert link',
+          value: 'Link details unavailable for this older snapshot.',
+          inline: false,
+        });
+        expect(sent.ids).toEqual([...approveReject, `preset_revert_${EDIT_ID}:9:pending`]);
+      });
+
+      it('retains malformed explicit optional snapshot fields as incomplete review, never trustworthy null', async () => {
+        const sent = await post({
+          is_edit: true,
+          edited_from_status: 'approved',
+          edited_from: { ...snapshot, example_link: 'https://e.test/prior' },
+          preset: editedPreset({
+            example_link: null,
+            previous_values: { ...snapshot, example_link: false },
+          }),
+        });
+        expect(sent.fields).toContainEqual({
+          name: 'Revert link',
+          value:
+            'Link details do not fit safely in this review. Ask the author to shorten the link before approval.',
+          inline: false,
+        });
+        expect(sent.ids).toEqual(approveReject);
+      });
+
       it('posts a new submission as new, with Approve and Reject only', async () => {
-        const sent = await post({ is_edit: false, preset: editedPreset({ previous_values: null }) });
+        const sent = await post({
+          is_edit: false,
+          preset: editedPreset({ previous_values: null }),
+        });
 
         expect(sent.title).toBe('🟡 New Preset Awaiting Review');
         expect(sent.ids).toEqual(approveReject);
@@ -642,7 +1097,13 @@ describe('index.ts', () => {
       // Names chosen so none is a substring of another.
       describe('the diff base is edited_from (Sprint 9)', () => {
         const dawn = { name: 'Dawn', description: 'First words', tags: ['warm'], dyes: [1, 2, 3] };
-        const noon = { name: 'Noon', description: 'Second words', tags: ['warm'], dyes: [1, 2] };
+        const noon = {
+          name: 'Noon',
+          description: 'Second words',
+          tags: ['warm'],
+          dyes: [1, 2],
+          example_link: null,
+        };
         const dusk = { name: 'Dusk', description: 'Third words', tags: ['warm'], dyes: [1, 2, 3] };
 
         it('diffs a rejected preset resubmission against edited_from, with no Revert', async () => {
@@ -688,7 +1149,9 @@ describe('index.ts', () => {
           expect(sent.description).toContain('"Noon" → "Dusk"');
           expect(sent.description).not.toContain('"Dawn" → "Dusk"');
           expect(sent.ids).toEqual([...approveReject, `preset_revert_${EDIT_ID}:9:pending`]);
-          expect(sent.description).toContain('**Revert:** restores the saved approved version "Dawn"');
+          expect(sent.description).toContain(
+            '**Revert:** restores the saved approved version "Dawn"',
+          );
           expect(sent.description).toContain('older than the text this edit replaced');
           expect(sent.description).toContain('differ in: name, description, dyes');
         });
@@ -702,7 +1165,9 @@ describe('index.ts', () => {
           });
 
           expect(sent.description).toContain('"Noon" → "Dusk"');
-          expect(sent.description).toContain('**Revert:** restores "Noon", the text this edit replaced');
+          expect(sent.description).toContain(
+            '**Revert:** restores "Noon", the text this edit replaced',
+          );
           expect(sent.description).not.toContain('older than');
           expect(sent.ids).toEqual([...approveReject, `preset_revert_${EDIT_ID}:9:pending`]);
         });
@@ -799,7 +1264,10 @@ describe('index.ts', () => {
       });
 
       it('falls back to the raw category_id for a category it does not know', async () => {
-        const sent = await post({ is_edit: false, preset: editedPreset({ category_id: 'not-a-category' }) });
+        const sent = await post({
+          is_edit: false,
+          preset: editedPreset({ category_id: 'not-a-category' }),
+        });
 
         expect(sent.description).toContain('**Category:** not-a-category');
       });
@@ -2797,8 +3265,10 @@ describe('index.ts', () => {
         /** Serve the favourites blobs from KV by key; every other key is empty. */
         function seedFavorites(blobs: { v2?: unknown; v1?: unknown }): void {
           (mockEnv.KV.get as unknown as MockInstance).mockImplementation((key: string) => {
-            if (key === V2_KEY && blobs.v2 !== undefined) return Promise.resolve(JSON.stringify(blobs.v2));
-            if (key === V1_KEY && blobs.v1 !== undefined) return Promise.resolve(JSON.stringify(blobs.v1));
+            if (key === V2_KEY && blobs.v2 !== undefined)
+              return Promise.resolve(JSON.stringify(blobs.v2));
+            if (key === V1_KEY && blobs.v1 !== undefined)
+              return Promise.resolve(JSON.stringify(blobs.v1));
             return Promise.resolve(null);
           });
         }
@@ -2809,7 +3279,8 @@ describe('index.ts', () => {
             .map(([, value]) => JSON.parse(value as string) as unknown);
 
         it('walks into the favorite group and answers from the stored favourites, not a preset search', async () => {
-          const { searchPresetsForAutocomplete, getPreset } = await import('./services/preset-api.js');
+          const { searchPresetsForAutocomplete, getPreset } =
+            await import('./services/preset-api.js');
           seedFavorites({
             v2: [
               { id: 'p-1', name: 'Sunset' },
@@ -2861,7 +3332,12 @@ describe('index.ts', () => {
 
         it('looks up no entry already marked gone, and labels it by its id', async () => {
           const { getPreset } = await import('./services/preset-api.js');
-          seedFavorites({ v2: [{ id: 'p-1', name: 'Sunset' }, { id: 'p-2', name: '', gone: true }] });
+          seedFavorites({
+            v2: [
+              { id: 'p-1', name: 'Sunset' },
+              { id: 'p-2', name: '', gone: true },
+            ],
+          });
 
           expect(await autocomplete(favoriteRemove(''))).toEqual([
             { name: 'Sunset', value: 'p-1' },
@@ -2900,10 +3376,11 @@ describe('index.ts', () => {
         it('answers within the back-fill deadline when a lookup hangs, persisting only what answered', async () => {
           const { getPreset } = await import('./services/preset-api.js');
           seedFavorites({ v1: ['p-1', 'p-2'] });
-          vi.mocked(getPreset).mockImplementation((_env, id) =>
-            id === 'p-1'
-              ? Promise.resolve({ id, name: 'Sunset' } as CommunityPreset)
-              : new Promise<CommunityPreset | null>(() => {}), // never settles
+          vi.mocked(getPreset).mockImplementation(
+            (_env, id) =>
+              id === 'p-1'
+                ? Promise.resolve({ id, name: 'Sunset' } as CommunityPreset)
+                : new Promise<CommunityPreset | null>(() => {}), // never settles
           );
 
           const started = Date.now();
@@ -2946,7 +3423,9 @@ describe('index.ts', () => {
               : Promise.reject(new Error('presets-api 503')),
           );
 
-          expect(await autocomplete(favoriteRemove('p-2'))).toEqual([{ name: 'p-2', value: 'p-2' }]);
+          expect(await autocomplete(favoriteRemove('p-2'))).toEqual([
+            { name: 'p-2', value: 'p-2' },
+          ]);
         });
 
         // earlier-audit BUG-028: the write-back is an optimisation, never a
@@ -2957,7 +3436,9 @@ describe('index.ts', () => {
           vi.mocked(getPreset).mockResolvedValue({ id: 'p-1', name: 'Sunset' } as CommunityPreset);
           vi.mocked(mockEnv.KV.put).mockRejectedValue(new Error('KV 429: one write per second'));
 
-          expect(await autocomplete(favoriteRemove('sun'))).toEqual([{ name: 'Sunset', value: 'p-1' }]);
+          expect(await autocomplete(favoriteRemove('sun'))).toEqual([
+            { name: 'Sunset', value: 'p-1' },
+          ]);
           expect(mockEnv.KV.put).toHaveBeenCalled();
         });
 
@@ -2967,22 +3448,55 @@ describe('index.ts', () => {
           const choices = await autocomplete({
             name: 'preferences',
             options: [
-              { name: 'set', type: 1, options: [{ name: 'clan', type: 3, value: 'moon', focused: true }] },
+              {
+                name: 'set',
+                type: 1,
+                options: [{ name: 'clan', type: 3, value: 'moon', focused: true }],
+              },
             ],
           });
 
-          expect(choices).toEqual([{ name: "Keeper of the Moon (Miqo'te)", value: 'Keeper of the Moon' }]);
+          expect(choices).toEqual([
+            { name: "Keeper of the Moon (Miqo'te)", value: 'Keeper of the Moon' },
+          ]);
           expect(getWorldAutocomplete).not.toHaveBeenCalled();
+        });
+
+        it('matches Japanese clan input and returns localized labels with canonical stored values', async () => {
+          const { resolveUserLocale } = await import('./services/i18n.js');
+          vi.mocked(resolveUserLocale).mockResolvedValue('ja');
+          try {
+            expect(
+              await autocomplete({
+                name: 'preferences',
+                options: [
+                  {
+                    name: 'set',
+                    type: 1,
+                    options: [{ name: 'clan', type: 3, value: 'サンシーカー', focused: true }],
+                  },
+                ],
+              }),
+            ).toEqual([{ name: 'サンシーカー (ミコッテ)', value: 'Seeker of the Sun' }]);
+          } finally {
+            vi.mocked(resolveUserLocale).mockResolvedValue('en');
+          }
         });
 
         it('hands /preferences world to the world autocomplete, with the logger and locale', async () => {
           const { getWorldAutocomplete } = await import('./services/budget/index.js');
-          vi.mocked(getWorldAutocomplete).mockResolvedValue([{ name: 'Gilgamesh', value: 'Gilgamesh' }]);
+          vi.mocked(getWorldAutocomplete).mockResolvedValue([
+            { name: 'Gilgamesh', value: 'Gilgamesh' },
+          ]);
 
           const choices = await autocomplete({
             name: 'preferences',
             options: [
-              { name: 'set', type: 1, options: [{ name: 'world', type: 3, value: 'gil', focused: true }] },
+              {
+                name: 'set',
+                type: 1,
+                options: [{ name: 'world', type: 3, value: 'gil', focused: true }],
+              },
             ],
           });
 
@@ -3056,7 +3570,7 @@ describe('index.ts', () => {
 
           expect(res.status).toBe(200);
           expect(((await res.json()) as InteractionResponseBody).data!.choices).toEqual([
-            { name: "Keeper of the Moon (Miqo'te)", value: 'Keeper of the Moon' },
+            { name: "Mondstreuner (Miqo'te)", value: 'Keeper of the Moon' },
           ]);
           const line = logLines.find((l) =>
             l.includes('Failed to read unified preferences for locale resolution'),
@@ -3069,6 +3583,141 @@ describe('index.ts', () => {
     });
 
     describe('MESSAGE_COMPONENT interactions', () => {
+      beforeEach(() => {
+        mockEnv.RL_30 = { limit: vi.fn().mockResolvedValue({ success: true }) };
+      });
+      beforeEach(async () => {
+        const actual = await vi.importActual<typeof import('./services/rate-limiter.js')>(
+          './services/rate-limiter.js',
+        );
+        actual.resetRateLimiterInstance();
+        const mocked = await import('./services/rate-limiter.js');
+        vi.mocked(mocked.checkRateLimit).mockImplementation(actual.checkRateLimit);
+        vi.mocked(mocked.formatRateLimitMessage).mockImplementation(actual.formatRateLimitMessage);
+      });
+      afterEach(async () => {
+        const mocked = await import('./services/rate-limiter.js');
+        vi.mocked(mocked.checkRateLimit).mockReset();
+        vi.mocked(mocked.formatRateLimitMessage).mockReset();
+      });
+
+      it('blocks the 31st button across custom ids before tracking or dispatch with a localized ephemeral notice', async () => {
+        const { verifyDiscordRequest } = await import('@xivdyetools/auth');
+        const { handleButtonInteraction } = await import('./handlers/buttons/index.js');
+        const { trackCommandWithKV } = await import('./services/analytics.js');
+        const { resolveUserLocale } = await import('./services/i18n.js');
+        vi.mocked(resolveUserLocale).mockResolvedValue('de');
+        vi.mocked(handleButtonInteraction).mockImplementation(async () =>
+          Response.json({ type: 4, data: { content: 'handled', flags: 0 } }),
+        );
+        const counts = new Map<string, number>();
+        mockEnv.RL_30 = {
+          limit: vi.fn(async ({ key }: { key: string }) => {
+            const count = (counts.get(key) ?? 0) + 1;
+            counts.set(key, count);
+            return { success: count <= 30 };
+          }),
+        };
+        // Fix the clock mid-window so the German retry notice uses the plural.
+        const dateNow = vi.spyOn(Date, 'now').mockReturnValue(90_000);
+        try {
+          for (let i = 0; i < 31; i++) {
+            vi.mocked(verifyDiscordRequest).mockResolvedValue({
+              isValid: true,
+              error: '',
+              body: JSON.stringify({
+                type: InteractionType.MESSAGE_COMPONENT,
+                locale: 'de',
+                member: { user: { id: 'button-user' } },
+                data: {
+                  component_type: 2,
+                  custom_id: i % 2 ? 'copy_rgb_FF0000' : 'copy_hex_FF0000',
+                },
+              }),
+            });
+            const response = await app.fetch(
+              new Request('http://localhost/', { method: 'POST' }),
+              mockEnv,
+              mockCtx,
+            );
+            if (i < 30)
+              expect(((await response.json()) as InteractionResponseBody).data?.content).toBe(
+                'handled',
+              );
+            else {
+              const reply = (await response.json()) as InteractionResponseBody;
+              expect(reply.type).toBe(4);
+              expect(reply.data?.flags).toBe(64);
+              expect(reply.data?.content).toContain('Sekunden');
+            }
+          }
+          expect(handleButtonInteraction).toHaveBeenCalledTimes(30);
+          expect(trackCommandWithKV).toHaveBeenCalledTimes(30);
+          expect([...counts.keys()]).toEqual(['ratelimit:user:button-user:button:t30_60']);
+        } finally {
+          dateNow.mockRestore();
+          vi.mocked(resolveUserLocale).mockResolvedValue('en');
+        }
+      });
+
+      it('keeps buttons available and logs the current request when the limiter fails open', async () => {
+        const { verifyDiscordRequest } = await import('@xivdyetools/auth');
+        const { handleButtonInteraction } = await import('./handlers/buttons/index.js');
+        mockEnv.RL_30 = { limit: vi.fn().mockRejectedValue(new Error('binding failed')) };
+        vi.mocked(handleButtonInteraction).mockImplementation(async () => new Response('handled'));
+        vi.mocked(verifyDiscordRequest).mockResolvedValue({
+          isValid: true,
+          error: '',
+          body: JSON.stringify({
+            type: InteractionType.MESSAGE_COMPONENT,
+            user: { id: 'button-user' },
+            data: { component_type: 2, custom_id: 'copy_hex_FF0000' },
+          }),
+        });
+        const lines: string[] = [];
+        const log = vi.spyOn(console, 'log').mockImplementation((line: unknown) => {
+          lines.push(String(line));
+        });
+        try {
+          const response = await app.fetch(
+            new Request('http://localhost/', { method: 'POST' }),
+            mockEnv,
+            mockCtx,
+          );
+          expect(await response.text()).toBe('handled');
+          expect(handleButtonInteraction).toHaveBeenCalledTimes(1);
+          const failure = lines.find((line) => line.includes('Rate limit check failed'));
+          expect(failure).toContain('"requestId"');
+        } finally {
+          log.mockRestore();
+        }
+      });
+
+      it('denies buttons without identity before admission, tracking, or dispatch', async () => {
+        const { verifyDiscordRequest } = await import('@xivdyetools/auth');
+        const { handleButtonInteraction } = await import('./handlers/buttons/index.js');
+        const { trackCommandWithKV } = await import('./services/analytics.js');
+        vi.mocked(verifyDiscordRequest).mockResolvedValue({
+          isValid: true,
+          error: '',
+          body: JSON.stringify({
+            type: InteractionType.MESSAGE_COMPONENT,
+            data: { component_type: 2, custom_id: 'copy_hex_FF0000' },
+          }),
+        });
+        const response = await app.fetch(
+          new Request('http://localhost/', { method: 'POST' }),
+          mockEnv,
+          mockCtx,
+        );
+        const reply = (await response.json()) as InteractionResponseBody;
+        expect(reply.data?.flags).toBe(64);
+        expect(reply.data?.content).toContain('Unable to identify user');
+        expect(mockEnv.RL_30!.limit).not.toHaveBeenCalled();
+        expect(handleButtonInteraction).not.toHaveBeenCalled();
+        expect(trackCommandWithKV).not.toHaveBeenCalled();
+      });
+
       it('should route button interactions', async () => {
         const { verifyDiscordRequest } = await import('@xivdyetools/auth');
         const { handleButtonInteraction } = await import('./handlers/buttons/index.js');
@@ -3190,7 +3839,11 @@ describe('index.ts', () => {
 
     describe('Webhook without secret', () => {
       it('should reject webhook when INTERNAL_WEBHOOK_SECRET is not configured', async () => {
-        const envWithoutSecret = { ...mockEnv, INTERNAL_WEBHOOK_SECRET: '' };
+        const envWithoutSecret = {
+          ...mockEnv,
+          INTERNAL_WEBHOOK_SECRET: '',
+          RL_30: { limit: vi.fn().mockResolvedValue({ success: true }) },
+        };
 
         const req = new Request('http://localhost/webhooks/preset-submission', {
           method: 'POST',
@@ -3432,6 +4085,7 @@ describe('index.ts', () => {
       });
 
       it('writes a button datapoint for copy buttons and nothing for other buttons', async () => {
+        await allowRateLimit();
         const { handleButtonInteraction } = await import('./handlers/buttons/index.js');
         vi.mocked(handleButtonInteraction).mockResolvedValue(new Response());
         const { trackCommandWithKV } = await import('./services/analytics.js');

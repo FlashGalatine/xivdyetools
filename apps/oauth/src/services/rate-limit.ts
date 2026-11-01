@@ -60,7 +60,7 @@ export interface RateLimitResult {
 export interface RateLimitBackends {
   /** Native Workers Rate Limiting bindings, one tier per distinct limit */
   cloudflare?: CloudflareRateLimitTier[];
-  /** KV namespace for globally consistent counters (legacy fallback) */
+  /** KV namespace for eventually consistent counters (legacy fallback) */
   kv?: KVNamespace;
 }
 
@@ -121,7 +121,7 @@ function getLimiter(backends: RateLimitBackends | undefined): RateLimiter {
  * Get client IP from request headers
  */
 export function getClientIp(request: Request): string {
-  return sharedGetClientIp(request);
+  return sharedGetClientIp(request, { ipv6Prefix64: true });
 }
 
 /**

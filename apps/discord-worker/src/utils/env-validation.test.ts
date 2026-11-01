@@ -26,6 +26,25 @@ function createMinimalEnv(overrides: Partial<Env> = {}): Env {
 
 describe('env-validation.ts', () => {
   describe('validateEnv', () => {
+    describe('preset webhook cutover flag', () => {
+      it.each([undefined, 'false', 'true'])('accepts the explicit rollout value %s', (flag) => {
+        expect(
+          validateEnv({ ...createMinimalEnv(), PRESET_WEBHOOK_BINDING_ONLY: flag }).valid,
+        ).toBe(true);
+      });
+      it.each(['', 'TRUE', '0', 'yes', true, false, null])(
+        'rejects malformed configured value %s without echoing it',
+        (flag) => {
+          const result = validateEnv({
+            ...createMinimalEnv(),
+            PRESET_WEBHOOK_BINDING_ONLY: flag,
+          } as Env);
+          expect(result.valid).toBe(false);
+          expect(result.errors).toEqual(['Invalid PRESET_WEBHOOK_BINDING_ONLY configuration']);
+        },
+      );
+    });
+
     describe('required secrets', () => {
       it('should pass when all required secrets are present', () => {
         const env = createMinimalEnv();
@@ -322,7 +341,9 @@ describe('env-validation.ts', () => {
       // FINDING-027 (2026-10-03 security audit): the webhook's only gate.
       it('reports a production INTERNAL_WEBHOOK_SECRET under 32 characters, without making it fatal', () => {
         const result = validateEnv(
-          createValidProductionEnv({ INTERNAL_WEBHOOK_SECRET: 'x'.repeat(MIN_WEBHOOK_SECRET_LENGTH - 1) }),
+          createValidProductionEnv({
+            INTERNAL_WEBHOOK_SECRET: 'x'.repeat(MIN_WEBHOOK_SECRET_LENGTH - 1),
+          }),
         );
 
         expect(result.valid).toBe(false);
@@ -336,7 +357,9 @@ describe('env-validation.ts', () => {
 
       it('accepts a production INTERNAL_WEBHOOK_SECRET of exactly 32 characters', () => {
         const result = validateEnv(
-          createValidProductionEnv({ INTERNAL_WEBHOOK_SECRET: 'x'.repeat(MIN_WEBHOOK_SECRET_LENGTH) }),
+          createValidProductionEnv({
+            INTERNAL_WEBHOOK_SECRET: 'x'.repeat(MIN_WEBHOOK_SECRET_LENGTH),
+          }),
         );
 
         expect(result.valid).toBe(true);

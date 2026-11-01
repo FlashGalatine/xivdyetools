@@ -1290,6 +1290,35 @@ async function handleFavoriteListSubcommand(
   return deferResponse;
 }
 
+/**
+ * Keep complete escaped lines, reserving room for both missing and omitted
+ * notices. UTF-16 length is deliberately conservative for Discord's 4096 cap;
+ * no slicing can split a Unicode code point or a markdown escape.
+ */
+function favoriteListDescription(
+  presets: presetApi.FavoriteListPreset[],
+  missingCount: number,
+  t: Translator,
+): string {
+  const lines = presets.map((p, i) => {
+    const category = CATEGORY_DISPLAY[p.category_id as PresetCategory]?.name ?? p.category_id;
+    return `**${i + 1}.** ${sanitizePresetName(p.name)} — *${sanitizeEmbedText(category, 100)}*`;
+  });
+  const unavailable = missingCount > 0
+    ? [t.t('preset.favorite.unavailableSummary', { count: missingCount })] : [];
+  for (let kept = lines.length; kept >= 0; kept--) {
+    const omitted = lines.length - kept;
+    const description = [
+      ...lines.slice(0, kept), ...unavailable,
+      ...(omitted > 0 ? [t.t('preset.favorite.truncated', { count: omitted })] : []),
+    ].join('\n');
+    if (description.length <= 4096) return description;
+  }
+  // Locale strings are bounded in the shipped catalog. Fail closed if a future
+  // translation alone exceeds Discord's budget instead of sending an invalid edit.
+  throw new Error('Favorite list notices exceed embed budget');
+}
+
 async function processFavoriteList(
   interaction: DiscordInteraction,
   env: Env,
@@ -1297,53 +1326,56 @@ async function processFavoriteList(
   userId: string,
   logger?: ExtendedLogger,
 ): Promise<void> {
+  // All list branches share one delivery policy. A short error message is not
+  // a successful favorites answer, even if this single fallback is delivered.
+  const deliver = async (payload: Parameters<typeof safeEditOriginalResponse>[2]): Promise<void> => {
+    const delivered = await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, payload);
+    if (delivered) return;
+    markCommandOutcome(interaction, 'unknown');
+    const fallbackDelivered = await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+      embeds: [errorEmbed(t.t('common.error'), t.t('common.unknownError'))],
+    });
+    if (!fallbackDelivered) logger?.warn('preset favorite list fallback delivery failed');
+  };
   try {
     const ids = await getPresetFavorites(env.KV, userId, logger);
     if (ids.length === 0) {
-      await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-        embeds: [
-          infoEmbed(`⭐ ${t.t('preset.favorite.listTitle')}`, t.t('preset.favorite.empty')),
-        ],
+      await deliver({
+        embeds: [infoEmbed(`⭐ ${t.t('preset.favorite.listTitle')}`, t.t('preset.favorite.empty'))],
       });
       return;
     }
-    const resolved = await Promise.all(
-      ids.map((id) => presetApi.getPreset(env, id).catch(() => null)),
-    );
-    const presets = resolved.filter((p): p is CommunityPreset => p !== null);
-
-    if (presets.length === 0) {
-      await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-        embeds: [
-          infoEmbed(`⭐ ${t.t('preset.favorite.listTitle')}`, t.t('preset.favorite.allRemoved')),
-        ],
-      });
-      return;
-    }
-
-    const lines = presets.map((p, i) => {
-      const catEntry = CATEGORY_DISPLAY[p.category_id];
-      const cat = catEntry?.name ?? p.category_id;
-      return `**${i + 1}.** ${sanitizePresetName(p.name)} — *${cat}*`;
+    const batch = await presetApi.getPresetBatch(env, ids, userId, {
+      requestId: interaction.id, logger,
     });
-
-    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-      embeds: [
-        {
-          title: `⭐ ${t.t('preset.favorite.listTitleCount', { n: presets.length, max: MAX_PRESET_FAVORITES })}`,
-          description: lines.join('\n'),
-          color: STATE.warning,
-          footer: { text: t.t('common.footer') },
-        },
-      ],
+    // The client returns requested order; keep that invariant at the display
+    // boundary as well, without trusting upstream ordering.
+    const byId = new Map(batch.presets.map((p) => [p.id, p]));
+    const presets = [...new Set(ids)].flatMap((id) => {
+      const preset = byId.get(id);
+      return preset ? [preset] : [];
+    });
+    if (presets.length === 0) {
+      await deliver({
+        embeds: [infoEmbed(`⭐ ${t.t('preset.favorite.listTitle')}`, t.t('preset.favorite.allRemoved'))],
+      });
+      return;
+    }
+    await deliver({
+      embeds: [{
+        title: `⭐ ${t.t('preset.favorite.listTitleCount', { n: presets.length, max: MAX_PRESET_FAVORITES })}`,
+        description: favoriteListDescription(presets, batch.missing_ids.length, t),
+        color: STATE.warning,
+        footer: { text: t.t('common.footer') },
+      }],
     });
   } catch (error) {
-    markCommandOutcome(interaction, classifyError(error));
-    if (logger) {
-      logger.error('preset favorite list failed', error instanceof Error ? error : undefined);
-    }
-    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-      embeds: [errorEmbed(t.t('common.error'), t.t('common.unknownError'))],
+    // A failed logical batch, including transport, malformed JSON and 4xx,
+    // gives no reliable missing-ID classification.
+    markCommandOutcome(interaction, 'upstream_presets');
+    logger?.error('preset favorite list failed', error instanceof Error ? error : undefined);
+    await deliver({
+      embeds: [errorEmbed(t.t('common.error'), t.t('preset.favorite.lookupFailed'))],
     });
   }
 }

@@ -10,7 +10,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
     checkSubmissionRateLimit,
-    recordSubmissionEvent,
+    reserveSubmissionAdmission,
     pruneSubmissionEvents,
     DAILY_SUBMISSION_LIMIT,
     DAILY_FLAGGED_EDIT_LIMIT,
@@ -50,21 +50,6 @@ describe('append-only daily quotas', () => {
         expect(result.remaining).toBe(DAILY_SUBMISSION_LIMIT - 3);
     });
 
-    it('recordSubmissionEvent inserts an append-only row with the kind and preset id', async () => {
-        const db = createMockD1Database();
-        db._setupMock(() => ({ success: true, meta: { changes: 1 } }));
-
-        await recordSubmissionEvent(db, '123456789012345678', 'preview_upload', 'preset-1');
-
-        const insert = db._queries.find((q) => /INSERT INTO submission_events/i.test(q));
-        expect(insert).toBeDefined();
-        expect(db._bindings[db._queries.indexOf(insert!)]).toEqual([
-            '123456789012345678',
-            'preview_upload',
-            'preset-1',
-        ]);
-    });
-
     // BUG-015 (2026-09-16 deep-dive): `checkDailyEventLimit` (a bare count,
     // with no insert of its own) was removed along with the check-then-insert
     // race it enabled — `reserveDailyEvent` (rate-limit-service.test.ts)
@@ -93,11 +78,12 @@ describe('submission_events retention (FINDING-017)', () => {
         vi.useRealTimers();
     });
 
-    it('prunes events older than 30 days before recording a new one', async () => {
+    it('prunes events older than 30 days before admitting a new submission', async () => {
         const db = createMockD1Database();
-        db._setupMock(() => ({ meta: { changes: 0 } }));
+        db._setupMock(query => /INSERT INTO submission_events/i.test(query) ? { id: 1 } : { meta: { changes: 0 } });
 
-        await recordSubmissionEvent(db, '123456789012345678', 'submission', 'preset-1');
+        const admission = await reserveSubmissionAdmission(db, '123456789012345678', 'preset-1');
+        expect(admission.allowed).toBe(true);
 
         const pruneIndex = db._queries.findIndex((q) => /DELETE FROM submission_events/i.test(q));
         expect(pruneIndex).toBeGreaterThanOrEqual(0);
@@ -122,12 +108,12 @@ describe('submission_events retention (FINDING-017)', () => {
             if (/DELETE FROM submission_events/i.test(query)) {
                 throw new Error('D1_ERROR: no such table: submission_events');
             }
-            return { meta: { changes: 1 } };
+            return { id: 1 };
         });
 
         await expect(
-            recordSubmissionEvent(db, '123456789012345678', 'submission', 'preset-1')
-        ).resolves.toBeUndefined();
+            reserveSubmissionAdmission(db, '123456789012345678', 'preset-1')
+        ).resolves.toMatchObject({ allowed: true });
 
         expect(db._queries.some((q) => /DELETE FROM submission_events/i.test(q))).toBe(true);
         expect(db._queries.some((q) => /INSERT INTO submission_events/i.test(q))).toBe(true);
