@@ -47,7 +47,7 @@
 | **Auth** (incl. `/encoding`) | v3.0.0 | `@xivdyetools/auth` | npm | Active |
 | **Logger** | v2.4.0 | `@xivdyetools/logger` | npm | Active |
 | **Worker Kit** (middleware + `/rate-limiter`) | v1.6.0 | `@xivdyetools/worker-kit` | npm | Active |
-| **SVG** | v4.4.0 | `@xivdyetools/svg` | npm | Active |
+| **SVG** | v4.4.1 | `@xivdyetools/svg` | npm | Active |
 | **Bot Logic** (incl. `/i18n`) | v4.11.0 | `@xivdyetools/bot-logic` | npm | Active |
 | **Test Utils** | v3.0.0 | `@xivdyetools/test-utils` | workspace-private | Active (never published) |
 
@@ -552,6 +552,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v4.4.1 | Oct 2026 | A-SVG security companion: `fitText` scans code-point prefixes in linear time with identical legacy output, numeric behavior, widths and public API; core 5.16.0 publication precedes this publish |
 | v4.4.0 | Oct 2026 | 2026-10-04 remediation, Sprints 14+28 — `formatContrastRatio`, one floored printer for card, embed and `/compare` (BUG-142); whole gradient step ranges (BUG-146); glamour footer wraps at clauses with an 11 px look label (I18N-015, BUG-145); the frame-budget gate covers every card (BUG-144); `scanEmittedGlyphs` fails closed (BUG-143); `LEDGER_GROUP_H` / `LEDGER_ROW_H` back in the barrel (REFACTOR-003) |
 | v4.3.0 | Sep 2026 | `generateGlamourCard` — the /glamour card (2a): pieces in slot order, a second row kind beside measuredRow |
 | v4.2.0 | Sep 2026 | The Glamour Reader glyph (1a: a tunic with the dye on a chest chip), compact + detail |
@@ -708,6 +709,7 @@ and the [rollout runbook](operations/security-remediation-2026-09-15.md) for the
 
 | Consumer | Minimum Core Version | Notes |
 |----------|---------------------|-------|
+| @xivdyetools/svg v4.4.1 | @xivdyetools/core v5.16.0; @xivdyetools/types v3.3.0 | Prepared source; publication and deployed acceptance remain pending |
 | @xivdyetools/worker-kit v1.6.0 | @xivdyetools/logger v2.4.0 | Prepared source; publication and deployed acceptance remain pending |
 | @xivdyetools/core v5.16.0 | @xivdyetools/logger v2.4.0; @xivdyetools/types v3.3.0 | Prepared source; publication and deployed acceptance remain pending |
 | Web App v5.16.0+ | @xivdyetools/core v5.15.0+ | `@xivdyetools/core/chara` (`inspectCharaForTools`, `resolveCharaWithProvider`) — the `.chara` inspection Web Worker imports it, and the xivcharakit-backed reader replaces the in-page parse |

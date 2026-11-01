@@ -17,7 +17,7 @@ Published to npm under the `@xivdyetools` scope (except `test-utils`, which is w
 | [`@xivdyetools/auth`](packages/auth/) | 3.0.0 | JWT verification, HMAC signing, Discord Ed25519 verification, Base64URL/hex encoding (`/encoding`) |
 | [`@xivdyetools/worker-kit`](packages/worker-kit/) | 1.6.0 | Worker toolkit: Hono middleware (request ID, logger, rate limit) + sliding-window rate limiting backends (`/rate-limiter`) |
 | [`@xivdyetools/core`](packages/core/) | 5.16.0 | Color algorithms, dye database (schema v2), k-d tree matching, 6-language i18n, Universalis client, blending (`/blending`) |
-| [`@xivdyetools/svg`](packages/svg/) | 4.4.0 | Pure SVG card generators on the 5.0 frame system (data in → SVG string out) |
+| [`@xivdyetools/svg`](packages/svg/) | 4.4.1 | Pure SVG card generators on the 5.0 frame system (data in → SVG string out) |
 | [`@xivdyetools/bot-logic`](packages/bot-logic/) | 4.11.0 | Platform-agnostic command business logic + bot UI translation engine (`/i18n`) |
 | [`@xivdyetools/test-utils`](packages/test-utils/) | 3.0.0 | Cloudflare Workers mocks (D1, KV, R2) and test factories — **not published** |
 
