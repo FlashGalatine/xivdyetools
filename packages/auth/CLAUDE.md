@@ -161,6 +161,15 @@ function bytesToHex(bytes: Uint8Array): string;
 
 Absorbed from the retired `@xivdyetools/crypto`. Import from this subpath, not the barrel — the root re-export drags in `discord-interactions`.
 
+The Base64URL decoders accept only canonical unpadded URL-safe input: no whitespace,
+standard `+`/`/` alphabet, padding, impossible lengths or nonzero unused trailing bits.
+They throw for invalid input and preserve empty input. Both JWT verifiers catch this
+as `null`; `hmacVerify` catches it as `false`. `decodeJWT` applies it only to the
+payload and continues to return `null` on decode errors without verifying the header
+or signature. Canonical signing/encoding output is unchanged. `hexToBytes` retains
+its case-insensitive and empty-input utility contract; signature boundaries instead
+require exactly 64 lowercase hex characters (`hmacVerifyHex`, `verifyBotSignatureV2`).
+
 ## Key Patterns
 
 ### Algorithm pinning (HS256 only)
@@ -207,6 +216,11 @@ string. Nonce **replay** protection is the caller's job — this package only bi
 nonce into the signed string; `presets-api`'s `middleware/auth.ts` is what actually
 remembers accepted nonces (`botnonce:` keys in the shared `TOKEN_BLACKLIST` KV, 120 s
 TTL). `userDiscordId` and `userName` are optional for system-level requests, same as v1.
+
+It rejects noncanonical hex signatures before reading/hashing the body, and
+`hmacVerifyHex` independently enforces the same lowercase 64-character signature
+format for direct callers (FINDING-042). Uppercase or mixed-case spellings that
+previously verified now return `false`.
 
 **v1 (`verifyBotSignature`: `${timestamp}:${userDiscordId}:${userName}`, no request
 binding) was removed in 2.0.0** (FINDING-015, 2026-08-29 security audit) — see
