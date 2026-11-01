@@ -127,13 +127,13 @@ describe('chara-resolve-service', () => {
       ['bad category', { ...ITEM, uiCategory: Infinity }],
     ];
     it.each(badItems)(
-      'nulls %s while preserving a valid requested sibling',
+      'nulls %s while preserving a valid requested sibling, without caching it',
       async (_label, bad) => {
         vi.stubGlobal(
           'fetch',
           vi
             .fn()
-            .mockResolvedValue(
+            .mockImplementation(async () =>
               envelope({ items: { HeadGear: bad, MainHand: ITEM }, glasses: GLASSES })
             )
         );
@@ -141,10 +141,28 @@ describe('chara-resolve-service', () => {
         expect(result.items.HeadGear).toBeNull();
         expect(result.items.MainHand).toEqual(ITEM);
         expect(result.glasses).toEqual(GLASSES);
-        expect(await resolveCharaEquipment(GEAR, 40)).toBe(result);
-        expect(fetch).toHaveBeenCalledTimes(1);
+        // An off-contract answer is used for this import only: the next one asks again.
+        const again = await resolveCharaEquipment(GEAR, 40);
+        expect(again).not.toBe(result);
+        expect(fetch).toHaveBeenCalledTimes(2);
       }
     );
+
+    it('caches a legitimate null item', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi
+          .fn()
+          .mockImplementation(async () =>
+            envelope({ items: { HeadGear: null, MainHand: ITEM }, glasses: GLASSES })
+          )
+      );
+      const result = await resolveCharaEquipment(GEAR, 40);
+      expect(result.items.HeadGear).toBeNull();
+      expect(result.items.MainHand).toEqual(ITEM);
+      expect(await resolveCharaEquipment(GEAR, 40)).toBe(result);
+      expect(fetch).toHaveBeenCalledTimes(1);
+    });
 
     it.each([
       [[]],
@@ -152,12 +170,14 @@ describe('chara-resolve-service', () => {
       [{ ...GLASSES, iconId: Number.MAX_SAFE_INTEGER + 1 }],
       [{ ...GLASSES, names: { en: 'Only' } }],
       [{ ...GLASSES, acquisition: false }],
-    ])('nulls malformed glasses %j', async (glasses) => {
+    ])('nulls malformed glasses %j without caching it', async (glasses) => {
       vi.stubGlobal(
         'fetch',
-        vi.fn().mockResolvedValue(envelope({ items: { HeadGear: ITEM }, glasses }))
+        vi.fn().mockImplementation(async () => envelope({ items: { HeadGear: ITEM }, glasses }))
       );
       expect((await resolveCharaEquipment(GEAR, 40)).glasses).toBeNull();
+      expect((await resolveCharaEquipment(GEAR, 40)).glasses).toBeNull();
+      expect(fetch).toHaveBeenCalledTimes(2);
     });
 
     it.each([[[]], [{ items: [] }], [{ items: {}, version: 123 }]])(

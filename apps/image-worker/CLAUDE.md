@@ -37,8 +37,10 @@ copy of the WASM blob — that is the whole point of the split.
 The current runtime initializes the retained ownership-patched WASM through exactly pinned
 `@cf-wasm/photon/others`, via `src/photon-runtime.ts`. Never import the default or `/workerd`
 entry in production code: those initialize the original artifact and would conflict with this
-singleton. [Source, lock, licenses and rebuild instructions](vendor/photon/REBUILD.md) accompany
-the artifact; regular builds require no Rust tools. The allocation patch transfers decoded RGBA
+singleton. [Source, lock, licenses and rebuild instructions](vendor/photon/README.md) accompany
+the artifact; regular builds require no Rust tools. The WASM is a reconstruction (the upstream
+lock and Binaryen version were never published), rebuilt with one recorded Windows tool set outside
+CI; see vendor/photon/README.md. The allocation patch transfers decoded RGBA
 ownership and borrows crop/resize inputs while retaining owned outputs and the existing algorithms.
 
 `src/worker.ts` is Wrangler's entry. It registers the complete Hono dispatch with `waitUntil`
@@ -49,13 +51,22 @@ owned-reader cleanup. A disconnect alone never releases the slot while work is s
 The platform bounds post-disconnect `waitUntil`; runtime termination/noncooperative I/O cannot
 carry an unconditional cleanup guarantee. Outstanding responses and other isolates are not bounded
 by this guard. Health checks and the existing public-surface protections remain outside admission.
+Consequence: if any aborted body read never settles (the caller's request body after a disconnect,
+or the CDN response body after the 10 s `FETCH_TIMEOUT_MS` abort), the slot stays held and every
+later `/extract` and `/thumbnail` on that isolate receives 503 until the runtime recycles the
+isolate. No deadline releases it: a deadline would admit a second decode while the first may still
+hold memory (`index-admission.test.ts` pins this). This is an accepted residual risk, pending the
+workerd check in unit 15 acceptance that an aborted service-binding body read and an aborted CDN
+subrequest body read both settle.
 
 Pre-decode validation also walks GIF descriptors and WebP reconstruction chunks. Every GIF
 image must fit its logical screen; extended WebP bitstream dimensions must match the static
 canvas or contained animation frame. Lengths, padding, alpha partners and payload ordering are
 checked before Photon, with constant auxiliary state. Malformed mixed/duplicate reconstruction
-paths are refused. These checks preserve the existing caps and caller error markers; they do
-not establish aggregate memory headroom or Cloudflare platform acceptance.
+paths are refused. Trailing bytes after a GIF trailer, a missing trailer, or data outside the
+RIFF payload (a RIFF size other than file length minus 8) are refused too. These checks preserve
+the existing caps and caller error markers; they do not establish aggregate memory headroom or
+Cloudflare platform acceptance.
 
 ## Commands
 

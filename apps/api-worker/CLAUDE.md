@@ -188,9 +188,9 @@ With the native binding, `X-RateLimit-Limit` reads `65` and `X-RateLimit-Remaini
 
 ### Chara upstream-operation budget (A-API)
 
-The additional Chara limiter counts one unit for an owned Item search batch, a Glasses fetch, or an icon fetch/revalidation. Cold Item + Glasses work costs two; cached rows/empty/null results and existing row/Glasses waiters cost zero. Icons retain independent fetches. Metadata Item/1 discovery is bounded/memoized and outside this budget. Public keys group IPv6 by /64; service requests retain the fixed shared key.
+The additional Chara limiter counts one unit for an owned Item search batch, a Glasses fetch, or an icon fetch/revalidation. Cold Item + Glasses work costs two; cached rows/empty/null results and existing row/Glasses waiters cost zero. A waiter whose owner's admission is denied is never given that denial: it claims the work again, joining a live owner or owning the handed-off keys as one new batch under its own admission (one unit). Icons retain independent fetches. Metadata Item/1 discovery is bounded/memoized and outside this budget. Public keys group IPv6 by /64; service requests retain the fixed shared key.
 
-Production thresholds are 30 public / 600 service per 60 seconds (development 60 / 1200). These are approximate per-location soft limits. Runtime backend failures preserve fail-open public-read behavior; malformed configured bindings are configuration errors, and explicit denial stops the operation. Every denied request formats its own 429 metadata and retry/budget headers with no-store, including coalesced waiters. Generic admission still applies on cache hits.
+Production thresholds are 30 public / 600 service per 60 seconds (development 60 / 1200). These are approximate per-location soft limits. Runtime backend failures preserve fail-open public-read behavior; malformed configured bindings are configuration errors, and explicit denial stops the operation. A 429 always reflects the denied request's own admission: an owner's denial stays with that owner, and only upstream failures are shared with waiters. Each denied request formats its own 429 metadata and retry/budget headers with no-store. Generic admission still applies on cache hits.
 
 ### Service Singleton
 

@@ -113,6 +113,7 @@ describe('nonce-only ban modal', () => {
       MOD,
       '**Repeated** @everyone spam',
       '_Target_ @everyone',
+      undefined,
     );
     expect(((await response.json()) as any).data.allowed_mentions).toEqual({ parse: [] });
     expect(JSON.stringify(vi.mocked(discord.safeSendMessage).mock.calls)).toContain('Repeated');
@@ -124,13 +125,46 @@ describe('nonce-only ban modal', () => {
     expect(bans.banUser).not.toHaveBeenCalled();
     expect(bans.getPresetAuthorName).not.toHaveBeenCalled();
   });
-  it('revoked moderator and missing actor are refused before load', async () => {
+  it('a revoked moderator is refused before load', async () => {
     env.MODERATOR_IDS = '899999999999999999';
-    await handleBanReasonModal(modal(), env, ctx);
+    const body = (await (await handleBanReasonModal(modal(), env, ctx)).json()) as any;
+    expect(body.data.flags).toBe(64);
+    expect(body.data.content).toBe('You do not have permission to ban users.');
+    expect(confirmations.loadBanReview).not.toHaveBeenCalled();
+  });
+  // Both disjuncts of the actor check refuse a missing actor; keeping MOD on the list proves
+  // the refusal does not depend on the list (e.g. a regressed fallback actor id).
+  it('a modal with no actor is refused even while the moderator list is current', async () => {
     const interaction = modal();
     delete interaction.member;
-    await handleBanReasonModal(interaction, env, ctx);
+    const body = (await (await handleBanReasonModal(interaction, env, ctx)).json()) as any;
+    expect(body.data.flags).toBe(64);
+    expect(body.data.content).toBe('You do not have permission to ban users.');
     expect(confirmations.loadBanReview).not.toHaveBeenCalled();
+  });
+  // 'ban_reason_modal_' is 17 characters, so 84 more make a 101-character custom_id.
+  it.each(['preset_reject_modal_x', `ban_reason_modal_${'a'.repeat(84)}`])(
+    'custom_id guard refuses %s before load',
+    async (customId) => {
+      const interaction = modal();
+      interaction.data!.custom_id = customId;
+      const body = (await (await handleBanReasonModal(interaction, env, ctx)).json()) as any;
+      expect(body.data.flags).toBe(64);
+      expect(confirmations.loadBanReview).not.toHaveBeenCalled();
+      expect(bans.banUser).not.toHaveBeenCalled();
+    },
+  );
+  it('an expand review that hides nothing reports 0 hidden presets', async () => {
+    const review = structuredClone(validReview) as unknown as confirmations.BanReview;
+    review.proposal.mode = 'expand';
+    vi.mocked(confirmations.loadBanReview).mockResolvedValue(review);
+    vi.mocked(bans.banUser).mockResolvedValue({ success: true, presetsHidden: 0 });
+    const body = (await (await handleBanReasonModal(modal(), env, ctx)).json()) as any;
+    expect(body.data.embeds[0].fields).toContainEqual({
+      name: 'Presets Hidden',
+      value: '0',
+      inline: true,
+    });
   });
   it('unban review cannot be repurposed by a ban modal', async () => {
     const review = structuredClone(validReview) as unknown as confirmations.BanReview;
@@ -156,13 +190,43 @@ describe('nonce-only ban modal', () => {
     expect(text).not.toContain('token');
     expect(discord.safeSendMessage).not.toHaveBeenCalled();
   });
+  it('an unexpected failure is logged with a fixed message and no IDs or reason', async () => {
+    const logger = { info: vi.fn(), error: vi.fn() };
+    const failure = 'D1_ERROR: no such table: presets';
+    vi.mocked(bans.getPresetAuthorName).mockRejectedValue(new Error(failure));
+    const body = (await (
+      await handleBanReasonModal(modal(), env, ctx, logger as never)
+    ).json()) as any;
+    expect(body.data.content).toBe(confirmations.REVIEW_UNAVAILABLE);
+    expect(logger.error).toHaveBeenCalledTimes(1);
+    expect(logger.error).toHaveBeenCalledWith('Ban reason modal failed', expect.any(Error));
+    const logText = `${logger.error.mock.calls[0][0]} ${logger.error.mock.calls[0][1].message}`;
+    expect(logger.error.mock.calls[0][1].message).toBe(failure);
+    for (const secret of [MOD, TARGET, U, 'Repeated spam submissions'])
+      expect(logText).not.toContain(secret);
+  });
+  it('an expired or unknown review is not logged as an error', async () => {
+    const logger = { info: vi.fn(), error: vi.fn() };
+    vi.mocked(confirmations.loadBanReview).mockRejectedValue(
+      new Error(confirmations.REVIEW_UNAVAILABLE),
+    );
+    await handleBanReasonModal(modal(), env, ctx, logger as never);
+    expect(logger.error).not.toHaveBeenCalled();
+  });
   it('unnamed author is rendered neutrally, stores target for private search only', async () => {
     vi.mocked(bans.getPresetAuthorName).mockResolvedValue(null);
     const body = (await (await handleBanReasonModal(modal(), env, ctx)).json()) as any;
     await Promise.all(pending);
     expect(body.data.embeds[0].description).toContain('an account with no author name');
     expect(JSON.stringify(body)).not.toContain(TARGET);
-    expect(bans.banUser).toHaveBeenCalledWith(env, NONCE, MOD, 'Repeated spam submissions', TARGET);
+    expect(bans.banUser).toHaveBeenCalledWith(
+      env,
+      NONCE,
+      MOD,
+      'Repeated spam submissions',
+      TARGET,
+      undefined,
+    );
   });
   it('logs counts and reason length only; no IDs, names or reason text', async () => {
     const logger = { info: vi.fn() } as never;
@@ -187,7 +251,14 @@ describe('F001 neutral attribution', () => {
     const completion = ((await response.json()) as any).data;
     await Promise.all(pending);
     const post = vi.mocked(discord.safeSendMessage).mock.calls.at(-1)![2] as any;
-    expect(bans.banUser).toHaveBeenCalledWith(env, NONCE, MOD, reason, '_Target_ @everyone');
+    expect(bans.banUser).toHaveBeenCalledWith(
+      env,
+      NONCE,
+      MOD,
+      reason,
+      '_Target_ @everyone',
+      undefined,
+    );
     for (const payload of [post, completion]) {
       const text = JSON.stringify(payload);
       expect.soft(text).not.toContain('_AttributionSentinel_ @here');

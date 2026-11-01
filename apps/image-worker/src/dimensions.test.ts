@@ -305,6 +305,17 @@ describe('readImageDimensions', () => {
     expect(readImageDimensions(sibling)).toBeUndefined();
   });
 
+  // User-visible tightening in 1.3.5 (CHANGELOG Security): 1.3.4 passed both shapes to Photon.
+  it('refuses bytes after a GIF trailer', () => {
+    expect(readImageDimensions(gifHeader(64, 64))).toEqual({ width: 64, height: 64 });
+    expect(readImageDimensions(new Uint8Array([...gifHeader(64, 64), 0]))).toBeUndefined();
+  });
+
+  it('refuses data appended after the RIFF payload', () => {
+    expect(readImageDimensions(webpVp8(64, 64))).toEqual({ width: 64, height: 64 });
+    expect(readImageDimensions(new Uint8Array([...webpVp8(64, 64), 0, 0]))).toBeUndefined();
+  });
+
   it('returns undefined for unknown or truncated input instead of throwing', () => {
     expect(readImageDimensions(new Uint8Array([1, 2, 3]))).toBeUndefined();
     expect(readImageDimensions(pngHeader(10, 10).subarray(0, 20))).toBeUndefined();

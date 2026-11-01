@@ -949,7 +949,7 @@ describe('chara upstream admission and current icon version', () => {
     const localEnv = createMockEnv({ XIVAPI_BASE: 'https://route-budget-' + ++sequence + '.test', XIVAPI_VERSION: V, XIVAPI_SCHEMA: S, CHARA_SERVICE_RATE_LIMITER: budget, ...extra });
     return { budget, localEnv };
   };
-  const resolve = (localEnv: typeof env, body: object, ctx = createMockExecutionContext(), locale = '') => app.request('/v1/chara/resolve' + locale, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }, localEnv, ctx);
+  const resolve = (localEnv: typeof env, body: object, ctx = createMockExecutionContext(), locale = '', headers: Record<string, string> = {}) => app.request('/v1/chara/resolve' + locale, { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body) }, localEnv, ctx);
   const gear = [{ slot: 'HeadGear', base: 361, variant: 5 }];
   const upstream = () => vi.fn(async (url: string) => url.includes('/Glasses/') ? okJson({ row_id: 3, fields: { Name: 'G' } }) : okJson({ results: [BEECH_MASK] }));
   it.each([
@@ -988,7 +988,7 @@ describe('chara upstream admission and current icon version', () => {
     expect((await resolve(localEnv, { gear, glasses: 3 })).status).toBe(200);
     expect(budget.limit).toHaveBeenCalledTimes(2);
   });
-  it('denied owner and waiter build independent 429 metadata with quota headers and permit retry', async () => {
+  it('denied owner and waiter each build 429 metadata from their own admission with quota headers and permit retry', async () => {
     const { budget, localEnv } = setup();
     let release!: () => void;
     const gate = new Promise<void>((yes) => { release = yes; });
@@ -1021,12 +1021,37 @@ describe('chara upstream admission and current icon version', () => {
     expect(bodies[0].meta.locale).toBe('ja');
     expect(bodies[1].meta.locale).toBe('fr');
     expect(bodies[0].meta.requestId).not.toBe(bodies[1].meta.requestId);
-    expect(budget.limit).toHaveBeenCalledOnce();
+    expect(budget.limit).toHaveBeenCalledTimes(2);
     expect(fetchMock).not.toHaveBeenCalled();
     await Promise.all([flush(ownerCtx), flush(waiterCtx)]);
     budget.limit.mockResolvedValue({ success: true });
     expect((await resolve(localEnv, { gear })).status).toBe(200);
-    expect(budget.limit).toHaveBeenCalledTimes(2);
+    expect(budget.limit).toHaveBeenCalledTimes(3);
+  });
+  it("a coalesced waiter from another client is not denied by the owner's quota", async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((yes) => { release = yes; });
+    const limit = vi.fn(async ({ key }: { key: string }) => { await gate; return { success: !key.includes('198.51.100.1') }; });
+    const { localEnv } = setup({ CHARA_RATE_LIMITER: { limit } });
+    const fetchMock = upstream();
+    vi.stubGlobal('fetch', fetchMock);
+    const ownerCtx = createMockExecutionContext();
+    const waiterCtx = createMockExecutionContext();
+    const loaderCalls = vi.spyOn(CharaLookupLoader.prototype, 'loadRows');
+    const owner = resolve(localEnv, { gear }, ownerCtx, '', { 'CF-Connecting-IP': '198.51.100.1' });
+    await vi.waitFor(() => expect(limit).toHaveBeenCalledOnce());
+    const waiter = resolve(localEnv, { gear }, waiterCtx, '', { 'CF-Connecting-IP': '203.0.113.9' });
+    await vi.waitFor(() => expect(loaderCalls).toHaveBeenCalledTimes(2));
+    release();
+    const [denied, served] = await Promise.all([owner, waiter]);
+    expect(denied.status).toBe(429);
+    expect(denied.headers.get('X-RateLimit-Limit')).toBe('60');
+    expect(served.status).toBe(200);
+    expect(((await served.json()) as any).data.items.HeadGear.itemId).toBe(18085);
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(limit).toHaveBeenCalledTimes(2);
+    expect(new Set(limit.mock.calls.map(([{ key }]) => key)).size).toBe(2);
+    await Promise.all([flush(ownerCtx), flush(waiterCtx)]);
   });
   it.each(['resolve', 'icon'])('malformed binding fails before discovery on %s', async (kind) => {
     const { localEnv } = setup({ XIVAPI_VERSION: 'latest', CHARA_SERVICE_RATE_LIMITER: {} as RateLimit });

@@ -14,13 +14,14 @@
  * FINDING-023 (2026-08-29 security audit): image-worker is binding-only by
  * design (see docs/operations/IMAGE_WORKER_SPLIT.md and this worker's own
  * wrangler.toml comments) — no routes, no workers_dev, no signature check, no
- * rate limiting, and every request fetches up to 10 MB from a CDN and runs a
- * full photon WASM decode. That design used to be protected by nothing but a
- * wrangler.toml comment: one config flip (workers_dev = true, or a routes
- * entry) would have published an unauthenticated decode/SSRF surface with
- * nothing to notice. This is the fourth and last of a config-drift test set
- * this branch added — presets-api (Sprint 1), oauth (Sprint 2),
- * moderation-worker (Sprint 4) — after this file, FINDING-023 closes.
+ * rate limiting, and every request fetches up to 5 MiB (MAX_FILE_SIZE_BYTES,
+ * validators.ts) from a CDN and runs a full photon WASM decode. That design
+ * used to be protected by nothing but a wrangler.toml comment: one config
+ * flip (workers_dev = true, or a routes entry) would have published an
+ * unauthenticated decode/SSRF surface with nothing to notice. This is the
+ * fourth and last of a config-drift test set this branch added — presets-api
+ * (Sprint 1), oauth (Sprint 2), moderation-worker (Sprint 4) — after this
+ * file, FINDING-023 closes.
  *
  * Fix round 2 (S8-R12): the edit this file most needs to catch is not
  * setting `workers_dev` to `true` — it is deleting the `workers_dev = false`
