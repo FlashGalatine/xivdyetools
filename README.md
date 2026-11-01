@@ -13,11 +13,11 @@ Published to npm under the `@xivdyetools` scope (except `test-utils`, which is w
 | Package | Version | Description |
 |---------|---------|-------------|
 | [`@xivdyetools/types`](packages/types/) | 3.3.0 | Branded types (`HexColor`, `DyeId`, etc.) and shared interfaces |
-| [`@xivdyetools/logger`](packages/logger/) | 2.3.0 | Multi-runtime logging (browser, Node, CF Workers) with secret redaction |
-| [`@xivdyetools/auth`](packages/auth/) | 2.0.2 | JWT verification, HMAC signing, Discord Ed25519 verification, Base64URL/hex encoding (`/encoding`) |
-| [`@xivdyetools/worker-kit`](packages/worker-kit/) | 1.5.0 | Worker toolkit: Hono middleware (request ID, logger, rate limit) + sliding-window rate limiting backends (`/rate-limiter`) |
-| [`@xivdyetools/core`](packages/core/) | 5.15.0 | Color algorithms, dye database (schema v2), k-d tree matching, 6-language i18n, Universalis client, blending (`/blending`) |
-| [`@xivdyetools/svg`](packages/svg/) | 4.4.0 | Pure SVG card generators on the 5.0 frame system (data in → SVG string out) |
+| [`@xivdyetools/logger`](packages/logger/) | 2.4.0 | Multi-runtime logging (browser, Node, CF Workers) with secret redaction |
+| [`@xivdyetools/auth`](packages/auth/) | 3.0.0 | JWT verification, HMAC signing, Discord Ed25519 verification, Base64URL/hex encoding (`/encoding`) |
+| [`@xivdyetools/worker-kit`](packages/worker-kit/) | 1.6.0 | Worker toolkit: Hono middleware (request ID, logger, rate limit) + sliding-window rate limiting backends (`/rate-limiter`) |
+| [`@xivdyetools/core`](packages/core/) | 5.16.0 | Color algorithms, dye database (schema v2), k-d tree matching, 6-language i18n, Universalis client, blending (`/blending`) |
+| [`@xivdyetools/svg`](packages/svg/) | 4.4.1 | Pure SVG card generators on the 5.0 frame system (data in → SVG string out) |
 | [`@xivdyetools/bot-logic`](packages/bot-logic/) | 4.11.0 | Platform-agnostic command business logic + bot UI translation engine (`/i18n`) |
 | [`@xivdyetools/test-utils`](packages/test-utils/) | 3.0.0 | Cloudflare Workers mocks (D1, KV, R2) and test factories — **not published** |
 
@@ -26,7 +26,7 @@ Published to npm under the `@xivdyetools` scope (except `test-utils`, which is w
 | App | Version | Description |
 |-----|---------|-------------|
 | [`web-app`](apps/web-app/) | 5.16.7 | Main web app at [xivdyetools.app](https://xivdyetools.app) (Vite + Lit + Tailwind) |
-| [`discord-worker`](apps/discord-worker/) | 5.9.0 | Primary Discord bot — 18 slash commands (CF Worker + Hono, HTTP Interactions) |
+| [`discord-worker`](apps/discord-worker/) | 5.9.1 | Primary Discord bot — 18 slash commands (CF Worker + Hono, HTTP Interactions) |
 | [`image-worker`](apps/image-worker/) | 1.3.4 | Photon host — `POST /extract` (raw pixels for the bot) and `POST /thumbnail` (WebP previews for presets-api), service-binding-only (CF Worker) |
 | [`moderation-worker`](apps/moderation-worker/) | 1.8.2 | Moderation bot for community presets (CF Worker) |
 | [`presets-api`](apps/presets-api/) | 2.6.1 | Community presets REST API + preview-image storage (CF Worker + D1 + R2) |

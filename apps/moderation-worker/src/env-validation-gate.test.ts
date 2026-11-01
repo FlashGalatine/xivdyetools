@@ -11,7 +11,7 @@
  *
  * These tests drive the real Hono app end to end.
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
 import { createMockKV, createMockD1Database } from '@xivdyetools/test-utils';
 import type { Env } from './types/env.js';
 
@@ -68,6 +68,12 @@ function interactionRequest(): [string, RequestInit] {
 
 describe('FINDING-013: production refuses requests while a rate-limit binding is missing', () => {
   let consoleError: ReturnType<typeof vi.spyOn>;
+
+  // Prepare the runner's initial module loading in setup. Discard this instance:
+  // freshApp still resets and reevaluates the app for every request-gate test.
+  beforeAll(async () => {
+    await import('./index.js');
+  });
 
   beforeEach(() => {
     vi.clearAllMocks();

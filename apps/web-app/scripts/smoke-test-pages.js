@@ -1,7 +1,7 @@
 /**
  * Smoke-test a Cloudflare Pages deployment end to end.
  *
- * Runs after `pages deploy` in both web-app workflows. Four phases, each
+ * Runs after `pages deploy` in both web-app workflows. Five phases, each
  * guarding a failure mode the others cannot see:
  *
  *   1. The deployment alias returns 2xx           -> this build serves at all
@@ -14,12 +14,14 @@
  *      text/plain                                 -> the .chara reader's license
  *          shipped (checked by body: _redirects turns a missing file into a 200
  *          carrying index.html)
+ *   5. In project mode: current custom/Pages/hash/reported branch origins match
+ *      this build and dist/_headers CSP; retired aliases/hashes return actual 404.
  *
  * Phase 2 exists to make phase 3 trustworthy. A Pages custom domain is a mutable
  * alias that keeps serving the PREVIOUS deployment until propagation finishes, so
  * without it phase 3 could describe the build before this one.
  *
- * Phase 3 runs on the custom domain only. Cloudflare injects
+ * Phase 3's robots assertion runs on the custom domain only. Cloudflare injects
  * `x-robots-tag: noindex` onto every *.pages.dev hostname itself, so that header is
  * only build-determined on the custom domain; and the security headers are the
  * ones users actually receive there. The security check exists because a beta
@@ -31,11 +33,17 @@
  *
  * Usage:
  *   node scripts/smoke-test-pages.js \
- *     --deployment-url <url> --domain <url> --expect-robots noindex|none
+ *     --deployment-url <url> --domain <url> --expect-robots noindex|none \
+ *     --project xivdyetools|xivdyetools-beta --commit <full-sha> \
+ *     --headers-file dist/_headers
+ * Project mode also requires CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN
+ * (Pages Read); it never mutates Cloudflare resources.
  */
 
 import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
+import { inspectPagesDeployment, parseRetentionArgs } from './retain-pages-deployments.mjs';
 
 export const ROBOTS_MODES = ['noindex', 'none'];
 
@@ -71,6 +79,13 @@ export function parseArgs(argv) {
     if (!match) throw new Error(`unexpected argument: ${argv[i]}`);
 
     const [, name, inline] = match;
+    if (
+      !['deployment-url', 'domain', 'expect-robots', 'project', 'commit', 'headers-file'].includes(
+        name
+      )
+    )
+      throw new Error(`unexpected argument: --${name}`);
+    if (values.has(name)) throw new Error(`duplicate argument: --${name}`);
     if (inline !== undefined) {
       values.set(name, inline);
       continue;
@@ -113,7 +128,153 @@ export function parseArgs(argv) {
     }
   }
 
+  const project = values.get('project');
+  const commit = values.get('commit');
+  const headersFile = values.get('headers-file');
+  if (project || commit || headersFile) {
+    if (!project || !commit || !headersFile)
+      throw new Error('--project, --commit and --headers-file must be supplied together');
+    parseRetentionArgs([
+      '--project',
+      project,
+      '--deployment-url',
+      deploymentUrl,
+      '--commit',
+      commit,
+    ]);
+    return { deploymentUrl, domain, expectRobots, project, commit, headersFile };
+  }
   return { deploymentUrl, domain, expectRobots };
+}
+
+// Read the policy actually shipped by this build, including beta transformations.
+// A duplicate catch-all rule is last-wins on Pages and must never be normalized
+// into a policy that was not served. Duplicate CSP directives are also rejected.
+export function readBuiltCsp(headersText) {
+  let catchAllCount = 0;
+  let inCatchAll = false;
+  const policies = [];
+  for (const line of headersText.split(/\r?\n/)) {
+    if (!line.trim() || line.trimStart().startsWith('#')) continue;
+    if (/^\S/.test(line)) {
+      inCatchAll = line.trim() === '/*';
+      if (inCatchAll) catchAllCount++;
+    } else if (inCatchAll) {
+      const match = /^\s+content-security-policy:\s*(.+)$/i.exec(line);
+      if (match) policies.push(match[1].trim());
+    }
+  }
+  if (catchAllCount !== 1 || policies.length !== 1)
+    throw new Error('Built _headers must contain one catch-all rule and one CSP');
+  normalizeCsp(policies[0]);
+  return policies[0];
+}
+
+function normalizeCsp(policy) {
+  if (typeof policy !== 'string' || !policy.trim()) throw new Error('CSP missing');
+  const directives = new Map();
+  for (const part of policy.split(';')) {
+    const tokens = part.trim().split(/\s+/);
+    if (!tokens[0]) continue;
+    const name = tokens.shift().toLowerCase();
+    if (!/^[a-z][a-z-]*$/.test(name) || directives.has(name))
+      throw new Error('CSP malformed or duplicate directive');
+    directives.set(name, [...new Set(tokens)].sort());
+  }
+  if (!directives.size) throw new Error('CSP missing');
+  return JSON.stringify([...directives].sort(([a], [b]) => a.localeCompare(b)));
+}
+
+const RETIRED_ORIGINS = {
+  xivdyetools: [
+    'https://v4-ui-migration.xiv-colorexplorer.pages.dev/',
+    'https://66496174.xiv-colorexplorer.pages.dev/',
+    'https://1c989934.xiv-colorexplorer.pages.dev/',
+  ],
+  'xivdyetools-beta': ['https://ecc7fb76.xivdyetools-beta.pages.dev/'],
+};
+
+/** Require actual 404s, never network failures or redirects, for retired hosts. */
+export async function checkPagesOrigins({
+  project,
+  current,
+  expectedCsp,
+  expectedBody,
+  fetchImpl = fetch,
+  sleep = (ms) => new Promise((r) => setTimeout(r, ms)),
+}) {
+  if (!Object.hasOwn(RETIRED_ORIGINS, project)) throw new Error('Unexpected Pages project');
+  const wantCsp = normalizeCsp(expectedCsp);
+  const wantHash = sha256(expectedBody);
+  const positive = [
+    ...new Set(
+      [
+        current.canonical.url,
+        ...current.domains.map((host) => `https://${host}`),
+        ...current.canonical.aliases,
+      ].map((url) => new URL('/', url).href)
+    ),
+  ];
+  const failures = [];
+  // Metadata has already been checked by inspectPagesDeployment. No arbitrary
+  // CLI origin list is accepted. Use manual redirects and bounded fetches so a
+  // hash alias redirecting elsewhere cannot impersonate a preserved deployment.
+  for (const url of positive) {
+    let detail = '';
+    for (let attemptNumber = 1; attemptNumber <= CONVERGE_ATTEMPTS; attemptNumber++) {
+      try {
+        const res = await fetchImpl(url, {
+          ...REQUEST_INIT,
+          redirect: 'manual',
+          signal: AbortSignal.timeout(20000),
+        });
+        if (res.status !== 200) {
+          detail = `HTTP ${res.status}`;
+          await res.body?.cancel();
+        } else if (sha256(Buffer.from(await res.arrayBuffer())) !== wantHash)
+          detail = 'serves a different build';
+        else {
+          try {
+            detail =
+              normalizeCsp(res.headers.get('content-security-policy')) === wantCsp
+                ? ''
+                : 'CSP differs from built _headers';
+          } catch {
+            detail = 'CSP missing, malformed or duplicated';
+          }
+          // Once the expected build is served, retrying a bad CSP cannot turn
+          // that deployment into a safe one. Report its policy immediately.
+          break;
+        }
+      } catch (error) {
+        detail = `request failed: ${error.message}`;
+      }
+      if (attemptNumber < CONVERGE_ATTEMPTS) await sleep(DELAY_MS);
+    }
+    if (detail) failures.push(`${url} ${detail}`);
+  }
+  for (const url of RETIRED_ORIGINS[project]) {
+    let detail = '';
+    for (let attemptNumber = 1; attemptNumber <= NOTICE_ATTEMPTS; attemptNumber++) {
+      try {
+        const res = await fetchImpl(url, {
+          ...REQUEST_INIT,
+          redirect: 'manual',
+          signal: AbortSignal.timeout(20000),
+        });
+        // Release the unused body even on 404; repeated probes must not retain
+        // connections while waiting for propagation or a transient edge error.
+        await res.body?.cancel();
+        detail = res.status === 404 ? '' : `HTTP ${res.status}; expected actual HTTP 404`;
+      } catch (error) {
+        detail = `request failed: ${error.message}; expected actual HTTP 404`;
+      }
+      if (!detail) break;
+      if (attemptNumber < NOTICE_ATTEMPTS) await sleep(DELAY_MS);
+    }
+    if (detail) failures.push(`${url} ${detail}`);
+  }
+  return failures;
 }
 
 // Phase 1: the deployment alias is *usually* live the moment `wrangler pages
@@ -171,6 +332,12 @@ export async function smokeTestPages({
   expectRobots,
   fetchImpl = fetch,
   sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+  project,
+  commit,
+  expectedCsp,
+  accountId = process.env.CLOUDFLARE_ACCOUNT_ID,
+  token = process.env.CLOUDFLARE_API_TOKEN,
+  apiFetchImpl = fetch,
 }) {
   const alias = new URL('/', deploymentUrl).toString();
   const site = new URL('/', domain).toString();
@@ -260,10 +427,46 @@ export async function smokeTestPages({
   const noticeFailure = await checkReaderNotice(fetchImpl, sleep, domain, want);
   if (noticeFailure) failures.push(noticeFailure);
 
+  if (project) {
+    try {
+      const metadataOptions = {
+        project,
+        deploymentUrl,
+        commit,
+        accountId,
+        token,
+        fetchImpl: apiFetchImpl,
+        sleep,
+      };
+      const current = await inspectPagesDeployment(metadataOptions);
+      const custom = current.domains.find((host) => !host.endsWith('.pages.dev'));
+      if (
+        new URL(domain).origin !== `https://${custom}` ||
+        expectRobots !== (project === 'xivdyetools' ? 'none' : 'noindex')
+      )
+        throw new Error('Pages project does not match the smoke domain or robots mode');
+      failures.push(
+        ...(await checkPagesOrigins({
+          project,
+          current,
+          expectedCsp,
+          expectedBody: aliasBody,
+          fetchImpl,
+          sleep,
+        }))
+      );
+      const after = await inspectPagesDeployment(metadataOptions);
+      if (JSON.stringify(current) !== JSON.stringify(after))
+        throw new Error('Current Pages metadata changed during origin probes');
+    } catch (error) {
+      failures.push(`Pages live-origin verification: ${error.message}`);
+    }
+  }
+
   return {
     ok: failures.length === 0,
     failures,
-    summary: `${site} serves this deployment (sha256 ${want.slice(0, 12)}), robots as expected for --expect-robots ${expectRobots}, security headers present, reader license notice served.`,
+    summary: `${site} serves this deployment (sha256 ${want.slice(0, 12)}), robots as expected for --expect-robots ${expectRobots}, security headers present, reader license notice served.${project ? ' Current Pages origins match build/CSP; retired origins return actual 404.' : ''}`,
   };
 }
 
@@ -305,6 +508,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   let options;
   try {
     options = parseArgs(process.argv.slice(2));
+    if (options.headersFile)
+      options.expectedCsp = readBuiltCsp(readFileSync(options.headersFile, 'utf8'));
   } catch (error) {
     console.error(`::error::smoke-test-pages: ${error.message}`);
     process.exit(1);

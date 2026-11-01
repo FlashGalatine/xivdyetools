@@ -5,7 +5,7 @@
 
 import type { AppearanceSlotInspection } from 'xivcharakit/appearance';
 import type { Field } from 'xivcharakit';
-import type { ResolvedCharaCharacter } from './chara-resolver.js';
+import type { ResolvedCharaCharacter } from './chara-types.js';
 
 /**
  * One appearance slot. The library's stored fields (`storedIndex`, `storedExtended`) are replaced by
@@ -28,8 +28,9 @@ export type ImportedCharaSlot = Omit<AppearanceSlotInspection, 'storedIndex' | '
 };
 
 /**
- * The library's palette contract: `resolveCharaForTools` accepts one in place of a
- * `CharacterColorService` (e.g. a worker that asks the page for each color).
+ * The library's palette contract: `resolveCharaWithProvider` consumes one directly
+ * (e.g. an inspection worker that asks the page for each color).
+ * `resolveCharaForTools` also accepts one, or bridges a `CharacterColorService`.
  */
 export type { PaletteProvider as CharaPaletteProvider } from 'xivcharakit/palettes';
 

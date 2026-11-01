@@ -12,7 +12,7 @@
 
 import type { CharaInspection } from 'xivcharakit';
 import type { CharacterColorService } from '../CharacterColorService.js';
-import type { StainIdLookup } from './chara-resolver.js';
+import type { StainIdLookup } from './chara-types.js';
 import { createCharaPaletteProvider } from './chara-palette-provider.js';
 import { resolveCharaWithProvider } from './chara-library.js';
 import type { CharaPaletteProvider, ImportedCharaCharacter } from './chara-library-types.js';

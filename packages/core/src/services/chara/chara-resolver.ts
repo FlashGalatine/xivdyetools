@@ -27,21 +27,26 @@
  *   entry. The swatch (`indexHex`) is still what the slot shows.
  */
 
-import type { CharacterColor, Dye, Gender, SubRace } from '@xivdyetools/types';
+import type { CharacterColor } from '@xivdyetools/types';
 import { ColorConverter } from '../color/ColorConverter.js';
 import { clamp } from '../../utils/index.js';
 import type { CharacterColorService } from '../CharacterColorService.js';
+import type { CharaColorSlotRaw, ParsedCharaFile } from './chara-parser.js';
 import type {
-  CharaColorSlotRaw,
-  CharaGearSlotId,
   CharaSlotId,
-  CharaSlotInertReason,
-  ParsedCharaFile,
-} from './chara-parser.js';
-import type { CharaGearModel } from './chara-models.js';
+  CharaSlotErrorCode,
+  ResolvedCharaSlot,
+  ResolvedCharaCharacter,
+  StainIdLookup,
+} from './chara-types.js';
 import { charaShaderHex, type CharaShaderPalette } from './chara-shader-colors.js';
 
-/** ΔE2000 beyond which a live float overrides the palette index (OFF GRID). */
+/**
+ * ΔE2000 beyond which a live float overrides the palette index (OFF GRID).
+ * @deprecated Legacy resolver threshold. Use inspectCharaForTools and
+ * resolveCharaForTools (or resolveCharaWithProvider) for current interpretation.
+ * Planned removal in core 6.
+ */
 export const OFF_GRID_DELTA_E2000 = 6;
 
 /**
@@ -50,83 +55,15 @@ export const OFF_GRID_DELTA_E2000 = 6;
  */
 const EYE_LANDS_DELTA_E2000 = 1;
 
-export type CharaSlotVerdict =
-  /** The palette index is the answer (float absent, not live, or agreeing) */
-  | 'index'
-  /** Live float disagrees past the threshold — float wins, both hexes named */
-  | 'offGrid'
-  /** A colour with no index (e.g. Hrothgar lip) — the OFF-GRID path */
-  | 'floatOnly'
-  /** A flag gates this slot off (reason on the slot) */
-  | 'inert'
-  /** Loud failure state — code + message name the field and value */
-  | 'error';
-
-export type CharaSlotErrorCode = 'midRangeIndex' | 'indexOutOfRange' | 'noTribe';
-
-export interface ResolvedCharaSlot {
-  slot: CharaSlotId;
-  /** The limbal slot is a limbal ring on Au Ra and a tattoo otherwise */
-  kind: CharaSlotId | 'tattoo';
-  verdict: CharaSlotVerdict;
-  inertReason?: CharaSlotInertReason;
-  error?: { code: CharaSlotErrorCode; message: string };
-  /** Raw palette index from the file */
-  index: number | null;
-  /** Index within the resolved sheet (light sheets subtract 128) */
-  sheetIndex: number | null;
-  /** Sheet variant for dark/light palettes */
-  sheetVariant: 'dark' | 'light' | null;
-  /** Grid address like "R6·C3" (8 columns), when the index resolved */
-  gridAddress: string | null;
-  /** Hex from the palette sheet, when the index resolved */
-  indexHex: string | null;
-  /** Hex from the extended float (gamma-encoded), when present */
-  floatHex: string | null;
-  /**
-   * ΔE2000 between a live float and the colour the game stores for the index
-   * (the shader half of `human.cmp` — not `indexHex`, the swatch). Null when
-   * the float is absent or not live.
-   */
-  deltaE: number | null;
-  /** Set when a float existed but was not live — the UI must say so */
-  indexWinNote?: 'extendedMissing';
-  /** Lip only: continuous opacity (null = not declared, ≠ 0) */
-  alpha: number | null;
-  /** Lip only: winning colour composited over the winning skin colour */
-  blendHex: string | null;
-}
-
-export interface ResolvedGearDye {
-  slot: CharaGearSlotId;
-  channel: 1 | 2;
-  stainId: number;
-  /** Resolved dye, or null when the stain ID is unknown to the database */
-  dye: Dye | null;
-}
-
-export interface ResolvedCharaCharacter {
-  producer: string | null;
-  race: ParsedCharaFile['race'];
-  tribe: SubRace | null;
-  gender: Gender | null;
-  nickname: string | null;
-  extendedValid: boolean;
-  extendedDeclared: boolean;
-  slots: ResolvedCharaSlot[];
-  /** True when both eyes carry the same palette index — merge into one badge */
-  eyesShareIndex: boolean;
-  gearDyes: ResolvedGearDye[];
-  /** Worn pieces' model keys (undyed included) — item names resolve off-device */
-  gearModels: CharaGearModel[];
-  /** Facewear `Glasses` sheet row; null when none */
-  glassesId: number | null;
-}
-
-/** Minimal dye lookup the resolver needs (DyeService satisfies this). */
-export interface StainIdLookup {
-  getByStainId(stainId: number): Dye | null | undefined;
-}
+// Compatibility reexports for consumers of the legacy resolver module.
+export type {
+  /** @public */ CharaSlotVerdict,
+  /** @public */ CharaSlotErrorCode,
+  /** @public */ ResolvedCharaSlot,
+  /** @public */ ResolvedGearDye,
+  ResolvedCharaCharacter,
+  StainIdLookup,
+} from './chara-types.js';
 
 const GRID_COLUMNS = 8;
 
@@ -312,6 +249,9 @@ async function resolveSheet(
 /**
  * Resolve a parsed `.chara` file against the character colour sheets and
  * (optionally) the dye database for gear dye names.
+ *
+ * @deprecated Use inspectCharaForTools and resolveCharaForTools (or
+ * resolveCharaWithProvider) for the current facade. Planned removal in core 6.
  */
 export async function resolveCharaColors(
   parsed: ParsedCharaFile,

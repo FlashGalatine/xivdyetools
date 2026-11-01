@@ -61,46 +61,20 @@ import type { Gender, Race, RGB, SubRace } from '@xivdyetools/types';
 import { AppError, ErrorCode, SUBRACE_TO_RACE } from '@xivdyetools/types';
 import { clamp } from '../../utils/index.js';
 import { isWornCharaModel, isCharaWeaponSlot, type CharaGearModel } from './chara-models.js';
+import type { CharaSlotId, CharaGearSlotId, CharaSlotInertReason } from './chara-types.js';
 
 /**
- * Largest `.chara` file the web app and the Discord bot accept: 8 KiB of the
- * original file's bytes, not its decoded text (2026-10-15 import review).
- *
- * Exports without an attached image measured 1,837–2,777 bytes over a
- * 1,093-file corpus. The one larger file carried an image the user attached
- * in Anamnesis (3,128,021 bytes); Anamnesis stores such an image as Base64
- * without shrinking it, so those files are refused on purpose, and the
- * refusal says to save the character again without the image.
- *
- * `parseCharaFile` does not check it: it receives decoded text, whose length
- * is not the file's byte count. Each caller enforces it where the bytes are
- * (the browser's `File.size`, the bot's attachment size and streamed
- * download). It is a resource limit, not a safety check: a file under it
- * still has to parse.
+ * Compatibility bridge: the live inspectCharaForTools facade checks original
+ * bytes (or UTF-8-encoded strings), while transport size/download guards enforce
+ * the same cap before import. The legacy parser accepts decoded text only.
  */
-export const MAX_CHARA_FILE_BYTES = 8 * 1024;
+export { MAX_CHARA_FILE_BYTES } from './chara-limits.js';
+export type { CharaSlotId, CharaGearSlotId, CharaSlotInertReason } from './chara-types.js';
 
-/** Colour slots a `.chara` file can populate. */
-export type CharaSlotId =
-  'leftEye' | 'rightEye' | 'hair' | 'highlights' | 'skin' | 'limbal' | 'lip' | 'facePaint';
-
-/** Equipment slots that can carry dye channels. */
-export type CharaGearSlotId =
-  | 'MainHand'
-  | 'OffHand'
-  | 'HeadGear'
-  | 'Body'
-  | 'Hands'
-  | 'Legs'
-  | 'Feet'
-  | 'Ears'
-  | 'Neck'
-  | 'Wrists'
-  | 'LeftRing'
-  | 'RightRing';
-
-export type CharaSlotInertReason = 'highlightsDisabled' | 'facePaintNone' | 'furPattern' | 'noLip';
-
+/**
+ * @deprecated Legacy parser output. Use inspectCharaForTools and resolveCharaForTools
+ * (or resolveCharaWithProvider) for the current facade. Planned removal in core 6.
+ */
 export interface CharaColorSlotRaw {
   slot: CharaSlotId;
   /** Raw palette index; null = key absent from the file */
@@ -116,6 +90,10 @@ export interface CharaColorSlotRaw {
   alpha: number | null;
 }
 
+/**
+ * @deprecated Legacy parser output. Use inspectCharaForTools and resolveCharaForTools
+ * (or resolveCharaWithProvider) for the current facade. Planned removal in core 6.
+ */
 export interface CharaGearDye {
   slot: CharaGearSlotId;
   /** Which dye channel (1 = DyeId, 2 = DyeId2) */
@@ -124,6 +102,10 @@ export interface CharaGearDye {
   stainId: number;
 }
 
+/**
+ * @deprecated Use inspectCharaForTools and resolveCharaForTools (or
+ * resolveCharaWithProvider) for the current facade. Planned removal in core 6.
+ */
 export interface ParsedCharaFile {
   /** Declared producer (`TypeName`), shown in UI — never used for parsing */
   producer: string | null;
@@ -438,6 +420,9 @@ function mapNamed<T>(
  * `race` is derived from the tribe and is never read from the file's own
  * `Race` key unless no tribe is given, so an unrecognised `Race` is not an
  * error — see "Tribe, not Race" in the module header.
+ *
+ * @deprecated Use inspectCharaForTools and resolveCharaForTools (or
+ * resolveCharaWithProvider) for bounded import. Planned removal in core 6.
  */
 export function parseCharaFile(text: string): ParsedCharaFile {
   let data: unknown;
