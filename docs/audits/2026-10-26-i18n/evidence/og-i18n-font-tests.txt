@@ -1,0 +1,8 @@
+
+ RUN  v5.0.5 C:/dev/XIVProjects/xivdyetools/.claude/worktrees/deep-i18n-audits-20261026/apps/og-worker
+
+
+ Test Files  6 passed (6)
+      Tests  206 passed (206)
+   Start at  20:12:56
+   Duration  3.44s (transform 71%, import 20%, tests 8%, worker 2%)
