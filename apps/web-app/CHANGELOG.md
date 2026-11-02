@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [5.16.10] - 2026-11-01
+## [5.16.10] - 2026-11-02
 
 ### Fixed
 
@@ -41,6 +41,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   verdict, the re-layout when panels close, the grid's own scrolling at 800x600 and 390x844, and the
   1920x1080 layout. Its five narrow-pane tests failed on the old code; the phone test was added with the
   fix, and removing `safe center` fails it.
+
+## [5.16.9] - 2026-11-02
+
+### Fixed
+
+- **The Color Palette has no sideways scrollbar, and its dye tooltips are no longer cut off at the
+  sides.** Each swatch's name is a `::after` tooltip that rests at `opacity: 0`, and a hidden box
+  still counts as scrollable overflow. Centered on a last-column swatch, a long name ran past
+  `.drawer-content`: client width 309 and scroll width 322 at the 320px drawer with a classic
+  scrollbar (334 in French), on all seven tools with the palette, at any window width. On hover the
+  same centering cut names off: the scroller clipped the outer columns (38 px of the longest French
+  name in the first column, where no scrolling could reach it), and the Favorites section's
+  `overflow: hidden` clipped them tighter. Tooltips in the first and last of the five columns now
+  line up with their swatch's outer edge and grow inward.
+  `overflow-x` stays as it was, so a future overflow shows up rather than clipping a name silently.
+- **Dye tooltips are no longer cut off at the top of the scrolled panel.** A tooltip opens above its
+  swatch, so the scroller cut it off for a swatch within about 35 px of its top edge.
+  `placeSwatchTooltip` now opens it below such a swatch, on hover and on scroll, because a swatch can
+  also rise to the edge under a still pointer. `.favorites-section` drops `overflow: hidden`, which
+  would have cut off a tooltip opened below a single row of Favorites; its header rounds its own
+  corners instead. A hovered swatch now ranks above the favorite stars (`z-index` 21 over 20), because
+  the tooltip lives in its stacking context and the stars of the row it opens over would paint across
+  the name.
+- **New checks in `e2e/content-scroll.spec.ts`:** no sideways scroll on each palette tool and at
+  769, 768, 390 and 320 px windows. In all six languages the widest tooltip of each column, in the
+  main grid and in Favorites, stays inside everything that clips it while hovered, at a 320px drawer
+  and at 310px (the columns a classic scrollbar leaves, which headless Chromium hides). Tooltips also
+  stay whole -15 to 60 px from the panel's top in both grids, stay above a swatch with room, and move
+  when the swatch scrolls up under a still pointer. They fail on the old code.
 
 ## [5.16.8] - 2026-11-01
 
