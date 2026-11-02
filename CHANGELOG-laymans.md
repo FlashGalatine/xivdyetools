@@ -31,6 +31,40 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.13.0] - 2026-11-02
+### 🖥️ Smaller windows and easier scrolling
+- Web app: the main scrollbar sits against the edge of the content area, long tool pages scroll all the way down on desktop and mobile, and the Dye Mixer shows one main scrollbar.
+- Web app: the Color Palette's stray sideways scrollbar is gone, and full dye names show on hover. Near the top of the panel, a name opens below its dye.
+- Web app: with Options and the Color Palette both open in a smaller window, the Swatch Matcher, Harmony Explorer, Dye Comparison and Accessibility Checker no longer lose their left side. In tight windows some text can still shorten, dye card menus can run past the left edge, and some sideways scrolling remains. Closing a side panel makes more room.
+- Web app: in the Swatch Matcher, matches move under the grid when there's no room beside it, and in a desktop window picking a swatch or a dye scrolls to its results. Phones can now reach the grid's first column.
+
+### 🌐 Dye names and translations
+- Web app, Discord bot and link previews: German and French dye names now match the game, for example Schneeweiß. Search by the in-game name, because the older full German names no longer match.
+- Web app and Discord bot: 65 more gear pieces show Korean names in the Glamour Reader and `/glamour`.
+- Discord bot: clan suggestions follow your language, and `/swatch` slot and order choices and preset sort choices follow your Discord app's language.
+- Link previews: default Harmony cards say ten harmony types in all six languages.
+
+### 🎨 Color tools
+- Web app: changing language keeps Swatch Matcher matches and sharing ready to use, and saved display settings apply to the first Accessibility Checker and Dye Comparison results.
+- Web app: newly selected Dye Comparison dyes and changed Gradient Builder steps load their prices when prices are on, and the Gradient Builder asks for a Start dye before its End dye.
+- Web app: exported match distances name the selected matching method and keep small differences visible.
+- Discord bot: `/harmony` shows every result's distance using your selected matching method, and `/swatch` keeps left and right eyes separate when their colors differ.
+
+### 🗂️ Presets and character files
+- Web app: preset vote checks stay fresh after voting or changing accounts, and edited presets refresh the Mine view.
+- Web app: replacing or clearing a character closes its export sheet, and long file names and character labels keep emoji intact.
+- Web app: new character-color saves in the Swatch Matcher use a generic name in your language. Older saves keep their names.
+- Discord bot: `/preset favorite list` keeps your saved order and fits long names, and tells unavailable presets apart from a temporary problem.
+- Discord bot: `/glamour` keeps long item notes within Discord's limit, tries a short message if its card can't be delivered, and can be used 5 times a minute.
+
+### 🔒 Sign-in and privacy
+- Web app: signing in with an XIVAuth account that has a verified character now gives you that character's name instead of "XIVAuth User". That name then replaces the author name on the presets under that account, unless a ban is active.
+- Web app: if XIVAuth can't return your characters when you sign in, the name already on your account stays and goes on the presets under that account, unless a ban is active. A new account then gets the "XIVAuth User" name until a later sign-in finds a verified character.
+- Discord bot: all six languages of the privacy policy now explain that each web app sign-in replaces the author name on the presets under that account, unless a ban is active.
+- Web app: all six privacy guides explain local saves and deletion, vote checks and kept pre-edit versions more precisely.
+- Discord bot: all six privacy policies explain the clan, gender and tool label shown on character cards, and when a pre-edit version is kept.
+- Behind the scenes: stronger login and abuse protection across the site and bots.
+
 ## [5.12.0] - 2026-10-26
 ### 🗂️ A new character-file reader
 - Web app and Discord bot: a character file that only holds gear, with no appearance colors, now opens in the Glamour Reader and with `/glamour`.
