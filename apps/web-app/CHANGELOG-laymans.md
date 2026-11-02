@@ -5,8 +5,9 @@
 ## Web-App Version 5.16.10 — November 2, 2026
 
 ### Swatch Matcher
-- **Nothing is cut off in smaller windows.** With Options and the Color Palette both open, the grid, its heading and its category tabs all fit.
-- **Matches move under the grid when there's no room beside it.** Picking a swatch scrolls down to them.
+- **The Swatch grid no longer loses its left side in smaller windows.** With Options and the Color Palette both open, every column, the heading and all the category tabs can be reached.
+- **Tight windows can still need sideways scrolling.** The grid scrolls inside its panel, and some details below it can run past the edge. Closing a side panel makes more room.
+- **Matches move under the grid when there's no room beside it.** In a desktop window, picking a swatch or a dye scrolls to its results. Small windows and long results can scroll the grid off screen.
 - **Phones can reach the first column.** The grid now scrolls sideways all the way to its left edge.
 
 ## Web-App Version 5.16.9 — November 2, 2026

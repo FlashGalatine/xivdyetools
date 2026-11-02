@@ -277,10 +277,13 @@ const GRID_GAP = 4;
 const GRID_WIDTH_DESKTOP = GRID_CELL_DESKTOP * 8 + GRID_GAP * 7;
 /**
  * Narrowest the results column gets beside the grid panel before it wraps under
- * it. Any narrower and the selection card's 230px excerpt runs past the pane's
- * 32px padding and is clipped.
+ * it. The selection card's excerpt reaches 230px into the column. In a narrower
+ * column it crosses the card's border, which is only cosmetic, and the pane clips
+ * it below 174px (230 minus the 56px between the column and the pane's edge). This
+ * stays above that, and low enough that a 1536px window (1920x1080 at 125%) keeps
+ * the 96-cell palettes' results beside the grid in English.
  */
-const RESULTS_MIN_WIDTH = 200;
+const RESULTS_MIN_WIDTH = 190;
 /** The selected thing the verdict card describes (sheet slot or grid cell). */
 interface SwatchSelectionContext {
   source: 'slot' | 'grid';
@@ -739,6 +742,7 @@ export class SwatchTool extends BaseComponent {
     this.reverseDyeName = LanguageService.getDyeName(dye.itemID) || dye.name;
     logger.info(`[SwatchTool] Reverse match: dye "${this.reverseDyeName}" (${dye.hex})`);
     this.performReverseMatch();
+    this.revealOutsideGridPick(this.reverseSection);
   }
 
   /**
@@ -746,12 +750,29 @@ export class SwatchTool extends BaseComponent {
    */
   public selectCustomColor(hex: string): void {
     if (!hex) return;
+    this.applyCustomColor(hex);
+    this.revealOutsideGridPick(this.reverseSection);
+  }
+
+  /** The match itself. A THIS CHARACTER slot uses this: its own card already shows the answer. */
+  private applyCustomColor(hex: string): void {
     this.reverseDyeHex = hex.startsWith('#') ? hex : `#${hex}`;
     this.reverseDyeName = LanguageService.tInterpolate('common.customColorName', {
       hex: this.reverseDyeHex.toUpperCase(),
     });
     logger.info(`[SwatchTool] Reverse match: custom color ${this.reverseDyeHex}`);
     this.performReverseMatch();
+  }
+
+  /**
+   * A pick made outside the grid can leave its results under the grid in a desktop
+   * window, where nothing else on screen would change: a dye from the palette or
+   * another tool, or a shared link's cell. Not at 768px and under, where the palette
+   * overlays the tool. Called from the picks only: performReverseMatch also re-runs
+   * on config changes and palette loads, which must not move the page.
+   */
+  private revealOutsideGridPick(results: HTMLElement | null): void {
+    if (window.innerWidth > 768) this.revealStackedResults(results);
   }
 
   /**
@@ -1444,7 +1465,7 @@ export class SwatchTool extends BaseComponent {
     } else {
       this.updateColorGrid();
     }
-    this.selectCustomColor(hex);
+    this.applyCustomColor(hex);
   }
 
   /**
@@ -1830,7 +1851,10 @@ export class SwatchTool extends BaseComponent {
         );
       }
 
-      swatch.addEventListener('click', () => {
+      swatch.addEventListener('click', (event) => {
+        // A pick can start the grid moving, so a double-click's second click could
+        // land on a different cell.
+        if (event.detail > 1) return;
         this.selectColor(color);
       });
 
@@ -2421,22 +2445,32 @@ export class SwatchTool extends BaseComponent {
     this.updateSelectionCard();
     this.updateShareButton();
 
-    // Where the results sit under the grid (on mobile, or in a narrow pane), scroll
-    // to them so user can see the matches
-    if (this.selectionCardContainer) {
-      // Small delay to allow DOM updates before scrolling
-      this.safeTimeout(() => {
-        const card = this.selectionCardContainer;
-        const grid = this.gridPanel;
-        if (
-          card &&
-          grid &&
-          card.getBoundingClientRect().top > grid.getBoundingClientRect().bottom
-        ) {
-          card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 100);
-    }
+    this.revealStackedResults(this.selectionCardContainer);
+  }
+
+  /**
+   * Where results sit under the grid (on mobile, or in a narrow pane), scroll to
+   * them so user can see them. A phone gives them the whole screen. A desktop
+   * window brings them just into view, which moves nothing if they already are and
+   * keeps rows of the grid on screen for the next pick. Results beside the grid stay
+   * put, even where a long column reaches past a short grid's bottom.
+   */
+  private revealStackedResults(results: HTMLElement | null): void {
+    if (!results) return;
+    // Small delay to allow DOM updates before scrolling
+    this.safeTimeout(() => {
+      if (!this.gridPanel) return;
+      const box = results.getBoundingClientRect();
+      const grid = this.gridPanel.getBoundingClientRect();
+      if (box.top > grid.bottom && box.left < grid.right) {
+        results.scrollIntoView({
+          behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+            ? 'auto'
+            : 'smooth',
+          block: window.innerWidth < 768 ? 'start' : 'nearest',
+        });
+      }
+    }, 100);
   }
 
   /**
@@ -2746,6 +2780,7 @@ export class SwatchTool extends BaseComponent {
       this.updateColorGrid();
       this.updateSwatchSelection();
       this.updateShareButton();
+      if (this.selectedColor) this.revealOutsideGridPick(this.selectionCardContainer);
 
       // Find matching dyes if a color was selected
       if (this.selectedColor) {
