@@ -2,7 +2,7 @@
 
 > Ceci est une traduction fournie à titre pratique. La version anglaise fait foi ; en cas de divergence, c'est elle qui prévaut. [Anglais](PRIVACY_POLICY.md)
 
-**Dernière mise à jour** : 2026-10-27
+**Dernière mise à jour** : 2026-11-01
 
 ## 1. Introduction
 
@@ -17,7 +17,7 @@ Nous nous engageons à protéger votre vie privée et à être transparents sur 
 | Type de donnée | Finalité | Conservation |
 |-----------|---------|-----------|
 | Identifiant utilisateur Discord | Identifier les utilisateurs pour les préférences, les préréglages favoris, le vote, la limitation de débit, et le repère de premier lancement ; sert aussi de clé à un repère d'activité quotidien par utilisateur et est compté (jamais listé) dans les statistiques d'utilisation — voir *Statistiques d'utilisation* ci-dessous | Jusqu'à la demande de suppression des données (statistiques d'utilisation : voir *Statistiques d'utilisation*) |
-| Nom d'auteur : votre nom d'affichage Discord (votre nom d'utilisateur si vous n'avez pas de nom d'affichage). Un préréglage que vous soumettez sur l'application web après vous être connecté avec XIVAuth affiche à la place le nom de votre personnage vérifié, ou « XIVAuth User » suivi des 8 premiers caractères de votre identifiant XIVAuth si aucun personnage vérifié n'est disponible lors de votre connexion | Affiché publiquement comme auteur des préréglages communautaires que vous soumettez | Jusqu'à la demande de suppression des données |
+| Nom d'auteur : le nom affiché sur vos préréglages. Un préréglage que vous soumettez via le Bot, ou sur l'application web après vous être connecté avec Discord, affiche votre nom d'affichage Discord (votre nom d'utilisateur si vous n'avez pas de nom d'affichage). Un préréglage que vous soumettez sur l'application web après vous être connecté avec XIVAuth affiche le nom de votre personnage vérifié, ou « XIVAuth User » suivi des 8 premiers caractères de votre identifiant XIVAuth si aucun personnage vérifié n'est disponible lors de votre connexion. À chaque connexion à l'application web, le nom issu de cette connexion remplace le nom d'auteur sur tous les préréglages de ce compte, sauf pendant un bannissement actif. Les préréglages que vous avez soumis via le Bot, ou sur l'application web après vous être connecté avec Discord, appartiennent à votre compte Discord : ils sont inclus dans la mise à jour si vous vous connectez avec Discord, ou avec un compte XIVAuth lié à votre compte Discord. Si votre compte XIVAuth n'est pas lié à Discord, ses préréglages et vos préréglages Discord sont distincts, et chaque ensemble n'est mis à jour que par sa propre connexion | Affiché publiquement comme auteur des préréglages communautaires que vous soumettez | Jusqu'à la demande de suppression des données |
 | Langue de l'utilisateur | Fournir des réponses du bot localisées ; la langue du client Discord (répartie dans l'une des six que le Bot prend en charge, ou « autre ») est aussi enregistrée dans les statistiques d'utilisation — voir *Statistiques d'utilisation* ci-dessous | Préférence stockée : jusqu'à effacement. Répartition des statistiques d'utilisation : voir *Statistiques d'utilisation* |
 | ID de serveur / ID de salon | Traiter les commandes dans leur contexte | Non stocké. Les statistiques d'utilisation n'enregistrent que le *fait* qu'une commande ait été exécutée sur un serveur ou en message privé (les valeurs `guild` / `dm`) — jamais l'ID du serveur ou du salon |
 

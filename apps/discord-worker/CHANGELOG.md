@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.9.8] - 2026-11-01
+
+### Changed
+
+- Privacy Policy (all six languages): the Author name row now covers every web-app sign-in, not
+  only XIVAuth. It says which name a Bot, Discord web and XIVAuth web submission shows, that each
+  web sign-in replaces the author name on all of the presets under the account that signed in with
+  the name from that sign-in (not while a ban is active), that Bot-submitted presets belong to the
+  Discord account and are included for a Discord sign-in or an XIVAuth account linked to Discord,
+  and that an XIVAuth account not linked to Discord has a separate set, updated only by its own
+  sign-in. Policy text only, with no code change. `apps/web-app/PRIVACY.md` covers the refresh for
+  the account, so the bot's policy is corrected first, in its own release. "Last Updated" is now November 1, 2026.
+
 ## [5.9.7] - 2026-10-27
 
 ### Hardening adoption
