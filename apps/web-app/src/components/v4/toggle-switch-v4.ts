@@ -129,7 +129,7 @@ export class ToggleSwitchV4 extends BaseLitComponent {
       }
 
       :host([checked]) .toggle-wrapper:not(.disabled):hover .toggle-track {
-        background: var(--theme-primary-hover, #c49d2f);
+        background: var(--theme-primary-hover);
       }
 
       /* Active press effect */

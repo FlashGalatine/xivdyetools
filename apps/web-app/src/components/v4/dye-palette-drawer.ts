@@ -244,8 +244,8 @@ export class DyePaletteDrawer extends BaseLitComponent {
       }
 
       .action-btn:hover {
-        color: var(--theme-primary, #d4af37);
-        background: rgba(212, 175, 55, 0.1);
+        color: var(--theme-primary);
+        background: color-mix(in srgb, var(--theme-primary) 10%, transparent);
         transform: scale(1.05);
       }
 
@@ -259,7 +259,7 @@ export class DyePaletteDrawer extends BaseLitComponent {
       }
 
       .action-btn.random-btn:hover {
-        color: var(--theme-primary, #d4af37);
+        color: var(--theme-primary);
       }
 
       .action-btn.clear-btn:hover {
@@ -355,7 +355,7 @@ export class DyePaletteDrawer extends BaseLitComponent {
       .filter-chip.active {
         background: var(--theme-primary, #d4af37);
         border-color: var(--theme-primary, #d4af37);
-        color: var(--theme-text-on-primary, #000);
+        color: var(--theme-text-on-primary);
       }
 
       /* Consolidation spectrum filter */
@@ -574,7 +574,7 @@ export class DyePaletteDrawer extends BaseLitComponent {
 
       .swatch-favorite-btn:hover {
         background: rgba(0, 0, 0, 0.7);
-        color: var(--theme-primary, #d4af37);
+        color: var(--theme-primary);
       }
 
       .swatch-favorite-btn.is-favorite {
@@ -738,7 +738,7 @@ export class DyePaletteDrawer extends BaseLitComponent {
         width: 100%;
         padding: 10px 16px;
         background: var(--theme-primary, #d4af37);
-        color: var(--theme-text-on-primary, #000);
+        color: var(--theme-text-on-primary);
         border: none;
         border-radius: 6px;
         font-family: var(--font-display);
@@ -752,7 +752,7 @@ export class DyePaletteDrawer extends BaseLitComponent {
       }
 
       .custom-apply-btn:hover:not(:disabled) {
-        background: var(--theme-primary-hover, #c49f2f);
+        background: var(--theme-primary-hover);
         transform: scale(1.02);
       }
 

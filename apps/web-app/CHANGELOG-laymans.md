@@ -2,6 +2,12 @@
 
 ---
 
+## Web-App Version 5.16.14 — November 2, 2026
+
+### Light and Dark themes
+- **No more stray gold on hover.** Toggles that are on and the Color Palette's Apply and random dye buttons now show your theme's red when you point at them, in both Light and Dark.
+- **Easier to read in Light.** The Apply button and the selected filters in the Color Palette now have white text on red instead of black.
+
 ## Web-App Version 5.16.11 — November 2, 2026
 
 ### Harmony Explorer, Dye Comparison and Accessibility Checker

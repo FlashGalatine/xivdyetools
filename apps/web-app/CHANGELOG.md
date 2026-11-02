@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.16.14] - 2026-11-02
+
+### Fixed
+
+- **Hovering no longer shows the gold of the retired themes.** No theme ever defined
+  `--theme-primary-hover`, so a toggle that is on and the palette drawer's Apply button painted their
+  fallbacks on hover in Light and Dark alike, `#c49d2f` and `#c49f2f`. `themes.css` now declares the token
+  beside its other aliases, from `--v4-accent-hover`: both palettes already pick that color as `accentHover`,
+  `#B01C1C` on Light and `#FF6257` on Dark. That goes deeper on Light and brighter on Dark, which one
+  `color-mix` of the accent can't do, and a new palette field would only have repeated the value. The
+  palette drawer's Random button had the same gold written out as its hover tint,
+  `rgba(212, 175, 55, 0.1)`, and now takes a 10% tint of the accent. The fallbacks in the other hover rules
+  that named it, on Random, the favorite star and the share button, could never paint and are gone.
+
+- **The labels on the accent read properly in Light.** The Apply button and active filter chips read
+  `--theme-text-on-primary`, which nothing declared either, so they painted its `#000` fallback: fine on gold,
+  3.88:1 on the resting red and 3.03:1 on the new deeper hover. `themes.css` now aliases it to
+  `--theme-text-header`, the token the other activated buttons use, and both `#000` fallbacks are gone. Light
+  becomes white at 5.42:1 resting and 6.93:1 on hover. Dark becomes near-black at 5.00:1 and 6.73:1, down from
+  5.30:1 and 7.14:1 on pure black.
+- **Bundle:** the code in these fixes shrinks by 32 bytes and the What's New entry adds 457, so the one-locale
+  payload grows by a net 425 and stays at 99.3% of its budget. No limit moved.
+
+### Tests
+
+- **`theme-token-contract.test.ts` fails on any `--theme-*` token the app reads and nothing declares**, the
+  gap that let this hide, and on the retired gold in any hover rule. The one token still undeclared,
+  `--theme-empty-state-background`, sits in an allow-list with its reason, and an entry that stops being a gap
+  fails too.
+- **`e2e/theme-hover.spec.ts` hovers the toggle, Apply and Random in a real browser and measures the label
+  contrast**, switching theme with the page open, because only a browser resolves these tokens through the
+  stylesheet and the applied palette.
+
 ## [5.16.11] - 2026-11-02
 
 ### Fixed
