@@ -517,7 +517,7 @@ export class ConfigSidebar extends BaseLitComponent {
       }
 
       .config-select:focus {
-        outline: 2px solid var(--theme-primary, #d4af37);
+        outline: 2px solid var(--theme-primary);
         outline-offset: 1px;
       }
 
@@ -684,7 +684,7 @@ export class ConfigSidebar extends BaseLitComponent {
         justify-content: center;
         gap: 8px;
         padding: 10px 16px;
-        background: var(--theme-primary, #d4af37);
+        background: var(--theme-primary);
         color: var(--theme-background, #1a1a1a);
         border: none;
         border-radius: 6px;

@@ -378,8 +378,8 @@ export class ResultCard extends BaseLitComponent {
       }
 
       :host([selected]) .ticket {
-        border-color: var(--theme-primary, #d4af37);
-        box-shadow: 0 0 0 2px var(--theme-primary, #d4af37);
+        border-color: var(--theme-primary);
+        box-shadow: 0 0 0 2px var(--theme-primary);
       }
 
       /* ---- verdict stub ------------------------------------------------ */
@@ -640,7 +640,7 @@ export class ResultCard extends BaseLitComponent {
         font-size: 12.5px;
         line-height: 1.15;
         padding: 0 6px;
-        background: var(--theme-primary, #d4af37);
+        background: var(--theme-primary);
         color: var(--theme-card-background, #121212);
         transition: filter var(--v4-transition-fast, 150ms);
       }
@@ -683,7 +683,7 @@ export class ResultCard extends BaseLitComponent {
       }
 
       .menu-btn:focus-visible {
-        outline: 2px solid var(--theme-primary, #d4af37);
+        outline: 2px solid var(--theme-primary);
         outline-offset: -2px;
       }
 
@@ -742,7 +742,7 @@ export class ResultCard extends BaseLitComponent {
       }
 
       .menu-item:focus-visible {
-        outline: 2px solid var(--theme-primary, #d4af37);
+        outline: 2px solid var(--theme-primary);
         outline-offset: -2px;
       }
 
@@ -884,7 +884,7 @@ export class ResultCard extends BaseLitComponent {
       }
 
       .slot-picker-item:focus-visible {
-        outline: 2px solid var(--theme-primary, #d4af37);
+        outline: 2px solid var(--theme-primary);
         outline-offset: -2px;
       }
 

@@ -44,14 +44,14 @@ describe('theme token contract', () => {
   const declared = declaredTokens();
   const tokens = [...tokensRead()];
 
-  it('keeps the gold of the retired themes out of every hover rule', () => {
+  it('keeps the gold of the retired themes out of every source', () => {
     const gold = /#d4af37|#c49[df]2f|212,\s*175,\s*55/i;
-    const hovers = sourceFiles().flatMap((file) =>
-      [...read(`src/${file}`).matchAll(/([^{}]*:hover[^{}]*)\{([^{}]*)\}/g)]
-        .filter(([, , body]) => gold.test(body))
-        .map(([, selector]) => `${file}: ${selector.trim()}`)
+    const offenders = sourceFiles().flatMap((file) =>
+      read(`src/${file}`)
+        .split('\n')
+        .flatMap((line, index) => (gold.test(line) ? [`${file}:${index + 1}: ${line.trim()}`] : []))
     );
-    expect(hovers).toEqual([]);
+    expect(offenders).toEqual([]);
   });
 
   it('declares every token the app reads', () => {
