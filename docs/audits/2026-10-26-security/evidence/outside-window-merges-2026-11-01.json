@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "preparedLocalDate": "2026-11-01",
   "timezone": "America/New_York",
-  "scope": "Second merge-day stretch: the open pull requests that do not depend on the AP-43 window, plus #420 and #419, merged ahead of the M line, and their deploys. The agent's list of what does not depend on the window also named the seroval floor bump, which it left until after the queue because a lockfile change starts all eight deploy workflows, and the image 1.3.5 deploy, which stays on its own hold.",
+  "scope": "Second merge-day stretch: the open pull requests that do not depend on the AP-43 window, plus #420 and #419, merged ahead of the M line, and their deploys; then #421 later the same night (see pr421). The agent's list of what does not depend on the window also named the seroval floor bump, which it left until after the queue because a lockfile change starts all eight deploy workflows, and the image 1.3.5 deploy, which stays on its own hold.",
   "authorization": {
     "request": "Maintainer, in chat, 2026-11-01: \"Let's merge what we can that doesn't depend on the window.\"",
     "merging": "The agent ran each merge with the maintainer's login, so GitHub names the maintainer as the merger.",
@@ -29,7 +29,8 @@
     {
       "item": "#389 and #366 included",
       "by": "agent, on the request",
-      "answer": "The agent had recommended leaving these two where they were, and the maintainer then asked to merge what can go. The agent took that to include them. For #366 the agent's own table had listed 'you confirm it's ready' as a condition of going early; the agent did not ask, and the maintainer did not confirm. #366 was merged on the agent's reading of the request and of the 2026-11-01 ruling that kept it in the batch, a ruling that placed it after the whole queue. Its description says the research remains in progress."
+      "answer": "The agent had recommended leaving these two where they were, and the maintainer then asked to merge what can go. The agent took that to include them. For #366 the agent's own table had listed 'you confirm it's ready' as a condition of going early; the agent did not ask, and the maintainer did not confirm. #366 was merged on the agent's reading of the request and of the 2026-11-01 ruling that kept it in the batch, a ruling that placed it after the whole queue. Its description says the research remains in progress.",
+      "laterRuling": "Asked afterward whether to keep #366's research on main, the maintainer answered 'Keep it'. That ruling came after the merge."
     },
     {
       "item": "One web deploy for three pull requests",
@@ -39,7 +40,8 @@
   ],
   "main": {
     "before": "d04d15402361156a7978036cd096d0a318ef5399",
-    "after": "6df8366d2757d8dcb6a9e9217ec0c453870492aa"
+    "after": "6df8366d2757d8dcb6a9e9217ec0c453870492aa",
+    "afterPr421": "bac2f382182e3d185f75c439b1bac55c4c06e674"
   },
   "merges": [
     {
@@ -252,19 +254,24 @@
     "oauth": "/health returned healthy."
   },
   "notYetDone": [
-    "The maintainer's checks asked for in chat: on Windows 11, the scrollbar position, one main scrollbar in the Dye Mixer with Options and the Color Palette still scrolling on their own, and nothing unstyled after #417's CSS removal; and on a phone, the Palette Extractor.",
-    "A real XIVAuth sign-in. No live XIVAuth response has been captured, so a real name appearing is still unproven; the old fallback was matched by one sign-in before the fix.",
-    "Acceptance of any of the four deploys: the maintainer has approved the runs and has not accepted them."
+    "The maintainer's checks asked for in chat: on Windows 11, the scrollbar position, one main scrollbar in the Dye Mixer with Options and the Color Palette still scrolling on their own, and nothing unstyled after #417's CSS removal; and on a phone, the Palette Extractor. These apply unchanged to web 5.16.8.",
+    "Acceptance of web 5.16.8, api 0.21.2, discord 5.9.9 and oauth 3.2.2: the maintainer has approved the runs and has not accepted them."
   ],
   "mLineRenumber": {
     "targets": {
       "M-API": "0.21.3",
-      "M-WEB": "5.16.8",
-      "M-DISCORD": "5.9.9"
+      "M-WEB": "5.16.9",
+      "M-DISCORD": "5.9.10"
     },
-    "simulatedOn": "6df8366d2757d8dcb6a9e9217ec0c453870492aa",
-    "finalTree": "8f92b6e433288b80bc6c3139df7efdeaab979178",
-    "limits": "Merge level only, with no install, build or tests, using the branch heads of 2026-11-01 before this record, on main at 6df8366d. Rerun after any new commit on the line or on main. Open draft #421 already takes oauth 3.2.2, web 5.16.8 and discord 5.9.9: if it merges first, every 'oauth 3.2.1' rule changes and M-WEB and M-DISCORD move again, to 5.16.9 and 5.9.10. packages/bot-logic/src/commands/swatch.test.ts auto-merged with changes from both sides and was read, not run.",
+    "simulatedOn": "bac2f382182e3d185f75c439b1bac55c4c06e674",
+    "headsUsed": {
+      "#411": "e9dc7e0d",
+      "#414": "5cba969e"
+    },
+    "finalTree": "63ed7ad55a3db4e2cede084918e20664571556de",
+    "limits": "Merge level only, with no install, build or tests, using the branch heads above. This record changes #411's documents, and so that tree id, and no M or F rule depends on those documents. Rerun after any new commit on the line or on main. packages/bot-logic/src/commands/swatch.test.ts auto-merged with changes from both sides and was read, not run. Each simulated step merged the branch onto the previous step; the real flow updates each PR with main first, which gives the same trees only if the same resolutions are made. The tree keeps #402's Hair/Skin clause; dropping it leaves #402 with no net change and a different tree id, with no web run either way.",
+    "selectedRuns": "From the simulated trees and each workflow's path filter, not observed live, so read the run list at merge time. Last web run: #396 (not #402). Last discord run: #398. Last api run: #395. Moderation: #399 for M-MODERATION, and #414 for the activation.",
+    "silentAtTakenNumber": "M-API only: its package.json, README row, current row and Conditional M row merge cleanly at 0.21.2. At #398 only the Conditional M row is silent, because main's 5.9.9 makes the rest conflict visibly.",
     "steps": [
       {
         "pullRequests": "#391, #392, #394",
@@ -276,31 +283,31 @@
         "pullRequests": "#395",
         "conflicts": "`README.md`, api `CHANGELOG.md`, `docs/versions.md`",
         "setByHand": "api `package.json`, the README api row, the current `docs/versions.md` row and its Conditional M row: all to 0.21.3",
-        "rule": "Changelog: #395's section as `[0.21.3]` above `main`'s `[0.21.2]`; keep `main`'s `[0.21.1]` dated 2026-10-29, not the branch's 2026-10-27. History: v0.21.3 above v0.21.2. README: keep oauth 3.2.1."
+        "rule": "Changelog: #395's section as `[0.21.3]` above `main`'s `[0.21.2]`; keep `main`'s `[0.21.1]` dated 2026-10-29, not the branch's 2026-10-27. History: v0.21.3 above v0.21.2. README: keep oauth 3.2.2."
       },
       {
         "pullRequests": "#396",
         "conflicts": "`README.md`, web `CHANGELOG.md`, web `package.json`, `docs/versions.md`",
         "setByHand": "none",
-        "rule": "Web 5.16.8 in `package.json`, the README row and the current row; keep discord 5.9.8 from `main`. Changelog: `[5.16.8]` above `[5.16.7]`, `[5.16.6]` and `[5.16.5]`. History: v5.16.8 above those three. Conditional M hunk: web v5.16.8, api v0.21.3, in the branch's row order."
+        "rule": "Web 5.16.9 in `package.json`, the README row and the current row, taking neither side's number (`main` 5.16.8, branch 5.16.5); keep discord 5.9.9 from `main`. Changelog: `[5.16.9]` above `[5.16.8]`, `[5.16.7]`, `[5.16.6]` and `[5.16.5]`. History: v5.16.9 above those four. Conditional M hunk: web v5.16.9, api v0.21.3, in the branch's row order. This is M-WEB's selected run."
       },
       {
         "pullRequests": "#397",
         "conflicts": "`README.md`, `docs/versions.md`",
         "setByHand": "none",
-        "rule": "Only because the neighboring api row moved. Per row take the higher version: oauth 3.2.1, api 0.21.3, og 2.12.3. Conditional M hunk: the branch's row order, web v5.16.8, api v0.21.3."
+        "rule": "Per row take the higher version: oauth 3.2.2, api 0.21.3, og 2.12.3. Conditional M hunk: the branch's row order, og v2.12.3, web v5.16.9, api v0.21.3."
       },
       {
         "pullRequests": "#398",
-        "conflicts": "`README.md`, discord `CHANGELOG.md`, `docs/versions.md`",
-        "setByHand": "discord `package.json`, the README discord row, the current `docs/versions.md` row and its Conditional M row: all to 5.9.9",
-        "rule": "Changelog: `[5.9.9]` above `[5.9.8]`. History: v5.9.9 above v5.9.8. Keep web 5.16.8. Edit the Conditional M row only: a global 5.9.8 replace would corrupt `main`'s history row and the Prepared source row."
+        "conflicts": "`README.md`, discord `CHANGELOG.md`, discord `package.json`, `docs/versions.md`",
+        "setByHand": "the Conditional M discord row in `docs/versions.md`: to v5.9.10",
+        "rule": "Discord 5.9.10 in `package.json`, the README row and the current row, taking neither side's number (`main` 5.9.9, branch 5.9.8). Changelog: `[5.9.10]` above `[5.9.9]` and `[5.9.8]`. History: v5.9.10 above v5.9.9 and v5.9.8. Keep web 5.16.9. Do not replace 5.9.8 globally, because that corrupts `main`'s `[5.9.8]` changelog heading and v5.9.8 history row. The Prepared source row is v5.9.9 and stays."
       },
       {
         "pullRequests": "#399",
         "conflicts": "`docs/versions.md`",
         "setByHand": "none",
-        "rule": "Current rows: moderation 1.9.1, keep oauth 3.2.1. Conditional M hunk: the branch's row order, moderation v1.9.1, discord v5.9.9. Never take the branch's oauth 3.2.0."
+        "rule": "Current rows: moderation 1.9.1, keep oauth 3.2.2. Conditional M hunk: the branch's row order, moderation v1.9.1, discord v5.9.10. Never take the branch's oauth 3.2.0."
       },
       {
         "pullRequests": "#400",
@@ -312,34 +319,39 @@
         "pullRequests": "#402",
         "conflicts": "`docs/versions.md`",
         "setByHand": "none",
-        "rule": "Replace the v5.16.8 history row with #402's wording at v5.16.8, and keep `main`'s v5.16.7, v5.16.6 and v5.16.5 rows. That row is #402's whole net delta, because its code and 5.16.4 changelog bullet are already on `main`. The row claims a Hair/Skin restore that `main` records under 5.16.4, so decide then whether to keep that clause; the simulation recommended dropping it. This merge should start no web run, so M-WEB's selected run is #396's."
+        "rule": "Replace the v5.16.9 history row with #402's wording at v5.16.9, and keep `main`'s v5.16.8, v5.16.7, v5.16.6 and v5.16.5 rows. That row is #402's whole net delta, because its code files match `main` and its changelog and `CLAUDE.md` additions resolve to `main`'s blobs. The row claims a Hair/Skin restore that `main` records under 5.16.4, so decide then whether to keep that clause; the first simulation recommended dropping it. This merge should start no web run: M-WEB's selected run is #396's, so do not reject that one as stale."
       },
       {
-        "pullRequests": "#403, #404, #406",
+        "pullRequests": "#403, #404",
         "conflicts": "none",
         "setByHand": "none",
-        "rule": "None."
+        "rule": "None. #404's net change is two documents, with nothing under `apps/discord-worker`."
       },
       {
         "pullRequests": "#405",
         "conflicts": "`README.md`, `docs/versions.md`",
         "setByHand": "none",
-        "rule": "Per row take the higher version: oauth 3.2.1, api 0.21.3, og 2.12.4. Conditional M hunk: the branch's row order, discord v5.9.9, og v2.12.4, web v5.16.8, api v0.21.3."
+        "rule": "Per row take the higher version: oauth 3.2.2, api 0.21.3, og 2.12.4. Conditional M hunk: the branch's row order, discord v5.9.10, og v2.12.4, web v5.16.9, api v0.21.3."
+      },
+      {
+        "pullRequests": "#406",
+        "conflicts": "none",
+        "setByHand": "none",
+        "rule": "None."
       },
       {
         "pullRequests": "#411",
         "conflicts": "`docs/research/index.md`, `docs/versions.md`",
         "setByHand": "none",
-        "rule": "Keep every research row. Prepared source hunk: keep `main`'s discord v5.9.8 and #411's presets-api v2.8.2. Do not bump that row to 5.9.9, because it lists bot-logic 4.12.0."
+        "rule": "Keep every research row. Prepared source hunk: keep `main`'s discord v5.9.9 and #411's presets-api v2.8.2. Do not bump that row to 5.9.10, because it lists bot-logic 4.12.0."
       },
       {
         "pullRequests": "#414",
         "conflicts": "`docs/versions.md`",
         "setByHand": "none",
-        "rule": "Current rows: moderation 1.9.2, keep oauth 3.2.1. The Conditional M moderation row stays v1.9.1."
+        "rule": "Current rows: moderation 1.9.2, keep oauth 3.2.2. The Conditional M moderation row stays v1.9.1. This step has two merge bases, and only this file conflicted."
       }
-    ],
-    "m5SelectedRun": "#402's merge now changes only docs/versions.md, so it should start no web run, and M-WEB's selected run is #396's. Read from the simulated trees and deploy-web-app.yml's path filter, not observed live."
+    ]
   },
   "deviations": [
     "The first preview gate was launched before the predicted chain was complete, so the preview was at the wrong commit. It was stopped at once and no result from it is used.",
@@ -347,9 +359,75 @@
     "#418's original session started its own merge of main into that branch. The agent told it not to push, and it pushed nothing."
   ],
   "followUps": [
-    "A failed XIVAuth roster fetch overwrites a good name with the fallback, on the account and its presets, until the next good sign-in. The maintainer started a separate session for this on 2026-11-01; it is open as draft #421, which takes oauth 3.2.2, web 5.16.8 and discord 5.9.9, and nothing from it has merged.",
     "@xivdyetools/types XIVAuthCharacterRegistration still declares a required verified boolean and no verified_at. oauth narrows it locally.",
-    "The policy's section 11 says significant changes are announced in the Discord server, so the one batch announcement should cover #420.",
-    "docs/versions.md on main says of discord 5.9.8 'no register-commands', but run 41369716760's 'Register Discord commands' step ran and succeeded. The agent asked #421's session to correct that row."
-  ]
+    "The one batch announcement should cover #421: the maintainer answered 'Yes, include it' in its session, and no deadline was set. Covering #420 is the agent's reading of the bot policy's section 11 and the Terms, which promise a Discord announcement for significant changes; it was not separately ruled. The candidate line in #421's description needs rewording before use.",
+    "Six older rows in docs/versions.md say 'no register-commands' (v5.8.10, v5.8.3, v5.7.1, v5.6.5, v5.6.4, v5.6.2). Their deploy runs have not been checked.",
+    "identity-timeouts.sqlite.test.ts 'get and apply share one deadline' timed out once when every hash was made slow in a throwaway copy. CI has not failed on it, and the cause is not confirmed.",
+    "Before IDENTITY_SPLIT_ENABLED is activated, decide whether a detach should carry the old row's name when the roster fetch fails. It is unreachable while the flag is false.",
+    "PRIVACY.md's sentence that linking Discord later moves presets at the next sign-in describes behavior that answers 503 while IDENTITY_SPLIT_ENABLED is false. It predates this work and is not changed here.",
+    "The parity gate does not pin #421's new policy sentence, so it would still pass if the keep behavior were removed."
+  ],
+  "pr421": {
+    "request": "Maintainer, in chat: 'let's monitor PR 421 and related session for it -- and see if this is something we can merge today or wait until after the window.'",
+    "what": "A failed XIVAuth roster fetch now keeps an existing account's stored name instead of overwriting it with the fallback. It also changes the policy text on four surfaces in six languages, so it takes oauth 3.2.2, web 5.16.8 and discord 5.9.9.",
+    "origin": "A session the maintainer started from the agent's proposal, after the first review named this as a finding. The agent asked that session to remove a false 'no register-commands' clause from the v5.9.8 row, and it did.",
+    "redCheckBeforeReview": "CI run 41374737229 failed on identity-timeouts.sqlite.test.ts. The session traced it to a timing race in two tests, written 2026-10-29 and on main since #378 merged on 2026-11-01 (fa563a9a), and fixed the tests in 41be052f with no production change.",
+    "review": "At 41be052f: full gate 62 of 62 turbo tasks, test:scripts, Playwright chromium 179 of 179, build:check, and the timing test file five runs in a row, all passing. Eight independent read-only reviews (the fix, the policy facts, the release, and one per translation) passed with no blocker or should-fix.",
+    "rulings": [
+      {
+        "question": "When should it merge?",
+        "answer": "Tonight (the agent's recommended option)"
+      },
+      {
+        "question": "PR decision 1: a name kept after a failed lookup isn't re-checked",
+        "answer": "Accept (the agent's recommended option)"
+      },
+      {
+        "question": "PR decision 2: [null] counts as a delivered roster",
+        "answer": "Keep as is (the agent's recommended option)"
+      },
+      {
+        "question": "Final six-language policy text; the maintainer's earlier 'Yes, update wording' came before the translations existed",
+        "answer": "Accept (the agent's recommended option). The option stated that no lawyer has read the text."
+      }
+    ],
+    "merge": {
+      "mergeCommit": "bac2f382182e3d185f75c439b1bac55c4c06e674",
+      "mainTree": "7e3f1bcfd06ba54229dce09987733508a9af73be",
+      "mergedHead": "41be052fd853c914d3993ff90cd50ee5c1d126c4",
+      "mergedAt": "2026-11-02T02:22:40Z",
+      "localDate": "2026-11-01, 9:22 PM Eastern",
+      "mainCi": "success",
+      "note": "The head already contained main, so no update was needed. The agent ran the merge with the maintainer's login."
+    },
+    "deploys": [
+      {
+        "run": 41377398213,
+        "worker": "oauth 3.2.2",
+        "cloudflareVersion": "4a964f05-019e-4fea-aade-c813d344e48e",
+        "finishedAt": "2026-11-02T02:25:47Z",
+        "accepted": false
+      },
+      {
+        "run": 41377398249,
+        "worker": "discord 5.9.9",
+        "cloudflareVersion": "983095c1-dc40-4528-b26e-ef2726d71bfa",
+        "finishedAt": "2026-11-02T02:26:44Z",
+        "accepted": false,
+        "commandRegistration": "The deploy re-registers commands; the maintainer was told first. No file under apps/discord-worker other than policy documents, changelogs and package.json changed since 885525f2, so the command list is unchanged. No command diff was put to the maintainer."
+      },
+      {
+        "run": 41377398224,
+        "worker": "web 5.16.8",
+        "pagesDeployment": "a3a6ad0b.xiv-colorexplorer.pages.dev",
+        "finishedAt": "2026-11-02T02:28:07Z",
+        "accepted": false
+      }
+    ],
+    "gate": "The agent asked the maintainer to sign in first, while 3.2.1 was still live, and to approve OAuth right after, because the documents went live at merge. The merge did not wait for the sign-in, although the agent's merge-tonight option had asked for the sign-in first. The maintainer reported 'I have performed all four steps' and that the three components were deploying. The approvals API shows each approval under the maintainer's login, which the agent also uses, so it cannot separate the two.",
+    "liveChecks": "The version constant in the live modals chunk is 5.16.8. PRIVACY.md on main carries the new sentence. The oauth, bot and api /health endpoints returned healthy or ok. Web 5.16.8, oauth 3.2.2 and discord 5.9.9 replace web 5.16.7, oauth 3.2.1 and discord 5.9.8, whose acceptance was still open, so acceptance moves to the new versions; the agent said so in chat, and the maintainer was not asked.",
+    "liveSignIn": "The agent asked the maintainer to sign in on oauth 3.2.1 and then approve OAuth. The maintainer reported 'I have performed all four steps. I see my character's name instead of \"XIVAuth User\".' The order is the one the agent asked for; the maintainer did not state it, and no sign-in time was captured. OAuth's job started at 02:24:43Z and its Cloudflare deploy ended at 02:25:39Z, 10 seconds before the report, so the sign-in was very likely on 3.2.1; 3.2.2 also contains #419. The agent treated this as the live proof of #419. The report does not say whether the name was seen on presets as well, and no response was captured.",
+    "notExercisedLive": "The failed-lookup path of 3.2.2 has only been tested with mocks, because it needs a real XIVAuth failure.",
+    "bodyCorrections": "The agent added the rulings and three corrections to #421's description before merging. It said that the candidate announcement line is too broad, that M-DISCORD's package.json conflicts visibly once #421 is on main, and that a kept unverified name can be published for the first time on an old row with no presets."
+  }
 }
