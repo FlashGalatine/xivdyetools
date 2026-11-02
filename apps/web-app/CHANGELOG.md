@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.16.5] - 2026-11-01
+
+### Fixed
+
+- Main-content scrollbars sat inside the shell's 24px padding because each tool panel, including Community Presets, created a second scroll container (#368). Let the shell own scrolling and let the tool wrapper grow with its content. The scrollbar now meets the content-pane edge, including the window edge when the palette is closed. Preserve content padding and print expansion.
+- The Dye Mixer restored an inner `height: 100%` / `overflow-y: auto` panel after shell layout, producing a second scrollbar from just 3–5px of overflow. Let the panel grow in the shell, keeping all matching results reachable and Options/Color Palette scrolling independent.
+- On phones, the Palette Extractor pinned its image, color bar and palette header by giving the workspace the tool panel's full height, which the shell change above removed: they scrolled away and the card sheet kept a scrollbar of its own. Make them sticky inside the shell's scroller on a glass ground, so the cards scroll under them with the shell's single scrollbar, on phones at least 560px tall; on shorter (often landscape) phones they scroll away with the cards, which stay reachable.
+- Add browser regression checks for desktop palette states, mobile scrolling, bottom-content reachability, the Mixer's single scroll owner with all result details enabled, the Extractor's pinned image on phones and reachable cards on a landscape phone, and the sidebar-free reader's print layout.
+
 ## [5.16.4] - 2026-10-28
 
 ### Fixed

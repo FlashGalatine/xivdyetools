@@ -449,9 +449,9 @@ export class V4LayoutShell extends BaseLitComponent {
     // to one sheet, with the app bar, FABs and Options column printed on it
     // (styles/v4-layout.css reaches only the host, not this shadow root).
     // Last in the list so it beats the max-width: 768px block, which a narrow
-    // print page also matches; overflow is !important because v4-layout.ts
-    // gives .v4-tool-main an inline overflow-y: auto. The rationale lives out
-    // here because comments inside a css`` literal ship verbatim.
+    // print page also matches. Reset every content wrapper so the whole tool
+    // can flow across pages. The rationale lives out here because comments
+    // inside a css`` literal ship verbatim.
     css`
       @media print {
         :host,
