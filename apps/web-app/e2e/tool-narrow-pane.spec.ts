@@ -335,11 +335,11 @@ test.describe('Tools in a narrow pane', () => {
         await expect(menu).toBeVisible();
         await expectInsidePane(page, menu);
 
-        // Bottom row first, the way a pointer comes up from the button, and by the
-        // row's right end: that's the part of it no other submenu covers.
+        // Up from the button and back down, by each row's right end: going down, that's
+        // the only part of the next row that the open submenu above it leaves uncovered.
         const rows = menu.locator('.menu-item.has-submenu');
         await expect(rows).toHaveCount(3);
-        for (const index of [2, 1, 0]) {
+        for (const index of [2, 1, 0, 1, 2, 1, 0]) {
           const row = rows.nth(index);
           const { width, height } = await box(row);
           await row.hover({ position: { x: width - 12, y: height / 2 } });
