@@ -2,7 +2,7 @@
 
 ---
 
-## Web-App Version 5.16.9 — November 1, 2026
+## Web-App Version 5.16.9 — November 2, 2026
 
 ### Color Palette
 - **The sideways scrollbar is gone.** The small stray scrollbar along the bottom of the Color Palette no longer appears.

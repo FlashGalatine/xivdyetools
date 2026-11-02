@@ -174,6 +174,14 @@ test.describe('Palette drawer sideways overflow', () => {
     expect(tip.right, `${tip.name} right edge`).toBeLessThanOrEqual(tip.clip.right);
     expect(tip.top, `${tip.name} top edge`).toBeGreaterThanOrEqual(tip.clip.top);
     expect(tip.bottom, `${tip.name} bottom edge`).toBeLessThanOrEqual(tip.clip.bottom);
+
+    // A box check can't see paint order. The tooltip's own z-index only counts
+    // inside the hovered swatch, so the swatch has to outrank every row's stars.
+    const [swatchLayer, starLayer] = await swatch.evaluate((el) => [
+      getComputedStyle(el).zIndex,
+      getComputedStyle(el.querySelector('.swatch-favorite-btn')!).zIndex,
+    ]);
+    expect(Number(swatchLayer), `${tip.name} above the stars`).toBeGreaterThan(Number(starLayer));
   }
 
   /** Scroll the panel until the swatch's top is this far below the panel's top. */
@@ -224,6 +232,7 @@ test.describe('Palette drawer sideways overflow', () => {
           locale
         );
         await gotoTool(page, 'harmony');
+        await expect(page.locator('html')).toHaveAttribute('lang', locale);
         const drawer = page.locator('dye-palette-drawer');
         await drawer.evaluate((el, width) => {
           el.style.setProperty('--v4-drawer-width', width);

@@ -42,6 +42,19 @@ const SPECTRUM_FILTERS: { key: SpectrumKey; labelKey: string }[] = [
 /**
  * What a dye tooltip needs above its swatch beyond its own height: the 6px gap,
  * plus what the swatch's 1.1 hover scale adds to the gap and the tooltip.
+ *
+ * How the tooltips stay whole, noted here because comments in the styles below
+ * ship in the layout chunk, which sits at its budget:
+ * - A hidden tooltip still counts as scrollable overflow. Centered on an outer
+ *   column, a long name ran past the drawer: a sideways scrollbar at rest, and a
+ *   cut-off name on hover. The outer columns of the five grow inward from their
+ *   swatch's edge instead.
+ * - `.tooltip-below` is set by placeSwatchTooltip when the panel's top edge would
+ *   cut a tooltip off.
+ * - `.swatch:hover` ranks above the favorite stars (20): the tooltip lives in its
+ *   stacking context, and the stars of the row it opens over would paint across it.
+ * - The Favorites section doesn't clip, so a tooltip can overhang it. Its header
+ *   follows the section's corners by itself instead.
  */
 const SWATCH_TOOLTIP_CLEARANCE_PX = 12;
 
@@ -370,8 +383,6 @@ export class DyePaletteDrawer extends BaseLitComponent {
         border-radius: 8px;
       }
 
-      /* The section doesn't clip, so a dye tooltip can overhang it. Its header
-         follows the section's corners by itself instead. */
       .favorites-section .section-header {
         border-radius: 7px;
       }
@@ -469,7 +480,7 @@ export class DyePaletteDrawer extends BaseLitComponent {
 
       .swatch:hover {
         transform: scale(1.1);
-        z-index: 10;
+        z-index: 21;
         border-color: rgba(255, 255, 255, 0.5);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
       }
@@ -500,10 +511,6 @@ export class DyePaletteDrawer extends BaseLitComponent {
         opacity: 1;
       }
 
-      /* A hidden tooltip still counts as scrollable overflow. Centered on an
-         outer column, a long name ran past the drawer: a sideways scrollbar at
-         rest, and a cut-off name on hover. The outer columns of the five grow
-         inward from their swatch's edge instead. */
       .swatch:nth-child(5n + 1)[title]::after {
         left: 0;
         transform: none;
@@ -515,7 +522,6 @@ export class DyePaletteDrawer extends BaseLitComponent {
         transform: none;
       }
 
-      /* Set by placeSwatchTooltip when the panel's top edge would cut it off */
       .swatch.tooltip-below[title]::after {
         top: calc(100% + 6px);
         bottom: auto;
