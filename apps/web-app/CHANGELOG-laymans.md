@@ -2,6 +2,22 @@
 
 ---
 
+## Web-App Version 5.16.12 — November 2, 2026
+
+### Dye card menus
+- **Menus stay on screen.** In smaller windows and on phones, a dye card's three-dot menu and its submenus no longer run off the left side, so every option can be clicked.
+
+### Harmony Explorer
+- **Dye markers fit small color wheels.** With Options and the Color Palette both open, markers shrink with the wheel, so Monochromatic and Shades numbers stay readable and clickable.
+
+### Dye Comparison
+- **"What actually differs" stays readable in smaller windows.** Values now move under their label instead of being squeezed down to nothing.
+
+### Swatch Matcher
+- **More room for the grid in smaller windows.** With both side panels open, the grid starts much higher up and shows all eight columns in narrower windows. Below about 880 px it still scrolls sideways.
+- **Keyboard picks stay in view.** Choosing a swatch with the keyboard keeps that swatch on screen. On the top rows of the Eye and other long palettes, you may need to scroll a little to see the match.
+- **Closing a side panel keeps your result in view.** It no longer ends up above the window when it moves beside the grid.
+
 ## Web-App Version 5.16.11 — November 2, 2026
 
 ### Harmony Explorer, Dye Comparison and Accessibility Checker

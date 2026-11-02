@@ -46,6 +46,30 @@ import { DyeService } from '@services/dye-service-wrapper';
 const TIER_RAMP_DARK = ['#5bbd68', '#8bc34a', '#ffc107', '#f4645a'] as const;
 const TIER_RAMP_LIGHT = ['#137A33', '#1C7D3A', '#B45309', '#B91C1C'] as const;
 
+/** The context menu's and each submenu's width, as in the stylesheet below. */
+const MENU_WIDTH = 200;
+/** Between a submenu and its menu, when there's room for one beside the other. */
+const SUBMENU_GAP = 8;
+/** Between a menu and the edge of the box that clips it. */
+const MENU_EDGE = 8;
+/** What a submenu overlapping its menu leaves uncovered at the end of each row. */
+const MENU_ROW_KEPT = 44;
+
+/** The parent of an element, through slots and shadow roots. */
+function composedParent(el: Element): Element | null {
+  return el.assignedSlot ?? el.parentElement ?? (el.getRootNode() as ShadowRoot).host ?? null;
+}
+
+/** The left side of the nearest box that clips an element: normally the tool's scroll pane. */
+function clippingLeft(el: Element): number {
+  for (let node = composedParent(el); node; node = composedParent(node)) {
+    if (getComputedStyle(node).overflowX !== 'visible') {
+      return node.getBoundingClientRect().left + node.clientLeft;
+    }
+  }
+  return 0;
+}
+
 /**
  * Data structure for the result card
  */
@@ -785,9 +809,9 @@ export class ResultCard extends BaseLitComponent {
       /* Nested submenu - pops LEFT from parent menu */
       .submenu {
         position: absolute;
-        right: calc(100% + 8px);
+        right: var(--submenu-right, calc(100% + 8px));
         top: -6px;
-        width: 200px;
+        width: var(--submenu-width, 200px);
         background: var(--theme-card-background, #2a2a2a);
         border: 1px solid var(--theme-border, #3a3a3a);
         border-radius: 8px;
@@ -815,6 +839,7 @@ export class ResultCard extends BaseLitComponent {
       .submenu .menu-item {
         font-size: 12px;
         padding: 8px 14px;
+        overflow-wrap: anywhere;
       }
 
       /* Menu section divider */
@@ -1536,6 +1561,49 @@ export class ResultCard extends BaseLitComponent {
     e.preventDefault();
   };
 
+  /**
+   * Keep the open menu inside the box that clips the card. It opens from the card's
+   * right corner and each submenu opens left of that, and in a narrow pane that's
+   * over the side panel, where the pane cuts it off and nothing scrolls to it.
+   *
+   * So the menu narrows, and never moves right: past the card's own edge it would go
+   * under the next card, which paints over a hovered card's menu. With no room left
+   * of the menu, a submenu overlaps it instead, from the pane's edge. It leaves the
+   * end of each row uncovered, so a pointer or a finger can still get to the next row.
+   * With room for the designed layout, this changes nothing.
+   */
+  private fitMenu(): void {
+    const menu = this.renderRoot.querySelector<HTMLElement>('.context-menu');
+    const anchor = menu?.parentElement;
+    if (!menu || !anchor) return;
+
+    const left = clippingLeft(this) + MENU_EDGE;
+    const right = anchor.getBoundingClientRect().right;
+
+    const width = Math.min(MENU_WIDTH, right - left);
+    menu.style.width = `${width}px`;
+
+    if (right - width - SUBMENU_GAP - MENU_WIDTH >= left) {
+      menu.style.removeProperty('--submenu-width');
+      menu.style.removeProperty('--submenu-right');
+      return;
+    }
+    const submenuWidth = Math.min(MENU_WIDTH, right - MENU_ROW_KEPT - left);
+    // A submenu is placed from its row, whose right edge is inside the menu's 1px border.
+    const fromRow = right - 1 - (left + submenuWidth);
+    menu.style.setProperty('--submenu-width', `${submenuWidth}px`);
+    menu.style.setProperty('--submenu-right', `${fromRow}px`);
+  }
+
+  private handleWindowResize = (): void => {
+    if (this.menuOpen) this.fitMenu();
+  };
+
+  protected override updated(changed: Map<PropertyKey, unknown>): void {
+    super.updated(changed);
+    if (changed.has('menuOpen') && this.menuOpen) this.fitMenu();
+  }
+
   private languageUnsubscribe: (() => void) | null = null;
 
   override connectedCallback(): void {
@@ -1543,6 +1611,7 @@ export class ResultCard extends BaseLitComponent {
     this.languageUnsubscribe = LanguageService.subscribe(() => this.requestUpdate());
     document.addEventListener('click', this.handleDocumentClick);
     document.addEventListener('keydown', this.handleKeyDown);
+    window.addEventListener('resize', this.handleWindowResize);
   }
 
   override disconnectedCallback(): void {
@@ -1551,6 +1620,7 @@ export class ResultCard extends BaseLitComponent {
     this.languageUnsubscribe = null;
     document.removeEventListener('click', this.handleDocumentClick);
     document.removeEventListener('keydown', this.handleKeyDown);
+    window.removeEventListener('resize', this.handleWindowResize);
   }
 
   /** One numeric-matrix cell */

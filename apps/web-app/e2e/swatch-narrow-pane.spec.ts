@@ -303,6 +303,154 @@ test.describe('Swatch Matcher in a narrow pane', () => {
     });
   }
 
+  // A pick by keyboard leaves focus on the cell. On a tall palette the verdict is too
+  // far below it for both to fit, and focus staying visible wins: the next Tab or
+  // Enter starts from there.
+  for (const index of [0, 20, 60, 100, 180]) {
+    test(`keeps the focused cell on screen after a keyboard pick of cell ${index}`, async ({
+      page,
+    }) => {
+      await openSwatch(page, { width: 1366, height: 768 });
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+
+      await cell(page, index).focus();
+      await page.keyboard.press('Enter');
+      await expect(page.getByText('IN THE CREATOR', { exact: true })).toBeVisible();
+      await page.waitForTimeout(400);
+
+      await expect(cell(page, index)).toBeFocused();
+      const pane = await box(scroller(page));
+      const focused = await box(cell(page, index));
+      // Its 3px outline, 2px off the cell, has to clear the pane's edge as well.
+      expect(focused.y - 5).toBeGreaterThanOrEqual(pane.y);
+      expect(focused.y + focused.height + 5).toBeLessThanOrEqual(pane.y + pane.height);
+    });
+  }
+
+  test('shows the verdict on a keyboard pick when it fits with the focused cell', async ({
+    page,
+  }) => {
+    await openSwatch(page, { width: 1366, height: 768 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+
+    await cell(page, 100).focus();
+    await page.keyboard.press('Enter');
+
+    const verdict = page.getByText('IN THE CREATOR', { exact: true });
+    await expect
+      .poll(async () => {
+        const top = (await box(verdict)).y;
+        const pane = await box(scroller(page));
+        return top >= pane.y && top <= pane.y + pane.height;
+      })
+      .toBe(true);
+  });
+
+  // Closing a panel moves stacked results up beside the grid and leaves the scroll
+  // position alone, so what was just revealed ended up above the pane.
+  for (const [name, close] of [
+    ['options', (page: Page) => page.locator('v4-config-sidebar .v4-sidebar-collapse').click()],
+    ['palette', (page: Page) => page.locator('dye-palette-drawer .close-btn').click()],
+  ] as const) {
+    test(`keeps a revealed verdict on screen when the ${name} panel closes`, async ({ page }) => {
+      await openSwatch(page, { width: 1366, height: 768 });
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+
+      await cell(page, 20).click();
+      const verdict = page.getByText('IN THE CREATOR', { exact: true });
+      await expect(verdict).toBeVisible();
+      await expect.poll(() => scroller(page).evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+
+      await close(page);
+
+      await expect
+        .poll(async () => {
+          const found = await box(verdict);
+          const pane = await box(scroller(page));
+          return found.y >= pane.y && found.y + found.height <= pane.y + pane.height;
+        })
+        .toBe(true);
+      // Beside the grid now, not under it.
+      const panel = await box(gridPanel(page));
+      expect((await box(verdict)).x).toBeGreaterThanOrEqual(panel.x + panel.width);
+    });
+  }
+
+  test('keeps revealed palette matches on screen when a panel closes', async ({ page }) => {
+    await openSwatch(page, { width: 1366, height: 768 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    const pick = page.locator('dye-palette-drawer .category-section .swatch-pick').first();
+    await pick.scrollIntoViewIfNeeded();
+    await pick.click();
+    const results = page.getByText('Closest Swatches', { exact: false }).first();
+    await expect(results).toBeVisible();
+    await expect.poll(() => scroller(page).evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+
+    await page.locator('v4-config-sidebar .v4-sidebar-collapse').click();
+
+    await expect
+      .poll(async () => {
+        const found = await box(results);
+        const pane = await box(scroller(page));
+        return found.y >= pane.y && found.y + found.height <= pane.y + pane.height;
+      })
+      .toBe(true);
+  });
+
+  // Fixed side padding left the panel 75px at 769px, and the Evercold notice alone
+  // came to 3,937px in a column that wide, so the grid started 5,440px down.
+  for (const width of [769, 800, 860]) {
+    test(`gives the grid panel the whole pane at ${width}px`, async ({ page }) => {
+      await openSwatch(page, { width, height: 768 });
+
+      const content = await scroller(page).evaluate((el) => {
+        const { paddingLeft, paddingRight } = getComputedStyle(el);
+        return el.clientWidth - parseFloat(paddingLeft) - parseFloat(paddingRight);
+      });
+      expect((await box(gridPanel(page))).width).toBeCloseTo(content, 0);
+      await expectWithinPane(page, gridPanel(page));
+      expect(await horizontalOverflow(scroller(page))).toBeLessThanOrEqual(1);
+    });
+  }
+
+  test('brings the grid up from 5,440px down at 769px', async ({ page }) => {
+    await openSwatch(page, { width: 769, height: 768 });
+    const pane = await box(scroller(page));
+    expect((await box(cell(page, 0))).y - pane.y).toBeLessThan(1400);
+  });
+
+  // 884px: both panels open, the pane is 302px, and that's 254px of panel for 236px
+  // of grid. Through 5.16.11 this took a 972px window.
+  test('shows all eight columns without sideways scrolling from 884px', async ({ page }) => {
+    await openSwatch(page, { width: 884, height: 768 });
+    expect(await horizontalOverflow(gridPanel(page))).toBeLessThanOrEqual(1);
+    await expectWithinPane(page, cell(page, 7));
+  });
+
+  // Room to spare: the padding that gives way below that is still all there.
+  test('keeps the designed padding from 972px up', async ({ page }) => {
+    await openSwatch(page, { width: 972, height: 768 });
+    const pane = await box(scroller(page));
+    const panel = await box(gridPanel(page));
+    // Pane edge, then the shell's 24px and the tool's 32px of padding.
+    expect(panel.x - pane.x).toBe(56);
+    const inner = await gridPanel(page).evaluate((el) => getComputedStyle(el).paddingLeft);
+    expect(inner).toBe('20px');
+  });
+
+  // A phone's cards are touch targets laid out for its own width, and this isn't theirs.
+  for (const width of [360, 390]) {
+    test(`keeps a phone's padding at ${width}px`, async ({ page }) => {
+      await openSwatch(page, { width, height: 780 });
+      const panel = await gridPanel(page).evaluate((el) => getComputedStyle(el).paddingLeft);
+      const tool = await page
+        .locator('.v4-tool-main')
+        .evaluate((el) => getComputedStyle(el).paddingLeft);
+      expect(panel).toBe('20px');
+      expect(tool).toBe('32px');
+    });
+  }
+
   test('keeps the wide layout: tabs on one line, matches beside the grid', async ({ page }) => {
     await openSwatch(page, { width: 1920, height: 1080 });
 
