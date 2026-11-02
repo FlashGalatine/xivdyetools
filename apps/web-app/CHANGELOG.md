@@ -46,6 +46,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   open, all eight columns show without sideways scrolling from an 884 px window instead of 972 px. Below that the
   grid still scrolls sideways inside its panel. Padding is unchanged from 972 px up and on phones.
 
+Measured geometry with menus closed is unchanged at 972, 1024, 1440 and 1920 px in English, German and Japanese
+across the Swatch Matcher, Harmony, Comparison and Accessibility (84 records, 233,460 element boxes). The
+exceptions are the one wrapper each Comparison row gains and German at 972 px, where "Farbstoffverkäufer" now takes
+two lines instead of an ellipsis. Two limits remain: with a card at the pane's very bottom, the lowest submenu runs
+28 px past it, as it did before, and hovering its row again after scrolling shows all of it. In German at 769 px,
+Comparison's "Was sich unterscheidet" heading overhangs by 3 px and the Swatch Matcher's content by 22 px, down
+from 4 px and 54 px, and both can be scrolled to.
+
 ### Changed
 
 - **`e2e/tool-narrow-pane.spec.ts` and `e2e/swatch-narrow-pane.spec.ts`** cover all of the above with real
