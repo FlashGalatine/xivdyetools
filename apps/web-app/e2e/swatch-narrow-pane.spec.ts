@@ -11,6 +11,10 @@ import type { Locator, Page } from '@playwright/test';
 import { test, expect } from './fixtures/coverage';
 import { gotoTool, seedStartupStorage } from './fixtures/navigation';
 
+// Real scrollbars: the app's 10px gutter narrows the pane, and hidden ones would
+// let the 1440 and 1536 cases below pass with less room than a player has.
+test.use({ launchOptions: { ignoreDefaultArgs: ['--hide-scrollbars'] } });
+
 type Viewport = { width: number; height: number };
 
 const scroller = (page: Page) => page.locator('.v4-layout-content-scroll');
@@ -46,6 +50,25 @@ async function expectWithinPane(page: Page, target: Locator): Promise<void> {
   const inner = await box(target);
   expect(inner.x).toBeGreaterThanOrEqual(pane.x - 1);
   expect(inner.x + inner.width).toBeLessThanOrEqual(pane.x + pane.width + 1);
+}
+
+/** Grid cells whose centers are inside the scroller, top to bottom. */
+async function cellsInView(page: Page): Promise<number> {
+  const pane = await box(scroller(page));
+  return page.locator('button[data-index]').evaluateAll(
+    (cells, { top, bottom }) =>
+      cells.filter((el) => {
+        const { y, height } = el.getBoundingClientRect();
+        return y + height / 2 >= top && y + height / 2 <= bottom;
+      }).length,
+    { top: pane.y, bottom: pane.y + pane.height }
+  );
+}
+
+async function openPalette(page: Page, tab: string): Promise<void> {
+  if (tab === 'Eye') return;
+  await page.getByRole('button', { name: tab, exact: true }).click();
+  await expect(page.locator('button[data-index]')).toHaveCount(96);
 }
 
 async function horizontalOverflow(target: Locator): Promise<number> {
@@ -104,6 +127,125 @@ test.describe('Swatch Matcher in a narrow pane', () => {
 
     // The grid panel is taller than the window, so without the scroll a click
     // would change nothing the user can see.
+    const verdict = page.getByText('IN THE CREATOR', { exact: true });
+    await expect
+      .poll(async () => {
+        const top = (await box(verdict)).y;
+        const pane = await box(scroller(page));
+        return top >= pane.y && top <= pane.y + pane.height;
+      })
+      .toBe(true);
+  });
+
+  test('keeps rows of the grid on screen after a grid pick', async ({ page }) => {
+    await openSwatch(page, { width: 1366, height: 768 });
+    // No animation, so the count below can't pass on the way past.
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+
+    await cell(page, 20).click();
+
+    const verdict = page.getByText('IN THE CREATOR', { exact: true });
+    await expect
+      .poll(async () => {
+        const top = (await box(verdict)).y;
+        const pane = await box(scroller(page));
+        return top >= pane.y && top <= pane.y + pane.height;
+      })
+      .toBe(true);
+    await expect.poll(() => cellsInView(page)).toBeGreaterThan(0);
+  });
+
+  test('brings a palette pick into view where the results sit under the grid', async ({ page }) => {
+    await openSwatch(page, { width: 1366, height: 768 });
+    const palette = page.locator('dye-palette-drawer .drawer-content');
+    const pick = page.locator('dye-palette-drawer .category-section .swatch-pick').first();
+    await pick.scrollIntoViewIfNeeded();
+    const paletteTop = await palette.evaluate((el) => el.scrollTop);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+
+    await pick.click();
+
+    const results = page.getByText('Closest Swatches', { exact: false }).first();
+    await expect
+      .poll(async () => {
+        const top = (await box(results)).y;
+        const pane = await box(scroller(page));
+        return top >= pane.y && top <= pane.y + pane.height;
+      })
+      .toBe(true);
+    expect(await palette.evaluate((el) => el.scrollTop)).toBe(paletteTop);
+    await expect.poll(() => cellsInView(page)).toBeGreaterThan(0);
+  });
+
+  test('moves nothing on a palette pick where the results sit beside the grid', async ({
+    page,
+  }) => {
+    await openSwatch(page, { width: 1920, height: 1080 });
+
+    await page.locator('dye-palette-drawer .category-section .swatch-pick').first().click();
+
+    await expect(page.getByText('Closest Swatches', { exact: false }).first()).toBeVisible();
+    await page.waitForTimeout(400);
+    expect(await scroller(page).evaluate((el) => el.scrollTop)).toBe(0);
+  });
+
+  test('moves nothing on a grid pick when the verdict is already on screen', async ({ page }) => {
+    await openSwatch(page, { width: 1366, height: 1400 });
+    await openPalette(page, 'Lips');
+
+    await cell(page, 20).click();
+
+    await expect(page.getByText('IN THE CREATOR', { exact: true })).toBeVisible();
+    await page.waitForTimeout(400);
+    expect(await scroller(page).evaluate((el) => el.scrollTop)).toBe(0);
+  });
+
+  // A 1920x1080 screen at 125% is a 1536px window. Each of these palettes keeps
+  // its results beside the grid, as it did through 5.16.8, so a pick moves nothing
+  // and the tab just clicked stays under the pointer.
+  for (const [width, tab] of [
+    [1440, 'Eye'],
+    [1536, 'Lips'],
+    [1536, 'Face paint'],
+  ] as const) {
+    test(`keeps the matches beside the grid at ${width}px on ${tab}`, async ({ page }) => {
+      await openSwatch(page, { width, height: 864 });
+      const tabButton = page.getByRole('button', { name: tab, exact: true });
+      const before = await box(tabButton);
+      await openPalette(page, tab);
+      if (tab !== 'Eye') expect((await box(tabButton)).x).toBe(before.x);
+
+      const panel = await box(gridPanel(page));
+      expect((await box(emptyState(page))).x).toBeGreaterThanOrEqual(panel.x + panel.width);
+
+      await cell(page, 20).click();
+      await expect(page.getByText('IN THE CREATOR', { exact: true })).toBeVisible();
+      await page.waitForTimeout(400);
+      expect(await scroller(page).evaluate((el) => el.scrollTop)).toBe(0);
+    });
+  }
+
+  test('stays put on a grid pick after a palette pick when the results sit beside the grid', async ({
+    page,
+  }) => {
+    await openSwatch(page, { width: 1536, height: 864 });
+    await openPalette(page, 'Lips');
+
+    await page.locator('dye-palette-drawer .category-section .swatch-pick').first().click();
+    await expect(page.getByText('Closest Swatches', { exact: false }).first()).toBeVisible();
+    await cell(page, 20).click();
+
+    await page.waitForTimeout(400);
+    expect(await scroller(page).evaluate((el) => el.scrollTop)).toBe(0);
+  });
+
+  test("brings a shared link's verdict into view where it sits under the grid", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1366, height: 768 });
+    await seedStartupStorage(page);
+    await page.goto('/swatch?slot=eyeColors&i=20');
+
     const verdict = page.getByText('IN THE CREATOR', { exact: true });
     await expect
       .poll(async () => {

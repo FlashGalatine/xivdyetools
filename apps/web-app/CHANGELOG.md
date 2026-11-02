@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [5.16.10] - 2026-11-01
+## [5.16.10] - 2026-11-02
 
 ### Fixed
 
@@ -16,19 +16,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and the matches column had no width at all, so a pick showed no result cards. The palette tabs' one-line width
   (521 px in English) set the grid panel's width: it is `flex: 0 0 auto`, and `updateSwatchLayout()`
   clears its `width: fit-content`. The row's `justify-content: center` then split the excess across both
-  sides of the pane's 340 px or so, and nothing can scroll to what hangs off the left. The panel now has
+  sides of the 340 px or so inside the pane's padding, and nothing can scroll to what hangs off the left.
+  The panel now has
   `max-width: 100%`, so its tabs wrap, and it scrolls sideways inside itself if even the 236 px grid
   does not fit. The row wraps too, which moves the matches under the grid when they would have under
-  200 px beside it. That is below about 1,430 px with both panels open in English, and it also ends the
-  right-edge clipping of the matches at 1280 and 1366. Both follow the pane rather than the window, so
-  closing a side panel re-lays the tool out with no resize. Measured geometry is unchanged at 1440, 1536,
-  1600, 1718, 1920 and 2560 px, with and without a selection.
+  190 px beside it. With both panels open in English that is below about 1,430 px, or about 1,530 px on
+  Lips and Face paint, whose Dark/Light toggle widens the panel, and it also ends the right-edge clipping
+  of the matches at 1280 and 1366. Longer languages stack sooner, up to about 1,680 px on French Lips.
+  Both follow the pane rather than the window, so closing a side panel re-lays the tool out with no
+  resize. In English, measured geometry is unchanged at 1536, 1600, 1718, 1920 and 2560 px, and at 1440 px
+  on the palettes without that toggle, with and without a selection. In the six languages nothing stacks
+  at 1718 px and wider.
 - **A phone can reach the grid's first column.** The 44 px grid overflows its panel on a phone, and
   `align-items: center` put its start 51 px left of the panel at 390 px wide, where scrolling could
   not reach it. `align-items: safe center` starts it at the panel's edge.
-- **Picking a swatch scrolls to the verdict wherever it sits under the grid.** The check was
-  `window.innerWidth < 768`, but a desktop window can stack them now too, and the grid panel is
-  taller than the window, so a pick there would have changed nothing on screen.
+- **A grid pick, or in a desktop window a palette pick, shared link or dye from another tool, brings
+  its results into view where they sit under the grid.** The check was `window.innerWidth < 768`, but a
+  desktop window can stack them now too, and the grid panel can be taller than the window, so a pick
+  there could have changed nothing on screen. A grid pick or a shared
+  link's cell goes to the verdict, and a dye or custom color from the palette, or a dye sent from another
+  tool, goes to the closest swatches. A desktop window uses `block: 'nearest'`, which moves nothing if
+  they're already on screen and keeps rows of the grid in view for the next pick, unless the results are
+  too tall for the pane, as a palette pick's are at 800x600. A phone's grid pick still takes the card to
+  the top, and at 768 px and under palette picks still don't scroll, since the open palette covers the
+  tool. A THIS CHARACTER slot doesn't scroll, because its own card shows the answer, and neither do results
+  beside the grid, even where a long column reaches past a short grid's bottom. A double-click's second
+  click is ignored, because the grid may have moved under the pointer. The scroll now honors
+  `prefers-reduced-motion`, on phones too.
 
 ### Changed
 
@@ -40,7 +54,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and the shell as the only vertical scroller. It also covers the stacked matches and the scroll to the
   verdict, the re-layout when panels close, the grid's own scrolling at 800x600 and 390x844, and the
   1920x1080 layout. Its five narrow-pane tests failed on the old code; the phone test was added with the
-  fix, and removing `safe center` fails it.
+  fix, and removing `safe center` fails it. It runs with real scrollbars, and also covers palette picks,
+  shared links, a grid pick that keeps cells in view, no jump with the verdict already on screen, and the
+  results staying beside the grid at 1440 on Eye and at 1536 on Lips and Face paint, after a palette pick
+  too.
 
 ## [5.16.8] - 2026-11-01
 
