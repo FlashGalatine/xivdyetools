@@ -119,7 +119,7 @@ export class V4ColorWheel extends BaseLitComponent {
   // A puck is 42px on any wheel of 263px and up, which is every phone from 320px, so
   // a touch target doesn't shrink there. On the wheel of a narrow pane it's 16% of the
   // wheel, down to 24px, or the base puck would cover the digits on Shades' neighbors
-  // and Monochromatic's inner puck. (No comments inside the css below: they ship.)
+  // and Monochromatic's inner puck. This is here because a comment in the css would ship.
   static override styles: CSSResultGroup = [
     BaseLitComponent.baseStyles,
     css`
