@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.16.10] - 2026-11-01
+
+### Fixed
+
+- **The Swatch Matcher no longer cuts off its grid in a narrow pane.** With both side panels open at
+  1024x768 the heading read "OLORS (192)", the Eye tab and the panel's left edge could not be reached,
+  and the matches column had no width at all, so a pick showed no result cards. The palette tabs' one-line width
+  (521 px in English) set the grid panel's width: it is `flex: 0 0 auto`, and `updateSwatchLayout()`
+  clears its `width: fit-content`. The row's `justify-content: center` then split the excess across both
+  sides of the pane's 340 px or so, and nothing can scroll to what hangs off the left. The panel now has
+  `max-width: 100%`, so its tabs wrap, and it scrolls sideways inside itself if even the 236 px grid
+  does not fit. The row wraps too, which moves the matches under the grid when they would have under
+  200 px beside it. That is below about 1,430 px with both panels open in English, and it also ends the
+  right-edge clipping of the matches at 1280 and 1366. Both follow the pane rather than the window, so
+  closing a side panel re-lays the tool out with no resize. Measured geometry is unchanged at 1440, 1536,
+  1600, 1718, 1920 and 2560 px, with and without a selection.
+- **A phone can reach the grid's first column.** The 44 px grid overflows its panel on a phone, and
+  `align-items: center` put its start 51 px left of the panel at 390 px wide, where scrolling could
+  not reach it. `align-items: safe center` starts it at the panel's edge.
+- **Picking a swatch scrolls to the verdict wherever it sits under the grid.** The check was
+  `window.innerWidth < 768`, but a desktop window can stack them now too, and the grid panel is
+  taller than the window, so a pick there would have changed nothing on screen.
+
+### Changed
+
+- **The Swatch Matcher's pane no longer declares `overflow-y: auto`.** It was the one tool panel left
+  with it after 5.16.5 moved scrolling to the shell. It never overflowed vertically, but it made the
+  pane a sideways scroll container of its own.
+- **New `e2e/swatch-narrow-pane.spec.ts`:** at 1024x768 and 1280x800 with both panels open, the
+  heading, all seven tabs and both ends of the top row sit inside the pane, with no sideways overflow
+  and the shell as the only vertical scroller. It also covers the stacked matches and the scroll to the
+  verdict, the re-layout when panels close, the grid's own scrolling at 800x600 and 390x844, and the
+  1920x1080 layout. Its five narrow-pane tests failed on the old code; the phone test was added with the
+  fix, and removing `safe center` fails it.
+
 ## [5.16.8] - 2026-11-01
 
 ### Changed

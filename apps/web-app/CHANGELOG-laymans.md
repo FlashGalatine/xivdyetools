@@ -2,6 +2,13 @@
 
 ---
 
+## Web-App Version 5.16.10 — November 1, 2026
+
+### Swatch Matcher
+- **Nothing is cut off in smaller windows.** With Options and the Color Palette both open, the grid, its heading and its category tabs all fit.
+- **Matches move under the grid when there's no room beside it.** Picking a swatch scrolls down to them.
+- **Phones can reach the first column.** The grid now scrolls sideways all the way to its left edge.
+
 ## Web-App Version 5.16.8 — November 1, 2026
 
 ### Privacy Guide and Terms

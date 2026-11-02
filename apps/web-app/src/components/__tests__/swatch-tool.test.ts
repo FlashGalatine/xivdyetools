@@ -2266,6 +2266,70 @@ describe('SwatchTool', () => {
         setWidth(width);
       }
     });
+
+    it('caps the grid panel at the pane again when a resize leaves phone width', () => {
+      const width = window.innerWidth;
+      try {
+        setWidth(500);
+        tool = mount();
+        const { mainLayout, gridPanel } = tool as unknown as {
+          mainLayout: HTMLElement;
+          gridPanel: HTMLElement;
+        };
+        expect(mainLayout.style.flexWrap).toBe('nowrap');
+
+        setWidth(1024);
+        window.dispatchEvent(new Event('resize'));
+
+        expect(mainLayout.style.flexWrap).toBe('wrap');
+        expect(gridPanel.style.maxWidth).toBe('100%');
+      } finally {
+        setWidth(width);
+      }
+    });
+  });
+
+  // ==========================================================================
+  // A grid pick scrolls to the verdict only where the verdict sits under the
+  // grid. The window width can't tell: a desktop window with both side panels
+  // open stacks them too, and the grid panel is taller than the window.
+  // ==========================================================================
+
+  describe('scrolling to the verdict after a grid pick', () => {
+    const pickWithCardAt = async (cardTop: number): Promise<void> => {
+      tool = mount();
+      await flush();
+      const { gridPanel, selectionCardContainer } = tool as unknown as {
+        gridPanel: HTMLElement;
+        selectionCardContainer: HTMLElement;
+      };
+      vi.spyOn(gridPanel, 'getBoundingClientRect').mockReturnValue({ bottom: 1000 } as DOMRect);
+      vi.spyOn(selectionCardContainer, 'getBoundingClientRect').mockReturnValue({
+        top: cardTop,
+      } as DOMRect);
+      vi.useFakeTimers();
+      try {
+        rightPanel.querySelector<HTMLButtonElement>('button[data-index]')!.click();
+        vi.advanceTimersByTime(100);
+      } finally {
+        vi.useRealTimers();
+      }
+    };
+
+    it('scrolls when the card is under the grid', async () => {
+      await pickWithCardAt(1024);
+
+      expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    });
+
+    it('stays put when the card is beside the grid', async () => {
+      await pickWithCardAt(100);
+
+      expect(Element.prototype.scrollIntoView).not.toHaveBeenCalled();
+    });
   });
 
   // ==========================================================================
