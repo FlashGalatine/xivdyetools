@@ -26,7 +26,7 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.16.8 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Web Application** | v5.16.9 | `xivdyetools-web-app` | Cloudflare Pages | Active |
 | **Discord Bot** | v5.9.9 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.5 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.9.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
@@ -126,6 +126,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.16.9 | Nov 2026 | The Color Palette has no sideways scrollbar: a hidden dye tooltip centered on a last-column swatch counted as scrollable overflow. Tooltips in the outer columns now grow inward from their swatch's edge, so they are no longer cut off at the sides on hover either, and near the panel's top edge a tooltip opens below its swatch |
 | v5.16.8 | Nov 2026 | Documents and the sign-in note only — the Privacy Guide, Terms and `preset.privacyNote` in all six languages now say that when XIVAuth cannot return the characters, the name already on the account stays and a new account gets the `XIVAuth User` name, matching oauth 3.2.2 |
 | v5.16.7 | Nov 2026 | The tutorial spotlight cancels its pending delays (a step's tooltip render, the skip past a missing target, the fade-in and fade-out) when the step changes, the tour ends or it is destroyed; the render that ran after jsdom teardown failed the web-app test task with every test green |
 | v5.16.6 | Nov 2026 | Tailwind's class scan is rooted at `src/`: about 2.5 KB of dead utilities seeded by the changelog no longer ship (index CSS 55.6 → 53.1 KB), and a local `build:check` under `.turbo/` measures the same CSS as CI |
