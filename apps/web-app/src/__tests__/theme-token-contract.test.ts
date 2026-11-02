@@ -15,8 +15,6 @@ const read = (p: string): string => readFileSync(resolve(APP_ROOT, p), 'utf-8');
 
 /** Known gaps, each with its reason. An entry that stops being a gap fails the test. */
 const UNDECLARED: Record<string, string> = {
-  '--theme-text-on-primary':
-    'palette drawer Apply button and active filter chip: their #000 fallback predates the red accent',
   '--theme-empty-state-background': 'v4-layout empty state, which only has its own rgba fallback',
 };
 

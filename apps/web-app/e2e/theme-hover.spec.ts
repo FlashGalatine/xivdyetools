@@ -4,9 +4,10 @@
  *
  * Before 5.16.14 no theme defined `--theme-primary-hover`, so the toggle and Apply
  * turned gold on hover: the fallback each one kept from the retired themes. Random's
- * tint was the same gold, written out. Only a real browser resolves the token through
- * `themes.css` and the palette ThemeService applies, and each test switches theme with
- * the page open, because the colors have to follow that.
+ * tint was the same gold, written out. Their black label read well on gold and poorly
+ * on red, because `--theme-text-on-primary` was undeclared too. Only a real browser
+ * resolves these tokens through `themes.css` and the palette ThemeService applies, and
+ * each test switches theme with the page open, because the colors have to follow that.
  */
 import type { Locator, Page } from '@playwright/test';
 import { test, expect } from './fixtures/coverage';
@@ -22,6 +23,25 @@ async function expectBackground(locator: Locator, color: string): Promise<void> 
   await expect
     .poll(() => locator.evaluate((element) => getComputedStyle(element).backgroundColor))
     .toBe(color);
+}
+
+/** WCAG AA for normal text: the Apply label is 13px and the chip labels 12px. */
+const AA_TEXT = 4.5;
+
+/** The WCAG contrast of an element's text on its own background, both opaque. */
+function labelContrast(locator: Locator): Promise<number> {
+  return locator.evaluate((element) => {
+    const luminance = (color: string): number => {
+      const [r, g, b] = (color.match(/\d+/g) ?? [])
+        .map(Number)
+        .map((channel) => channel / 255)
+        .map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    };
+    const { color, backgroundColor } = getComputedStyle(element);
+    const [lighter, darker] = [luminance(color), luminance(backgroundColor)].sort((a, b) => b - a);
+    return (lighter + 0.05) / (darker + 0.05);
+  });
 }
 
 /** What the browser computes for a 10% tint of the accent, in whatever form it reports. */
@@ -85,5 +105,22 @@ test('the Random button hovers in a tint of the accent of each theme', async ({ 
     await pickTheme(page, name);
     await random.hover();
     await expectBackground(random, await accentTint(page, rest));
+  }
+});
+
+test('labels on the accent stay readable in each theme, at rest and on hover', async ({ page }) => {
+  const apply = page.locator('dye-palette-drawer .custom-apply-btn');
+  const chip = page.locator('dye-palette-drawer .filter-chip.active').first();
+
+  for (const { name, rest, hover } of THEMES) {
+    await pickTheme(page, name);
+    await apply.scrollIntoViewIfNeeded();
+    await expectBackground(apply, rest);
+    await expect.poll(() => labelContrast(apply)).toBeGreaterThanOrEqual(AA_TEXT);
+    await expect.poll(() => labelContrast(chip)).toBeGreaterThanOrEqual(AA_TEXT);
+
+    await apply.hover();
+    await expectBackground(apply, hover);
+    await expect.poll(() => labelContrast(apply)).toBeGreaterThanOrEqual(AA_TEXT);
   }
 });

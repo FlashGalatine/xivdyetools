@@ -355,7 +355,7 @@ export class DyePaletteDrawer extends BaseLitComponent {
       .filter-chip.active {
         background: var(--theme-primary, #d4af37);
         border-color: var(--theme-primary, #d4af37);
-        color: var(--theme-text-on-primary, #000);
+        color: var(--theme-text-on-primary);
       }
 
       /* Consolidation spectrum filter */
@@ -738,7 +738,7 @@ export class DyePaletteDrawer extends BaseLitComponent {
         width: 100%;
         padding: 10px 16px;
         background: var(--theme-primary, #d4af37);
-        color: var(--theme-text-on-primary, #000);
+        color: var(--theme-text-on-primary);
         border: none;
         border-radius: 6px;
         font-family: var(--font-display);

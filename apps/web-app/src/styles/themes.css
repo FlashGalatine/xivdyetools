@@ -40,6 +40,8 @@
   /* The accent on hover. Each palette picks its own `accentHover`: deeper on
      Light, brighter on Dark, which no single mix of the accent gives both. */
   --theme-primary-hover: var(--v4-accent-hover, var(--theme-primary));
+  /* Text on the accent: white on Light's red, near-black on Dark's. */
+  --theme-text-on-primary: var(--theme-text-header);
 
   /* ===== V4 STACKING ORDER =====
      One scale for everything that floats, so the order is a decision rather
