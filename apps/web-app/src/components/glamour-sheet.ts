@@ -10,6 +10,12 @@
  * this device, keyed by the gear (`acquisition-edits`). A twin pick never
  * overwrites an edit: the row warns and offers the new source (spec G9).
  *
+ * The Abridged toggle (remembered on this device) switches the whole sheet to
+ * the shorter social-media form: the preview, the fields, Copy and Save. Each
+ * Abridged line starts as the one source `glamour-abridged` picks from the full
+ * line, and what is typed there is kept apart, word for word, so it never
+ * touches the full form (`abridgedEditKey`).
+ *
  * Mounted on document.body; Escape or Close dismisses it, and so does the
  * reader going away (GlamourBlock.destroy). It registers with ModalService
  * while it is up, so the global shortcuts stand down under it.
@@ -17,18 +23,24 @@
  * @module components/glamour-sheet
  */
 
-import { LanguageService, ModalService, ToastService } from '@services/index';
+import { LanguageService, ModalService, StorageService, ToastService } from '@services/index';
 import { MONO, SANS, amber, el, green, monoChip, tCount } from '@components/chara-ui';
-import { AcquisitionEdits } from '@shared/acquisition-edits';
+import '@components/v4/toggle-switch-v4';
+import { AcquisitionEdits, abridgedEditKey, type AcquisitionEdit } from '@shared/acquisition-edits';
 import { copyRichTextToClipboard } from '@shared/clipboard';
+import { STORAGE_PREFIX } from '@shared/constants';
 import { downloadTextFile } from '@shared/download-file';
+import { abridgeAcquisition } from '@shared/glamour-abridged';
 import { logger } from '@shared/logger';
 import {
   ACQUISITION_LABEL,
+  GLAMOUR_ABRIDGED_FILENAME,
   GLAMOUR_MARKDOWN_FILENAME,
+  OBTAINED_LABEL,
   buildGlamourHtml,
   buildGlamourMarkdown,
   buildGlamourPlainText,
+  type GlamourListFormat,
   type GlamourMarkdownSlot,
 } from '@shared/glamour-markdown';
 import {
@@ -39,6 +51,14 @@ import {
 } from '@components/glamour-list-actions';
 
 type RowState = 'filled' | 'edited' | 'blank';
+
+const FORMAT_KEY = `${STORAGE_PREFIX}_glamour_list_format`;
+
+/**
+ * The format, when its storage write failed: it lives for the page only, as the
+ * edits made in it do (`acquisition-edits`), and a write that works ends it.
+ */
+let pageOnlyFormat: GlamourListFormat | null = null;
 
 let current: { root: HTMLElement; cleanup: () => void; opener: HTMLElement | null } | null = null;
 
@@ -67,21 +87,72 @@ function isPhone(): boolean {
   return typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 768px)').matches;
 }
 
-/** The line a piece writes now: the player's edit, else the generated line. */
-function lineOf(piece: GlamourSheetPiece): string {
+/** The full form's line: the player's edit, else the generated line. */
+function fullLine(piece: GlamourSheetPiece): string {
   const edit = AcquisitionEdits.get(piece.hash);
   return edit ? edit.text : (piece.generated ?? '');
 }
 
-function stateOf(piece: GlamourSheetPiece): RowState {
-  if (AcquisitionEdits.get(piece.hash)) return 'edited';
+/** The key of the edit that decides a row: Abridged's own when it has one, else the full one. */
+function activeKey(piece: GlamourSheetPiece, format: GlamourListFormat): string {
+  const key = abridgedEditKey(piece.hash);
+  return format === 'abridged' && AcquisitionEdits.get(key) ? key : piece.hash;
+}
+
+function activeEdit(piece: GlamourSheetPiece, format: GlamourListFormat): AcquisitionEdit | null {
+  return AcquisitionEdits.get(activeKey(piece, format));
+}
+
+/** The line a piece writes now. A blank edit is still an edit, in both forms. */
+function lineOf(piece: GlamourSheetPiece, format: GlamourListFormat): string {
+  if (format === 'full') return fullLine(piece);
+  const edit = AcquisitionEdits.get(abridgedEditKey(piece.hash));
+  return edit ? edit.text : abridgeAcquisition(fullLine(piece));
+}
+
+function stateOf(piece: GlamourSheetPiece, format: GlamourListFormat): RowState {
+  if (activeEdit(piece, format)) return 'edited';
   return piece.generated ? 'filled' : 'blank';
 }
 
-/** An edit made against a different twin than the one the list names now. */
-function staleEdit(piece: GlamourSheetPiece): boolean {
-  const edit = AcquisitionEdits.get(piece.hash);
+/** The state chip's words. */
+function stateLabel(state: RowState): string {
+  return LanguageService.t(
+    `glamour.sheet.state${state === 'filled' ? 'Filled' : state === 'edited' ? 'Edited' : 'Blank'}`
+  );
+}
+
+/** Whether an edit was made against a different twin than the one the list names now. */
+function editIsStale(edit: AcquisitionEdit | null, piece: GlamourSheetPiece): boolean {
   return edit !== null && piece.pickedItemId !== null && edit.baseItemId !== piece.pickedItemId;
+}
+
+function staleEdit(piece: GlamourSheetPiece, format: GlamourListFormat): boolean {
+  return editIsStale(activeEdit(piece, format), piece);
+}
+
+/**
+ * Off, and looking it, when there is nothing to write. A disabled button has
+ * no other cue: the footer's buttons always say `cursor: pointer`.
+ */
+function setActionEnabled(button: HTMLButtonElement, enabled: boolean): void {
+  button.disabled = !enabled;
+  button.style.opacity = enabled ? '' : '0.5';
+  button.style.cursor = enabled ? 'pointer' : 'not-allowed';
+}
+
+/** A plain button with its role, for the row warning and the footer. */
+function roleButton(
+  role: string,
+  label: string,
+  style: string,
+  onClick: () => void
+): HTMLButtonElement {
+  const button = el('button', style, label) as HTMLButtonElement;
+  button.type = 'button';
+  button.dataset.role = role;
+  button.addEventListener('click', onClick);
+  return button;
 }
 
 /**
@@ -99,6 +170,9 @@ export function openGlamourSheet(
   const returnTo = opener === undefined ? deepActiveElement() : opener;
   const pieces = glamourSheetPieces(source);
   const phone = isPhone();
+  let format: GlamourListFormat =
+    pageOnlyFormat ??
+    (StorageService.getItem<string>(FORMAT_KEY) === 'abridged' ? 'abridged' : 'full');
 
   const root = el(
     'div',
@@ -120,7 +194,7 @@ export function openGlamourSheet(
   panel.setAttribute('aria-label', LanguageService.t('glamour.sheet.title'));
   root.appendChild(panel);
 
-  // Header: title, sub, counts, close
+  // Header: title, sub, counts, the Abridged toggle (its own strip on a phone), close
   const head = el(
     'div',
     'display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--theme-border);'
@@ -147,6 +221,15 @@ export function openGlamourSheet(
   const counts = el('span', 'display: flex; gap: 6px; flex-wrap: wrap;');
   counts.dataset.role = 'sheet-counts';
   head.appendChild(counts);
+  // The toggle's own off-track fallback is nearly invisible on the Light card
+  const toggle = el(
+    'v4-toggle-switch',
+    'flex-shrink: 0; --v4-toggle-bg: var(--theme-text-muted); --v4-toggle-bg-hover: color-mix(in srgb, var(--theme-text-muted) 80%, var(--theme-card-background));'
+  ) as HTMLElementTagNameMap['v4-toggle-switch'];
+  toggle.dataset.role = 'sheet-format';
+  toggle.label = LanguageService.t('glamour.sheet.abridged');
+  toggle.checked = format === 'abridged';
+  if (!phone) head.appendChild(toggle);
   const close = el(
     'button',
     'flex-shrink: 0; width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--theme-border); background: transparent; color: var(--theme-text); cursor: pointer; font-size: 16px;',
@@ -157,6 +240,14 @@ export function openGlamourSheet(
   close.addEventListener('click', () => closeGlamourSheet());
   head.appendChild(close);
   panel.appendChild(head);
+  if (phone) {
+    const strip = el(
+      'div',
+      'display: flex; justify-content: flex-end; padding: 8px 20px; border-bottom: 1px solid var(--theme-border);'
+    );
+    strip.appendChild(toggle);
+    panel.appendChild(strip);
+  }
 
   // Body: the rows, and (desktop) WHAT GETS COPIED beside them
   const body = el(
@@ -189,14 +280,18 @@ export function openGlamourSheet(
   panel.appendChild(body);
 
   const acquisition = (): Partial<Record<GlamourMarkdownSlot, string>> =>
-    Object.fromEntries(pieces.map((p) => [p.slot, lineOf(p)]));
+    Object.fromEntries(pieces.map((p) => [p.slot, lineOf(p, format)]));
   const input = () => glamourInputWithAcquisition(source, acquisition());
 
   const refresh = (): void => {
-    preview.textContent = buildGlamourPlainText(input());
+    const text = buildGlamourPlainText(input(), format);
+    preview.textContent = text;
+    // Abridged has no header, so a list with no rows has nothing to copy or save
+    setActionEnabled(save, text !== '');
+    setActionEnabled(copy, text !== '');
     counts.replaceChildren();
     const tally = { filled: 0, edited: 0, blank: 0 };
-    for (const piece of pieces) tally[stateOf(piece)]++;
+    for (const piece of pieces) tally[stateOf(piece, format)]++;
     const chip = (n: number, key: string, fg: string): void => {
       if (n > 0)
         counts.appendChild(
@@ -210,6 +305,19 @@ export function openGlamourSheet(
     chip(tally.filled, 'glamour.sheet.countFilled', green());
     chip(tally.edited, 'glamour.sheet.countEdited', 'var(--theme-primary)');
     chip(tally.blank, 'glamour.sheet.countBlank', 'var(--theme-text-muted)');
+  };
+
+  /**
+   * Draw a row again after its warning's button was used. That button is gone
+   * with the old row, so the new row takes focus: never <body> under an
+   * aria-modal, and not the field, which would raise a phone's keyboard.
+   */
+  const redrawRow = (row: HTMLElement, piece: GlamourSheetPiece): void => {
+    const next = renderRow(piece);
+    next.tabIndex = -1;
+    row.replaceWith(next);
+    next.focus();
+    refresh();
   };
 
   const renderRow = (piece: GlamourSheetPiece): HTMLElement => {
@@ -234,11 +342,9 @@ export function openGlamourSheet(
         piece.name ?? ''
       )
     );
-    const state = stateOf(piece);
+    const state = stateOf(piece, format);
     const stateChip = monoChip(
-      LanguageService.t(
-        `glamour.sheet.state${state === 'filled' ? 'Filled' : state === 'edited' ? 'Edited' : 'Blank'}`
-      ),
+      stateLabel(state),
       state === 'filled'
         ? green()
         : state === 'edited'
@@ -260,33 +366,33 @@ export function openGlamourSheet(
       el(
         'span',
         `font-family: ${MONO}; font-size: 10.5px; color: var(--theme-text-muted); padding-top: 7px; white-space: nowrap;`,
-        ACQUISITION_LABEL
+        format === 'abridged' ? OBTAINED_LABEL : ACQUISITION_LABEL
       )
     );
     const field = document.createElement('textarea');
     field.rows = 1;
-    field.value = lineOf(piece);
+    field.value = lineOf(piece, format);
     field.placeholder = LanguageService.t('glamour.sheet.placeholder');
     field.style.cssText = `flex: 1; min-width: 0; resize: vertical; min-height: 32px; padding: 6px 9px; border-radius: 8px; font-family: ${SANS}; font-size: 12px; line-height: 1.4; color: var(--theme-text); background: var(--theme-background-secondary); border: 1px solid ${
-      staleEdit(piece) ? amber() : 'var(--theme-border)'
+      staleEdit(piece, format) ? amber() : 'var(--theme-border)'
     }; box-sizing: border-box;`;
     field.addEventListener('input', () => {
-      if (field.value === (piece.generated ?? '')) AcquisitionEdits.remove(piece.hash);
+      const abridged = format === 'abridged';
+      const key = abridged ? abridgedEditKey(piece.hash) : piece.hash;
+      const baseline = abridged ? abridgeAcquisition(fullLine(piece)) : (piece.generated ?? '');
+      if (field.value === baseline) AcquisitionEdits.remove(key);
       else
-        AcquisitionEdits.set(piece.hash, {
+        AcquisitionEdits.set(key, {
           text: field.value,
           baseItemId: piece.pickedItemId ?? 0,
         });
-      const fresh = stateOf(piece);
-      stateChip.textContent = LanguageService.t(
-        `glamour.sheet.state${fresh === 'filled' ? 'Filled' : fresh === 'edited' ? 'Edited' : 'Blank'}`
-      );
+      stateChip.textContent = stateLabel(stateOf(piece, format));
       refresh();
     });
     fieldRow.appendChild(field);
     row.appendChild(fieldRow);
 
-    if (staleEdit(piece)) {
+    if (staleEdit(piece, format)) {
       const warn = el(
         'div',
         `display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 7px 9px; border-radius: 8px; font-size: 11px; line-height: 1.4; color: var(--theme-text); background: color-mix(in srgb, ${amber()} 10%, transparent); border: 1px solid color-mix(in srgb, ${amber()} 35%, transparent);`
@@ -299,32 +405,32 @@ export function openGlamourSheet(
           LanguageService.tInterpolate('glamour.sheet.warn', { name: piece.pickedName ?? '' })
         )
       );
-      const action = (role: string, key: string, onClick: () => void): HTMLButtonElement => {
-        const button = el(
-          'button',
+      const action = (role: string, key: string, onClick: () => void): HTMLButtonElement =>
+        roleButton(
+          role,
+          LanguageService.t(key),
           `padding: 4px 9px; border-radius: 7px; font-family: ${SANS}; font-size: 11px; font-weight: 600; cursor: pointer; background: var(--theme-card-background); color: var(--theme-text); border: 1px solid var(--theme-border);`,
-          LanguageService.t(key)
-        ) as HTMLButtonElement;
-        button.type = 'button';
-        button.dataset.role = role;
-        button.addEventListener('click', onClick);
-        return button;
-      };
+          onClick
+        );
       warn.appendChild(
         action('sheet-keep', 'glamour.sheet.keep', () => {
-          const edit = AcquisitionEdits.get(piece.hash);
+          const key = activeKey(piece, format);
+          const edit = AcquisitionEdits.get(key);
           if (edit) {
-            AcquisitionEdits.set(piece.hash, { ...edit, baseItemId: piece.pickedItemId ?? 0 });
+            AcquisitionEdits.set(key, { ...edit, baseItemId: piece.pickedItemId ?? 0 });
           }
-          row.replaceWith(renderRow(piece));
-          refresh();
+          redrawRow(row, piece);
         })
       );
       warn.appendChild(
         action('sheet-use-new', 'glamour.sheet.useNew', () => {
-          AcquisitionEdits.remove(piece.hash);
-          row.replaceWith(renderRow(piece));
-          refresh();
+          AcquisitionEdits.remove(activeKey(piece, format));
+          // A stale full edit under a removed Abridged one is not the new source
+          // either; a fresh one is the line this row should fall back to.
+          if (editIsStale(AcquisitionEdits.get(piece.hash), piece)) {
+            AcquisitionEdits.remove(piece.hash);
+          }
+          redrawRow(row, piece);
         })
       );
       row.appendChild(warn);
@@ -332,6 +438,17 @@ export function openGlamourSheet(
     return row;
   };
   for (const piece of pieces) rows.appendChild(renderRow(piece));
+
+  const redrawRows = (): void => {
+    rows.replaceChildren(...pieces.map(renderRow));
+    refresh();
+  };
+
+  toggle.addEventListener('toggle-change', () => {
+    format = toggle.checked ? 'abridged' : 'full';
+    pageOnlyFormat = StorageService.setItem(FORMAT_KEY, format) ? null : format;
+    redrawRows();
+  });
 
   // Footer: what is kept, Reset all, Save .md, Copy list
   const foot = el(
@@ -350,31 +467,30 @@ export function openGlamourSheet(
     label: string,
     primary: boolean,
     onClick: () => void
-  ): HTMLButtonElement => {
-    const b = el(
-      'button',
+  ): HTMLButtonElement =>
+    roleButton(
+      role,
+      label,
       `min-height: 34px; padding: 0 14px; border-radius: 9px; font-family: ${SANS}; font-size: 12px; font-weight: 600; cursor: pointer; ${
         primary
           ? 'background: var(--theme-primary); color: #fff; border: 1px solid var(--theme-primary);'
           : 'background: var(--theme-card-background); color: var(--theme-text); border: 1px solid var(--theme-border);'
       }`,
-      label
-    ) as HTMLButtonElement;
-    b.type = 'button';
-    b.dataset.role = role;
-    b.addEventListener('click', onClick);
-    return b;
-  };
+      onClick
+    );
   foot.appendChild(
     button('sheet-reset', LanguageService.t('glamour.sheet.reset'), false, () => {
-      AcquisitionEdits.resetAll(pieces.map((p) => p.hash));
-      rows.replaceChildren(...pieces.map(renderRow));
-      refresh();
+      AcquisitionEdits.resetAll(pieces.flatMap((p) => [p.hash, abridgedEditKey(p.hash)]));
+      redrawRows();
     })
   );
   const save = button('sheet-save', LanguageService.t('glamour.sheet.save'), false, () => {
     try {
-      downloadTextFile(buildGlamourMarkdown(input()), GLAMOUR_MARKDOWN_FILENAME, 'text/markdown');
+      downloadTextFile(
+        buildGlamourMarkdown(input(), format),
+        format === 'abridged' ? GLAMOUR_ABRIDGED_FILENAME : GLAMOUR_MARKDOWN_FILENAME,
+        'text/markdown'
+      );
     } catch {
       // A fixed message: the error's text never reaches the log.
       logger.error('[GlamourSheet] Export failed');
@@ -387,8 +503,8 @@ export function openGlamourSheet(
   const copy = button('sheet-copy', LanguageService.t('swatch.copyList'), true, () => {
     const current = input();
     void copyRichTextToClipboard({
-      html: buildGlamourHtml(current),
-      text: buildGlamourPlainText(current),
+      html: buildGlamourHtml(current, format),
+      text: buildGlamourPlainText(current, format),
     })
       .then((ok) => {
         if (ok) ToastService.success(LanguageService.t('swatch.listCopied'));
@@ -409,21 +525,27 @@ export function openGlamourSheet(
       closeGlamourSheet();
       return;
     }
-    // aria-modal: Tab and Shift+Tab stay inside the sheet
+    // aria-modal: Tab and Shift+Tab stay inside the sheet. The toggle's switch is
+    // in its shadow root, out of this query's sight, so the host stands in for it:
+    // document.activeElement retargets to the host, and wrapping focuses the switch.
     if (event.key !== 'Tab') return;
     const focusable = Array.from(
-      panel.querySelectorAll<HTMLElement>('button, textarea, input, select, [href]')
+      panel.querySelectorAll<HTMLElement>(
+        'button, textarea, input, select, [href], v4-toggle-switch'
+      )
     ).filter((node) => !node.hasAttribute('disabled'));
     const first = focusable[0];
     const last = focusable[focusable.length - 1];
     if (!first || !last) return;
-    if (event.shiftKey && document.activeElement === first) {
+    const wrapTo = (node: HTMLElement): void => {
       event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault();
-      first.focus();
-    }
+      (node.shadowRoot?.querySelector<HTMLElement>('[role="switch"]') ?? node).focus();
+    };
+    // A click on text in the sheet (the toggle's label, the title) leaves focus on
+    // <body>, and the browser's next Tab could land behind the sheet: wrap from there too.
+    const outside = !panel.contains(document.activeElement);
+    if (event.shiftKey && (outside || document.activeElement === first)) wrapTo(last);
+    else if (!event.shiftKey && (outside || document.activeElement === last)) wrapTo(first);
   };
   document.addEventListener('keydown', onKey);
   const releaseModal = ModalService.registerExternal();
@@ -435,5 +557,6 @@ export function openGlamourSheet(
     },
     opener: returnTo,
   };
-  (focus === 'save' ? save : copy).focus();
+  const opening = focus === 'save' ? save : copy;
+  (opening.disabled ? close : opening).focus();
 }

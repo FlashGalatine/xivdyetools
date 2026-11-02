@@ -45,10 +45,14 @@ export interface GlamourListSource {
   equipment: CharaResolveResult | null;
   /**
    * The twin the Glamour Reader names per slot (it may differ from the lowest
-   * row), with its own acquisition line. Absent = the resolved item.
+   * row), with its own acquisition line and, when the answer has rules, its
+   * dye channel count. Absent = the resolved item.
    */
   picked?: Partial<
-    Record<CharaGearSlotId, { itemId: number; names: CharaItemNames; acquisition?: string }>
+    Record<
+      CharaGearSlotId,
+      { itemId: number; names: CharaItemNames; acquisition?: string; dyeCount?: number }
+    >
   >;
 }
 
@@ -110,6 +114,7 @@ export function glamourMarkdownInput({
     const pick = picked?.[model.slot];
     if (pick && !piece.name) piece.name = itemNameFor(pick.names, lang);
     else if (item && !piece.name) piece.name = itemNameFor(item.names, lang);
+    if (pick?.dyeCount !== undefined) piece.dyeSlots = pick.dyeCount;
   }
   for (const gear of resolved.gearDyes) {
     const piece = pieceFor(gear.slot);

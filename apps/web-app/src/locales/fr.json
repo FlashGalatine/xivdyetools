@@ -1403,6 +1403,7 @@
       "privacy": "Les modifications sont conservées sur cet appareil pour chaque pièce d'équipement. Le nom du personnage n'apparaît jamais dans la liste, et le fichier lui-même n'est jamais enregistré.",
       "reset": "Tout réinitialiser",
       "save": "Enregistrer le .md",
+      "abridged": "Version abrégée",
       "cardNote": "Vos notes d'obtention modifiées sont conservées sur cet appareil."
     },
     "empty": "Ce fichier ne porte aucun équipement.",

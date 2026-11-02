@@ -1403,6 +1403,7 @@
       "privacy": "Edits are kept on this device for each piece of gear. The character's name is never in the list, and the file itself is never saved.",
       "reset": "Reset all",
       "save": "Save .md",
+      "abridged": "Abridged",
       "cardNote": "Your edited acquisition notes are kept on this device."
     },
     "empty": "This file wears no gear.",
