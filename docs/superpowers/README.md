@@ -9,6 +9,7 @@ For the investigation that preceded a decision, see [`../research/`](../research
 
 | Feature | Spec | Plan | Status |
 |---------|------|------|--------|
+| Acquisition generator schema pins | [spec](specs/2026-10-29-acquisition-schema-pins-design.md) | [plan](plans/2026-10-29-acquisition-schema-pins.md) | Implemented and verified; awaiting PR integration — fixed pins, offline replay and unchanged acquisition/facewear data |
 | Beta web app deployment (`beta.xivdyetools.app`) | [spec](specs/2026-08-09-beta-web-app-deployment-design.md) | [plan](plans/2026-08-09-beta-web-app-deployment.md) | Shipped — second Pages project, `deploy-web-app-beta.yml`, `check-beta-build.js` |
 | image-worker split out of discord-worker | — (design record: [`operations/IMAGE_WORKER_SPLIT.md`](../operations/IMAGE_WORKER_SPLIT.md)) | [plan](plans/2026-08-09-image-worker-split.md) | Shipped 2026-08-11 — `apps/image-worker` |
 | Pages smoke test | [spec](specs/2026-08-10-pages-smoke-test-design.md) | [plan](plans/2026-08-10-pages-smoke-test.md) | Shipped — `apps/web-app/scripts/smoke-test-pages.js` |
