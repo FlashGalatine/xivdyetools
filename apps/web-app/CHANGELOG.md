@@ -7,6 +7,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.16.11] - 2026-11-02
+
+### Fixed
+
+- **Harmony, Comparison and Accessibility no longer lose their left edge in a narrow pane.** With both
+  side panels open below about 870 px wide, each one centered something wider than its pane. Centering
+  splits the excess across both sides, and nothing can scroll to what hangs off the left. At 800x600
+  the pane starts at x=252, but the wheel started at 216, the result cards at 226, the "Add Dye" slots at
+  246 and the vision tabs at 234. All of these can shrink, so none needed sideways scrolling of its own.
+  The wheel's circle takes `max-width: 100%` and `aspect-ratio: 1`, with its spokes and label offset now
+  percentages, and `size` is the largest it gets. Its hub is `min(114px, 46%)`, because a fixed 114 px
+  would sit on the nodes of a smaller wheel. Comparison's single-dye and pair cards and its pair chips
+  take `max-width: 100%`. Vision tab labels wrap, and the lens grid's tracks can go below 180 px.
+- **The Comparison and Accessibility empty states fit a narrow pane and still read.** The slots row and
+  the message box take `max-width: 100%`, and their sideways padding gives way below about 640 px of
+  width (`min(2rem, 5cqw)`, and likewise for the others). It is `cqw` because a percentage counts as 0
+  while a shrink-to-fit box measures itself, and Accessibility's four slots then stacked in one column
+  in a 1600 px window. With the full padding at 769 px there would be no room left for either.
+- **Accessibility's share row wraps.** The "As designed → as perceived" row didn't, so once a dye was
+  picked the whole pane scrolled sideways: 77 px at 1024x768, or 87 px with a real scrollbar, and 149 px
+  on a 390 px phone. The "Can you tell them apart?" row wraps as well.
+- **Header rows wrap in longer languages.** Comparison's Export and Share row is `justify-content:
+  flex-end`, so in German at 800x600 "Exportieren" was cut off on the left. Comparison's "What differs"
+  row in German and Harmony's results row in French overflowed to the right.
+- **A word too long for its line breaks.** "Barrierefreiheitsanalyse" in Accessibility's empty message
+  hung 4 px off the left of the pane in German at 769 px.
+
+Measured geometry is unchanged at 1440, 1536, 1600, 1718, 1920 and 2560 px in English, German and
+Japanese, empty and with one, two and four dyes (240 records, 47,808 element boxes), and at 768x1024 in
+English. At 769, 800 and 1024 px nothing starts left of the pane in any of the six languages.
+
+### Changed
+
+- **New `e2e/tool-narrow-pane.spec.ts`:** at 769x700, 800x600 and 1024x768 with both panels open, each
+  tool's wheel, cards, chips, slots, tabs and share controls sit inside the pane's padding, nothing drawn
+  starts left of it, nothing scrolls sideways and the shell is the only vertical scroller (#372). It also
+  covers the German and French header rows, a phone's share row and the designed sizes at 1440x900. It
+  runs with real scrollbars, because the 10 px that headless Chromium's hidden ones leave the pane
+  concealed a pair chip's 4 px overflow.
+
 ## [5.16.8] - 2026-11-01
 
 ### Changed

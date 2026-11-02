@@ -2,6 +2,13 @@
 
 ---
 
+## Web-App Version 5.16.11 — November 2, 2026
+
+### Harmony Explorer, Dye Comparison and Accessibility Checker
+- **Nothing is cut off in smaller windows.** With Options and the Color Palette both open, the color wheel, dye cards, "Add Dye" slots and vision buttons all fit.
+- **The color wheel shrinks to fit.** It stays round, and it's back to full size as soon as there's room.
+- **Less sideways scrolling.** Long headings and the Accessibility Checker's share controls move to a new line when they need to, on phones too.
+
 ## Web-App Version 5.16.8 — November 1, 2026
 
 ### Privacy Guide and Terms

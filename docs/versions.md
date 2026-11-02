@@ -26,7 +26,7 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.16.8 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Web Application** | v5.16.11 | `xivdyetools-web-app` | Cloudflare Pages | Active |
 | **Discord Bot** | v5.9.9 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.5 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.9.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
@@ -126,6 +126,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.16.11 | Nov 2026 | Harmony, Comparison and Accessibility fit a narrow pane: the wheel, result cards, pair chips, empty-state slots and vision tabs shrink instead of hanging off the pane's left, and Accessibility's share row and the header rows wrap, which also ends a phone's 149 px of sideways scrolling. Geometry is unchanged at 1440 px and wider |
 | v5.16.8 | Nov 2026 | Documents and the sign-in note only — the Privacy Guide, Terms and `preset.privacyNote` in all six languages now say that when XIVAuth cannot return the characters, the name already on the account stays and a new account gets the `XIVAuth User` name, matching oauth 3.2.2 |
 | v5.16.7 | Nov 2026 | The tutorial spotlight cancels its pending delays (a step's tooltip render, the skip past a missing target, the fade-in and fade-out) when the step changes, the tour ends or it is destroyed; the render that ran after jsdom teardown failed the web-app test task with every test green |
 | v5.16.6 | Nov 2026 | Tailwind's class scan is rooted at `src/`: about 2.5 KB of dead utilities seeded by the changelog no longer ship (index CSS 55.6 → 53.1 KB), and a local `build:check` under `.turbo/` measures the same CSS as CI |

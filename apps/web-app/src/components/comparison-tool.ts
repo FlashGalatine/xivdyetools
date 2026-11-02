@@ -913,7 +913,9 @@ export class ComparisonTool extends BaseComponent {
     });
 
     // Empty state (shown when < 2 dyes selected)
-    this.emptyStateContainer = this.createElement('div');
+    this.emptyStateContainer = this.createElement('div', {
+      attributes: { style: 'container-type: inline-size;' },
+    });
     this.renderEmptyState();
     contentWrapper.appendChild(this.emptyStateContainer);
 
@@ -924,7 +926,7 @@ export class ComparisonTool extends BaseComponent {
     const actionsRow = this.createElement('div', {
       attributes: {
         style:
-          'display: none; justify-content: flex-end; align-items: center; gap: 12px; margin-bottom: 8px;',
+          'display: none; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 12px; margin-bottom: 8px;',
       },
     });
     this.actionsRow = actionsRow;
@@ -1026,13 +1028,18 @@ export class ComparisonTool extends BaseComponent {
     if (!this.emptyStateContainer) return;
     clearContainer(this.emptyStateContainer);
 
+    // Everything centered in here stays inside the pane, because what hangs off
+    // the left of it can't be scrolled to. The sideways padding only gives way
+    // when the pane is too narrow for it (under about 640px). It's in cqw because
+    // a percentage counts as 0 while a shrink-to-fit box measures itself, which
+    // stacked the slots in a window with room for all four.
     const container = this.createElement('div', {
       attributes: {
         style: `
           display: flex;
           flex-direction: column;
           align-items: center;
-          padding: 2rem;
+          padding: 2rem min(2rem, 5cqw);
         `
           .replace(/\s+/g, ' ')
           .trim(),
@@ -1046,7 +1053,8 @@ export class ComparisonTool extends BaseComponent {
           display: flex;
           gap: 16px;
           flex-wrap: wrap;
-          padding: 20px;
+          max-width: 100%;
+          padding: 20px min(20px, 5cqw);
           justify-content: center;
           margin-bottom: 2rem;
         `
@@ -1140,7 +1148,8 @@ export class ComparisonTool extends BaseComponent {
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          padding: 60px 40px;
+          max-width: 100%;
+          padding: 60px min(40px, 8cqw);
           text-align: center;
           background: rgba(0, 0, 0, 0.2);
           border-radius: 12px;
@@ -1156,6 +1165,7 @@ export class ComparisonTool extends BaseComponent {
       attributes: {
         style: `
           width: 150px;
+          max-width: 100%;
           height: 150px;
           margin-bottom: 20px;
           opacity: 0.4;
@@ -1367,7 +1377,7 @@ export class ComparisonTool extends BaseComponent {
         attributes: {
           type: 'button',
           'aria-pressed': String(active),
-          style: `display: flex; align-items: center; gap: 7px; min-height: 44px; padding: 6px 10px; border-radius: 11px; cursor: pointer; font-family: inherit; text-align: left; background: var(--theme-card-background); border: 1px solid ${active ? 'var(--theme-primary)' : 'var(--theme-border)'};${active ? ' box-shadow: 0 0 0 1px var(--theme-primary);' : ''}`,
+          style: `display: flex; align-items: center; gap: 7px; max-width: 100%; min-height: 44px; padding: 6px 10px; border-radius: 11px; cursor: pointer; font-family: inherit; text-align: left; background: var(--theme-card-background); border: 1px solid ${active ? 'var(--theme-primary)' : 'var(--theme-border)'};${active ? ' box-shadow: 0 0 0 1px var(--theme-primary);' : ''}`,
         },
       });
 
@@ -1535,6 +1545,7 @@ export class ComparisonTool extends BaseComponent {
     ] as Array<[Dye, Dye]>) {
       const card = document.createElement('v4-result-card') as ResultCard;
       card.style.width = '280px';
+      card.style.maxWidth = '100%';
       card.style.flexShrink = '0';
       const cardData: ResultCardData = {
         dye,
@@ -1739,7 +1750,7 @@ export class ComparisonTool extends BaseComponent {
     const header = this.createElement('div', {
       attributes: {
         style:
-          'display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--theme-border);',
+          'display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--theme-border);',
       },
     });
     const left = this.createElement('span', {
@@ -2026,6 +2037,7 @@ export class ComparisonTool extends BaseComponent {
 
       // Override default block display to allow horizontal layout
       card.style.display = 'inline-block';
+      card.style.maxWidth = '100%';
       card.style.flexShrink = '0';
 
       // Build card data - use dye color for both original and match (no comparison target)
