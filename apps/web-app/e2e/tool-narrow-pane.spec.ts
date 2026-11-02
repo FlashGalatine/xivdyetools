@@ -14,7 +14,7 @@ import { test, expect } from './fixtures/coverage';
 import { gotoTool, seedStartupStorage } from './fixtures/navigation';
 
 type Viewport = { width: number; height: number };
-type ToolId = 'harmony' | 'comparison' | 'accessibility';
+type ToolId = 'harmony' | 'comparison' | 'accessibility' | 'mixer' | 'gradient';
 
 // Headless Chromium hides scrollbars, which gives the pane 10px that a real window
 // doesn't have. A pair chip's 4px overflow only shows with them on.
@@ -336,4 +336,300 @@ test.describe('Tools in a narrow pane', () => {
     await expect(cards).toHaveCount(2);
     expect((await box(cards.first())).width).toBe(280);
   });
+});
+
+/**
+ * The Mixer and the Gradient Builder keep 32px of side padding of their own inside
+ * the pane's 24px, which at 769px left them 75px. Before 5.16.13 the Mixer's field
+ * wouldn't go under 348px and its results header wouldn't wrap, which scrolled the
+ * pane sideways by 217px, and the Gradient's endpoint cards had no room for what
+ * they print: the swatch spilled out of the card and the text had a width of 0.
+ */
+const MIXER_PAIR = { v4_mixer_selected_dyes: [DYES[0], DYES[1], null] };
+const GRADIENT_PAIR = { v3_mixer_selected_dyes: DYES.slice(0, 2) };
+const RATIOS = ['10/90', '30/70', '50/50', '70/30', '90/10'];
+const fieldCells = (page: Page) => page.locator('button[title*=" · #"]');
+
+/** The box of the text itself, which an element's own box doesn't show when it spills. */
+function textBox(target: Locator) {
+  return target.evaluate((el) => {
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const { left, right } = range.getBoundingClientRect();
+    return { left, right };
+  });
+}
+
+/** What a cell prints stays in it, and the ratio headings don't run together. */
+async function expectFieldReads(page: Page): Promise<void> {
+  const spilling = await fieldCells(page).evaluateAll((cells) =>
+    cells
+      .filter((cell) => {
+        const range = document.createRange();
+        range.selectNodeContents(cell);
+        const text = range.getBoundingClientRect();
+        const { left, right } = cell.getBoundingClientRect();
+        return text.left < left || text.right > right;
+      })
+      .map((cell) => cell.textContent)
+  );
+  expect(spilling).toEqual([]);
+
+  let previous = -Infinity;
+  for (const ratio of RATIOS) {
+    const text = await textBox(page.getByText(ratio, { exact: true }));
+    expect(text.left).toBeGreaterThan(previous);
+    previous = text.right;
+  }
+}
+
+/** The swatch and the label stay in the card, and the dye's name gets room to start. */
+async function expectEndpointReads(card: Locator): Promise<void> {
+  const parts = await card.evaluate((el) => {
+    const [swatch, column] = [...el.children];
+    const [label, name] = [...column.children];
+    const range = document.createRange();
+    range.selectNodeContents(label);
+    return {
+      right: el.getBoundingClientRect().right,
+      swatchRight: swatch.getBoundingClientRect().right,
+      labelRight: range.getBoundingClientRect().right,
+      nameWidth: name.getBoundingClientRect().width,
+    };
+  });
+  expect(parts.swatchRight).toBeLessThanOrEqual(parts.right);
+  expect(parts.labelRight).toBeLessThanOrEqual(parts.right);
+  expect(parts.nameWidth).toBeGreaterThanOrEqual(28);
+}
+
+test.describe('Mixer and Gradient in a narrow pane', () => {
+  for (const viewport of [
+    { width: 769, height: 700 },
+    { width: 800, height: 600 },
+    { width: 860, height: 700 },
+    { width: 960, height: 700 },
+    { width: 1024, height: 768 },
+  ]) {
+    const size = `${viewport.width}x${viewport.height}`;
+
+    test(`Mixer fits its empty slots at ${size}`, async ({ page }) => {
+      await openTool(page, 'mixer', viewport);
+
+      const message = page
+        .getByText('Select two dyes to blend and find matching colors')
+        .filter({ visible: true });
+      // The row of slots, and the tool's icon under it.
+      const parts = message.locator('..').locator('> div');
+      await expect(parts).toHaveCount(2);
+      await expectWithinPane(page, parts);
+      await expectFitsThePane(page);
+    });
+
+    test(`Mixer fits the field and the results header at ${size}`, async ({ page }) => {
+      await openTool(page, 'mixer', viewport, MIXER_PAIR);
+
+      await expect(fieldCells(page)).toHaveCount(30);
+      await expectWithinPane(page, fieldCells(page));
+      await expectFieldReads(page);
+      await expectWithinPane(page, page.locator('.mixer-result-slot'));
+      await expectWithinPane(page, page.getByRole('button', { name: 'Save mix' }));
+      await expectWithinPane(page, page.getByTestId('mixer-export'));
+      await expectWithinPane(page, page.locator('v4-share-button').filter({ visible: true }));
+      // Its first word whole, rather than squeezed beside the actions and broken.
+      const title = await box(page.getByText('Matching Dyes', { exact: true }));
+      expect(title.width).toBeGreaterThanOrEqual(80);
+      await expectFitsThePane(page);
+    });
+
+    test(`Gradient fits its endpoint cards with no dye at ${size}`, async ({ page }) => {
+      await openTool(page, 'gradient', viewport);
+
+      await expectWithinPane(page, page.getByTestId('gradient-start-node'));
+      await expectWithinPane(page, page.getByTestId('gradient-end-node'));
+      await expectEndpointReads(page.getByTestId('gradient-start-node'));
+      await expectEndpointReads(page.getByTestId('gradient-end-node'));
+      await expectFitsThePane(page);
+    });
+
+    test(`Gradient fits the rail and the results header with a pair at ${size}`, async ({
+      page,
+    }) => {
+      await openTool(page, 'gradient', viewport, GRADIENT_PAIR);
+
+      await expect(page.locator('.v5-grad-row')).toHaveCount(8);
+      await expectEndpointReads(page.getByTestId('gradient-start-node'));
+      await expectEndpointReads(page.getByTestId('gradient-end-node'));
+      await expectWithinPane(page, page.getByTestId('gradient-swap-button'));
+      await expectWithinPane(page, page.locator('.v5-grad-row'));
+      await expectWithinPane(page, page.getByTestId('gradient-export'));
+      await expectWithinPane(page, page.locator('v4-share-button').filter({ visible: true }));
+      // Its first word whole, rather than squeezed beside the controls and broken.
+      const label = await box(page.getByText('Gradient Results', { exact: true }));
+      expect(label.width).toBeGreaterThanOrEqual(70);
+      await expectFitsThePane(page);
+    });
+  }
+
+  // A pointer has to land on it, and the redraw it starts has to fit as well.
+  test('the far corner of the field takes a click at 769x700', async ({ page }) => {
+    await openTool(page, 'mixer', { width: 769, height: 700 }, MIXER_PAIR);
+
+    const corner = fieldCells(page).last();
+    const hex = (await corner.getAttribute('title'))!.split(' · ')[2];
+    await corner.click();
+
+    await expect(page.locator('.mixer-result-slot')).toContainText(hex);
+    await expectWithinPane(page, fieldCells(page));
+    await expectFitsThePane(page);
+  });
+
+  // A side panel changes the pane's width with no window resize for a media query to see.
+  test('the field follows a panel closing at 769x700', async ({ page }) => {
+    await openTool(page, 'mixer', { width: 769, height: 700 }, MIXER_PAIR);
+
+    const name = page.getByText('Spectral', { exact: true });
+    const firstCell = fieldCells(page).nth(5);
+    const nameBox = await box(name);
+    expect((await box(firstCell)).y).toBeGreaterThanOrEqual(nameBox.y + nameBox.height);
+
+    await page.locator('v4-config-sidebar .v4-sidebar-collapse').click();
+
+    // Beside the name again, with the name's 68px and the 4px gap between them.
+    await expect
+      .poll(async () => (await box(firstCell)).x - (await box(name)).x)
+      .toBeCloseTo(72, 1);
+    await expectFitsThePane(page);
+  });
+
+  // OKLab prints three decimals, which is the widest a cell's ΔE gets.
+  test('the widest ΔE stays in its cell at 769x700', async ({ page }) => {
+    await openTool(
+      page,
+      'mixer',
+      { width: 769, height: 700 },
+      { ...MIXER_PAIR, xivdyetools_v4_config_mixer: { matchingMethod: 'oklab' } }
+    );
+
+    await expect(fieldCells(page).first()).toHaveText(/^\d\.\d{3}$/);
+    await expectFieldReads(page);
+    await expectFitsThePane(page);
+  });
+
+  // Longer labels than English, with one word wider than the 139px that 769px leaves.
+  for (const [locale, title, exportLabel] of [
+    ['de', 'Passende Farbstoffe', 'Exportieren'],
+    ['fr', 'Teintures correspondantes', 'Exporter'],
+  ]) {
+    test(`Mixer wraps its ${locale} results header at 769x700`, async ({ page }) => {
+      await openTool(
+        page,
+        'mixer',
+        { width: 769, height: 700 },
+        { ...MIXER_PAIR, xivdyetools_locale: locale }
+      );
+
+      await expectWithinPane(page, page.getByText(title, { exact: true }));
+      await expectWithinPane(page, page.getByRole('button', { name: exportLabel }));
+      await expectWithinPane(page, page.locator('v4-share-button').filter({ visible: true }));
+      await expectFitsThePane(page);
+    });
+  }
+
+  for (const [locale, title, exportLabel] of [
+    ['de', 'Verlaufsergebnisse', 'Exportieren'],
+    ['fr', 'Résultats du Dégradé', 'Exporter'],
+  ]) {
+    test(`Gradient wraps its ${locale} results header at 769x700`, async ({ page }) => {
+      await openTool(
+        page,
+        'gradient',
+        { width: 769, height: 700 },
+        { ...GRADIENT_PAIR, xivdyetools_locale: locale }
+      );
+
+      await expect(page.locator('.v5-grad-row')).toHaveCount(8);
+      await expectWithinPane(page, page.getByText(title, { exact: true }));
+      await expectWithinPane(page, page.getByRole('button', { name: exportLabel }));
+      await expectWithinPane(page, page.locator('v4-share-button').filter({ visible: true }));
+      await expectFitsThePane(page);
+    });
+  }
+
+  // A phone has the Mixer's bug too: 56px of padding and a 348px field need 404px.
+  // Only the field gives way there, so its padding and results header don't move.
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 412, height: 915 },
+  ]) {
+    test(`Mixer's field doesn't push a ${viewport.width}px phone sideways`, async ({ page }) => {
+      await openTool(page, 'mixer', viewport, MIXER_PAIR);
+
+      await expectWithinPane(page, fieldCells(page));
+      await expectFieldReads(page);
+      await expectFitsThePane(page);
+      const padding = await page
+        .locator('.v4-tool-main')
+        .evaluate((el) => getComputedStyle(el).paddingLeft);
+      expect(padding).toBe('32px');
+
+      const title = await box(page.getByText('Matching Dyes', { exact: true }));
+      const exportButton = await box(page.getByTestId('mixer-export'));
+      expect(exportButton.y).toBeLessThan(title.y + title.height);
+    });
+  }
+
+  test("a phone's Gradient keeps its padding and its one row of cards", async ({ page }) => {
+    await openTool(page, 'gradient', { width: 390, height: 844 }, GRADIENT_PAIR);
+
+    const workspace = page.locator('.v5-grad-workspace');
+    expect(await workspace.evaluate((el) => getComputedStyle(el).paddingLeft)).toBe('12px');
+    const from = await box(page.getByTestId('gradient-start-node'));
+    const to = await box(page.getByTestId('gradient-end-node'));
+    expect(to.y).toBe(from.y);
+    await expectFitsThePane(page);
+  });
+
+  // The narrow-pane sizing must not reach a window where the design fits. The Mixer's
+  // field needs 412px with its padding, and the first window that gives it that is 1042px.
+  for (const { viewport, cell } of [
+    { viewport: { width: 1046, height: 800 }, cell: 52.8 },
+    { viewport: { width: 1440, height: 900 }, cell: 94.4 },
+  ]) {
+    test(`keeps the Mixer's designed field at ${viewport.width}px`, async ({ page }) => {
+      await openTool(page, 'mixer', viewport, MIXER_PAIR);
+
+      const padding = await page
+        .locator('.v4-tool-main')
+        .evaluate((el) => getComputedStyle(el).paddingLeft);
+      expect(padding).toBe('32px');
+      expect((await box(page.getByText('Spectral', { exact: true }))).width).toBe(68);
+      expect((await box(fieldCells(page).first())).width).toBeCloseTo(cell, 1);
+      expect((await box(fieldCells(page).nth(5))).y).toBeGreaterThan(
+        (await box(fieldCells(page).first())).y
+      );
+    });
+  }
+
+  // Likewise the Gradient, whose cards have what they print from a 934px window up.
+  for (const viewport of [
+    { width: 934, height: 800 },
+    { width: 1440, height: 900 },
+  ]) {
+    test(`keeps the Gradient's padding and rows at ${viewport.width}px`, async ({ page }) => {
+      await openTool(page, 'gradient', viewport, GRADIENT_PAIR);
+
+      const workspace = page.locator('.v5-grad-workspace');
+      expect(await workspace.evaluate((el) => getComputedStyle(el).paddingLeft)).toBe('32px');
+      const from = await box(page.getByTestId('gradient-start-node'));
+      const swap = await box(page.getByTestId('gradient-swap-button'));
+      const to = await box(page.getByTestId('gradient-end-node'));
+      expect(to.y).toBe(from.y);
+      expect(swap.x).toBeGreaterThan(from.x + from.width);
+      expect(to.x).toBeGreaterThan(swap.x + swap.width);
+      // The label and the cluster share the header's line, however the cluster wraps inside.
+      const label = await box(page.getByText('Gradient Results', { exact: true }));
+      const cluster = await box(page.locator('.section-header > div').filter({ visible: true }));
+      expect(cluster.y).toBeLessThan(label.y + label.height);
+    });
+  }
 });

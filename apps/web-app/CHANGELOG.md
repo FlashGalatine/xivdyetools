@@ -7,6 +7,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.16.13] - 2026-11-02
+
+### Fixed
+
+- **The Dye Mixer no longer scrolls sideways in a narrow pane.** With both side panels open and two dyes
+  picked, the pane scrolled sideways by 217 px at 769 px, 186 at 800, 126 at 860, 86 at 900 and 26 at 960.
+  With one dye or none it didn't. Two things pushed it, measured by hiding one at a time: the mixing field's
+  grid wouldn't go under 348 px, and the results header (title, Export, Share) wouldn't wrap, which alone
+  left 120 px at 769 px. The field now gives way in order, following its own width rather than the window's:
+  its cells narrow from 52 to 32 px and its row names from 68 to 52 px, then the tool's 32 px of side padding
+  goes (`clamp(0px, calc((100% - 232px) / 2), 32px)`, a percentage because a side panel changes the pane with
+  no window resize), and under 232 px each row name takes a line of its own, so the cells get the whole width.
+  With both panels open that's 926 px for the padding and 862 px for the row names. All 30 cells stay on
+  screen down to 769 px, at 26 px wide. The six rows are taller there, and with three-decimal ΔE values
+  (OKLab) a cell's label nearly fills it.
+- **A phone's Mixer had the same bug.** 56 px of padding and a 348 px field need 404 px, so a 390 px phone
+  scrolled 14 px sideways (24 px in a window with a real scrollbar) and a 320 px one 84 px. On a 390 or 412 px
+  phone only the field's cells change, and the padding stays until a window under about 344 px. A 360 px
+  phone also moves Export and Share under the results title, whose row was already 3 px too wide there.
+- **The results headers wrap, but only when they have to.** The Mixer's title takes what's left beside
+  Export and Share, as it did, until its longest word and those two can't share a line. The Gradient's
+  label and controls work the same way: its header overflowed by 9 px at 769 px. Long words break, because
+  "CORRESPONDANTES" and "VERLAUFSERGEBNISSE" are wider than the 139 px a 769 px window leaves.
+- **The Gradient Builder's endpoint cards fit and read.** Below an 872 px window its From and To cards were
+  too narrow for their own 30 px swatch, so the swatch spilled out under the swap button and the text had a
+  width of 0. At 769 px that text was also the pane's 10 px overflow, with no dye picked or with one. The
+  tool's side padding now gives way first (`clamp(0px, calc((100% - 238px) / 2), 32px)`, from 932 px with both
+  panels open), and under 238 px of width, an 868 px window, the cards stack with the swap between them.
+- **The Mixer's empty icon fits.** Its 150 px didn't at 769 px.
+
+With both panels open, the tools' geometry is identical to `main` from 934 px up for the Gradient and from
+1,042 px up for the Mixer, in English, empty and with one or two dyes, apart from the one box each that
+draws nothing: the Mixer's title and the Gradient's control cluster are now as wide as the room beside them.
+Measured at 11 window widths from 930 to 2,560 px and 6 phone widths from 320 to 768 px (102 records, 20,723
+element boxes). A phone's Gradient is unchanged, and so is a phone's Mixer with no pair picked, except that
+at 320 px its padding goes from 32 to 20 px. At 769, 830, 860 and 960 px nothing passes the pane's padding
+in any of the six languages, with a long dye name (160 records, three matching methods in English). A result
+card's decorative notches are the exception, half outside the card as designed.
+
+### Changed
+
+- **`e2e/tool-narrow-pane.spec.ts` covers both tools:** at five window sizes their field, slots, cards, rail
+  and results headers sit inside the pane's padding and nothing scrolls sideways. It also covers the far
+  corner of the field taking a click, a panel closing with no window resize, the widest ΔE, German and
+  French headers, 390 and 412 px phones, and the designed sizes where there's room.
+
 ## [5.16.11] - 2026-11-02
 
 ### Fixed

@@ -2,6 +2,15 @@
 
 ---
 
+## Web-App Version 5.16.13 — November 2, 2026
+
+### Dye Mixer and Gradient Builder
+- **No more sideways scrolling in smaller windows.** With Options and the Color Palette both open, both tools now fit the space between them.
+- **The Dye Mixer's Model × ratio grid stays whole.** All 30 cells stay on screen. When space is tight, the cells narrow and each model's name moves above its row.
+- **The Gradient Builder's From and To cards stack when space is tight.** The swap button sits between them, and long dye names can still shorten.
+- **Long headings move to a new line.** Export and Share stay in reach in every language, and a very long word can break across two lines.
+- **Smaller phones too.** The Model × ratio grid no longer pushes the Dye Mixer sideways.
+
 ## Web-App Version 5.16.11 — November 2, 2026
 
 ### Harmony Explorer, Dye Comparison and Accessibility Checker
