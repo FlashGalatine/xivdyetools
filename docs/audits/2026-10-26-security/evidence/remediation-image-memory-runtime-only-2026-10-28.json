@@ -1,0 +1,796 @@
+{
+  "label": "actual-runtime-only-v1",
+  "provenance": {
+    "createdAt": "2026-10-28T16:20:29.645Z",
+    "root": "<source-checkout>",
+    "node": "v22.21.0",
+    "versions": {
+      "miniflare": "5.20261019.2-beta",
+      "workerd": "1.20261019.1",
+      "esbuild": "0.28.2",
+      "ws": "8.21.0",
+      "photon": "0.4.0"
+    },
+    "variant": "frozen-source",
+    "scriptSha256": "4b80758bf6bf0897adc9444a8863f9986968a6188af5bfca2e16be75774e3428",
+    "head": "e66c67a937436a951331789207c57817ffdd0a50",
+    "sources": {
+      "apps/image-worker/src/index.ts": "b4cc10292bfe82610e034d1abc91b3e9064f4e17d61629beceb8ecf601d896b8",
+      "apps/image-worker/src/photon.ts": "554ad016422af11a68b505238569a4958496cee3c6013b01d2e959e398facbdb",
+      "apps/image-worker/src/validators.ts": "69ac9284fad0f087f2cb1c1d2016abc3fc5039d2c7e7a95986dd5eb452200844",
+      "apps/image-worker/src/dimensions.ts": "9976ed63307b5c402cb09ceede043cf9ad7b3f073d1a1b6ac4806db50586edc8",
+      "apps/image-worker/wrangler.toml": "b3876ec32b249a50bde9439a659a21dccbab3616e2529233baca63b198f41bb8",
+      "pnpm-lock.yaml": "707a5d7d9e59fd3790011a986435b91ac0d1347ebdb069e854c9828996d7434f"
+    },
+    "commands": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "<probe-workspace>\\harness.mjs",
+      "--source-root=<source-checkout>",
+      "--set=actual",
+      "--label=actual-runtime-only-v1",
+      "--warm-only",
+      "--runtime-only-diagnostic",
+      "--diagnostic-gc-at-end"
+    ],
+    "description": "Original routes/processors bundled into scratch; no source file changes; no external fixture requests.",
+    "photonWasmSHA256": "f477b87cbea0445c65fc7e580e89050190600379fcd44821cec67403483872b1"
+  },
+  "sourceIntegrity": {
+    "unchanged": true,
+    "before": {
+      "apps/image-worker/src/index.ts": "b4cc10292bfe82610e034d1abc91b3e9064f4e17d61629beceb8ecf601d896b8",
+      "apps/image-worker/src/photon.ts": "554ad016422af11a68b505238569a4958496cee3c6013b01d2e959e398facbdb",
+      "apps/image-worker/src/validators.ts": "69ac9284fad0f087f2cb1c1d2016abc3fc5039d2c7e7a95986dd5eb452200844",
+      "apps/image-worker/src/dimensions.ts": "9976ed63307b5c402cb09ceede043cf9ad7b3f073d1a1b6ac4806db50586edc8",
+      "apps/image-worker/wrangler.toml": "b3876ec32b249a50bde9439a659a21dccbab3616e2529233baca63b198f41bb8",
+      "pnpm-lock.yaml": "707a5d7d9e59fd3790011a986435b91ac0d1347ebdb069e854c9828996d7434f"
+    },
+    "after": {
+      "apps/image-worker/src/index.ts": "b4cc10292bfe82610e034d1abc91b3e9064f4e17d61629beceb8ecf601d896b8",
+      "apps/image-worker/src/photon.ts": "554ad016422af11a68b505238569a4958496cee3c6013b01d2e959e398facbdb",
+      "apps/image-worker/src/validators.ts": "69ac9284fad0f087f2cb1c1d2016abc3fc5039d2c7e7a95986dd5eb452200844",
+      "apps/image-worker/src/dimensions.ts": "9976ed63307b5c402cb09ceede043cf9ad7b3f073d1a1b6ac4806db50586edc8",
+      "apps/image-worker/wrangler.toml": "b3876ec32b249a50bde9439a659a21dccbab3616e2529233baca63b198f41bb8",
+      "pnpm-lock.yaml": "707a5d7d9e59fd3790011a986435b91ac0d1347ebdb069e854c9828996d7434f"
+    }
+  },
+  "method": "Control bundle, Runtime.enable only; no Debugger, source stage injection, constructor wrapper, or forcedGC during18requests. Runtime.discardConsoleEntries before idle samples.",
+  "requests": 18,
+  "allHTTP200": true,
+  "allParity": true,
+  "parity": [
+    {
+      "index": 1,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "index": 2,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "index": 3,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "index": 4,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "index": 5,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "index": 6,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "index": 7,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "index": 8,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "index": 9,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "index": 10,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "index": 11,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "index": 12,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "index": 13,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "index": 14,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "index": 15,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "index": 16,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "index": 17,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "index": 18,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    }
+  ],
+  "wasmHighWaterBytes": 108396544,
+  "processPeakWorkingSetBytes": 239370240,
+  "idleRows": [
+    {
+      "index": 1,
+      "round": 1,
+      "fixture": "rgba8-64cap-near5MiB",
+      "flow": "extract512",
+      "moment": "idleBefore",
+      "wasmBytes": 1376256,
+      "usedSize": 985156,
+      "totalSize": 1585152,
+      "embedderHeapUsedSize": 515872,
+      "backingStorageSize": 0,
+      "discardConsoleEntries": {
+        "ok": true
+      },
+      "diagnosticAccountingBytes": 2877284
+    },
+    {
+      "index": 1,
+      "round": 1,
+      "fixture": "rgba8-64cap-near5MiB",
+      "flow": "extract512",
+      "moment": "idleAfter",
+      "wasmBytes": 108396544,
+      "usedSize": 2699644,
+      "totalSize": 5779456,
+      "embedderHeapUsedSize": 902760,
+      "backingStorageSize": 10943925,
+      "discardConsoleEntries": {
+        "ok": true
+      },
+      "diagnosticAccountingBytes": 122942873
+    },
+    {
+      "index": 2,
+      "round": 1,
+      "fixture": "rgba8-4K-near5MiB",
+      "flow": "thumbnail",
+      "moment": "idleBefore",
+      "wasmBytes": 108396544,
+      "usedSize": 2709360,
+      "totalSize": 5779456,
+      "embedderHeapUsedSize": 902760,
+      "backingStorageSize": 10943925,
+      "discardConsoleEntries": {
+        "ok": true
+      },
+      "diagnosticAccountingBytes": 122952589
+    },
+    {
+      "index": 2,
+      "round": 1,
+      "fixture": "rgba8-4K-near5MiB",
+      "flow": "thumbnail",
+      "moment": "idleAfter",
+      "wasmBytes": 108396544,
+      "usedSize": 2286408,
+      "totalSize": 5779456,
+      "embedderHeapUsedSize": 420936,
+      "backingStorageSize": 10450745,
+      "discardConsoleEntries": {
+        "ok": true
+      },
+      "diagnosticAccountingBytes": 121554633
+    },
+    {
+      "index": 3,
+      "round": 1,
+      "fixture": "rgba8-ultrawide-near5MiB",
+      "flow": "extract512",
+      "moment": "idleBefore",
+      "wasmBytes": 108396544,
+      "usedSize": 2288132,
+      "totalSize": 5779456,
+      "embedderHeapUsedSize": 420936,
+      "backingStorageSize": 10450745,
+      "discardConsoleEntries": {
+        "ok": true
+      },
+      "diagnosticAccountingBytes": 121556357
+    },
+    {
+      "index": 3,
+      "round": 1,
+      "fixture": "rgba8-ultrawide-near5MiB",
+      "flow": "extract512",
+      "moment": "idleAfter",
+      "wasmBytes": 108396544,
+      "usedSize": 4062392,
+      "totalSize": 6303744,
+      "embedderHeapUsedSize": 879984,
+      "backingStorageSize": 21058270,
+      "discardConsoleEntries": {
+        "ok": true
+      },
+      "diagnosticAccountingBytes": 134397190
+    },
+    {
+      "index": 4,
+      "round": 1,
+      "fixture": "rgba8-smaller-near5MiB",
+      "flow": "thumbnail",
+      "moment": "idleBefore",
+      "wasmBytes": 108396544,
+      "usedSize": 4064064,
+      "totalSize": 6303744,
+      "embedderHeapUsedSize": 879984,
+      "backingStorageSize": 21058270,
+      "discardConsoleEntries": {
+        "ok": true
+      },
+      "diagnosticAccountingBytes": 134398862
+    },
+    {
+      "index": 4,
+      "round": 1,
+      "fixture": "rgba8-smaller-near5MiB",
+      "flow": "thumbnail",
+      "moment": "idleAfter",
+      "wasmBytes": 108396544,
+      "usedSize": 4691292,
+      "totalSize": 7614464,
+      "embedderHeapUsedSize": 1289816,
+      "backingStorageSize": 21228579,
+      "discardConsoleEntries": {
+        "ok": true
+      },
+      "diagnosticAccountingBytes": 135606231
+    },
+    {
+      "index": 5,
+      "round": 1,
+      "fixture": "rgba8-64cap-near5MiB",
+      "flow": "thumbnail",
+      "moment": "idleBefore",
+      "wasmBytes": 108396544,
+      "usedSize": 4692964,
+      "totalSize": 7614464,
+      "embedderHeapUsedSize": 1289816,
+      "backingStorageSize": 21228579,
+      "discardConsoleEntries": {
+        "ok": true
+      },
+      "diagnosticAccountingBytes": 135607903
+    },
+    {
+      "index": 5,
+      "round": 1,
+      "fixture": "rgba8-64cap-near5MiB",
+      "flow": "thumbnail",
+      "moment": "idleAfter",
+      "wasmBytes": 108396544,
+      "usedSize": 2985960,
+      "totalSize": 7614464,
+      "embedderHeapUsedSize": 578312,
+      "backingStorageSize": 10466947,
+      "discardConsoleEntries": {
+        "ok": true
+      },
+      "diagnosticAccountingBytes": 122427763
+    },
+    {
+      "index": 6,
+      "round": 1,
+      "fixture": "rgba8-4K-near5MiB",
+      "flow": "extract256",
+      "moment": "idleBefore",
+      "wasmBytes": 108396544,
+      "usedSize": 2987632,
+      "totalSize": 7614464,
+      "embedderHeapUsedSize": 611856,
+      "backingStorageSize": 10466947,
+      "discardConsoleEntries": {
+        "ok": true
+      },
+      "diagnosticAccountingBytes": 122462979
+    },
+    {
+      "index": 6,
+      "round": 1,
+      "fixture": "rgba8-4K-near5MiB",
+      "flow": "extract256",
+      "moment": "idleAfter",
+      "wasmBytes": 108396544,
+      "usedSize": 3598836,
+      "totalSize": 7614464,
+      "embedderHeapUsedSize": 1118632,
+      "backingStorageSize": 20824074,
+      "discardConsoleEntries": {
+        "ok": true
+      },
+      "diagnosticAccountingBytes": 133938086
+    },
+    {
+      "index": 7,
+      "round": 2,
+      "fixture": "rgba8-64cap-near5MiB",
+      "flow": "extract512",
+      "moment": "idleBefore",
+      "wasmBytes": 108396544,
+      "usedSize": 3600508,
+      "totalSize": 7614464,
+      "embedderHeapUsedSize": 1118632,
+      "backingStorageSize": 20824074,
+      "discardConsoleEntries": {
+        "ok": true
+      },
+      "diagnosticAccountingBytes": 133939758
+    },
+    {
+      "index": 7,
+      "round": 2,
+      "fixture": "rgba8-64cap-near5MiB",
+      "flow": "extract512",
+      "moment": "idleAfter",
+      "wasmBytes": 108396544,
+      "usedSize": 1587104,
+      "totalSize": 8400896,
+      "embedderHeapUsedSize": 205584,
+      "backingStorageSize": 10943925,
+      "discardConsoleEntries": {
+        "ok": true
+      },
+      "diagnosticAccountingBytes": 121133157
+    },
+    {
+      "index": 8,
+      "round": 2,
+      "fixture": "rgba8-4K-near5MiB",
+      "flow": "thumbnail",
+      "moment": "idleBefore",
+      "wasmBytes": 108396544,
+      "usedSize": 1588776,
+      "totalSize": 8400896,
+      "embedderHeapUsedSize": 205584,
+      "backingStorageSize": 10943925,
+      "discardConsoleEntries": {
+        "ok": true
+      },
+      "diagnosticAccountingBytes": 121134829
+    },
+    {
+      "index": 8,
+      "round": 2,
+      "fixture": "rgba8-4K-near5MiB",
+      "flow": "thumbnail",
+      "moment": "idleAfter",
+      "wasmBytes": 108396544,
+      "usedSize": 3361156,
+      "totalSize": 8400896,
+      "embedderHeapUsedSize": 709984,
+      "backingStorageSize": 21174134,
+      "discardConsoleEntries": {
+        "ok": true
+      },
+      "diagnosticAccountingBytes": 133641818
+    },
+    {
+      "index": 9,
+      "round": 2,
+      "fixture": "rgba8-ultrawide-near5MiB",
+      "flow": "extract512",
+      "moment": "idleBefore",
+      "wasmBytes": 108396544,
+      "usedSize": 3362828,
+      "totalSize": 8400896,
+      "embedderHeapUsedSize": 709984,
+      "backingStorageSize": 21174134,
+      "discardConsoleEntries": {
+        "ok": true
+      },
+      "diagnosticAccountingBytes": 133643490
+    },
+    {
+      "index": 9,
+      "round": 2,
+      "fixture": "rgba8-ultrawide-near5MiB",
+      "flow": "extract512",
+      "moment": "idleAfter",
+      "wasmBytes": 108396544,
+      "usedSize": 4039700,
+      "totalSize": 8400896,
+      "embedderHeapUsedSize": 1063936,
+      "backingStorageSize": 21547354,
+      "discardConsoleEntries": {
+        "ok": true
+      },
+      "diagnosticAccountingBytes": 135047534
+    },
+    {
+      "index": 10,
+      "round": 2,
+      "fixture": "rgba8-smaller-near5MiB",
+      "flow": "thumbnail",
+      "moment": "idleBefore",
+      "wasmBytes": 108396544,
+      "usedSize": 4041372,
+      "totalSize": 8400896,
+      "embedderHeapUsedSize": 1063936,
+      "backingStorageSize": 21547354,
+      "discardConsoleEntries": {
+        "ok": true
+      },
+      "diagnosticAccountingBytes": 135049206
+    },
+    {
+      "index": 10,
+      "round": 2,
+      "fixture": "rgba8-smaller-near5MiB",
+      "flow": "thumbnail",
+      "moment": "idleAfter",
+      "wasmBytes": 108396544,
+      "usedSize": 2843540,
+      "totalSize": 7876608,
+      "embedderHeapUsedSize": 519232,
+      "backingStorageSize": 11023004,
+      "discardConsoleEntries": {
+        "ok": true
+      },
+      "diagnosticAccountingBytes": 122782320
+    },
+    {
+      "index": 11,
+      "round": 2,
+      "fixture": "rgba8-64cap-near5MiB",
+      "flow": "thumbnail",
+      "moment": "idleBefore",
+      "wasmBytes": 108396544,
+      "usedSize": 2845212,
+      "totalSize": 7876608,
+      "embedderHeapUsedSize": 519232,
+      "backingStorageSize": 11023004,
+      "discardConsoleEntries": {
+        "ok": true
+      },
+      "diagnosticAccountingBytes": 122783992
+    },
+    {
+      "index": 11,
+      "round": 2,
+      "fixture": "rgba8-64cap-near5MiB",
+      "flow": "thumbnail",
+      "moment": "idleAfter",
+      "wasmBytes": 108396544,
+      "usedSize": 4619688,
+      "totalSize": 7876608,
+      "embedderHeapUsedSize": 1072248,
+      "backingStorageSize": 21269415,
+      "discardConsoleEntries": {
+        "ok": true
+      },
+      "diagnosticAccountingBytes": 135357895
+    },
+    {
+      "index": 12,
+      "round": 2,
+      "fixture": "rgba8-4K-near5MiB",
+      "flow": "extract256",
+      "moment": "idleBefore",
+      "wasmBytes": 108396544,
+      "usedSize": 4621360,
+      "totalSize": 7876608,
+      "embedderHeapUsedSize": 1072248,
+      "backingStorageSize": 21269415,
+      "discardConsoleEntries": {
+        "ok": true
+      },
+      "diagnosticAccountingBytes": 135359567
+    },
+    {
+      "index": 12,
+      "round": 2,
+      "fixture": "rgba8-4K-near5MiB",
+      "flow": "extract256",
+      "moment": "idleAfter",
+      "wasmBytes": 108396544,
+      "usedSize": 5222872,
+      "totalSize": 8138752,
+      "embedderHeapUsedSize": 1547640,
+      "backingStorageSize": 20724617,
+      "discardConsoleEntries": {
+        "ok": true
+      },
+      "diagnosticAccountingBytes": 135891673
+    },
+    {
+      "index": 13,
+      "round": 3,
+      "fixture": "rgba8-64cap-near5MiB",
+      "flow": "extract512",
+      "moment": "idleBefore",
+      "wasmBytes": 108396544,
+      "usedSize": 5224544,
+      "totalSize": 8138752,
+      "embedderHeapUsedSize": 1547640,
+      "backingStorageSize": 20724617,
+      "discardConsoleEntries": {
+        "ok": true
+      },
+      "diagnosticAccountingBytes": 135893345
+    },
+    {
+      "index": 13,
+      "round": 3,
+      "fixture": "rgba8-64cap-near5MiB",
+      "flow": "extract512",
+      "moment": "idleAfter",
+      "wasmBytes": 108396544,
+      "usedSize": 3019640,
+      "totalSize": 8138752,
+      "embedderHeapUsedSize": 599600,
+      "backingStorageSize": 10943925,
+      "discardConsoleEntries": {
+        "ok": true
+      },
+      "diagnosticAccountingBytes": 122959709
+    },
+    {
+      "index": 14,
+      "round": 3,
+      "fixture": "rgba8-4K-near5MiB",
+      "flow": "thumbnail",
+      "moment": "idleBefore",
+      "wasmBytes": 108396544,
+      "usedSize": 3021312,
+      "totalSize": 8138752,
+      "embedderHeapUsedSize": 599600,
+      "backingStorageSize": 10943925,
+      "discardConsoleEntries": {
+        "ok": true
+      },
+      "diagnosticAccountingBytes": 122961381
+    },
+    {
+      "index": 14,
+      "round": 3,
+      "fixture": "rgba8-4K-near5MiB",
+      "flow": "thumbnail",
+      "moment": "idleAfter",
+      "wasmBytes": 108396544,
+      "usedSize": 4792124,
+      "totalSize": 8138752,
+      "embedderHeapUsedSize": 1131352,
+      "backingStorageSize": 21174134,
+      "discardConsoleEntries": {
+        "ok": true
+      },
+      "diagnosticAccountingBytes": 135494154
+    },
+    {
+      "index": 15,
+      "round": 3,
+      "fixture": "rgba8-ultrawide-near5MiB",
+      "flow": "extract512",
+      "moment": "idleBefore",
+      "wasmBytes": 108396544,
+      "usedSize": 4793796,
+      "totalSize": 8138752,
+      "embedderHeapUsedSize": 1131352,
+      "backingStorageSize": 21174134,
+      "discardConsoleEntries": {
+        "ok": true
+      },
+      "diagnosticAccountingBytes": 135495826
+    },
+    {
+      "index": 15,
+      "round": 3,
+      "fixture": "rgba8-ultrawide-near5MiB",
+      "flow": "extract512",
+      "moment": "idleAfter",
+      "wasmBytes": 108396544,
+      "usedSize": 6560224,
+      "totalSize": 9187328,
+      "embedderHeapUsedSize": 1652544,
+      "backingStorageSize": 31781659,
+      "discardConsoleEntries": {
+        "ok": true
+      },
+      "diagnosticAccountingBytes": 148390971
+    },
+    {
+      "index": 16,
+      "round": 3,
+      "fixture": "rgba8-smaller-near5MiB",
+      "flow": "thumbnail",
+      "moment": "idleBefore",
+      "wasmBytes": 108396544,
+      "usedSize": 6561896,
+      "totalSize": 9187328,
+      "embedderHeapUsedSize": 1652544,
+      "backingStorageSize": 31781659,
+      "discardConsoleEntries": {
+        "ok": true
+      },
+      "diagnosticAccountingBytes": 148392643
+    },
+    {
+      "index": 16,
+      "round": 3,
+      "fixture": "rgba8-smaller-near5MiB",
+      "flow": "thumbnail",
+      "moment": "idleAfter",
+      "wasmBytes": 108396544,
+      "usedSize": 6011300,
+      "totalSize": 10760192,
+      "embedderHeapUsedSize": 2063496,
+      "backingStorageSize": 21742297,
+      "discardConsoleEntries": {
+        "ok": true
+      },
+      "diagnosticAccountingBytes": 138213637
+    },
+    {
+      "index": 17,
+      "round": 3,
+      "fixture": "rgba8-64cap-near5MiB",
+      "flow": "thumbnail",
+      "moment": "idleBefore",
+      "wasmBytes": 108396544,
+      "usedSize": 6012972,
+      "totalSize": 10760192,
+      "embedderHeapUsedSize": 2063496,
+      "backingStorageSize": 21742297,
+      "discardConsoleEntries": {
+        "ok": true
+      },
+      "diagnosticAccountingBytes": 138215309
+    },
+    {
+      "index": 17,
+      "round": 3,
+      "fixture": "rgba8-64cap-near5MiB",
+      "flow": "thumbnail",
+      "moment": "idleAfter",
+      "wasmBytes": 108396544,
+      "usedSize": 2967084,
+      "totalSize": 10235904,
+      "embedderHeapUsedSize": 560808,
+      "backingStorageSize": 10466947,
+      "discardConsoleEntries": {
+        "ok": true
+      },
+      "diagnosticAccountingBytes": 122391383
+    },
+    {
+      "index": 18,
+      "round": 3,
+      "fixture": "rgba8-4K-near5MiB",
+      "flow": "extract256",
+      "moment": "idleBefore",
+      "wasmBytes": 108396544,
+      "usedSize": 2968756,
+      "totalSize": 10235904,
+      "embedderHeapUsedSize": 560808,
+      "backingStorageSize": 10466947,
+      "discardConsoleEntries": {
+        "ok": true
+      },
+      "diagnosticAccountingBytes": 122393055
+    },
+    {
+      "index": 18,
+      "round": 3,
+      "fixture": "rgba8-4K-near5MiB",
+      "flow": "extract256",
+      "moment": "idleAfter",
+      "wasmBytes": 108396544,
+      "usedSize": 4757872,
+      "totalSize": 10235904,
+      "embedderHeapUsedSize": 1045720,
+      "backingStorageSize": 20824074,
+      "discardConsoleEntries": {
+        "ok": true
+      },
+      "diagnosticAccountingBytes": 135024210
+    }
+  ],
+  "worstIdleCheckpoint": {
+    "index": 16,
+    "round": 3,
+    "fixture": "rgba8-smaller-near5MiB",
+    "flow": "thumbnail",
+    "moment": "idleBefore",
+    "wasmBytes": 108396544,
+    "usedSize": 6561896,
+    "totalSize": 9187328,
+    "embedderHeapUsedSize": 1652544,
+    "backingStorageSize": 31781659,
+    "discardConsoleEntries": {
+      "ok": true
+    },
+    "diagnosticAccountingBytes": 148392643
+  },
+  "forcedGCDiagnostic": {
+    "label": "Idle after complete18request sequence only; diagnostic reachability experiment, not production behavior or pass criterion",
+    "before": {
+      "discardConsoleEntries": {
+        "ok": true
+      },
+      "heap": {
+        "usedSize": 4757872,
+        "totalSize": 10235904,
+        "embedderHeapUsedSize": 1045720,
+        "backingStorageSize": 20824074
+      }
+    },
+    "wasmBeforeBytes": 108396544,
+    "attempts": 1,
+    "completed": false,
+    "error": "Error: CDP timeout: HeapProfiler.collectGarbage\n    at Timeout._onTimeout (file:///<probe-workspace>/harness.mjs:157:142)\n    at listOnTimeout (node:internal/timers:588:17)\n    at process.processTimers (node:internal/timers:523:7)",
+    "after": null
+  },
+  "limitations": [
+    "The original stage-pausing run observed142.330MiB diagnostic accounting and natural garbage collection; neither observation is replaced or hidden by this diagnostic.",
+    "Runtime-only idle sampling still sees temporary JS/external accumulation without Debugger, supporting ordinary uncollected buffers rather than a backtrace-only artifact.",
+    "The single idle HeapProfiler.collectGarbage call timed out after15seconds; no postGC observation or completed forcedGC is claimed.",
+    "ProcessRSS is wholeworkerd high-water. No continuous isolatepeak, production128MiB enforcement, reachability/leak verdict or safety pass is established."
+  ],
+  "publicReceiptNormalization": {
+    "paths": "Source checkout and private probe workspace replaced by placeholders; measurements and source hashes unchanged.",
+    "originalReceiptSHA256": "43d08df6aebf150028f79990b3218943d31ec2badd51a9cdc2badab772fb0c63"
+  }
+}

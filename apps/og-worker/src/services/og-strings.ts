@@ -1,7 +1,8 @@
 /**
- * The og default-card deck strings ×6 — verbatim from
+ * The og default-card deck strings ×6 — originally verbatim from
  * `String Pass - OG One-liners.dc.html` (CONFIRMED 2026-08-07), the worker's
- * first tool-describing card strings.
+ * first tool-describing card strings. Harmony's count was corrected to ten
+ * in I18N-002 (2026-10-26 audit); the rest of its subtitle is unchanged.
  *
  * Vocabulary anchors, not new coinage: names quote the shipped tool titles,
  * part 1's extractor retranslation, 1b's FR *Nuancier*, the shipped presets
@@ -40,7 +41,7 @@ type DeckKey =
 
 export const OG_DECK: Record<LocaleCode, Record<DeckKey, OgDeckStrings>> = {
   en: {
-    harmony: { name: 'Harmony Explorer', sub: 'Build a palette around any dye. Six harmony types, real dyes only.' },
+    harmony: { name: 'Harmony Explorer', sub: 'Build a palette around any dye. Ten harmony types, real dyes only.' },
     extractor: { name: 'Palette Extractor', sub: 'Pull the palette from any image and match every color to a buyable dye.' },
     comparison: { name: 'Dye Comparison', sub: 'Two to four dyes side by side — every distance, closest pair first.' },
     gradient: { name: 'Gradient Builder', sub: 'The dyes along a gradient between two colors — distinct steps, no repeats.' },
@@ -53,7 +54,7 @@ export const OG_DECK: Record<LocaleCode, Record<DeckKey, OgDeckStrings>> = {
     root: { name: 'XIV Dye Tools', sub: 'Color tools for FFXIV dyes — harmony, matching, prices, accessibility.' },
   },
   de: {
-    harmony: { name: 'Harmonie-Explorer', sub: 'Baue eine Palette um einen beliebigen Farbstoff — sechs Harmonietypen, nur echte Farbstoffe.' },
+    harmony: { name: 'Harmonie-Explorer', sub: 'Baue eine Palette um einen beliebigen Farbstoff — zehn Harmonietypen, nur echte Farbstoffe.' },
     extractor: { name: 'Paletten-Extraktor', sub: 'Ziehe die Palette aus jedem Bild und gleiche jede Farbe mit einem kaufbaren Farbstoff ab.' },
     comparison: { name: 'Farbstoffvergleich', sub: 'Zwei bis vier Farbstoffe nebeneinander — alle Distanzen, engstes Paar zuerst.' },
     gradient: { name: 'Verlauf-Ersteller', sub: 'Die Farbstoffe entlang eines Verlaufs zwischen zwei Farben — klare Stufen, keine Wiederholungen.' },
@@ -66,7 +67,7 @@ export const OG_DECK: Record<LocaleCode, Record<DeckKey, OgDeckStrings>> = {
     root: { name: 'XIV Dye Tools', sub: 'Farbwerkzeuge für FFXIV-Farbstoffe — Harmonie, Abgleich, Preise, Barrierefreiheit.' },
   },
   fr: {
-    harmony: { name: "Explorateur d'harmonies", sub: "Construisez une palette autour d'une teinture — six types d'harmonie, teintures réelles uniquement." },
+    harmony: { name: "Explorateur d'harmonies", sub: "Construisez une palette autour d'une teinture — dix types d'harmonie, teintures réelles uniquement." },
     extractor: { name: 'Extracteur de palette', sub: "Extrayez la palette de n'importe quelle image et associez chaque couleur à une teinture achetable." },
     comparison: { name: 'Comparaison de teintures', sub: "Deux à quatre teintures côte à côte — toutes les distances, la paire la plus proche d'abord." },
     gradient: { name: 'Constructeur de dégradé', sub: 'Les teintures le long d’un dégradé entre deux couleurs — des paliers distincts, sans doublons.' },
@@ -79,7 +80,7 @@ export const OG_DECK: Record<LocaleCode, Record<DeckKey, OgDeckStrings>> = {
     root: { name: 'XIV Dye Tools', sub: 'Outils couleur pour les teintures FFXIV — harmonie, correspondance, prix, accessibilité.' },
   },
   ja: {
-    harmony: { name: 'ハーモニーエクスプローラー', sub: '好きなカララントを軸にパレットを構築。6種類のハーモニー、実在の染料のみ。' },
+    harmony: { name: 'ハーモニーエクスプローラー', sub: '好きなカララントを軸にパレットを構築。10種類のハーモニー、実在の染料のみ。' },
     extractor: { name: 'パレット抽出', sub: '画像からパレットを抽出し、各色を入手可能な染料にマッチング。' },
     comparison: { name: 'カララント比較', sub: '2〜4つのカララントを並べて比較——全距離を表示、最も近いペアから。' },
     gradient: { name: 'グラデーションビルダー', sub: '2色間のグラデーションに沿った染料——重複のない明確なステップ。' },
@@ -92,7 +93,7 @@ export const OG_DECK: Record<LocaleCode, Record<DeckKey, OgDeckStrings>> = {
     root: { name: 'XIV Dye Tools', sub: 'FFXIV染料のためのカラーツール——ハーモニー、マッチング、価格、アクセシビリティ。' },
   },
   ko: {
-    harmony: { name: '조화 탐색기', sub: '원하는 염료를 중심으로 팔레트 구성 — 6가지 조화 유형, 실제 염료만.' },
+    harmony: { name: '조화 탐색기', sub: '원하는 염료를 중심으로 팔레트 구성 — 10가지 조화 유형, 실제 염료만.' },
     extractor: { name: '팔레트 추출', sub: '이미지에서 팔레트를 추출하고 모든 색을 구매 가능한 염료에 매칭.' },
     comparison: { name: '염료 비교', sub: '염료 2~4개를 나란히 — 모든 거리, 가장 가까운 쌍부터.' },
     gradient: { name: '그라데이션 빌더', sub: '두 색 사이 그라데이션을 따라 놓인 염료 — 중복 없는 뚜렷한 단계.' },
@@ -105,7 +106,7 @@ export const OG_DECK: Record<LocaleCode, Record<DeckKey, OgDeckStrings>> = {
     root: { name: 'XIV Dye Tools', sub: 'FFXIV 염료를 위한 색상 도구 — 조화, 매칭, 가격, 접근성.' },
   },
   zh: {
-    harmony: { name: '色彩和谐探索器', sub: '以任意染剂为中心构建调色板——六种和谐类型，仅限真实染剂。' },
+    harmony: { name: '色彩和谐探索器', sub: '以任意染剂为中心构建调色板——十种和谐类型，仅限真实染剂。' },
     extractor: { name: '调色板提取', sub: '从任意图像提取调色板，并将每种颜色匹配到可购买的染剂。' },
     comparison: { name: '染剂比较', sub: '两到四种染剂并排——全部距离，最接近的一对在前。' },
     gradient: { name: '渐变生成器', sub: '两色渐变沿线的染剂——步进清晰，不重复。' },
