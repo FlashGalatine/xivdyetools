@@ -16,8 +16,8 @@ Moderation lives in its own Discord app, not as more commands on `discord-worker
 | Command | Description |
 |---------|-------------|
 | `/preset moderate` | Four actions on the required `action` option — `pending` (browse the queue), `approve`, `reject`, `stats` — plus an optional autocompleted `preset_id`. `approve` and `reject` do not act on a typed id: they show the preset's **current** text with one confirm button (see below), and the rejection reason is typed in the modal the confirm click opens |
-| `/preset ban_user` | Ban a `user` (a Discord snowflake or an XIVAuth `sub` UUID) from submitting presets |
-| `/preset unban_user` | Lift a submission ban for a `user` and restore their presets (see [Bans](#bans)) |
+| `/preset ban_user` | Privately review a `user` (Discord ID or internal account UUID), with optional `additional_user`, before creating or expanding one ban |
+| `/preset unban_user` | Select and review one recorded ban for a `user`; restore only eligible presets in that ban’s recorded scope (see [Bans](#bans)) |
 
 Interactive approve/reject **buttons** on moderation-channel embeds route here as well, so a moderator normally never types a command.
 
@@ -34,7 +34,7 @@ A decision applies to the exact version the moderator looked at (FINDING-017, 20
 
 `<revision>` is a non-negative integer with no leading zeros; `<status>` is the full status word (`pending`, `approved`, `rejected`, `flagged`, `hidden`). Every id stays within Discord's 100-character cap. The one strict parser is `parseReviewCustomId` from `@xivdyetools/types` (`packages/types/src/preset/review-custom-id.ts`), the grammar discord-worker builds its buttons with too; anything that does not match exactly is ignored.
 
-**Refresh-and-reclick.** A button that cannot name a revision — one on a message posted before this change (bare `preset_approve_<uuid>`), or any click whose `expected_*` values `presets-api` refuses with a `409` — never acts. The handler fetches the current preset, edits the message to show its **current** text with fresh revision-bound buttons, and tells the moderator to review it and click again. A preset that is no longer pending has nothing left to review: a channel message keeps its embed (so a concurrent moderator's "Approved by" or rejection reason stays), loses its buttons, and states the new status in the message content, while the private `/preset moderate` confirmation is rebuilt from the current preset. If `presets-api` cannot load the preset, the message and its buttons are left as they are. `/preset moderate approve|reject <id>` is the same flow with a confirm step: it answers privately with the current text and one button bound to the revision just fetched.
+**Refresh-and-reclick.** A button that cannot name a revision — one on a message posted before this change (bare `preset_approve_<uuid>`), or any click whose `expected_*` values `presets-api` refuses with a `409` — never acts. The handler fetches the current preset, edits the message to show its **current** text with fresh revision-bound buttons, and tells the moderator to review it and click again. A preset that is no longer pending has nothing left to review: a channel message keeps its embed (so a concurrent moderator's decision or rejection reason stays), loses its buttons, and states the new status in the message content, while the private `/preset moderate` confirmation is rebuilt from the current preset. If `presets-api` cannot load the preset, the message and its buttons are left as they are. `/preset moderate approve|reject <id>` is the same flow with a confirm step: it answers privately with the current text and one button bound to the revision just fetched.
 
 ## Routes
 
@@ -45,12 +45,30 @@ A decision applies to the exact version the moderator looked at (FINDING-017, 20
 
 ## Bans
 
-Bans are written **directly to D1** (`services/ban-service.ts`), in one `db.batch` with their `moderation_log` rows and the preset hide/restore, so a failure leaves nothing half-applied. The tables belong to `presets-api`.
+`LINKED_BAN_CONFIRMATION_ENABLED` is **false in both environments**. Ban/unban commands,
+selectors, buttons and modals refuse privately while inactive. Enable only in a separate
+consumer activation after the schema, OAuth provider and disclosures are live and verified.
 
-- **Target.** A ban target is a Discord snowflake or an XIVAuth `sub` UUID. `banned_users.discord_id` takes whichever the moderator picked; a UUID is **also** written to `banned_users.xivauth_id` (FINDING-014), so the ban can still be matched once `presets-api` resolves the same person by a different id. Every ban read in this worker (the already-banned check, approval's banned-author check, the pickers, the active-ban lookup, unban) matches a target in `discord_id` **or** `xivauth_id`. Rows written before this change carry the UUID in `discord_id` only and keep matching.
-- **While a ban is active** its `username` copy and free-text `reason` are kept — ban search selects and sorts by `username`.
-- **On unban** the same statement that sets `unbanned_at` also blanks `username` and `reason` to `''` (both columns are `NOT NULL`; FINDING-005). The lifted row itself is not deleted here: how long lifted bans and `moderation_log` reasons are kept is `presets-api`'s retention rule.
-- **Unban restores hidden presets** to `approved`, except those whose dye combination (`dye_signature`) is now held by another approved or pending preset, and all but one of the author's own hidden twins — restoring them would trip the unique `dye_signature` index and abort the whole unban (FINDING-021). Those stay hidden and the confirmation embed says how many and why; the `restore` audit rows list only the presets that actually flipped. If a submission races the batch anyway and the index trips, the unban rolls back and the moderator gets "Unban blocked: a restored preset duplicates an existing one".
+- OAuth's private `IdentityLookup` returns stored internal/Discord IDs and revisions. A lookup
+  is not fresh upstream verification. `additional_user` supplies a separately reviewed target;
+  the bot does not infer links from names or historical bans.
+- An ephemeral confirmation shows exact IDs and one particular ban. Multiple matching bans
+  require an explicit choice; more than 16 matches refuses for manual review. Existing partial
+  bans can be expanded only by explicitly confirming the additional IDs. Each ban holds at most
+  64 effective IDs across its legacy columns and particular-ban memberships.
+- Actor-bound, one-use server nonces expire within 15 minutes. The transaction rechecks the
+  exact parent scope, matching bans, expiry and capacity before consuming a review, hiding
+  approved presets and writing audits. Stale or legacy target-only controls never authorize a
+  mutation. The reason is trimmed and checked on the server at 10–500 characters.
+- Unban closes only the selected parent, uses its recorded scope rather than current links,
+  and clears its stored name/reason. Another active ban keeps an identity's presets hidden.
+  Signature collisions remain hidden; across the restoring scope only the lowest-ID eligible
+  hidden twin is restored. Audit rows and reported counts describe actual affected presets.
+- Memberships enforce only their particular ban, grant no account access and survive unlinking.
+  They remain until the lifted parent is pruned under its existing 90-day retention.
+
+Ban writes, nonce consumption, hide/restore and audits share one D1 batch. The tables belong
+to presets-api. See [the identity contract and release order](../../docs/architecture/identity-moderation.md).
 
 ## Observability
 

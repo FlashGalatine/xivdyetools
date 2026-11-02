@@ -167,43 +167,35 @@ changes nothing. A button that cannot name a revision (a message posted before t
 that draws a `409` never acts: the message is refreshed to show the preset's current text with
 new buttons, and the moderator reviews it and clicks again. A preset that is no longer pending
 has nothing left to review: a channel message keeps its embed (so a concurrent moderator's
-"Approved by" or rejection reason stays), loses its buttons, and states the new status in the
+decision or rejection reason stays), loses its buttons, and states the new status in the
 message content, while the private `/preset moderate` confirmation is rebuilt from the current
 preset. If presets-api cannot load the preset, the message and its buttons are left as they are.
 
 ### /preset ban_user
 
-Ban a user from the preset system. This:
-- Hides all their existing presets
-- Prevents new submissions
-- Records the ban in the database (`banned_users`; an XIVAuth `sub` UUID target is stored in both `discord_id` and `xivauth_id`, and every ban check matches either column)
+With linked-ID moderation enabled, privately resolve and review a valid Discord user ID or
+internal account UUID. Optional `additional_user` supplies another explicit target, resolved
+independently; this is stored data rather than fresh upstream verification. The confirmation
+shows exact IDs and one parent ban. Multiple matches require an explicit parent choice; more
+than 16 refuses for manual review. A partial existing ban can be expanded only through this
+review. The reason modal accepts 10–500 trimmed characters.
 
-```
-/preset ban_user user:Username#1234
-```
-
-A confirmation dialog appears with:
-- User's username and Discord ID (or XIVAuth ID)
-- Total preset count
-- Links to their recent presets
-- Confirm/Cancel buttons
-
-After confirming, a modal prompts for the ban reason.
+Nonce-only controls are actor-bound, expire within 15 minutes and cannot replay. The SQL claim
+rechecks exact reviewed IDs/parent scope, all matching bans, expiry and capacity before the
+single transaction adds memberships, hides presets and writes audits. No new ID appears in
+ordinary channel posts. Historical IDs never grant account access.
 
 ### /preset unban_user
 
-Unban a user and restore their presets.
+Select and review one parent ban. Its recorded legacy/member scope drives restoration, without
+consulting current OAuth links. Other active bans keep covered identities hidden. Existing
+approved/pending signature collisions stay hidden; among hidden twins across the restoring scope,
+only the lowest-ID eligible row is restored. The parent name/reason is scrubbed when lifted,
+and memberships follow its existing 90-day retention.
 
-```
-/preset unban_user user:Username#1234
-```
-
-The statement that lifts the ban also blanks the stored `username` and ban `reason` (FINDING-005;
-they are kept while the ban is active, since ban search uses the username). Hidden presets are
-restored to `approved`, except any whose dye combination is now held by another approved or
-pending preset (and all but one of the author's own hidden twins): those stay hidden, because
-restoring them would trip the unique `dye_signature` index and abort the whole unban
-(FINDING-021). The confirmation embed reports how many stayed hidden and why.
+Both flows, including old buttons and modals, refuse privately while
+`LINKED_BAN_CONFIRMATION_ENABLED` is false (the prepared value in both environments). Activate
+separately only after migration, provider and all privacy disclosures are live and verified.
 
 ---
 
@@ -214,6 +206,7 @@ restoring them would trip the unique `dye_signature` index and abort the whole u
 | `KV` | KV Namespace | Bot state, and the **fallback** rate-limit counters |
 | `DB` | D1 Database | Preset storage, shared with presets-api |
 | `PRESETS_API` | Service Binding | Worker-to-worker API calls |
+| `OAUTH_IDENTITY` | Named service binding | Minimal private stored-ID lookup from OAuth `IdentityLookup` |
 | `RL_COMMAND` | Workers Rate Limiting (`[[ratelimits]]`, 25 / 60 s) | Per-user command limiter (20 + 5 burst) |
 | `RL_AUTOCOMPLETE` | Workers Rate Limiting (`[[ratelimits]]`, 70 / 60 s) | Per-user autocomplete limiter (60 + 10 burst) |
 

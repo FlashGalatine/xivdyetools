@@ -40,6 +40,11 @@ api-worker; schema in `apps/api-worker/src/telemetry/schema.ts`. Spec:
 | `blob5`–`blob9` | locale · theme · viewport (m/t/d) · app version · env |
 | `double1` | `active_s` for tool_leave, else 0 |
 
+**A-API update, 2026-10-27 (prepared in API 0.21.1):** new `blob8` values contain only
+a numeric `major.minor.patch` triple, with one to four digits per component. Valid prerelease
+suffixes are discarded in full; invalid inputs become `invalid`. Historical rows can still
+contain the earlier truncated prerelease values. The column layout is unchanged.
+
 **Addendum 2026-08-30 (FINDING-014):** `blob9` is server-derived from the request
 `Origin` (`https://xivdyetools.app` → `production`, `https://beta.xivdyetools.app`
 → `beta`), not taken from the beacon body — production/beta splits are now

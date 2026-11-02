@@ -149,7 +149,7 @@ importers:
   apps/image-worker:
     dependencies:
       '@cf-wasm/photon':
-        specifier: ^0.4.0
+        specifier: 0.4.0
         version: 0.4.0
       '@cloudflare/workers-types':
         specifier: ^5.20261023.1

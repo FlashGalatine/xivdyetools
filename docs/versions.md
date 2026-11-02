@@ -26,15 +26,15 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.16.7 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Web Application** | v5.16.6 | `xivdyetools-web-app` | Cloudflare Pages | Active |
 | **Discord Bot** | v5.9.7 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
-| **Image Worker** | v1.3.4 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
-| **Moderation Bot** | v1.8.2 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
+| **Image Worker** | v1.3.5 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
+| **Moderation Bot** | v1.9.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.2.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.8.2 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
 | **Public REST API** | v0.21.1 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
-| **OpenGraph Worker** | v2.12.0 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
-| **Stoat Bot** | v0.3.3 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
+| **OpenGraph Worker** | v2.12.2 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
+| **Stoat Bot** | v0.3.4 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
 | **API Documentation** | — | merged into `xivdyetools-api-worker` (`docs/`, Workers Static Assets) | Cloudflare Workers | Merged 2026-07-31 |
 
@@ -126,7 +126,8 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| v5.16.7 | Oct 2026 | Tailwind's class scan is rooted at `src/`: about 2.5 KB of dead utilities seeded by the changelog no longer ship (index CSS 55.6 → 53.1 KB), and a local `build:check` under `.turbo/` measures the same CSS as CI |
+| v5.16.6 | Nov 2026 | Tailwind's class scan is rooted at `src/`: about 2.5 KB of dead utilities seeded by the changelog no longer ship (index CSS 55.6 → 53.1 KB), and a local `build:check` under `.turbo/` measures the same CSS as CI |
+| v5.16.5 | Nov 2026 | Main content scrolls at the pane edge, or the window edge when the palette is closed; tool wrappers grow naturally so long content remains reachable on desktop, mobile and in print (#368) |
 | v5.16.4 | Oct 2026 | Generic character-save names, named CSP connection hosts, validated previews/character replies and six-language privacy/Terms corrections |
 | v5.16.3 | Oct 2026 | Six-language identity-review, particular-ban continuity and recovery-retention privacy disclosures |
 | v5.16.2 | Oct 2026 | Six-language privacy alignment for preset metadata moderation, safe link snapshots and attempt/refund accounting |
@@ -418,6 +419,9 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v1.9.0 | Oct 2026 | Inactive private linked-ID confirmation, explicit partial-ban expansion, recorded-scope unban and neutral decision posts |
+| v1.8.4 | Oct 2026 | Complete path-only link reviews, revision-bound action guards and stale-message refresh; companion for later metadata-moderation activation |
+| v1.8.3 | Oct 2026 | Bot-logic 4.12.0: shared embed sanitizer escapes Discord angle tokens and strips additional invisible controls; review routing and decisions unchanged |
 | v1.8.2 | Oct 2026 | Review custom_id grammar from `@xivdyetools/types` (2026-10-04 remediation, Sprint 26, REFACTOR-001); a parity test pins the routing prefixes. No visible change |
 | v1.8.1 | Oct 2026 | 2026-10-04 remediation, Sprint 17 — a losing concurrent click no longer overwrites the winner (BUG-052); a stale-deploy 404 keeps the buttons (BUG-054); success embeds drop stale Error / Review fields (BUG-050); trimmed ban reasons (BUG-051); a refreshed review says what Revert restores; dead middleware, helpers, parameter, ban suffix and strings removed (DEAD-025 to DEAD-030) |
 | v1.8.0 | Oct 2026 | 2026-10-03 security audit, Sprint 4 — approve / reject / revert are bound to the revision the moderator reviewed (new `preset_<action>_<uuid>:<rev>:<status>` buttons; a legacy button or a stale one refreshes the embed and asks for a second click; `/preset moderate approve|reject` answers with a revision-bound confirm button); bans written and matched by `xivauth_id` too; a lifted ban's username and reason are blanked; unban restore skips presets whose dyes collide; revert refuses a banned author; Workers Logs pinned off. Deploy with presets-api 2.4.0 in one window |
@@ -444,6 +448,8 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v2.12.2 | Oct 2026 | A-OG-COPY: default Harmony subtitles say ten types in all six languages; new Worker cache version retires prior beta cards |
+| v2.12.1 | Oct 2026 | SVG 4.4.1: default-card text fitting is linear with unchanged content, font measurements, layout and routes |
 | v2.12.0 | Oct 2026 | 2026-10-04 remediation, Sprint 11: gradient previews follow the shared `interpolation` (new query key) and draw the page's own steps (6,682 / 6,682 share links match the page end to end); the extractor card follows `?algo=`; legacy `?algo=` spellings fixed on harmony; custom-color shares unfurl named; cache key splits only where a route reads the key; a repeated query key gets a 400; fr presets name and de Glamour Reader description fixed; resvg allocations freed |
 | v2.11.3 | Oct 2026 | Core 5.10.0 (2026-10-04 remediation, Sprint 13): CJK subsets re-cut for the new sheet names; de/fr swatch link descriptions reworded so no gendered word precedes the sheet name; the version retires cached HSL mixer cards with a gray input (BUG-035) |
 | v2.11.2 | Oct 2026 | CJK font subsets re-cut for core 5.8.1 (Korean / Chinese race and clan names from the game clients); cached cards retire with the version |
@@ -479,6 +485,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v1.3.5 | Oct 2026 | A-IMAGE: reject 16-bit PNGs before Photon, bound input/output memory, avoid redundant decode and release thumbnail intermediates early; corrected bot manual must precede the 5 MiB cap |
 | v1.3.4 | Oct 2026 | 2026-10-04 remediation Sprint 21 — the unused `@` path alias removed from `vitest.config.ts` and `tsconfig.json` (DEAD-038); bundle unchanged |
 | v1.3.3 | Oct 2026 | 2026-10-03 security audit (FINDING-022, Sprint 10) — Workers Logs pinned off in both `wrangler.toml` blocks, asserted by `src/wrangler-config.test.ts`; no behavior change |
 | v1.3.2 | Sep 2026 | 2026-09-16 deep-dive Sprint 15 — the magic-byte table and `detectImageFormat` come from `@xivdyetools/worker-kit/image-sniff` (REFACTOR-008); the local byte-table test exercises the import unchanged |
@@ -645,6 +652,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v0.3.4 | Oct 2026 | Bot-logic 4.12.0: mirrored invisible-control stripping and shared sanitizer hardening; parked, no deployment |
 | v0.3.3 | Oct 2026 | 2026-10-04 remediation Sprint 24 (parked, no deploy) — `!xd about` no longer advertises `!xd random`, a ❓ reaction or capabilities the bot lacks (BUG-070); `!xd info` resolves a broad name (`white`, `Blue`) to each matching dye or a capped list instead of one arbitrary dye (BUG-073); the resolver honors `locale` and help no longer promises localized names (BUG-072); resolver tests rewritten against the real database (BUG-071) |
 | v0.3.2 | Oct 2026 | 2026-10-03 security audit Sprint 12 (parked, no deploy) — echoed text no longer carries Stoat's `@online` mass mention (`<%…>` tokens now rewritten explicitly) (FINDING-026) |
 | v0.3.1 | Sep 2026 | 2026-09-16 deep-dive Sprint 12 (parked, no deploy) — `!xd ping` measures the round-trip after the send and edits it in (BUG-031); the dye-info test asserts embed title/color/description (BUG-042) |
@@ -728,6 +736,10 @@ and the [rollout runbook](operations/security-remediation-2026-09-15.md) for the
 
 | Consumer | Minimum Core Version | Notes |
 |----------|---------------------|-------|
+| xivdyetools-stoat-worker v0.3.4 | @xivdyetools/bot-logic v4.12.0; @xivdyetools/logger v2.4.0; @xivdyetools/types v3.3.0 | Prepared source; publication and deployed acceptance remain pending |
+| xivdyetools-image-worker v1.3.5 | @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
+| xivdyetools-moderation-worker v1.9.0 | @xivdyetools/auth v3.0.0; @xivdyetools/bot-logic v4.12.0; @xivdyetools/logger v2.4.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
+| xivdyetools-og-worker v2.12.2 | @xivdyetools/core v5.16.0; @xivdyetools/svg v4.4.1; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
 | xivdyetools-web-app v5.16.4 | @xivdyetools/core v5.16.0; @xivdyetools/logger v2.4.0; @xivdyetools/svg v4.4.1; @xivdyetools/types v3.3.0 | Prepared source; publication and deployed acceptance remain pending |
 | xivdyetools-api-worker v0.21.1 | @xivdyetools/core v5.16.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
 | xivdyetools-discord-worker v5.9.7 | @xivdyetools/auth v3.0.0; @xivdyetools/bot-logic v4.12.0; @xivdyetools/svg v4.4.1; @xivdyetools/core v5.16.0; @xivdyetools/logger v2.4.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |

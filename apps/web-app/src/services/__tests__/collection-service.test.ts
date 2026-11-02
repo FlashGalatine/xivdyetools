@@ -6,6 +6,8 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { CollectionService } from '../collection-service';
 import { LanguageService } from '../language-service';
 import { StorageService } from '../storage-service';
+import { dyeService } from '../dye-service-wrapper';
+import { LEGACY_GERMAN_DYE_NAMES } from '../legacy-german-dye-names';
 
 // Mock localStorage
 const localStorageMock = (() => {
@@ -688,6 +690,42 @@ describe('CollectionService', () => {
       expect(migrated?.dyes.length).toBe(2);
       // The legacy key is removed once processed
       expect(localStorageMock.getItem('xivdyetools_saved_palettes')).toBeNull();
+    });
+
+    // Core 5.16.0 adopted XIVAPI's German names; a 4.x palette saved under the
+    // German UI still holds the old ones, whatever locale the user has now.
+    it('resolves pre-5.16 German dye names from a 4.x palette in any UI locale', () => {
+      localStorageMock.setItem(
+        'xivdyetools_saved_palettes',
+        JSON.stringify([
+          {
+            id: 'pal-de',
+            name: 'Alte Palette',
+            baseColor: '#000001', // no dye has this hex, so the base resolves by name
+            baseDyeName: 'Rußschwarzer',
+            harmonyType: 'triadic',
+            companions: ['Schneeweißer', 'METALLIC SILBERNER', 'Perlmutt-', 'Kürbisoranger'],
+            dateCreated: new Date().toISOString(),
+          },
+        ])
+      );
+      CollectionService.__reloadForTesting();
+
+      // Jet Black, Snow White, Metallic Silver, Pearl White, Pumpkin Orange
+      expect(CollectionService.getCollectionByName('Alte Palette')?.dyes).toEqual([
+        6, 1, 112, 93, 26,
+      ]);
+    });
+
+    it('keeps the legacy German name table frozen, lowercase and on real stainIDs', () => {
+      const stainIDs = new Set(dyeService.getAllDyes().map((dye) => dye.stainID));
+      const currentNames = new Set(dyeService.getAllDyes().map((dye) => dye.name.toLowerCase()));
+      expect(LEGACY_GERMAN_DYE_NAMES.size).toBe(119);
+      for (const [name, stainID] of LEGACY_GERMAN_DYE_NAMES) {
+        expect(name).toBe(name.toLowerCase());
+        expect(stainIDs.has(stainID)).toBe(true);
+        expect(currentNames.has(name)).toBe(false);
+      }
     });
 
     it('coerces an unknown collection kind to palette on import', () => {

@@ -222,12 +222,94 @@ test.describe('Extractor Tool - Mobile Viewport', () => {
 
     await expect(page.locator('#extractor-bar .x4a-seg').first()).toBeVisible();
     expect(await page.locator('v4-result-card').count()).toBeGreaterThan(0);
-    // The sheet scrolls on its own below the pinned hero
-    const overflow = await page
+
+    // The shell owns scrolling (#368): the sheet grows inside the shell's
+    // scroller instead of scrolling on its own, and the sticky hero stays at
+    // the scroller's top while the sheet passes under it.
+    const scroller = page.locator('.v4-layout-content-scroll');
+    // On the sheet's own content nothing inside the shell overflows (the old
+    // layout gave the sheet a second scrollbar here)
+    const nestedScrollers = await scroller.evaluate((el) =>
+      [...el.querySelectorAll<HTMLElement>('*')]
+        .filter(
+          (node) =>
+            /^(auto|scroll)$/.test(getComputedStyle(node).overflowY) &&
+            node.scrollHeight > node.clientHeight + 1
+        )
+        .map((node) => node.className)
+    );
+    expect(nestedScrollers).toEqual([]);
+
+    // A card scrolled under the hero's lower edge is painted beneath it
+    const heroOnTop = await scroller.evaluate((el) => {
+      const pinned = el.querySelector<HTMLElement>('.x4a-hero')!;
+      const card = el.querySelector<HTMLElement>('v4-result-card')!;
+      for (let i = 0; i < 3; i++) {
+        el.scrollTop +=
+          card.getBoundingClientRect().top - (pinned.getBoundingClientRect().bottom - 80);
+      }
+      const hero = pinned.getBoundingClientRect();
+      const under = card.getBoundingClientRect();
+      if (under.top >= hero.bottom - 30) return 'no card under the hero';
+      const hit = (el.getRootNode() as ShadowRoot).elementFromPoint(
+        under.left + 40,
+        hero.bottom - 30
+      );
+      return hit !== null && pinned.contains(hit);
+    });
+    expect(heroOnTop).toBe(true);
+
+    await page
       .locator('.x4a-sheet')
       .first()
-      .evaluate((el) => getComputedStyle(el).overflowY);
-    expect(overflow).toBe('auto');
+      .evaluate((sheet) => {
+        const spacer = document.createElement('div');
+        spacer.style.height = '1200px';
+        const end = document.createElement('p');
+        end.dataset.scrollEnd = 'true';
+        end.textContent = 'End of the sheet';
+        sheet.append(spacer, end);
+      });
+    await expect
+      .poll(() => scroller.evaluate((el) => el.scrollHeight - el.clientHeight))
+      .toBeGreaterThan(500);
+    await scroller.evaluate((el) => {
+      el.scrollTop = el.scrollHeight;
+    });
+    const visible = await scroller.boundingBox();
+    const hero = await page.locator('.x4a-hero').first().boundingBox();
+    const end = await page.locator('[data-scroll-end]').boundingBox();
+    expect(visible).not.toBeNull();
+    expect(hero).not.toBeNull();
+    expect(end).not.toBeNull();
+    expect(Math.abs(hero!.y - visible!.y)).toBeLessThanOrEqual(1);
+    expect(end!.y).toBeGreaterThanOrEqual(hero!.y + hero!.height);
+    expect(end!.y + end!.height).toBeLessThanOrEqual(visible!.y + visible!.height);
+  });
+
+  test('lets the cards scroll into view on a short landscape phone', async ({ page }) => {
+    // Too short to pin the ~360px hero: it scrolls away with the sheet
+    await page.setViewportSize({ width: 667, height: 375 });
+    await uploadTestImage(page);
+
+    const scroller = page.locator('.v4-layout-content-scroll');
+    await scroller.evaluate((el) => {
+      el.scrollTop = el.scrollHeight;
+    });
+    const cardReachable = await scroller.evaluate((el) => {
+      const card = [...el.querySelectorAll<HTMLElement>('v4-result-card')].at(-1)!;
+      const bottom = Math.min(
+        card.getBoundingClientRect().bottom,
+        el.getBoundingClientRect().bottom
+      );
+      const box = card.getBoundingClientRect();
+      const hit = (el.getRootNode() as ShadowRoot).elementFromPoint(
+        box.left + box.width / 2,
+        bottom - 20
+      );
+      return hit !== null && (hit === card || card.contains(hit));
+    });
+    expect(cardReachable).toBe(true);
   });
 });
 

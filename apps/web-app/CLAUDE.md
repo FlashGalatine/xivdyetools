@@ -245,7 +245,14 @@ There is **no service worker** — the app has no offline cache. (The v3 `servic
 |--------|------|------|
 | `asyncCss` | `vite-plugin-async-css.ts` | Defers non-critical CSS to avoid render-block |
 | `changelogParser` | `vite-plugin-changelog-parser.ts` | Parses `CHANGELOG-laymans.md` into the `virtual:changelog` module the What's New modal imports. The module is **bounded in bytes** (`boundChangelog`, 36 KB of JSON, newest first, never fewer than ten releases) because its chunk is gated in bytes (`check-bundle-size.js`, 40 KB); `olderReleases` tells the modal to link the full file. Do not swap the bound back to a release count — the two units never agree |
+| `coreJsonCompatibility` | `vite-plugin-core-json.ts` | Client-only `vite dev` bridge for native JSON import attributes in two compiled Core modules; preserves Node packages and production chunking |
 | `betaBranding` | `vite-plugin-beta-branding.ts` | `VITE_APP_ENV=beta` only: `[BETA]` title, beta icon set, `__APP_ENV__` define, `X-Robots-Tag: noindex` on `dist/_headers`. Inert without the flag |
+
+Core retains JSON import attributes for native Node. The dev bridge uses Vite's existing
+`transformWithEsbuild` with both import-attribute/assertion syntax disabled and `esnext` output.
+It adapts only browser-served copies of `CharacterColorService` and `chara-shader-colors`, with
+source maps. The API is deprecated; revisit the bridge when Vite handles these dynamic imports.
+Production builds and SSR do not apply it.
 
 ## Dependencies
 

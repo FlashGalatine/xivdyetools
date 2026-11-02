@@ -14,4 +14,4 @@
 - Optional hardening: bind a canonical query (the sorted `url.search`) into canonicalV2 as a v3 field and update both bots and presets-api together. Otherwise document in hmac.ts that query parameters must never decide authorization.
 
 ## Status
-OPEN
+FIXED — documentation decision recorded 2026-10-28: retain the existing path-only v2 contract and authorize query effects independently against the authenticated actor. The auth JSDoc and architecture decision explicitly cover unsigned queries and best-effort KV replay checks. No protocol change or new deployment. [R-sprint evidence](../evidence/remediation-repository-2026-10-28.md).
