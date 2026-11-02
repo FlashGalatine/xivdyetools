@@ -30,6 +30,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **A line typed in Abridged stays word for word, and only in Abridged.** It is stored under its own key
   (`abridgedEditKey`). A full-list edit carries over to Abridged, trimmed by the same rules, until it is
   typed over. Typing the picked source back removes the edit. Reset all clears both forms.
+- **Each row of the Glamour list sheet has its own switch, in both forms.** Switching a piece off leaves it out
+  of the preview, Copy list and Save .md. A switch belongs to one outfit, the file's full set of worn gear and
+  dyes: a file with a different outfit starts with every piece on, even one switched off in another outfit; one
+  dye changed anywhere makes a different outfit, a dye moved to the piece's other channel included; and the same outfit loaded again (SWAP, or the file dropped
+  again) keeps its switches. A switch stays off until the page reloads: it is held in a module-level set
+  (`offPieces` in `glamour-sheet.ts`, keyed by the piece's `offKeys`: every worn slot's model key and dyed channels from the file
+  alone, then the piece's own, not the `hash`, so a twin pick or the names lookup landing later does not turn
+  it back on) and is never written to `localStorage`, so reopening the sheet or flipping Abridged keeps it and
+  a reload turns every piece back on. Edits stay keyed by the gear and still carry between files. A merged
+  `Rings:` row has one switch for both rings; different rings have one each. An off row stays in the sheet, dimmed, with its field and its warning's buttons locked, and what was typed there
+  comes back when it is switched on. FILLED, EDITED and BLANK count only the pieces that are on. Reset all
+  turns every piece of this outfit back on, including one with no row in this view, as well as clearing edits, and leaves other outfits' switches alone. It also now forgets a line typed while the names lookup was down; a line filed under the item stays while the lookup is down, because nothing names the item then. With
+  every piece off, Copy list and Save .md are disabled in both forms. The switch's accessible name is the new `glamour.sheet.includePiece` string. The
+  reader's own piece list, the API and the `/glamour` bot are unchanged, and a list with every piece on is
+  byte for byte what it was.
 - **CI's always-run step now runs `src/shared/__tests__/glamour-abridged.test.ts`.** It pins every line of
   api-worker's `acquisition.en.json` where Abridged's instance rule drops a source (a result with no craft
   and no priced vendor) against `glamour-abridged-drops.json`, so a table refresh that adds one fails in its

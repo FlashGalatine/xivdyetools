@@ -1404,6 +1404,7 @@
       "reset": "全部重置",
       "save": "保存 .md",
       "abridged": "精简版",
+      "includePiece": "将{name}加入列表",
       "cardNote": "你编辑过的获取方式备注保存在本设备上。"
     },
     "empty": "这个文件没有穿戴装备。",

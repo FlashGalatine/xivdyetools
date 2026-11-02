@@ -1404,6 +1404,7 @@
       "reset": "모두 초기화",
       "save": ".md 저장",
       "abridged": "요약본",
+      "includePiece": "{name}을(를) 목록에 포함",
       "cardNote": "수정한 획득처 메모는 이 기기에 저장됩니다."
     },
     "empty": "이 파일에는 장비가 없습니다.",

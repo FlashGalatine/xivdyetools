@@ -69,7 +69,9 @@ these clears one part:
   delete control in the app; your browser's site-data controls clear them.
 - Signing out deletes the session token.
 - "Reset all" in the Glamour list deletes the rewritten line of every piece in that list. Each
-  line is kept per piece of gear, so another outfit that shares a piece loses that line too.
+  line is kept per piece of gear, so another outfit that shares a piece loses that line too. While
+  the item names can't be looked up, it can't reach a line you typed when they could; press it again
+  once the names are back.
 
 `IndexedDB` holds one thing: a cache of market-board prices already fetched, so the same lookup is
 not repeated. It holds no images — an earlier version of the app kept your last extractor image

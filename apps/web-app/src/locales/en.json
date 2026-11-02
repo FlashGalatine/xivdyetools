@@ -1404,6 +1404,7 @@
       "reset": "Reset all",
       "save": "Save .md",
       "abridged": "Abridged",
+      "includePiece": "Include {name} in the list",
       "cardNote": "Your edited acquisition notes are kept on this device."
     },
     "empty": "This file wears no gear.",

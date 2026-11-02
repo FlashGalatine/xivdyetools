@@ -16,6 +16,12 @@
  * line, and what is typed there is kept apart, word for word, so it never
  * touches the full form (`abridgedEditKey`).
  *
+ * Each row has its own switch, for both forms: a piece switched off stays in the
+ * sheet, dimmed and locked, but is left out of the preview, the counts, Copy and
+ * Save. What was typed there waits for it to come back on. A switch belongs to one
+ * outfit, lasts until the page reloads and is never stored (`offPieces`). Reset all
+ * turns the outfit's pieces back on.
+ *
  * Mounted on document.body; Escape or Close dismisses it, and so does the
  * reader going away (GlamourBlock.destroy). It registers with ModalService
  * while it is up, so the global shortcuts stand down under it.
@@ -46,6 +52,7 @@ import {
 import {
   glamourInputWithAcquisition,
   glamourSheetPieces,
+  outfitSignature,
   type GlamourListSource,
   type GlamourSheetPiece,
 } from '@components/glamour-list-actions';
@@ -59,6 +66,34 @@ const FORMAT_KEY = `${STORAGE_PREFIX}_glamour_list_format`;
  * edits made in it do (`acquisition-edits`), and a write that works ends it.
  */
 let pageOnlyFormat: GlamourListFormat | null = null;
+
+/**
+ * The pieces switched off, per outfit (`offKeys`: the file's worn gear and dyes,
+ * then the piece's model, so neither a twin pick nor the names lookup landing moves
+ * it). Scoped to the outfit so a piece left out of one look cannot quietly drop from
+ * the list of another file that wears it; the same file loaded again finds its
+ * switches as they were. Deliberately in the module and not on the device: a
+ * remembered off switch could quietly drop a piece from a later post of this outfit.
+ */
+const offPieces = new Set<string>();
+
+/** Off wins: a merged Rings row with either ring off must not write that ring. */
+const isOff = (piece: GlamourSheetPiece): boolean =>
+  piece.offKeys.some((key) => offPieces.has(key));
+
+function setOff(piece: GlamourSheetPiece, off: boolean): void {
+  for (const key of piece.offKeys) {
+    if (off) offPieces.add(key);
+    else offPieces.delete(key);
+  }
+}
+
+/**
+ * The toggle's own off-track fallback is nearly invisible on the Light card, and
+ * no theme defines the on-hover color, whose fallback is a gold from retired themes.
+ */
+const TOGGLE_TRACK =
+  '--v4-toggle-bg: var(--theme-text-muted); --v4-toggle-bg-hover: color-mix(in srgb, var(--theme-text-muted) 80%, var(--theme-card-background)); --theme-primary-hover: color-mix(in srgb, var(--theme-primary) 80%, var(--theme-card-background));';
 
 let current: { root: HTMLElement; cleanup: () => void; opener: HTMLElement | null } | null = null;
 
@@ -226,10 +261,9 @@ export function openGlamourSheet(
   const counts = el('span', 'display: flex; gap: 6px; flex-wrap: wrap;');
   counts.dataset.role = 'sheet-counts';
   head.appendChild(counts);
-  // The toggle's own off-track fallback is nearly invisible on the Light card
   const toggle = el(
     'v4-toggle-switch',
-    'flex-shrink: 0; --v4-toggle-bg: var(--theme-text-muted); --v4-toggle-bg-hover: color-mix(in srgb, var(--theme-text-muted) 80%, var(--theme-card-background));'
+    `flex-shrink: 0; ${TOGGLE_TRACK}`
   ) as HTMLElementTagNameMap['v4-toggle-switch'];
   toggle.dataset.role = 'sheet-format';
   toggle.label = LanguageService.t('glamour.sheet.abridged');
@@ -286,17 +320,24 @@ export function openGlamourSheet(
 
   const acquisition = (): Partial<Record<GlamourMarkdownSlot, string>> =>
     Object.fromEntries(pieces.map((p) => [p.slot, lineOf(p, format)]));
-  const input = () => glamourInputWithAcquisition(source, acquisition());
+  const input = () =>
+    glamourInputWithAcquisition(
+      source,
+      acquisition(),
+      new Set(pieces.filter(isOff).map((p) => p.slot))
+    );
 
   const refresh = (): void => {
     const text = buildGlamourPlainText(input(), format);
     preview.textContent = text;
-    // Abridged has no header, so a list with no rows has nothing to copy or save
-    setActionEnabled(save, text !== '');
-    setActionEnabled(copy, text !== '');
+    // Abridged has no header, so a list with no rows has nothing to copy or save.
+    // Every piece off is the same, in the full form too: a lone header says nothing.
+    const writable = text !== '' && !(pieces.length > 0 && pieces.every(isOff));
+    setActionEnabled(save, writable);
+    setActionEnabled(copy, writable);
     counts.replaceChildren();
     const tally = { filled: 0, edited: 0, blank: 0 };
-    for (const piece of pieces) tally[stateOf(piece, format)]++;
+    for (const piece of pieces) if (!isOff(piece)) tally[stateOf(piece, format)]++;
     const chip = (n: number, key: string, fg: string): void => {
       if (n > 0)
         counts.appendChild(
@@ -359,6 +400,17 @@ export function openGlamourSheet(
     );
     stateChip.dataset.role = 'sheet-state';
     top.appendChild(stateChip);
+    // In the top line, not the row's <label>: a click in a label forwards to the field
+    const include = el(
+      'v4-toggle-switch',
+      `flex-shrink: 0; align-self: center; ${TOGGLE_TRACK}`
+    ) as HTMLElementTagNameMap['v4-toggle-switch'];
+    include.dataset.role = 'sheet-include';
+    include.accessibleName = LanguageService.tInterpolate('glamour.sheet.includePiece', {
+      name: piece.name || piece.label,
+    });
+    include.checked = !isOff(piece);
+    top.appendChild(include);
     row.appendChild(top);
     if (piece.dyes.length > 0) {
       row.appendChild(
@@ -442,6 +494,28 @@ export function openGlamourSheet(
       );
       row.appendChild(warn);
     }
+
+    // Part by part, never the row or its top line: an opacity on either would dim
+    // the switch too. The warning's buttons lock with the field they would change.
+    const paintOnOff = (): void => {
+      const off = isOff(piece);
+      for (const part of [...top.children, ...row.children]) {
+        if (part !== include && part !== top) {
+          (part as HTMLElement).style.opacity = off ? '0.45' : '';
+        }
+      }
+      field.disabled = off;
+      row
+        .querySelectorAll<HTMLButtonElement>('[data-role="sheet-warn"] button')
+        .forEach((node) => setActionEnabled(node, !off));
+    };
+    paintOnOff();
+    // The row stays as it is, so focus stays on the switch
+    include.addEventListener('toggle-change', () => {
+      setOff(piece, !include.checked);
+      paintOnOff();
+      refresh();
+    });
     return row;
   };
   for (const piece of pieces) rows.appendChild(renderRow(piece));
@@ -487,7 +561,13 @@ export function openGlamourSheet(
     );
   foot.appendChild(
     button('sheet-reset', LanguageService.t('glamour.sheet.reset'), false, () => {
-      AcquisitionEdits.resetAll(pieces.flatMap((p) => [p.hash, abridgedEditKey(p.hash)]));
+      AcquisitionEdits.resetAll(
+        pieces.flatMap((p) => p.editKeys.flatMap((key) => [key, abridgedEditKey(key)]))
+      );
+      // By the outfit, not the rows: a piece of it can have no row in this view (a
+      // slot the lookup omits, the Robe on a female file) and still be off
+      const outfit = `${outfitSignature(source)}:`;
+      for (const key of offPieces) if (key.startsWith(outfit)) offPieces.delete(key);
       redrawRows();
     })
   );

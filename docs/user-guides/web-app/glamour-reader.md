@@ -168,7 +168,7 @@ Dyes this version of the app doesn't know (the dashed chips) are left out of the
 
 **Copy list** and **Save .md** sit at the top of the reader, beside its title. (Older versions labeled the second one **Export .md**.) They appear once the loaded file wears something, and stay grayed out while item names are loading, because a list copied a second early would be missing them. If the names never arrive, the buttons still work from the slots and dyes in your file.
 
-Neither button copies or downloads anything by itself. Both open the **Glamour list** sheet, where you can check and edit the list first. The button you pressed has focus in the sheet's footer.
+Neither button copies or downloads anything by itself. Both open the **Glamour list** sheet, where you can check and edit the list first. The button you pressed has focus in the sheet's footer. If every piece is switched off, that button is grayed out, so the sheet's **×** has focus instead.
 
 ### What the list says
 
@@ -196,7 +196,7 @@ Acquisition:
 - **The labels are the form's own English words in every language:** Main Hand, Off Hand, Head, Body, Hands, Legs, Feet, Earrings, Necklace, Bracelets, Right Ring, Left Ring and Facewear, with Right Ring before Left Ring and Facewear last. Item and dye names are in the app's language, as on screen.
 - **Two identical rings are written once**, as **Rings:**.
 - **Each piece is the twin the reader names**, or the one you picked.
-- **Every worn piece is written, except the two cases below.** The **Pieces / Dyes** view and **Show all** change what is on screen, not what is in the list.
+- **Every worn piece is written, except the two cases below and any piece you switch off in the sheet.** The **Pieces / Dyes** view and **Show all** change what is on screen, not what is in the list.
 - **Invisible pieces are left out.** A piece whose look is one of The Emperor's New items (the Promise of Innocence, Passion and Devotion bracelets share The Emperor's New Bracelet's look) has nothing to show off, so it gets no entry. The exceptions are The Emperor's New Gloves, which are always listed, and The Emperor's New Robe, which is listed for a male character or one whose gender the file doesn't record.
 - **Off Hand is written only under a weapon that really takes one:** a Paladin weapon, a Beastmaster weapon, a one-handed Thaumaturge or Conjurer weapon, or a crafting or gathering tool. A fist pair, a quiver, a focus or a tool's own second model is part of the main weapon, so it isn't listed a second time. Any case the reader can't tell yet keeps its line.
 - **Only the list changes.** The list and its export sheet leave these pieces out; the reader itself is unchanged, and **Show all** still lists every worn piece.
@@ -205,7 +205,7 @@ Acquisition:
 
 ### The Glamour list sheet
 
-The sheet is headed **Glamour list** (*"GPOSERS format · N pieces · edit anything before you copy it"*). It has one row per piece: the slot, the piece's name, its dyes, and an editable **Acquisition:** field. Only the Acquisition line can be edited; everything else comes from your file and your twin picks. On a desktop, **WHAT GETS COPIED** beside the rows shows the finished list as you edit; on a phone it is under them.
+The sheet is headed **Glamour list** (*"GPOSERS format · N pieces · edit anything before you copy it"*). It has one row per piece: the slot, the piece's name, its dyes, a switch, and an editable **Acquisition:** field. Only the Acquisition line can be edited; everything else comes from your file and your twin picks. On a desktop, **WHAT GETS COPIED** beside the rows shows the finished list as you edit; on a phone it is under them.
 
 Each row is marked, and the header counts the marks:
 
@@ -218,6 +218,18 @@ Each row is marked, and the header counts the marks:
 The table is rebuilt after each game patch from the game's data and Teamcraft's data files. It is in English, like the form, and covers the twin the list names: pick another twin and its own line comes with it. Facewear is filled when the table knows where the style's unlock item comes from, and blank otherwise. A line is always one line, so a line break you type becomes a space in the list.
 
 Typing a filled line back to what it was turns the row back to **FILLED**.
+
+#### Leaving a piece out
+
+Every row has its own switch, beside its mark, in the full list and in Abridged alike. Switch a piece off and it is left out of **WHAT GETS COPIED**, **Copy list** and **Save .md**. A switch belongs to one outfit, meaning everything the file wears and every dye on it. A file with a different outfit starts with every piece on, even one you switched off in another outfit, and changing one dye anywhere makes a different outfit, even moving a dye to the piece's other dye slot. Load the same outfit again, after **SWAP** or by dropping the file again, and its switches are as you left them.
+
+- **The row stays.** An off row is dimmed and its **Acquisition:** field is locked (so are **Keep mine** and **Use new source**, if the row shows them), but you can still see it and switch it back on. Anything you typed there is kept and returns when you switch it on.
+- **The counts follow.** **FILLED**, **EDITED** and **BLANK** count only the pieces that are on.
+- **Two identical rings share one switch.** They are one **Rings:** row, so the switch covers both. Two different rings are two rows with a switch each. If a twin pick makes two different rings identical while either is off, the **Rings:** row opens off.
+- **Off lasts until you reload the page.** It is not saved on this device. Closing and reopening the sheet, or flipping **Abridged**, keeps it; a reload turns every piece back on.
+- **Reset all turns every piece of this outfit back on**, as well as clearing your edits. Other outfits keep their switches.
+- **With every piece off**, **Copy list** and **Save .md** are grayed out, in both forms.
+- **The reader itself does not change.** These switches only affect the sheet's list. The piece list above the sheet and the `/glamour` bot work as they always have.
 
 #### Abridged
 
@@ -242,14 +254,16 @@ Only the lines you edit are saved, in this browser's storage; filled lines are n
 
 Picking another twin never overwrites an edit. The row warns you instead (*"You picked …, which has its own source. Your edited line is still here."*) and offers **Keep mine** or **Use new source**.
 
-**Reset all** forgets your edits for this outfit's pieces, and nothing else.
+**Reset all** forgets your edits for the pieces in the sheet and turns every piece of this outfit back on, even one that has no row in the sheet right now, and nothing else.
+
+One thing it can't reach: if the item names couldn't be looked up, the reader doesn't know which item a piece is, so a line you typed while the names were there stays saved on this device and comes back when they do. Press **Reset all** again once the names are back. The other way around works: with the names there, it also forgets a line you typed while they weren't.
 
 ### Copy or save
 
-- **Copy list** copies the list (the Abridged form, when that switch is on) with real bold, which survives a paste into Word or Google Docs. Anywhere that takes only plain text gets the same lines, without `**` marks.
+- **Copy list** copies the list (the Abridged form, when that switch is on, and without any piece you switched off) with real bold, which survives a paste into Word or Google Docs. Anywhere that takes only plain text gets the same lines, without `**` marks.
 - **Save .md** downloads the same list as `glamour-equipment.md` (`glamour-equipment-abridged.md` in Abridged), with the bold written as Markdown `**…**`.
 
-Close the sheet with **×**, `Esc` or a click outside it.
+Both buttons are grayed out when every piece is switched off. Close the sheet with **×**, `Esc` or a click outside it.
 
 ---
 

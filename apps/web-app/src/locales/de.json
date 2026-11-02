@@ -1404,6 +1404,7 @@
       "reset": "Alles zurücksetzen",
       "save": ".md speichern",
       "abridged": "Kurzfassung",
+      "includePiece": "{name} in die Liste aufnehmen",
       "cardNote": "Deine bearbeiteten Bezugsquellen werden auf diesem Gerät gespeichert."
     },
     "empty": "Diese Datei trägt keine Ausrüstung.",

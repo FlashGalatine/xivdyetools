@@ -118,7 +118,7 @@ src/
 │   ├── glamour-tool.ts              # Glamour Reader (tenth tool): header + file card + the glamour block
 │   ├── glamour-block.ts             # DYES ON THIS GLAMOUR + IN THE GAME verdict — its own chunk, imported by the reader once a loaded file wears anything
 │   ├── glamour-twin-picker.ts       # SAME LOOK · N ITEMS popover / sheet (twin rules: core chara-twins)
-│   ├── glamour-sheet.ts             # Export sheet (design 2c): editable Acquisition lines, Copy list / Save .md, the Abridged toggle (form remembered on the device)
+│   ├── glamour-sheet.ts             # Export sheet (design 2c): editable Acquisition lines, Copy list / Save .md, the Abridged toggle (form remembered on the device), a per-row include switch (off until reload, never stored)
 │   └── ... image-zoom-controller, dye-grid, dye-search-box, dye-selector, market-board, metric-help, etc.
 ├── services/
 │   ├── index.ts                     # initializeServices(), getServicesStatus(), re-exports
