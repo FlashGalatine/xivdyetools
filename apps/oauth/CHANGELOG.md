@@ -26,6 +26,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   so a slower failed sign-in cannot undo a newer good one.
 - The policy text that described the old behavior is corrected alongside this in web-app 5.16.8 and
   discord-worker 5.9.9.
+- Two tests in `identity-timeouts.sqlite.test.ts` advanced fake time while `crypto.subtle` hashes were
+  still running on the real clock, which failed CI on a loaded runner. They now wait until every
+  acknowledgement has started. Test-only.
 
 ## [3.2.1] - 2026-11-01
 
