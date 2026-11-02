@@ -17,15 +17,16 @@ queue. These conditional M sources do not replace the earlier deprecation releas
 | 1 | M-CORE | Core 6.0.0 | Remove only the approved legacy parser/resolver APIs and host parity half; preserve the live contracts and all 261 library cases |
 | 2 | M-SVG | SVG 4.4.2 | Adopt Core 6 using retained APIs; public SVG contracts remain compatible |
 | 3 | M-BOT-LOGIC | Bot Logic 5.0.0 | Remove the legacy character projection; successful results contain only `ok`, `svgString`, `embed` |
-| 4 | M-API | API 0.21.2 | Keep the public v1 request/response contract and `familySize` |
-| 5 | M-WEB | Web 5.16.5 | Preserve inspection-worker protocol, eight slots, matching eligibility and bundle budget |
+| 4 | M-API | API 0.21.3 (prepared as 0.21.2) | Keep the public v1 request/response contract and `familySize` |
+| 5 | M-WEB | Web 5.16.8 (prepared as 5.16.5) | Preserve inspection-worker protocol, eight slots, matching eligibility and bundle budget |
 | 6 | M-OG | OG 2.12.3 | Preserve card output; the app version also advances cache identity |
-| 7 | M-DISCORD | Discord 5.9.8 | Preserve original-byte attachment guards, cards, embeds and adapter behavior |
+| 7 | M-DISCORD | Discord 5.9.9 (prepared as 5.9.8) | Preserve original-byte attachment guards, cards, embeds and adapter behavior |
 | 8 | M-MODERATION | Moderation 1.9.1 | Preserve shared sanitization, private replies and disabled confirmation paths |
 | 9 | M-STOAT | Stoat 0.3.5 | Verify the parked adapter; no activation or deployment |
 
 Version reservations were checked against public npm and all 56 open PR heads (504 manifests)
 on October 29: no proposed target conflict or unavailable manifest. Refresh before any release.
+**Since 2026-11-01** web 5.16.5 to 5.16.7, api 0.21.2 and discord 5.9.8 are taken on `main`; see [the renumbering section](#renumbering-after-the-merges-outside-the-window-2026-11-01).
 The package targets remain separate from pending Core 5.16.0, SVG 4.4.1 and Bot Logic 4.12.0;
 folding removal into those minor artifacts would defeat the required deprecation sequence.
 
@@ -47,7 +48,9 @@ folding removal into those minor artifacts would defeat the required deprecation
   and #405 are on `main` and M-CORE, M-SVG and M-BOT-LOGIC are published. With
   e-02 on `main`, #404's merge changes only docs and #405's starts only an og-worker run, so
   each of these four deploys from the last run its own M merge starts (#395, #402, #398 and
-  #399), held in the production gate until then and accepted one at a time. Reject or cancel
+  #399), held in the production gate until then and accepted one at a time. **Since 2026-11-01**
+  #402's merge should start no web run, so M-WEB's is #396's
+  ([renumbering section](#renumbering-after-the-merges-outside-the-window-2026-11-01)). Reject or cancel
   every earlier run of each workflow before the next merge that matches it. M-OG gets no
   selected run of its own: reject #397's og 2.12.3 run, and #405's og 2.12.4 run carries it, so
   it is accepted with F-OG ([unit acceptance](REMEDIATION_UNIT_ACCEPTANCE_2026_10.md) AP-05,
@@ -146,3 +149,30 @@ adds no migration or activation action.
 
 Every merge remains blocked until October 30 or later **and** a new explicit approval plus
 satisfied prerequisites. There is no scheduled merge, publication or deployment.
+
+## Renumbering after the merges outside the window (2026-11-01)
+
+On 2026-11-01 the maintainer asked to merge what does not depend on the 14-day window, so web 5.16.5 to 5.16.7 (#372, #417, #418), api 0.21.2 (#389), discord 5.9.8 (#420) and oauth 3.2.1 (#419) are on `main` ahead of this line ([receipt](../audits/2026-10-26-security/evidence/outside-window-merges-2026-11-01.json)). **M-API becomes 0.21.3, M-WEB 5.16.8 and M-DISCORD 5.9.9.** Every other target stays, and none of those pull requests changed `packages/`. The first table above shows both numbers. The Version column of the prepared-source table keeps the prepared numbers, because it names frozen heads.
+
+**The trap.** At #395 and #398, `package.json`, the README row and the current `docs/versions.md` row merge cleanly at the taken number, because both sides say 0.21.2 or 5.9.8. `docs:check-versions` passes, because it only compares those places with each other. Set them by hand, or that release ships Core 6 under a version already used.
+
+Simulated in order on `main` at `6df8366d`, with these rules applied:
+
+| Pull request | Conflicts | Merges cleanly but must be set by hand | Rule |
+|---|---|---|---|
+| #391, #392, #394 | none | none | None. #391 merges first at its real tip: `3cd1b6df` aligns core's `package-declarations.test.ts` with `main`, and a later branch merged without it conflicts on that test. |
+| #395 | `README.md`, api `CHANGELOG.md`, `docs/versions.md` | api `package.json`, the README api row, the current `docs/versions.md` row and its Conditional M row: all to 0.21.3 | Changelog: #395's section as `[0.21.3]` above `main`'s `[0.21.2]`; keep `main`'s `[0.21.1]` dated 2026-10-29, not the branch's 2026-10-27. History: v0.21.3 above v0.21.2. README: keep oauth 3.2.1. |
+| #396 | `README.md`, web `CHANGELOG.md`, web `package.json`, `docs/versions.md` | none | Web 5.16.8 in `package.json`, the README row and the current row; keep discord 5.9.8 from `main`. Changelog: `[5.16.8]` above `[5.16.7]`, `[5.16.6]` and `[5.16.5]`. History: v5.16.8 above those three. Conditional M hunk: web v5.16.8, api v0.21.3, in the branch's row order. |
+| #397 | `README.md`, `docs/versions.md` | none | Only because the neighboring api row moved. Per row take the higher version: oauth 3.2.1, api 0.21.3, og 2.12.3. Conditional M hunk: the branch's row order, web v5.16.8, api v0.21.3. |
+| #398 | `README.md`, discord `CHANGELOG.md`, `docs/versions.md` | discord `package.json`, the README discord row, the current `docs/versions.md` row and its Conditional M row: all to 5.9.9 | Changelog: `[5.9.9]` above `[5.9.8]`. History: v5.9.9 above v5.9.8. Keep web 5.16.8. Edit the Conditional M row only: a global 5.9.8 replace would corrupt `main`'s history row and the Prepared source row. |
+| #399 | `docs/versions.md` | none | Current rows: moderation 1.9.1, keep oauth 3.2.1. Conditional M hunk: the branch's row order, moderation v1.9.1, discord v5.9.9. Never take the branch's oauth 3.2.0. |
+| #400 | none | none | None, provided the earlier Conditional M hunks kept the branch's row order. |
+| #402 | `docs/versions.md` | none | Replace the v5.16.8 history row with #402's wording at v5.16.8, and keep `main`'s v5.16.7, v5.16.6 and v5.16.5 rows. That row is #402's whole net delta, because its code and 5.16.4 changelog bullet are already on `main`. The row claims a Hair/Skin restore that `main` records under 5.16.4, so decide then whether to keep that clause; the simulation recommended dropping it. This merge should start no web run, so M-WEB's selected run is #396's: do not reject that one as stale. That comes from the simulated trees and the workflow's path filter and has not been observed live, so read the run list then. |
+| #403, #404, #406 | none | none | None. |
+| #405 | `README.md`, `docs/versions.md` | none | Per row take the higher version: oauth 3.2.1, api 0.21.3, og 2.12.4. Conditional M hunk: the branch's row order, discord v5.9.9, og v2.12.4, web v5.16.8, api v0.21.3. |
+| #411 | `docs/research/index.md`, `docs/versions.md` | none | Keep every research row. Prepared source hunk: keep `main`'s discord v5.9.8 and #411's presets-api v2.8.2. Do not bump that row to 5.9.9, because it lists bot-logic 4.12.0. |
+| #414 | `docs/versions.md` | none | Current rows: moderation 1.9.2, keep oauth 3.2.1. The Conditional M moderation row stays v1.9.1. |
+
+The simulated final tree is `8f92b6e4`. In it, `package.json`, the README and `docs/versions.md` agree for every workspace, the web, api and discord changelogs descend, and `'Restore Hair and Skin'` appears once in the web changelog.
+
+This is a merge-level result only, with no install, build or tests, and it used the branch heads of 2026-11-01 before this record. Rerun it after any new commit on the line or on `main`, and run the full gate on a preview merge before merging. Open draft #421 already takes oauth 3.2.2, web 5.16.8 and discord 5.9.9. If it merges first, every `oauth 3.2.1` rule above changes, and M-WEB and M-DISCORD move again, to 5.16.9 and 5.9.10, so rerun this section. M-DISCORD would then hit the same silent trap at the new number. `packages/bot-logic/src/commands/swatch.test.ts` auto-merged with changes from both sides and was read, not run. Re-date the renumbered changelog headings and history rows to the real merge date, since they still say 2026-10-29 and Oct 2026.
