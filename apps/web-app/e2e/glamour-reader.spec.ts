@@ -102,6 +102,23 @@ test('verdict first, a twin named and picked, and an edited Acquisition line kep
   await expect(sheet.locator('[data-role="sheet-preview"]')).toContainText(
     'Acquisition: Crafted (WVR Lvl. 3) / my note'
   );
+
+  // The Abridged toggle switches the form, and flips back
+  const abridged = sheet.getByRole('switch', { name: 'Abridged' });
+  await abridged.click();
+  await expect(sheet.locator('[data-role="sheet-preview"]')).toContainText('Obtained:');
+  await abridged.click();
+  await expect(sheet.locator('[data-role="sheet-preview"]')).toContainText('Acquisition:');
+
+  // A piece's own switch leaves it out of the list, and puts it back
+  const includeHead = sheet.getByRole('switch', { name: 'Include Hempen Coif in the list' });
+  await includeHead.click();
+  await expect(sheet.locator('[data-role="sheet-preview"]')).not.toContainText('Head: Hempen Coif');
+  await expect(field).toBeDisabled();
+  await includeHead.click();
+  await expect(sheet.locator('[data-role="sheet-preview"]')).toContainText('Head: Hempen Coif');
+  await expect(field).toBeEnabled();
+
   await page.keyboard.press('Escape');
   await page.locator('[data-role="reader-actions"] [data-role="export-markdown"]').click();
   await expect(field).toHaveValue('Crafted (WVR Lvl. 3) / my note');

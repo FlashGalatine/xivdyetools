@@ -780,6 +780,7 @@ export class GlamourBlock {
           itemId: state.picked.itemId,
           names: state.picked.names,
           ...(state.picked.acquisition ? { acquisition: state.picked.acquisition } : {}),
+          ...(state.picked.rules ? { dyeCount: state.picked.rules.dyeCount } : {}),
         };
       }
     }
