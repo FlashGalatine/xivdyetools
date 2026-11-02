@@ -2,7 +2,7 @@
 
 > Ceci est une traduction fournie à titre pratique. La version anglaise fait foi ; en cas de divergence, c'est elle qui prévaut. [Anglais](TERMS_OF_SERVICE.md)
 
-**Dernière mise à jour :** 2026-10-28 · Couvre **xivdyetools.app** et **beta.xivdyetools.app**. La
+**Dernière mise à jour :** 2026-11-01 · Couvre **xivdyetools.app** et **beta.xivdyetools.app**. La
 façon dont nous traitons vos données fait l'objet d'un document séparé : [`PRIVACY.md`](PRIVACY.fr.md).
 Le bot Discord a ses propres conditions :
 [`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.fr.md).
@@ -34,7 +34,9 @@ pour soumettre, modifier ou voter sur des préréglages communautaires.
 - La connexion crée un enregistrement de compte contenant votre identifiant de fournisseur et un
   nom. Avec Discord, le nom est votre nom d'affichage, ou votre nom d'utilisateur si vous n'avez pas de nom d'affichage. Avec XIVAuth, le nom est celui de votre
   personnage vérifié, ou « XIVAuth User » suivi des 8 premiers caractères de votre
-  identifiant XIVAuth si aucun personnage vérifié n'est disponible lors de votre connexion, comme
+  identifiant XIVAuth si vous n'avez aucun personnage vérifié lors de votre connexion. Si XIVAuth
+  ne peut pas renvoyer vos personnages lors de votre connexion, le nom déjà associé à votre compte
+  est conservé (un nouveau compte reçoit ce même nom « XIVAuth User »), comme
   décrit dans le Guide de confidentialité. Si votre compte XIVAuth est lié
   à Discord, l'enregistrement contient aussi cet identifiant utilisateur Discord. Le nom figurant
   dans l'enregistrement est affiché comme auteur de chaque préréglage que vous publiez.

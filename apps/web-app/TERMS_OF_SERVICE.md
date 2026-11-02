@@ -2,7 +2,7 @@
 
 > Also available in: [日本語](TERMS_OF_SERVICE.ja.md) · [Deutsch](TERMS_OF_SERVICE.de.md) · [Français](TERMS_OF_SERVICE.fr.md) · [한국어](TERMS_OF_SERVICE.ko.md) · [中文](TERMS_OF_SERVICE.zh.md). This English version is the authoritative text.
 
-**Last updated:** 2026-10-28 · Covers **xivdyetools.app** and **beta.xivdyetools.app**. How we handle
+**Last updated:** 2026-11-01 · Covers **xivdyetools.app** and **beta.xivdyetools.app**. How we handle
 your data is a separate document: [`PRIVACY.md`](PRIVACY.md). The Discord bot has its own terms:
 [`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.md).
 
@@ -28,8 +28,10 @@ community presets.
 - Signing in goes through Discord or XIVAuth. We never see or store a password.
 - Signing in creates an account record holding your provider ID and a name. With Discord, the name
   is your display name, or your username if you have no display name. With XIVAuth, the name is your verified character's name, or
-  "XIVAuth User" followed by the first 8 characters of your XIVAuth ID if no verified character is
-  available when you sign in, as described in the Privacy Guide. If your XIVAuth account is linked
+  "XIVAuth User" followed by the first 8 characters of your XIVAuth ID if you have no verified
+  character when you sign in. If XIVAuth cannot return your characters when you sign in, the name
+  already on your account stays (a new account gets the same "XIVAuth User" name), as described in
+  the Privacy Guide. If your XIVAuth account is linked
   to Discord, the record also holds that Discord user ID. The name in the record is shown as the
   author of every preset you publish.
 - Your session is a token held in your browser. Clearing your browser's site data signs you out.

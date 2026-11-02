@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   claim, D1 column or scope changed.
 - `findOrCreateUser` keeps the name with `COALESCE(?,username)` rather than writing back what it read,
   so a slower failed sign-in cannot undo a newer good one.
+- The policy text that described the old behavior is corrected alongside this in web-app 5.16.8 and
+  discord-worker 5.9.9.
 
 ## [3.2.1] - 2026-11-01
 

@@ -2,7 +2,7 @@
 
 > Dies ist eine zur Verständlichkeit bereitgestellte Übersetzung. Maßgeblich ist die englische Fassung; weichen beide voneinander ab, gilt die englische Fassung. [Englisch](PRIVACY.md)
 
-**Zuletzt aktualisiert:** 2026-10-28 · Gilt für **xivdyetools.app** und **beta.xivdyetools.app**. Der
+**Zuletzt aktualisiert:** 2026-11-01 · Gilt für **xivdyetools.app** und **beta.xivdyetools.app**. Der
 Discord-Bot hat eine eigene Richtlinie: [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.de.md).
 
 XIV Dye Tools läuft in deinem Browser. Die Farbwerkzeuge — Paletten-Extraktor, Harmonie-Explorer,
@@ -103,8 +103,10 @@ erlaubt nichts anderes) sowie den unten genannten Drittanbietern:
    Kontodatensatz an, unabhängig davon, ob du anschließend etwas einreichst oder abstimmst. Bei
    Discord enthält der Datensatz deine Discord-Benutzer-ID und deinen Anzeigenamen (deinen
    Benutzernamen, wenn du keinen Anzeigenamen hast). Bei XIVAuth enthält der Datensatz deine
-   XIVAuth-ID und den Namen deines verifizierten Charakters. Ist keiner verfügbar, wenn du dich
-   anmeldest, lautet der Name "XIVAuth User", gefolgt von den ersten 8 Zeichen deiner XIVAuth-ID.
+   XIVAuth-ID und den Namen deines verifizierten Charakters. Hast du bei deiner Anmeldung keinen
+   verifizierten Charakter, lautet der Name "XIVAuth User", gefolgt von den ersten 8 Zeichen deiner
+   XIVAuth-ID. Kann XIVAuth deine Charaktere bei deiner Anmeldung nicht liefern, bleibt der bereits
+   in deinem Konto hinterlegte Name bestehen (ein neues Konto erhält denselben "XIVAuth User"-Namen).
    Ist dein XIVAuth-Konto mit Discord verknüpft, enthält der Datensatz zusätzlich diese
    Discord-Benutzer-ID. Der Name im Datensatz wird als Autor jeder Vorlage angezeigt, die du
    veröffentlichst, und wird bei jeder Anmeldung bei allen davon aktualisiert (nicht, solange eine

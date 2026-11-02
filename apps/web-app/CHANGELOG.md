@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.16.8] - 2026-11-01
+
+### Changed
+
+- **Privacy Guide, Terms and the sign-in note (`preset.privacyNote`), all six languages:** they said
+  the `XIVAuth User` name applies when no verified character is available at sign-in. oauth 3.2.2 makes
+  that false for one case: when XIVAuth cannot return the characters, an existing account keeps the name
+  it already has. The text now separates the cases. No verified character gives the `XIVAuth User`
+  name; a failed lookup keeps the name on the account, and a new account gets the `XIVAuth User` name.
+  `Last updated` is 2026-11-01 on all twelve documents. The note ships in the bundle, while
+  `PRIVACY*.md` and `TERMS_OF_SERVICE*.md` are served from `main` (`about-modal.ts`
+  `POLICY_DOCS_BASE`), so they are live at merge. No other source changed.
+
 ## [5.16.7] - 2026-11-01
 
 ### Fixed

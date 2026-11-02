@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.9.9] - 2026-11-01
+
+### Changed
+
+- Privacy Policy (all six languages): the Author name row said the `XIVAuth User` name applies when
+  no verified character is available at sign-in. oauth 3.2.2 makes that false for one case: when XIVAuth
+  cannot return the characters, an existing account keeps the name it already has. The row now
+  separates the cases, and a new account in that case gets the `XIVAuth User` name. Policy text only,
+  with no code change. "Last Updated" stays November 1, 2026.
+
 ## [5.9.8] - 2026-11-01
 
 ### Changed
