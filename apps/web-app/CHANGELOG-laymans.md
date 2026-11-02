@@ -10,6 +10,12 @@
 - **Matches move under the grid when there's no room beside it.** In a desktop window, picking a swatch or a dye scrolls to its results. Small windows and long results can scroll the grid off screen.
 - **Phones can reach the first column.** The grid now scrolls sideways all the way to its left edge.
 
+## Web-App Version 5.16.9 — November 2, 2026
+
+### Color Palette
+- **The sideways scrollbar is gone.** The small stray scrollbar along the bottom of the Color Palette no longer appears.
+- **Full dye names on hover.** Names are no longer cut off at the sides of the panel or at its top edge. Near the top, a name now opens below its dye.
+
 ## Web-App Version 5.16.8 — November 1, 2026
 
 ### Privacy Guide and Terms

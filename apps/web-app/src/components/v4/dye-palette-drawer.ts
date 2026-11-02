@@ -40,6 +40,25 @@ const SPECTRUM_FILTERS: { key: SpectrumKey; labelKey: string }[] = [
 ];
 
 /**
+ * What a dye tooltip needs above its swatch beyond its own height: the 6px gap,
+ * plus what the swatch's 1.1 hover scale adds to the gap and the tooltip.
+ *
+ * How the tooltips stay whole, noted here because comments in the styles below
+ * ship in the layout chunk, which sits at its budget:
+ * - A hidden tooltip still counts as scrollable overflow. Centered on an outer
+ *   column, a long name ran past the drawer: a sideways scrollbar at rest, and a
+ *   cut-off name on hover. The outer columns of the five grow inward from their
+ *   swatch's edge instead.
+ * - `.tooltip-below` is set by placeSwatchTooltip when the panel's top edge would
+ *   cut a tooltip off.
+ * - `.swatch:hover` ranks above the favorite stars (20): the tooltip lives in its
+ *   stacking context, and the stars of the row it opens over would paint across it.
+ * - The Favorites section doesn't clip, so a tooltip can overhang it. Its header
+ *   follows the section's corners by itself instead.
+ */
+const SWATCH_TOOLTIP_CLEARANCE_PX = 12;
+
+/**
  * V4 Dye Palette Drawer - Right-side color selection panel
  *
  * @fires dye-selected - When a dye swatch is clicked or random dye is selected
@@ -362,7 +381,15 @@ export class DyePaletteDrawer extends BaseLitComponent {
         margin-bottom: 16px;
         border: 1px solid var(--v4-border-subtle, rgba(255, 255, 255, 0.1));
         border-radius: 8px;
-        overflow: hidden;
+      }
+
+      .favorites-section .section-header {
+        border-radius: 7px;
+      }
+
+      .favorites-section .section-header[aria-expanded='true'] {
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
       }
 
       /* A <button> since BUG-028 (2026-10-04 deep-dive); the resets keep it
@@ -453,7 +480,7 @@ export class DyePaletteDrawer extends BaseLitComponent {
 
       .swatch:hover {
         transform: scale(1.1);
-        z-index: 10;
+        z-index: 21;
         border-color: rgba(255, 255, 255, 0.5);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
       }
@@ -482,6 +509,22 @@ export class DyePaletteDrawer extends BaseLitComponent {
 
       .swatch:hover[title]::after {
         opacity: 1;
+      }
+
+      .swatch:nth-child(5n + 1)[title]::after {
+        left: 0;
+        transform: none;
+      }
+
+      .swatch:nth-child(5n)[title]::after {
+        left: auto;
+        right: 0;
+        transform: none;
+      }
+
+      .swatch.tooltip-below[title]::after {
+        top: calc(100% + 6px);
+        bottom: auto;
       }
 
       /* The pick control (BUG-028): transparent, and over the swatch's border
@@ -897,6 +940,33 @@ export class DyePaletteDrawer extends BaseLitComponent {
     this.emit('drawer-toggle');
   }
 
+  private handleSwatchHover(e: MouseEvent): void {
+    const swatch = (e.target as Element).closest<HTMLElement>('.swatch');
+    if (swatch) this.placeSwatchTooltip(swatch);
+  }
+
+  /** A swatch can also reach the panel's top edge under a still pointer. */
+  private handleDrawerScroll(): void {
+    const swatch = this.renderRoot.querySelector<HTMLElement>('.swatch:hover');
+    if (swatch) this.placeSwatchTooltip(swatch);
+  }
+
+  /**
+   * A dye tooltip opens above its swatch, where the top edge of the scrolled
+   * panel would cut it off, so near that edge it opens below instead. Measured
+   * from the swatch's center, which its hover scale doesn't move.
+   */
+  private placeSwatchTooltip(swatch: HTMLElement): void {
+    const scroller = swatch.closest('.drawer-content');
+    if (!scroller) return;
+
+    const { top, height } = swatch.getBoundingClientRect();
+    const room = top + height / 2 - scroller.getBoundingClientRect().top;
+    const tooltipHeight = parseFloat(getComputedStyle(swatch, '::after').height);
+    const needed = swatch.offsetHeight / 2 + tooltipHeight + SWATCH_TOOLTIP_CLEARANCE_PX;
+    swatch.classList.toggle('tooltip-below', room < needed);
+  }
+
   /**
    * Select a random dye from all available dyes.
    * Emits dye-selected with the randomly chosen dye.
@@ -1060,7 +1130,11 @@ export class DyePaletteDrawer extends BaseLitComponent {
           </div>
         </div>
 
-        <div class="drawer-content">
+        <div
+          class="drawer-content"
+          @mouseover=${this.handleSwatchHover}
+          @scroll=${this.handleDrawerScroll}
+        >
           ${this.renderSearch()} ${this.renderFilters()} ${this.renderSpectrumFilters()}
           ${this.shouldShowCustomColor ? this.renderCustomColor() : nothing}
           ${this.renderFavorites()} ${this.renderDyeGrid(groupedDyes)}
