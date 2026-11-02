@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.16.6] - 2026-11-01
+
+Build hardening only; nothing a visitor sees changes.
+
+### Maintenance
+
+- **Tailwind's class scan is rooted at `src/`.** `src/styles/tailwind.css` now reads
+  `@import "tailwindcss" source("../")`. Without `source()`, `@tailwindcss/postcss` scanned from
+  Vite's cwd (`apps/web-app`), and two things followed from that:
+  - The scan read this changelog, so 15 utilities named only in its prose shipped as dead CSS
+    (`bg-pink-600`, `bg-purple-600`, `bg-green-600`, `bg-blue-100`, `bg-gray-900`, `bg-gradient-to-r`,
+    `text-3xl`, `text-blue-900`, `text-green-600`, `border-blue-200`, `tabular-nums`, and the
+    `dark:` variants `border-blue-800`, `bg-blue-900`, `text-blue-100`, `text-green-400`), together
+    with their theme variables and the five `--tw-numeric-*` / `--tw-ordinal` / `--tw-slashed-zero`
+    `@property` rules. The index CSS drops from 55.6 KB to 53.1 KB. Every removed rule was checked
+    against `src/`, `public/`, `functions/` and `index.html`: none of them is rendered (the `src/`
+    mentions are `dark:bg-gray-900`, `dark:bg-blue-900/30` and the `font-variant-numeric` value, all
+    still generated or plain CSS), and no class is built from string pieces.
+  - The result depended on where the checkout lived. Inside a folder on Tailwind's ignored-dir list
+    (`.turbo`, `.next`, `.vercel`, `.svelte-kit`, ...), the oxide scanner turned off its ignore rules
+    and read `node_modules`, `dist` and `.git`, nearly doubling the index CSS (107.8 KB) and failing
+    a local `build:check` against the 105 KB CSS budget that CI passes at 53%. `src/` holds none of
+    those, so the CSS is now the same wherever the checkout sits.
+
 ## [5.16.5] - 2026-11-01
 
 ### Fixed
