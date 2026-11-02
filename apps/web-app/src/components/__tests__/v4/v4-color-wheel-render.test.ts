@@ -204,8 +204,8 @@ describe('V4ColorWheel rendering', () => {
     expect(seen.size).toBe(nodes().length);
   });
 
-  it('sizes the connection lines from the wheel, whatever it shrinks to', async () => {
-    await mount({ baseColor: '#ff0000', harmonyType: 'complementary', size: 400 });
+  it('pins the connection lines to 35% of the wheel, so they follow it down', async () => {
+    await mount({ baseColor: '#ff0000', harmonyType: 'complementary' });
 
     expect(lines()[0].style.width).toBe('35%');
   });

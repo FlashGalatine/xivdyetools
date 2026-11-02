@@ -63,8 +63,9 @@ async function expectWithinPane(page: Page, targets: Locator): Promise<void> {
       right: left + el.clientWidth - parseFloat(paddingRight),
     };
   });
+  // The tool renders after the panels open, and count() doesn't wait for it.
+  await expect(targets.first()).toBeVisible();
   const count = await targets.count();
-  expect(count).toBeGreaterThan(0);
   for (let i = 0; i < count; i++) {
     const inner = await box(targets.nth(i));
     expect(inner.x).toBeGreaterThanOrEqual(content.left - 1);
@@ -166,6 +167,7 @@ test.describe('Tools in a narrow pane', () => {
 
     test(`Harmony fits the wheel, hub and nodes with a dye at ${size}`, async ({ page }) => {
       await openTool(page, 'harmony', viewport, { v3_harmony_selected_dye: DYES[1] });
+      await expect(page.locator('v4-color-wheel .main-swatch-display.empty')).toHaveCount(0);
 
       await expectWithinPane(page, page.locator('v4-color-wheel'));
       await expectWithinPane(page, page.locator('v4-color-wheel .main-swatch-display'));
@@ -291,6 +293,7 @@ test.describe('Tools in a narrow pane', () => {
       { xivdyetools_locale: 'de' }
     );
 
+    await expect(scroller(page).getByText(/Barrierefreiheitsanalyse/)).toBeVisible();
     await expectFitsThePane(page);
   });
 

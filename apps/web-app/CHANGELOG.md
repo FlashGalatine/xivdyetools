@@ -14,20 +14,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Harmony, Comparison and Accessibility no longer lose their left edge in a narrow pane.** With both
   side panels open below about 870 px wide, each one centered something wider than its pane. Centering
   splits the excess across both sides, and nothing can scroll to what hangs off the left. At 800x600
-  the pane starts at x=252, but the wheel started at 216, the result cards at 226, the "Add Dye" slots at
-  246 and the vision tabs at 234. All of these can shrink, so none needed sideways scrolling of its own.
+  the pane starts at x=252, but the wheel started at 216, the result cards at 226, the row of "Add Dye" slots
+  at 246 and the vision tabs at 234. All of these can shrink, so none needed sideways scrolling of its own.
   The wheel's circle takes `max-width: 100%` and `aspect-ratio: 1`, with its spokes and label offset now
   percentages, and `size` is the largest it gets. Its hub is `min(114px, 46%)`, because a fixed 114 px
   would sit on the nodes of a smaller wheel. Comparison's single-dye and pair cards and its pair chips
   take `max-width: 100%`. Vision tab labels wrap, and the lens grid's tracks can go below 180 px.
 - **The Comparison and Accessibility empty states fit a narrow pane and still read.** The slots row and
-  the message box take `max-width: 100%`, and their sideways padding gives way below about 640 px of
-  width (`min(2rem, 5cqw)`, and likewise for the others). It is `cqw` because a percentage counts as 0
+  the message box take `max-width: 100%`, and their sideways padding gives way as the pane narrows
+  (`min(2rem, 5cqw)` below about 640 px of container width, `min(40px, 8cqw)` below 500 and
+  `min(20px, 5cqw)` below 400). It is `cqw` because a percentage counts as 0
   while a shrink-to-fit box measures itself, and Accessibility's four slots then stacked in one column
   in a 1600 px window. With the full padding at 769 px there would be no room left for either.
 - **Accessibility's share row wraps.** The "As designed → as perceived" row didn't, so once a dye was
-  picked the whole pane scrolled sideways: 77 px at 1024x768, or 87 px with a real scrollbar, and 149 px
-  on a 390 px phone. The "Can you tell them apart?" row wraps as well.
+  picked the whole pane scrolled sideways: 77 px at 1024x768, or 87 px with a real scrollbar, and 139 px
+  on a 390 px phone (149 px in a 390 px window with a real scrollbar). The "Can you tell them apart?" row
+  wraps as well.
 - **Header rows wrap in longer languages.** Comparison's Export and Share row is `justify-content:
   flex-end`, so in German at 800x600 "Exportieren" was cut off on the left. Comparison's "What differs"
   row in German and Harmony's results row in French overflowed to the right.
@@ -36,7 +38,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Measured geometry is unchanged at 1440, 1536, 1600, 1718, 1920 and 2560 px in English, German and
 Japanese, empty and with one, two and four dyes (240 records, 47,808 element boxes), and at 768x1024 in
-English. At 769, 800 and 1024 px nothing starts left of the pane in any of the six languages.
+English. At 769, 800 and 1024 px, with menus closed, nothing starts left of the pane in any of the six
+languages. An open card menu is the exception: at 769 and 800 px it starts left of the pane and its
+submenu opens off the pane's left, out of a mouse's reach, while the keyboard and closing Options still
+work; at 1024 px the submenu starts left of the pane but stays clickable. Harmony and Accessibility
+already did this. So did Comparison's submenu, and at 800 px its narrower cards now start the open menu
+left of the pane as well.
 
 ### Changed
 
