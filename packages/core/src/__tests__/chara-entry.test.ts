@@ -10,12 +10,44 @@ import { fileURLToPath } from 'node:url';
 import * as core from '../index.js';
 import type * as entryTypes from '../chara.js';
 import type * as libraryTypes from '../services/chara/chara-library-types.js';
+import type * as charaTypes from '../services/chara/chara-types.js';
 import { runtimeImportGraph } from '../services/chara/__tests__/import-graph.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const srcDir = resolve(here, '..');
 const packageDir = resolve(srcDir, '..');
 const entryFile = resolve(srcDir, 'chara.ts');
+
+describe('@xivdyetools/core chara contracts', () => {
+  it.each(['parseCharaFile', 'resolveCharaColors', 'OFF_GRID_DELTA_E2000'])(
+    'does not export the retired %s value',
+    (name) => {
+      expect(Object.hasOwn(core, name)).toBe(false);
+    },
+  );
+
+  it('does not export the retired parser types', () => {
+    // @ts-expect-error ParsedCharaFile was retired with the legacy parser.
+    expectTypeOf<core.ParsedCharaFile>();
+    // @ts-expect-error CharaColorSlotRaw was retired with the legacy parser.
+    expectTypeOf<core.CharaColorSlotRaw>();
+    // @ts-expect-error CharaGearDye was retired with the legacy parser.
+    expectTypeOf<core.CharaGearDye>();
+  });
+
+  it('retains all nine live chara types and the 8 KiB admission cap', () => {
+    expectTypeOf<core.CharaSlotId>().toEqualTypeOf<charaTypes.CharaSlotId>();
+    expectTypeOf<core.CharaGearSlotId>().toEqualTypeOf<charaTypes.CharaGearSlotId>();
+    expectTypeOf<core.CharaSlotInertReason>().toEqualTypeOf<charaTypes.CharaSlotInertReason>();
+    expectTypeOf<core.CharaSlotVerdict>().toEqualTypeOf<charaTypes.CharaSlotVerdict>();
+    expectTypeOf<core.CharaSlotErrorCode>().toEqualTypeOf<charaTypes.CharaSlotErrorCode>();
+    expectTypeOf<core.ResolvedCharaSlot>().toEqualTypeOf<charaTypes.ResolvedCharaSlot>();
+    expectTypeOf<core.ResolvedGearDye>().toEqualTypeOf<charaTypes.ResolvedGearDye>();
+    expectTypeOf<core.ResolvedCharaCharacter>().toEqualTypeOf<charaTypes.ResolvedCharaCharacter>();
+    expectTypeOf<core.StainIdLookup>().toEqualTypeOf<charaTypes.StainIdLookup>();
+    expect(core.MAX_CHARA_FILE_BYTES).toBe(8192);
+  });
+});
 
 describe('@xivdyetools/core/chara runtime exports', () => {
   it('exports exactly inspectCharaForTools and resolveCharaWithProvider', async () => {
