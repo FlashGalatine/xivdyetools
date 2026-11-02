@@ -273,3 +273,12 @@ describe('logValidationErrors', () => {
     spy.mockRestore();
   });
 });
+
+describe('linked ban binding configuration',()=>{
+ it.each(['TRUE','0',' false ',''])('rejects malformed flag %s',flag=>{const result=validateEnv({LINKED_BAN_CONFIRMATION_ENABLED:flag} as Env);expect(result.errors).toContain('Invalid linked ban configuration: LINKED_BAN_CONFIRMATION_ENABLED must be true or false');});
+ it('requires structural RPC binding only when enabled',()=>{
+  expect(validateEnv({LINKED_BAN_CONFIRMATION_ENABLED:'true'} as Env).errors).toContain('Invalid linked ban configuration: OAUTH_IDENTITY binding is required');
+  expect(validateEnv({LINKED_BAN_CONFIRMATION_ENABLED:'true',OAUTH_IDENTITY:{lookupStoredIdentity:async()=>({version:1,status:'missing'})}} as unknown as Env).errors.filter(error=>error.startsWith('Invalid linked ban configuration: '))).toEqual([]);
+  expect(validateEnv({LINKED_BAN_CONFIRMATION_ENABLED:'false'} as Env).errors.filter(error=>error.startsWith('Invalid linked ban configuration: '))).toEqual([]);
+ });
+});

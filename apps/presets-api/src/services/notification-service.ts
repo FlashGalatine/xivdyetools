@@ -9,7 +9,8 @@
  * has a single owner module.
  */
 
-import type { Env, PresetPreviousValues, PresetStatus, RetentionLogger } from '../types.js';
+import type { Env, PresetStatus, RetentionLogger } from '../types.js';
+import type { PresetSnapshot } from './preset-moderation-input.js';
 
 /**
  * FINDING-011 (2026-08-29 security audit): the slice of the logger
@@ -71,7 +72,7 @@ export interface PresetSubmissionNotification {
   edited_from_status?: PresetStatus;
   /**
    * Sprint 9 (2026-10-04 remediation): the text THIS edit replaced — `name`,
-   * `description`, `tags` and `dyes` exactly as the row held them immediately
+   * `description`, `tags`, `dyes` and the full `example_link` exactly as the row held them immediately
    * before the write that sent this notification. Set on every PATCH
    * /presets/:id notification and absent on a new submission (POST), like
    * `edited_from_status`.
@@ -86,11 +87,11 @@ export interface PresetSubmissionNotification {
    * that. Revert stays governed by the three-part rule on
    * `edited_from_status` and restores `previous_values`, never `edited_from`.
    *
-   * Same shape as `PresetPreviousValues`, not the same meaning: nothing stores
+   * Same app-local shape as the revert snapshot, not the same meaning: nothing stores
    * it, and no endpoint restores it. Treat an absent value (a new submission,
    * or an older presets-api) as "no diff available".
    */
-  edited_from?: PresetPreviousValues;
+  edited_from?: PresetSnapshot;
   preset: {
     id: string;
     name: string;
@@ -113,7 +114,7 @@ export interface PresetSubmissionNotification {
      * The revert target only — an edit's diff base is the top-level
      * `edited_from`.
      */
-    previous_values?: PresetPreviousValues | null;
+    previous_values?: PresetSnapshot | null;
     /**
      * FINDING-017 (2026-10-03 audit): the revision of exactly the text this
      * notification carries — the row's value AFTER the write that produced it.

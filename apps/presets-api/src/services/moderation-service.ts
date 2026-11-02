@@ -281,7 +281,7 @@ async function checkWithPerspective(
       // ordinary back-pressure case, not an exotic outage. FINDING-011: the
       // status only — the upstream body is never logged (it's an opaque
       // Google error payload we don't control the shape or contents of).
-      (logger ?? console).error('Perspective API error', { status: response.status });
+      (logger ?? console).error('Perspective API error', undefined, { status: response.status });
       return moderationUnavailable();
     }
 

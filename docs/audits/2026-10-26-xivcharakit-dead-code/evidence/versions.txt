@@ -1,0 +1,6 @@
+packages/core @xivdyetools/core@5.15.0
+packages/bot-logic @xivdyetools/bot-logic@4.11.0
+apps/web-app xivdyetools-web-app@5.16.0
+apps/discord-worker xivdyetools-discord-worker@5.9.0
+apps/api-worker xivdyetools-api-worker@0.21.0
+apps/og-worker xivdyetools-og-worker@2.12.0

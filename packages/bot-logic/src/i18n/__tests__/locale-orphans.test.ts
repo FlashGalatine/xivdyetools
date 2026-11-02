@@ -54,6 +54,10 @@
  *      either declaration enough that the regex stops matching, extraction
  *      throws — this gate fails loudly instead of silently treating a whole
  *      namespace as reachable.
+ *
+ * Preparatory A-DISCORD choice metadata has a separate exact, reasoned exception
+ * map. These keys must exist in all locales and remain naturally unreachable;
+ * the exceptions go stale as soon as literal consumer references land.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -90,6 +94,20 @@ const CONSUMER_DIRS = [
 
 /** The two surviving `meta.*` keys — kept structurally, never read via `t()`. */
 const META_KEYS = ['meta.locale', 'meta.name'];
+
+/** Preparatory metadata, deliberately separate from natural/dynamic reachability. */
+const PREPARATION_EXCEPTIONS: Readonly<Record<string, string>> = {
+  'commands.swatch.choices.order.slots':
+    'A-DISCORD: prepare the slot-order choice label; remove when literal consumer references land.',
+  'commands.swatch.choices.order.hardest':
+    'A-DISCORD: prepare the hardest-first choice label; remove when literal consumer references land.',
+  'commands.preset.choices.sort.popular':
+    'A-DISCORD: prepare the popularity-sort choice label; remove when literal consumer references land.',
+  'commands.preset.choices.sort.recent':
+    'A-DISCORD: prepare the recent-sort choice label; remove when literal consumer references land.',
+  'commands.preset.choices.sort.name':
+    'A-DISCORD: prepare the name-sort choice label; remove when literal consumer references land.',
+};
 
 /** Flatten a nested locale object to dot-notation leaf keys. */
 function flattenKeys(obj: Record<string, unknown>, prefix = ''): string[] {
@@ -277,6 +295,34 @@ function isReachable(key: string, corpus: string, enumerated: Set<string>): bool
   return new RegExp(`['"\`]${escapeRe(base)}['"\`]`).test(corpus);
 }
 
+function findOrphans(
+  keys: string[],
+  corpus: string,
+  enumerated: Set<string>,
+  exceptions: Readonly<Record<string, string>>,
+): string[] {
+  return keys.filter(
+    (key) => !isReachable(key, corpus, enumerated) && !Object.hasOwn(exceptions, key),
+  );
+}
+
+function preparationExceptionProblems(
+  exceptions: Readonly<Record<string, string>>,
+  localeKeys: Record<string, Set<string>>,
+  corpus: string,
+  enumerated: Set<string>,
+): string[] {
+  const problems: string[] = [];
+  for (const [key, reason] of Object.entries(exceptions)) {
+    if (!reason.trim()) problems.push(`${key}: missing reason`);
+    for (const [locale, keys] of Object.entries(localeKeys)) {
+      if (!keys.has(key)) problems.push(`${key}: absent from ${locale}`);
+    }
+    if (isReachable(key, corpus, enumerated)) problems.push(`${key}: stale preparation exception`);
+  }
+  return problems;
+}
+
 function loadLocale(code: string): Record<string, unknown> {
   return JSON.parse(readFileSync(join(LOCALES_DIR, `${code}.json`), 'utf-8')) as Record<
     string,
@@ -285,16 +331,74 @@ function loadLocale(code: string): Record<string, unknown> {
 }
 
 describe('bot-logic i18n orphan gate', () => {
-  it('every key in en.json is reachable from a consumer tree or an enumerated dynamic key', () => {
+  it('every key in en.json is reachable or has an exact preparation exception', () => {
     const en = loadLocale('en');
     const keys = flattenKeys(en);
     const corpus = buildCorpus();
     const enumerated = buildEnumeratedKeys();
 
-    const orphans = keys.filter((k) => !isReachable(k, corpus, enumerated));
+    const orphans = findOrphans(keys, corpus, enumerated, PREPARATION_EXCEPTIONS);
 
     expect(keys.length).toBeGreaterThan(300);
     expect(orphans, `orphaned locale keys:\n  ${orphans.join('\n  ')}`).toEqual([]);
+  });
+
+  it('every preparation exception has a reason, exists in all six locales, and is not naturally reachable', () => {
+    const localeKeys = Object.fromEntries(
+      LOCALE_CODES.map((code) => [code, new Set(flattenKeys(loadLocale(code)))]),
+    );
+    expect(Object.keys(PREPARATION_EXCEPTIONS)).toHaveLength(5);
+    expect(
+      preparationExceptionProblems(
+        PREPARATION_EXCEPTIONS,
+        localeKeys,
+        buildCorpus(),
+        buildEnumeratedKeys(),
+      ),
+    ).toEqual([]);
+  });
+
+  it('rejects a sixth unused choice and an unrelated unused key', () => {
+    const unused = ['commands.preset.choices.sort.unused', 'unrelated.unused'];
+    expect(
+      findOrphans(
+        [...Object.keys(PREPARATION_EXCEPTIONS), ...unused],
+        '',
+        new Set(),
+        PREPARATION_EXCEPTIONS,
+      ),
+    ).toEqual(unused);
+  });
+
+  it.each(Object.keys(PREPARATION_EXCEPTIONS))(
+    'rejects stale preparation for literal consumer use of %s',
+    (key) => {
+      const exceptions = { [key]: PREPARATION_EXCEPTIONS[key] };
+      const localeKeys = { en: new Set([key]) };
+      for (const quote of ["'", '"', '`']) {
+        expect(
+          preparationExceptionProblems(
+            exceptions,
+            localeKeys,
+            `t.t(${quote}${key}${quote})`,
+            new Set(),
+          ),
+        ).toEqual([`${key}: stale preparation exception`]);
+      }
+      expect(preparationExceptionProblems(exceptions, localeKeys, '', new Set([key]))).toEqual([
+        `${key}: stale preparation exception`,
+      ]);
+    },
+  );
+
+  it('rejects an exception without a reason or a key missing from any locale', () => {
+    const key = 'commands.preset.choices.sort.name';
+    const localeKeys = Object.fromEntries(LOCALE_CODES.map((code) => [code, new Set([key])]));
+    localeKeys.ko.clear();
+    expect(preparationExceptionProblems({ [key]: '  ' }, localeKeys, '', new Set())).toEqual([
+      `${key}: missing reason`,
+      `${key}: absent from ko`,
+    ]);
   });
 
   /**

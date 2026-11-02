@@ -219,3 +219,19 @@ describe('PublicRateLimitMiddleware', () => {
         expect(JSON.stringify(context)).not.toContain('10.0.0.99');
     });
 });
+
+// Removing IPv6 /64 normalization must let a rotating host evade this ceiling.
+describe('public IPv6 network fairness', () => {
+    it('shares the ceiling within /64, separates another /64 and preserves IPv4', async () => {
+        const env = createMockEnv();
+        const app = new Hono<{ Bindings: Env }>();
+        app.use('*', publicRateLimitMiddleware);
+        app.get('/test', (c) => c.json({ success: true }));
+        for (let i = 1; i <= 100; i++) {
+            expect((await app.request('/test', { headers: { 'CF-Connecting-IP': `2001:db8:fee:1234::${i.toString(16)}` } }, env)).status).toBe(200);
+        }
+        expect((await app.request('/test', { headers: { 'CF-Connecting-IP': '2001:db8:fee:1234:ffff::1' } }, env)).status).toBe(429);
+        expect((await app.request('/test', { headers: { 'CF-Connecting-IP': '2001:db8:fee:1235::1' } }, env)).status).toBe(200);
+        expect((await app.request('/test', { headers: { 'CF-Connecting-IP': '192.0.2.19' } }, env)).status).toBe(200);
+    });
+});

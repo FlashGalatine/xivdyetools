@@ -47,6 +47,7 @@ All tokens use HMAC-SHA256 signing.
 | `global_name` | string \| null | Discord display name or character name |
 | `avatar` | string \| null | Discord avatar hash |
 | `auth_provider` | string | `"discord"` or `"xivauth"` |
+| `identity_revision` | number | Local account-identity revision; changes when an identity relationship changes, not on profile edits |
 
 ### Provider-Specific Claims
 
@@ -54,8 +55,15 @@ All tokens use HMAC-SHA256 signing.
 |-------|------|-------------|
 | `discord_id` | string? | Discord user ID (snowflake) — present whenever the account has one, including an XIVAuth login with a verified Discord social link |
 
-That is the complete claim set. `presets-api` reads `sub` / `discord_id` / `username` /
-`global_name`; the web app additionally reads `avatar` and `auth_provider`.
+That is the complete claim set. OAuth checks the current revision and provider relationship
+before returning `/auth/me`. A missing revision means zero only against a current,
+nonpending revision-zero row. The prepared private provider lets the later presets consumer
+perform the same check after JWT verification and before deriving ownership or moderator
+authority; that consumer is a prerequisite to enabling identity splitting. The web app
+additionally reads `avatar` and `auth_provider`.
+
+See [stored identities and moderation continuity](../../architecture/identity-moderation.md)
+for the disabled-by-default transition, legacy-token rules and release order.
 
 ### Claims removed in 3.0.0
 
@@ -85,6 +93,7 @@ the worker.
   "global_name": "Display Name",
   "avatar": "a_1234567890abcdef",
   "auth_provider": "discord",
+  "identity_revision": 0,
   "discord_id": "123456789012345678"
 }
 ```

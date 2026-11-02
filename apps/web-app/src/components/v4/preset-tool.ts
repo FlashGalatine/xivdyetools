@@ -201,6 +201,7 @@ export class PresetTool extends BaseLitComponent {
    */
   @state()
   private userSubmissionsLoaded: boolean = false;
+  private userSubmissionsGeneration = 0;
 
   @state()
   private isAuthenticated: boolean = false;
@@ -485,6 +486,7 @@ export class PresetTool extends BaseLitComponent {
       if (!wasAuthenticated && this.isAuthenticated) {
         void this.loadUserSubmissions();
       } else if (!this.isAuthenticated) {
+        this.userSubmissionsGeneration++;
         this.userSubmissions = [];
         this.userSubmissionsLoaded = false;
         // OPT-008 review follow-up: through the same catch-up as a tab click,
@@ -522,6 +524,7 @@ export class PresetTool extends BaseLitComponent {
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
+    this.userSubmissionsGeneration++;
     window.removeEventListener('popstate', this.handleWindowPopState);
     this.configUnsubscribe?.();
     this.configUnsubscribe = null;
@@ -757,18 +760,23 @@ export class PresetTool extends BaseLitComponent {
   }
 
   private async loadUserSubmissions(): Promise<void> {
+    const generation = ++this.userSubmissionsGeneration;
     if (!this.isAuthenticated) {
       this.userSubmissions = [];
       return;
     }
     try {
       const response = await presetSubmissionService.getMySubmissions();
-      this.userSubmissions = response.presets;
+      if (generation === this.userSubmissionsGeneration) {
+        this.userSubmissions = response.presets;
+      }
     } catch (error) {
       logger.warn('[v4-preset-tool] Failed to load user submissions:', error);
     } finally {
       // A failure changes nothing else, so this is what stops Mine's spinner
-      this.userSubmissionsLoaded = true;
+      if (generation === this.userSubmissionsGeneration) {
+        this.userSubmissionsLoaded = true;
+      }
     }
   }
 
@@ -1131,6 +1139,7 @@ export class PresetTool extends BaseLitComponent {
     showPresetEditForm(communityPreset, (result) => {
       if (result.success) {
         void this.loadPresets();
+        void this.loadUserSubmissions();
         this.selectedPreset = null;
         window.history.pushState({ toolId: 'presets' }, '', '/presets');
       }

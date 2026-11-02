@@ -7,8 +7,9 @@
  * line. It loads files into CharaSessionService and draws whatever is loaded
  * there, so every view of the character follows the same file.
  *
- * Privacy is on the card: read on this device, nothing uploaded, and no
- * embedded image kept (the reader scans past Base64Image without retaining it).
+ * Privacy is on the card: parsing stays on this device and no embedded image is kept
+ * (the reader scans past Base64Image). With sendsGearIds, the Glamour Reader sends
+ * gear model numbers and the facewear id for equipment names; its hint says so.
  * Renders inside the v4 shell's shadow DOM with inline styles.
  *
  * Spec: docs/research/monorepo-2.0/10a-sheet-port-spec.md (10A "Sheet")

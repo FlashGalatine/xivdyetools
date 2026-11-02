@@ -13,9 +13,11 @@ import {
     VALID_CODE_CHALLENGE,
     recordedStatements,
     resetRecordedStatements,
+    resetMockDB,
 } from './mocks/cloudflare-test.js';
 import { resetRateLimiter } from '../services/rate-limit.js';
 import { signState, type StateData } from '../utils/state-signing.js';
+import { base64UrlEncode, signJwtData } from '../services/jwt-service.js';
 
 // Store original fetch
 const originalFetch = globalThis.fetch;
@@ -90,11 +92,156 @@ function mockDiscordSuccess(): ReturnType<typeof vi.fn> {
     return mock;
 }
 
+/**
+ * Structured request-logger entries: the worker-kit JSON adapter writes every level,
+ * warn included, through console.log (packages/logger/src/adapters/json-adapter.ts).
+ */
+function loggedEntries(calls: unknown[][]): { line: string; message?: string; context?: Record<string, unknown> }[] {
+    return calls.flatMap(([line]) => {
+        try {
+            return [{ line: String(line), ...(JSON.parse(String(line)) as { message?: string; context?: Record<string, unknown> }) }];
+        } catch {
+            return [];
+        }
+    });
+}
+
 describe('Callback Handler', () => {
     beforeEach(() => {
+        resetMockDB();
         vi.useFakeTimers();
         vi.setSystemTime(new Date('2024-01-01T12:00:00Z'));
         resetRateLimiter();
+    });
+
+    it('logs only the identity refusal code before the generic 503', async () => {
+        const id = '10000000-0000-4000-8000-000000000001';
+        const discordId = '123456789012345678';
+        await env.DB.prepare('INSERT INTO users (id,discord_id,auth_provider,username) VALUES (?,?,?,?)').bind(id, discordId, 'discord', 'Stored').run();
+        await env.DB.prepare("INSERT INTO identity_operations (id,payload_json,payload_hash,state,created_at,expires_at) VALUES (?,'{}',?,'pending',1,2)").bind('pending-test', 'a'.repeat(64)).run();
+        await env.DB.prepare('INSERT INTO identity_operation_locks (resource_key,operation_id) VALUES (?,?)').bind(`discord:${discordId}`, 'pending-test').run();
+        mockDiscordSuccess();
+        const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+        try {
+            const response = await SELF.fetch('http://localhost/auth/callback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: 'locked-code', code_verifier: VALID_CODE_VERIFIER, state: await boundState() }),
+            });
+            expect(response.status).toBe(503);
+            expect(await response.json()).not.toHaveProperty('token');
+            const refusals = loggedEntries(logSpy.mock.calls).filter((entry) => entry.message === 'OAuth callback identity refusal');
+            expect(refusals).toHaveLength(1);
+            expect(refusals[0]!.context).toMatchObject({ code: 'unavailable' });
+            expect(refusals[0]!.line).not.toContain(id);
+            expect(refusals[0]!.line).not.toContain(discordId);
+        } finally {
+            logSpy.mockRestore();
+        }
+    });
+
+    describe('signed state across GET and POST', () => {
+        const cutoff = Date.parse('2026-10-28T00:00:00Z') / 1000;
+
+        async function migrationState(legacy: boolean, iat: number, exp = iat + 600): Promise<string> {
+            const data: StateData = {
+                csrf: 'migration-csrf',
+                code_challenge: await s256(VALID_CODE_VERIFIER),
+                redirect_uri: 'https://xivdyetools.app/auth/callback',
+                return_path: '/palette',
+                provider: 'discord',
+                iat,
+                exp,
+            };
+            if (!legacy) return signState(data, env.JWT_SECRET);
+            const encoded = base64UrlEncode(JSON.stringify(data));
+            return `${encoded}.${await signJwtData(encoded, env.JWT_SECRET)}`;
+        }
+
+        it.each([cutoff - 1, cutoff + 601])('completes the production GET bounce and POST exchange at %i', async (now) => {
+            vi.setSystemTime(now * 1000);
+            const fetchMock = mockDiscordSuccess();
+            const production = createProductionEnv();
+            const state = await migrationState(false, now);
+            const get = await fetchWithEnv(production,
+                `http://localhost/auth/callback?${new URLSearchParams({ code: 'migration-code', state })}`,
+                { redirect: 'manual' });
+            expect(get.status).toBe(302);
+            const bounce = new URL(get.headers.get('location')!);
+            expect(bounce.origin).toBe('https://xivdyetools.app');
+            expect(bounce.searchParams.get('code')).toBe('migration-code');
+            expect(bounce.searchParams.get('csrf')).toBe('migration-csrf');
+            expect(bounce.searchParams.get('state')).toBe(state);
+            expect(bounce.searchParams.get('return_path')).toBe('/palette');
+            expect(fetchMock).not.toHaveBeenCalled();
+            const post = await fetchWithEnv(production, 'http://localhost/auth/callback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    code: bounce.searchParams.get('code'),
+                    code_verifier: VALID_CODE_VERIFIER,
+                    state: bounce.searchParams.get('state'),
+                }),
+            });
+            expect(post.status).toBe(200);
+            const json = await post.json() as Record<string, any>;
+            expect(json.success).toBe(true);
+            expect(json.token).toEqual(expect.any(String));
+            expect(fetchMock).toHaveBeenCalled();
+        });
+
+        it.each([
+            { now: cutoff - 1, iat: cutoff - 1, exp: cutoff + 599 },
+            { now: cutoff, iat: cutoff, exp: cutoff + 600 },
+            { now: cutoff + 601, iat: cutoff + 1, exp: cutoff + 601 },
+        ])('rejects raw-HMAC (unprefixed) state on both legs without upstream calls: %o', async ({ now, iat, exp }) => {
+            vi.setSystemTime(now * 1000);
+            const fetchMock = mockDiscordSuccess();
+            const production = createProductionEnv();
+            const state = await migrationState(true, iat, exp);
+            const get = await fetchWithEnv(production,
+                `http://localhost/auth/callback?${new URLSearchParams({ code: 'migration-code', state })}`,
+                { redirect: 'manual' });
+            expect(get.status).toBe(302);
+            const bounce = new URL(get.headers.get('location')!);
+            expect(bounce.searchParams.get('code')).toBeNull();
+            expect(bounce.searchParams.get('state')).toBeNull();
+            expect(bounce.searchParams.get('error')).toEqual(expect.any(String));
+            const post = await fetchWithEnv(production, 'http://localhost/auth/callback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: 'migration-code', code_verifier: VALID_CODE_VERIFIER, state }),
+            });
+            expect(post.status).toBe(400);
+            expect(await post.json()).toMatchObject({ success: false, error: 'Invalid state' });
+            expect(fetchMock).not.toHaveBeenCalled();
+        });
+
+        it.each(['development', 'production'])('keeps unsigned compatibility GET-only in %s', async (environment) => {
+            vi.setSystemTime((cutoff + 601) * 1000);
+            const fetchMock = mockDiscordSuccess();
+            const targetEnv = environment === 'production' ? createProductionEnv() : env;
+            const state = btoa(JSON.stringify({
+                csrf: 'unsigned-csrf',
+                provider: 'discord',
+                redirect_uri: 'https://xivdyetools.app/auth/callback',
+                return_path: '/',
+                code_challenge: await s256(VALID_CODE_VERIFIER),
+            }));
+            const get = await fetchWithEnv(targetEnv,
+                `http://localhost/auth/callback?${new URLSearchParams({ code: 'unsigned-code', state })}`,
+                { redirect: 'manual' });
+            const bounce = new URL(get.headers.get('location')!);
+            expect(bounce.searchParams.get('code')).toBe(environment === 'development' ? 'unsigned-code' : null);
+            const post = await fetchWithEnv(targetEnv, 'http://localhost/auth/callback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: 'unsigned-code', code_verifier: VALID_CODE_VERIFIER, state }),
+            });
+            expect(post.status).toBe(400);
+            expect(await post.json()).toMatchObject({ success: false, error: 'Invalid state' });
+            expect(fetchMock).not.toHaveBeenCalled();
+        });
     });
 
     afterEach(() => {
@@ -1333,6 +1480,8 @@ describe('Callback Handler', () => {
                 'Minimisation User',
                 expect.stringMatching(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/),
                 expect.stringMatching(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/),
+                `user:${json.user.id}`,
+                'discord:222333444555666777',
             ]);
 
             // The response still carries the URL — recomputed, not stored
@@ -1380,6 +1529,7 @@ describe('Callback Handler', () => {
                 'exp',
                 'global_name',
                 'iat',
+                'identity_revision',
                 'iss',
                 'jti',
                 'sub',

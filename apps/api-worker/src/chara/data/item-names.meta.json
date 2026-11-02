@@ -3,27 +3,74 @@
   "equippable": 28993,
   "sources": {
     "itemCsv": "local ffxiv-datamining clone",
-    "ko": "https://raw.githubusercontent.com/ffxiv-teamcraft/ffxiv-teamcraft/staging/libs/data/src/lib/json/ko/ko-items.json",
-    "zh": "https://raw.githubusercontent.com/ffxiv-teamcraft/ffxiv-teamcraft/staging/libs/data/src/lib/json/zh/zh-items.json",
-    "ja": "https://raw.githubusercontent.com/xivapi/ffxiv-datamining/d9582a624eaec69d45649366dee801c2f3a6e9b3/csv/ja/Item.csv"
+    "ko": {
+      "items": {
+        "kind": "github",
+        "repository": "ffxiv-teamcraft/ffxiv-teamcraft",
+        "path": "libs/data/src/lib/json/ko/ko-items.json",
+        "commit": "c022ca5385ae41ec0d747599ef16ce74e4fbfdcf",
+        "url": "https://raw.githubusercontent.com/ffxiv-teamcraft/ffxiv-teamcraft/c022ca5385ae41ec0d747599ef16ce74e4fbfdcf/libs/data/src/lib/json/ko/ko-items.json",
+        "sha256": "c62dbc73790a8b77ca53d4a16b506915e1178eb6464d94f5b31730ae3017bc0c"
+      },
+      "itemCsv": {
+        "kind": "github",
+        "repository": "xivapi/ffxiv-datamining",
+        "path": "csv/en/Item.csv",
+        "commit": "44948e4cda5846eab0baa9872122a888fcc4f1b1",
+        "url": "https://raw.githubusercontent.com/xivapi/ffxiv-datamining/44948e4cda5846eab0baa9872122a888fcc4f1b1/csv/en/Item.csv",
+        "sha256": "67dc31b8c0fa410bb878bfda8b27ca92696703a220c7e45efd8fcacb789218c3"
+      }
+    },
+    "zh": {
+      "items": {
+        "kind": "github",
+        "repository": "ffxiv-teamcraft/ffxiv-teamcraft",
+        "path": "libs/data/src/lib/json/zh/zh-items.json",
+        "commit": "c022ca5385ae41ec0d747599ef16ce74e4fbfdcf",
+        "url": "https://raw.githubusercontent.com/ffxiv-teamcraft/ffxiv-teamcraft/c022ca5385ae41ec0d747599ef16ce74e4fbfdcf/libs/data/src/lib/json/zh/zh-items.json",
+        "sha256": "366dd6521adb197c7a77a37fe0debf3a4189fd841ef331558e3a063c384574c1"
+      },
+      "itemCsv": {
+        "kind": "github",
+        "repository": "xivapi/ffxiv-datamining",
+        "path": "csv/en/Item.csv",
+        "commit": "44948e4cda5846eab0baa9872122a888fcc4f1b1",
+        "url": "https://raw.githubusercontent.com/xivapi/ffxiv-datamining/44948e4cda5846eab0baa9872122a888fcc4f1b1/csv/en/Item.csv",
+        "sha256": "67dc31b8c0fa410bb878bfda8b27ca92696703a220c7e45efd8fcacb789218c3"
+      }
+    },
+    "ja": {
+      "itemCsv": {
+        "kind": "github",
+        "repository": "xivapi/ffxiv-datamining",
+        "path": "csv/ja/Item.csv",
+        "commit": "44948e4cda5846eab0baa9872122a888fcc4f1b1",
+        "url": "https://raw.githubusercontent.com/xivapi/ffxiv-datamining/44948e4cda5846eab0baa9872122a888fcc4f1b1/csv/ja/Item.csv",
+        "sha256": "b198264923261454c94cc1bc42876b77aa318d96ee6f35ecaa34506ba085e3b4"
+      }
+    }
   },
   "counts": {
     "ko": {
-      "named": 28986,
+      "named": 29051,
       "missing": 7,
-      "bytes": 1103611
+      "bytes": 1106068,
+      "equippable": 29058,
+      "generated": "2026-10-29"
     },
     "zh": {
       "named": 28992,
-      "missing": 1,
-      "bytes": 899454
+      "missing": 66,
+      "bytes": 899454,
+      "equippable": 29058,
+      "generated": "2026-10-29"
     },
     "ja": {
       "named": 29057,
       "missing": 1,
       "bytes": 1508629,
       "equippable": 29058,
-      "generated": "2026-10-06"
+      "generated": "2026-10-29"
     }
   },
   "notes": {

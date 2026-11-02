@@ -12,6 +12,7 @@
 import type { UrlValidationResult, FormatValidationResult, ImageFormat } from './types.js';
 import { readImageDimensions, type ImageDimensions } from './dimensions.js';
 import { detectImageFormat } from '@xivdyetools/worker-kit/image-sniff';
+import { cancelWithoutWaiting } from './admission.js';
 
 // ============================================================================
 // Constants
@@ -28,14 +29,14 @@ const ALLOWED_HOSTS = new Set([
 ]);
 
 /**
- * Maximum allowed file size (10MB)
+ * Maximum allowed encoded file size (5 MiB).
  *
  * Workers have 128MB memory limit, and we need room for:
  * - Original image buffer
  * - Decoded pixel data (4x uncompressed)
  * - Processing overhead
  */
-export const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
+export const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 
 /**
  * Maximum image dimension per side (4096px) — the SECONDARY guard.
@@ -52,33 +53,27 @@ export const MAX_IMAGE_DIMENSION = 4096;
 const BYTES_PER_RGBA_PIXEL = 4;
 
 /**
- * How many full RGBA copies of the image exist at once inside photon.
+ * Conservative RGBA buffers charged to the input pixel allowance.
  *
- * `get_raw_pixels()` materialises one, and `dyn_image_from_raw` copies that
- * vector again for each operation — so a decode-then-resize holds two.
+ * Keep the existing two-buffer allowance after the owned-buffer Photon patch.
+ * Removing input clones does not remove codec scratch, transformation outputs
+ * or allocator high-water capacity. This is an admission model, not a full
+ * WASM/JS peak measurement or a reason to raise the input limits.
  */
 const CONCURRENT_RGBA_COPIES = 2;
 
 /**
- * The share of the isolate's 128 MiB this Worker will spend on decoded pixels.
+ * Input pixel allowance within the isolate's 128 MiB limit.
  *
- * The rest pays for the JS-side source buffer (up to
- * {@link MAX_FILE_SIZE_BYTES}), the resize output, the WASM module itself and
- * the runtime's own overhead — and this Worker shares its isolate with
- * whatever else is resident.
- *
- * 2026-09-03 (pre-merge review of the deep dive): this was 32 MiB, i.e. a
- * 4 MP ceiling. That is below the resolution people actually screenshot at —
- * 3840×2160 is 8.29 MP and 3440×1440 is 4.95 MP, so a 4K or ultrawide capture,
- * the single most common palette source an FFXIV player has, was refused
- * pre-decode with no downscale path and nothing but an error to show for it.
- * At 72 MiB the ceiling is 9.4 MP: 4K and ultrawide pass, and 4096×4096 —
- * the decompression bomb BUG-052 was actually about, at 134 MiB of RGBA — is
- * still refused. The trade is a thinner margin: peak lands near 95-100 MB of
- * the 128 MiB isolate rather than 55-60, so this is the ceiling, not a floor
- * to raise again without measuring the real peak first.
+ * FINDING-020 (2026-10-26 audit): workerd measurements invalidated the
+ * previous 72 MiB allowance and its claimed peak. This 64 MiB candidate
+ * admits 3840×2160 and 3440×1440, alongside the 5 MiB encoded-file cap,
+ * bounded extraction output and early release of thumbnail intermediates.
+ * The remaining memory pays for encoded bytes, WASM/JS overhead and operation
+ * outputs. This arithmetic alone is not a peak guarantee: the combined limits
+ * require warm-isolate workerd validation before being treated as safe.
  */
-const PIXEL_MEMORY_BUDGET_BYTES = 72 * 1024 * 1024;
+const PIXEL_MEMORY_BUDGET_BYTES = 64 * 1024 * 1024;
 
 /**
  * Maximum pixel count — **derived from the memory budget, not the side length**.
@@ -89,7 +84,7 @@ const PIXEL_MEMORY_BUDGET_BYTES = 72 * 1024 * 1024;
  * buffer for it is 64 MiB and photon holds two, so decode-then-resize needed
  * ≥ 128 MiB of WASM linear memory against Cloudflare's 128 MiB per-isolate
  * limit — before the source buffer and the resize output. A solid-colour
- * 4096×4096 PNG compresses to tens of KB, far under the 10 MB file cap, so the
+ * 4096×4096 PNG compresses to tens of KB, far under the encoded-file cap, so the
  * OOM this pre-decode gate exists to prevent was reachable from any Discord
  * attachment, in a Worker shared with presets-api.
  *
@@ -99,30 +94,33 @@ const PIXEL_MEMORY_BUDGET_BYTES = 72 * 1024 * 1024;
  * that is the only thing able to downscale it. Set too low it does not save a
  * user bandwidth; it refuses their screenshot. So the number answers "what can
  * this isolate decode without dying", and nothing else. See
- * {@link PIXEL_MEMORY_BUDGET_BYTES} for the 4 MP → 9.4 MP revision.
+ * {@link PIXEL_MEMORY_BUDGET_BYTES} for the measured-candidate constraints.
  */
 export const MAX_PIXEL_COUNT = Math.floor(
   PIXEL_MEMORY_BUDGET_BYTES / (BYTES_PER_RGBA_PIXEL * CONCURRENT_RGBA_COPIES)
-); // 9,437,184 px ≈ 9.4 MP — admits 3840×2160 (8.29) and 3440×1440 (4.95)
+); // 8,388,608 px — admits 3840×2160 (8.29 MP) and 3440×1440 (4.95 MP)
 
 /** Smallest `maxDimension` that still yields a usable palette sample. */
 export const MIN_MAX_DIMENSION = 16;
 
+/** Largest extraction output side; separate from the input-side dimension cap. */
+export const MAX_EXTRACTION_DIMENSION = 512;
+
 /**
  * FINDING-004 (2026-08-21 audit): `maxDimension` arrives from the request body
  * and used to flow straight into `resize()` — NaN / 0 / huge values produced a
- * zero-sized or full-resolution RGBA buffer. Integer 16..MAX_IMAGE_DIMENSION.
+ * zero-sized or full-resolution RGBA buffer. Integer 16..MAX_EXTRACTION_DIMENSION.
  *
  * REFACTOR-007 (deep dive 2026-09-02): this lives HERE, not in `photon.ts`, so
  * the route and the processor can share one rule without the route importing
  * the WASM-touching module — which every route test mocks wholesale, so a rule
- * reached through it would be undefined under test. `photon.ts` re-exports it
- * for its own callers.
+ * reached through it would be undefined under test. `photon.ts` imports it
+ * directly for its own callers.
  */
 export function assertValidMaxDimension(value: number): void {
-  if (!Number.isInteger(value) || value < MIN_MAX_DIMENSION || value > MAX_IMAGE_DIMENSION) {
+  if (!Number.isInteger(value) || value < MIN_MAX_DIMENSION || value > MAX_EXTRACTION_DIMENSION) {
     throw new Error(
-      `Invalid maxDimension: expected an integer between ${MIN_MAX_DIMENSION} and ${MAX_IMAGE_DIMENSION}`
+      `Invalid maxDimension: expected an integer between ${MIN_MAX_DIMENSION} and ${MAX_EXTRACTION_DIMENSION}`
     );
   }
 }
@@ -315,34 +313,43 @@ export function assertImageDimensionsFromHeader(buffer: Uint8Array): ImageDimens
  * Read a body stream into memory, abandoning it as soon as it exceeds `maxBytes`.
  *
  * FINDING-004: the previous `arrayBuffer()`-then-check pattern buffered the
- * whole body (up to the platform's ~100 MB request cap) before the 10 MB rule
+ * whole body (up to the platform's ~100 MB request cap) before the byte-cap rule
  * ran. Streaming lets the cap bind while bytes arrive.
  *
  * @throws Error("Image too large…") once the cap is exceeded
  */
 export async function readBodyWithCap(
   body: ReadableStream<Uint8Array> | null,
-  maxBytes: number = MAX_FILE_SIZE_BYTES
+  maxBytes: number = MAX_FILE_SIZE_BYTES,
+  signal?: AbortSignal
 ): Promise<Uint8Array> {
+  if (signal?.aborted) {
+    cancelWithoutWaiting(body, signal.reason);
+    signal.throwIfAborted();
+  }
   if (!body) return new Uint8Array(0);
 
   const reader = body.getReader();
+  const abortRead = (): void => cancelWithoutWaiting(reader, signal?.reason);
+  signal?.addEventListener('abort', abortRead, { once: true });
   const chunks: Uint8Array[] = [];
   let total = 0;
   try {
     for (;;) {
       const { done, value } = await reader.read();
+      signal?.throwIfAborted();
       if (done) break;
       if (!value) continue;
       total += value.byteLength;
       if (total > maxBytes) {
-        await reader.cancel().catch(() => undefined);
+        cancelWithoutWaiting(reader);
         const maxMB = (maxBytes / 1024 / 1024).toFixed(0);
         throw new Error(`Image too large. Maximum size is ${maxMB}MB`);
       }
       chunks.push(value);
     }
   } finally {
+    signal?.removeEventListener('abort', abortRead);
     try {
       reader.releaseLock();
     } catch {
@@ -411,13 +418,16 @@ export function validateImageFormat(buffer: Uint8Array): FormatValidationResult 
  */
 export async function fetchImageWithTimeout(
   url: string,
-  options: { maxBytes?: number } = {}
+  options: { maxBytes?: number; signal?: AbortSignal } = {}
 ): Promise<Uint8Array> {
   const maxBytes = options.maxBytes ?? MAX_FILE_SIZE_BYTES;
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  const abortFetch = (): void => controller.abort(options.signal?.reason);
+  options.signal?.addEventListener('abort', abortFetch, { once: true });
 
   try {
+    options.signal?.throwIfAborted();
     // SECURITY: Use manual redirect handling to validate redirect targets
     // This prevents SSRF attacks where Discord CDN might redirect to internal hosts
     let response = await fetch(url, {
@@ -428,10 +438,15 @@ export async function fetchImageWithTimeout(
         'User-Agent': 'XIV Dye Tools Discord Bot/1.0',
       },
     });
+    if (controller.signal.aborted) {
+      cancelWithoutWaiting(response.body, controller.signal.reason);
+      controller.signal.throwIfAborted();
+    }
 
     // Handle redirects manually with validation
     if (response.status >= 300 && response.status < 400) {
       const redirectUrl = response.headers.get('Location');
+      cancelWithoutWaiting(response.body);
       if (!redirectUrl) {
         throw new Error('Redirect without Location header');
       }
@@ -453,9 +468,14 @@ export async function fetchImageWithTimeout(
           'User-Agent': 'XIV Dye Tools Discord Bot/1.0',
         },
       });
+      if (controller.signal.aborted) {
+        cancelWithoutWaiting(response.body, controller.signal.reason);
+        controller.signal.throwIfAborted();
+      }
     }
 
     if (!response.ok) {
+      controller.abort();
       throw new Error(`Failed to fetch image: HTTP ${response.status}`);
     }
 
@@ -464,6 +484,7 @@ export async function fetchImageWithTimeout(
     if (contentLength) {
       const size = parseInt(contentLength, 10);
       if (Number.isFinite(size) && size > maxBytes) {
+        controller.abort();
         const sizeError = validateFileSize(size);
         throw new Error(sizeError ?? 'Image too large');
       }
@@ -474,8 +495,9 @@ export async function fetchImageWithTimeout(
     // (Real responses always expose `body`; the arrayBuffer() branch only
     // serves hand-built responses without a stream, e.g. in tests.)
     const bytes = response.body
-      ? await readBodyWithCap(response.body, maxBytes)
+      ? await readBodyWithCap(response.body, maxBytes, controller.signal)
       : new Uint8Array(await response.arrayBuffer());
+    controller.signal.throwIfAborted();
 
     // Validate actual size (also catches empty bodies)
     const sizeError = validateFileSize(bytes.byteLength);
@@ -491,6 +513,7 @@ export async function fetchImageWithTimeout(
     throw error;
   } finally {
     clearTimeout(timeoutId);
+    options.signal?.removeEventListener('abort', abortFetch);
   }
 }
 
@@ -520,7 +543,7 @@ export async function fetchImageWithTimeout(
  * }
  * ```
  */
-export async function validateAndFetchImage(url: string): Promise<{
+export async function validateAndFetchImage(url: string, signal?: AbortSignal): Promise<{
   buffer: Uint8Array;
   format: ImageFormat;
 }> {
@@ -531,7 +554,7 @@ export async function validateAndFetchImage(url: string): Promise<{
   }
 
   // Step 2: Fetch with timeout
-  const buffer = await fetchImageWithTimeout(urlResult.normalizedUrl!);
+  const buffer = await fetchImageWithTimeout(urlResult.normalizedUrl!, { signal });
 
   // Step 3: Validate format
   const formatResult = validateImageFormat(buffer);

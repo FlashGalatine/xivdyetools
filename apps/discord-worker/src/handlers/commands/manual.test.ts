@@ -409,6 +409,22 @@ describe('handleManualCommand', () => {
       expect(named.filter((name) => !registered.has(name))).toEqual([]);
     });
 
+    it.each([
+      ['en', 'File Limits', '• Maximum size: 5MB'],
+      ['ja', 'ファイル制限', '• 最大サイズ：5MB'],
+      ['de', 'Dateilimits', '• Maximale Größe: 5MB'],
+      ['fr', 'Limites de fichier', '• Taille maximale : 5 Mo'],
+      ['ko', '파일 제한', '• 최대 크기: 5MB'],
+      ['zh', '文件限制', '• 最大大小：5MB'],
+    ])('shows the supported image-upload limit in the %s manual', async (locale, name, value) => {
+      const embeds = await embedsFor(locale, 'match_image');
+      const limits = embeds
+        .flatMap((embed) => embed.fields ?? [])
+        .filter((field) => field.name === name);
+
+      expect(limits).toEqual([expect.objectContaining({ name, value })]);
+    });
+
     it.each(LOCALES)('fits every %s reply inside Discord embed limits', async (locale) => {
       for (const topic of TOPICS) {
         const embeds = await embedsFor(locale, topic);

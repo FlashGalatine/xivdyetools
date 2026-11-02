@@ -102,7 +102,8 @@ app.use(
 );
 
 // Security headers middleware
-// Applies to all responses (after handler execution)
+// Applies after handler execution; CORS OPTIONS preflights return earlier
+// and bypass these headers.
 //
 // BUG-017 (2026-09-16 deep-dive audit): this used to sit BELOW env
 // validation, so the "Service misconfigured" 500 went back with none of
@@ -134,7 +135,7 @@ app.use('*', async (c, next) => {
 });
 
 // Environment validation middleware
-// Validates required env vars once per isolate and caches result
+// Validates required env vars on every request; only error logging is cached.
 //
 // FINDING-029 (2026-08-21 security audit): the gate keyed on
 // ENVIRONMENT === 'production', so a non-development, non-production deploy
@@ -177,8 +178,8 @@ app.use('*', async (c, next) => {
 // Rate limiting middleware for auth endpoints
 // Protects against brute force and credential stuffing attacks
 // REFACTOR-006/OPT-004 (2026-07-18 audit): the dead Durable Object path was
-// deleted; limits are KV-backed (globally consistent) when TOKEN_BLACKLIST
-// is bound, per-isolate memory otherwise.
+// deleted; native bindings are preferred, then the eventually consistent
+// TOKEN_BLACKLIST KV fallback, then per-isolate memory.
 app.use('/auth/*', async (c, next) => {
   const clientIp = getClientIp(c.req.raw);
   // BUG-007: key and tier on the decoded path Hono routes on, not the wire

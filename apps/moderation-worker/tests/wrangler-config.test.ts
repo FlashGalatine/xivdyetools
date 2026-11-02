@@ -207,3 +207,11 @@ describe('wrangler.toml', () => {
     expect(toml).not.toMatch(/^\[env\.preview\]$/m);
   });
 });
+
+describe('linked-ban activation stays separate from provider/schema/privacy rollout',()=>{
+ it.each([['development',topLevel,'services'],['production',production,'env.production.services']])('%s explicitly stays off and binds only named private identity entrypoint',(_name,section,header)=>{
+  expect(section).toMatch(/^LINKED_BAN_CONFIRMATION_ENABLED = "false"$/m);
+  const escaped=header.replace(/\./g,'\\.');
+  expect(section).toMatch(new RegExp(`\\[\\[${escaped}\\]\\]\\nbinding = "OAUTH_IDENTITY"\\nservice = "xivdyetools-oauth"\\nentrypoint = "IdentityLookup"`));
+ });
+});

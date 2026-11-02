@@ -341,6 +341,128 @@ describe('ComparisonTool', () => {
   // Basic Rendering Tests
   // ============================================================================
 
+  describe('BUG-019 canonical display options', () => {
+    beforeEach(async () => resetStorageReads());
+
+    it('seeds single cards and broadcasts every color row to duel cards', async () => {
+      const { ConfigController } = await import('@services/index');
+      const { ConfigController: RealController } = await import('@services/config-controller');
+      const { DEFAULT_DISPLAY_OPTIONS } = await import('@shared/tool-config-types');
+      const stub = ConfigController.getInstance();
+      RealController.resetInstance();
+      const controller = RealController.getInstance();
+      controller.setConfig('comparison', {
+        displayOptions: {
+          ...DEFAULT_DISPLAY_OPTIONS,
+          showHex: false,
+          showRgb: false,
+          showHsv: true,
+          showLab: true,
+          showCmyk: true,
+          showHue: false,
+          showStain: false,
+          showSpectrum: false,
+          showDeltaE: false,
+        },
+      });
+      vi.mocked(ConfigController.getInstance).mockReturnValue(controller as never);
+      try {
+        tool = new ComparisonTool(container, { leftPanel, rightPanel });
+        tool.init();
+        tool.selectDye(mockDyes[0]);
+        expect(rightPanel.querySelector('v4-result-card')).toMatchObject({
+          showHex: false,
+          showRgb: false,
+          showHsv: true,
+          showLab: true,
+          showCmyk: true,
+          showHue: false,
+          showStain: false,
+          showConsolidation: false,
+        });
+        tool.selectDye(mockDyes[1]);
+        const cards = () =>
+          [...rightPanel.querySelectorAll('v4-result-card')].filter(
+            (card) => !card.closest('.comparison-cards-container')
+          );
+        expect(cards()).toHaveLength(2);
+        for (const card of cards())
+          expect(card).toMatchObject({ showStain: false, showConsolidation: false });
+        controller.setConfig('comparison', {
+          displayOptions: {
+            ...DEFAULT_DISPLAY_OPTIONS,
+            showHue: true,
+            showStain: true,
+            showSpectrum: true,
+          },
+        });
+        for (const card of cards())
+          expect(card).toMatchObject({ showHue: true, showStain: true, showConsolidation: true });
+      } finally {
+        tool?.destroy();
+        vi.mocked(ConfigController.getInstance).mockReturnValue(stub);
+        RealController.resetInstance();
+      }
+    });
+  });
+
+  describe('BUG-020 direct palette prices', () => {
+    beforeEach(async () => resetStorageReads());
+
+    it('prices the displayed direct selection after a deferred fetch and ignores duplicate/off picks', async () => {
+      const { MarketBoardService } = await import('@services/index');
+      const service = MarketBoardService.getInstance();
+      let finish!: () => void;
+      const pending = new Promise<void>((resolve) => {
+        finish = resolve;
+      });
+      vi.mocked(service.getShowPrices).mockReturnValue(true);
+      vi.mocked(service.fetchPricesForDyes).mockImplementation(async () => {
+        await pending;
+        vi.mocked(service.getPriceForDye).mockImplementation((itemID) => ({
+          itemID,
+          currentMinPrice: 321,
+          currentAverage: 350,
+          currentMaxPrice: 400,
+          lastUpdate: 1000,
+        }));
+        return new Map();
+      });
+      try {
+        tool = new ComparisonTool(container, { leftPanel, rightPanel });
+        tool.init();
+        tool.selectDye(mockDyes[0]);
+        expect(service.fetchPricesForDyes).toHaveBeenCalledTimes(1);
+        expect(vi.mocked(service.fetchPricesForDyes).mock.calls[0][0].map((d) => d.id)).toEqual([
+          mockDyes[0].id,
+        ]);
+        expect(
+          (
+            rightPanel.querySelector('v4-result-card') as unknown as {
+              data: { price?: number };
+            }
+          ).data.price
+        ).toBeUndefined();
+        tool.selectDye(mockDyes[0]);
+        expect(service.fetchPricesForDyes).toHaveBeenCalledTimes(1);
+        finish();
+        await pending;
+        await Promise.resolve();
+        await Promise.resolve();
+        expect(rightPanel.querySelector('v4-result-card')).toMatchObject({ data: { price: 321 } });
+        vi.mocked(service.getShowPrices).mockReturnValue(false);
+        tool.selectDye(mockDyes[1]);
+        expect(service.fetchPricesForDyes).toHaveBeenCalledTimes(1);
+      } finally {
+        finish();
+        await pending;
+        vi.mocked(service.getShowPrices).mockReturnValue(false);
+        vi.mocked(service.getPriceForDye).mockReturnValue(undefined);
+        vi.mocked(service.fetchPricesForDyes).mockResolvedValue(new Map());
+      }
+    });
+  });
+
   describe('Basic Rendering', () => {
     it('should render comparison tool', () => {
       tool = new ComparisonTool(container, { leftPanel, rightPanel, drawerContent });

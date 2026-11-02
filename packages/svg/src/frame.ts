@@ -189,17 +189,21 @@ export function fitText(
   font: 'mono' | 'body' | 'display' = 'body',
 ): string {
   if (textWidth(content, size, font) <= maxPx) return content;
-  // REFACTOR-008: slice by code point, not by UTF-16 unit. A `slice(0, -1)`
-  // truncation landing inside a surrogate pair (astral CJK, an emoji) leaves a
-  // lone high surrogate, which `escapeXml` then deletes — so the character
-  // vanishes instead of being ellipsised, and the XML stays valid enough to
-  // hide it. `preset-swatch.ts`'s `fitToWidth` has always done this correctly
-  // (BUG-060); the two ellipsisers in this package now agree.
-  const chars = [...content];
-  while (chars.length > 1 && textWidth(chars.join('') + '…', size, font) > maxPx) {
-    chars.pop();
+  // Scan code points once, retaining the last prefix the legacy descending
+  // loop would accept. Preserve addition order, NaN comparisons, the first
+  // code point fallback and trim-after-selection without splitting pairs.
+  const ellipsisWidth = textWidth('…', size, font);
+  let prefixWidth = 0;
+  let offset = 0;
+  let selectedEnd = 0;
+  for (const char of content) {
+    prefixWidth += textWidth(char, size, font);
+    offset += char.length;
+    if (selectedEnd === 0 || !(prefixWidth + ellipsisWidth > maxPx)) {
+      selectedEnd = offset;
+    }
   }
-  return chars.join('').trimEnd() + '…';
+  return content.slice(0, selectedEnd).trimEnd() + '…';
 }
 
 // ============================================================================

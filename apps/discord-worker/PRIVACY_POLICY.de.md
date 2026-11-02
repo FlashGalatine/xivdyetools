@@ -2,7 +2,7 @@
 
 > Dies ist eine zur Verständlichkeit bereitgestellte Übersetzung. Maßgeblich ist die englische Fassung; weichen beide voneinander ab, gilt die englische Fassung. [Englisch](PRIVACY_POLICY.md)
 
-**Zuletzt aktualisiert**: 2026-10-12
+**Zuletzt aktualisiert**: 2026-10-27
 
 ## 1. Einführung
 
@@ -31,12 +31,12 @@ Verbindung zu Square Enix.
 | Einstellungen | Sprache, Mischmodus, Matching-Algorithmus, Ergebnisanzahl, Stamm, Geschlecht, Standard-Welt / -Datenzentrum, ob Marktbrett-Preise standardmäßig angezeigt werden, Farbanzeige-Umschalter und Design sowie welche Farbstoffkategorien von den Suchergebnissen ausgeschlossen werden sollen (metallisch, pastellfarben, dunkel, kosmisch, ishgardisch, teuer, vom Händler verkauft, hergestellt), dazu der Zeitpunkt, zu dem du sie zuletzt geändert hast | Bis du sie zurücksetzt oder eine Löschung beantragst |
 | Favorisierte Vorlagen | Bis zu 50 Community-Vorlagen, die du mit `/preset favorite add` markierst — die ID der Vorlage und der Name, den sie bei der Speicherung hatte | Bis du sie entfernst oder eine Löschung beantragst |
 | Erstlauf-Hinweis-Markierung | Eine Markierung pro Nutzer, dass der Bot seine einmalige Prüfung auf den 5.0-Willkommenshinweis durchgeführt hat. Sie wird gesetzt, wenn du zum ersten Mal einen Befehl ausführst, unabhängig davon, ob der Hinweis gesendet wird (er wird nicht gesendet, wenn du bereits gespeicherte Einstellungen hast); enthält keinen Inhalt | Läuft automatisch nach 180 Tagen ab |
-| Vorlagen-Einreichungen | Name, Beschreibung, Farbstoffe, Tags, Kategorie — und, falls unsere automatische Prüfung den neuen Namen oder die neue Beschreibung einer Bearbeitung zur Prüfung zurückhält, die Fassung vor der ersten solchen Bearbeitung, aufbewahrt, bis ein Moderator diese Fassung wiederherstellt oder die Vorlage gelöscht wird | Bis du sie löschst (unter "Meine Einreichungen" in der Web-App, angemeldet mit demselben Discord-Konto) oder eine Löschung beantragst |
+| Vorlagen-Einreichungen | Name, Beschreibung, Farbstoffe, Tags, Kategorie, Beispiellink — und, falls unsere automatische Prüfung eine Bearbeitung des Namens, der Beschreibung, der Tags oder des Beispiellinks einer veröffentlichten (genehmigten) Vorlage zur Prüfung zurückhält, die Fassung vor der ersten solchen Bearbeitung, aufbewahrt, bis ein Moderator diese Fassung wiederherstellt oder die Vorlage gelöscht wird | Bis du sie löschst (unter "Meine Einreichungen" in der Web-App, angemeldet mit demselben Discord-Konto) oder eine Löschung beantragst |
 | Stimmen | Deine Stimmen zu Community-Vorlagen. Das Einreichen einer Vorlage zählt als deine Stimme dafür; hat eine veröffentlichte Vorlage bereits dieselben Farbstoffe, wird deine Einreichung stattdessen zu einer Stimme für diese Vorlage | Bis du die Stimme entfernst oder eine Löschung beantragst |
 
 ### Ratenbegrenzungsdaten
 
-- Zähler pro Nutzer und Befehl werden vom Rate-Limiting-Dienst der Cloudflare Workers für das
+- Zähler pro Nutzer für Befehle und Schaltflächen werden vom Rate-Limiting-Dienst der Cloudflare Workers für das
   60-Sekunden-Fenster gehalten und niemals in KV geschrieben.
 - **Fallback**: Auf einer Bereitstellung ohne die nativen Rate-Limiting-Bindings werden die Zähler
   stattdessen in Cloudflare KV gehalten, unter einem Schlüssel, der deine Discord-Benutzer-ID und
@@ -82,6 +82,16 @@ halten, speichern wir:
 
 Wie lange jeder Datensatz aufbewahrt wird, steht unter *Datenaufbewahrung*.
 
+### Gespeicherte Identitäten und Umfang von Sperren
+
+Unser Anmeldedienst speichert bei deinem Konto eine Sitzungsrevision. Autorisierte Dienste können deine gespeicherte interne Konto-ID, eine gegebenenfalls verknüpfte Discord-Benutzer-ID und die Revision privat abrufen oder prüfen, ob eine Sitzung noch zu den gespeicherten Anmeldeverknüpfungen passt. Die Abfrage liefert keine XIVAuth-ID, Namen, Charakterliste oder Anbieter-Tokens. Gespeicherte Verknüpfungen sind keine neue Bestätigung durch den externen Anbieter. Eine nicht sicher ausführbare Änderung wird abgelehnt; das Verschieben von Presets, Stimmen und Tageslimit-Zählern setzt eine sicher angenommene Verknüpfung voraus und kann keine aktive Sperre umgehen.
+
+Wenn die Moderation verknüpfter Identitäten aktiviert ist, prüft ein autorisierter Moderator die genauen IDs privat, bevor er eine Sperre erstellt oder erweitert oder eine bestimmte Sperre aufhebt. Eine Sperre kann mehrere interne Konto-IDs und Discord-Benutzer-IDs umfassen, die für diese Sperre bestätigt oder bei einer Änderung der Verknüpfung beibehalten wurden. Bestehende Einschränkungen bleiben nach dem Trennen bestehen, bis sie nach einer Moderationsprüfung aufgehoben werden; spätere Sperren erstrecken sich nicht automatisch auf zuvor getrennte Identitäten. Diese Zuordnungen setzen nur die jeweilige Sperre durch und gewähren keinen Kontozugriff. Für sie gilt die Aufbewahrung des Sperrdatensatzes: Löschung 90 Tage nach Aufhebung.
+
+Die ID-Prüfung erfolgt über nur für Moderatoren sichtbare, ephemere Discord-Antworten, getrennt von den in dieser Richtlinie beschriebenen gewöhnlichen Kanalbeiträgen. Wir versprechen keinen Zeitpunkt, zu dem Discord diese Antworten löscht. Unsere Preset-Datenbank speichert kurzzeitig die ID des handelnden Moderators, geprüfte IDs und Revisionen, die ausgewählte Sperre und Aktion, den Vorschlags-Hash, eine Nonce, das Ergebnis und Fristen. Bestätigungsdatensätze enthalten keine Namen, Anbieter-Tokens oder frei formulierten Gründe. Sie laufen innerhalb von 15 Minuten ab und werden dann für begrenzte, anfragegesteuerte und tägliche Bereinigungen freigegeben; die Löschung kann bis zu einem erfolgreichen Bereinigungslauf warten.
+
+Wenn die Wiederherstellung unterbrochener Kontoverknüpfungen aktiviert ist, speichert unser Anmeldedienst betroffene Anbieter-/Konto-IDs, erwartete Zuordnungen und Revisionen, die beabsichtigte Änderung, den Status und Fristen; der Preset-Dienst speichert eine passende Vorgangsquittung. Keiner dieser Wiederherstellungsdatensätze enthält Namen, Anbieter-Tokens, Charakterlisten oder frei formulierte Gründe. Die Vorgangsfrist beträgt höchstens 15 Minuten. Abgeschlossene oder abgelehnte Datensätze werden 24 Stunden nach dem späteren Zeitpunkt aus Frist und Bestätigung zur Bereinigung freigegeben; ein Abbruch, für den das Fehlen einer entfernten Quittung bestätigt wurde, verwendet statt der Bestätigung seinen Abschlusszeitpunkt. Die Bereinigung erfolgt nach bestem Bemühen. Angewendete oder unbekannte, noch ungeklärte Änderungen bleiben nach Ablauf der Frist zur Prüfung durch den Betreiber ausstehend, auch bevor ihre Wiederherstellungsdatensätze aufgrund eines Löschantrags entfernt werden.
+
 ## 3. Daten, die wir NICHT erheben
 
 Wir erheben ausdrücklich **nicht**:
@@ -108,7 +118,7 @@ Wenn du `/extractor image` verwendest, wird dein hochgeladenes Bild:
 
 Wenn du `/swatch` oder `/glamour` verwendest, wird deine hochgeladene `.chara`-Datei:
 1. Von Discord heruntergeladen und im Arbeitsspeicher auf Cloudflares Edge-Servern gelesen
-2. Auf ihre Farben, Farbstoffe und Ausrüstung ausgelesen
+2. Auf Farben, Farbstoffe, Ausrüstung, Stamm, Geschlecht und das Werkzeug, mit dem die Datei gespeichert wurde, ausgelesen. Die im Kanal veröffentlichte Karte zeigt auch den Stamm, das Geschlecht und eine zugelassene Werkzeugbezeichnung
 3. **Sofort verworfen** nach der Verarbeitung
 4. **Niemals gespeichert** auf unseren Servern
 
@@ -140,7 +150,7 @@ wird nichts aus der Datei gesendet, und nichts über dich oder dein Discord-Kont
 | Cloudflare Workers Analytics Engine | Telemetrie zur Befehlsnutzung (siehe *Nutzungsanalyse*) | Cloudflares Analyseinfrastruktur |
 | Discord | Beiträge in zwei privaten Kanälen unseres Discord-Servers. Der Moderationskanal erhält jede Vorlage, jede Bearbeitung und jedes Vorschaubild, die geprüft werden müssen: Der Beitrag zeigt die Vorlage (etwa Name, Beschreibung, Kategorie und Farbstoffe) und den Autorennamen oder, bei einem Vorschaubild, den Namen der Vorlage und das Bild, und er wird aktualisiert, wenn ein Moderator entscheidet. Sperrt dich ein Moderator, erhält der Moderationskanal außerdem einen Beitrag mit deinem Autorennamen, dem Grund und der Anzahl deiner ausgeblendeten Vorlagen. Moderatoren können im Moderationskanal auch die Liste der Vorlagen, die auf Prüfung warten, mit ihren Autorennamen posten. Der Einreichungsprotokoll-Kanal erhält jede ohne Prüfung veröffentlichte Vorlage mit ihrem Autorennamen sowie einen Hinweis, der die Vorlage nennt, wenn ein Moderator eine genehmigt, ablehnt oder zurücksetzt, mit dem Grund bei einer Ablehnung oder einem Zurücksetzen. Beiträge, die nach dem 2026-10-05 entstanden sind, zeigen nicht deine Discord-Benutzer-ID; Beiträge, die an diesem Tag oder davor entstanden sind, können sie zeigen | Discords Infrastruktur |
 
-Alles außer diesen Discord-Beiträgen wird auf Cloudflares Infrastruktur gespeichert. Siehe
+Alles außer diesen Discord-Beiträgen und den ephemeren Antworten für Moderatoren wird auf Cloudflares Infrastruktur gespeichert. Siehe
 [Cloudflares Datenschutzrichtlinie](https://www.cloudflare.com/privacypolicy/) für weitere
 Informationen. Die Discord-Beiträge bleiben in diesen Kanälen, unter der
 [Datenschutzrichtlinie von Discord](https://discord.com/privacy), bis ein Moderator sie löscht oder bis du eine Löschung beantragst (siehe *Deine Rechte*).
@@ -176,7 +186,7 @@ Der Bot ist mit diesen Drittanbieter-Diensten verbunden:
 | Cloudflare | Hosting, Datenspeicherung (KV, D1), Ratenbegrenzung, Analyse | [Cloudflare-Datenschutzrichtlinie](https://www.cloudflare.com/privacypolicy/) |
 | Universalis | FFXIV-Marktbrett-Daten | [Universalis](https://universalis.app/) |
 | XIVAPI | FFXIV-Gegenstandsnamen für `/glamour` | [XIVAPI](https://xivapi.com/) |
-| Perspective API | Inhaltsmoderation (optional) | [Google-Datenschutzrichtlinie](https://policies.google.com/privacy) |
+| Perspective API | Optionale Moderation von Vorlagennamen, Beschreibungen, Tags und dem Pfadtext von Beispiellinks. URL-Abfrageparameter, Fragmente, Zugangsdaten und Hostnamen werden aus dem Linktext ausgeschlossen; es werden keine Konto-IDs angehängt und angegebene Links werden niemals abgerufen. Die Anfrage verwendet `doNotStore`. | [Google-Datenschutzrichtlinie](https://policies.google.com/privacy) |
 
 Wir verkaufen, tauschen oder teilen deine personenbezogenen Daten nicht mit Drittanbietern zu
 Marketingzwecken.
@@ -211,6 +221,8 @@ Um die Löschung aller deiner Daten zu beantragen:
 Wir bearbeiten Löschanfragen innerhalb von 30 Tagen. Eine Löschanfrage entfernt außerdem die Beiträge über dich und deine Vorlagen von unserem Discord-Server, außer dem Beitrag zu einer noch aktiven Sperre. Ein aktiver Sperrdatensatz wird auf Anfrage nicht gelöscht; sobald die Sperre aufgehoben ist, richtet sich der Datensatz nach der Aufbewahrung unter *Datenaufbewahrung*.
 
 ## 8. Datenaufbewahrung
+
+Die Tageslimits zählen Einreichungsversuche, die die Moderation erreichen, Änderungen an Name oder Beschreibung einer Vorlage und Verarbeitungsversuche von Vorschaubildern. Änderungen an Tags oder Beispiellinks zählen nur bei aktivierten erweiterten Prüfungen als Bearbeitungen; nur dann können Tags und Linkpfadtexte zur Moderation gesendet werden. Unveränderte Textfelder verbrauchen keinen Bearbeitungsplatz. Fehlgeschlagene Bilddekodierungen und Zeitüberschreitungen bleiben gezählt. Nur bei Vorschaubildversuchen werden frühe Validierungsablehnungen sowie Fehler bei der Bildspeicherung oder Datenbankoperation nicht angerechnet. Kann das Ergebnis eines Datenbankschreibvorgangs nicht bestätigt werden, bleibt der Versuch gezählt. Ein Einreichungsversuch bleibt ab Beginn der Moderation gezählt, auch wenn keine Vorlage erstellt wird.
 
 | Datentyp | Aufbewahrungszeitraum |
 |-----------|-----------------|

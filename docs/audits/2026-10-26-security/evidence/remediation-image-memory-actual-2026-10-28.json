@@ -1,0 +1,3946 @@
+{
+  "schemaVersion": 1,
+  "label": "actual-frozen-v1",
+  "provenance": {
+    "createdAt": "2026-10-28T16:15:03.672Z",
+    "root": "<source-checkout>",
+    "node": "v22.21.0",
+    "versions": {
+      "miniflare": "5.20261019.2-beta",
+      "workerd": "1.20261019.1",
+      "esbuild": "0.28.2",
+      "ws": "8.21.0",
+      "photon": "0.4.0"
+    },
+    "variant": "frozen-source",
+    "scriptSha256": "950c30d4dfe4f6a7369e6cda5451aeaff88dd17db791633844b663dac062588f",
+    "head": "e66c67a937436a951331789207c57817ffdd0a50",
+    "sources": {
+      "apps/image-worker/src/index.ts": "b4cc10292bfe82610e034d1abc91b3e9064f4e17d61629beceb8ecf601d896b8",
+      "apps/image-worker/src/photon.ts": "554ad016422af11a68b505238569a4958496cee3c6013b01d2e959e398facbdb",
+      "apps/image-worker/src/validators.ts": "69ac9284fad0f087f2cb1c1d2016abc3fc5039d2c7e7a95986dd5eb452200844",
+      "apps/image-worker/src/dimensions.ts": "9976ed63307b5c402cb09ceede043cf9ad7b3f073d1a1b6ac4806db50586edc8",
+      "apps/image-worker/wrangler.toml": "b3876ec32b249a50bde9439a659a21dccbab3616e2529233baca63b198f41bb8",
+      "pnpm-lock.yaml": "707a5d7d9e59fd3790011a986435b91ac0d1347ebdb069e854c9828996d7434f"
+    },
+    "commands": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "<probe-workspace>\\harness.mjs",
+      "--source-root=<source-checkout>",
+      "--set=actual",
+      "--label=actual-frozen-v1",
+      "--only=rgba8-over5MiB-onebyte-thumbnail"
+    ],
+    "description": "Original routes/processors bundled into scratch; no source file changes; no external fixture requests.",
+    "photonWasmSHA256": "f477b87cbea0445c65fc7e580e89050190600379fcd44821cec67403483872b1"
+  },
+  "sourceIntegrity": {
+    "unchanged": true,
+    "before": {
+      "apps/image-worker/src/index.ts": "b4cc10292bfe82610e034d1abc91b3e9064f4e17d61629beceb8ecf601d896b8",
+      "apps/image-worker/src/photon.ts": "554ad016422af11a68b505238569a4958496cee3c6013b01d2e959e398facbdb",
+      "apps/image-worker/src/validators.ts": "69ac9284fad0f087f2cb1c1d2016abc3fc5039d2c7e7a95986dd5eb452200844",
+      "apps/image-worker/src/dimensions.ts": "9976ed63307b5c402cb09ceede043cf9ad7b3f073d1a1b6ac4806db50586edc8",
+      "apps/image-worker/wrangler.toml": "b3876ec32b249a50bde9439a659a21dccbab3616e2529233baca63b198f41bb8",
+      "pnpm-lock.yaml": "707a5d7d9e59fd3790011a986435b91ac0d1347ebdb069e854c9828996d7434f"
+    },
+    "after": {
+      "apps/image-worker/src/index.ts": "b4cc10292bfe82610e034d1abc91b3e9064f4e17d61629beceb8ecf601d896b8",
+      "apps/image-worker/src/photon.ts": "554ad016422af11a68b505238569a4958496cee3c6013b01d2e959e398facbdb",
+      "apps/image-worker/src/validators.ts": "69ac9284fad0f087f2cb1c1d2016abc3fc5039d2c7e7a95986dd5eb452200844",
+      "apps/image-worker/src/dimensions.ts": "9976ed63307b5c402cb09ceede043cf9ad7b3f073d1a1b6ac4806db50586edc8",
+      "apps/image-worker/wrangler.toml": "b3876ec32b249a50bde9439a659a21dccbab3616e2529233baca63b198f41bb8",
+      "pnpm-lock.yaml": "707a5d7d9e59fd3790011a986435b91ac0d1347ebdb069e854c9828996d7434f"
+    }
+  },
+  "fixtures": [
+    {
+      "name": "rgba8-64cap-near5MiB",
+      "path": "<probe-workspace>\\fixtures\\rgba8-64cap-near5MiB.png",
+      "bytes": 5095485,
+      "sha256": "d87f2ffb72f4d71c26576f1b56e8e7d56df8289d471c3560da0d56ea5b90928b",
+      "width": 4096,
+      "height": 2048,
+      "depth": 8,
+      "colorType": 6,
+      "randomRows": 309,
+      "seed": "0x7a6b5c4d"
+    },
+    {
+      "name": "rgba8-4K-near5MiB",
+      "path": "<probe-workspace>\\fixtures\\rgba8-4K-near5MiB.png",
+      "bytes": 5101959,
+      "sha256": "84607a30cb3017caaadedc96856c79af09281dd4484bd135a7c5b34e20905abf",
+      "width": 3840,
+      "height": 2160,
+      "depth": 8,
+      "colorType": 6,
+      "randomRows": 330,
+      "seed": "0x7a6b5c4d"
+    },
+    {
+      "name": "rgba8-ultrawide-near5MiB",
+      "path": "<probe-workspace>\\fixtures\\rgba8-ultrawide-near5MiB.png",
+      "bytes": 5082021,
+      "sha256": "ff5e875bd22bec3913f5ab846d1a3a18f246b7dde7aa056464e372e742070ffc",
+      "width": 3440,
+      "height": 1440,
+      "depth": 8,
+      "colorType": 6,
+      "randomRows": 368,
+      "seed": "0x7a6b5c4d"
+    },
+    {
+      "name": "rgba8-smaller-near5MiB",
+      "path": "<probe-workspace>\\fixtures\\rgba8-smaller-near5MiB.png",
+      "bytes": 5072010,
+      "sha256": "00032fc925d037db28417e61b786f22c114534a6aac0a882f6772521daa1cac9",
+      "width": 1280,
+      "height": 1024,
+      "depth": 8,
+      "colorType": 6,
+      "randomRows": 990,
+      "seed": "0x7a6b5c4d"
+    },
+    {
+      "name": "rgba8-noresize",
+      "path": "<probe-workspace>\\fixtures\\rgba8-noresize.png",
+      "bytes": 664,
+      "sha256": "69c9df087c657f913d362722e099d4ead05a139fe5b0f40ac58a9fe82298032c",
+      "width": 256,
+      "height": 256,
+      "depth": 8,
+      "colorType": 6,
+      "randomRows": 0,
+      "seed": null
+    },
+    {
+      "name": "rgba8-highaspect",
+      "path": "<probe-workspace>\\fixtures\\rgba8-highaspect.png",
+      "bytes": 100,
+      "sha256": "abb980491b6936ce5b93e159f803c769e9fdb89b50766f2171bebb3c8f649e4d",
+      "width": 4096,
+      "height": 1,
+      "depth": 8,
+      "colorType": 6,
+      "randomRows": 0,
+      "seed": null
+    },
+    {
+      "name": "png16-color0-64cap",
+      "path": "<probe-workspace>\\fixtures\\png16-color0-64cap.png",
+      "bytes": 21194,
+      "sha256": "3864c1f61a503451daa7ead61d90c9eab6046503cac88be12dd2a199817367e8",
+      "width": 4096,
+      "height": 2048,
+      "depth": 16,
+      "colorType": 0,
+      "randomRows": 0,
+      "seed": null
+    },
+    {
+      "name": "png16-color2-64cap",
+      "path": "<probe-workspace>\\fixtures\\png16-color2-64cap.png",
+      "bytes": 54047,
+      "sha256": "dd159c6e4c92cb37ad1b5a07c25284b7556d9fd2fc0647fe3025603189faede7",
+      "width": 4096,
+      "height": 2048,
+      "depth": 16,
+      "colorType": 2,
+      "randomRows": 0,
+      "seed": null
+    },
+    {
+      "name": "png16-color4-64cap",
+      "path": "<probe-workspace>\\fixtures\\png16-color4-64cap.png",
+      "bytes": 37868,
+      "sha256": "13e7ab29e9b5dcc890797a2156a45931b544521648ee00d2f5f0b59cad5543d5",
+      "width": 4096,
+      "height": 2048,
+      "depth": 16,
+      "colorType": 4,
+      "randomRows": 0,
+      "seed": null
+    },
+    {
+      "name": "png16-color6-64cap",
+      "path": "<probe-workspace>\\fixtures\\png16-color6-64cap.png",
+      "bytes": 69476,
+      "sha256": "f04b2f2355199eb01c38d36ebac212aa66612dc77c1f4a959e5facbc9b213177",
+      "width": 4096,
+      "height": 2048,
+      "depth": 16,
+      "colorType": 6,
+      "randomRows": 0,
+      "seed": null
+    },
+    {
+      "name": "rgba8-over5MiB-onebyte",
+      "path": "<probe-workspace>\\fixtures\\rgba8-over5MiB-onebyte.png",
+      "bytes": 5242881,
+      "sha256": "336ab000b128b1f55c118c7708112d7d7dff82f530f2a36a5e70149824addaea",
+      "width": 64,
+      "height": 64,
+      "depth": 8,
+      "colorType": 6,
+      "randomRows": 0,
+      "seed": null,
+      "ancillaryPaddingBytes": 5242712
+    }
+  ],
+  "commands": [
+    {
+      "timestamp": "2026-10-28T16:12:07.343Z",
+      "argv": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "<probe-workspace>\\harness.mjs",
+        "--source-root=<source-checkout>",
+        "--set=actual",
+        "--label=actual-frozen-v1",
+        "--warm"
+      ],
+      "variant": "frozen-source",
+      "scriptSha256": "9ba3be62099855d836b92a7e3eb355c14e0fc675e462b62eaa5e94af18ad3099"
+    },
+    {
+      "timestamp": "2026-10-28T16:15:03.672Z",
+      "argv": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "<probe-workspace>\\harness.mjs",
+        "--source-root=<source-checkout>",
+        "--set=actual",
+        "--label=actual-frozen-v1",
+        "--only=rgba8-over5MiB-onebyte-thumbnail"
+      ],
+      "variant": "frozen-source",
+      "scriptSha256": "950c30d4dfe4f6a7369e6cda5451aeaff88dd17db791633844b663dac062588f"
+    }
+  ],
+  "cold": [
+    {
+      "id": "png16-color0-64cap-extract256-instrumented-actual-frozen-v1",
+      "fixture": "png16-color0-64cap",
+      "flow": "extract256",
+      "mode": "instrumented",
+      "transport": "dispatchFetch",
+      "status": 400,
+      "responseBytes": 67,
+      "responseSHA256": "4f2f4db2bd8c1307d1c182cbf4a2fce4560adb181484127556b39b5762ac15aa",
+      "error": "{\"error\":\"Unsupported image format or unreadable image dimensions\"}",
+      "constructorCalls": 0,
+      "outboundFetches": 1,
+      "wasmHighWaterBytes": 1376256,
+      "osProcessPeakWorkingSetBytes": 64409600,
+      "samples": [
+        {
+          "stage": "request-start",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1091292,
+          "totalSize": 1585152,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 0
+        },
+        {
+          "stage": "before-header-gate",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1702628,
+          "totalSize": 2633728,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 270402
+        },
+        {
+          "stage": "request-finally",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1753148,
+          "totalSize": 2895872,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 270402
+        }
+      ]
+    },
+    {
+      "id": "png16-color0-64cap-thumbnail-instrumented-actual-frozen-v1",
+      "fixture": "png16-color0-64cap",
+      "flow": "thumbnail",
+      "mode": "instrumented",
+      "transport": "dispatchFetch",
+      "status": 400,
+      "responseBytes": 67,
+      "responseSHA256": "4f2f4db2bd8c1307d1c182cbf4a2fce4560adb181484127556b39b5762ac15aa",
+      "error": "{\"error\":\"Unsupported image format or unreadable image dimensions\"}",
+      "constructorCalls": 0,
+      "outboundFetches": 0,
+      "wasmHighWaterBytes": 1376256,
+      "osProcessPeakWorkingSetBytes": 63746048,
+      "samples": [
+        {
+          "stage": "request-start",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1091304,
+          "totalSize": 1585152,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 0
+        },
+        {
+          "stage": "before-header-gate",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1681756,
+          "totalSize": 2633728,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 270402
+        },
+        {
+          "stage": "request-finally",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1731408,
+          "totalSize": 2895872,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 270402
+        }
+      ]
+    },
+    {
+      "id": "png16-color2-64cap-extract256-instrumented-actual-frozen-v1",
+      "fixture": "png16-color2-64cap",
+      "flow": "extract256",
+      "mode": "instrumented",
+      "transport": "dispatchFetch",
+      "status": 400,
+      "responseBytes": 67,
+      "responseSHA256": "4f2f4db2bd8c1307d1c182cbf4a2fce4560adb181484127556b39b5762ac15aa",
+      "error": "{\"error\":\"Unsupported image format or unreadable image dimensions\"}",
+      "constructorCalls": 0,
+      "outboundFetches": 1,
+      "wasmHighWaterBytes": 1376256,
+      "osProcessPeakWorkingSetBytes": 65282048,
+      "samples": [
+        {
+          "stage": "request-start",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1091292,
+          "totalSize": 1585152,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 0
+        },
+        {
+          "stage": "before-header-gate",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1715236,
+          "totalSize": 2633728,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 336023
+        },
+        {
+          "stage": "request-finally",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1765800,
+          "totalSize": 2895872,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 336023
+        }
+      ]
+    },
+    {
+      "id": "png16-color2-64cap-thumbnail-instrumented-actual-frozen-v1",
+      "fixture": "png16-color2-64cap",
+      "flow": "thumbnail",
+      "mode": "instrumented",
+      "transport": "dispatchFetch",
+      "status": 400,
+      "responseBytes": 67,
+      "responseSHA256": "4f2f4db2bd8c1307d1c182cbf4a2fce4560adb181484127556b39b5762ac15aa",
+      "error": "{\"error\":\"Unsupported image format or unreadable image dimensions\"}",
+      "constructorCalls": 0,
+      "outboundFetches": 0,
+      "wasmHighWaterBytes": 1376256,
+      "osProcessPeakWorkingSetBytes": 63733760,
+      "samples": [
+        {
+          "stage": "request-start",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1091304,
+          "totalSize": 1585152,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 0
+        },
+        {
+          "stage": "before-header-gate",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1694364,
+          "totalSize": 2633728,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 336023
+        },
+        {
+          "stage": "request-finally",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1744024,
+          "totalSize": 2895872,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 336023
+        }
+      ]
+    },
+    {
+      "id": "png16-color4-64cap-extract256-instrumented-actual-frozen-v1",
+      "fixture": "png16-color4-64cap",
+      "flow": "extract256",
+      "mode": "instrumented",
+      "transport": "dispatchFetch",
+      "status": 400,
+      "responseBytes": 67,
+      "responseSHA256": "4f2f4db2bd8c1307d1c182cbf4a2fce4560adb181484127556b39b5762ac15aa",
+      "error": "{\"error\":\"Unsupported image format or unreadable image dimensions\"}",
+      "constructorCalls": 0,
+      "outboundFetches": 1,
+      "wasmHighWaterBytes": 1376256,
+      "osProcessPeakWorkingSetBytes": 64577536,
+      "samples": [
+        {
+          "stage": "request-start",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1091292,
+          "totalSize": 1585152,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 0
+        },
+        {
+          "stage": "before-header-gate",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1708932,
+          "totalSize": 2633728,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 303460
+        },
+        {
+          "stage": "request-finally",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1759440,
+          "totalSize": 2895872,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 303460
+        }
+      ]
+    },
+    {
+      "id": "png16-color4-64cap-thumbnail-instrumented-actual-frozen-v1",
+      "fixture": "png16-color4-64cap",
+      "flow": "thumbnail",
+      "mode": "instrumented",
+      "transport": "dispatchFetch",
+      "status": 400,
+      "responseBytes": 67,
+      "responseSHA256": "4f2f4db2bd8c1307d1c182cbf4a2fce4560adb181484127556b39b5762ac15aa",
+      "error": "{\"error\":\"Unsupported image format or unreadable image dimensions\"}",
+      "constructorCalls": 0,
+      "outboundFetches": 0,
+      "wasmHighWaterBytes": 1376256,
+      "osProcessPeakWorkingSetBytes": 63516672,
+      "samples": [
+        {
+          "stage": "request-start",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1091304,
+          "totalSize": 1585152,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 0
+        },
+        {
+          "stage": "before-header-gate",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1688060,
+          "totalSize": 2633728,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 303460
+        },
+        {
+          "stage": "request-finally",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1737716,
+          "totalSize": 2895872,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 303460
+        }
+      ]
+    },
+    {
+      "id": "png16-color6-64cap-extract256-instrumented-actual-frozen-v1",
+      "fixture": "png16-color6-64cap",
+      "flow": "extract256",
+      "mode": "instrumented",
+      "transport": "dispatchFetch",
+      "status": 400,
+      "responseBytes": 67,
+      "responseSHA256": "4f2f4db2bd8c1307d1c182cbf4a2fce4560adb181484127556b39b5762ac15aa",
+      "error": "{\"error\":\"Unsupported image format or unreadable image dimensions\"}",
+      "constructorCalls": 0,
+      "outboundFetches": 1,
+      "wasmHighWaterBytes": 1376256,
+      "osProcessPeakWorkingSetBytes": 64466944,
+      "samples": [
+        {
+          "stage": "request-start",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1091292,
+          "totalSize": 1585152,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 0
+        },
+        {
+          "stage": "before-header-gate",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1719964,
+          "totalSize": 2633728,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 363740
+        },
+        {
+          "stage": "request-finally",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1770496,
+          "totalSize": 2895872,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 363740
+        }
+      ]
+    },
+    {
+      "id": "png16-color6-64cap-thumbnail-instrumented-actual-frozen-v1",
+      "fixture": "png16-color6-64cap",
+      "flow": "thumbnail",
+      "mode": "instrumented",
+      "transport": "dispatchFetch",
+      "status": 400,
+      "responseBytes": 67,
+      "responseSHA256": "4f2f4db2bd8c1307d1c182cbf4a2fce4560adb181484127556b39b5762ac15aa",
+      "error": "{\"error\":\"Unsupported image format or unreadable image dimensions\"}",
+      "constructorCalls": 0,
+      "outboundFetches": 0,
+      "wasmHighWaterBytes": 1376256,
+      "osProcessPeakWorkingSetBytes": 64020480,
+      "samples": [
+        {
+          "stage": "request-start",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1091304,
+          "totalSize": 1585152,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 0
+        },
+        {
+          "stage": "before-header-gate",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1700848,
+          "totalSize": 2633728,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 367836
+        },
+        {
+          "stage": "request-finally",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1750496,
+          "totalSize": 2895872,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 367836
+        }
+      ]
+    },
+    {
+      "id": "rgba8-4K-near5MiB-extract256-control-actual-frozen-v1",
+      "fixture": "rgba8-4K-near5MiB",
+      "flow": "extract256",
+      "mode": "control",
+      "transport": "dispatchFetch",
+      "status": 200,
+      "responseBytes": 147456,
+      "responseSHA256": "f2a9d8e5791d0821810090c400557387cbd642d7228961c7e4115f7282132a38",
+      "constructorCalls": null,
+      "outboundFetches": 1,
+      "wasmHighWaterBytes": 107675648,
+      "osProcessPeakWorkingSetBytes": 187420672,
+      "samples": []
+    },
+    {
+      "id": "rgba8-4K-near5MiB-extract256-instrumented-actual-frozen-v1",
+      "fixture": "rgba8-4K-near5MiB",
+      "flow": "extract256",
+      "mode": "instrumented",
+      "transport": "dispatchFetch",
+      "status": 200,
+      "responseBytes": 147456,
+      "responseSHA256": "f2a9d8e5791d0821810090c400557387cbd642d7228961c7e4115f7282132a38",
+      "constructorCalls": 1,
+      "outboundFetches": 1,
+      "wasmHighWaterBytes": 107675648,
+      "osProcessPeakWorkingSetBytes": 186970112,
+      "samples": [
+        {
+          "stage": "request-start",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1091292,
+          "totalSize": 1585152,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 0
+        },
+        {
+          "stage": "before-header-gate",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 2924520,
+          "totalSize": 5517312,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10430207
+        },
+        {
+          "stage": "after-header-gate",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 2966620,
+          "totalSize": 5517312,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10430207
+        },
+        {
+          "stage": "constructor-before",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 3032192,
+          "totalSize": 5517312,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10430207
+        },
+        {
+          "stage": "constructor-after",
+          "wasmBytes": 107675648,
+          "calibrationBytes": 0,
+          "usedSize": 3109632,
+          "totalSize": 5517312,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10430207
+        },
+        {
+          "stage": "extract-after-decode",
+          "wasmBytes": 107675648,
+          "calibrationBytes": 0,
+          "usedSize": 3149384,
+          "totalSize": 5517312,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10430207
+        },
+        {
+          "stage": "extract-after-resize",
+          "wasmBytes": 107675648,
+          "calibrationBytes": 0,
+          "usedSize": 3191004,
+          "totalSize": 5517312,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10430207
+        },
+        {
+          "stage": "extract-after-pixel-copy",
+          "wasmBytes": 107675648,
+          "calibrationBytes": 0,
+          "usedSize": 3231672,
+          "totalSize": 5517312,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10577663
+        },
+        {
+          "stage": "request-finally",
+          "wasmBytes": 107675648,
+          "calibrationBytes": 0,
+          "usedSize": 3278632,
+          "totalSize": 5517312,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10577663
+        }
+      ]
+    },
+    {
+      "id": "rgba8-4K-near5MiB-thumbnail-control-actual-frozen-v1",
+      "fixture": "rgba8-4K-near5MiB",
+      "flow": "thumbnail",
+      "mode": "control",
+      "transport": "dispatchFetch",
+      "status": 200,
+      "responseBytes": 20538,
+      "responseSHA256": "357e14588ea682e924a99ca41c99e53a6a046a4ddbb87d32171e1704be0a25b2",
+      "constructorCalls": null,
+      "outboundFetches": 0,
+      "wasmHighWaterBytes": 107675648,
+      "osProcessPeakWorkingSetBytes": 199360512,
+      "samples": []
+    },
+    {
+      "id": "rgba8-4K-near5MiB-thumbnail-instrumented-actual-frozen-v1",
+      "fixture": "rgba8-4K-near5MiB",
+      "flow": "thumbnail",
+      "mode": "instrumented",
+      "transport": "dispatchFetch",
+      "status": 200,
+      "responseBytes": 20538,
+      "responseSHA256": "357e14588ea682e924a99ca41c99e53a6a046a4ddbb87d32171e1704be0a25b2",
+      "constructorCalls": 1,
+      "outboundFetches": 0,
+      "wasmHighWaterBytes": 107675648,
+      "osProcessPeakWorkingSetBytes": 187236352,
+      "samples": [
+        {
+          "stage": "request-start",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1091304,
+          "totalSize": 1585152,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 0
+        },
+        {
+          "stage": "before-header-gate",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 2913156,
+          "totalSize": 5517312,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10430207
+        },
+        {
+          "stage": "after-header-gate",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 2955296,
+          "totalSize": 5517312,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10430207
+        },
+        {
+          "stage": "constructor-before",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 3021148,
+          "totalSize": 5517312,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10430207
+        },
+        {
+          "stage": "constructor-after",
+          "wasmBytes": 107675648,
+          "calibrationBytes": 0,
+          "usedSize": 3098496,
+          "totalSize": 5517312,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10430207
+        },
+        {
+          "stage": "thumbnail-after-decode",
+          "wasmBytes": 107675648,
+          "calibrationBytes": 0,
+          "usedSize": 3138156,
+          "totalSize": 5517312,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10430207
+        },
+        {
+          "stage": "thumbnail-after-crop",
+          "wasmBytes": 107675648,
+          "calibrationBytes": 0,
+          "usedSize": 3179652,
+          "totalSize": 5517312,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10430207
+        },
+        {
+          "stage": "thumbnail-after-resize",
+          "wasmBytes": 107675648,
+          "calibrationBytes": 0,
+          "usedSize": 3220632,
+          "totalSize": 5517312,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10430207
+        },
+        {
+          "stage": "thumbnail-after-webp",
+          "wasmBytes": 107675648,
+          "calibrationBytes": 0,
+          "usedSize": 3267680,
+          "totalSize": 5517312,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10450745
+        },
+        {
+          "stage": "request-finally",
+          "wasmBytes": 107675648,
+          "calibrationBytes": 0,
+          "usedSize": 3312380,
+          "totalSize": 5517312,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10450745
+        }
+      ]
+    },
+    {
+      "id": "rgba8-64cap-near5MiB-extract256-control-actual-frozen-v1",
+      "fixture": "rgba8-64cap-near5MiB",
+      "flow": "extract256",
+      "mode": "control",
+      "transport": "dispatchFetch",
+      "status": 200,
+      "responseBytes": 131072,
+      "responseSHA256": "4500008012c3775a4e0a559f60d613e0bb0499e86ade8cfbbcb04af5039444a3",
+      "constructorCalls": null,
+      "outboundFetches": 1,
+      "wasmHighWaterBytes": 108396544,
+      "osProcessPeakWorkingSetBytes": 188596224,
+      "samples": []
+    },
+    {
+      "id": "rgba8-64cap-near5MiB-extract256-instrumented-actual-frozen-v1",
+      "fixture": "rgba8-64cap-near5MiB",
+      "flow": "extract256",
+      "mode": "instrumented",
+      "transport": "dispatchFetch",
+      "status": 200,
+      "responseBytes": 131072,
+      "responseSHA256": "4500008012c3775a4e0a559f60d613e0bb0499e86ade8cfbbcb04af5039444a3",
+      "constructorCalls": 1,
+      "outboundFetches": 1,
+      "wasmHighWaterBytes": 108396544,
+      "osProcessPeakWorkingSetBytes": 188538880,
+      "samples": [
+        {
+          "stage": "request-start",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1091292,
+          "totalSize": 1585152,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 0
+        },
+        {
+          "stage": "before-header-gate",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 2970108,
+          "totalSize": 5779456,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10419637
+        },
+        {
+          "stage": "after-header-gate",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 3014372,
+          "totalSize": 5779456,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10419637
+        },
+        {
+          "stage": "constructor-before",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 3079924,
+          "totalSize": 5779456,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10419637
+        },
+        {
+          "stage": "constructor-after",
+          "wasmBytes": 108396544,
+          "calibrationBytes": 0,
+          "usedSize": 3157364,
+          "totalSize": 5779456,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10419637
+        },
+        {
+          "stage": "extract-after-decode",
+          "wasmBytes": 108396544,
+          "calibrationBytes": 0,
+          "usedSize": 3197116,
+          "totalSize": 5779456,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10419637
+        },
+        {
+          "stage": "extract-after-resize",
+          "wasmBytes": 108396544,
+          "calibrationBytes": 0,
+          "usedSize": 3238736,
+          "totalSize": 5779456,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10419637
+        },
+        {
+          "stage": "extract-after-pixel-copy",
+          "wasmBytes": 108396544,
+          "calibrationBytes": 0,
+          "usedSize": 3279884,
+          "totalSize": 5779456,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10550709
+        },
+        {
+          "stage": "request-finally",
+          "wasmBytes": 108396544,
+          "calibrationBytes": 0,
+          "usedSize": 3325636,
+          "totalSize": 5779456,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10550709
+        }
+      ]
+    },
+    {
+      "id": "rgba8-64cap-near5MiB-extract512-control-actual-frozen-v1",
+      "fixture": "rgba8-64cap-near5MiB",
+      "flow": "extract512",
+      "mode": "control",
+      "transport": "dispatchFetch",
+      "status": 200,
+      "responseBytes": 524288,
+      "responseSHA256": "036eab0dcd98294f424a287aa2d8fb7edf0f40817e3c0d45c96629dc19f68525",
+      "constructorCalls": null,
+      "outboundFetches": 1,
+      "wasmHighWaterBytes": 108396544,
+      "osProcessPeakWorkingSetBytes": 189169664,
+      "samples": []
+    },
+    {
+      "id": "rgba8-64cap-near5MiB-extract512-instrumented-actual-frozen-v1",
+      "fixture": "rgba8-64cap-near5MiB",
+      "flow": "extract512",
+      "mode": "instrumented",
+      "transport": "dispatchFetch",
+      "status": 200,
+      "responseBytes": 524288,
+      "responseSHA256": "036eab0dcd98294f424a287aa2d8fb7edf0f40817e3c0d45c96629dc19f68525",
+      "constructorCalls": 1,
+      "outboundFetches": 1,
+      "wasmHighWaterBytes": 108396544,
+      "osProcessPeakWorkingSetBytes": 189796352,
+      "samples": [
+        {
+          "stage": "request-start",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1091292,
+          "totalSize": 1585152,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 0
+        },
+        {
+          "stage": "before-header-gate",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 2938456,
+          "totalSize": 5517312,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10419637
+        },
+        {
+          "stage": "after-header-gate",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 2980720,
+          "totalSize": 5517312,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10419637
+        },
+        {
+          "stage": "constructor-before",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 3051192,
+          "totalSize": 5517312,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10419637
+        },
+        {
+          "stage": "constructor-after",
+          "wasmBytes": 108396544,
+          "calibrationBytes": 0,
+          "usedSize": 3128632,
+          "totalSize": 5517312,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10419637
+        },
+        {
+          "stage": "extract-after-decode",
+          "wasmBytes": 108396544,
+          "calibrationBytes": 0,
+          "usedSize": 3168384,
+          "totalSize": 5517312,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10419637
+        },
+        {
+          "stage": "extract-after-resize",
+          "wasmBytes": 108396544,
+          "calibrationBytes": 0,
+          "usedSize": 3210004,
+          "totalSize": 5517312,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10419637
+        },
+        {
+          "stage": "extract-after-pixel-copy",
+          "wasmBytes": 108396544,
+          "calibrationBytes": 0,
+          "usedSize": 3250672,
+          "totalSize": 5517312,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10943925
+        },
+        {
+          "stage": "request-finally",
+          "wasmBytes": 108396544,
+          "calibrationBytes": 0,
+          "usedSize": 3296256,
+          "totalSize": 5517312,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10943925
+        }
+      ]
+    },
+    {
+      "id": "rgba8-64cap-near5MiB-extract513-instrumented-actual-frozen-v1",
+      "fixture": "rgba8-64cap-near5MiB",
+      "flow": "extract513",
+      "mode": "instrumented",
+      "transport": "dispatchFetch",
+      "status": 400,
+      "responseBytes": 72,
+      "responseSHA256": "0f042f6c2eb81e7145535f2ab6f3a85a9538970f25a21ca8d5807ea6d5083788",
+      "error": "{\"error\":\"Invalid maxDimension: expected an integer between 16 and 512\"}",
+      "constructorCalls": 0,
+      "outboundFetches": 0,
+      "wasmHighWaterBytes": 1376256,
+      "osProcessPeakWorkingSetBytes": 63275008,
+      "samples": [
+        {
+          "stage": "request-start",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1091292,
+          "totalSize": 1585152,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 0
+        },
+        {
+          "stage": "request-finally",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1671364,
+          "totalSize": 2633728,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 220536
+        }
+      ]
+    },
+    {
+      "id": "rgba8-64cap-near5MiB-thumbnail-control-actual-frozen-v1",
+      "fixture": "rgba8-64cap-near5MiB",
+      "flow": "thumbnail",
+      "mode": "control",
+      "transport": "dispatchFetch",
+      "status": 200,
+      "responseBytes": 47310,
+      "responseSHA256": "123fcf1fe7b72a48acbac64c407a9d59126e54f5ab0c3be94310480bf4e5a914",
+      "constructorCalls": null,
+      "outboundFetches": 0,
+      "wasmHighWaterBytes": 108396544,
+      "osProcessPeakWorkingSetBytes": 201175040,
+      "samples": []
+    },
+    {
+      "id": "rgba8-64cap-near5MiB-thumbnail-instrumented-actual-frozen-v1",
+      "fixture": "rgba8-64cap-near5MiB",
+      "flow": "thumbnail",
+      "mode": "instrumented",
+      "transport": "dispatchFetch",
+      "status": 200,
+      "responseBytes": 47310,
+      "responseSHA256": "123fcf1fe7b72a48acbac64c407a9d59126e54f5ab0c3be94310480bf4e5a914",
+      "constructorCalls": 1,
+      "outboundFetches": 0,
+      "wasmHighWaterBytes": 108396544,
+      "osProcessPeakWorkingSetBytes": 188129280,
+      "samples": [
+        {
+          "stage": "request-start",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1091304,
+          "totalSize": 1585152,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 0
+        },
+        {
+          "stage": "before-header-gate",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 2894972,
+          "totalSize": 5517312,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10419637
+        },
+        {
+          "stage": "after-header-gate",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 2937112,
+          "totalSize": 5517312,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10419637
+        },
+        {
+          "stage": "constructor-before",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 3007848,
+          "totalSize": 5517312,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10419637
+        },
+        {
+          "stage": "constructor-after",
+          "wasmBytes": 108396544,
+          "calibrationBytes": 0,
+          "usedSize": 3085196,
+          "totalSize": 5517312,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10419637
+        },
+        {
+          "stage": "thumbnail-after-decode",
+          "wasmBytes": 108396544,
+          "calibrationBytes": 0,
+          "usedSize": 3124856,
+          "totalSize": 5517312,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10419637
+        },
+        {
+          "stage": "thumbnail-after-crop",
+          "wasmBytes": 108396544,
+          "calibrationBytes": 0,
+          "usedSize": 3166340,
+          "totalSize": 5517312,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10419637
+        },
+        {
+          "stage": "thumbnail-after-resize",
+          "wasmBytes": 108396544,
+          "calibrationBytes": 0,
+          "usedSize": 3207320,
+          "totalSize": 5517312,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10419637
+        },
+        {
+          "stage": "thumbnail-after-webp",
+          "wasmBytes": 108396544,
+          "calibrationBytes": 0,
+          "usedSize": 3254308,
+          "totalSize": 5517312,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10466947
+        },
+        {
+          "stage": "request-finally",
+          "wasmBytes": 108396544,
+          "calibrationBytes": 0,
+          "usedSize": 3299008,
+          "totalSize": 5517312,
+          "embedderHeapUsedSize": 902760,
+          "backingStorageSize": 10466947
+        }
+      ]
+    },
+    {
+      "id": "rgba8-highaspect-extract512-control-actual-frozen-v1",
+      "fixture": "rgba8-highaspect",
+      "flow": "extract512",
+      "mode": "control",
+      "transport": "dispatchFetch",
+      "status": 200,
+      "responseBytes": 2048,
+      "responseSHA256": "27acea4da84479785e4ca65078210260d25e885dbd5c18a9ab18dc8e724987eb",
+      "constructorCalls": null,
+      "outboundFetches": 1,
+      "wasmHighWaterBytes": 1572864,
+      "osProcessPeakWorkingSetBytes": 67944448,
+      "samples": []
+    },
+    {
+      "id": "rgba8-highaspect-extract512-instrumented-actual-frozen-v1",
+      "fixture": "rgba8-highaspect",
+      "flow": "extract512",
+      "mode": "instrumented",
+      "transport": "dispatchFetch",
+      "status": 200,
+      "responseBytes": 2048,
+      "responseSHA256": "27acea4da84479785e4ca65078210260d25e885dbd5c18a9ab18dc8e724987eb",
+      "constructorCalls": 1,
+      "outboundFetches": 1,
+      "wasmHighWaterBytes": 1572864,
+      "osProcessPeakWorkingSetBytes": 71204864,
+      "samples": [
+        {
+          "stage": "request-start",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1091292,
+          "totalSize": 1585152,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 0
+        },
+        {
+          "stage": "before-header-gate",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1685668,
+          "totalSize": 2633728,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 228828
+        },
+        {
+          "stage": "after-header-gate",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1733828,
+          "totalSize": 2895872,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 228828
+        },
+        {
+          "stage": "constructor-before",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1799380,
+          "totalSize": 2895872,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 228828
+        },
+        {
+          "stage": "constructor-after",
+          "wasmBytes": 1572864,
+          "calibrationBytes": 0,
+          "usedSize": 1876728,
+          "totalSize": 2895872,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 228828
+        },
+        {
+          "stage": "extract-after-decode",
+          "wasmBytes": 1572864,
+          "calibrationBytes": 0,
+          "usedSize": 1916480,
+          "totalSize": 2895872,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 228828
+        },
+        {
+          "stage": "extract-after-resize",
+          "wasmBytes": 1572864,
+          "calibrationBytes": 0,
+          "usedSize": 1958192,
+          "totalSize": 2895872,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 228828
+        },
+        {
+          "stage": "extract-after-pixel-copy",
+          "wasmBytes": 1572864,
+          "calibrationBytes": 0,
+          "usedSize": 1999436,
+          "totalSize": 3158016,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 230876
+        },
+        {
+          "stage": "request-finally",
+          "wasmBytes": 1572864,
+          "calibrationBytes": 0,
+          "usedSize": 2044912,
+          "totalSize": 3158016,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 230876
+        }
+      ]
+    },
+    {
+      "id": "rgba8-highaspect-thumbnail-control-actual-frozen-v1",
+      "fixture": "rgba8-highaspect",
+      "flow": "thumbnail",
+      "mode": "control",
+      "transport": "dispatchFetch",
+      "status": 200,
+      "responseBytes": 146,
+      "responseSHA256": "bd9346537a405b21a4f37ac2dc37809359a62138544ea3eb2e3caa1c7e20fd32",
+      "constructorCalls": null,
+      "outboundFetches": 0,
+      "wasmHighWaterBytes": 3735552,
+      "osProcessPeakWorkingSetBytes": 80580608,
+      "samples": []
+    },
+    {
+      "id": "rgba8-highaspect-thumbnail-instrumented-actual-frozen-v1",
+      "fixture": "rgba8-highaspect",
+      "flow": "thumbnail",
+      "mode": "instrumented",
+      "transport": "dispatchFetch",
+      "status": 200,
+      "responseBytes": 146,
+      "responseSHA256": "bd9346537a405b21a4f37ac2dc37809359a62138544ea3eb2e3caa1c7e20fd32",
+      "constructorCalls": 1,
+      "outboundFetches": 0,
+      "wasmHighWaterBytes": 3735552,
+      "osProcessPeakWorkingSetBytes": 70074368,
+      "samples": [
+        {
+          "stage": "request-start",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1091304,
+          "totalSize": 1585152,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 0
+        },
+        {
+          "stage": "before-header-gate",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1664544,
+          "totalSize": 2633728,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 228828
+        },
+        {
+          "stage": "after-header-gate",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1713300,
+          "totalSize": 2895872,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 228828
+        },
+        {
+          "stage": "constructor-before",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1778760,
+          "totalSize": 2895872,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 228828
+        },
+        {
+          "stage": "constructor-after",
+          "wasmBytes": 1572864,
+          "calibrationBytes": 0,
+          "usedSize": 1856016,
+          "totalSize": 2895872,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 228828
+        },
+        {
+          "stage": "thumbnail-after-decode",
+          "wasmBytes": 1572864,
+          "calibrationBytes": 0,
+          "usedSize": 1895676,
+          "totalSize": 2895872,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 228828
+        },
+        {
+          "stage": "thumbnail-after-crop",
+          "wasmBytes": 1572864,
+          "calibrationBytes": 0,
+          "usedSize": 1937172,
+          "totalSize": 2895872,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 228828
+        },
+        {
+          "stage": "thumbnail-after-resize",
+          "wasmBytes": 2293760,
+          "calibrationBytes": 0,
+          "usedSize": 1979140,
+          "totalSize": 3158016,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 228828
+        },
+        {
+          "stage": "thumbnail-after-webp",
+          "wasmBytes": 3735552,
+          "calibrationBytes": 0,
+          "usedSize": 2025224,
+          "totalSize": 3158016,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 228974
+        },
+        {
+          "stage": "request-finally",
+          "wasmBytes": 3735552,
+          "calibrationBytes": 0,
+          "usedSize": 2069924,
+          "totalSize": 3158016,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 228974
+        }
+      ]
+    },
+    {
+      "id": "rgba8-noresize-extract256-control-actual-frozen-v1",
+      "fixture": "rgba8-noresize",
+      "flow": "extract256",
+      "mode": "control",
+      "transport": "dispatchFetch",
+      "status": 200,
+      "responseBytes": 262144,
+      "responseSHA256": "f316e96c73c68e8a53ba077b102bfe083c201c3614cc0bf63d9c35100d403714",
+      "constructorCalls": null,
+      "outboundFetches": 1,
+      "wasmHighWaterBytes": 2490368,
+      "osProcessPeakWorkingSetBytes": 68259840,
+      "samples": []
+    },
+    {
+      "id": "rgba8-noresize-extract256-instrumented-actual-frozen-v1",
+      "fixture": "rgba8-noresize",
+      "flow": "extract256",
+      "mode": "instrumented",
+      "transport": "dispatchFetch",
+      "status": 200,
+      "responseBytes": 262144,
+      "responseSHA256": "f316e96c73c68e8a53ba077b102bfe083c201c3614cc0bf63d9c35100d403714",
+      "constructorCalls": 1,
+      "outboundFetches": 1,
+      "wasmHighWaterBytes": 2490368,
+      "osProcessPeakWorkingSetBytes": 71172096,
+      "samples": [
+        {
+          "stage": "request-start",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1091292,
+          "totalSize": 1585152,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 0
+        },
+        {
+          "stage": "before-header-gate",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1685176,
+          "totalSize": 2633728,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 229392
+        },
+        {
+          "stage": "after-header-gate",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1733028,
+          "totalSize": 2895872,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 229392
+        },
+        {
+          "stage": "constructor-before",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1798580,
+          "totalSize": 2895872,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 229392
+        },
+        {
+          "stage": "constructor-after",
+          "wasmBytes": 2490368,
+          "calibrationBytes": 0,
+          "usedSize": 1876012,
+          "totalSize": 2895872,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 229392
+        },
+        {
+          "stage": "extract-after-decode",
+          "wasmBytes": 2490368,
+          "calibrationBytes": 0,
+          "usedSize": 1915764,
+          "totalSize": 2895872,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 229392
+        },
+        {
+          "stage": "extract-after-resize",
+          "wasmBytes": 2490368,
+          "calibrationBytes": 0,
+          "usedSize": 1956256,
+          "totalSize": 2895872,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 229392
+        },
+        {
+          "stage": "extract-after-pixel-copy",
+          "wasmBytes": 2490368,
+          "calibrationBytes": 0,
+          "usedSize": 1998444,
+          "totalSize": 3158016,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 491536
+        },
+        {
+          "stage": "request-finally",
+          "wasmBytes": 2490368,
+          "calibrationBytes": 0,
+          "usedSize": 2044084,
+          "totalSize": 3158016,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 491536
+        }
+      ]
+    },
+    {
+      "id": "rgba8-noresize-extract512-control-actual-frozen-v1",
+      "fixture": "rgba8-noresize",
+      "flow": "extract512",
+      "mode": "control",
+      "transport": "dispatchFetch",
+      "status": 200,
+      "responseBytes": 262144,
+      "responseSHA256": "f316e96c73c68e8a53ba077b102bfe083c201c3614cc0bf63d9c35100d403714",
+      "constructorCalls": null,
+      "outboundFetches": 1,
+      "wasmHighWaterBytes": 2490368,
+      "osProcessPeakWorkingSetBytes": 68497408,
+      "samples": []
+    },
+    {
+      "id": "rgba8-noresize-extract512-instrumented-actual-frozen-v1",
+      "fixture": "rgba8-noresize",
+      "flow": "extract512",
+      "mode": "instrumented",
+      "transport": "dispatchFetch",
+      "status": 200,
+      "responseBytes": 262144,
+      "responseSHA256": "f316e96c73c68e8a53ba077b102bfe083c201c3614cc0bf63d9c35100d403714",
+      "constructorCalls": 1,
+      "outboundFetches": 1,
+      "wasmHighWaterBytes": 2490368,
+      "osProcessPeakWorkingSetBytes": 71073792,
+      "samples": [
+        {
+          "stage": "request-start",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1091292,
+          "totalSize": 1585152,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 0
+        },
+        {
+          "stage": "before-header-gate",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1685668,
+          "totalSize": 2633728,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 229392
+        },
+        {
+          "stage": "after-header-gate",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1733828,
+          "totalSize": 2895872,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 229392
+        },
+        {
+          "stage": "constructor-before",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1799380,
+          "totalSize": 2895872,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 229392
+        },
+        {
+          "stage": "constructor-after",
+          "wasmBytes": 2490368,
+          "calibrationBytes": 0,
+          "usedSize": 1876812,
+          "totalSize": 2895872,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 229392
+        },
+        {
+          "stage": "extract-after-decode",
+          "wasmBytes": 2490368,
+          "calibrationBytes": 0,
+          "usedSize": 1916564,
+          "totalSize": 2895872,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 229392
+        },
+        {
+          "stage": "extract-after-resize",
+          "wasmBytes": 2490368,
+          "calibrationBytes": 0,
+          "usedSize": 1957056,
+          "totalSize": 2895872,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 229392
+        },
+        {
+          "stage": "extract-after-pixel-copy",
+          "wasmBytes": 2490368,
+          "calibrationBytes": 0,
+          "usedSize": 1999020,
+          "totalSize": 3158016,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 491536
+        },
+        {
+          "stage": "request-finally",
+          "wasmBytes": 2490368,
+          "calibrationBytes": 0,
+          "usedSize": 2044496,
+          "totalSize": 3158016,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 491536
+        }
+      ]
+    },
+    {
+      "id": "rgba8-over5MiB-onebyte-extract256-instrumented-actual-frozen-v1",
+      "fixture": "rgba8-over5MiB-onebyte",
+      "flow": "extract256",
+      "mode": "instrumented",
+      "transport": "dispatchFetch",
+      "status": 400,
+      "responseBytes": 56,
+      "responseSHA256": "4663aa50a9d708cc1317dd71fce986924b02d4139f0d4bdf849dc74306774d8c",
+      "error": "{\"error\":\"Image too large (5.0MB). Maximum size is 5MB\"}",
+      "constructorCalls": 0,
+      "outboundFetches": 1,
+      "wasmHighWaterBytes": 1376256,
+      "osProcessPeakWorkingSetBytes": 63991808,
+      "samples": [
+        {
+          "stage": "request-start",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1091292,
+          "totalSize": 1585152,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 0
+        },
+        {
+          "stage": "request-finally",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1689656,
+          "totalSize": 2633728,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 220536
+        }
+      ]
+    },
+    {
+      "id": "rgba8-over5MiB-onebyte-thumbnail-instrumented-actual-frozen-v1",
+      "fixture": "rgba8-over5MiB-onebyte",
+      "flow": "thumbnail",
+      "mode": "instrumented",
+      "transport": "service-binding-proxy",
+      "status": 400,
+      "responseBytes": 56,
+      "responseSHA256": "4663aa50a9d708cc1317dd71fce986924b02d4139f0d4bdf849dc74306774d8c",
+      "error": "{\"error\":\"Image too large (5.0MB). Maximum size is 5MB\"}",
+      "constructorCalls": 0,
+      "outboundFetches": 0,
+      "wasmHighWaterBytes": 1376256,
+      "osProcessPeakWorkingSetBytes": 79245312,
+      "samples": [
+        {
+          "stage": "request-start",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1091304,
+          "totalSize": 1585152,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 0
+        },
+        {
+          "stage": "request-finally",
+          "wasmBytes": 1376256,
+          "calibrationBytes": 0,
+          "usedSize": 1669096,
+          "totalSize": 2633728,
+          "embedderHeapUsedSize": 515872,
+          "backingStorageSize": 220536
+        }
+      ]
+    }
+  ],
+  "warm": [
+    {
+      "mode": "control",
+      "requests": 18,
+      "wasmHighWaterBytes": 108396544,
+      "osProcessPeakWorkingSetBytes": 239906816,
+      "cases": [
+        {
+          "index": 1,
+          "round": 1,
+          "fixture": "rgba8-64cap-near5MiB",
+          "flow": "extract512",
+          "status": 200,
+          "responseBytes": 524288,
+          "responseSHA256": "036eab0dcd98294f424a287aa2d8fb7edf0f40817e3c0d45c96629dc19f68525",
+          "wasmBeforeBytes": 1376256,
+          "wasmAfterBytes": 108396544,
+          "samples": []
+        },
+        {
+          "index": 2,
+          "round": 1,
+          "fixture": "rgba8-4K-near5MiB",
+          "flow": "thumbnail",
+          "status": 200,
+          "responseBytes": 20538,
+          "responseSHA256": "357e14588ea682e924a99ca41c99e53a6a046a4ddbb87d32171e1704be0a25b2",
+          "wasmBeforeBytes": 108396544,
+          "wasmAfterBytes": 108396544,
+          "samples": []
+        },
+        {
+          "index": 3,
+          "round": 1,
+          "fixture": "rgba8-ultrawide-near5MiB",
+          "flow": "extract512",
+          "status": 200,
+          "responseBytes": 438272,
+          "responseSHA256": "d538a4ca7fb38c40dc0fb5a0f326ea7ef05bb5cadd9a4443be2e83f58f0d69e8",
+          "wasmBeforeBytes": 108396544,
+          "wasmAfterBytes": 108396544,
+          "samples": []
+        },
+        {
+          "index": 4,
+          "round": 1,
+          "fixture": "rgba8-smaller-near5MiB",
+          "flow": "thumbnail",
+          "status": 200,
+          "responseBytes": 651418,
+          "responseSHA256": "fcc7259458ddaa07ca7924755810ee416bbd1595cfce7e4ea6f282d930c42685",
+          "wasmBeforeBytes": 108396544,
+          "wasmAfterBytes": 108396544,
+          "samples": []
+        },
+        {
+          "index": 5,
+          "round": 1,
+          "fixture": "rgba8-64cap-near5MiB",
+          "flow": "thumbnail",
+          "status": 200,
+          "responseBytes": 47310,
+          "responseSHA256": "123fcf1fe7b72a48acbac64c407a9d59126e54f5ab0c3be94310480bf4e5a914",
+          "wasmBeforeBytes": 108396544,
+          "wasmAfterBytes": 108396544,
+          "samples": []
+        },
+        {
+          "index": 6,
+          "round": 1,
+          "fixture": "rgba8-4K-near5MiB",
+          "flow": "extract256",
+          "status": 200,
+          "responseBytes": 147456,
+          "responseSHA256": "f2a9d8e5791d0821810090c400557387cbd642d7228961c7e4115f7282132a38",
+          "wasmBeforeBytes": 108396544,
+          "wasmAfterBytes": 108396544,
+          "samples": []
+        },
+        {
+          "index": 7,
+          "round": 2,
+          "fixture": "rgba8-64cap-near5MiB",
+          "flow": "extract512",
+          "status": 200,
+          "responseBytes": 524288,
+          "responseSHA256": "036eab0dcd98294f424a287aa2d8fb7edf0f40817e3c0d45c96629dc19f68525",
+          "wasmBeforeBytes": 108396544,
+          "wasmAfterBytes": 108396544,
+          "samples": []
+        },
+        {
+          "index": 8,
+          "round": 2,
+          "fixture": "rgba8-4K-near5MiB",
+          "flow": "thumbnail",
+          "status": 200,
+          "responseBytes": 20538,
+          "responseSHA256": "357e14588ea682e924a99ca41c99e53a6a046a4ddbb87d32171e1704be0a25b2",
+          "wasmBeforeBytes": 108396544,
+          "wasmAfterBytes": 108396544,
+          "samples": []
+        },
+        {
+          "index": 9,
+          "round": 2,
+          "fixture": "rgba8-ultrawide-near5MiB",
+          "flow": "extract512",
+          "status": 200,
+          "responseBytes": 438272,
+          "responseSHA256": "d538a4ca7fb38c40dc0fb5a0f326ea7ef05bb5cadd9a4443be2e83f58f0d69e8",
+          "wasmBeforeBytes": 108396544,
+          "wasmAfterBytes": 108396544,
+          "samples": []
+        },
+        {
+          "index": 10,
+          "round": 2,
+          "fixture": "rgba8-smaller-near5MiB",
+          "flow": "thumbnail",
+          "status": 200,
+          "responseBytes": 651418,
+          "responseSHA256": "fcc7259458ddaa07ca7924755810ee416bbd1595cfce7e4ea6f282d930c42685",
+          "wasmBeforeBytes": 108396544,
+          "wasmAfterBytes": 108396544,
+          "samples": []
+        },
+        {
+          "index": 11,
+          "round": 2,
+          "fixture": "rgba8-64cap-near5MiB",
+          "flow": "thumbnail",
+          "status": 200,
+          "responseBytes": 47310,
+          "responseSHA256": "123fcf1fe7b72a48acbac64c407a9d59126e54f5ab0c3be94310480bf4e5a914",
+          "wasmBeforeBytes": 108396544,
+          "wasmAfterBytes": 108396544,
+          "samples": []
+        },
+        {
+          "index": 12,
+          "round": 2,
+          "fixture": "rgba8-4K-near5MiB",
+          "flow": "extract256",
+          "status": 200,
+          "responseBytes": 147456,
+          "responseSHA256": "f2a9d8e5791d0821810090c400557387cbd642d7228961c7e4115f7282132a38",
+          "wasmBeforeBytes": 108396544,
+          "wasmAfterBytes": 108396544,
+          "samples": []
+        },
+        {
+          "index": 13,
+          "round": 3,
+          "fixture": "rgba8-64cap-near5MiB",
+          "flow": "extract512",
+          "status": 200,
+          "responseBytes": 524288,
+          "responseSHA256": "036eab0dcd98294f424a287aa2d8fb7edf0f40817e3c0d45c96629dc19f68525",
+          "wasmBeforeBytes": 108396544,
+          "wasmAfterBytes": 108396544,
+          "samples": []
+        },
+        {
+          "index": 14,
+          "round": 3,
+          "fixture": "rgba8-4K-near5MiB",
+          "flow": "thumbnail",
+          "status": 200,
+          "responseBytes": 20538,
+          "responseSHA256": "357e14588ea682e924a99ca41c99e53a6a046a4ddbb87d32171e1704be0a25b2",
+          "wasmBeforeBytes": 108396544,
+          "wasmAfterBytes": 108396544,
+          "samples": []
+        },
+        {
+          "index": 15,
+          "round": 3,
+          "fixture": "rgba8-ultrawide-near5MiB",
+          "flow": "extract512",
+          "status": 200,
+          "responseBytes": 438272,
+          "responseSHA256": "d538a4ca7fb38c40dc0fb5a0f326ea7ef05bb5cadd9a4443be2e83f58f0d69e8",
+          "wasmBeforeBytes": 108396544,
+          "wasmAfterBytes": 108396544,
+          "samples": []
+        },
+        {
+          "index": 16,
+          "round": 3,
+          "fixture": "rgba8-smaller-near5MiB",
+          "flow": "thumbnail",
+          "status": 200,
+          "responseBytes": 651418,
+          "responseSHA256": "fcc7259458ddaa07ca7924755810ee416bbd1595cfce7e4ea6f282d930c42685",
+          "wasmBeforeBytes": 108396544,
+          "wasmAfterBytes": 108396544,
+          "samples": []
+        },
+        {
+          "index": 17,
+          "round": 3,
+          "fixture": "rgba8-64cap-near5MiB",
+          "flow": "thumbnail",
+          "status": 200,
+          "responseBytes": 47310,
+          "responseSHA256": "123fcf1fe7b72a48acbac64c407a9d59126e54f5ab0c3be94310480bf4e5a914",
+          "wasmBeforeBytes": 108396544,
+          "wasmAfterBytes": 108396544,
+          "samples": []
+        },
+        {
+          "index": 18,
+          "round": 3,
+          "fixture": "rgba8-4K-near5MiB",
+          "flow": "extract256",
+          "status": 200,
+          "responseBytes": 147456,
+          "responseSHA256": "f2a9d8e5791d0821810090c400557387cbd642d7228961c7e4115f7282132a38",
+          "wasmBeforeBytes": 108396544,
+          "wasmAfterBytes": 108396544,
+          "samples": []
+        }
+      ]
+    },
+    {
+      "mode": "instrumented",
+      "requests": 18,
+      "wasmHighWaterBytes": 108396544,
+      "osProcessPeakWorkingSetBytes": 231612416,
+      "cases": [
+        {
+          "index": 1,
+          "round": 1,
+          "fixture": "rgba8-64cap-near5MiB",
+          "flow": "extract512",
+          "status": 200,
+          "responseBytes": 524288,
+          "responseSHA256": "036eab0dcd98294f424a287aa2d8fb7edf0f40817e3c0d45c96629dc19f68525",
+          "wasmBeforeBytes": 1376256,
+          "wasmAfterBytes": 108396544,
+          "samples": [
+            {
+              "stage": "request-start",
+              "wasmBytes": 1376256,
+              "calibrationBytes": 0,
+              "usedSize": 1093348,
+              "totalSize": 1585152,
+              "embedderHeapUsedSize": 515872,
+              "backingStorageSize": 0
+            },
+            {
+              "stage": "before-header-gate",
+              "wasmBytes": 1376256,
+              "calibrationBytes": 0,
+              "usedSize": 2939792,
+              "totalSize": 5779456,
+              "embedderHeapUsedSize": 902760,
+              "backingStorageSize": 10419637
+            },
+            {
+              "stage": "after-header-gate",
+              "wasmBytes": 1376256,
+              "calibrationBytes": 0,
+              "usedSize": 2982056,
+              "totalSize": 5779456,
+              "embedderHeapUsedSize": 902760,
+              "backingStorageSize": 10419637
+            },
+            {
+              "stage": "constructor-before",
+              "wasmBytes": 1376256,
+              "calibrationBytes": 0,
+              "usedSize": 3051948,
+              "totalSize": 5779456,
+              "embedderHeapUsedSize": 902760,
+              "backingStorageSize": 10419637
+            },
+            {
+              "stage": "constructor-after",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3129388,
+              "totalSize": 5779456,
+              "embedderHeapUsedSize": 902760,
+              "backingStorageSize": 10419637
+            },
+            {
+              "stage": "extract-after-decode",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3169140,
+              "totalSize": 5779456,
+              "embedderHeapUsedSize": 902760,
+              "backingStorageSize": 10419637
+            },
+            {
+              "stage": "extract-after-resize",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3210760,
+              "totalSize": 5779456,
+              "embedderHeapUsedSize": 902760,
+              "backingStorageSize": 10419637
+            },
+            {
+              "stage": "extract-after-pixel-copy",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3251428,
+              "totalSize": 5779456,
+              "embedderHeapUsedSize": 902760,
+              "backingStorageSize": 10943925
+            },
+            {
+              "stage": "request-finally",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3296880,
+              "totalSize": 5779456,
+              "embedderHeapUsedSize": 902760,
+              "backingStorageSize": 10943925
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "round": 1,
+          "fixture": "rgba8-4K-near5MiB",
+          "flow": "thumbnail",
+          "status": 200,
+          "responseBytes": 20538,
+          "responseSHA256": "357e14588ea682e924a99ca41c99e53a6a046a4ddbb87d32171e1704be0a25b2",
+          "wasmBeforeBytes": 108396544,
+          "wasmAfterBytes": 108396544,
+          "samples": [
+            {
+              "stage": "request-start",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3339004,
+              "totalSize": 5779456,
+              "embedderHeapUsedSize": 902760,
+              "backingStorageSize": 10943925
+            },
+            {
+              "stage": "before-header-gate",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 2615836,
+              "totalSize": 6041600,
+              "embedderHeapUsedSize": 336368,
+              "backingStorageSize": 10430207
+            },
+            {
+              "stage": "after-header-gate",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 2655928,
+              "totalSize": 6041600,
+              "embedderHeapUsedSize": 336368,
+              "backingStorageSize": 10430207
+            },
+            {
+              "stage": "constructor-before",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 2725616,
+              "totalSize": 6041600,
+              "embedderHeapUsedSize": 336368,
+              "backingStorageSize": 10430207
+            },
+            {
+              "stage": "constructor-after",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 2790520,
+              "totalSize": 6041600,
+              "embedderHeapUsedSize": 336368,
+              "backingStorageSize": 10430207
+            },
+            {
+              "stage": "thumbnail-after-decode",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 2830068,
+              "totalSize": 6041600,
+              "embedderHeapUsedSize": 336368,
+              "backingStorageSize": 10430207
+            },
+            {
+              "stage": "thumbnail-after-crop",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 2870968,
+              "totalSize": 6041600,
+              "embedderHeapUsedSize": 336368,
+              "backingStorageSize": 10430207
+            },
+            {
+              "stage": "thumbnail-after-resize",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 2910544,
+              "totalSize": 6041600,
+              "embedderHeapUsedSize": 336368,
+              "backingStorageSize": 10430207
+            },
+            {
+              "stage": "thumbnail-after-webp",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 2956040,
+              "totalSize": 6041600,
+              "embedderHeapUsedSize": 336368,
+              "backingStorageSize": 10450745
+            },
+            {
+              "stage": "request-finally",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 2999496,
+              "totalSize": 6303744,
+              "embedderHeapUsedSize": 336368,
+              "backingStorageSize": 10450745
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "round": 1,
+          "fixture": "rgba8-ultrawide-near5MiB",
+          "flow": "extract512",
+          "status": 200,
+          "responseBytes": 438272,
+          "responseSHA256": "d538a4ca7fb38c40dc0fb5a0f326ea7ef05bb5cadd9a4443be2e83f58f0d69e8",
+          "wasmBeforeBytes": 108396544,
+          "wasmAfterBytes": 108396544,
+          "samples": [
+            {
+              "stage": "request-start",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3032920,
+              "totalSize": 6303744,
+              "embedderHeapUsedSize": 463376,
+              "backingStorageSize": 10450745
+            },
+            {
+              "stage": "before-header-gate",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3878736,
+              "totalSize": 6828032,
+              "embedderHeapUsedSize": 901976,
+              "backingStorageSize": 20595364
+            },
+            {
+              "stage": "after-header-gate",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3920252,
+              "totalSize": 6828032,
+              "embedderHeapUsedSize": 901976,
+              "backingStorageSize": 20595364
+            },
+            {
+              "stage": "constructor-before",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3985140,
+              "totalSize": 6828032,
+              "embedderHeapUsedSize": 901976,
+              "backingStorageSize": 20595364
+            },
+            {
+              "stage": "constructor-after",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 4050028,
+              "totalSize": 6828032,
+              "embedderHeapUsedSize": 901976,
+              "backingStorageSize": 20595364
+            },
+            {
+              "stage": "extract-after-decode",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 4089836,
+              "totalSize": 6828032,
+              "embedderHeapUsedSize": 901976,
+              "backingStorageSize": 20595364
+            },
+            {
+              "stage": "extract-after-resize",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 4129528,
+              "totalSize": 6828032,
+              "embedderHeapUsedSize": 901976,
+              "backingStorageSize": 20595364
+            },
+            {
+              "stage": "extract-after-pixel-copy",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 4172436,
+              "totalSize": 7090176,
+              "embedderHeapUsedSize": 901976,
+              "backingStorageSize": 21033636
+            },
+            {
+              "stage": "request-finally",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 4215320,
+              "totalSize": 7090176,
+              "embedderHeapUsedSize": 901976,
+              "backingStorageSize": 21033636
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "round": 1,
+          "fixture": "rgba8-smaller-near5MiB",
+          "flow": "thumbnail",
+          "status": 200,
+          "responseBytes": 651418,
+          "responseSHA256": "fcc7259458ddaa07ca7924755810ee416bbd1595cfce7e4ea6f282d930c42685",
+          "wasmBeforeBytes": 108396544,
+          "wasmAfterBytes": 108396544,
+          "samples": [
+            {
+              "stage": "request-start",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 4248376,
+              "totalSize": 7090176,
+              "embedderHeapUsedSize": 901976,
+              "backingStorageSize": 21033636
+            },
+            {
+              "stage": "before-header-gate",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3349332,
+              "totalSize": 7090176,
+              "embedderHeapUsedSize": 577048,
+              "backingStorageSize": 10371586
+            },
+            {
+              "stage": "after-header-gate",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3389400,
+              "totalSize": 7090176,
+              "embedderHeapUsedSize": 577048,
+              "backingStorageSize": 10371586
+            },
+            {
+              "stage": "constructor-before",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3454196,
+              "totalSize": 7090176,
+              "embedderHeapUsedSize": 577048,
+              "backingStorageSize": 10371586
+            },
+            {
+              "stage": "constructor-after",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3519100,
+              "totalSize": 7090176,
+              "embedderHeapUsedSize": 577048,
+              "backingStorageSize": 10371586
+            },
+            {
+              "stage": "thumbnail-after-decode",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3564076,
+              "totalSize": 7090176,
+              "embedderHeapUsedSize": 577048,
+              "backingStorageSize": 10371586
+            },
+            {
+              "stage": "thumbnail-after-crop",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3604260,
+              "totalSize": 7090176,
+              "embedderHeapUsedSize": 577048,
+              "backingStorageSize": 10371586
+            },
+            {
+              "stage": "thumbnail-after-resize",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3643876,
+              "totalSize": 7090176,
+              "embedderHeapUsedSize": 577048,
+              "backingStorageSize": 10371586
+            },
+            {
+              "stage": "thumbnail-after-webp",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3683828,
+              "totalSize": 7090176,
+              "embedderHeapUsedSize": 577048,
+              "backingStorageSize": 11023004
+            },
+            {
+              "stage": "request-finally",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3726412,
+              "totalSize": 7090176,
+              "embedderHeapUsedSize": 577048,
+              "backingStorageSize": 11023004
+            }
+          ]
+        },
+        {
+          "index": 5,
+          "round": 1,
+          "fixture": "rgba8-64cap-near5MiB",
+          "flow": "thumbnail",
+          "status": 200,
+          "responseBytes": 47310,
+          "responseSHA256": "123fcf1fe7b72a48acbac64c407a9d59126e54f5ab0c3be94310480bf4e5a914",
+          "wasmBeforeBytes": 108396544,
+          "wasmAfterBytes": 108396544,
+          "samples": [
+            {
+              "stage": "request-start",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3759464,
+              "totalSize": 7090176,
+              "embedderHeapUsedSize": 577048,
+              "backingStorageSize": 11023004
+            },
+            {
+              "stage": "before-header-gate",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 4618276,
+              "totalSize": 7614464,
+              "embedderHeapUsedSize": 1160848,
+              "backingStorageSize": 20566591
+            },
+            {
+              "stage": "after-header-gate",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 4657752,
+              "totalSize": 7614464,
+              "embedderHeapUsedSize": 1160848,
+              "backingStorageSize": 20566591
+            },
+            {
+              "stage": "constructor-before",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 4722548,
+              "totalSize": 7614464,
+              "embedderHeapUsedSize": 1160848,
+              "backingStorageSize": 20566591
+            },
+            {
+              "stage": "constructor-after",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 4788352,
+              "totalSize": 7876608,
+              "embedderHeapUsedSize": 1160848,
+              "backingStorageSize": 20566591
+            },
+            {
+              "stage": "thumbnail-after-decode",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 4827900,
+              "totalSize": 7876608,
+              "embedderHeapUsedSize": 1160848,
+              "backingStorageSize": 20566591
+            },
+            {
+              "stage": "thumbnail-after-crop",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 4867516,
+              "totalSize": 7876608,
+              "embedderHeapUsedSize": 1160848,
+              "backingStorageSize": 20566591
+            },
+            {
+              "stage": "thumbnail-after-resize",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 4907092,
+              "totalSize": 7876608,
+              "embedderHeapUsedSize": 1160848,
+              "backingStorageSize": 20566591
+            },
+            {
+              "stage": "thumbnail-after-webp",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 4946912,
+              "totalSize": 7876608,
+              "embedderHeapUsedSize": 1160848,
+              "backingStorageSize": 20613901
+            },
+            {
+              "stage": "request-finally",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 4986488,
+              "totalSize": 7876608,
+              "embedderHeapUsedSize": 1160848,
+              "backingStorageSize": 20613901
+            }
+          ]
+        },
+        {
+          "index": 6,
+          "round": 1,
+          "fixture": "rgba8-4K-near5MiB",
+          "flow": "extract256",
+          "status": 200,
+          "responseBytes": 147456,
+          "responseSHA256": "f2a9d8e5791d0821810090c400557387cbd642d7228961c7e4115f7282132a38",
+          "wasmBeforeBytes": 108396544,
+          "wasmAfterBytes": 108396544,
+          "samples": [
+            {
+              "stage": "request-start",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3794976,
+              "totalSize": 8663040,
+              "embedderHeapUsedSize": 1160848,
+              "backingStorageSize": 20613901
+            },
+            {
+              "stage": "before-header-gate",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5863928,
+              "totalSize": 8925184,
+              "embedderHeapUsedSize": 1676704,
+              "backingStorageSize": 20577161
+            },
+            {
+              "stage": "after-header-gate",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5903496,
+              "totalSize": 8925184,
+              "embedderHeapUsedSize": 1676704,
+              "backingStorageSize": 20577161
+            },
+            {
+              "stage": "constructor-before",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5968384,
+              "totalSize": 8925184,
+              "embedderHeapUsedSize": 1676704,
+              "backingStorageSize": 20577161
+            },
+            {
+              "stage": "constructor-after",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 6033272,
+              "totalSize": 8925184,
+              "embedderHeapUsedSize": 1676704,
+              "backingStorageSize": 20577161
+            },
+            {
+              "stage": "extract-after-decode",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 6076288,
+              "totalSize": 8925184,
+              "embedderHeapUsedSize": 1676704,
+              "backingStorageSize": 20577161
+            },
+            {
+              "stage": "extract-after-resize",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 6116036,
+              "totalSize": 8925184,
+              "embedderHeapUsedSize": 1676704,
+              "backingStorageSize": 20577161
+            },
+            {
+              "stage": "extract-after-pixel-copy",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 6155932,
+              "totalSize": 8925184,
+              "embedderHeapUsedSize": 1676704,
+              "backingStorageSize": 20724617
+            },
+            {
+              "stage": "request-finally",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 6195524,
+              "totalSize": 8925184,
+              "embedderHeapUsedSize": 1676704,
+              "backingStorageSize": 20724617
+            }
+          ]
+        },
+        {
+          "index": 7,
+          "round": 2,
+          "fixture": "rgba8-64cap-near5MiB",
+          "flow": "extract512",
+          "status": 200,
+          "responseBytes": 524288,
+          "responseSHA256": "036eab0dcd98294f424a287aa2d8fb7edf0f40817e3c0d45c96629dc19f68525",
+          "wasmBeforeBytes": 108396544,
+          "wasmAfterBytes": 108396544,
+          "samples": [
+            {
+              "stage": "request-start",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 4858256,
+              "totalSize": 9973760,
+              "embedderHeapUsedSize": 1676704,
+              "backingStorageSize": 20724617
+            },
+            {
+              "stage": "before-header-gate",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 2218684,
+              "totalSize": 9449472,
+              "embedderHeapUsedSize": 257144,
+              "backingStorageSize": 10419637
+            },
+            {
+              "stage": "after-header-gate",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 2258776,
+              "totalSize": 9449472,
+              "embedderHeapUsedSize": 257144,
+              "backingStorageSize": 10419637
+            },
+            {
+              "stage": "constructor-before",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 2323664,
+              "totalSize": 9449472,
+              "embedderHeapUsedSize": 257144,
+              "backingStorageSize": 10419637
+            },
+            {
+              "stage": "constructor-after",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 2391656,
+              "totalSize": 9449472,
+              "embedderHeapUsedSize": 257144,
+              "backingStorageSize": 10419637
+            },
+            {
+              "stage": "extract-after-decode",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 2431296,
+              "totalSize": 9449472,
+              "embedderHeapUsedSize": 257144,
+              "backingStorageSize": 10419637
+            },
+            {
+              "stage": "extract-after-resize",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 2470988,
+              "totalSize": 9449472,
+              "embedderHeapUsedSize": 257144,
+              "backingStorageSize": 10419637
+            },
+            {
+              "stage": "extract-after-pixel-copy",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 2510884,
+              "totalSize": 9449472,
+              "embedderHeapUsedSize": 257144,
+              "backingStorageSize": 10943925
+            },
+            {
+              "stage": "request-finally",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 2552760,
+              "totalSize": 9449472,
+              "embedderHeapUsedSize": 257144,
+              "backingStorageSize": 10943925
+            }
+          ]
+        },
+        {
+          "index": 8,
+          "round": 2,
+          "fixture": "rgba8-4K-near5MiB",
+          "flow": "thumbnail",
+          "status": 200,
+          "responseBytes": 20538,
+          "responseSHA256": "357e14588ea682e924a99ca41c99e53a6a046a4ddbb87d32171e1704be0a25b2",
+          "wasmBeforeBytes": 108396544,
+          "wasmAfterBytes": 108396544,
+          "samples": [
+            {
+              "stage": "request-start",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 2585708,
+              "totalSize": 9449472,
+              "embedderHeapUsedSize": 257144,
+              "backingStorageSize": 10943925
+            },
+            {
+              "stage": "before-header-gate",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3389076,
+              "totalSize": 9449472,
+              "embedderHeapUsedSize": 760456,
+              "backingStorageSize": 21149500
+            },
+            {
+              "stage": "after-header-gate",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3428552,
+              "totalSize": 9449472,
+              "embedderHeapUsedSize": 760456,
+              "backingStorageSize": 21149500
+            },
+            {
+              "stage": "constructor-before",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3493348,
+              "totalSize": 9449472,
+              "embedderHeapUsedSize": 760456,
+              "backingStorageSize": 21149500
+            },
+            {
+              "stage": "constructor-after",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3560704,
+              "totalSize": 9449472,
+              "embedderHeapUsedSize": 760456,
+              "backingStorageSize": 21149500
+            },
+            {
+              "stage": "thumbnail-after-decode",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3600252,
+              "totalSize": 9449472,
+              "embedderHeapUsedSize": 760456,
+              "backingStorageSize": 21149500
+            },
+            {
+              "stage": "thumbnail-after-crop",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3640372,
+              "totalSize": 9449472,
+              "embedderHeapUsedSize": 760456,
+              "backingStorageSize": 21149500
+            },
+            {
+              "stage": "thumbnail-after-resize",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3679948,
+              "totalSize": 9449472,
+              "embedderHeapUsedSize": 760456,
+              "backingStorageSize": 21149500
+            },
+            {
+              "stage": "thumbnail-after-webp",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3719752,
+              "totalSize": 9449472,
+              "embedderHeapUsedSize": 760456,
+              "backingStorageSize": 21170038
+            },
+            {
+              "stage": "request-finally",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3758700,
+              "totalSize": 9449472,
+              "embedderHeapUsedSize": 760456,
+              "backingStorageSize": 21170038
+            }
+          ]
+        },
+        {
+          "index": 9,
+          "round": 2,
+          "fixture": "rgba8-ultrawide-near5MiB",
+          "flow": "extract512",
+          "status": 200,
+          "responseBytes": 438272,
+          "responseSHA256": "d538a4ca7fb38c40dc0fb5a0f326ea7ef05bb5cadd9a4443be2e83f58f0d69e8",
+          "wasmBeforeBytes": 108396544,
+          "wasmAfterBytes": 108396544,
+          "samples": [
+            {
+              "stage": "request-start",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3793700,
+              "totalSize": 9449472,
+              "embedderHeapUsedSize": 760456,
+              "backingStorageSize": 21170038
+            },
+            {
+              "stage": "before-header-gate",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 2512412,
+              "totalSize": 7614464,
+              "embedderHeapUsedSize": 411112,
+              "backingStorageSize": 10389789
+            },
+            {
+              "stage": "after-header-gate",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 2558312,
+              "totalSize": 7614464,
+              "embedderHeapUsedSize": 411112,
+              "backingStorageSize": 10389789
+            },
+            {
+              "stage": "constructor-before",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 2623368,
+              "totalSize": 7614464,
+              "embedderHeapUsedSize": 411112,
+              "backingStorageSize": 10389789
+            },
+            {
+              "stage": "constructor-after",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 2688508,
+              "totalSize": 7614464,
+              "embedderHeapUsedSize": 411112,
+              "backingStorageSize": 10389789
+            },
+            {
+              "stage": "extract-after-decode",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 2728148,
+              "totalSize": 7614464,
+              "embedderHeapUsedSize": 411112,
+              "backingStorageSize": 10389789
+            },
+            {
+              "stage": "extract-after-resize",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 2769488,
+              "totalSize": 7614464,
+              "embedderHeapUsedSize": 411112,
+              "backingStorageSize": 10389789
+            },
+            {
+              "stage": "extract-after-pixel-copy",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 2809436,
+              "totalSize": 7614464,
+              "embedderHeapUsedSize": 411112,
+              "backingStorageSize": 10828061
+            },
+            {
+              "stage": "request-finally",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 2859216,
+              "totalSize": 7614464,
+              "embedderHeapUsedSize": 411112,
+              "backingStorageSize": 10828061
+            }
+          ]
+        },
+        {
+          "index": 10,
+          "round": 2,
+          "fixture": "rgba8-smaller-near5MiB",
+          "flow": "thumbnail",
+          "status": 200,
+          "responseBytes": 651418,
+          "responseSHA256": "fcc7259458ddaa07ca7924755810ee416bbd1595cfce7e4ea6f282d930c42685",
+          "wasmBeforeBytes": 108396544,
+          "wasmAfterBytes": 108396544,
+          "samples": [
+            {
+              "stage": "request-start",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 2892296,
+              "totalSize": 7614464,
+              "embedderHeapUsedSize": 411112,
+              "backingStorageSize": 10828061
+            },
+            {
+              "stage": "before-header-gate",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 4934180,
+              "totalSize": 7876608,
+              "embedderHeapUsedSize": 799656,
+              "backingStorageSize": 20979111
+            },
+            {
+              "stage": "after-header-gate",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 4977228,
+              "totalSize": 8138752,
+              "embedderHeapUsedSize": 799656,
+              "backingStorageSize": 20979111
+            },
+            {
+              "stage": "constructor-before",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5042024,
+              "totalSize": 8138752,
+              "embedderHeapUsedSize": 799656,
+              "backingStorageSize": 20979111
+            },
+            {
+              "stage": "constructor-after",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5106868,
+              "totalSize": 8138752,
+              "embedderHeapUsedSize": 799656,
+              "backingStorageSize": 20979111
+            },
+            {
+              "stage": "thumbnail-after-decode",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5146416,
+              "totalSize": 8138752,
+              "embedderHeapUsedSize": 799656,
+              "backingStorageSize": 20979111
+            },
+            {
+              "stage": "thumbnail-after-crop",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5186536,
+              "totalSize": 8138752,
+              "embedderHeapUsedSize": 799656,
+              "backingStorageSize": 20979111
+            },
+            {
+              "stage": "thumbnail-after-resize",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5229600,
+              "totalSize": 8400896,
+              "embedderHeapUsedSize": 799656,
+              "backingStorageSize": 20979111
+            },
+            {
+              "stage": "thumbnail-after-webp",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5269420,
+              "totalSize": 8400896,
+              "embedderHeapUsedSize": 799656,
+              "backingStorageSize": 21630529
+            },
+            {
+              "stage": "request-finally",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5308568,
+              "totalSize": 8400896,
+              "embedderHeapUsedSize": 799656,
+              "backingStorageSize": 21630529
+            }
+          ]
+        },
+        {
+          "index": 11,
+          "round": 2,
+          "fixture": "rgba8-64cap-near5MiB",
+          "flow": "thumbnail",
+          "status": 200,
+          "responseBytes": 47310,
+          "responseSHA256": "123fcf1fe7b72a48acbac64c407a9d59126e54f5ab0c3be94310480bf4e5a914",
+          "wasmBeforeBytes": 108396544,
+          "wasmAfterBytes": 108396544,
+          "samples": [
+            {
+              "stage": "request-start",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5341620,
+              "totalSize": 8400896,
+              "embedderHeapUsedSize": 799656,
+              "backingStorageSize": 21630529
+            },
+            {
+              "stage": "before-header-gate",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 4763644,
+              "totalSize": 9973760,
+              "embedderHeapUsedSize": 1278344,
+              "backingStorageSize": 21023066
+            },
+            {
+              "stage": "after-header-gate",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 4803168,
+              "totalSize": 9973760,
+              "embedderHeapUsedSize": 1278344,
+              "backingStorageSize": 21023066
+            },
+            {
+              "stage": "constructor-before",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 4868624,
+              "totalSize": 9973760,
+              "embedderHeapUsedSize": 1278344,
+              "backingStorageSize": 21023066
+            },
+            {
+              "stage": "constructor-after",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 4933420,
+              "totalSize": 9973760,
+              "embedderHeapUsedSize": 1278344,
+              "backingStorageSize": 21023066
+            },
+            {
+              "stage": "thumbnail-after-decode",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 4972968,
+              "totalSize": 9973760,
+              "embedderHeapUsedSize": 1278344,
+              "backingStorageSize": 21023066
+            },
+            {
+              "stage": "thumbnail-after-crop",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5012584,
+              "totalSize": 9973760,
+              "embedderHeapUsedSize": 1278344,
+              "backingStorageSize": 21023066
+            },
+            {
+              "stage": "thumbnail-after-resize",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5052160,
+              "totalSize": 9973760,
+              "embedderHeapUsedSize": 1278344,
+              "backingStorageSize": 21023066
+            },
+            {
+              "stage": "thumbnail-after-webp",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5093632,
+              "totalSize": 9973760,
+              "embedderHeapUsedSize": 1278344,
+              "backingStorageSize": 21070376
+            },
+            {
+              "stage": "request-finally",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5132540,
+              "totalSize": 9973760,
+              "embedderHeapUsedSize": 1278344,
+              "backingStorageSize": 21070376
+            }
+          ]
+        },
+        {
+          "index": 12,
+          "round": 2,
+          "fixture": "rgba8-4K-near5MiB",
+          "flow": "extract256",
+          "status": 200,
+          "responseBytes": 147456,
+          "responseSHA256": "f2a9d8e5791d0821810090c400557387cbd642d7228961c7e4115f7282132a38",
+          "wasmBeforeBytes": 108396544,
+          "wasmAfterBytes": 108396544,
+          "samples": [
+            {
+              "stage": "request-start",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5165580,
+              "totalSize": 9973760,
+              "embedderHeapUsedSize": 1278344,
+              "backingStorageSize": 21070376
+            },
+            {
+              "stage": "before-header-gate",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 7215528,
+              "totalSize": 11546624,
+              "embedderHeapUsedSize": 1842368,
+              "backingStorageSize": 31280047
+            },
+            {
+              "stage": "after-header-gate",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 7255096,
+              "totalSize": 11546624,
+              "embedderHeapUsedSize": 1842368,
+              "backingStorageSize": 31280047
+            },
+            {
+              "stage": "constructor-before",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 7320852,
+              "totalSize": 11808768,
+              "embedderHeapUsedSize": 1842368,
+              "backingStorageSize": 31280047
+            },
+            {
+              "stage": "constructor-after",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 7385740,
+              "totalSize": 11808768,
+              "embedderHeapUsedSize": 1842368,
+              "backingStorageSize": 31280047
+            },
+            {
+              "stage": "extract-after-decode",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 7425380,
+              "totalSize": 11808768,
+              "embedderHeapUsedSize": 1842368,
+              "backingStorageSize": 31280047
+            },
+            {
+              "stage": "extract-after-resize",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 7465072,
+              "totalSize": 11808768,
+              "embedderHeapUsedSize": 1842368,
+              "backingStorageSize": 31280047
+            },
+            {
+              "stage": "extract-after-pixel-copy",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 7505260,
+              "totalSize": 11808768,
+              "embedderHeapUsedSize": 1842368,
+              "backingStorageSize": 31427503
+            },
+            {
+              "stage": "request-finally",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 7544028,
+              "totalSize": 11808768,
+              "embedderHeapUsedSize": 1842368,
+              "backingStorageSize": 31427503
+            }
+          ]
+        },
+        {
+          "index": 13,
+          "round": 3,
+          "fixture": "rgba8-64cap-near5MiB",
+          "flow": "extract512",
+          "status": 200,
+          "responseBytes": 524288,
+          "responseSHA256": "036eab0dcd98294f424a287aa2d8fb7edf0f40817e3c0d45c96629dc19f68525",
+          "wasmBeforeBytes": 108396544,
+          "wasmAfterBytes": 108396544,
+          "samples": [
+            {
+              "stage": "request-start",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 7577532,
+              "totalSize": 12070912,
+              "embedderHeapUsedSize": 1842368,
+              "backingStorageSize": 31427503
+            },
+            {
+              "stage": "before-header-gate",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3303632,
+              "totalSize": 11284480,
+              "embedderHeapUsedSize": 577160,
+              "backingStorageSize": 10419637
+            },
+            {
+              "stage": "after-header-gate",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3343888,
+              "totalSize": 11284480,
+              "embedderHeapUsedSize": 577160,
+              "backingStorageSize": 10419637
+            },
+            {
+              "stage": "constructor-before",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3408776,
+              "totalSize": 11284480,
+              "embedderHeapUsedSize": 577160,
+              "backingStorageSize": 10419637
+            },
+            {
+              "stage": "constructor-after",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3473772,
+              "totalSize": 11284480,
+              "embedderHeapUsedSize": 577160,
+              "backingStorageSize": 10419637
+            },
+            {
+              "stage": "extract-after-decode",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3513412,
+              "totalSize": 11284480,
+              "embedderHeapUsedSize": 577160,
+              "backingStorageSize": 10419637
+            },
+            {
+              "stage": "extract-after-resize",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3553104,
+              "totalSize": 11284480,
+              "embedderHeapUsedSize": 577160,
+              "backingStorageSize": 10419637
+            },
+            {
+              "stage": "extract-after-pixel-copy",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3595984,
+              "totalSize": 11284480,
+              "embedderHeapUsedSize": 577160,
+              "backingStorageSize": 10943925
+            },
+            {
+              "stage": "request-finally",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3637228,
+              "totalSize": 11284480,
+              "embedderHeapUsedSize": 577160,
+              "backingStorageSize": 10943925
+            }
+          ]
+        },
+        {
+          "index": 14,
+          "round": 3,
+          "fixture": "rgba8-4K-near5MiB",
+          "flow": "thumbnail",
+          "status": 200,
+          "responseBytes": 20538,
+          "responseSHA256": "357e14588ea682e924a99ca41c99e53a6a046a4ddbb87d32171e1704be0a25b2",
+          "wasmBeforeBytes": 108396544,
+          "wasmAfterBytes": 108396544,
+          "samples": [
+            {
+              "stage": "request-start",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3670176,
+              "totalSize": 11284480,
+              "embedderHeapUsedSize": 577160,
+              "backingStorageSize": 10943925
+            },
+            {
+              "stage": "before-header-gate",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5716296,
+              "totalSize": 11284480,
+              "embedderHeapUsedSize": 1116520,
+              "backingStorageSize": 21153596
+            },
+            {
+              "stage": "after-header-gate",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5755772,
+              "totalSize": 11284480,
+              "embedderHeapUsedSize": 1116520,
+              "backingStorageSize": 21153596
+            },
+            {
+              "stage": "constructor-before",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5823432,
+              "totalSize": 11284480,
+              "embedderHeapUsedSize": 1116520,
+              "backingStorageSize": 21153596
+            },
+            {
+              "stage": "constructor-after",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5888228,
+              "totalSize": 11284480,
+              "embedderHeapUsedSize": 1116520,
+              "backingStorageSize": 21153596
+            },
+            {
+              "stage": "thumbnail-after-decode",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5927776,
+              "totalSize": 11284480,
+              "embedderHeapUsedSize": 1116520,
+              "backingStorageSize": 21153596
+            },
+            {
+              "stage": "thumbnail-after-crop",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5967748,
+              "totalSize": 11284480,
+              "embedderHeapUsedSize": 1116520,
+              "backingStorageSize": 21153596
+            },
+            {
+              "stage": "thumbnail-after-resize",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 6007324,
+              "totalSize": 11284480,
+              "embedderHeapUsedSize": 1116520,
+              "backingStorageSize": 21153596
+            },
+            {
+              "stage": "thumbnail-after-webp",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 6047128,
+              "totalSize": 11284480,
+              "embedderHeapUsedSize": 1116520,
+              "backingStorageSize": 21174134
+            },
+            {
+              "stage": "request-finally",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 6088996,
+              "totalSize": 11284480,
+              "embedderHeapUsedSize": 1116520,
+              "backingStorageSize": 21174134
+            }
+          ]
+        },
+        {
+          "index": 15,
+          "round": 3,
+          "fixture": "rgba8-ultrawide-near5MiB",
+          "flow": "extract512",
+          "status": 200,
+          "responseBytes": 438272,
+          "responseSHA256": "d538a4ca7fb38c40dc0fb5a0f326ea7ef05bb5cadd9a4443be2e83f58f0d69e8",
+          "wasmBeforeBytes": 108396544,
+          "wasmAfterBytes": 108396544,
+          "samples": [
+            {
+              "stage": "request-start",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 6122036,
+              "totalSize": 11284480,
+              "embedderHeapUsedSize": 1116520,
+              "backingStorageSize": 21174134
+            },
+            {
+              "stage": "before-header-gate",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5467732,
+              "totalSize": 11546624,
+              "embedderHeapUsedSize": 1501280,
+              "backingStorageSize": 21109082
+            },
+            {
+              "stage": "after-header-gate",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5507300,
+              "totalSize": 11546624,
+              "embedderHeapUsedSize": 1501280,
+              "backingStorageSize": 21109082
+            },
+            {
+              "stage": "constructor-before",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5572188,
+              "totalSize": 11546624,
+              "embedderHeapUsedSize": 1501280,
+              "backingStorageSize": 21109082
+            },
+            {
+              "stage": "constructor-after",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5637076,
+              "totalSize": 11546624,
+              "embedderHeapUsedSize": 1501280,
+              "backingStorageSize": 21109082
+            },
+            {
+              "stage": "extract-after-decode",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5679280,
+              "totalSize": 11546624,
+              "embedderHeapUsedSize": 1501280,
+              "backingStorageSize": 21109082
+            },
+            {
+              "stage": "extract-after-resize",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5718972,
+              "totalSize": 11546624,
+              "embedderHeapUsedSize": 1501280,
+              "backingStorageSize": 21109082
+            },
+            {
+              "stage": "extract-after-pixel-copy",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5758868,
+              "totalSize": 11546624,
+              "embedderHeapUsedSize": 1501280,
+              "backingStorageSize": 21547354
+            },
+            {
+              "stage": "request-finally",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5797620,
+              "totalSize": 11546624,
+              "embedderHeapUsedSize": 1501280,
+              "backingStorageSize": 21547354
+            }
+          ]
+        },
+        {
+          "index": 16,
+          "round": 3,
+          "fixture": "rgba8-smaller-near5MiB",
+          "flow": "thumbnail",
+          "status": 200,
+          "responseBytes": 651418,
+          "responseSHA256": "fcc7259458ddaa07ca7924755810ee416bbd1595cfce7e4ea6f282d930c42685",
+          "wasmBeforeBytes": 108396544,
+          "wasmAfterBytes": 108396544,
+          "samples": [
+            {
+              "stage": "request-start",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5830568,
+              "totalSize": 11546624,
+              "embedderHeapUsedSize": 1501280,
+              "backingStorageSize": 21547354
+            },
+            {
+              "stage": "before-header-gate",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3420332,
+              "totalSize": 11546624,
+              "embedderHeapUsedSize": 633744,
+              "backingStorageSize": 10371586
+            },
+            {
+              "stage": "after-header-gate",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3460216,
+              "totalSize": 11546624,
+              "embedderHeapUsedSize": 633744,
+              "backingStorageSize": 10371586
+            },
+            {
+              "stage": "constructor-before",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3525012,
+              "totalSize": 11546624,
+              "embedderHeapUsedSize": 633744,
+              "backingStorageSize": 10371586
+            },
+            {
+              "stage": "constructor-after",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3589916,
+              "totalSize": 11546624,
+              "embedderHeapUsedSize": 633744,
+              "backingStorageSize": 10371586
+            },
+            {
+              "stage": "thumbnail-after-decode",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3629464,
+              "totalSize": 11546624,
+              "embedderHeapUsedSize": 633744,
+              "backingStorageSize": 10371586
+            },
+            {
+              "stage": "thumbnail-after-crop",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3670616,
+              "totalSize": 11546624,
+              "embedderHeapUsedSize": 633744,
+              "backingStorageSize": 10371586
+            },
+            {
+              "stage": "thumbnail-after-resize",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3710224,
+              "totalSize": 11546624,
+              "embedderHeapUsedSize": 633744,
+              "backingStorageSize": 10371586
+            },
+            {
+              "stage": "thumbnail-after-webp",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3750060,
+              "totalSize": 11546624,
+              "embedderHeapUsedSize": 633744,
+              "backingStorageSize": 11023004
+            },
+            {
+              "stage": "request-finally",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3791112,
+              "totalSize": 11546624,
+              "embedderHeapUsedSize": 633744,
+              "backingStorageSize": 11023004
+            }
+          ]
+        },
+        {
+          "index": 17,
+          "round": 3,
+          "fixture": "rgba8-64cap-near5MiB",
+          "flow": "thumbnail",
+          "status": 200,
+          "responseBytes": 47310,
+          "responseSHA256": "123fcf1fe7b72a48acbac64c407a9d59126e54f5ab0c3be94310480bf4e5a914",
+          "wasmBeforeBytes": 108396544,
+          "wasmAfterBytes": 108396544,
+          "samples": [
+            {
+              "stage": "request-start",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 3824164,
+              "totalSize": 11546624,
+              "embedderHeapUsedSize": 633744,
+              "backingStorageSize": 11023004
+            },
+            {
+              "stage": "before-header-gate",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5869752,
+              "totalSize": 11546624,
+              "embedderHeapUsedSize": 1087744,
+              "backingStorageSize": 21222105
+            },
+            {
+              "stage": "after-header-gate",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5909228,
+              "totalSize": 11546624,
+              "embedderHeapUsedSize": 1087744,
+              "backingStorageSize": 21222105
+            },
+            {
+              "stage": "constructor-before",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5974024,
+              "totalSize": 11546624,
+              "embedderHeapUsedSize": 1087744,
+              "backingStorageSize": 21222105
+            },
+            {
+              "stage": "constructor-after",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 6038820,
+              "totalSize": 11546624,
+              "embedderHeapUsedSize": 1087744,
+              "backingStorageSize": 21222105
+            },
+            {
+              "stage": "thumbnail-after-decode",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 6078368,
+              "totalSize": 11546624,
+              "embedderHeapUsedSize": 1087744,
+              "backingStorageSize": 21222105
+            },
+            {
+              "stage": "thumbnail-after-crop",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 6124372,
+              "totalSize": 11546624,
+              "embedderHeapUsedSize": 1087744,
+              "backingStorageSize": 21222105
+            },
+            {
+              "stage": "thumbnail-after-resize",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 6163948,
+              "totalSize": 11546624,
+              "embedderHeapUsedSize": 1087744,
+              "backingStorageSize": 21222105
+            },
+            {
+              "stage": "thumbnail-after-webp",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 6203876,
+              "totalSize": 11546624,
+              "embedderHeapUsedSize": 1087744,
+              "backingStorageSize": 21269415
+            },
+            {
+              "stage": "request-finally",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 6242760,
+              "totalSize": 11546624,
+              "embedderHeapUsedSize": 1087744,
+              "backingStorageSize": 21269415
+            }
+          ]
+        },
+        {
+          "index": 18,
+          "round": 3,
+          "fixture": "rgba8-4K-near5MiB",
+          "flow": "extract256",
+          "status": 200,
+          "responseBytes": 147456,
+          "responseSHA256": "f2a9d8e5791d0821810090c400557387cbd642d7228961c7e4115f7282132a38",
+          "wasmBeforeBytes": 108396544,
+          "wasmAfterBytes": 108396544,
+          "samples": [
+            {
+              "stage": "request-start",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 6275800,
+              "totalSize": 11546624,
+              "embedderHeapUsedSize": 1087744,
+              "backingStorageSize": 21269415
+            },
+            {
+              "stage": "before-header-gate",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5617748,
+              "totalSize": 11546624,
+              "embedderHeapUsedSize": 1622248,
+              "backingStorageSize": 20577161
+            },
+            {
+              "stage": "after-header-gate",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5657316,
+              "totalSize": 11546624,
+              "embedderHeapUsedSize": 1622248,
+              "backingStorageSize": 20577161
+            },
+            {
+              "stage": "constructor-before",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5722204,
+              "totalSize": 11546624,
+              "embedderHeapUsedSize": 1622248,
+              "backingStorageSize": 20577161
+            },
+            {
+              "stage": "constructor-after",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5788568,
+              "totalSize": 11546624,
+              "embedderHeapUsedSize": 1622248,
+              "backingStorageSize": 20577161
+            },
+            {
+              "stage": "extract-after-decode",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5828208,
+              "totalSize": 11546624,
+              "embedderHeapUsedSize": 1622248,
+              "backingStorageSize": 20577161
+            },
+            {
+              "stage": "extract-after-resize",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5868024,
+              "totalSize": 11546624,
+              "embedderHeapUsedSize": 1622248,
+              "backingStorageSize": 20577161
+            },
+            {
+              "stage": "extract-after-pixel-copy",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5908088,
+              "totalSize": 11546624,
+              "embedderHeapUsedSize": 1622248,
+              "backingStorageSize": 20724617
+            },
+            {
+              "stage": "request-finally",
+              "wasmBytes": 108396544,
+              "calibrationBytes": 0,
+              "usedSize": 5947096,
+              "totalSize": 11546624,
+              "embedderHeapUsedSize": 1622248,
+              "backingStorageSize": 20724617
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "coldPairs": [
+    {
+      "fixture": "rgba8-4K-near5MiB",
+      "flow": "extract256",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "fixture": "rgba8-4K-near5MiB",
+      "flow": "thumbnail",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "fixture": "rgba8-64cap-near5MiB",
+      "flow": "extract256",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "fixture": "rgba8-64cap-near5MiB",
+      "flow": "extract512",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "fixture": "rgba8-64cap-near5MiB",
+      "flow": "thumbnail",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "fixture": "rgba8-highaspect",
+      "flow": "extract512",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "fixture": "rgba8-highaspect",
+      "flow": "thumbnail",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "fixture": "rgba8-noresize",
+      "flow": "extract256",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "fixture": "rgba8-noresize",
+      "flow": "extract512",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    }
+  ],
+  "warmPairs": [
+    {
+      "index": 1,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "index": 2,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "index": 3,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "index": 4,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "index": 5,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "index": 6,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "index": 7,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "index": 8,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "index": 9,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "index": 10,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "index": 11,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "index": 12,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "index": 13,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "index": 14,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "index": 15,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "index": 16,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "index": 17,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    },
+    {
+      "index": 18,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmEqual": true
+    }
+  ],
+  "worstWarmCheckpoint": {
+    "index": 13,
+    "round": 3,
+    "fixture": "rgba8-64cap-near5MiB",
+    "flow": "extract512",
+    "stage": "request-start",
+    "wasmBytes": 108396544,
+    "calibrationBytes": 0,
+    "usedSize": 7577532,
+    "totalSize": 12070912,
+    "embedderHeapUsedSize": 1842368,
+    "backingStorageSize": 31427503,
+    "diagnosticAccountingBytes": 149243947
+  },
+  "rejections": {
+    "count": 11,
+    "allBeforeDecode": true,
+    "sixteenBit": 8
+  },
+  "allResponsesAgree": true,
+  "failures": [],
+  "inspectorRetentionAudit": {
+    "evaluateMethod": "Debugger.evaluateOnCallFrame",
+    "returnByValue": true,
+    "expressionReturns": "Only stage string and numeric memory sizes; no fixture, Request, Response or PhotonImage handles.",
+    "resumeEveryPause": true,
+    "workerState": "One Photon memory reference plus current stage and reset-per-request numeric stage rows/counter. No fixture arrays.",
+    "control": "No inspector, processor stage injection or constructor wrapper; same diagnostic endpoint for final WASM capacity.",
+    "console": "Original middleware logs request metadata only; no image bytes.",
+    "v8Reference": "https://github.com/v8/v8/blob/main/src/inspector/v8-debugger-agent-impl.cc#L1468"
+  },
+  "limitations": [
+    "The 142.330MiB checkpoint is observed staged accounting, not a continuous total-isolate peak and not a Cloudflare production enforcement result.",
+    "WASM stayed103.375MiB through18mixedrequests per mode. External/JS counters dropped naturally on request13, suggesting uncollected buffers rather than growing retained WASM. No forced GC used.",
+    "Standalone workerd lacks production128MiB enforcement; natural GC scheduling may differ. This candidate is not marked safe/pass.",
+    "One oversized-thumbnail HTTP upload returned an Undici transport failure after early response; service-binding-proxy retry returned400 before decode. Original failed attempt retained in attempts/.",
+    "Fixtures exercise deterministic PNG scanline entropy, selected shapes and18sequentialrequests. Concurrent requests and other image formats are not measured here."
+  ],
+  "publicReceiptNormalization": {
+    "paths": "Source checkout and private probe workspace replaced by placeholders; measurements and source hashes unchanged.",
+    "originalReceiptSHA256": "a47889c604de00751447b1270a7132bacd64223976b85441eb897ba93a931fba"
+  }
+}

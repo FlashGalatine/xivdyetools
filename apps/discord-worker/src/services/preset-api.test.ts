@@ -7,6 +7,7 @@ import {
   isModerator,
   getPresets,
   getPreset,
+  getPresetBatch,
   getPresetByName,
   getRandomPreset,
   submitPreset,
@@ -870,5 +871,95 @@ describe('preset-api.ts', () => {
         'https://api.example.com/api/v1/presets/12345678-1234-4123-8123-123456789abc',
       );
     });
+  });
+});
+
+
+describe('getPresetBatch strict favorites contract', () => {
+  const a = 'saved-a';
+  const b = 'saved-b';
+  const preset = { id: a, name: 'First', category_id: 'aesthetics', status: 'approved' };
+  beforeEach(() => vi.clearAllMocks());
+  it.each([1, 10, 50])('sends %i IDs in one signed acting-user POST body', async (count) => {
+    const env = createMockEnv({ withServiceBinding: true, withBotSigningSecret: true });
+    const ids = Array.from({ length: count }, (_, i) => `saved-${i}`);
+    env.PRESETS_API.fetch.mockResolvedValue(Response.json({
+      success: true, presets: ids.map((id) => ({ ...preset, id })), missing_ids: [],
+    }));
+    const result = await getPresetBatch(env, ids, '12345678901234567', { requestId: 'trace-42' });
+    expect(result.presets.map((p) => p.id)).toEqual(ids);
+    expect(env.PRESETS_API.fetch).toHaveBeenCalledTimes(1);
+    const request = env.PRESETS_API.fetch.mock.calls[0][0] as Request;
+    const body = await request.text();
+    expect(request.url).toBe('https://internal/api/v1/presets/batch');
+    expect(request.method).toBe('POST');
+    expect(JSON.parse(body)).toEqual({ ids });
+    expect(request.headers.get('X-User-Discord-ID')).toBe('12345678901234567');
+    expect(request.headers.get('X-Request-ID')).toBe('trace-42');
+    const signature = await createBotSignatureV2({
+      method: 'POST', path: '/api/v1/presets/batch', body,
+      timestamp: request.headers.get('X-Request-Timestamp')!,
+      nonce: request.headers.get(BOT_SIGNATURE_NONCE_HEADER)!,
+      userDiscordId: '12345678901234567',
+    }, env.BOT_SIGNING_SECRET);
+    expect(request.headers.get(BOT_SIGNATURE_V2_HEADER)).toBe(signature);
+  });
+  it('deduplicates requested IDs and restores favorite order from an unordered response', async () => {
+    const env = createMockEnv({ withServiceBinding: true, withBotSigningSecret: true });
+    env.PRESETS_API.fetch.mockResolvedValue(Response.json({
+      success: true, presets: [{ ...preset, id: b }, preset], missing_ids: ['missing'],
+    }));
+    const result = await getPresetBatch(env, [a, 'missing', b, a], 'user');
+    expect(result.presets.map((p) => p.id)).toEqual([a, b]);
+    expect(result.missing_ids).toEqual(['missing']);
+    const request = env.PRESETS_API.fetch.mock.calls[0][0] as Request;
+    expect(await request.json()).toEqual({ ids: [a, 'missing', b] });
+  });
+  it('accepts an explicit all-missing classification without calling individual GETs', async () => {
+    const env = createMockEnv({ withServiceBinding: true, withBotSigningSecret: true });
+    env.PRESETS_API.fetch.mockResolvedValue(Response.json({ success: true, presets: [], missing_ids: [b, a] }));
+    await expect(getPresetBatch(env, [a, b], 'user')).resolves.toEqual({ presets: [], missing_ids: [a, b] });
+    expect(env.PRESETS_API.fetch).toHaveBeenCalledTimes(1);
+  });
+  it.each([
+    null,
+    { success: false, presets: [preset], missing_ids: [b] },
+    { success: true, presets: [preset] },
+    { success: true, presets: [preset], missing_ids: [] },
+    { success: true, presets: [preset, preset], missing_ids: [b] },
+    { success: true, presets: [preset], missing_ids: [b, b] },
+    { success: true, presets: [preset], missing_ids: [a, b] },
+    { success: true, presets: [preset], missing_ids: [b, 'extra'] },
+    { success: true, presets: [preset, { ...preset, id: 'extra' }], missing_ids: [b] },
+    { success: true, presets: [{ ...preset, name: 7 }], missing_ids: [b] },
+    { success: true, presets: [{ ...preset, category_id: null }], missing_ids: [b] },
+    { success: true, presets: [{ ...preset, status: 'pending' }], missing_ids: [b] },
+    { success: true, presets: [null], missing_ids: [b] },
+    { success: true, presets: [preset], missing_ids: [7] },
+  ])('rejects malformed or incomplete classifications as upstream: %j', async (body) => {
+    const env = createMockEnv({ withServiceBinding: true, withBotSigningSecret: true });
+    env.PRESETS_API.fetch.mockResolvedValue(Response.json(body));
+    await expect(getPresetBatch(env, [a, b], 'user')).rejects.toMatchObject({ statusCode: 502 });
+    expect(env.PRESETS_API.fetch).toHaveBeenCalledTimes(1);
+  });
+  it.each([{ ids: [] }, { ids: Array<string>(51).fill(a) }, { ids: [''] }, { ids: ['x'.repeat(129)] }])('rejects invalid input without a request: %j', async ({ ids }) => {
+    const env = createMockEnv({ withServiceBinding: true, withBotSigningSecret: true });
+    await expect(getPresetBatch(env, ids, 'user')).rejects.toBeInstanceOf(PresetAPIError);
+    expect(env.PRESETS_API.fetch).not.toHaveBeenCalled();
+  });
+  it('requires signed acting-user context before making a request', async () => {
+    const env = createMockEnv({ withServiceBinding: true });
+    await expect(getPresetBatch(env, [a], 'user')).rejects.toBeInstanceOf(PresetAPIError);
+    env.BOT_SIGNING_SECRET = 't'.repeat(32);
+    await expect(getPresetBatch(env, [a], '')).rejects.toBeInstanceOf(PresetAPIError);
+    expect(env.PRESETS_API.fetch).not.toHaveBeenCalled();
+  });
+  it.each(['transport', 'json', 'http'])('propagates %s failures with one request and no fanout', async (failure) => {
+    const env = createMockEnv({ withServiceBinding: true, withBotSigningSecret: true });
+    if (failure === 'transport') env.PRESETS_API.fetch.mockRejectedValue(new Error('network'));
+    if (failure === 'json') env.PRESETS_API.fetch.mockResolvedValue(new Response('invalid'));
+    if (failure === 'http') env.PRESETS_API.fetch.mockResolvedValue(Response.json({ error: 'busy' }, { status: 429 }));
+    await expect(getPresetBatch(env, [a], 'user')).rejects.toBeInstanceOf(PresetAPIError);
+    expect(env.PRESETS_API.fetch).toHaveBeenCalledTimes(1);
   });
 });

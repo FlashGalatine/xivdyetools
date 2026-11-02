@@ -90,6 +90,7 @@ const commands = [
             required: true,
             autocomplete: true,
           },
+          { name: 'additional_user', description: 'Additional explicit account ID to review', type: OptionType.STRING, required: false, autocomplete: true },
         ],
       },
       {

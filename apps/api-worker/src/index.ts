@@ -92,9 +92,9 @@ app.use('*', async (c, next) => {
   }
 });
 
-// 4. CORS — permissive for public read-only API (POST exists only for
-//    /v1/chara/resolve, whose body is twelve small integers — still anonymous,
-//    still idempotent, still cacheable per key behind it).
+// 4. CORS — permissive for anonymous reads and bounded character-model POSTs;
+//    character responses cache per key behind the envelope. The separate
+//    internal telemetry POST also applies its own Origin gate.
 //    FINDING-025 / API-11: `X-API-Key` is no longer advertised — no API-key
 //    feature exists; add it back with the feature, not before.
 app.use(
@@ -171,8 +171,8 @@ app.route('/v1/match', matchRouter);
 // wheels). Read-only, deterministic, cached like the dye routes.
 app.route('/v1/wheels', wheelsRouter);
 app.route('/v1/harmony', harmonyRouter);
-// .chara equipment-model resolution (web-app Swatch Matcher import) — one
-// XIVAPI search per file, per-key edge cache, icons proxied. See chara/router.ts.
+// .chara equipment-model resolution for Glamour Reader, facewear links and
+// bot /glamour — cached Item/Glasses families and validated icon transport.
 app.route('/v1/chara', charaRouter);
 
 // Opt-in web-app usage telemetry → Analytics Engine. Internal, undocumented,

@@ -8,6 +8,39 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [Unreleased]
+
+### Security
+
+- Separate package build/test/packing from the main-only, production-approved OIDC publisher. Verify the selected same-run artifact, package identities, hashes and workspace pins before publishing without lifecycle scripts.
+- Require patched Vite 6.4.5 or newer below Vite 7 for VitePress's development server dependency.
+
+### Changed
+
+- Add guarded Pages retention and retained/retired-origin checks. Retention remains dry-run until both deletion controls are separately authorized.
+- Exclude `codex/release-cut-*` preparation branches from automatic shared-beta deployments; pull-request CI remains available. Production activation remains on hold.
+- Keep the presets test loader's `.js` alias limited to relative source imports, so Windows dependency filenames remain intact when validating intermediate release cuts. No presets runtime behavior changes in this bootstrap.
+- Prepare moderation's initial test-module loading in setup before its request-gate assertions. Every behavioral test still resets and reevaluates the real app; request assertions and timeouts remain unchanged.
+- Keep generated VitePress temporary JavaScript out of Knip's source project during concurrent docs builds. API source, docs configuration and theme files remain analyzed.
+- Raise the Node.js engine floor from 22.13 to 22.16 (root and oauth `engines`, README and developer guides): the oauth SQLite test double calls `node:sqlite`'s `StatementSync.columns()`, added in Node 22.16, so every oauth suite failed on 22.13-22.15. CI already runs the latest Node 22.
+
+## [2.3.4] - 2026-10-31
+
+A production image-worker release can be held without approving or rejecting runs by hand.
+Patch: no workspace, package or worker code changes. No deploy workflow's paths include
+`.github/`, so **merging starts no deploy**, production or beta.
+
+### Added
+
+- **`IMAGE_WORKER_DEPLOY_HOLD` repository variable**: while it is `true`, a push to `main` skips
+  the deploy job in `deploy-image-worker.yml`, so a merge that matches its paths (a lockfile bump
+  included) queues no production approval. A manual dispatch still deploys, behind the
+  `production` reviewer. Without it, held image-worker source (the 2026-10-26 security audit's
+  image cut) could only stay undeployed if every queued run were rejected by hand. Usage and
+  timing: `docs/operations/DEPLOY_ENVIRONMENTS.md`, "Update 2026-10-31".
+- **`scripts/check-workflows.test.ts`** pins the guard, the job's `production` environment and the
+  `workflow_dispatch` trigger.
+
 ## [2.3.3] - 2026-10-13
 
 The three beta deploys follow the branch's own changes. Patch: no workspace, package or worker code changes, and no

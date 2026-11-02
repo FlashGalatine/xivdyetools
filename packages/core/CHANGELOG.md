@@ -11,6 +11,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Manual Stain discovery/comparison (`audit:dyes`, issue #322).** Enumerates the complete XIVAPI sheet with canonical pins and bounded requests, then saves raw evidence and review-only JSON/Markdown reports. Verified offline replay preserves all six local locale sources and existing identity mappings. Builds and runtime dye access keep their existing offline behavior. The private scripts are covered by dedicated type/lint checks and fixture/subprocess tests. No dye values or public exports change.
 
+## [5.16.0] - 2026-10-27
+
+### Hardening adoption
+
+- **H-CORE-ADOPT preparation:** pack logger 2.4.0 as the exact dependency, carrying guarded object-error redaction and Discord token-path sanitization for consumers that select a logger. The default remains NoOpLogger. Publish only after logger 2.4.0 is available.
+- Add JSON import attributes to character and shader palettes so actual built packages load in Node 22 without a custom loader, including the lazy hair, skin and shader tables. Palette values, APIs and lazy loading remain unchanged.
+
+### Deprecated
+
+- **Legacy `.chara` parsing and resolution remain available but are deprecated.**
+  `parseCharaFile`, `resolveCharaColors`, `OFF_GRID_DELTA_E2000`, `ParsedCharaFile`,
+  `CharaColorSlotRaw` and `CharaGearDye` carry migration guidance for the existing
+  `inspectCharaForTools` / `resolveCharaForTools` facade (or `resolveCharaWithProvider`).
+  Removal remains planned for core 6.0.0 after a shipped deprecation release and reader
+  acceptance; this MINOR removes no published exports or legacy implementation.
+
+### Changed
+
+- **Shared character contracts no longer live in the legacy parser/resolver.** The unchanged
+  8,192-byte cap moves to `chara-limits`; nine live slot/result/lookup types move to
+  `chara-types`, with root names and legacy-module bridges preserved. The palette-free
+  `/chara` entry no longer reaches the legacy parser at runtime. Stale export exemptions,
+  entry-point descriptions and reader attribution are corrected.
+- **German and French dye names now match the game (XIVAPI `Stain.Name`, PR #390).** 118
+  German names change wording, mostly losing the inflected ending (`Schneeweißer` becomes
+  `Schneeweiß`, `Metallic silberner` becomes `Metallic Silber`); the 125 French names change
+  capitalization only (`blanc neige` becomes `Blanc neige`). A lookup or search by an earlier
+  full German name no longer matches, so type the in-game name; French matching is
+  case-insensitive and unaffected. stainIDs, itemIDs, English, Japanese, Korean and Chinese
+  names, colors, acquisition data and the Facewear collection are unchanged; only
+  `dyenames.csv` and the generated `de`/`fr` locale payloads change.
+
+### Fixed
+
+- Preserve emitted declarations for the five existing public utility helpers when building with `stripInternal`; their runtime signatures and all legacy character APIs remain unchanged.
+
+- **Long imported nicknames and producer labels keep surrogate pairs intact.** Their cap
+  remains 256 UTF-16 code units with no ellipsis; a pair crossing that boundary is omitted
+  as a whole rather than leaving a broken character (BUG-003).
+- **GPOSERS value joining is linear-time while retaining its existing output.** Newline
+  runs are joined as before, including ring-name comparisons; other internal whitespace
+  stays unchanged (core companion to security FINDING-002).
+
 ## [5.15.0] - 2026-10-26
 
 The first half of the `xivcharakit` integration (Tasks 1-3 of the 2026-10-22 plan). MINOR: new

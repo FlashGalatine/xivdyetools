@@ -1,5 +1,7 @@
 # Version Matrix
 
+**Isolated release preparation:** these versions describe this candidate source. Package publication, app deployment and production activation remain held.
+
 **Single source of truth for all XIV Dye Tools project versions**
 
 *Last Updated: October 29, 2026*
@@ -24,15 +26,15 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.16.1 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v5.9.0 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
-| **Image Worker** | v1.3.4 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
-| **Moderation Bot** | v1.8.2 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
-| **OAuth Worker** | v3.1.3 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
-| **Presets API** | v2.6.1 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
-| **Public REST API** | v0.21.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
-| **OpenGraph Worker** | v2.12.0 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
-| **Stoat Bot** | v0.3.3 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
+| **Web Application** | v5.16.5 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Discord Bot** | v5.9.7 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
+| **Image Worker** | v1.3.5 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
+| **Moderation Bot** | v1.9.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
+| **OAuth Worker** | v3.2.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
+| **Presets API** | v2.8.2 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
+| **Public REST API** | v0.21.1 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
+| **OpenGraph Worker** | v2.12.2 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
+| **Stoat Bot** | v0.3.4 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
 | **API Documentation** | — | merged into `xivdyetools-api-worker` (`docs/`, Workers Static Assets) | Cloudflare Workers | Merged 2026-07-31 |
 
@@ -40,13 +42,13 @@
 
 | Package | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Core** (incl. `/blending` + schema-v2 data) | v5.15.0 | `@xivdyetools/core` | npm | Active |
+| **Core** (incl. `/blending` + schema-v2 data) | v5.16.0 | `@xivdyetools/core` | npm | Active |
 | **Types** | v3.3.0 | `@xivdyetools/types` | npm | Active |
-| **Auth** (incl. `/encoding`) | v2.0.2 | `@xivdyetools/auth` | npm | Active |
-| **Logger** | v2.3.0 | `@xivdyetools/logger` | npm | Active |
-| **Worker Kit** (middleware + `/rate-limiter`) | v1.5.0 | `@xivdyetools/worker-kit` | npm | Active |
-| **SVG** | v4.4.0 | `@xivdyetools/svg` | npm | Active |
-| **Bot Logic** (incl. `/i18n`) | v4.11.0 | `@xivdyetools/bot-logic` | npm | Active |
+| **Auth** (incl. `/encoding`) | v3.0.0 | `@xivdyetools/auth` | npm | Active |
+| **Logger** | v2.4.0 | `@xivdyetools/logger` | npm | Active |
+| **Worker Kit** (middleware + `/rate-limiter`) | v1.6.0 | `@xivdyetools/worker-kit` | npm | Active |
+| **SVG** | v4.4.1 | `@xivdyetools/svg` | npm | Active |
+| **Bot Logic** (incl. `/i18n`) | v4.12.0 | `@xivdyetools/bot-logic` | npm | Active |
 | **Test Utils** | v3.0.0 | `@xivdyetools/test-utils` | workspace-private | Active (never published) |
 
 ### Deprecated
@@ -70,7 +72,8 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| v5.15.0 | Oct 2026 | `.chara` import on `xivcharakit@0.1.0-beta.4` (exact pin): `inspectCharaForTools` / `resolveCharaForTools` / `resolveCharaWithProvider` / `createCharaPaletteProvider` and the `ImportedCharaCharacter` projection (with `indexGap`; `resolveCharaWithProvider` takes a palette provider and never reaches the palette tables), additive beside the legacy parser and resolver. Nothing consumes it yet |
+| v5.16.0 | Oct 2026 | A-CORE remediation: legacy character APIs deprecated for core 6 after release/acceptance gates; shared limit and nine live types relocated with unchanged exports; imported labels preserve surrogate pairs within 256 UTF-16 units; GPOSERS newline joining made linear with unchanged output; facade docs and xivcharakit attribution refreshed |
+| v5.15.0 | Oct 2026 | `.chara` import on `xivcharakit@0.1.0-beta.4` (exact pin): `inspectCharaForTools` / `resolveCharaForTools` / `resolveCharaWithProvider` / `createCharaPaletteProvider` and the `ImportedCharaCharacter` projection (with `indexGap`; `resolveCharaWithProvider` takes a palette provider and never reaches the palette tables), additive beside the legacy parser and resolver. Adopted by web 5.16.0 and Discord 5.9.0 |
 | v5.14.0 | Oct 2026 | `MAX_CHARA_FILE_BYTES` (8,192): the largest `.chara` file the web app and the bot accept, enforced by them on the original bytes (2026-10-15 import review). Exports without an attached image measured 1,837–2,777 bytes; the corpus's one larger file carried an image attached in Anamnesis (3,128,021 bytes) |
 | v5.13.0 | Oct 2026 | `.chara` error messages are bounded (2026-10-15 import audit, FINDING-002): a value is quoted only up to 64 characters, otherwise described by kind and size, and nothing walks it, so a nested palette index that fits in 8 KiB no longer overflows the stack and a 1 MiB Tribe value no longer becomes a 1 MiB message. A float color string over 128 characters is refused before it is split |
 | v5.12.0 | Oct 2026 | `gposersOmittedSlots` + `CHARA_OFF_HAND_MAIN_CATEGORIES`: the GPOSERS list leaves out invisible pieces (an Emperor's New twin in the family; the Gloves and, unless the character is known female, the Robe are kept) and an Off Hand under a main hand outside ItemUICategory 2/6/8/12–32 even/113; unknown keeps the slot. Corpus, with the callers' `viaMainHand` skip: 2,765 invisible slots and 357 more off-hands (354 by this rule, 3 a crafting tool's own model) leave the list across 913 of 1,093 files |
@@ -123,7 +126,11 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| v5.16.1 | Oct 2026 | Main content scrolls at the pane edge, or the window edge when the palette is closed; tool wrappers grow naturally so long content remains reachable on desktop, mobile and in print (#368) |
+| v5.16.5 | Nov 2026 | Main content scrolls at the pane edge, or the window edge when the palette is closed; tool wrappers grow naturally so long content remains reachable on desktop, mobile and in print (#368) |
+| v5.16.4 | Oct 2026 | Generic character-save names, named CSP connection hosts, validated previews/character replies and six-language privacy/Terms corrections |
+| v5.16.3 | Oct 2026 | Six-language identity-review, particular-ban continuity and recovery-retention privacy disclosures |
+| v5.16.2 | Oct 2026 | Six-language privacy alignment for preset metadata moderation, safe link snapshots and attempt/refund accounting |
+| v5.16.1 | Oct 2026 | Core 5.16.0: imported character nickname/producer labels keep surrogate pairs intact when capped; GPOSERS export newline joining is linear with the same output |
 | v5.16.0 | Oct 2026 | The Swatch Matcher and Glamour Reader read `.chara` files through core 5.15.0's `xivcharakit` adapter in a cancellable Web Worker (the web app's first), with a palette bridge so no reference data ships twice: files that hold only gear load, the lip-color bit and a mirror-only face paint are read, an unconfirmed highlight, face-paint or lip color is shown but never matched or saved, failures are fixed localized messages, and incomplete gear is flagged. Intentional differences are recorded in `docs/research/2026-10-22-xivcharakit-integration.md` |
 | v5.15.6 | Oct 2026 | Imported labels and raw errors stay out of logs (development and production): the saves, the `.chara` loader, the toast log and every collection-service path that named a record log fixed messages only; a collection import with a malformed description no longer throws and no longer stops the records after it (FINDING-001 and FINDING-004, 2026-10-22 xivcharakit integration review) |
 | v5.15.5 | Oct 2026 | Core 5.13.0 + 5.14.0 (2026-10-15 import review): the Glamour Reader and Swatch Matcher read only files named `.chara`, refuse one over 8 KB (was 20 MB) before reading it, and say to re-save an Anamnesis export without its attached image; a malformed file's error no longer quotes the whole value. The Palette Extractor keeps 20 MB |
@@ -207,6 +214,13 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.9.7 | Oct 2026 | A-DISCORD: one-request favorite lists, bounded/checkable delivery, localized choices/clan labels, byte-only attachments, preview attribution removal and native request guards; bot-logic 4.12.0 locale companion must publish first |
+| v5.9.6 | Oct 2026 | Six-language identity-review, particular-ban continuity and recovery-retention privacy disclosures |
+| v5.9.5 | Oct 2026 | Complete path-only preset reviews and Revert targets; six-language privacy alignment for optional metadata moderation and attempt/refund accounting |
+| v5.9.4 | Oct 2026 | Bot-logic 4.12.0: harmony distances use the selected metric, eyes merge only for equal eligible colors, bounded and sanitized glamour descriptions; command-choice localization remains in A-DISCORD |
+| v5.9.3 | Oct 2026 | SVG 4.4.1: shared card text fitting is linear while preserving existing card content, widths and truncation; security-only patch after the separate core deployment |
+| v5.9.2 | Oct 2026 | Core 5.16.0: `/glamour` GPOSERS text joins newlines in linear time while retaining prior output; command schema unchanged; imported nicknames remain excluded from bot output |
+| v5.9.1 | Oct 2026 | Prepared font readiness: preserve all existing Japanese/Simplified Chinese glyphs and add characters needed by the pending shared bot catalog; runtime handlers and bindings unchanged |
 | v5.9.0 | Oct 2026 | Core 5.15.0 + bot-logic 4.11.0: `/swatch` and `/glamour` pass the attachment's capped bytes to the `xivcharakit`-backed reader (invalid UTF-8 refused), `/glamour` opens gear-only files, unmatched or unreadable colors, gear and dyes get a fixed line; attachment guards unchanged; no command shape change; bundle 2,732.6 KiB gzip (88.9 % of the cap) |
 | v5.8.15 | Oct 2026 | Core 5.13.0 + 5.14.0, bot-logic 4.10.0 (2026-10-15 import review): `/swatch` and `/glamour` refuse an attachment not named `.chara` before deferring, and the cap is 8 KiB (was 1 MiB) on the reported size and the streamed download, with an 8 KB message; no command shape changes |
 | v5.8.14 | Oct 2026 | bot-logic 4.9.0 (no source change here): `/glamour`'s list leaves out invisible pieces and an Off Hand the main hand doesn't take; the card is unchanged; no command shape changes |
@@ -275,6 +289,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v3.2.0 | Oct 2026 | Private stored-identity/session provider and inactive identity-transition preparation; migration required before deployment; state HMAC input separation with finite legacy compatibility, routeless development and IPv6 /64 keying; consumer verification before separate activation |
 | v3.1.3 | Oct 2026 | 2026-10-04 remediation Sprint 10 — `/auth/*` rate limiting keys and tiers on the decoded path, so a percent-encoded route spelling shares the real bucket (BUG-007); a non-object JSON body gets 400 on both callbacks (BUG-056); a malformed XIVAuth roster falls back to `XIVAuth User <id8>` instead of a 500 or an empty name (BUG-057); a non-empty callback body must be `application/json` (415), closing the `text/plain` bypass of the body guard (BUG-149, oauth half); dead `decodeJWT` wrapper and coverage excludes removed (DEAD-036, DEAD-037) |
 | v3.1.2 | Oct 2026 | 2026-10-03 security audit Sprint 6 — retired `xivdyetools.projectgalatine.com` origin removed from the redirect + CORS allowlist and the retired `auth.` custom-domain route dropped, both pinned by tests (FINDING-006); `[observability] enabled = false` pinned and asserted (FINDING-022) |
 | v3.1.1 | Sep 2026 | 2026-09-16 deep-dive Sprint 14 — the security-headers middleware is registered before env validation, so the misconfiguration 500 carries nosniff / no-store / HSTS (BUG-017); body-size and JSON-depth middleware come from `@xivdyetools/worker-kit/body-guards`, error bodies unchanged (REFACTOR-009) |
@@ -302,6 +317,10 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v2.8.2 | Oct 2026 | Prepared named Discord notification binding companion after provider acceptance; protocol and separate activation holds retained |
+| v2.8.1 | Oct 2026 | Prepared base hardening and continuity release with default Discord notification binding retained; named-provider selection is a separate companion |
+| v2.8.0 | Oct 2026 | Private continuity receipts and membership enforcement; inactive OAuth session checks and additive migration |
+| v2.7.0 | Oct 2026 | Approved-only signed bot batch lookup; database ban guards, atomic pre-moderation quota, default-off tag/link-path moderation, safe snapshots and preview concurrency/refund fixes; IPv6 /64 and bounded pagination |
 | v2.6.1 | Oct 2026 | `expected_status` checked against `@xivdyetools/types`' `REVIEW_STATUSES` (2026-10-04 remediation, Sprint 26, REFACTOR-001); the two 404 bodies moderation-worker reads are pinned. No behavior change |
 | v2.6.0 | Oct 2026 | 2026-10-04 remediation, Sprint 9 — every PATCH notification carries `edited_from`, the text the edit replaced, so the moderation embed can diff an edit; `previous_values` stays the Revert target only |
 | v2.5.0 | Oct 2026 | 2026-10-04 remediation, Sprint 8 — a preset may not repeat a dye (BUG-010); a `null` / non-object JSON body is a 400 (BUG-064); resending unchanged text no longer re-moderates (BUG-065); a failed retention sweep fails its cron invocation (BUG-066); a self-rekey is a no-op (BUG-067); trimmed name/description minimums and example links (BUG-068, BUG-069); the moderation webhook says whether it is an edit and from which status (for BUG-003's Revert in discord-worker) |
@@ -377,6 +396,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v2.4.0 | Oct 2026 | H-LOGGER source prepared: non-Error object/array error arguments use guarded field/value redaction; Discord webhook/interaction URL tokens redact across log entry points. MINOR follows the observable-output precedent; publication and consumer adoption remain separate |
 | v2.3.0 | Oct 2026 | 2026-10-04 remediation Sprint 12 — minor, because log output changes (the rule 2.2.0 set): a context string gets the free-text redaction pass, so a secret inside a longer string is redacted (BUG-140; `sanitizeErrors: false` keeps the old output); a `Date`, `URL` or other `toJSON` value logs as its serialized, redacted form instead of `{}`, bounded and never throwing (BUG-141); URL user-info passwords redacted; the redact set is built once per logger (OPT-010) |
 | v2.2.1 | Sep 2026 | 2026-09-16 deep-dive Sprint 9 — the browser preset's error-tracker wrapper serializes a non-`Error` value with `safeStringify`, so a circular or BigInt-bearing value no longer throws inside `logger.error()` (BUG-020; latent — no app configures a tracker) |
 | **v2.2.0** | **Sep 2026** | **2026-09-02 deep-dive (Sprint 13) — a secret reachable only through a cycle is redacted (the cycle guards returned the raw original node, BUG-004); `sanitizeErrorMessage` output changes shape for non-`Bearer` auth schemes** |
@@ -398,6 +418,9 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v1.9.0 | Oct 2026 | Inactive private linked-ID confirmation, explicit partial-ban expansion, recorded-scope unban and neutral decision posts |
+| v1.8.4 | Oct 2026 | Complete path-only link reviews, revision-bound action guards and stale-message refresh; companion for later metadata-moderation activation |
+| v1.8.3 | Oct 2026 | Bot-logic 4.12.0: shared embed sanitizer escapes Discord angle tokens and strips additional invisible controls; review routing and decisions unchanged |
 | v1.8.2 | Oct 2026 | Review custom_id grammar from `@xivdyetools/types` (2026-10-04 remediation, Sprint 26, REFACTOR-001); a parity test pins the routing prefixes. No visible change |
 | v1.8.1 | Oct 2026 | 2026-10-04 remediation, Sprint 17 — a losing concurrent click no longer overwrites the winner (BUG-052); a stale-deploy 404 keeps the buttons (BUG-054); success embeds drop stale Error / Review fields (BUG-050); trimmed ban reasons (BUG-051); a refreshed review says what Revert restores; dead middleware, helpers, parameter, ban suffix and strings removed (DEAD-025 to DEAD-030) |
 | v1.8.0 | Oct 2026 | 2026-10-03 security audit, Sprint 4 — approve / reject / revert are bound to the revision the moderator reviewed (new `preset_<action>_<uuid>:<rev>:<status>` buttons; a legacy button or a stale one refreshes the embed and asks for a second click; `/preset moderate approve|reject` answers with a revision-bound confirm button); bans written and matched by `xivauth_id` too; a lifted ban's username and reason are blanked; unban restore skips presets whose dyes collide; revert refuses a banned author; Workers Logs pinned off. Deploy with presets-api 2.4.0 in one window |
@@ -424,6 +447,8 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v2.12.2 | Oct 2026 | A-OG-COPY: default Harmony subtitles say ten types in all six languages; new Worker cache version retires prior beta cards |
+| v2.12.1 | Oct 2026 | SVG 4.4.1: default-card text fitting is linear with unchanged content, font measurements, layout and routes |
 | v2.12.0 | Oct 2026 | 2026-10-04 remediation, Sprint 11: gradient previews follow the shared `interpolation` (new query key) and draw the page's own steps (6,682 / 6,682 share links match the page end to end); the extractor card follows `?algo=`; legacy `?algo=` spellings fixed on harmony; custom-color shares unfurl named; cache key splits only where a route reads the key; a repeated query key gets a 400; fr presets name and de Glamour Reader description fixed; resvg allocations freed |
 | v2.11.3 | Oct 2026 | Core 5.10.0 (2026-10-04 remediation, Sprint 13): CJK subsets re-cut for the new sheet names; de/fr swatch link descriptions reworded so no gendered word precedes the sheet name; the version retires cached HSL mixer cards with a gray input (BUG-035) |
 | v2.11.2 | Oct 2026 | CJK font subsets re-cut for core 5.8.1 (Korean / Chinese race and clan names from the game clients); cached cards retire with the version |
@@ -459,6 +484,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v1.3.5 | Oct 2026 | A-IMAGE: reject 16-bit PNGs before Photon, bound input/output memory, avoid redundant decode and release thumbnail intermediates early; corrected bot manual must precede the 5 MiB cap |
 | v1.3.4 | Oct 2026 | 2026-10-04 remediation Sprint 21 — the unused `@` path alias removed from `vitest.config.ts` and `tsconfig.json` (DEAD-038); bundle unchanged |
 | v1.3.3 | Oct 2026 | 2026-10-03 security audit (FINDING-022, Sprint 10) — Workers Logs pinned off in both `wrangler.toml` blocks, asserted by `src/wrangler-config.test.ts`; no behavior change |
 | v1.3.2 | Sep 2026 | 2026-09-16 deep-dive Sprint 15 — the magic-byte table and `detectImageFormat` come from `@xivdyetools/worker-kit/image-sniff` (REFACTOR-008); the local byte-table test exercises the import unchanged |
@@ -494,6 +520,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v3.0.0 | Oct 2026 | H-AUTH source prepared: canonical unpadded Base64URL and lowercase 64-hex signatures; MAJOR because the exported hex verifier no longer accepts uppercase/mixed-case digests. Generic hex decoding and v2 signing bytes remain unchanged; publication/adoption pending |
 | v2.0.2 | Sep 2026 | Enforce Discord byte caps during streaming, cancel early, verify original bytes |
 | v2.0.1 | Sep 2026 | knip dead-code gate — 17 barrel exports tagged `@public` (the four encoding helpers are live via `@xivdyetools/auth/encoding`, only the root re-export is unreferenced) |
 | **v2.0.0** | **Aug 2026** | **BREAKING — 2026-08-29 security audit (FINDING-015): `verifyBotSignature` (v1 bot request signature, `timestamp:userId:userName`, no request binding) removed from `hmac.ts` and the barrel; `createBotSignatureV2`/`verifyBotSignatureV2` (1.4.0) are now the only signature scheme. No in-repo caller remained — `presets-api` 2.2.0, `discord-worker` 5.1.0 and `moderation-worker` 1.6.0 had already stopped accepting/sending v1** |
@@ -520,6 +547,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v1.6.0 | Oct 2026 | Opt-in `getClientIp` IPv6 /64 network keys with mapped-IPv4 and malformed-input compatibility; existing callers stay opted out; explicit `/glamour` 5/minute preset without burst selects Discord's existing RL_5 binding |
 | v1.5.0 | Oct 2026 | 2026-10-04 remediation Sprint 16 — minor, for behavior changes (as 1.2.0 and 1.3.0): `jsonDepthLimit` recognizes JSON case-insensitively and `+json` while still guarding anything the old substring test did (BUG-149); a `formatError` response gets the computed `X-RateLimit-*` / `Retry-After` headers it lacks (BUG-150); `KVRateLimiter.reset()` / `resetAll()` page the KV cursor and delete the whole prefix (BUG-151); pins logger 2.3.0 |
 | v1.4.1 | Sep 2026 | Packaging patch — the optional `@cloudflare/workers-types` peer range admits 5.x as well as 4.x (was `^4.0.0`, so `npm install` next to the 5.x line every Worker here uses failed with `ERESOLVE`); the optional `hono` peer stays at 1.4.0's `^4.13.7`; no code change — the published files differ from 1.4.0 only in `package.json` and the README line quoting the peer ranges |
 | v1.4.0 | Sep 2026 | 2026-09-16 deep-dive Sprint 13 — two new subpaths: `/body-guards` (`bodyGuards({ maxSize, maxDepth, onTooLarge, onInvalidJson, exempt })` → `bodySizeLimit` + `jsonDepthLimit`, the oauth and presets-api copies folded in, REFACTOR-009) and `/image-sniff` (`detectImageFormat`, `sniffImageType(bytes, accept)`, `IMAGE_MAGIC_BYTES` — image-worker's table is the source of truth, REFACTOR-008); `body-guards` is subpath-only (it imports `hono/body-limit` at runtime and `hono` is an optional peer) |
@@ -547,6 +575,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v4.4.1 | Oct 2026 | A-SVG security companion: `fitText` scans code-point prefixes in linear time with identical legacy output, numeric behavior, widths and public API; core 5.16.0 publication precedes this publish |
 | v4.4.0 | Oct 2026 | 2026-10-04 remediation, Sprints 14+28 — `formatContrastRatio`, one floored printer for card, embed and `/compare` (BUG-142); whole gradient step ranges (BUG-146); glamour footer wraps at clauses with an 11 px look label (I18N-015, BUG-145); the frame-budget gate covers every card (BUG-144); `scanEmittedGlyphs` fails closed (BUG-143); `LEDGER_GROUP_H` / `LEDGER_ROW_H` back in the barrel (REFACTOR-003) |
 | v4.3.0 | Sep 2026 | `generateGlamourCard` — the /glamour card (2a): pieces in slot order, a second row kind beside measuredRow |
 | v4.2.0 | Sep 2026 | The Glamour Reader glyph (1a: a tunic with the dye on a chest chip), compact + detail |
@@ -569,6 +598,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v4.12.0 | Oct 2026 | A-BOT-LOGIC: metric-correct harmony distances, effective-color eye pairing, bounded glamour descriptions and shared sanitizer hardening; deprecated but retained legacy swatch result, legacy-oracle/fixture cleanup and five preparatory choice keys in six locales. Includes A-DISCORD favorite-list/neutral-preview locale companion; publish that source after core 5.16.0 and SVG 4.4.1, before the Discord consumer |
 | v4.11.0 | Oct 2026 | `/swatch` and `/glamour` read through core 5.15.0's `xivcharakit` facade: optional `fileBytes` input (wins over `fileText`), matching on `matchHex` alone with the lip on its live blend, `SwatchCharacter` keeps its shape and carries no color for a slot `matchHex` excludes, four fixed lines in six languages (`card.swatchActivityUnknown`, `card.swatchUnusable`, `card.glamourGearSkipped`, `card.glamourDyeInvalid`); intentional differences in `docs/research/2026-10-22-xivcharakit-integration.md` |
 | v4.10.0 | Oct 2026 | `card.charaFileReason.tooLarge` takes `{kb}` (was `{mb}`) and says to re-save an Anamnesis export without its attached image; new `card.charaFileReason.notChara`; the `/manual` Character File topic states the `.chara` name and 8 KB limits, all six languages |
 | v4.9.0 | Oct 2026 | `/glamour`'s GPOSERS list applies core 5.12.0's `gposersOmittedSlots` (invisible pieces, unsupported Off Hand); `GlamourResolvedItem.uiCategory`; the card is unchanged |
@@ -621,6 +651,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v0.3.4 | Oct 2026 | Bot-logic 4.12.0: mirrored invisible-control stripping and shared sanitizer hardening; parked, no deployment |
 | v0.3.3 | Oct 2026 | 2026-10-04 remediation Sprint 24 (parked, no deploy) — `!xd about` no longer advertises `!xd random`, a ❓ reaction or capabilities the bot lacks (BUG-070); `!xd info` resolves a broad name (`white`, `Blue`) to each matching dye or a capped list instead of one arbitrary dye (BUG-073); the resolver honors `locale` and help no longer promises localized names (BUG-072); resolver tests rewritten against the real database (BUG-071) |
 | v0.3.2 | Oct 2026 | 2026-10-03 security audit Sprint 12 (parked, no deploy) — echoed text no longer carries Stoat's `@online` mass mention (`<%…>` tokens now rewritten explicitly) (FINDING-026) |
 | v0.3.1 | Sep 2026 | 2026-09-16 deep-dive Sprint 12 (parked, no deploy) — `!xd ping` measures the round-trip after the send and edits it in (BUG-031); the dye-info test asserts embed title/color/description (BUG-042) |
@@ -639,6 +670,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v0.21.1 | Oct 2026 | A-API: bounded and sanitized upstream character data, dedicated cache-miss soft budgets, current-version-only icon overrides, IPv6 /64 adoption and numeric-only telemetry versions; pinned/checksummed item-name inputs and controlled ko/zh/ja refresh with 65 additional Korean names, using unchanged fonts |
 | v0.21.0 | Oct 2026 | Snapshot/schema-aware equipment caching, optional versioned icon URLs and conditional PNG refresh, isolate-local Item/Glasses miss coalescing |
 | v0.20.1 | Oct 2026 | Acquisition lines for 671 older tomestone items omit the redundant base-item upgrade exchange when a reachable vendor sells the item outright for Poetics |
 | v0.20.0 | Oct 2026 | `uiCategory` (the named item's ItemUICategory row) on each resolved item, so the GPOSERS list can tell which main hands take an Off Hand; row cache shape 5 (every cached row refetches once) |
@@ -703,6 +735,19 @@ and the [rollout runbook](operations/security-remediation-2026-09-15.md) for the
 
 | Consumer | Minimum Core Version | Notes |
 |----------|---------------------|-------|
+| xivdyetools-stoat-worker v0.3.4 | @xivdyetools/bot-logic v4.12.0; @xivdyetools/logger v2.4.0; @xivdyetools/types v3.3.0 | Prepared source; publication and deployed acceptance remain pending |
+| xivdyetools-image-worker v1.3.5 | @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
+| xivdyetools-moderation-worker v1.9.0 | @xivdyetools/auth v3.0.0; @xivdyetools/bot-logic v4.12.0; @xivdyetools/logger v2.4.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
+| xivdyetools-og-worker v2.12.2 | @xivdyetools/core v5.16.0; @xivdyetools/svg v4.4.1; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
+| xivdyetools-web-app v5.16.4 | @xivdyetools/core v5.16.0; @xivdyetools/logger v2.4.0; @xivdyetools/svg v4.4.1; @xivdyetools/types v3.3.0 | Prepared source; publication and deployed acceptance remain pending |
+| xivdyetools-api-worker v0.21.1 | @xivdyetools/core v5.16.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
+| xivdyetools-discord-worker v5.9.7 | @xivdyetools/auth v3.0.0; @xivdyetools/bot-logic v4.12.0; @xivdyetools/svg v4.4.1; @xivdyetools/core v5.16.0; @xivdyetools/logger v2.4.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
+| xivdyetools-presets-api v2.8.1 | @xivdyetools/auth v3.0.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
+| xivdyetools-oauth-worker v3.2.0 | @xivdyetools/auth v3.0.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
+| @xivdyetools/bot-logic v4.12.0 | @xivdyetools/core v5.16.0; @xivdyetools/svg v4.4.1; @xivdyetools/types v3.3.0 | Prepared source; publication and deployed acceptance remain pending |
+| @xivdyetools/svg v4.4.1 | @xivdyetools/core v5.16.0; @xivdyetools/types v3.3.0 | Prepared source; publication and deployed acceptance remain pending |
+| @xivdyetools/worker-kit v1.6.0 | @xivdyetools/logger v2.4.0 | Prepared source; publication and deployed acceptance remain pending |
+| @xivdyetools/core v5.16.0 | @xivdyetools/logger v2.4.0; @xivdyetools/types v3.3.0 | Prepared source; publication and deployed acceptance remain pending |
 | Web App v5.16.0+ | @xivdyetools/core v5.15.0+ | `@xivdyetools/core/chara` (`inspectCharaForTools`, `resolveCharaWithProvider`) — the `.chara` inspection Web Worker imports it, and the xivcharakit-backed reader replaces the in-page parse |
 | Web App v5.15.5+ | @xivdyetools/core v5.14.0+ | `MAX_CHARA_FILE_BYTES` — the `.chara` cap, and core 5.13.0's bounded parse errors |
 | Web App v5.15.4 | @xivdyetools/core v5.12.0+ | `gposersOmittedSlots` — the GPOSERS list leaves out invisible pieces and an Off Hand the main hand doesn't take |
