@@ -140,6 +140,41 @@ describe('PresetCard', () => {
     expect(byline).toContain('3 dyes');
   });
 
+  it.each(['Enter', ' '])(
+    'leaves nested controls in charge of %s without opening detail (BUG-021)',
+    async (key) => {
+      const el = await mountCard(baseCardData);
+      const select = vi.fn();
+      const save = vi.fn();
+      const vote = vi.fn();
+      el.addEventListener('preset-select', select);
+      el.addEventListener('preset-save', save);
+      el.addEventListener('preset-vote', vote);
+      const buttons = el.shadowRoot!.querySelectorAll<HTMLButtonElement>('.face-btn');
+      for (const button of buttons) {
+        const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
+        button.dispatchEvent(event);
+        expect(event.defaultPrevented).toBe(false);
+        expect(select).not.toHaveBeenCalled();
+        // jsdom does not synthesize a native button click from a keydown.
+        button.click();
+      }
+      expect(vote).toHaveBeenCalledTimes(1);
+      expect(save).toHaveBeenCalledTimes(1);
+      expect(select).not.toHaveBeenCalled();
+    }
+  );
+
+  it.each(['Enter', ' '])('opens detail from the article with %s', async (key) => {
+    const el = await mountCard(baseCardData);
+    const select = vi.fn();
+    el.addEventListener('preset-select', select);
+    const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
+    el.shadowRoot!.querySelector('article')!.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(true);
+    expect(select).toHaveBeenCalledTimes(1);
+  });
+
   it('renders the singular dye count for a one-dye preset', async () => {
     const el = await mountCard({
       ...baseCardData,

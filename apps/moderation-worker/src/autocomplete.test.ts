@@ -64,6 +64,7 @@ describe('handleAutocomplete moderator gate', () => {
     vi.clearAllMocks();
     rateLimit.resetRateLimiterInstance();
     env = {
+      LINKED_BAN_CONFIRMATION_ENABLED: 'true',
       DISCORD_PUBLIC_KEY: 'k',
       DISCORD_TOKEN: 't',
       DISCORD_CLIENT_ID: 'app',
@@ -123,6 +124,7 @@ describe('handleAutocomplete — FINDING-034 follow-ups', () => {
     vi.clearAllMocks();
     rateLimit.resetRateLimiterInstance();
     env = {
+      LINKED_BAN_CONFIRMATION_ENABLED: 'true',
       DISCORD_PUBLIC_KEY: 'k',
       DISCORD_TOKEN: 't',
       DISCORD_CLIENT_ID: 'app',
@@ -220,4 +222,35 @@ describe('handleAutocomplete — FINDING-034 follow-ups', () => {
     expect([...json.data.choices[0].name].length).toBeLessThanOrEqual(100);
     expect(json.data.choices[0].value).toBe('555555555555555555');
   });
+
+  it('unban autocomplete logs and returns no choices when the search fails', async () => {
+    vi.mocked(banService.searchBannedUsers).mockRejectedValueOnce(
+      new Error('D1_ERROR: no such table: ban_identity_memberships'),
+    );
+    const interaction = autocompleteInteraction('111111111111111111', 'unban_user');
+
+    const res = await handleAutocomplete(interaction, env, ctx, logger);
+    const json = (await res.json()) as { data: { choices: unknown[] } };
+
+    expect(json.data.choices).toEqual([]);
+    expect((logger as { error: ReturnType<typeof vi.fn> }).error).toHaveBeenCalledWith(
+      'Failed to get unban user autocomplete',
+      expect.any(Error),
+    );
+  });
+});
+
+describe('inactive/optional additional account autocomplete',()=>{
+ const MOD='111111111111111111';
+ it('inactive account pickers expose no scope and never access author/ban storage',async()=>{
+  vi.clearAllMocks();rateLimit.resetRateLimiterInstance();const env={LINKED_BAN_CONFIRMATION_ENABLED:'false',MODERATOR_IDS:MOD,KV:createMockKV(),MODERATION_CHANNEL_ID:'channel-mod'} as unknown as Env;
+  for(const action of ['ban_user','unban_user'] as const){const body=await(await handleAutocomplete(autocompleteInteraction(MOD,action),env,ctx,logger)).json() as any;expect(body.data.choices).toEqual([]);}
+  expect(banService.searchPresetAuthors).not.toHaveBeenCalled();expect(banService.searchBannedUsers).not.toHaveBeenCalled();
+ });
+ it('additional_user uses same author picker and native25-choice/100-label limits',async()=>{
+  vi.clearAllMocks();rateLimit.resetRateLimiterInstance();const env={LINKED_BAN_CONFIRMATION_ENABLED:'true',MODERATOR_IDS:MOD,KV:createMockKV(),MODERATION_CHANNEL_ID:'channel-mod'} as unknown as Env;
+  vi.mocked(banService.searchPresetAuthors).mockResolvedValue(Array.from({length:30},(_,index)=>({discordId:String(400000000000000000n+BigInt(index)),username:'長'.repeat(120),presetCount:1})));
+  const i=autocompleteInteraction(MOD,'ban_user');i.data!.options![0]!.options![0]!.name='additional_user';const body=await(await handleAutocomplete(i,env,ctx,logger)).json() as any;
+  expect(banService.searchPresetAuthors).toHaveBeenCalledTimes(1);expect(body.data.choices).toHaveLength(25);expect(body.data.choices.every((choice:{name:string})=>choice.name.length<=100)).toBe(true);
+ });
 });

@@ -325,8 +325,6 @@ const IDENTITY_FIELDS: ReadonlySet<string> = new Set(['Tribe', 'Gender', 'Race']
 const ISSUE_KEY: Record<string, string | null> = {
   RACE_TRIBE_MISMATCH: 'swatch.issue.raceTribeMismatch',
   EYE_PAIRING_INFERRED: 'swatch.issue.eyePairingInferred',
-  // The host keeps the eye correction on, so this is unreachable today: the generic sentence.
-  EYE_PAIRING_UNCONFIRMED: 'swatch.issue.unknown',
   PALETTE_UNAVAILABLE: 'swatch.issue.paletteUnavailable',
   INVALID_PALETTE_RESPONSE: 'swatch.issue.paletteUnavailable',
   ISSUES_TRUNCATED: 'swatch.issue.truncated',

@@ -133,7 +133,7 @@ src/
 │   ├── chara-file-loader.ts         # Reads a dropped .chara into the session: `*.chara` names only, core's 8 KiB MAX_CHARA_FILE_BYTES (both before reading), the capped read, the inspection service, chara_parse telemetry; returns a fixed failure code (`notChara`/`tooLarge`/`unreadable`/`workerFailed`/`timedOut`), the file card toasts it; a newer load or SWAP's `cancelCharaLoad()` supersedes an older one
 │   ├── chara-inspection-service.ts  # Runs one cancellable inspection in the Web Worker: transfers the bytes, answers the worker's palette requests from the page's own CharacterColorService, 5,000 ms deadline, terminates every worker once, validates the answer through the protocol, then attaches gearDyes[].dye from the offline dye database. `prefetchCharaPalettes()` warms the palettes from the drop zone (skipped under saveData)
 │   ├── chara-inspection-protocol.ts # The worker's message shapes and validators: rebuilds a fresh DTO from validated values (eight unique slots, 24 dye channels, 64 diagnostics, 256 KiB, the matchHex rule); the page never trusts a worker answer as received
-│   ├── chara-resolve-service.ts     # POST data.xivdyetools.app/v1/chara/resolve — .chara model keys → item names/icons (Swatch 11a/11c); session cache; any failure = CharaResolveUnavailableError
+│   ├── chara-resolve-service.ts     # POST data.xivdyetools.app/v1/chara/resolve — .chara model keys → Glamour Reader equipment names/icons; session cache; any failure = CharaResolveUnavailableError
 │   ├── dye-service-wrapper.ts       # Wraps core DyeService
 │   ├── harmony-generator.ts         # The harmony-type UI vocabulary only (ids, icons, names) —
 │   │                                # slot SELECTION is core's generateHarmonySlots
@@ -218,11 +218,14 @@ border-color: var(--theme-border);
 
 - `vendor-core` — `@xivdyetools/core` by name, but in practice only the race-specific character-color JSON (~1.8 MB raw) that `CharacterColorService` `import()`s on demand
 - `vendor-lit` — Lit framework
-- `vendor-spectral` — `spectral.js` (reached only through `@xivdyetools/core/blending`; core declares the dependency)
-- `vendor` — everything else from `node_modules`
+- `vendor` — reserved for other `node_modules` dependencies, with a retained 30 KB budget; the current build emits no such chunk
 - `modals` — named for the welcome + changelog modals, but Rolldown merges the shared color engine (ColorService, APIService, core utils) into it, so it is the app's core runtime and loads on every visit (budget 287 KB since web-app 5.15.4)
 
 Each tool component is its own dynamic import.
+
+Rolldown merges `spectral.js` (reached through `@xivdyetools/core/blending`) into
+the core runtime chunk named `modals`; the dye selector is shared through
+`collapsible-panel`. Neither has a separate chunk or named budget.
 
 ### Storage Keys
 
@@ -242,7 +245,14 @@ There is **no service worker** — the app has no offline cache. (The v3 `servic
 |--------|------|------|
 | `asyncCss` | `vite-plugin-async-css.ts` | Defers non-critical CSS to avoid render-block |
 | `changelogParser` | `vite-plugin-changelog-parser.ts` | Parses `CHANGELOG-laymans.md` into the `virtual:changelog` module the What's New modal imports. The module is **bounded in bytes** (`boundChangelog`, 36 KB of JSON, newest first, never fewer than ten releases) because its chunk is gated in bytes (`check-bundle-size.js`, 40 KB); `olderReleases` tells the modal to link the full file. Do not swap the bound back to a release count — the two units never agree |
+| `coreJsonCompatibility` | `vite-plugin-core-json.ts` | Client-only `vite dev` bridge for native JSON import attributes in two compiled Core modules; preserves Node packages and production chunking |
 | `betaBranding` | `vite-plugin-beta-branding.ts` | `VITE_APP_ENV=beta` only: `[BETA]` title, beta icon set, `__APP_ENV__` define, `X-Robots-Tag: noindex` on `dist/_headers`. Inert without the flag |
+
+Core retains JSON import attributes for native Node. The dev bridge uses Vite's existing
+`transformWithEsbuild` with both import-attribute/assertion syntax disabled and `esnext` output.
+It adapts only browser-served copies of `CharacterColorService` and `chara-shader-colors`, with
+source maps. The API is deprecated; revisit the bridge when Vite handles these dynamic imports.
+Production builds and SSR do not apply it.
 
 ## Dependencies
 
@@ -265,7 +275,7 @@ There is **no service worker** — the app has no offline cache. (The v3 `servic
 - `npm run build:check` runs `vite build` then `scripts/check-bundle-size.js`, which enforces per-bundle byte ceilings (e.g. CSS ≤ 105 KB, main entry ≤ 150 KB raw, layout shell ≤ 218 KB). CI fails if a chunk grows past its budget. The `.chara` inspection worker chunk has its own named row (35 KB; it measured 30 KB, 11 KB gzipped, at 5.16.0): a new limit for a new chunk, not a raised one. If it grows, the worker has started importing something beyond `@xivdyetools/core/chara` (usually the core barrel, which drags the whole library in) or has started shipping palette JSON; fix the import, don't raise the row.
 - **Fonts are a contract, not a per-file choice.** All three faces are self-hosted woff2 in `public/fonts/` (Space Grotesk display, Onest body, Fragment Mono numeric/mono — matching `FONTS` in `packages/svg`). The `@font-face` blocks and the `--font-display` / `--font-body` / `--font-mono` / `--font-cjk` variables in `src/styles/globals.css` are the **single** declaration site; `tailwind.config.js` points its `sans`/`mono` families at the same variables; the `.number` rule (Fragment Mono + tabular figures) lives in `src/styles/tool-content.css`, which is loaded both page-side and inside the layout shell's shadow root. Nothing else should name a family — that is how four sources ended up disagreeing before `REFACTOR-002`. There is no runtime Google Fonts request, and the CSP's `font-src` is `'self'` only. `--font-cjk` names locally-installed CJK families (nothing is downloaded) so ja/ko/zh rendering is a decision rather than an OS accident. The web app renders no SVG-to-PNG of its own; the Noto Sans JP/SC/KR subsets used for card rasterization live in `apps/discord-worker/src/fonts/` and `apps/og-worker/src/fonts/` (`@xivdyetools/svg` ships no font files — it only names the stacks in `FONTS`).
 - `src/index.html` is the Vite entry; `vite.config.ts` sets `root: 'src'` and `outDir: '../dist'`.
-- Tailwind v4 is compiled inside Vite by `@tailwindcss/postcss` (`postcss.config.js`) from `src/styles/tailwind.css` (`@import "tailwindcss"` + `@config "../../tailwind.config.js"`); there is no separate CSS build step and no committed CSS output.
+- Tailwind v4 is compiled inside Vite by `@tailwindcss/postcss` (`postcss.config.js`) from `src/styles/tailwind.css` (`@import "tailwindcss" source("../")` + `@config "../../tailwind.config.js"`); there is no separate CSS build step and no committed CSS output. **The class scan is rooted at `src/`**, so a class written anywhere else (`public/`, `functions/`, a changelog, a script) generates nothing. Without `source()` the base was Vite's cwd: the scan read `CHANGELOG.md` and shipped about 2.5 KB of dead utilities, and a checkout under `.turbo/` (or any folder on Tailwind's ignored-dir list, such as `.next` or `.vercel`) turned off the scanner's ignore rules, pulled in `node_modules`, `dist` and `.git`, and pushed the index CSS past its 105 KB budget on a local `build:check` while CI passed.
 - `public/_headers` (Cloudflare Pages) is the **single** source of truth for the production CSP: `script-src 'self'`, `style-src 'self' 'unsafe-inline'`, `frame-ancestors 'none'`. Do not add a second copy — a `<meta http-equiv>` tag cannot express `frame-ancestors` and will silently diverge.
 - **`public/licenses/xivcharakit.txt` is generated, then committed.** `npm run build` runs `scripts/copy-chara-notices.mjs` (also `npm run copy-chara-notices`) before `tsc`, which finds `xivcharakit` through `@xivdyetools/core` (never a hoisted path), fails unless it is the version core pins, and writes its `dist/LICENSE` and `dist/THIRD_PARTY_NOTICES.md` verbatim under a fixed header; `copy-chara-notices.test.js` fails when the committed file drifts from the installed package, the About modal links it, and `e2e/reader-license.spec.ts` plus `smoke-test-pages.js` check the served body (because `_redirects` answers a missing file with `index.html` and a 200) and, in production, its type: `text/plain; charset=utf-8` comes from the `/licenses/*` rule in `public/_headers`, since Pages sends no charset for `.txt` and the notice holds non-ASCII text.
 - **Only `public/` reaches `dist/`.** `publicDir` is `../public`, so anything sitting at the package root is copied by nothing and is absent from a production build. Anything that must ship belongs under `public/`. (The 2026-08-16 cleanup deleted the stray root-level `assets/`, `robots.txt`, `service-worker.js` and `src/public/` for exactly this reason — production has **no** `robots.txt`; crawler policy is the `X-Robots-Tag` header in `_headers`/beta branding.)
@@ -297,7 +307,7 @@ npx playwright test --project=mobile-chrome
 **Sibling apps it talks to:**
 - `xivdyetools-presets-api` — community presets (HTTPS)
 - `xivdyetools-oauth` — Discord login + JWT issuance
-- `xivdyetools-api-worker` — market-board pricing via its `/universalis` routes (absorbed CORS proxy), and `.chara` equipment identity via `POST /v1/chara/resolve` + `GET /v1/chara/icon/:id` (the Glamour Reader's DYES ON THIS GLAMOUR names/icons; the SPA never talks to XIVAPI — CSP `img-src` allows `data.xivdyetools.app` for the proxied icons, `connect-src` already covers `*.xivdyetools.app`). Local dev: `VITE_API_WORKER_URL` (default `http://localhost:8790`); when the worker is down the block degrades to slot-only rows by design; opt-in telemetry via `POST /v1/telemetry`
+- `xivdyetools-api-worker` — market-board pricing via its `/universalis` routes (absorbed CORS proxy), and `.chara` equipment identity via `POST /v1/chara/resolve` + `GET /v1/chara/icon/:id` (the Glamour Reader's DYES ON THIS GLAMOUR names/icons; the SPA never talks to XIVAPI — CSP `img-src` allows `data.xivdyetools.app` for the proxied icons, `connect-src` explicitly allows `api.xivdyetools.app`, `auth.xivdyetools.app` and `data.xivdyetools.app`, plus the site itself). Local dev: `VITE_API_WORKER_URL` (default `http://localhost:8790`); when the worker is down the block degrades to slot-only rows by design; opt-in telemetry via `POST /v1/telemetry`
 - `xivdyetools-og-worker` — dynamic OpenGraph images for share links
 
 ## Documentation

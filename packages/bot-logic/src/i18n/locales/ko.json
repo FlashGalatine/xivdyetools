@@ -296,7 +296,10 @@
       "listTitle": "즐겨찾기 프리셋",
       "listTitleCount": "즐겨찾기 프리셋 ({n}/{max})",
       "empty": "아직 즐겨찾기한 프리셋이 없습니다. `/preset favorite add`로 추가하세요.",
-      "allRemoved": "즐겨찾기한 프리셋이 모두 삭제된 것 같습니다. `/preset favorite remove`로 항목을 정리하세요."
+      "allRemoved": "저장된 프리셋을 현재 이용할 수 없습니다. 즐겨찾기는 그대로 보관됩니다.",
+      "unavailableSummary": "현재 이용할 수 없는 저장된 프리셋: {count}개.",
+      "truncated": "이 메시지에 담을 공간이 없어 생략된 이용 가능한 프리셋: {count}개.",
+      "lookupFailed": "즐겨찾기를 불러오지 못했습니다. 나중에 다시 시도해 주세요."
     },
     "noValidDyes": "이 프리셋에 유효한 염료가 없습니다"
   },
@@ -463,8 +466,8 @@
     "invalidButton": "잘못된 버튼 상호작용입니다.",
     "notPermitted": "미리보기 이미지를 검토할 권한이 없습니다.",
     "actionFailed": "미리보기 이미지 업데이트에 실패했습니다. 다시 시도해 주세요.",
-    "approvedFooter": "{moderator} 님이 미리보기 이미지를 승인했습니다",
-    "rejectedFooter": "{moderator} 님이 미리보기 이미지를 거부했습니다 (프리셋은 변경되지 않음)"
+    "approvedFooter": "미리보기 이미지가 승인되었습니다",
+    "rejectedFooter": "미리보기 이미지가 거부되었습니다 — 프리셋에는 영향이 없습니다"
   },
   "matchImage": {
     "missingImage": "분석할 이미지를 첨부해 주세요.",
@@ -500,7 +503,7 @@
     "supportedFormats": "지원 형식",
     "supportedFormatsContent": "• PNG\n• JPG/JPEG\n• GIF\n• WebP\n• BMP",
     "fileLimits": "파일 제한",
-    "fileLimitsContent": "• 최대 크기: 10MB",
+    "fileLimitsContent": "• 최대 크기: 5MB",
     "matchQualityRatings": "매칭 거리",
     "matchQualityRatingsContent": "목록의 모든 매칭은 입력 색상과의 거리를 함께 표시합니다 - 값이 낮을수록 더 가깝습니다.\n\n여섯 가지 매칭 방식과 밴드 판정 방식: `/manual` 주제 {topic}",
     "poweredBy": "Photon WASM 이미지 처리 기반"
@@ -846,6 +849,12 @@
         "slot": {
           "description": "대신 슬롯 하나에 대한 가장 가까운 염료 5개 표시"
         }
+      },
+      "choices": {
+        "order": {
+          "slots": "슬롯 — 파일 순서(기본값)",
+          "hardest": "어려운 순 — 일치도가 낮은 순"
+        }
       }
     },
     "glamour": {
@@ -1133,6 +1142,13 @@
               "description": "즐겨찾기한 프리셋 목록"
             }
           }
+        }
+      },
+      "choices": {
+        "sort": {
+          "popular": "인기순",
+          "recent": "최신순",
+          "name": "가나다순"
         }
       }
     },

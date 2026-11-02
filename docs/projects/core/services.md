@@ -306,10 +306,11 @@ Barrel exports the sections above do not cover:
 - Consolidation: `CONSOLIDATED_DYES` (the Type A/B/C items with localized
   names, acquisition and price) and `getMarketItemID(dye)` (legacy item ID →
   consolidated market ID).
-- `.chara` import: `parseCharaFile(text)`, the async
-  `resolveCharaColors(parsed, characterColors, dyeLookup?)`, and
-  `CHARA_DYEABLE_SLOTS` (the seven gear slots that carry dye channels).
-- `.chara` import on `xivcharakit` (core 5.15.0; the legacy pair above is unchanged):
+- Legacy `.chara` import: `parseCharaFile(text)` and the async
+  `resolveCharaColors(parsed, characterColors, dyeLookup?)` remain available with deprecation
+  guidance; removal is gated separately in [DEPRECATIONS.md](../../../DEPRECATIONS.md).
+  `CHARA_DYEABLE_SLOTS` remains the live set of seven gear slots that carry dye channels.
+- Current `.chara` import on `xivcharakit`:
   `inspectCharaForTools(bytesOrText)` reads a document under the 8,192-byte cap;
   `resolveCharaForTools(inspection, characterColors, dyeLookup?)` projects it to an
   `ImportedCharaCharacter` (eight slots, worn models, dye badges, bounded diagnostics, no raw document);
@@ -319,6 +320,8 @@ Barrel exports the sections above do not cover:
   preview and never matches. `@xivdyetools/core/chara` exports only the reader, the provider-based
   resolve and four types, for a bundle (a Web Worker) that must not carry the rest of core.
   Differences from the legacy parser: `docs/research/2026-10-22-xivcharakit-integration.md`.
+  The size cap is defined independently of the legacy parser; live slot/result/lookup contracts
+  also live in their own type-only module. Their root export names and shapes are preserved.
 - Facewear colors: `facewearColors`, `getFacewearColor(slug)` and
   `getFacewearColorByLegacyItemID(legacyId)`.
 

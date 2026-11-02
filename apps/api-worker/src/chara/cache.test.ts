@@ -64,3 +64,19 @@ describe('verified row-cache partitions', () => {
     expect(await cache.getGlasses(3)).toBeUndefined();
   });
 });
+
+
+it('excludes literal shape-5 Item and Glasses entries', async () => {
+  resetAllMocks();
+  const ctx = createMockExecutionContext();
+  const cache = new CharaRowCache(ctx, 'old-shape');
+  const edge = await caches.open('chara-resolve');
+  const match = vi.spyOn(edge, 'match').mockImplementation(async (request) => {
+    const key = typeof request === 'string' ? request : request instanceof URL ? request.href : request.url;
+    return decodeURIComponent(key).includes('chara:5:old-shape:') ? new Response(JSON.stringify([row]), { headers: { 'X-Cached-At': String(Date.now()), 'X-Cache-TTL': '604800', 'X-SWR-Window': '86400' } }) : undefined;
+  });
+  expect((await cache.getRows([lookup])).size).toBe(0);
+  expect(await cache.getGlasses(3)).toBeUndefined();
+  expect(match).toHaveBeenCalledTimes(2);
+  match.mockRestore();
+});

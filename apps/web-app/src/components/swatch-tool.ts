@@ -25,6 +25,7 @@ import {
 // Type-only: RouterService itself comes through the barrel above
 import type { ToolId } from '@services/router-service';
 import {
+  BAND_METHOD_DP,
   CharacterColorService,
   isMatchingMethod,
   LEGACY_MATCHING_METHOD_MAP,
@@ -61,7 +62,12 @@ import type { ShareButton } from '@components/v4/share-button';
 import { ShareService } from '@services/share-service';
 import { CharaFileCard } from '@components/chara-file-card';
 import { CharaSheet, saveCharacterColors, type CharaSlotGridRef } from '@components/chara-sheet';
-import { hasValidGridCoordinate, slotLabel as charaSlotLabel } from '@components/chara-ui';
+import {
+  MONO,
+  SANS,
+  hasValidGridCoordinate,
+  slotLabel as charaSlotLabel,
+} from '@components/chara-ui';
 import { CharaSessionService } from '@services/chara-session-service';
 
 // ============================================================================
@@ -252,12 +258,6 @@ function migrateLegacySwatchSettings(): void {
   StorageService.setItem(LEGACY_MIGRATED_KEY, true);
 }
 
-// ============================================================================
-// 10A Sheet vocabulary (drawn card metrics)
-// ============================================================================
-
-const MONO = 'var(--font-mono)';
-
 /**
  * Grid cell sizes per the 5.0 register: a dense 26px reference chart on
  * desktop (the slot cards' chip size), 44px touch targets on mobile.
@@ -275,9 +275,6 @@ const GRID_GAP = 4;
  * line and blows the panel out (the Evercold notice did exactly that).
  */
 const GRID_WIDTH_DESKTOP = GRID_CELL_DESKTOP * 8 + GRID_GAP * 7;
-/** Matches globals.css h1–h6 — Space Grotesk with the system fallback. */
-const SANS = 'var(--font-display)';
-
 /** The selected thing the verdict card describes (sheet slot or grid cell). */
 interface SwatchSelectionContext {
   source: 'slot' | 'grid';
@@ -1042,7 +1039,7 @@ export class SwatchTool extends BaseComponent {
       // Distance badge
       const distBadge = this.createElement('span', {
         className: 'number',
-        textContent: `Δ ${match.distance.toFixed(2)}`,
+        textContent: `Δ ${match.distance.toFixed(BAND_METHOD_DP[this.matchingMethod])} · ${METHOD_TAGS[this.matchingMethod]}`,
         attributes: {
           style: `
             font-size: 11px;
@@ -1100,7 +1097,6 @@ export class SwatchTool extends BaseComponent {
 
     // 10A: the .chara reader sits ABOVE the workspace — the drop zone is an
     // offer, not a replacement; everything below keeps working without it.
-    // (Constructed further down, once the glamour container exists.)
     const charaContainer = this.createElement('div', {
       attributes: { style: 'width: 100%; max-width: 1400px;' },
     });
@@ -1360,6 +1356,9 @@ export class SwatchTool extends BaseComponent {
 
     this.mountChara(charaContainer);
 
+    // Restore derived matches and Share whenever the surrounding panel is rebuilt.
+    this.updateMatchResults();
+    this.updateShareButton();
     // Initialize displays
     this.updateSelectionCard();
     this.updateEmptyState();
@@ -1866,7 +1865,7 @@ export class SwatchTool extends BaseComponent {
   private closestDyeTo(hex: string): { dye: Dye; distance: number } | null {
     let best: { dye: Dye; distance: number } | null = null;
     for (const dye of dyeService.getAllDyes()) {
-      if (dye.itemID <= 0 || isDyeExcluded(this.dyeFiltersConfig, dye)) continue;
+      if (isDyeExcluded(this.dyeFiltersConfig, dye)) continue;
       const distance = this.calculateColorDistance(hex, dye.hex);
       if (!best || distance < best.distance) best = { dye, distance };
     }
@@ -1935,12 +1934,12 @@ export class SwatchTool extends BaseComponent {
     if (ctx?.source !== 'slot' && this.matchedDyes.length > 0) {
       const top = this.matchedDyes[0];
       bestName = LanguageService.getDyeName(top.dye.itemID) || top.dye.name;
-      bestDelta = top.distance.toFixed(1);
+      bestDelta = top.distance.toFixed(BAND_METHOD_DP[this.matchingMethod]);
     } else {
       const best = this.closestDyeTo(subjectHex);
       if (best) {
         bestName = LanguageService.getDyeName(best.dye.itemID) || best.dye.name;
-        bestDelta = best.distance.toFixed(1);
+        bestDelta = best.distance.toFixed(BAND_METHOD_DP[this.matchingMethod]);
       }
     }
 
@@ -2019,6 +2018,14 @@ export class SwatchTool extends BaseComponent {
           style: `font-family: ${MONO}; font-size: 9.5px; letter-spacing: 0.5px; color: ${
             offGrid ? '#F4BF4F' : 'var(--theme-text-muted)'
           }; white-space: nowrap;`,
+        },
+      })
+    );
+    tagRow.appendChild(
+      this.createElement('span', {
+        textContent: METHOD_TAGS[this.matchingMethod],
+        attributes: {
+          style: `font-family: ${MONO}; font-size: 9.5px; color: var(--theme-text-muted); white-space: nowrap;`,
         },
       })
     );

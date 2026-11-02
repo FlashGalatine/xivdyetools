@@ -56,13 +56,21 @@ wrangler secret delete PERSPECTIVE_API_KEY --env production
 - [ ] Confirm on the `…-dev` worker (no key set) that a new preset lands as `pending` (the
       `unscored` path, shipped in presets-api 2.4.0), or is scored by the replacement
 - [ ] Delete the `PERSPECTIVE_API_KEY` production secret **before 2026-12-31**
-- [ ] **Same day:** edit both privacy policies so neither names Perspective any more, all six
-      languages each:
-  - bot `apps/discord-worker/PRIVACY_POLICY.md` §6 (the Perspective API row of Third-Party
-    Services);
-  - web `apps/web-app/PRIVACY.md` item 3 (the Perspective sentence).
+- [ ] **Same day as key deletion:** update both privacy policies and both Terms of Service,
+      all six languages each:
+  - bot `apps/discord-worker/PRIVACY_POLICY.md` §6: remove the Perspective API row of Third-Party
+    Services;
+  - web `apps/web-app/PRIVACY.md` item 3: remove the Perspective sentence;
+  - bot `apps/discord-worker/TERMS_OF_SERVICE.md` §5, Content Moderation → Community Presets:
+    replace the "Those that clear it are published immediately" claim;
+  - web `apps/web-app/TERMS_OF_SERVICE.md`, Moderation:
+    replace the "A submission that clears them is published straight away and logged for audit" claim.
 
-  Bump every variant's `Last updated` and run
+  Without a replacement scorer, both Terms of Service must say that every new or text-edited
+  preset is held for moderator review. If a replacement scorer is used, describe its verified
+  behavior instead. Make these policy changes on key-deletion day, not before.
+
+  Bump every variant's `Last updated` to the same date and run
   `python .agents/skills/audit-shared/scripts/policy-locale-parity.py` (exit 0).
 - [ ] Remove `checkWithPerspective`, `PERSPECTIVE_ENDPOINT`, `moderationUnavailable()`, the
       `perspective_unavailable` method value and the `PERSPECTIVE_API_KEY` `Env` field once the
@@ -159,7 +167,7 @@ never shadow API paths on data.*). The docs now deploy atomically with the API t
 - [x] Content moved to `apps/api-worker/docs/`; vitepress build wired into the api-worker deploy (2026-07-31)
 - [x] `deploy-api-docs.yml` deleted (2026-07-31)
 - [x] Pages-project domain cutover (steps 1–3) — verified live 2026-08-21: `developers.xivdyetools.app` is no longer attached to the `xivdyetools-api-docs` Pages project (only its `pages.dev` alias remains) and serves api-worker's Workers-Static-Assets build
-- [ ] Delete the `xivdyetools-api-docs` Pages project after the cutover window (step 4; tracked in `docs/operations/OPEN_ITEMS.md` §2)
+- [x] Deleted the `xivdyetools-api-docs` Pages project and its 22 deployments on 2026-10-26 after rechecking the cutover; project and deployment-list GETs return 404, while developers.xivdyetools.app still serves the production API worker's docs ([verification](docs/audits/2026-10-26-security/evidence/remediation-finding-056-2026-10-26.md)).
 
 ---
 
@@ -197,7 +205,7 @@ global `cors({ origin: '*' })` replaces the proxy's allowlist CORS (strictly mor
 - [x] discord-worker binding + web-app fallback URL + preconnect hints flipped (2026-07-31)
 - [x] deploy-universalis-proxy.yml deleted (api-worker's workflow covers the moved code)
 - [x] Production domain cutover, steps 1–3 — verified live 2026-08-21: both proxy hosts answer api-worker (`/v1/dyes` 200, `/api/v2/data-centers` 200). Steps 4–5 (web-app + discord-worker production deploys) *are* the 5.0 merge
-- [ ] Delete the old `xivdyetools-universalis-proxy` worker after the cutover window (still exists, last deploy 2026-07-13 — tracked in `docs/operations/OPEN_ITEMS.md` §2)
+- [x] Deleted the old `xivdyetools-universalis-proxy` worker on 2026-10-26 after rechecking routes and all worker bindings; settings GET returns 404 / 10007, while both current proxy URLs still serve the expected data-centers JSON ([verification](docs/audits/2026-10-26-security/evidence/remediation-finding-056-2026-10-26.md)).
 
 ---
 
@@ -380,6 +388,63 @@ the source — `git ls-files apps/web-app | xargs grep -l LocalStorageCacheBacke
 re-verifying work that was already done.
 
 ---
+
+### Legacy character-file parser and resolver (`@xivdyetools/core`)
+
+| Field | Value |
+|---|---|
+| Deprecation prepared | 2026-10-27, core 5.16.0 MINOR; publication pending |
+| Remove in | Core 6.0.0, after the MINOR is published and beta/production consumer acceptance is recorded |
+| Severity | High — published npm API; removal requires a MAJOR |
+
+**Deprecated symbols:** `parseCharaFile`, `resolveCharaColors`, `OFF_GRID_DELTA_E2000`,
+`ParsedCharaFile`, `CharaColorSlotRaw`, and `CharaGearDye`. Their implementations, signatures,
+exports, tests and the host/library parity harness remain in the 5.x release. The shared
+`MAX_CHARA_FILE_BYTES` limit and the nine live slot/result/lookup types are retained APIs,
+relocated to independent modules; they are not deprecated.
+
+**Migration:** use `inspectCharaForTools` with `resolveCharaForTools`, or the palette-free
+`@xivdyetools/core/chara` reader and `resolveCharaWithProvider` with a host palette provider.
+Review the [integration notes](docs/research/2026-10-22-xivcharakit-integration.md): the new
+diagnostics and color eligibility are intentionally different from the legacy result contract.
+
+**Removal gates:**
+
+- [x] Prepare the 5.16.0 deprecation tags and migration documentation without removing legacy APIs.
+- [x] Relocate the shared limit and live types while preserving public names and declaration shapes.
+- [ ] Publish core 5.16.0 through **Publish Packages to npm** and verify registry availability.
+- [ ] Record beta and production acceptance for web/bot consumers of the current facade.
+- [x] Prepare bot-logic's legacy test-oracle rewrite in A-BOT-LOGIC (DEAD-022); publication pending.
+- [ ] In core 6.0.0, remove the legacy pair, its legacy-only symbols and the parity harness's
+      host half only after the preceding gates pass (DEAD-024).
+
+---
+
+
+### Legacy swatch result projection (`@xivdyetools/bot-logic`)
+
+| Field | Value |
+|---|---|
+| Deprecation prepared | 2026-10-27, bot-logic 4.12.0 MINOR; publication pending |
+| Remove in | Bot-logic 5.0.0 after the published MINOR, prerequisites and consumer acceptance |
+| Severity | High — published result contract; removal requires a MAJOR |
+
+**Deprecated:** `SwatchResult.character` and `SwatchCharacter`. The field remains required
+on both successful result routes, with its legacy member shape and back-mapping intact in
+4.x. Use `svgString`/`embed` for presentation. Deprecation does not sanitize legacy metadata
+or resolve the raw-producer concern scheduled for the major removal (FINDING-043 / DEAD-023).
+
+**Removal gates:**
+
+- [x] Prepare the 4.12.0 tags and replace display/matching test oracles with card/embed assertions.
+- [ ] Publish and verify core 5.16.0, SVG 4.4.1, then bot-logic 4.12.0.
+- [ ] Record consumer beta/production acceptance while retaining compatibility/privacy tests.
+- [ ] Recheck external npm consumer usage; cancel removal if an active consumer still needs the field.
+- [ ] After the major prerequisite releases, remove the approved field/type/back-mapping in
+      M-BOT-LOGIC 5.0.0. Keep fileText, NO_INPUT and familySize unless separately approved.
+
+---
+
 
 ## Process
 

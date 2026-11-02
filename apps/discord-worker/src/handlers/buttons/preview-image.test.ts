@@ -248,7 +248,7 @@ describe('preview-image button handlers', () => {
               image: { url: 'https://shots.xivdyetools.app/p1/abc.webp' },
               // BUG-041: the preset id survives the edit; the outcome moves to
               // the description, where it is readable rather than a dead <@id>
-              description: '**My Preset**\n\nPreview image approved by Moderator',
+              description: '**My Preset**\n\nPreview image approved',
               footer: { text: `ID: ${PRESET_ID}` },
             }),
           ],
@@ -285,13 +285,13 @@ describe('preview-image button handlers', () => {
       const body = vi.mocked(discordApi.editMessage).mock.calls[0][3];
       expect(JSON.stringify(body)).not.toContain('<@');
       expect(body.embeds![0]).toMatchObject({
-        description: 'Preview image approved by Moderator',
+        description: 'Preview image approved',
         footer: { text: `ID: ${PRESET_ID}` },
       });
     });
 
-    // FINDING-019: the moderator's Discord name is user-controlled text
-    it('sanitises the moderator name (mentions defused, markdown escaped)', async () => {
+    // FINDING-001: moderator identity stays in API attribution only.
+    it('omits the moderator name and retains API actor attribution', async () => {
       vi.mocked(presetApi.isModerator).mockReturnValue(true);
       vi.mocked(presetApi.setPreviewImageStatus).mockResolvedValue({
         success: true,
@@ -315,10 +315,11 @@ describe('preview-image button handlers', () => {
       await vi.mocked(ctx.waitUntil).mock.calls[0][0];
 
       const description = vi.mocked(discordApi.editMessage).mock.calls[0][3].embeds![0].description!;
-      expect(description).toContain('Preview image rejected by');
+      expect(description).toBe('Preview image rejected — preset unaffected');
       expect(description).not.toContain('@everyone');
       expect(description).not.toContain('<@999>');
-      expect(description).toContain('\\*\\*bold\\*\\*');
+      expect(description).not.toContain('bold');
+      expect(presetApi.setPreviewImageStatus).toHaveBeenCalledWith(env, PRESET_ID, 'reject', PREVIEW_IMAGE_KEY, 'mod-1', '@everyone <@999> **bold**');
     });
 
     // A refresh by an older build replaced the footer with its notice (a
@@ -452,7 +453,7 @@ describe('preview-image button handlers', () => {
       expect(discordApi.safeSendFollowUp).toHaveBeenCalled();
     });
 
-    it('falls back to the raw user id (as plain text) in the outcome when username is missing', async () => {
+    it('omits the raw user id from the outcome when username is missing', async () => {
       vi.mocked(presetApi.isModerator).mockReturnValue(true);
       vi.mocked(presetApi.setPreviewImageStatus).mockResolvedValue({
         success: true,
@@ -480,7 +481,7 @@ describe('preview-image button handlers', () => {
         expect.objectContaining({
           embeds: [
             expect.objectContaining({
-              description: 'Preview image rejected by mod-1 — preset unaffected',
+              description: 'Preview image rejected — preset unaffected',
               footer: { text: `ID: ${PRESET_ID}` },
             }),
           ],

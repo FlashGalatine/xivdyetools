@@ -149,7 +149,10 @@ const LOUPE_PLACEHOLDER = 'color-mix(in srgb, var(--theme-text-muted) 35%, trans
  * Desktop scrolls the whole column (the hero spends ~320px before the first
  * card, so roughly one card row shows at a time — the accepted cost). Mobile
  * (≤768px) pins the hero and scrolls the sheet under it: 226px image, 44px
- * bar, 40px pick segments, 44px `+` tile, 74px loupe.
+ * bar, 40px pick segments, 44px `+` tile, 74px loupe. The shell's scroller
+ * owns all scrolling (#368), so the pin is a sticky hero on a glass ground,
+ * not a second scroller under a fixed-height workspace, and it needs a
+ * phone at least 560px tall.
  *
  * Busy state: while K-means runs the bar and the sheet dim and stop taking
  * taps — the `data-busy` flag is what the unit tests wait on too.
@@ -178,7 +181,7 @@ const X4A_RESPONSIVE_CSS = `
   .x4a-dt-text { display: block; }
   .x4a-mb-text { display: none; }
   @media (max-width: 768px) {
-    .x4a-workspace { padding: 12px 14px 24px; gap: 8px; height: 100%; min-height: 0; }
+    .x4a-workspace { padding: 12px 14px 24px; gap: 8px; }
     .x4a-image-card { height: 226px; }
     /* The zoom toolbar is the only touch-reachable zoom, so it stays; it
        drops to the three controls that matter (−, level, +) so it and the
@@ -194,12 +197,23 @@ const X4A_RESPONSIVE_CSS = `
     .x4a-add-tile { flex-basis: 44px; }
     .x4a-loupe { width: 74px; height: 74px; padding-bottom: 7px; }
     .x4a-loupe-ring { width: 13px; height: 13px; margin: -6.5px 0 0 -6.5px; }
-    .x4a-sheet { overflow-y: auto; }
     .x4a-drop-title { font-size: 17px; }
     .x4a-dt-actions { display: none; }
     .x4a-mb-actions { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 236px; }
     .x4a-dt-text { display: none; }
     .x4a-mb-text { display: block; }
+  }
+  /* The ~360px hero pins only where at least ~150px of the sheet still shows
+     under it; on a shorter (often landscape) phone it scrolls away with the
+     sheet. Sticky offsets count from inside the scroller's padding, so the
+     negative top pins the hero to the scroller's own edge, under the header. */
+  @media (max-width: 768px) and (min-height: 560px) {
+    .x4a-hero {
+      position: sticky; top: calc(-1 * var(--v4-content-padding, 24px)); z-index: 2;
+      background: var(--v4-glass-bg, rgba(30, 30, 30, 0.7));
+      backdrop-filter: var(--v4-glass-blur, blur(12px));
+      -webkit-backdrop-filter: var(--v4-glass-blur, blur(12px));
+    }
   }
 `;
 
@@ -2371,6 +2385,7 @@ export class ExtractorTool extends BaseComponent {
   private openPaletteExport(): void {
     openExportSheet({
       tool: 'extractor',
+      matchingMethod: this.matchingMethod,
       title: LanguageService.t('matcher.extractedPalette'),
       entries: this.roll.map((entry, index) => ({
         key: `pick-${index + 1}`,

@@ -37,6 +37,11 @@ database_id = "e17d68a1-5a44-4c88-b02b-07d053cbe321"
 binding = "PRESETS_API"
 service = "xivdyetools-presets-api"
 
+[[services]]
+binding = "OAUTH_IDENTITY"
+service = "xivdyetools-oauth"
+entrypoint = "IdentityLookup"
+
 # FINDING-003: native Workers Rate Limiting bindings (per Discord user): command 20+5, autocomplete 60+10 per 60 s.
 [[ratelimits]]
 name = "RL_COMMAND"
@@ -60,6 +65,7 @@ simple = { limit = 70, period = 60 }
 ENVIRONMENT = "development"
 DISCORD_CLIENT_ID = "1453806659708129374"
 PRESETS_API_URL = "https://api.xivdyetools.app"
+LINKED_BAN_CONFIRMATION_ENABLED = "false"
 
 # Secrets: DISCORD_TOKEN, DISCORD_PUBLIC_KEY, BOT_API_SECRET,
 # BOT_SIGNING_SECRET, MODERATOR_IDS, MODERATION_CHANNEL_ID,
@@ -86,6 +92,7 @@ enabled = false
 ENVIRONMENT = "production"
 DISCORD_CLIENT_ID = "1453806659708129374"
 PRESETS_API_URL = "https://api.xivdyetools.app"
+LINKED_BAN_CONFIRMATION_ENABLED = "false"
 
 [[env.production.kv_namespaces]]
 binding = "KV"
@@ -99,6 +106,11 @@ database_id = "e17d68a1-5a44-4c88-b02b-07d053cbe321"
 [[env.production.services]]
 binding = "PRESETS_API"
 service = "xivdyetools-presets-api"
+
+[[env.production.services]]
+binding = "OAUTH_IDENTITY"
+service = "xivdyetools-oauth"
+entrypoint = "IdentityLookup"
 
 # FINDING-003: production per-user rate-limit bindings
 [[env.production.ratelimits]]

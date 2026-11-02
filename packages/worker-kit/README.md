@@ -223,8 +223,16 @@ than global.
 
 | Export | Description |
 |--------|-------------|
-| `getClientIp(request, options?)` | Prefers `CF-Connecting-IP`. **Never** trusts `X-Forwarded-For`, which is spoofable (SEC-002). |
+| `getClientIp(request, options?)` | Prefers `CF-Connecting-IP`. Ignores spoofable `X-Forwarded-For` unless `trustXForwardedFor: true` is explicitly selected. Optional `ipv6Prefix64: true` groups valid IPv6 clients by /64; both options default to false. |
 | `getRateLimitHeaders(result)` | Builds the `X-RateLimit-*` / `Retry-After` header set. |
+
+Use `getClientIp(request, { ipv6Prefix64: true })` for a shared /64 quota when IPv6 host-address
+rotation should not create a new bucket. Equivalent IPv6 spellings resolve to the same network
+literal without a `/64` suffix. IPv4-mapped IPv6 resolves to dotted IPv4, preserving separate
+IPv4 clients; ordinary IPv4 and malformed input retain the existing output. Aggregation may
+group legitimate clients on the same network, so enable it deliberately at the caller. Existing
+callers remain opted out, and enabling it starts new network buckets rather than migrating
+per-address counters. Header precedence and the separate X-Forwarded-For trust option are unchanged.
 
 ### Presets (`/rate-limiter/presets`)
 

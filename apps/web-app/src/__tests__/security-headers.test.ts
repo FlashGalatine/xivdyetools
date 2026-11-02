@@ -105,13 +105,13 @@ describe('public/_headers security contract', () => {
     // browser never talks to it — market prices come through the first-party
     // proxy at data.xivdyetools.app (services/api-service-wrapper.ts) — so the
     // allowance only widened the exfil surface an injection could reach.
-    it('only names own or first-party hosts in connect-src', () => {
-      const connect = CSP.get('connect-src') ?? [];
-      expect(connect).toContain("'self'");
-      for (const source of connect) {
-        if (source.startsWith("'")) continue;
-        expect(source, source).toMatch(/^https:\/\/([a-z0-9-]+\.|\*\.)?xivdyetools\.app$/);
-      }
+    it('allows exactly the required connection origins (FINDING-011)', () => {
+      expect(CSP.get('connect-src')?.slice().sort()).toEqual([
+        "'self'",
+        'https://api.xivdyetools.app',
+        'https://auth.xivdyetools.app',
+        'https://data.xivdyetools.app',
+      ]);
       // …nor anywhere else a directive could smuggle it back in (comments may
       // still name it — that is where the removal is explained).
       const directiveLines = HEADERS.split('\n').filter(

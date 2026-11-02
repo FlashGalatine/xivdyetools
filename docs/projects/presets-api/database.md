@@ -2,13 +2,13 @@
 
 ## Overview
 
-The Presets API uses **Cloudflare D1**, a SQLite-based serverless database. All timestamps are stored as ISO 8601 strings in UTC.
+The Presets API uses **Cloudflare D1**, a SQLite-based serverless database. Legacy business timestamps use ISO 8601 strings in UTC; the identity-operation and confirmation deadlines added below use integer epoch seconds.
 
 ---
 
 ## Tables
 
-There are 7 live tables in the schema: `categories`, `presets`, `votes`, `moderation_log`, `banned_users`, `failed_notifications` (migration 0005) and `submission_events` (migrations 0011 / 0012). `rate_limits` was dropped in 0006 and only a comment marks where it used to be.
+There are 10 live tables in the prepared schema: `categories`, `presets`, `votes`, `moderation_log`, `banned_users`, `failed_notifications` (migration 0005), `submission_events` (migrations 0011 / 0012), and the three identity-continuity tables added by migration 0016. `rate_limits` was dropped in 0006 and only a comment marks where it used to be.
 
 ### categories
 
@@ -119,13 +119,13 @@ a comment where it stood — a fresh local database does **not** create it.
 
 ### banned_users
 
-Users banned from the presets system (migration 0003). Written by `xivdyetools-moderation-worker`; presets-api only reads it (`middleware/ban-check.ts`, `middleware/auth.ts`).
+Parent bans for the presets system (migration 0003). Moderation writes these records; presets-api reads them for enforcement and prunes lifted records under retention. Effective scope also includes particular-ban memberships.
 
 | Column | Type | Notes |
 |--------|------|-------|
 | id | TEXT | PRIMARY KEY — UUID v4 |
 | discord_id | TEXT | The resolved acting-user id, nullable — a Discord snowflake, or the oauth `sub` UUID (lowercase) for an account with no Discord ID (BUG-001 path (a), 2026-09-16 deep-dive) |
-| xivauth_id | TEXT | XIVAuth UUID, nullable |
+| xivauth_id | TEXT | Legacy internal OAuth account UUID slot, nullable; never the upstream XIVAuth identifier |
 | username | TEXT | NOT NULL — display name at the time of the ban |
 | moderator_discord_id | TEXT | NOT NULL — moderator who issued the ban |
 | reason | TEXT | NOT NULL (10-500 chars) |
@@ -134,9 +134,23 @@ Users banned from the presets system (migration 0003). Written by `xivdyetools-m
 | unban_moderator_discord_id | TEXT | Moderator who lifted the ban |
 | | | CHECK (discord_id IS NOT NULL OR xivauth_id IS NOT NULL) |
 
-An unban closes the row (`unbanned_at`, and blanks `username` and `reason`) rather than deleting it at once — a lifted ban is deleted **90 days** after `unbanned_at` by the presets-api retention prune (FINDING-005; an active ban is never pruned). Two **partial unique** indexes — `idx_banned_users_discord_active` on `discord_id` and `idx_banned_users_xivauth_active` on `xivauth_id`, both `WHERE … IS NOT NULL AND unbanned_at IS NULL` — allow only one *active* ban per identity while keeping the history. Also `idx_banned_users_active(banned_at DESC) WHERE unbanned_at IS NULL` and `idx_banned_users_moderator(moderator_discord_id)`.
+An unban closes one selected row (`unbanned_at`, and blanks `username` and `reason`) rather than deleting it at once — a lifted ban is deleted **90 days** after `unbanned_at` by the presets-api retention prune (FINDING-005; an active ban is never pruned). Two **partial unique** indexes — `idx_banned_users_discord_active` on `discord_id` and `idx_banned_users_xivauth_active` on `xivauth_id`, both `WHERE … IS NOT NULL AND unbanned_at IS NULL` — keep the legacy column anchors unique while retaining history. Memberships can match several independent active parents; a scope-changing action must select one particular ban. Also `idx_banned_users_active(banned_at DESC) WHERE unbanned_at IS NULL` and `idx_banned_users_moderator(moderator_discord_id)`.
 
 ---
+
+### Identity-continuity tables (migration 0016)
+
+| Table | Purpose and limits |
+|---|---|
+| `ban_identity_memberships` | Per-parent confirmed/continuity IDs; composite ban/identity key and parent-delete cascade. Triggers cap distinct legacy/member scope at 64 IDs |
+| `ban_continuity_operations` | ID/hash-bound applying/applied/refused receipts, overflow/review refusal, stable acknowledgement and integer deadlines. Apply finishes terminal in one transaction; at most 16 matching active bans |
+| `moderation_ban_confirmations` | Actor-bound nonce, action/mode/phase, immutable proposal/hash and selected parent; review always has a parent ID but no parent FK, allowing a reviewed new ban. Integer expiry is within 900 seconds; consume/mutate/audit/finalize share one batch |
+
+Acknowledged terminal receipts become eligible after `max(expires_at, acknowledged_at)+86400`;
+unknown/applying or unacknowledged rows remain. Expired unconsumed/applied confirmations become
+eligible for bounded request/scheduled cleanup. A sweep handles up to 128 rows per category.
+Membership retention follows the parent ban. These associations enforce bans, never ownership.
+See [the full protocol](../../architecture/identity-moderation.md).
 
 ## Indexes
 

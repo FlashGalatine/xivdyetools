@@ -338,3 +338,26 @@ Every response the app dispatches includes (CORS preflight 204s excluded — see
 - [PKCE Flow](pkce-flow.md) - Authentication flow walkthrough
 - [JWT Structure](jwt.md) - Token format and verification
 - [OAuth Overview](overview.md) - Worker architecture
+
+## Private stored-identity provider
+
+The named `IdentityLookup` service entrypoint is separate from every HTTP route above. It
+returns a minimal current stored association or validates a session revision; it exposes no
+upstream XIVAuth ID, profile or token and adds no public lookup URL. Missing, pending and
+unavailable results are distinct. See [the identity contract](../../architecture/identity-moderation.md).
+
+After JWT verification, `/auth/me` additionally checks the current identity revision and
+provider relationship. A stale/missing relationship is `401 Invalid token`; pending recovery
+or unavailable identity storage is a generic `503`. Missing token revision means zero only
+while the original row remains nonpending at zero.
+
+`IDENTITY_SPLIT_ENABLED` remains false in both environments, and the initial provider release
+has no outbound continuity binding. A callback requiring a changed existing relationship is
+refused with a generic `503` and requires another sign-in; it never mints the old Discord
+identity. Matching sign-ins and new-account creation continue. The additive users migration
+must precede deployment, and later consumer/disclosure verification must precede activation.
+
+State signatures use `oauth-state-v1:` before the encoded signing input, with unchanged
+two-part wire format. Unprefixed (3.1.x) states are rejected; a sign-in in flight across the
+3.2.0 deployment retries once. Both provider POST exchanges continue to require signed state and
+PKCE.

@@ -2,11 +2,11 @@
  * Imported `.chara` labels never reach a log — FINDING-001 / FINDING-004
  * (xivcharakit integration plan, Task 5).
  *
- * The character nickname and the file name may name a record the user
- * deliberately saves on this device (typed palette name → nickname → file
- * name → localized default, at most 50 UTF-16 units), and a collection backup
- * keeps those saved names. They must never appear in any log or console
- * output, in development or production logging, anywhere in the lifecycle:
+ * New Swatch character-color records use a localized generic name. Glamour
+ * palette saves may use a typed name, nickname, filename or localized default
+ * (at most 50 UTF-16 units); backups retain existing saved names. Imported labels
+ * must never appear in any log or console output, in development or production,
+ * anywhere in the lifecycle:
  * the two component saves, the loader, and every collection-service path that
  * handles a name (create, duplicate refusal, delete, load-time truncation and
  * dye-ID migration, legacy-palette migration, tombstoned reimport, the
@@ -186,7 +186,10 @@ const buttonByText = (root: HTMLElement, text: string): HTMLButtonElement => {
 async function mountGlamour(fixture: object, fileName: string): Promise<HTMLElement> {
   const host = createTestContainer('chara-glamour');
   hosts.push(host);
-  block = new GlamourBlock(host, { onSubmitPalette: vi.fn() });
+  const actionsHost = document.createElement('div');
+  const content = document.createElement('div');
+  host.append(actionsHost, content);
+  block = new GlamourBlock(content, { actionsHost, onSubmitPalette: vi.fn() });
   block.init();
   expect(await load(fixture, fileName)).toEqual({ ok: true });
   buttonByText(host, LanguageService.t('swatch.makePalette')).click();
@@ -269,11 +272,11 @@ describe.each(MODES)('imported labels stay out of logs — $mode logging', ({ en
   });
 
   // --------------------------------------------------------------------------
-  // (a) The real component saves keep the local name and log none of it
+  // (a) Real component saves follow their naming rules and log no imported labels
   // --------------------------------------------------------------------------
 
   describe('chara-sheet character save', () => {
-    it('saves under the nickname without logging it', async () => {
+    it('uses the generic name without saving or logging the nickname', async () => {
       expect(await load({ ...SHEET_FIXTURE, Nickname: NICK_CANARY }, 'sheet.chara')).toEqual({
         ok: true,
       });
@@ -282,11 +285,12 @@ describe.each(MODES)('imported labels stay out of logs — $mode logging', ({ en
       saveCharacterColors(CharaSessionService.getSession()!);
 
       const saved = CollectionService.getCollections().find((c) => c.kind === 'character');
-      expect(saved?.name).toBe(NICK_CANARY);
+      expect(saved?.name).toBe(LanguageService.t('swatch.characterDefaultName'));
+      expect(saved?.name).not.toContain(NICK_CANARY);
       expect(leaksOf(NICK_CANARY)).toEqual([]);
     });
 
-    it('saves under the file name (kept with .chara) without logging it', async () => {
+    it('uses the generic name without saving or logging the file name', async () => {
       expect(await load({ ...SHEET_FIXTURE, Nickname: '' }, `${FILE_CANARY}.chara`)).toEqual({
         ok: true,
       });
@@ -295,7 +299,8 @@ describe.each(MODES)('imported labels stay out of logs — $mode logging', ({ en
       saveCharacterColors(CharaSessionService.getSession()!);
 
       const saved = CollectionService.getCollections().find((c) => c.kind === 'character');
-      expect(saved?.name).toBe(`${FILE_CANARY}.chara`);
+      expect(saved?.name).toBe(LanguageService.t('swatch.characterDefaultName'));
+      expect(saved?.name).not.toContain(FILE_CANARY);
       expect(leaksOf(FILE_CANARY)).toEqual([]);
     });
   });
@@ -677,9 +682,15 @@ describe.each(MODES)('imported labels stay out of logs — $mode logging', ({ en
 // ============================================================================
 
 describe('preserved local naming', () => {
-  it('a 50-unit saved name keeps its cap, trimming the base and never the suffix', async () => {
-    const long = `${NICK_CANARY}${'N'.repeat(60)}`;
-    expect(await load({ ...SHEET_FIXTURE, Nickname: long }, 'long.chara')).toEqual({ ok: true });
+  it('a long localized generic name keeps its cap, trimming the base and never the suffix', async () => {
+    const long = 'Default'.repeat(10);
+    const translate = LanguageService.t.bind(LanguageService);
+    vi.spyOn(LanguageService, 't').mockImplementation((key, ...args) =>
+      key === 'swatch.characterDefaultName' ? long : translate(key, ...args)
+    );
+    expect(await load({ ...SHEET_FIXTURE, Nickname: NICK_CANARY }, 'long.chara')).toEqual({
+      ok: true,
+    });
     const session = CharaSessionService.getSession()!;
 
     saveCharacterColors(session);
@@ -690,6 +701,7 @@ describe('preserved local naming', () => {
         .filter((c) => c.kind === 'character')
         .map((c) => c.name)
     ).toEqual([long.slice(0, 50), `${long.slice(0, 46)} (1)`]);
+    expect(leaksOf(NICK_CANARY)).toEqual([]);
   });
 
   it('loading a character file alone persists no collection', async () => {

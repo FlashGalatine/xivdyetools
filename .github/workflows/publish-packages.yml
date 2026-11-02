@@ -90,31 +90,24 @@ jobs:
             echo "count=${#TO_PUBLISH[@]}" >> "$GITHUB_OUTPUT"
           fi
 
-  publish:
-    name: Build, Test & Publish
+  # FINDING-049: dependency/build/test/pack code never receives the npm OIDC identity.
+  build:
+    name: Build, Test & Pack
     needs: detect
     if: needs.detect.outputs.count != '0'
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    # FINDING-009: bind production deploys/publishes to the `production` GitHub
-    # environment so branch restrictions / required reviewers can gate them.
-    environment: production
-    permissions:
-      contents: read
-      id-token: write
+    outputs:
+      artifact-id: ${{ steps.upload.outputs.artifact-id }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5
+        with:
+          run_install: false
 
-      # `registry-url` is deliberately omitted here. It makes setup-node write an
-      # .npmrc containing `//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}`,
-      # which under trusted publishing has nothing to expand to. Not emitting it
-      # keeps the auth path unambiguous: publishing authenticates via OIDC, see
-      # `id-token: write` above. Some pnpm versions passed the unexpanded
-      # placeholder through as a credential and failed with a misleading 404
-      # (pnpm/pnpm#11513); npm expands it itself, so the symptom varies by which
-      # client performs the publish.
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
@@ -123,92 +116,82 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Build (with dependencies)
+        env:
+          PACKAGES_JSON: ${{ needs.detect.outputs.packages }}
         run: |
-          PACKAGES='${{ needs.detect.outputs.packages }}'
-          FILTER_ARGS=""
-          for pkg in $(echo "$PACKAGES" | jq -r '.[]'); do
-            FILTER_ARGS="$FILTER_ARGS --filter=${pkg}..."
+          FILTER_ARGS=()
+          for pkg in $(echo "$PACKAGES_JSON" | jq -r '.[]'); do
+            FILTER_ARGS+=("--filter=${pkg}...")
           done
-          echo "Running: pnpm turbo run build $FILTER_ARGS"
-          pnpm turbo run build $FILTER_ARGS
+          pnpm turbo run build "${FILTER_ARGS[@]}"
 
       - name: Test
+        env:
+          PACKAGES_JSON: ${{ needs.detect.outputs.packages }}
         run: |
-          PACKAGES='${{ needs.detect.outputs.packages }}'
-          FILTER_ARGS=""
-          for pkg in $(echo "$PACKAGES" | jq -r '.[]'); do
-            FILTER_ARGS="$FILTER_ARGS --filter=${pkg}"
+          FILTER_ARGS=()
+          for pkg in $(echo "$PACKAGES_JSON" | jq -r '.[]'); do
+            FILTER_ARGS+=("--filter=${pkg}")
           done
-          echo "Running: pnpm turbo run test $FILTER_ARGS"
-          pnpm turbo run test $FILTER_ARGS
+          pnpm turbo run test "${FILTER_ARGS[@]}"
 
-      # pnpm 11 publishes natively (no npm CLI delegation) and implements the
-      # OIDC trusted-publishing exchange itself, so the npm-upgrade step that
-      # pnpm 10 needed (npm >= 11.5.1 for OIDC; Node 22 bundles npm 10.x, which
-      # fails with ENEEDAUTH) is gone. If publishing ever regresses to
-      # ENEEDAUTH/404, check which pnpm version action-setup resolved from
-      # `packageManager` before suspecting the trusted-publisher config.
-      - name: Publish
+      - name: Pack and bind release metadata
+        env:
+          PACKAGES_JSON: ${{ needs.detect.outputs.packages }}
         run: |
-          PACKAGES='${{ needs.detect.outputs.packages }}'
-          FAILED=()
-          SKIPPED=()
-          # BUG-154: a package that failed, or was skipped because something it
-          # depends on failed, must not let its dependents publish. svg and
-          # bot-logic pin core with `workspace:*`, which pnpm rewrites to core's
-          # local version at publish time; if core is not on npm, the dependent
-          # lands on the registry uninstallable for external consumers (ETARGET).
-          # Not a blanket `break`: TIER_ORDER puts worker-kit before svg, and an
-          # unrelated package should still go out.
-          BLOCKED=" "
-          for pkg in $(echo "$PACKAGES" | jq -r '.[]'); do
+          mkdir -p "$RUNNER_TEMP/release"
+          for pkg in $(echo "$PACKAGES_JSON" | jq -r '.[]'); do
             dir_name="${pkg#@xivdyetools/}"
-            manifest="packages/${dir_name}/package.json"
-            # Only dependencies that ship to consumers; devDependencies do not.
-            deps=$(jq -r '[.dependencies, .peerDependencies, .optionalDependencies] | map(select(. != null) | to_entries[] | select(.key | startswith("@xivdyetools/")) | .key) | .[]' "$manifest")
-
-            reason=""
-            for dep in $deps; do
-              if [[ "$BLOCKED" == *" $dep "* ]]; then
-                reason="$dep failed or was skipped"
-                break
-              fi
-              # A dependency outside this run (single-package mode) must already be
-              # on npm at the version this package will be published against.
-              if ! echo "$PACKAGES" | jq -e --arg d "$dep" 'index($d) != null' >/dev/null; then
-                dep_dir="${dep#@xivdyetools/}"
-                dep_version=$(jq -r .version "packages/${dep_dir}/package.json")
-                if [ -z "$(npm view "${dep}@${dep_version}" version 2>/dev/null)" ]; then
-                  reason="${dep}@${dep_version} is not on npm"
-                  break
-                fi
-              fi
-            done
-
-            if [ -n "$reason" ]; then
-              echo "::error::Skipping $pkg: $reason"
-              SKIPPED+=("$pkg")
-              BLOCKED="${BLOCKED}${pkg} "
-              continue
-            fi
-
-            echo "::group::Publishing $pkg"
-            if pnpm --filter "$pkg" publish --provenance --access public --no-git-checks; then
-              echo "✓ Successfully published $pkg"
-            else
-              echo "::error::Failed to publish $pkg"
-              FAILED+=("$pkg")
-              BLOCKED="${BLOCKED}${pkg} "
-            fi
-            echo "::endgroup::"
+            pnpm --filter "$pkg" pack --out "$RUNNER_TEMP/release/${dir_name}.tgz"
           done
+          node --experimental-strip-types scripts/publish-packages.ts manifest "$RUNNER_TEMP/release"
 
-          if [ ${#FAILED[@]} -gt 0 ] || [ ${#SKIPPED[@]} -gt 0 ]; then
-            echo ""
-            [ ${#FAILED[@]} -gt 0 ] && echo "::error::Failed to publish ${#FAILED[@]} package(s): ${FAILED[*]}"
-            [ ${#SKIPPED[@]} -gt 0 ] && echo "::error::Skipped ${#SKIPPED[@]} package(s) whose dependency failed or is not on npm: ${SKIPPED[*]} (fix it and rerun; packages already published are skipped by detect)"
-            exit 1
-          fi
+      - name: Upload release tarballs
+        id: upload
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: npm-release-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/release/
+          if-no-files-found: error
+          retention-days: 7
 
-          echo ""
-          echo "All packages published successfully."
+  publish:
+    name: Verify & Publish Tarballs
+    needs: [detect, build]
+    if: github.ref == 'refs/heads/main' && needs.detect.outputs.count != '0'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      # Helper and expected manifests come from reviewed source, never the artifact.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: 22
+
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5
+        with:
+          version: 11.17.0
+          run_install: false
+
+      - name: Download this run's immutable release artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          artifact-ids: ${{ needs.build.outputs.artifact-id }}
+          path: ${{ runner.temp }}/release/
+          digest-mismatch: error
+
+      # Native pnpm 11 OIDC, with no setup-node registry credential placeholder.
+      # All archive verification completes before publishing starts; lifecycle
+      # scripts are disabled and pnpm runs outside the checkout in an empty cwd.
+      - name: Verify identities, versions, hashes and publish
+        env:
+          PACKAGES_JSON: ${{ needs.detect.outputs.packages }}
+        run: node --experimental-strip-types scripts/publish-packages.ts publish "$RUNNER_TEMP/release"

@@ -89,26 +89,19 @@ export function checkCharaAttachment(
   return { ok: true, url: attachment.url };
 }
 
-/** A downloaded attachment: its decoded text, and with `withBytes` the bytes as received. */
-type DownloadedChara<B extends boolean> = B extends true
-  ? { ok: true; text: string; bytes: Uint8Array }
-  : { ok: true; text: string };
-
 /**
- * Download the attachment's text: bounded wait, no redirect following,
- * bounded read. With `withBytes` the capped bytes come back too, undecoded,
- * so the `.chara` reader sees invalid UTF-8 instead of the U+FFFD the
- * non-fatal decode puts in its place. `manual`, NOT `error`: workerd implements only follow/manual
+ * Download the attachment's original bytes: bounded wait, no redirect following,
+ * bounded read. Leave decoding to the `.chara` reader so it can reject invalid
+ * UTF-8. `manual`, NOT `error`: workerd implements only follow/manual
  * and throws on `error` (which broke every /swatch download until
  * 2026-08-29). A redirect surfaces as a 3xx response, refused by the `!ok`
  * check. A refused download carries the localized reply; a network failure
  * or timeout throws, for the caller to report as its own error.
  */
-export async function downloadCharaAttachment<B extends boolean = false>(
+export async function downloadCharaAttachment(
   url: string,
-  t: Translator,
-  withBytes?: B
-): Promise<DownloadedChara<B> | { ok: false; message: string }> {
+  t: Translator
+): Promise<{ ok: true; bytes: Uint8Array } | { ok: false; message: string }> {
   const response = await fetch(url, {
     redirect: 'manual',
     signal: AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS),
@@ -122,6 +115,5 @@ export async function downloadCharaAttachment<B extends boolean = false>(
   if (bytes === null) {
     return refusal(t, 'card.charaFileReason.tooLarge', { kb: MAX_FILE_KB });
   }
-  const text = new TextDecoder().decode(bytes);
-  return (withBytes ? { ok: true, text, bytes } : { ok: true, text }) as DownloadedChara<B>;
+  return { ok: true, bytes };
 }

@@ -10,8 +10,8 @@ import { BAND_FRAMES } from './band';
 
 const tool = {
   tool: { ...DEFAULT_DECK.harmony, label: '/HARMONY' },
-  name: 'Color Harmony',
-  sub: 'Build a palette around any dye. Six harmony types, real dyes only.',
+  name: 'Harmony Explorer',
+  sub: 'Build a palette around any dye. Ten harmony types, real dyes only.',
   path: 'xivdyetools.app/harmony',
   methodTag: 'ΔE2000',
 };
@@ -24,7 +24,7 @@ describe('generateDefaultCard (2a)', () => {
     expect(svg).toContain(`height="${BAND_FRAMES.discord.height}"`);
     expect(svg).toContain('XIV DYE TOOLS');
     expect(svg).toContain('/HARMONY');
-    expect(svg).toContain('Color Harmony');
+    expect(svg).toContain('Harmony Explorer');
     expect(svg).toContain('xivdyetools.app/harmony');
     expect(svg).toContain('ΔE2000');
     for (const hex of MARK_STRIPES) expect(svg).toContain(hex);
@@ -63,7 +63,7 @@ describe('generateDefaultCard (2a)', () => {
     expect(svg).not.toContain('rx="24"');
     // The one-liner drops; the name and path move into the strip
     expect(svg).not.toContain(tool.sub);
-    expect(svg).toContain('Color Harmony');
+    expect(svg).toContain('Harmony Explorer');
     expect(svg).toContain('xivdyetools.app/harmony');
   });
 

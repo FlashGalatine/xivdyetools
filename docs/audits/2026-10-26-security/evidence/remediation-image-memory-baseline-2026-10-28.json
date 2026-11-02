@@ -1,0 +1,2577 @@
+{
+  "createdAt": "2026-10-28T16:01:12.191Z",
+  "metricsDefinitions": {
+    "wasm": "Exact non-shrinking linear-memory capacity high-water in actual workerd; not live allocator bytes.",
+    "stagedFields": "Maxima of individual raw CDP fields at synchronous boundary pauses; maxima need not occur at same stage. No continuous total-isolate peak claimed.",
+    "processPeakWorkingSetBytes": "OS-maintained physical process high-water, including all workerd isolates/code/bridge; not Cloudflare isolate accounting."
+  },
+  "sourceHead": "e66c67a937436a951331789207c57817ffdd0a50",
+  "versions": {
+    "miniflare": "5.20261019.2-beta",
+    "workerd": "1.20261019.1",
+    "esbuild": "0.28.2",
+    "ws": "8.21.0",
+    "photon": "0.4.0"
+  },
+  "sourceChecks": [
+    {
+      "path": "apps/image-worker/src/index.ts",
+      "expectedSHA256": "2cdeac7083ffc93beeb14a2816393f7b0ed951ed78572be6a628b73e4dcb5081",
+      "currentSHA256": "2cdeac7083ffc93beeb14a2816393f7b0ed951ed78572be6a628b73e4dcb5081"
+    },
+    {
+      "path": "apps/image-worker/src/photon.ts",
+      "expectedSHA256": "9ecc1c2ffe117c7f4e847d8f04f22e3aeb8689da715526955c7090b490c68c6e",
+      "currentSHA256": "9ecc1c2ffe117c7f4e847d8f04f22e3aeb8689da715526955c7090b490c68c6e"
+    },
+    {
+      "path": "apps/image-worker/src/validators.ts",
+      "expectedSHA256": "1729ad583e2c660c46257b747ea6388ff4be240991b02f0423f5289331068009",
+      "currentSHA256": "1729ad583e2c660c46257b747ea6388ff4be240991b02f0423f5289331068009"
+    },
+    {
+      "path": "apps/image-worker/src/dimensions.ts",
+      "expectedSHA256": "65f27fa1427d7ba420c5a8ef33c1aa34e5346b06ba1d2facfb5b643ac26267ea",
+      "currentSHA256": "65f27fa1427d7ba420c5a8ef33c1aa34e5346b06ba1d2facfb5b643ac26267ea"
+    },
+    {
+      "path": "apps/image-worker/wrangler.toml",
+      "expectedSHA256": "b3876ec32b249a50bde9439a659a21dccbab3616e2529233baca63b198f41bb8",
+      "currentSHA256": "b3876ec32b249a50bde9439a659a21dccbab3616e2529233baca63b198f41bb8"
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "expectedSHA256": "707a5d7d9e59fd3790011a986435b91ac0d1347ebdb069e854c9828996d7434f",
+      "currentSHA256": "707a5d7d9e59fd3790011a986435b91ac0d1347ebdb069e854c9828996d7434f"
+    }
+  ],
+  "sourceUnchanged": true,
+  "results": [
+    {
+      "id": "calibration-calibration-instrumented-guard64-file5-output512",
+      "variant": "guard64-file5-output512",
+      "label": "",
+      "flow": "calibration",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 1376256,
+      "stagedFields": {
+        "usedSize": 1169696,
+        "totalSize": 1581056,
+        "backingStorageSize": 8388608,
+        "embedderHeapUsedSize": 515872
+      },
+      "processPeakWorkingSetBytes": 79872000,
+      "responseBytes": 28,
+      "responseSHA256": "692ec52d9090d1e25ea4307b5c61f850c1033ad2ebf7cc9e1caf1bac7ef8b14e",
+      "constructorCalls": 0
+    },
+    {
+      "id": "calibration-calibration-instrumented",
+      "variant": "frozen-source",
+      "label": "",
+      "flow": "calibration",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 1376256,
+      "stagedFields": {
+        "usedSize": 1169428,
+        "totalSize": 1581056,
+        "backingStorageSize": 8388608,
+        "embedderHeapUsedSize": 515872
+      },
+      "processPeakWorkingSetBytes": 79626240,
+      "responseBytes": 28,
+      "responseSHA256": "692ec52d9090d1e25ea4307b5c61f850c1033ad2ebf7cc9e1caf1bac7ef8b14e",
+      "constructorCalls": 0
+    },
+    {
+      "id": "rgb16-64cap-extract256-control-guard64-file5-output512",
+      "variant": "guard64-file5-output512",
+      "label": "",
+      "fixture": "rgb16-64cap",
+      "flow": "extract256",
+      "mode": "control",
+      "status": 400,
+      "wasmHighWaterBytes": 1376256,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 62111744,
+      "responseBytes": 67,
+      "responseSHA256": "4f2f4db2bd8c1307d1c182cbf4a2fce4560adb181484127556b39b5762ac15aa",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgb16-64cap-extract256-instrumented-guard64-file5-output512",
+      "variant": "guard64-file5-output512",
+      "label": "",
+      "fixture": "rgb16-64cap",
+      "flow": "extract256",
+      "mode": "instrumented",
+      "status": 400,
+      "wasmHighWaterBytes": 1376256,
+      "stagedFields": {
+        "usedSize": 1761232,
+        "totalSize": 2891776,
+        "backingStorageSize": 336023,
+        "embedderHeapUsedSize": 515872
+      },
+      "processPeakWorkingSetBytes": 64442368,
+      "responseBytes": 67,
+      "responseSHA256": "4f2f4db2bd8c1307d1c182cbf4a2fce4560adb181484127556b39b5762ac15aa",
+      "constructorCalls": 0
+    },
+    {
+      "id": "rgb16-64cap-extract4096-control-guard64-file5-output512",
+      "variant": "guard64-file5-output512",
+      "label": "",
+      "fixture": "rgb16-64cap",
+      "flow": "extract4096",
+      "mode": "control",
+      "status": 400,
+      "wasmHighWaterBytes": 1376256,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 60891136,
+      "responseBytes": 72,
+      "responseSHA256": "0f042f6c2eb81e7145535f2ab6f3a85a9538970f25a21ca8d5807ea6d5083788",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgb16-64cap-extract4096-instrumented-guard64-file5-output512",
+      "variant": "guard64-file5-output512",
+      "label": "",
+      "fixture": "rgb16-64cap",
+      "flow": "extract4096",
+      "mode": "instrumented",
+      "status": 400,
+      "wasmHighWaterBytes": 1376256,
+      "stagedFields": {
+        "usedSize": 1667324,
+        "totalSize": 2629632,
+        "backingStorageSize": 220536,
+        "embedderHeapUsedSize": 515872
+      },
+      "processPeakWorkingSetBytes": 63475712,
+      "responseBytes": 72,
+      "responseSHA256": "0f042f6c2eb81e7145535f2ab6f3a85a9538970f25a21ca8d5807ea6d5083788",
+      "constructorCalls": 0
+    },
+    {
+      "id": "rgb16-64cap-extract512-control-guard64-file5-output512",
+      "variant": "guard64-file5-output512",
+      "label": "",
+      "fixture": "rgb16-64cap",
+      "flow": "extract512",
+      "mode": "control",
+      "status": 400,
+      "wasmHighWaterBytes": 1376256,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 62111744,
+      "responseBytes": 67,
+      "responseSHA256": "4f2f4db2bd8c1307d1c182cbf4a2fce4560adb181484127556b39b5762ac15aa",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgb16-64cap-extract512-instrumented-guard64-file5-output512",
+      "variant": "guard64-file5-output512",
+      "label": "",
+      "fixture": "rgb16-64cap",
+      "flow": "extract512",
+      "mode": "instrumented",
+      "status": 400,
+      "wasmHighWaterBytes": 1376256,
+      "stagedFields": {
+        "usedSize": 1761708,
+        "totalSize": 2891776,
+        "backingStorageSize": 336023,
+        "embedderHeapUsedSize": 515872
+      },
+      "processPeakWorkingSetBytes": 64708608,
+      "responseBytes": 67,
+      "responseSHA256": "4f2f4db2bd8c1307d1c182cbf4a2fce4560adb181484127556b39b5762ac15aa",
+      "constructorCalls": 0
+    },
+    {
+      "id": "rgb16-64cap-thumbnail-control-guard64-file5-output512-earlyfree",
+      "variant": "guard64-file5-output512-earlyfree",
+      "label": "",
+      "fixture": "rgb16-64cap",
+      "flow": "thumbnail",
+      "mode": "control",
+      "status": 400,
+      "wasmHighWaterBytes": 1376256,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 61181952,
+      "responseBytes": 67,
+      "responseSHA256": "4f2f4db2bd8c1307d1c182cbf4a2fce4560adb181484127556b39b5762ac15aa",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgb16-64cap-thumbnail-control-guard64-file5-output512",
+      "variant": "guard64-file5-output512",
+      "label": "",
+      "fixture": "rgb16-64cap",
+      "flow": "thumbnail",
+      "mode": "control",
+      "status": 400,
+      "wasmHighWaterBytes": 1376256,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 61149184,
+      "responseBytes": 67,
+      "responseSHA256": "4f2f4db2bd8c1307d1c182cbf4a2fce4560adb181484127556b39b5762ac15aa",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgb16-64cap-thumbnail-instrumented-guard64-file5-output512-earlyfree",
+      "variant": "guard64-file5-output512-earlyfree",
+      "label": "",
+      "fixture": "rgb16-64cap",
+      "flow": "thumbnail",
+      "mode": "instrumented",
+      "status": 400,
+      "wasmHighWaterBytes": 1376256,
+      "stagedFields": {
+        "usedSize": 1739692,
+        "totalSize": 2891776,
+        "backingStorageSize": 336023,
+        "embedderHeapUsedSize": 515872
+      },
+      "processPeakWorkingSetBytes": 63713280,
+      "responseBytes": 67,
+      "responseSHA256": "4f2f4db2bd8c1307d1c182cbf4a2fce4560adb181484127556b39b5762ac15aa",
+      "constructorCalls": 0
+    },
+    {
+      "id": "rgb16-64cap-thumbnail-instrumented-guard64-file5-output512",
+      "variant": "guard64-file5-output512",
+      "label": "",
+      "fixture": "rgb16-64cap",
+      "flow": "thumbnail",
+      "mode": "instrumented",
+      "status": 400,
+      "wasmHighWaterBytes": 1376256,
+      "stagedFields": {
+        "usedSize": 1739324,
+        "totalSize": 2891776,
+        "backingStorageSize": 336023,
+        "embedderHeapUsedSize": 515872
+      },
+      "processPeakWorkingSetBytes": 63696896,
+      "responseBytes": 67,
+      "responseSHA256": "4f2f4db2bd8c1307d1c182cbf4a2fce4560adb181484127556b39b5762ac15aa",
+      "constructorCalls": 0
+    },
+    {
+      "id": "rgb16-cap-extract256-control-cf-disabled-control",
+      "variant": "frozen-source",
+      "label": "cf-disabled-control",
+      "fixture": "rgb16-cap",
+      "flow": "extract256",
+      "mode": "control",
+      "status": 200,
+      "wasmHighWaterBytes": 135135232,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 199069696,
+      "responseBytes": 262144,
+      "responseSHA256": "f316e96c73c68e8a53ba077b102bfe083c201c3614cc0bf63d9c35100d403714",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgb16-cap-extract256-control",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgb16-cap",
+      "flow": "extract256",
+      "mode": "control",
+      "status": 200,
+      "wasmHighWaterBytes": 135135232,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 198619136,
+      "responseBytes": 262144,
+      "responseSHA256": "f316e96c73c68e8a53ba077b102bfe083c201c3614cc0bf63d9c35100d403714",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgb16-cap-extract256-instrumented-cf-disabled-control",
+      "variant": "frozen-source",
+      "label": "cf-disabled-control",
+      "fixture": "rgb16-cap",
+      "flow": "extract256",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 135135232,
+      "stagedFields": {
+        "usedSize": 2067768,
+        "totalSize": 3153920,
+        "backingStorageSize": 614831,
+        "embedderHeapUsedSize": 515872
+      },
+      "processPeakWorkingSetBytes": 198942720,
+      "responseBytes": 262144,
+      "responseSHA256": "f316e96c73c68e8a53ba077b102bfe083c201c3614cc0bf63d9c35100d403714",
+      "constructorCalls": 1
+    },
+    {
+      "id": "rgb16-cap-extract256-instrumented",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgb16-cap",
+      "flow": "extract256",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 135135232,
+      "stagedFields": {
+        "usedSize": 2067528,
+        "totalSize": 3153920,
+        "backingStorageSize": 614831,
+        "embedderHeapUsedSize": 515872
+      },
+      "processPeakWorkingSetBytes": 200122368,
+      "responseBytes": 262144,
+      "responseSHA256": "f316e96c73c68e8a53ba077b102bfe083c201c3614cc0bf63d9c35100d403714",
+      "constructorCalls": 1
+    },
+    {
+      "id": "rgb16-cap-extract4096-control-no-resize-return-original",
+      "variant": "no-resize-return-original",
+      "label": "",
+      "fixture": "rgb16-cap",
+      "flow": "extract4096",
+      "mode": "control",
+      "status": 200,
+      "wasmHighWaterBytes": 135135232,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 310218752,
+      "responseBytes": 37748736,
+      "responseSHA256": "c3a53ec714c774fb7f1e9919d1419b5ea6d0bb8b9777ad05f499df10d087f6aa",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgb16-cap-extract4096-control",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgb16-cap",
+      "flow": "extract4096",
+      "mode": "control",
+      "status": 200,
+      "wasmHighWaterBytes": 172949504,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 349908992,
+      "responseBytes": 37748736,
+      "responseSHA256": "c3a53ec714c774fb7f1e9919d1419b5ea6d0bb8b9777ad05f499df10d087f6aa",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgb16-cap-extract4096-instrumented-no-resize-return-original",
+      "variant": "no-resize-return-original",
+      "label": "",
+      "fixture": "rgb16-cap",
+      "flow": "extract4096",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 135135232,
+      "stagedFields": {
+        "usedSize": 2067708,
+        "totalSize": 3153920,
+        "backingStorageSize": 38101423,
+        "embedderHeapUsedSize": 515872
+      },
+      "processPeakWorkingSetBytes": 273883136,
+      "responseBytes": 37748736,
+      "responseSHA256": "c3a53ec714c774fb7f1e9919d1419b5ea6d0bb8b9777ad05f499df10d087f6aa",
+      "constructorCalls": 1
+    },
+    {
+      "id": "rgb16-cap-extract4096-instrumented",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgb16-cap",
+      "flow": "extract4096",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 172949504,
+      "stagedFields": {
+        "usedSize": 2209572,
+        "totalSize": 3153920,
+        "backingStorageSize": 38292392,
+        "embedderHeapUsedSize": 515872
+      },
+      "processPeakWorkingSetBytes": 312061952,
+      "responseBytes": 37748736,
+      "responseSHA256": "c3a53ec714c774fb7f1e9919d1419b5ea6d0bb8b9777ad05f499df10d087f6aa",
+      "constructorCalls": 2
+    },
+    {
+      "id": "rgb16-cap-thumbnail-control",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgb16-cap",
+      "flow": "thumbnail",
+      "mode": "control",
+      "status": 200,
+      "wasmHighWaterBytes": 135135232,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 211664896,
+      "responseBytes": 146,
+      "responseSHA256": "bd9346537a405b21a4f37ac2dc37809359a62138544ea3eb2e3caa1c7e20fd32",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgb16-cap-thumbnail-instrumented",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgb16-cap",
+      "flow": "thumbnail",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 135135232,
+      "stagedFields": {
+        "usedSize": 2092452,
+        "totalSize": 3153920,
+        "backingStorageSize": 352833,
+        "embedderHeapUsedSize": 515872
+      },
+      "processPeakWorkingSetBytes": 199639040,
+      "responseBytes": 146,
+      "responseSHA256": "bd9346537a405b21a4f37ac2dc37809359a62138544ea3eb2e3caa1c7e20fd32",
+      "constructorCalls": 1
+    },
+    {
+      "id": "rgba16-64cap-extract256-control-guard64-file5-output512",
+      "variant": "guard64-file5-output512",
+      "label": "",
+      "fixture": "rgba16-64cap",
+      "flow": "extract256",
+      "mode": "control",
+      "status": 400,
+      "wasmHighWaterBytes": 1376256,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 62423040,
+      "responseBytes": 67,
+      "responseSHA256": "4f2f4db2bd8c1307d1c182cbf4a2fce4560adb181484127556b39b5762ac15aa",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba16-64cap-extract256-instrumented-guard64-file5-output512",
+      "variant": "guard64-file5-output512",
+      "label": "",
+      "fixture": "rgba16-64cap",
+      "flow": "extract256",
+      "mode": "instrumented",
+      "status": 400,
+      "wasmHighWaterBytes": 1376256,
+      "stagedFields": {
+        "usedSize": 1766008,
+        "totalSize": 2891776,
+        "backingStorageSize": 363740,
+        "embedderHeapUsedSize": 515872
+      },
+      "processPeakWorkingSetBytes": 64581632,
+      "responseBytes": 67,
+      "responseSHA256": "4f2f4db2bd8c1307d1c182cbf4a2fce4560adb181484127556b39b5762ac15aa",
+      "constructorCalls": 0
+    },
+    {
+      "id": "rgba16-64cap-extract4096-control-guard64-file5-output512",
+      "variant": "guard64-file5-output512",
+      "label": "",
+      "fixture": "rgba16-64cap",
+      "flow": "extract4096",
+      "mode": "control",
+      "status": 400,
+      "wasmHighWaterBytes": 1376256,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 61251584,
+      "responseBytes": 72,
+      "responseSHA256": "0f042f6c2eb81e7145535f2ab6f3a85a9538970f25a21ca8d5807ea6d5083788",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba16-64cap-extract4096-instrumented-guard64-file5-output512",
+      "variant": "guard64-file5-output512",
+      "label": "",
+      "fixture": "rgba16-64cap",
+      "flow": "extract4096",
+      "mode": "instrumented",
+      "status": 400,
+      "wasmHighWaterBytes": 1376256,
+      "stagedFields": {
+        "usedSize": 1667324,
+        "totalSize": 2629632,
+        "backingStorageSize": 220536,
+        "embedderHeapUsedSize": 515872
+      },
+      "processPeakWorkingSetBytes": 63766528,
+      "responseBytes": 72,
+      "responseSHA256": "0f042f6c2eb81e7145535f2ab6f3a85a9538970f25a21ca8d5807ea6d5083788",
+      "constructorCalls": 0
+    },
+    {
+      "id": "rgba16-64cap-extract512-control-guard64-file5-output512",
+      "variant": "guard64-file5-output512",
+      "label": "",
+      "fixture": "rgba16-64cap",
+      "flow": "extract512",
+      "mode": "control",
+      "status": 400,
+      "wasmHighWaterBytes": 1376256,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 62062592,
+      "responseBytes": 67,
+      "responseSHA256": "4f2f4db2bd8c1307d1c182cbf4a2fce4560adb181484127556b39b5762ac15aa",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba16-64cap-extract512-instrumented-guard64-file5-output512",
+      "variant": "guard64-file5-output512",
+      "label": "",
+      "fixture": "rgba16-64cap",
+      "flow": "extract512",
+      "mode": "instrumented",
+      "status": 400,
+      "wasmHighWaterBytes": 1376256,
+      "stagedFields": {
+        "usedSize": 1766556,
+        "totalSize": 2891776,
+        "backingStorageSize": 363740,
+        "embedderHeapUsedSize": 515872
+      },
+      "processPeakWorkingSetBytes": 64442368,
+      "responseBytes": 67,
+      "responseSHA256": "4f2f4db2bd8c1307d1c182cbf4a2fce4560adb181484127556b39b5762ac15aa",
+      "constructorCalls": 0
+    },
+    {
+      "id": "rgba16-64cap-thumbnail-control-guard64-file5-output512-earlyfree",
+      "variant": "guard64-file5-output512-earlyfree",
+      "label": "",
+      "fixture": "rgba16-64cap",
+      "flow": "thumbnail",
+      "mode": "control",
+      "status": 400,
+      "wasmHighWaterBytes": 1376256,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 61243392,
+      "responseBytes": 67,
+      "responseSHA256": "4f2f4db2bd8c1307d1c182cbf4a2fce4560adb181484127556b39b5762ac15aa",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba16-64cap-thumbnail-control-guard64-file5-output512",
+      "variant": "guard64-file5-output512",
+      "label": "",
+      "fixture": "rgba16-64cap",
+      "flow": "thumbnail",
+      "mode": "control",
+      "status": 400,
+      "wasmHighWaterBytes": 1376256,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 61353984,
+      "responseBytes": 67,
+      "responseSHA256": "4f2f4db2bd8c1307d1c182cbf4a2fce4560adb181484127556b39b5762ac15aa",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba16-64cap-thumbnail-instrumented-guard64-file5-output512-earlyfree",
+      "variant": "guard64-file5-output512-earlyfree",
+      "label": "",
+      "fixture": "rgba16-64cap",
+      "flow": "thumbnail",
+      "mode": "instrumented",
+      "status": 400,
+      "wasmHighWaterBytes": 1376256,
+      "stagedFields": {
+        "usedSize": 1746168,
+        "totalSize": 2891776,
+        "backingStorageSize": 367836,
+        "embedderHeapUsedSize": 515872
+      },
+      "processPeakWorkingSetBytes": 64229376,
+      "responseBytes": 67,
+      "responseSHA256": "4f2f4db2bd8c1307d1c182cbf4a2fce4560adb181484127556b39b5762ac15aa",
+      "constructorCalls": 0
+    },
+    {
+      "id": "rgba16-64cap-thumbnail-instrumented-guard64-file5-output512",
+      "variant": "guard64-file5-output512",
+      "label": "",
+      "fixture": "rgba16-64cap",
+      "flow": "thumbnail",
+      "mode": "instrumented",
+      "status": 400,
+      "wasmHighWaterBytes": 1376256,
+      "stagedFields": {
+        "usedSize": 1745816,
+        "totalSize": 2891776,
+        "backingStorageSize": 367836,
+        "embedderHeapUsedSize": 515872
+      },
+      "processPeakWorkingSetBytes": 63557632,
+      "responseBytes": 67,
+      "responseSHA256": "4f2f4db2bd8c1307d1c182cbf4a2fce4560adb181484127556b39b5762ac15aa",
+      "constructorCalls": 0
+    },
+    {
+      "id": "rgba16-cap-extract256-control-cf-disabled-control",
+      "variant": "frozen-source",
+      "label": "cf-disabled-control",
+      "fixture": "rgba16-cap",
+      "flow": "extract256",
+      "mode": "control",
+      "status": 200,
+      "wasmHighWaterBytes": 154009600,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 217354240,
+      "responseBytes": 262144,
+      "responseSHA256": "57423b27dde3767534c6335bf071614e59750f949a5c9fca552c28c8f4802923",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba16-cap-extract256-control",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba16-cap",
+      "flow": "extract256",
+      "mode": "control",
+      "status": 200,
+      "wasmHighWaterBytes": 154009600,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 217243648,
+      "responseBytes": 262144,
+      "responseSHA256": "57423b27dde3767534c6335bf071614e59750f949a5c9fca552c28c8f4802923",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba16-cap-extract256-instrumented-cf-disabled-control",
+      "variant": "frozen-source",
+      "label": "cf-disabled-control",
+      "fixture": "rgba16-cap",
+      "flow": "extract256",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 154009600,
+      "stagedFields": {
+        "usedSize": 2081476,
+        "totalSize": 3153920,
+        "backingStorageSize": 649732,
+        "embedderHeapUsedSize": 515872
+      },
+      "processPeakWorkingSetBytes": 217935872,
+      "responseBytes": 262144,
+      "responseSHA256": "57423b27dde3767534c6335bf071614e59750f949a5c9fca552c28c8f4802923",
+      "constructorCalls": 1
+    },
+    {
+      "id": "rgba16-cap-extract256-instrumented",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba16-cap",
+      "flow": "extract256",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 154009600,
+      "stagedFields": {
+        "usedSize": 2081236,
+        "totalSize": 3153920,
+        "backingStorageSize": 649732,
+        "embedderHeapUsedSize": 515872
+      },
+      "processPeakWorkingSetBytes": 217792512,
+      "responseBytes": 262144,
+      "responseSHA256": "57423b27dde3767534c6335bf071614e59750f949a5c9fca552c28c8f4802923",
+      "constructorCalls": 1
+    },
+    {
+      "id": "rgba16-cap-extract4096-control-no-resize-return-original",
+      "variant": "no-resize-return-original",
+      "label": "",
+      "fixture": "rgba16-cap",
+      "flow": "extract4096",
+      "mode": "control",
+      "status": 200,
+      "wasmHighWaterBytes": 154009600,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 329228288,
+      "responseBytes": 37748736,
+      "responseSHA256": "ecd2bb0a6cf9b0589d2902225d87053e48f608e7eb0d0aff4d43cad55b00ce11",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba16-cap-extract4096-control",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba16-cap",
+      "flow": "extract4096",
+      "mode": "control",
+      "status": 200,
+      "wasmHighWaterBytes": 191823872,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 368541696,
+      "responseBytes": 37748736,
+      "responseSHA256": "ecd2bb0a6cf9b0589d2902225d87053e48f608e7eb0d0aff4d43cad55b00ce11",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba16-cap-extract4096-instrumented-no-resize-return-original",
+      "variant": "no-resize-return-original",
+      "label": "",
+      "fixture": "rgba16-cap",
+      "flow": "extract4096",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 154009600,
+      "stagedFields": {
+        "usedSize": 2081408,
+        "totalSize": 3153920,
+        "backingStorageSize": 38136324,
+        "embedderHeapUsedSize": 515872
+      },
+      "processPeakWorkingSetBytes": 292802560,
+      "responseBytes": 37748736,
+      "responseSHA256": "ecd2bb0a6cf9b0589d2902225d87053e48f608e7eb0d0aff4d43cad55b00ce11",
+      "constructorCalls": 1
+    },
+    {
+      "id": "rgba16-cap-extract4096-instrumented",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba16-cap",
+      "flow": "extract4096",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 191823872,
+      "stagedFields": {
+        "usedSize": 2215540,
+        "totalSize": 3153920,
+        "backingStorageSize": 38327295,
+        "embedderHeapUsedSize": 515872
+      },
+      "processPeakWorkingSetBytes": 330850304,
+      "responseBytes": 37748736,
+      "responseSHA256": "ecd2bb0a6cf9b0589d2902225d87053e48f608e7eb0d0aff4d43cad55b00ce11",
+      "constructorCalls": 2
+    },
+    {
+      "id": "rgba16-cap-thumbnail-control",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba16-cap",
+      "flow": "thumbnail",
+      "mode": "control",
+      "status": 200,
+      "wasmHighWaterBytes": 154009600,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 230178816,
+      "responseBytes": 284,
+      "responseSHA256": "547804b26e427d418a42a0d4a3f775e21d16cefdd67d2846d9bd0840599b4904",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba16-cap-thumbnail-instrumented",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba16-cap",
+      "flow": "thumbnail",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 154009600,
+      "stagedFields": {
+        "usedSize": 2098436,
+        "totalSize": 3153920,
+        "backingStorageSize": 387872,
+        "embedderHeapUsedSize": 515872
+      },
+      "processPeakWorkingSetBytes": 218357760,
+      "responseBytes": 284,
+      "responseSHA256": "547804b26e427d418a42a0d4a3f775e21d16cefdd67d2846d9bd0840599b4904",
+      "constructorCalls": 1
+    },
+    {
+      "id": "rgba8-4K-extract256-control",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba8-4K",
+      "flow": "extract256",
+      "mode": "control",
+      "status": 200,
+      "wasmHighWaterBytes": 101908480,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 165666816,
+      "responseBytes": 147456,
+      "responseSHA256": "346f09df6ebc14ff8fece70f4d5e45f1bc8f2ee1b31c781c8eb927b58b417d36",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba8-4K-extract256-instrumented",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba8-4K",
+      "flow": "extract256",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 101908480,
+      "stagedFields": {
+        "usedSize": 2059416,
+        "totalSize": 3153920,
+        "backingStorageSize": 444843,
+        "embedderHeapUsedSize": 515872
+      },
+      "processPeakWorkingSetBytes": 166240256,
+      "responseBytes": 147456,
+      "responseSHA256": "346f09df6ebc14ff8fece70f4d5e45f1bc8f2ee1b31c781c8eb927b58b417d36",
+      "constructorCalls": 1
+    },
+    {
+      "id": "rgba8-4K-extract4096-control",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba8-4K",
+      "flow": "extract4096",
+      "mode": "control",
+      "status": 200,
+      "wasmHighWaterBytes": 168361984,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 331902976,
+      "responseBytes": 33177600,
+      "responseSHA256": "abae1978c4ed25c9552867b6b264f79d9050155896ae2fcbe1c78b97767bd693",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba8-4K-extract4096-instrumented",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba8-4K",
+      "flow": "extract4096",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 168361984,
+      "stagedFields": {
+        "usedSize": 2197032,
+        "totalSize": 3153920,
+        "backingStorageSize": 33641698,
+        "embedderHeapUsedSize": 515872
+      },
+      "processPeakWorkingSetBytes": 298778624,
+      "responseBytes": 33177600,
+      "responseSHA256": "abae1978c4ed25c9552867b6b264f79d9050155896ae2fcbe1c78b97767bd693",
+      "constructorCalls": 2
+    },
+    {
+      "id": "rgba8-4K-near10MiB-extract256-control",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba8-4K-near10MiB",
+      "flow": "extract256",
+      "mode": "control",
+      "status": 200,
+      "wasmHighWaterBytes": 112787456,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 206639104,
+      "responseBytes": 147456,
+      "responseSHA256": "36f5c19f64e1afa7994ad41018756d1bc9ba776adc1c83c95a5ad20c4430b569",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba8-4K-near10MiB-extract256-instrumented",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba8-4K-near10MiB",
+      "flow": "extract256",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 112787456,
+      "stagedFields": {
+        "usedSize": 5248280,
+        "totalSize": 7348224,
+        "backingStorageSize": 20709919,
+        "embedderHeapUsedSize": 1418616
+      },
+      "processPeakWorkingSetBytes": 207548416,
+      "responseBytes": 147456,
+      "responseSHA256": "36f5c19f64e1afa7994ad41018756d1bc9ba776adc1c83c95a5ad20c4430b569",
+      "constructorCalls": 1
+    },
+    {
+      "id": "rgba8-4K-near10MiB-extract4096-control",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba8-4K-near10MiB",
+      "flow": "extract4096",
+      "mode": "control",
+      "status": 200,
+      "wasmHighWaterBytes": 188022784,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 386088960,
+      "responseBytes": 33177600,
+      "responseSHA256": "83f1103b9912ab110ba0a3681baf4bd9ba1be2d7daff3ce0a70c50ae53ec7bd4",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba8-4K-near10MiB-extract4096-instrumented",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba8-4K-near10MiB",
+      "flow": "extract4096",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 188022784,
+      "stagedFields": {
+        "usedSize": 5387204,
+        "totalSize": 7348224,
+        "backingStorageSize": 67718552,
+        "embedderHeapUsedSize": 1418616
+      },
+      "processPeakWorkingSetBytes": 372301824,
+      "responseBytes": 33177600,
+      "responseSHA256": "83f1103b9912ab110ba0a3681baf4bd9ba1be2d7daff3ce0a70c50ae53ec7bd4",
+      "constructorCalls": 2
+    },
+    {
+      "id": "rgba8-4K-near10MiB-thumbnail-control",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba8-4K-near10MiB",
+      "flow": "thumbnail",
+      "mode": "control",
+      "status": 200,
+      "wasmHighWaterBytes": 112787456,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 218333184,
+      "responseBytes": 130414,
+      "responseSHA256": "bd71da4a2f10406fa7d61ecd1d8efcaa2d194d0a4e65bf460e744ed466331fbe",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba8-4K-near10MiB-thumbnail-instrumented",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba8-4K-near10MiB",
+      "flow": "thumbnail",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 112787456,
+      "stagedFields": {
+        "usedSize": 5279044,
+        "totalSize": 7348224,
+        "backingStorageSize": 20692877,
+        "embedderHeapUsedSize": 1418616
+      },
+      "processPeakWorkingSetBytes": 207122432,
+      "responseBytes": 130414,
+      "responseSHA256": "bd71da4a2f10406fa7d61ecd1d8efcaa2d194d0a4e65bf460e744ed466331fbe",
+      "constructorCalls": 1
+    },
+    {
+      "id": "rgba8-4K-near5MiB-extract256-control-guard64-file5-output512",
+      "variant": "guard64-file5-output512",
+      "label": "",
+      "fixture": "rgba8-4K-near5MiB",
+      "flow": "extract256",
+      "mode": "control",
+      "status": 200,
+      "wasmHighWaterBytes": 107675648,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 187203584,
+      "responseBytes": 147456,
+      "responseSHA256": "f2a9d8e5791d0821810090c400557387cbd642d7228961c7e4115f7282132a38",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba8-4K-near5MiB-extract256-instrumented-guard64-file5-output512",
+      "variant": "guard64-file5-output512",
+      "label": "",
+      "fixture": "rgba8-4K-near5MiB",
+      "flow": "extract256",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 107675648,
+      "stagedFields": {
+        "usedSize": 3282436,
+        "totalSize": 5513216,
+        "backingStorageSize": 10577663,
+        "embedderHeapUsedSize": 902760
+      },
+      "processPeakWorkingSetBytes": 187355136,
+      "responseBytes": 147456,
+      "responseSHA256": "f2a9d8e5791d0821810090c400557387cbd642d7228961c7e4115f7282132a38",
+      "constructorCalls": 1
+    },
+    {
+      "id": "rgba8-4K-near5MiB-extract4096-control-guard64-file5-output512",
+      "variant": "guard64-file5-output512",
+      "label": "",
+      "fixture": "rgba8-4K-near5MiB",
+      "flow": "extract4096",
+      "mode": "control",
+      "status": 400,
+      "wasmHighWaterBytes": 1376256,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 61501440,
+      "responseBytes": 72,
+      "responseSHA256": "0f042f6c2eb81e7145535f2ab6f3a85a9538970f25a21ca8d5807ea6d5083788",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba8-4K-near5MiB-extract4096-instrumented-guard64-file5-output512",
+      "variant": "guard64-file5-output512",
+      "label": "",
+      "fixture": "rgba8-4K-near5MiB",
+      "flow": "extract4096",
+      "mode": "instrumented",
+      "status": 400,
+      "wasmHighWaterBytes": 1376256,
+      "stagedFields": {
+        "usedSize": 1667324,
+        "totalSize": 2629632,
+        "backingStorageSize": 220536,
+        "embedderHeapUsedSize": 515872
+      },
+      "processPeakWorkingSetBytes": 63606784,
+      "responseBytes": 72,
+      "responseSHA256": "0f042f6c2eb81e7145535f2ab6f3a85a9538970f25a21ca8d5807ea6d5083788",
+      "constructorCalls": 0
+    },
+    {
+      "id": "rgba8-4K-near5MiB-extract512-control-guard64-file5-output512",
+      "variant": "guard64-file5-output512",
+      "label": "",
+      "fixture": "rgba8-4K-near5MiB",
+      "flow": "extract512",
+      "mode": "control",
+      "status": 200,
+      "wasmHighWaterBytes": 107675648,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 188825600,
+      "responseBytes": 589824,
+      "responseSHA256": "45fbcd9b6fa04fde58b575cbc2f9f153d8a0903c3b8a4017de20bac51e741537",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba8-4K-near5MiB-extract512-instrumented-guard64-file5-output512",
+      "variant": "guard64-file5-output512",
+      "label": "",
+      "fixture": "rgba8-4K-near5MiB",
+      "flow": "extract512",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 107675648,
+      "stagedFields": {
+        "usedSize": 3299824,
+        "totalSize": 5513216,
+        "backingStorageSize": 11020031,
+        "embedderHeapUsedSize": 902760
+      },
+      "processPeakWorkingSetBytes": 187772928,
+      "responseBytes": 589824,
+      "responseSHA256": "45fbcd9b6fa04fde58b575cbc2f9f153d8a0903c3b8a4017de20bac51e741537",
+      "constructorCalls": 1
+    },
+    {
+      "id": "rgba8-4K-near5MiB-thumbnail-control-guard64-file5-output512-earlyfree",
+      "variant": "guard64-file5-output512-earlyfree",
+      "label": "",
+      "fixture": "rgba8-4K-near5MiB",
+      "flow": "thumbnail",
+      "mode": "control",
+      "status": 200,
+      "wasmHighWaterBytes": 107675648,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 199626752,
+      "responseBytes": 20538,
+      "responseSHA256": "357e14588ea682e924a99ca41c99e53a6a046a4ddbb87d32171e1704be0a25b2",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba8-4K-near5MiB-thumbnail-control-guard64-file5-output512",
+      "variant": "guard64-file5-output512",
+      "label": "",
+      "fixture": "rgba8-4K-near5MiB",
+      "flow": "thumbnail",
+      "mode": "control",
+      "status": 200,
+      "wasmHighWaterBytes": 123928576,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 215924736,
+      "responseBytes": 20538,
+      "responseSHA256": "357e14588ea682e924a99ca41c99e53a6a046a4ddbb87d32171e1704be0a25b2",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba8-4K-near5MiB-thumbnail-instrumented-guard64-file5-output512-earlyfree",
+      "variant": "guard64-file5-output512-earlyfree",
+      "label": "",
+      "fixture": "rgba8-4K-near5MiB",
+      "flow": "thumbnail",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 107675648,
+      "stagedFields": {
+        "usedSize": 3321204,
+        "totalSize": 5513216,
+        "backingStorageSize": 10450745,
+        "embedderHeapUsedSize": 902760
+      },
+      "processPeakWorkingSetBytes": 187564032,
+      "responseBytes": 20538,
+      "responseSHA256": "357e14588ea682e924a99ca41c99e53a6a046a4ddbb87d32171e1704be0a25b2",
+      "constructorCalls": 1
+    },
+    {
+      "id": "rgba8-4K-near5MiB-thumbnail-instrumented-guard64-file5-output512",
+      "variant": "guard64-file5-output512",
+      "label": "",
+      "fixture": "rgba8-4K-near5MiB",
+      "flow": "thumbnail",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 123928576,
+      "stagedFields": {
+        "usedSize": 3310368,
+        "totalSize": 5775360,
+        "backingStorageSize": 10450745,
+        "embedderHeapUsedSize": 902760
+      },
+      "processPeakWorkingSetBytes": 203845632,
+      "responseBytes": 20538,
+      "responseSHA256": "357e14588ea682e924a99ca41c99e53a6a046a4ddbb87d32171e1704be0a25b2",
+      "constructorCalls": 1
+    },
+    {
+      "id": "rgba8-4K-thumbnail-control",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba8-4K",
+      "flow": "thumbnail",
+      "mode": "control",
+      "status": 200,
+      "wasmHighWaterBytes": 118161408,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 194945024,
+      "responseBytes": 146,
+      "responseSHA256": "bd9346537a405b21a4f37ac2dc37809359a62138544ea3eb2e3caa1c7e20fd32",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba8-4K-thumbnail-instrumented",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba8-4K",
+      "flow": "thumbnail",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 118161408,
+      "stagedFields": {
+        "usedSize": 2087428,
+        "totalSize": 3153920,
+        "backingStorageSize": 297533,
+        "embedderHeapUsedSize": 515872
+      },
+      "processPeakWorkingSetBytes": 182657024,
+      "responseBytes": 146,
+      "responseSHA256": "bd9346537a405b21a4f37ac2dc37809359a62138544ea3eb2e3caa1c7e20fd32",
+      "constructorCalls": 1
+    },
+    {
+      "id": "rgba8-64cap-extract256-control",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba8-64cap",
+      "flow": "extract256",
+      "mode": "control",
+      "status": 200,
+      "wasmHighWaterBytes": 103022592,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 166023168,
+      "responseBytes": 131072,
+      "responseSHA256": "d505367fbf83d58c15d8e3f923ec5e19c448849079ea3c363d6161923af6979a",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba8-64cap-extract256-instrumented",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba8-64cap",
+      "flow": "extract256",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 103022592,
+      "stagedFields": {
+        "usedSize": 2059416,
+        "totalSize": 3153920,
+        "backingStorageSize": 428899,
+        "embedderHeapUsedSize": 515872
+      },
+      "processPeakWorkingSetBytes": 167059456,
+      "responseBytes": 131072,
+      "responseSHA256": "d505367fbf83d58c15d8e3f923ec5e19c448849079ea3c363d6161923af6979a",
+      "constructorCalls": 1
+    },
+    {
+      "id": "rgba8-64cap-extract4096-control",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba8-64cap",
+      "flow": "extract4096",
+      "mode": "control",
+      "status": 200,
+      "wasmHighWaterBytes": 170262528,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 334307328,
+      "responseBytes": 33554432,
+      "responseSHA256": "9f2de1fdf1b172458590b5a73231f5e87f1247363bcac7fcdc2f43ef57666fe4",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba8-64cap-extract4096-instrumented",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba8-64cap",
+      "flow": "extract4096",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 170262528,
+      "stagedFields": {
+        "usedSize": 2197016,
+        "totalSize": 3153920,
+        "backingStorageSize": 34020316,
+        "embedderHeapUsedSize": 515872
+      },
+      "processPeakWorkingSetBytes": 301543424,
+      "responseBytes": 33554432,
+      "responseSHA256": "9f2de1fdf1b172458590b5a73231f5e87f1247363bcac7fcdc2f43ef57666fe4",
+      "constructorCalls": 2
+    },
+    {
+      "id": "rgba8-64cap-near10MiB-extract256-control",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba8-64cap-near10MiB",
+      "flow": "extract256",
+      "mode": "control",
+      "status": 200,
+      "wasmHighWaterBytes": 113442816,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 208048128,
+      "responseBytes": 131072,
+      "responseSHA256": "514ccdc67092b0a54af3f4743d073e7c49170b67373092c602e6ad1b09749719",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba8-64cap-near10MiB-extract256-instrumented",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba8-64cap-near10MiB",
+      "flow": "extract256",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 113442816,
+      "stagedFields": {
+        "usedSize": 5252104,
+        "totalSize": 7348224,
+        "backingStorageSize": 20701129,
+        "embedderHeapUsedSize": 1418616
+      },
+      "processPeakWorkingSetBytes": 209104896,
+      "responseBytes": 131072,
+      "responseSHA256": "514ccdc67092b0a54af3f4743d073e7c49170b67373092c602e6ad1b09749719",
+      "constructorCalls": 1
+    },
+    {
+      "id": "rgba8-64cap-near10MiB-extract4096-control",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba8-64cap-near10MiB",
+      "flow": "extract4096",
+      "mode": "control",
+      "status": 200,
+      "wasmHighWaterBytes": 189071360,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 388669440,
+      "responseBytes": 33554432,
+      "responseSHA256": "2f9a42b33ad517053ae136edc70537611f330fd094f27426b2b5b2c8e92ee992",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba8-64cap-near10MiB-extract4096-instrumented",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba8-64cap-near10MiB",
+      "flow": "extract4096",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 189071360,
+      "stagedFields": {
+        "usedSize": 5397204,
+        "totalSize": 7348224,
+        "backingStorageSize": 68110945,
+        "embedderHeapUsedSize": 1418616
+      },
+      "processPeakWorkingSetBytes": 375566336,
+      "responseBytes": 33554432,
+      "responseSHA256": "2f9a42b33ad517053ae136edc70537611f330fd094f27426b2b5b2c8e92ee992",
+      "constructorCalls": 2
+    },
+    {
+      "id": "rgba8-64cap-near10MiB-thumbnail-control",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba8-64cap-near10MiB",
+      "flow": "thumbnail",
+      "mode": "control",
+      "status": 200,
+      "wasmHighWaterBytes": 130809856,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 236883968,
+      "responseBytes": 141458,
+      "responseSHA256": "d846ed4d80939836ee10dd1d52ffb0679b3aaebad7f199a9e503e8e83f2c1447",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba8-64cap-near10MiB-thumbnail-instrumented",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba8-64cap-near10MiB",
+      "flow": "thumbnail",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 130809856,
+      "stagedFields": {
+        "usedSize": 5302188,
+        "totalSize": 7348224,
+        "backingStorageSize": 20711515,
+        "embedderHeapUsedSize": 1418616
+      },
+      "processPeakWorkingSetBytes": 225607680,
+      "responseBytes": 141458,
+      "responseSHA256": "d846ed4d80939836ee10dd1d52ffb0679b3aaebad7f199a9e503e8e83f2c1447",
+      "constructorCalls": 1
+    },
+    {
+      "id": "rgba8-64cap-near5MiB-extract256-control-guard64-file5-output512",
+      "variant": "guard64-file5-output512",
+      "label": "",
+      "fixture": "rgba8-64cap-near5MiB",
+      "flow": "extract256",
+      "mode": "control",
+      "status": 200,
+      "wasmHighWaterBytes": 108396544,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 188473344,
+      "responseBytes": 131072,
+      "responseSHA256": "4500008012c3775a4e0a559f60d613e0bb0499e86ade8cfbbcb04af5039444a3",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba8-64cap-near5MiB-extract256-instrumented-guard64-file5-output512",
+      "variant": "guard64-file5-output512",
+      "label": "",
+      "fixture": "rgba8-64cap-near5MiB",
+      "flow": "extract256",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 108396544,
+      "stagedFields": {
+        "usedSize": 3284924,
+        "totalSize": 5513216,
+        "backingStorageSize": 10550709,
+        "embedderHeapUsedSize": 902760
+      },
+      "processPeakWorkingSetBytes": 188276736,
+      "responseBytes": 131072,
+      "responseSHA256": "4500008012c3775a4e0a559f60d613e0bb0499e86ade8cfbbcb04af5039444a3",
+      "constructorCalls": 1
+    },
+    {
+      "id": "rgba8-64cap-near5MiB-extract4096-control-guard64-file5-output512",
+      "variant": "guard64-file5-output512",
+      "label": "",
+      "fixture": "rgba8-64cap-near5MiB",
+      "flow": "extract4096",
+      "mode": "control",
+      "status": 400,
+      "wasmHighWaterBytes": 1376256,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 61173760,
+      "responseBytes": 72,
+      "responseSHA256": "0f042f6c2eb81e7145535f2ab6f3a85a9538970f25a21ca8d5807ea6d5083788",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba8-64cap-near5MiB-extract4096-instrumented-guard64-file5-output512",
+      "variant": "guard64-file5-output512",
+      "label": "",
+      "fixture": "rgba8-64cap-near5MiB",
+      "flow": "extract4096",
+      "mode": "instrumented",
+      "status": 400,
+      "wasmHighWaterBytes": 1376256,
+      "stagedFields": {
+        "usedSize": 1667324,
+        "totalSize": 2629632,
+        "backingStorageSize": 220536,
+        "embedderHeapUsedSize": 515872
+      },
+      "processPeakWorkingSetBytes": 63557632,
+      "responseBytes": 72,
+      "responseSHA256": "0f042f6c2eb81e7145535f2ab6f3a85a9538970f25a21ca8d5807ea6d5083788",
+      "constructorCalls": 0
+    },
+    {
+      "id": "rgba8-64cap-near5MiB-extract512-control-guard64-file5-output512",
+      "variant": "guard64-file5-output512",
+      "label": "",
+      "fixture": "rgba8-64cap-near5MiB",
+      "flow": "extract512",
+      "mode": "control",
+      "status": 200,
+      "wasmHighWaterBytes": 108396544,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 188563456,
+      "responseBytes": 524288,
+      "responseSHA256": "036eab0dcd98294f424a287aa2d8fb7edf0f40817e3c0d45c96629dc19f68525",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba8-64cap-near5MiB-extract512-instrumented-guard64-file5-output512",
+      "variant": "guard64-file5-output512",
+      "label": "",
+      "fixture": "rgba8-64cap-near5MiB",
+      "flow": "extract512",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 108396544,
+      "stagedFields": {
+        "usedSize": 3285284,
+        "totalSize": 5513216,
+        "backingStorageSize": 10943925,
+        "embedderHeapUsedSize": 902760
+      },
+      "processPeakWorkingSetBytes": 189415424,
+      "responseBytes": 524288,
+      "responseSHA256": "036eab0dcd98294f424a287aa2d8fb7edf0f40817e3c0d45c96629dc19f68525",
+      "constructorCalls": 1
+    },
+    {
+      "id": "rgba8-64cap-near5MiB-thumbnail-control-guard64-file5-output512-earlyfree",
+      "variant": "guard64-file5-output512-earlyfree",
+      "label": "",
+      "fixture": "rgba8-64cap-near5MiB",
+      "flow": "thumbnail",
+      "mode": "control",
+      "status": 200,
+      "wasmHighWaterBytes": 108396544,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 201056256,
+      "responseBytes": 47310,
+      "responseSHA256": "123fcf1fe7b72a48acbac64c407a9d59126e54f5ab0c3be94310480bf4e5a914",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba8-64cap-near5MiB-thumbnail-control-guard64-file5-output512",
+      "variant": "guard64-file5-output512",
+      "label": "",
+      "fixture": "rgba8-64cap-near5MiB",
+      "flow": "thumbnail",
+      "mode": "control",
+      "status": 200,
+      "wasmHighWaterBytes": 125763584,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 218570752,
+      "responseBytes": 47310,
+      "responseSHA256": "123fcf1fe7b72a48acbac64c407a9d59126e54f5ab0c3be94310480bf4e5a914",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba8-64cap-near5MiB-thumbnail-instrumented-guard64-file5-output512-earlyfree",
+      "variant": "guard64-file5-output512-earlyfree",
+      "label": "",
+      "fixture": "rgba8-64cap-near5MiB",
+      "flow": "thumbnail",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 108396544,
+      "stagedFields": {
+        "usedSize": 3294868,
+        "totalSize": 5513216,
+        "backingStorageSize": 10466947,
+        "embedderHeapUsedSize": 902760
+      },
+      "processPeakWorkingSetBytes": 188698624,
+      "responseBytes": 47310,
+      "responseSHA256": "123fcf1fe7b72a48acbac64c407a9d59126e54f5ab0c3be94310480bf4e5a914",
+      "constructorCalls": 1
+    },
+    {
+      "id": "rgba8-64cap-near5MiB-thumbnail-instrumented-guard64-file5-output512",
+      "variant": "guard64-file5-output512",
+      "label": "",
+      "fixture": "rgba8-64cap-near5MiB",
+      "flow": "thumbnail",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 125763584,
+      "stagedFields": {
+        "usedSize": 3294588,
+        "totalSize": 5513216,
+        "backingStorageSize": 10466947,
+        "embedderHeapUsedSize": 902760
+      },
+      "processPeakWorkingSetBytes": 205877248,
+      "responseBytes": 47310,
+      "responseSHA256": "123fcf1fe7b72a48acbac64c407a9d59126e54f5ab0c3be94310480bf4e5a914",
+      "constructorCalls": 1
+    },
+    {
+      "id": "rgba8-64cap-thumbnail-control",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba8-64cap",
+      "flow": "thumbnail",
+      "mode": "control",
+      "status": 200,
+      "wasmHighWaterBytes": 120389632,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 196902912,
+      "responseBytes": 146,
+      "responseSHA256": "bd9346537a405b21a4f37ac2dc37809359a62138544ea3eb2e3caa1c7e20fd32",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba8-64cap-thumbnail-instrumented",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba8-64cap",
+      "flow": "thumbnail",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 120389632,
+      "stagedFields": {
+        "usedSize": 2087428,
+        "totalSize": 3153920,
+        "backingStorageSize": 297973,
+        "embedderHeapUsedSize": 515872
+      },
+      "processPeakWorkingSetBytes": 184958976,
+      "responseBytes": 146,
+      "responseSHA256": "bd9346537a405b21a4f37ac2dc37809359a62138544ea3eb2e3caa1c7e20fd32",
+      "constructorCalls": 1
+    },
+    {
+      "id": "rgba8-cap-extract256-control-cf-disabled-control",
+      "variant": "frozen-source",
+      "label": "cf-disabled-control",
+      "fixture": "rgba8-cap",
+      "flow": "extract256",
+      "mode": "control",
+      "status": 200,
+      "wasmHighWaterBytes": 115605504,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 179679232,
+      "responseBytes": 262144,
+      "responseSHA256": "f316e96c73c68e8a53ba077b102bfe083c201c3614cc0bf63d9c35100d403714",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba8-cap-extract256-control",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba8-cap",
+      "flow": "extract256",
+      "mode": "control",
+      "status": 200,
+      "wasmHighWaterBytes": 115605504,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 180027392,
+      "responseBytes": 262144,
+      "responseSHA256": "f316e96c73c68e8a53ba077b102bfe083c201c3614cc0bf63d9c35100d403714",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba8-cap-extract256-instrumented-cf-disabled-control",
+      "variant": "frozen-source",
+      "label": "cf-disabled-control",
+      "fixture": "rgba8-cap",
+      "flow": "extract256",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 115605504,
+      "stagedFields": {
+        "usedSize": 2061064,
+        "totalSize": 3153920,
+        "backingStorageSize": 573666,
+        "embedderHeapUsedSize": 515872
+      },
+      "processPeakWorkingSetBytes": 180449280,
+      "responseBytes": 262144,
+      "responseSHA256": "f316e96c73c68e8a53ba077b102bfe083c201c3614cc0bf63d9c35100d403714",
+      "constructorCalls": 1
+    },
+    {
+      "id": "rgba8-cap-extract256-instrumented",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba8-cap",
+      "flow": "extract256",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 115605504,
+      "stagedFields": {
+        "usedSize": 2060824,
+        "totalSize": 3153920,
+        "backingStorageSize": 573666,
+        "embedderHeapUsedSize": 515872
+      },
+      "processPeakWorkingSetBytes": 180039680,
+      "responseBytes": 262144,
+      "responseSHA256": "f316e96c73c68e8a53ba077b102bfe083c201c3614cc0bf63d9c35100d403714",
+      "constructorCalls": 1
+    },
+    {
+      "id": "rgba8-cap-extract4096-control-no-resize-return-original",
+      "variant": "no-resize-return-original",
+      "label": "",
+      "fixture": "rgba8-cap",
+      "flow": "extract4096",
+      "mode": "control",
+      "status": 200,
+      "wasmHighWaterBytes": 115605504,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 291004416,
+      "responseBytes": 37748736,
+      "responseSHA256": "c3a53ec714c774fb7f1e9919d1419b5ea6d0bb8b9777ad05f499df10d087f6aa",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba8-cap-extract4096-control",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba8-cap",
+      "flow": "extract4096",
+      "mode": "control",
+      "status": 200,
+      "wasmHighWaterBytes": 191234048,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 367935488,
+      "responseBytes": 37748736,
+      "responseSHA256": "c3a53ec714c774fb7f1e9919d1419b5ea6d0bb8b9777ad05f499df10d087f6aa",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba8-cap-extract4096-instrumented-no-resize-return-original",
+      "variant": "no-resize-return-original",
+      "label": "",
+      "fixture": "rgba8-cap",
+      "flow": "extract4096",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 115605504,
+      "stagedFields": {
+        "usedSize": 2061020,
+        "totalSize": 3153920,
+        "backingStorageSize": 38060258,
+        "embedderHeapUsedSize": 515872
+      },
+      "processPeakWorkingSetBytes": 254840832,
+      "responseBytes": 37748736,
+      "responseSHA256": "c3a53ec714c774fb7f1e9919d1419b5ea6d0bb8b9777ad05f499df10d087f6aa",
+      "constructorCalls": 1
+    },
+    {
+      "id": "rgba8-cap-extract4096-instrumented",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba8-cap",
+      "flow": "extract4096",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 191234048,
+      "stagedFields": {
+        "usedSize": 2198448,
+        "totalSize": 3153920,
+        "backingStorageSize": 38251227,
+        "embedderHeapUsedSize": 515872
+      },
+      "processPeakWorkingSetBytes": 330829824,
+      "responseBytes": 37748736,
+      "responseSHA256": "c3a53ec714c774fb7f1e9919d1419b5ea6d0bb8b9777ad05f499df10d087f6aa",
+      "constructorCalls": 2
+    },
+    {
+      "id": "rgba8-cap-near10MiB-extract256-control-cf-disabled-control",
+      "variant": "frozen-source",
+      "label": "cf-disabled-control",
+      "fixture": "rgba8-cap-near10MiB",
+      "flow": "extract256",
+      "mode": "control",
+      "status": 200,
+      "wasmHighWaterBytes": 126550016,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 220131328,
+      "responseBytes": 262144,
+      "responseSHA256": "51386ed84a65e3d3d1b2d8880a79bfdfd2f9687788931adeebdb74c70674bb7f",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba8-cap-near10MiB-extract256-control",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba8-cap-near10MiB",
+      "flow": "extract256",
+      "mode": "control",
+      "status": 200,
+      "wasmHighWaterBytes": 126550016,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 219844608,
+      "responseBytes": 262144,
+      "responseSHA256": "51386ed84a65e3d3d1b2d8880a79bfdfd2f9687788931adeebdb74c70674bb7f",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba8-cap-near10MiB-extract256-instrumented-cf-disabled-control",
+      "variant": "frozen-source",
+      "label": "cf-disabled-control",
+      "fixture": "rgba8-cap-near10MiB",
+      "flow": "extract256",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 126550016,
+      "stagedFields": {
+        "usedSize": 5316532,
+        "totalSize": 7348224,
+        "backingStorageSize": 20859139,
+        "embedderHeapUsedSize": 1418616
+      },
+      "processPeakWorkingSetBytes": 220925952,
+      "responseBytes": 262144,
+      "responseSHA256": "51386ed84a65e3d3d1b2d8880a79bfdfd2f9687788931adeebdb74c70674bb7f",
+      "constructorCalls": 1
+    },
+    {
+      "id": "rgba8-cap-near10MiB-extract256-instrumented",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba8-cap-near10MiB",
+      "flow": "extract256",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 126550016,
+      "stagedFields": {
+        "usedSize": 5276748,
+        "totalSize": 7348224,
+        "backingStorageSize": 20859139,
+        "embedderHeapUsedSize": 1418616
+      },
+      "processPeakWorkingSetBytes": 221163520,
+      "responseBytes": 262144,
+      "responseSHA256": "51386ed84a65e3d3d1b2d8880a79bfdfd2f9687788931adeebdb74c70674bb7f",
+      "constructorCalls": 1
+    },
+    {
+      "id": "rgba8-cap-near10MiB-extract4096-control-no-resize-return-original",
+      "variant": "no-resize-return-original",
+      "label": "",
+      "fixture": "rgba8-cap-near10MiB",
+      "flow": "extract4096",
+      "mode": "control",
+      "status": 200,
+      "wasmHighWaterBytes": 126550016,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 332546048,
+      "responseBytes": 37748736,
+      "responseSHA256": "fe72a5ce59bf5c401992b21392a8b5a68cec67bb6366d7994a44804f9b14af2f",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba8-cap-near10MiB-extract4096-control",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba8-cap-near10MiB",
+      "flow": "extract4096",
+      "mode": "control",
+      "status": 200,
+      "wasmHighWaterBytes": 206438400,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 422268928,
+      "responseBytes": 37748736,
+      "responseSHA256": "fe72a5ce59bf5c401992b21392a8b5a68cec67bb6366d7994a44804f9b14af2f",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba8-cap-near10MiB-extract4096-instrumented-no-resize-return-original",
+      "variant": "no-resize-return-original",
+      "label": "",
+      "fixture": "rgba8-cap-near10MiB",
+      "flow": "extract4096",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 126550016,
+      "stagedFields": {
+        "usedSize": 5276980,
+        "totalSize": 7348224,
+        "backingStorageSize": 58345731,
+        "embedderHeapUsedSize": 1418616
+      },
+      "processPeakWorkingSetBytes": 333488128,
+      "responseBytes": 37748736,
+      "responseSHA256": "fe72a5ce59bf5c401992b21392a8b5a68cec67bb6366d7994a44804f9b14af2f",
+      "constructorCalls": 1
+    },
+    {
+      "id": "rgba8-cap-near10MiB-extract4096-instrumented",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba8-cap-near10MiB",
+      "flow": "extract4096",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 206438400,
+      "stagedFields": {
+        "usedSize": 5434704,
+        "totalSize": 7348224,
+        "backingStorageSize": 72363884,
+        "embedderHeapUsedSize": 1418616
+      },
+      "processPeakWorkingSetBytes": 409251840,
+      "responseBytes": 37748736,
+      "responseSHA256": "fe72a5ce59bf5c401992b21392a8b5a68cec67bb6366d7994a44804f9b14af2f",
+      "constructorCalls": 2
+    },
+    {
+      "id": "rgba8-cap-near10MiB-thumbnail-control",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba8-cap-near10MiB",
+      "flow": "thumbnail",
+      "mode": "control",
+      "status": 200,
+      "wasmHighWaterBytes": 126550016,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 232779776,
+      "responseBytes": 367066,
+      "responseSHA256": "c850bc51cdc71602bb8a4b9e39f5a1ce5802534707f0414afdb7db2659d5624e",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba8-cap-near10MiB-thumbnail-instrumented",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba8-cap-near10MiB",
+      "flow": "thumbnail",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 126550016,
+      "stagedFields": {
+        "usedSize": 5278820,
+        "totalSize": 7348224,
+        "backingStorageSize": 20964061,
+        "embedderHeapUsedSize": 1418616
+      },
+      "processPeakWorkingSetBytes": 220200960,
+      "responseBytes": 367066,
+      "responseSHA256": "c850bc51cdc71602bb8a4b9e39f5a1ce5802534707f0414afdb7db2659d5624e",
+      "constructorCalls": 1
+    },
+    {
+      "id": "rgba8-cap-thumbnail-control",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba8-cap",
+      "flow": "thumbnail",
+      "mode": "control",
+      "status": 200,
+      "wasmHighWaterBytes": 115605504,
+      "stagedFields": {
+        "usedSize": null,
+        "totalSize": null,
+        "backingStorageSize": null,
+        "embedderHeapUsedSize": null
+      },
+      "processPeakWorkingSetBytes": 192049152,
+      "responseBytes": 146,
+      "responseSHA256": "bd9346537a405b21a4f37ac2dc37809359a62138544ea3eb2e3caa1c7e20fd32",
+      "constructorCalls": null
+    },
+    {
+      "id": "rgba8-cap-thumbnail-instrumented",
+      "variant": "frozen-source",
+      "label": "",
+      "fixture": "rgba8-cap",
+      "flow": "thumbnail",
+      "mode": "instrumented",
+      "status": 200,
+      "wasmHighWaterBytes": 115605504,
+      "stagedFields": {
+        "usedSize": 2088852,
+        "totalSize": 3153920,
+        "backingStorageSize": 311668,
+        "embedderHeapUsedSize": 515872
+      },
+      "processPeakWorkingSetBytes": 180424704,
+      "responseBytes": 146,
+      "responseSHA256": "bd9346537a405b21a4f37ac2dc37809359a62138544ea3eb2e3caa1c7e20fd32",
+      "constructorCalls": 1
+    }
+  ],
+  "pairs": [
+    {
+      "id": "rgb16-64cap-extract256-instrumented-guard64-file5-output512",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgb16-64cap-extract4096-instrumented-guard64-file5-output512",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgb16-64cap-extract512-instrumented-guard64-file5-output512",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgb16-64cap-thumbnail-instrumented-guard64-file5-output512-earlyfree",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgb16-64cap-thumbnail-instrumented-guard64-file5-output512",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgb16-cap-extract256-instrumented-cf-disabled-control",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgb16-cap-extract256-instrumented",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgb16-cap-extract4096-instrumented-no-resize-return-original",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgb16-cap-extract4096-instrumented",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgb16-cap-thumbnail-instrumented",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba16-64cap-extract256-instrumented-guard64-file5-output512",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba16-64cap-extract4096-instrumented-guard64-file5-output512",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba16-64cap-extract512-instrumented-guard64-file5-output512",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba16-64cap-thumbnail-instrumented-guard64-file5-output512-earlyfree",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba16-64cap-thumbnail-instrumented-guard64-file5-output512",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba16-cap-extract256-instrumented-cf-disabled-control",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba16-cap-extract256-instrumented",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba16-cap-extract4096-instrumented-no-resize-return-original",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba16-cap-extract4096-instrumented",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba16-cap-thumbnail-instrumented",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba8-4K-extract256-instrumented",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba8-4K-extract4096-instrumented",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba8-4K-near10MiB-extract256-instrumented",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba8-4K-near10MiB-extract4096-instrumented",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba8-4K-near10MiB-thumbnail-instrumented",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba8-4K-near5MiB-extract256-instrumented-guard64-file5-output512",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba8-4K-near5MiB-extract4096-instrumented-guard64-file5-output512",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba8-4K-near5MiB-extract512-instrumented-guard64-file5-output512",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba8-4K-near5MiB-thumbnail-instrumented-guard64-file5-output512-earlyfree",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba8-4K-near5MiB-thumbnail-instrumented-guard64-file5-output512",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba8-4K-thumbnail-instrumented",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba8-64cap-extract256-instrumented",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba8-64cap-extract4096-instrumented",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba8-64cap-near10MiB-extract256-instrumented",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba8-64cap-near10MiB-extract4096-instrumented",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba8-64cap-near10MiB-thumbnail-instrumented",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba8-64cap-near5MiB-extract256-instrumented-guard64-file5-output512",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba8-64cap-near5MiB-extract4096-instrumented-guard64-file5-output512",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba8-64cap-near5MiB-extract512-instrumented-guard64-file5-output512",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba8-64cap-near5MiB-thumbnail-instrumented-guard64-file5-output512-earlyfree",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba8-64cap-near5MiB-thumbnail-instrumented-guard64-file5-output512",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba8-64cap-thumbnail-instrumented",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba8-cap-extract256-instrumented-cf-disabled-control",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba8-cap-extract256-instrumented",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba8-cap-extract4096-instrumented-no-resize-return-original",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba8-cap-extract4096-instrumented",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba8-cap-near10MiB-extract256-instrumented-cf-disabled-control",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba8-cap-near10MiB-extract256-instrumented",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba8-cap-near10MiB-extract4096-instrumented-no-resize-return-original",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba8-cap-near10MiB-extract4096-instrumented",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba8-cap-near10MiB-thumbnail-instrumented",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    },
+    {
+      "id": "rgba8-cap-thumbnail-instrumented",
+      "controlFound": true,
+      "statusEqual": true,
+      "bodyEqual": true,
+      "wasmHighWaterEqual": true
+    }
+  ],
+  "improvementPairs": [
+    {
+      "id": "rgba8-4K-near5MiB-thumbnail-control-guard64-file5-output512-earlyfree",
+      "baselineFound": true,
+      "bodyEqual": true,
+      "wasmBytesBefore": 123928576,
+      "wasmBytesAfter": 107675648
+    },
+    {
+      "id": "rgba8-4K-near5MiB-thumbnail-instrumented-guard64-file5-output512-earlyfree",
+      "baselineFound": true,
+      "bodyEqual": true,
+      "wasmBytesBefore": 123928576,
+      "wasmBytesAfter": 107675648
+    },
+    {
+      "id": "rgba8-64cap-near5MiB-thumbnail-control-guard64-file5-output512-earlyfree",
+      "baselineFound": true,
+      "bodyEqual": true,
+      "wasmBytesBefore": 125763584,
+      "wasmBytesAfter": 108396544
+    },
+    {
+      "id": "rgba8-64cap-near5MiB-thumbnail-instrumented-guard64-file5-output512-earlyfree",
+      "baselineFound": true,
+      "bodyEqual": true,
+      "wasmBytesBefore": 125763584,
+      "wasmBytesAfter": 108396544
+    }
+  ],
+  "failures": [],
+  "limitations": [
+    "Fresh runtime per fixture; does not settle warm-isolate retention, concurrency or fragmentation across requests.",
+    "Standalone workerd does not reproduce Cloudflare production 128MiB enforcement.",
+    "No exact continuous JS+WASM+embedder maximum; use separate WASM high-water, raw staged counters, and OS process high-water.",
+    "Earlier setup left cf unspecified: Miniflare fetched generic workers.cloudflare.com/cf.json metadata and wrote node_modules/.mf/cf.json outside assigned scratch; corrected cf:false and MINIFLARE_CACHE_DIR in harness. Key controls rerun with cf disabled. No image or user data sent by that setup request.",
+    "Experimental guard64/file5/output512 changes are scratch-only hypotheses, not selected production contracts."
+  ],
+  "publicReceiptNormalization": {
+    "paths": "Source checkout and private probe workspace replaced by placeholders; measurements and source hashes unchanged.",
+    "originalReceiptSHA256": "f9723c844c3210a91c9abe1cdacf03e46e426f51ce062290a2ae8f71aacd5bcb"
+  }
+}

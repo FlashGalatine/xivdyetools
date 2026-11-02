@@ -177,6 +177,19 @@ import { base64UrlEncode, base64UrlDecode, bytesToHex, hexToBytes } from '@xivdy
 | `base64UrlEncodeBytes(bytes)` / `base64UrlDecodeBytes(str)` | Base64URL byte codec |
 | `bytesToHex(bytes)` / `hexToBytes(hex)` | Hex codec |
 
+Base64URL decoders require the URL-safe alphabet (`A–Z`, `a–z`, `0–9`, `-`, `_`),
+no padding or whitespace, a valid unpadded length, and zero unused trailing bits.
+They throw on other spellings, including previously accepted byte-equivalent aliases.
+Empty codec input remains valid. JWT verification returns `null` for noncanonical
+segments, and `hmacVerify` returns `false` for noncanonical signatures. `decodeJWT`
+still only decodes the payload without authenticating the header or signature;
+its payload must use canonical encoding.
+
+`hmacVerifyHex` and `verifyBotSignatureV2` require exactly 64 lowercase hex
+characters and return `false` for uppercase or mixed-case signature aliases.
+Signing output is unchanged. The general `hexToBytes` utility continues to accept
+uppercase, lowercase, mixed-case and empty strings.
+
 Absorbed from the retired `@xivdyetools/crypto` — see [`DEPRECATIONS.md`](../../DEPRECATIONS.md).
 
 ## Security Features

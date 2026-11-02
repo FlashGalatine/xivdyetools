@@ -91,8 +91,34 @@ jobs:
         # nothing, so a future filter typo would silently turn this gate into a
         # passing no-op. A direct node invocation cannot do that.
         working-directory: apps/web-app
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          DEPLOYMENT_URL: ${{ steps.deploy.outputs.deployment-url }}
+          EXPECTED_COMMIT: ${{ github.sha }}
         run: >
           node scripts/smoke-test-pages.js
-          --deployment-url "${{ steps.deploy.outputs.deployment-url }}"
+          --deployment-url "$DEPLOYMENT_URL"
           --domain https://xivdyetools.app
           --expect-robots none
+          --project xivdyetools
+          --commit "$EXPECTED_COMMIT"
+          --headers-file dist/_headers
+
+      # FINDING-009: source-prepared companion. Keep --apply absent until a
+      # reviewed activation after merge AND the protected environment setting
+      # PAGES_RETENTION_APPLY=true authorize deletion. Either control alone is
+      # insufficient; a feature-branch push cannot activate cleanup here.
+      - name: Pages retention (dry-run; activation deferred)
+        working-directory: apps/web-app
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PAGES_RETENTION_APPLY: ${{ vars.PAGES_RETENTION_APPLY }}
+          DEPLOYMENT_URL: ${{ steps.deploy.outputs.deployment-url }}
+          EXPECTED_COMMIT: ${{ github.sha }}
+        run: >
+          node scripts/retain-pages-deployments.mjs
+          --project xivdyetools
+          --deployment-url "$DEPLOYMENT_URL"
+          --commit "$EXPECTED_COMMIT"

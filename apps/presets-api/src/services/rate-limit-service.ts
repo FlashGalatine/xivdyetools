@@ -15,7 +15,7 @@
  * rows) had no per-user cap at all. Every quota-bearing mutation now also
  * writes an append-only `submission_events` row (migration 0011) that user
  * actions never delete, and the caps count those rows — the live-row count is
- * kept as a second, cheaper signal for submissions.
+ * counted only when not represented by a matching admission event.
  */
 
 import type { RateLimitResult, RetentionLogger } from '../types.js';
@@ -30,7 +30,7 @@ export const DAILY_FLAGGED_EDIT_LIMIT = 10;
 export const DAILY_PREVIEW_UPLOAD_LIMIT = 20;
 
 /**
- * Maximum name/description edits per user per day, counted BEFORE the content
+ * Maximum moderated text/metadata edits per user per day, counted BEFORE the content
  * is moderated.
  *
  * FINDING-005 (2026-08-29 security audit): `DAILY_FLAGGED_EDIT_LIMIT` above is
@@ -38,7 +38,7 @@ export const DAILY_PREVIEW_UPLOAD_LIMIT = 20;
  * the Perspective call it is meant to bound — so a stream of edits that
  * moderation clears, or that lands on a `flagged` preset (which notifies
  * nobody at all), drove Perspective to its ~1 QPS quota for free. This cap is
- * checked before the call, for every status, so a name/description edit costs
+ * checked before the call, for every status, so a moderated-field edit costs
  * a slot whatever moderation goes on to decide. Deliberately generous: an author
  * polishing one preset's wording should never meet it.
  */
@@ -60,38 +60,8 @@ const DAILY_LIMITS: Record<SubmissionEventKind, number> = {
 };
 
 /**
- * Count a user's surviving submissions for the current UTC day.
- *
- * BUG-049 (2026-07-18 audit): exported so the submission handler can re-check
- * after its INSERT — the pre-check alone is check-then-insert and concurrent
- * requests could exceed the cap.
- */
-export async function getSubmissionCountToday(
-  db: D1Database,
-  userDiscordId: string
-): Promise<number> {
-  const today = getStartOfDayUTC();
-  const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
-
-  const query = `
-    SELECT COUNT(*) as count
-    FROM presets
-    WHERE author_discord_id = ?
-      AND created_at >= ?
-      AND created_at < ?
-  `;
-
-  const result = await db
-    .prepare(query)
-    .bind(userDiscordId, today.toISOString(), tomorrow.toISOString())
-    .first<{ count: number }>();
-
-  return result?.count || 0;
-}
-
-/**
  * Count a user's append-only events of one kind for the current UTC day.
- * Unlike the row count above, nothing the user can do lowers this number.
+ * Nothing the user can do lowers this number.
  *
  * `upToId` (BUG-015 fix round 2 — deterministic tie-break) restricts the
  * count to rows with `id <= upToId`. Autoincrement ids are monotonic, so
@@ -180,28 +150,6 @@ export async function pruneSubmissionEvents(db: D1Database, logger?: RetentionLo
 }
 
 /**
- * Record one quota-bearing event. Best-effort from the caller's point of view
- * (a failed insert must not fail the mutation the user just completed), but
- * callers should still `await` it so the row lands before the response.
- */
-export async function recordSubmissionEvent(
-  db: D1Database,
-  userDiscordId: string,
-  kind: SubmissionEventKind,
-  presetId: string | null = null,
-  logger?: RetentionLogger
-): Promise<void> {
-  await pruneSubmissionEvents(db, logger);
-
-  await db
-    .prepare(
-      `INSERT INTO submission_events (user_discord_id, kind, preset_id) VALUES (?, ?, ?)`
-    )
-    .bind(userDiscordId, kind, presetId)
-    .run();
-}
-
-/**
  * A daily-cap reservation obtained via `reserveDailyEvent` (BUG-015).
  *
  * `release` is present only when `allowed` is true — a refused reservation
@@ -232,11 +180,9 @@ export interface DailyEventReservation extends RateLimitResult {
  * with a later `recordSubmissionEvent` call was check-then-insert — N
  * concurrent requests sitting at cap-1 could all pass the check before any
  * of them recorded, overshooting the daily cap for `text_edit` /
- * `flagged_edit` / `preview_upload`. Unlike the `submission`
- * cap (whose own overshoot guard in `handlers/presets.ts` can roll back the
- * INSERT it guards — see BUG-049 there), these three gate an UPDATE or an R2
- * write that cannot be rolled back the same way, so the reservation itself
- * has to close the race:
+ * `flagged_edit` / `preview_upload`. These gate an UPDATE or an R2 write;
+ * submissions now use the separate fail-closed conditional admission below.
+ * For these existing event kinds the reservation closes the race:
  *
  *   1. Insert the event row first — this is the statement every concurrent
  *      request serializes on.
@@ -263,7 +209,7 @@ export interface DailyEventReservation extends RateLimitResult {
  * `recordSubmissionEvent` call it replaces at the three call sites.
  *
  * Fail OPEN on any D1 error from either the INSERT or the COUNT (coordinator
- * ruling, fix round 1): `recordSubmissionEvent`'s own docblock still promises
+ * ruling, fix round 1): the earlier append-after-action path promised
  * "a failed insert must not fail the mutation the user just completed", and
  * `migrations/0012_submission_events_text_edit.sql` (needed before a
  * `'text_edit'` row is accepted) is hand-run and may not be applied to a
@@ -356,47 +302,89 @@ export async function reserveDailyEvent(
 }
 
 /**
- * Check if a user can submit a preset
- * Returns rate limit status and remaining submissions
- *
- * Counts BOTH surviving rows (cheap, pre-0011 behaviour) and append-only
- * submission events — whichever is higher is the number that counts, so
- * deleting your own presets no longer refills the quota.
- */
-
-/**
- * The submission count the daily cap is actually enforced on.
- *
- * BUG-042: this rule lived only inside `checkSubmissionRateLimit`, so
- * `POST /presets` used the raw `presets` row count for BOTH its overshoot
- * rollback and the `remaining_submissions` it reports. For anyone who had
- * deleted a preset that day the two disagreed: submit 3, delete 3, submit a
- * 4th, and the 201 said 9 remaining while `GET /presets/rate-limit` said 6 —
- * and the user was refused at 6. Worse, the BUG-049 concurrency rollback
- * under-triggered for exactly the deleting user that `submission_events` was
- * introduced (FINDING-008) to catch.
+ * Events plus live rows not represented by a same-user submission event.
+ * Deleted presets stay charged, while successful admitted rows count once.
  */
 export async function getEffectiveSubmissionCountToday(
   db: D1Database,
-  userDiscordId: string
+  userDiscordId: string,
+  window = submissionWindow()
 ): Promise<number> {
-  const [rowsToday, eventsToday] = await Promise.all([
-    getSubmissionCountToday(db, userDiscordId),
-    getEventCountToday(db, userDiscordId, 'submission'),
-  ]);
-  return Math.max(rowsToday, eventsToday);
+  return getSubmissionUsage(db, userDiscordId, window);
 }
+
+/** One captured UTC window keeps counts, event timestamps and resets coherent. */
+function submissionWindow(): { now: string; start: string; end: string; resetAt: Date } {
+  const now = new Date();
+  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const resetAt = new Date(start.getTime() + MS_PER_DAY);
+  return { now: now.toISOString(), start: start.toISOString(), end: resetAt.toISOString(), resetAt };
+}
+
+// Match representation across ALL retained admissions, including yesterday's
+// admission completing today. Unrelated users/kinds never represent a preset.
+const submissionUsageSql = `(
+  (SELECT COUNT(*) FROM submission_events
+   WHERE user_discord_id = ? AND kind = 'submission' AND created_at >= ? AND created_at < ?)
+  +
+  (SELECT COUNT(*) FROM presets p
+   WHERE p.author_discord_id = ? AND p.created_at >= ? AND p.created_at < ?
+     AND NOT EXISTS (
+       SELECT 1 FROM submission_events e
+       WHERE e.user_discord_id = p.author_discord_id AND e.kind = 'submission' AND e.preset_id = p.id
+     ))
+)`;
+
+function submissionUsageBindings(user: string, window: ReturnType<typeof submissionWindow>): string[] {
+  return [user, window.start, window.end, user, window.start, window.end];
+}
+
+async function getSubmissionUsage(
+  db: D1Database,
+  user: string,
+  window: ReturnType<typeof submissionWindow>
+): Promise<number> {
+  const result = await db.prepare(`SELECT ${submissionUsageSql} AS count`)
+    .bind(...submissionUsageBindings(user, window)).first<{ count: number }>();
+  return result?.count ?? 0;
+}
+
+/**
+ * Admit before moderation in one conditional write. A zero-row RETURNING is
+ * quota denial, never a stale last_row_id. Database errors deliberately escape
+ * to the submission handler's fail-closed 503; unrelated reservations retain
+ * their existing fail-open behavior. Once moderation starts this event stays,
+ * including a failed create or a same-dye collision.
+ */
+export async function reserveSubmissionAdmission(
+  db: D1Database,
+  user: string,
+  presetId: string,
+  logger?: RetentionLogger
+): Promise<Pick<RateLimitResult, 'allowed' | 'resetAt'>> {
+  await pruneSubmissionEvents(db, logger);
+  const window = submissionWindow();
+  const inserted = await db.prepare(`
+    INSERT INTO submission_events (user_discord_id, kind, preset_id, created_at)
+    SELECT ?, 'submission', ?, ? WHERE ${submissionUsageSql} < ?
+    RETURNING id
+  `).bind(user, presetId, window.now, ...submissionUsageBindings(user, window), DAILY_SUBMISSION_LIMIT)
+    .first<{ id: number }>();
+  return { allowed: inserted !== null, resetAt: window.resetAt };
+}
+
 export async function checkSubmissionRateLimit(
   db: D1Database,
   userDiscordId: string
 ): Promise<RateLimitResult> {
-  const submissionsToday = await getEffectiveSubmissionCountToday(db, userDiscordId);
+  const window = submissionWindow();
+  const submissionsToday = await getEffectiveSubmissionCountToday(db, userDiscordId, window);
   const remaining = Math.max(0, DAILY_SUBMISSION_LIMIT - submissionsToday);
 
   return {
     allowed: submissionsToday < DAILY_SUBMISSION_LIMIT,
     remaining,
-    resetAt: getNextResetUTC(),
+    resetAt: window.resetAt,
   };
 }
 

@@ -17,11 +17,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   CharacterColorService,
+  ColorService,
   inspectCharaForTools,
   resolveCharaForTools,
 } from '@xivdyetools/core';
 import { generateNearestSheet, generateSwatchCard } from '@xivdyetools/svg';
 import { executeSwatch, type SwatchInput } from './swatch.js';
+import { dyeService } from '../input-resolution.js';
 import { createTranslator } from '../i18n/index.js';
 import {
   CHARA_CANARY_PATTERN,
@@ -267,8 +269,8 @@ describe('explicitly disabled controls are inactive: no row', () => {
     });
     if (!result.ok) throw new Error(result.errorMessage);
     expect(rowLabels()).toEqual([en.t('card.slotHair')]);
-    const verdicts = Object.fromEntries(result.character.slots.map((s) => [s.slot, s.verdict]));
-    expect(verdicts).toMatchObject({ highlights: 'inert', facePaint: 'inert', lip: 'inert' });
+    expect(lastCard().stripHexes).toEqual(['#FFE7A1']);
+    expect(result.embed.description).not.toContain('Lip α');
   });
 
   it.each([
@@ -287,7 +289,6 @@ describe('explicitly disabled controls are inactive: no row', () => {
     expect(rowLabels()).not.toContain(en.t('card.slotLip'));
     expect(lastCard().labels.footKey).toBe('nearest by ΔE2000 · 5 of 6 slots');
     expect(result.embed.description).not.toContain('Lip α');
-    expect(result.character.slots.find((s) => s.slot === 'lip')?.verdict).toBe('inert');
   });
 });
 
@@ -308,14 +309,59 @@ describe('the library lip-composite rule', () => {
     expect(lastCard().stripHexes).toContain('#621C33');
     expect(lastCard().stripHexes).not.toContain('#B69A91');
     expect(result.embed.description).not.toContain('Lip α');
-    const lip = result.character.slots.find((s) => s.slot === 'lip');
-    expect(lip).toMatchObject({ verdict: 'index', indexHex: '#621C33', blendHex: null });
+    const target = await run({ ...DUSK, Mouth: 130, IsExtendedAppearanceValid: false }, { slot: 'lip' });
+    if (!target.ok) throw new Error(target.errorMessage);
+    expect(lastSheet().targetHex).toBe('#621C33');
   });
 
   it('slot: lip targets the composite of a live lip', async () => {
     const result = await run({ ...DUSK, Mouth: 130 }, { slot: 'lip' });
     if (!result.ok) throw new Error(result.errorMessage);
     expect(lastSheet().targetHex).toBe('#AE8F98');
+    expect(result.embed.description).toContain('LIP `#AE8F98`');
+  });
+});
+
+// EXT-28: squared sRGB channels recreate the two live extended colours.
+const SHARED_INDEX_DIFFERENT_COLOURS = {
+  IsExtendedAppearanceValid: true, LEyeColor: 42, REyeColor: 42,
+  LeftEyeColor: `${(135 / 255) ** 2}, ${(192 / 255) ** 2}, ${(163 / 255) ** 2}`,
+  RightEyeColor: `${(220 / 255) ** 2}, ${(186 / 255) ** 2}, ${(108 / 255) ** 2}`,
+};
+
+describe('winning eye colours (BUG-002)', () => {
+  it('keeps EXT-28 as distinct L/R rows with independent nearest-dye distances', async () => {
+    const result = await run(SHARED_INDEX_DIFFERENT_COLOURS);
+    if (!result.ok) throw new Error(result.errorMessage);
+    expect(result.character.eyesShareIndex).toBe(true); // legacy metadata still means index equality
+    expect(lastCard().stripHexes).toEqual(['#87C0A3', '#DCBA6C']);
+    expect(rowLabels()).toEqual(['EYES·L', 'EYES·R']);
+    expect(lastCard().rows).toHaveLength(2);
+    for (const [i, hex] of ['#87C0A3', '#DCBA6C'].entries()) {
+      const nearest = dyeService.getAllDyes().map((dye) => ({ dye,
+        distance: ColorService.getDistanceForMethod(hex, dye.hex, 'ciede2000'),
+      })).sort((a, b) => a.distance - b.distance)[0];
+      expect(lastCard().rows[i]).toMatchObject({ sourceHex: hex, dyeHex: nearest.dye.hex, name: nearest.dye.name });
+      expect(lastCard().rows[i].deltaE).toBeCloseTo(nearest.distance, 10);
+    }
+    expect(result.embed.description).not.toContain('EYES·LR');
+  });
+
+  it('slot:eyes keeps left preference and five matches for EXT-28', async () => {
+    const result = await run(SHARED_INDEX_DIFFERENT_COLOURS, { slot: 'eyes' });
+    if (!result.ok) throw new Error(result.errorMessage);
+    expect(lastSheet()).toMatchObject({ targetHex: '#87C0A3', targetText: 'EYES·L #87C0A3' });
+    expect(lastSheet().rows).toHaveLength(5);
+    expect(result.embed.description).toContain('EYES·L `#87C0A3`');
+  });
+
+  it('merges equal live colours even when their stored indices differ', async () => {
+    const result = await run({ IsExtendedAppearanceValid: true, LEyeColor: 42, REyeColor: 169,
+      LeftEyeColor: '0, 0, 1', RightEyeColor: '0, 0, 1' });
+    if (!result.ok) throw new Error(result.errorMessage);
+    expect(rowLabels()).toEqual(['EYES·LR']);
+    expect(lastCard().stripHexes).toEqual(['#0000FF']);
+    expect(result.character.eyesShareIndex).toBe(false);
   });
 });
 
@@ -349,16 +395,12 @@ describe('the eye-pair correction', () => {
     expect(result.embed.description).toContain('EYES·L off grid — index #F0EACB, live #0000FF');
     expect(result.embed.description).not.toContain('EYES·R off grid');
 
-    const left = result.character.slots.find((s) => s.slot === 'leftEye');
-    const right = result.character.slots.find((s) => s.slot === 'rightEye');
-    expect(left).toMatchObject({ verdict: 'offGrid', indexHex: '#F0EACB', floatHex: '#0000FF' });
-    expect(right).toMatchObject({ verdict: 'index', indexHex: '#B7A981', floatHex: '#B7A981' });
   });
 
-  it('a shared index whose left eye has no matchHex still draws the right eye as the merged row', async () => {
+  it.each([undefined, 'eyes'] as const)('a shared index whose left eye has no matchHex draws and selects only EYES·R (slot:%s)', async (slot) => {
     // The bundled palettes never leave one of two same-index eyes unmatched, so
-    // the projection is patched: the right eye is skipped as a duplicate only
-    // when the left eye actually produced a row.
+    // the projection is patched: display colours cannot qualify the left eye
+    // for merging when its matching colour is missing.
     const actual = await vi.importActual<typeof import('@xivdyetools/core')>('@xivdyetools/core');
     vi.mocked(resolveCharaForTools).mockImplementationOnce(async (...args) => {
       const character = await actual.resolveCharaForTools(...args);
@@ -367,25 +409,29 @@ describe('the eye-pair correction', () => {
         ...character,
         slots: character.slots.map((s) =>
           s.slot === 'leftEye'
-            ? { ...s, interpretation: 'unresolved' as const, reason: 'missingShaderReference' as const, displayHex: null, matchHex: null }
+            ? { ...s, interpretation: 'unresolved' as const, reason: 'missingShaderReference' as const, matchHex: null }
             : s
         ),
       };
     });
-    const result = await run({ ...HAIR_ONLY, LEyeColor: 42, REyeColor: 42 });
+    const result = await run({ ...HAIR_ONLY, LEyeColor: 42, REyeColor: 42 }, { slot });
     if (!result.ok) throw new Error(result.errorMessage);
-    const eyes = lastCard().rows.filter((r) => r.slotLabel.startsWith('EYES'));
-    expect(eyes).toHaveLength(1);
-    expect(eyes[0]).toMatchObject({ slotLabel: 'EYES·LR', sourceHex: '#DCBA6C' });
+    if (slot) {
+      expect(lastSheet()).toMatchObject({ targetHex: '#DCBA6C', targetText: 'EYES·R #DCBA6C' });
+      expect(lastSheet().rows).toHaveLength(5);
+      expect(result.embed.description).toContain('EYES·R `#DCBA6C`');
+    } else {
+      const eyes = lastCard().rows.filter((r) => r.slotLabel.startsWith('EYES'));
+      expect(eyes).toHaveLength(1);
+      expect(eyes[0]).toMatchObject({ slotLabel: 'EYES·R', sourceHex: '#DCBA6C' });
+    }
   });
 
   it('the Duskwight export’s exact crossing shows each eye’s own colour', async () => {
     const result = await run(DUSK);
     if (!result.ok) throw new Error(result.errorMessage);
-    const left = result.character.slots.find((s) => s.slot === 'leftEye');
-    const right = result.character.slots.find((s) => s.slot === 'rightEye');
-    expect(left).toMatchObject({ verdict: 'index', indexHex: '#87C0A3', floatHex: '#87C0A3' });
-    expect(right).toMatchObject({ verdict: 'index', indexHex: '#DCBA6C', floatHex: '#DCBA6C' });
+    expect(lastCard().rows.find((r) => r.slotLabel === 'EYES·L')?.sourceHex).toBe('#87C0A3');
+    expect(lastCard().rows.find((r) => r.slotLabel === 'EYES·R')?.sourceHex).toBe('#DCBA6C');
     expect(lastCard().stripHexes.slice(0, 2)).toEqual(['#87C0A3', '#DCBA6C']);
   });
 });
@@ -395,15 +441,14 @@ describe('unresolved slots give no row and no crash', () => {
     const result = await run({ HairTone: 10, Skintone: 3, LEyeColor: 42, REyeColor: 42 });
     if (!result.ok) throw new Error(result.errorMessage);
     expect(rowLabels()).toEqual(['EYES·LR']);
-    const verdicts = Object.fromEntries(result.character.slots.map((s) => [s.slot, s.verdict]));
-    expect(verdicts).toMatchObject({ hair: 'error', skin: 'error' });
+    expect(lastCard().stripHexes).toEqual(['#DCBA6C']);
   });
 
   it('a lip index in the unused 96-127 gap is no row', async () => {
     const result = await run({ ...HAIR_ONLY, LipsToneFurPattern: 100, Mouth: 130 });
     if (!result.ok) throw new Error(result.errorMessage);
     expect(rowLabels()).toEqual([en.t('card.slotHair')]);
-    expect(result.character.slots.find((s) => s.slot === 'lip')?.verdict).toBe('error');
+    expect(lastCard().stripHexes).toEqual(['#FFE7A1']);
   });
 
   it('a malformed colour beside valid ones no longer refuses the whole file', async () => {
@@ -546,8 +591,8 @@ describe('colour data the file holds but that cannot be used: one fixed localize
 // ============================================================================
 
 describe('SwatchCharacter keeps the legacy shape', () => {
-  it('has exactly the legacy character members: no nickname, no issues', async () => {
-    const result = await run({ ...DUSK, Mouth: 130, Nickname: 'Real Name' });
+  it.each([undefined, 'hair'] as const)('has the required legacy character members on success (slot:%s), no nickname or issues', async (slot) => {
+    const result = await run({ ...DUSK, Mouth: 130, Nickname: 'Real Name' }, { slot });
     if (!result.ok) throw new Error(result.errorMessage);
     expect(Object.keys(result.character).sort()).toEqual(
       [

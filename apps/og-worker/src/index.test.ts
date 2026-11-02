@@ -6,6 +6,7 @@
  * a WASM runtime not available in test.
  */
 import { describe, it, expect, vi } from 'vitest';
+import { textWidth } from '@xivdyetools/svg';
 
 // Mock the renderer before importing the app
 const rendered: string[] = [];
@@ -497,6 +498,54 @@ describe('Catch-all route', () => {
 // ============================================================================
 // 5.0 blocker fixes: per-tool defaults, new tool routes, ?lang= propagation
 // ============================================================================
+
+describe('Harmony default-card count (I18N-002)', () => {
+  // Independent authored expectations: never import the production copy table.
+  const subtitles = {
+    en: 'Build a palette around any dye. Ten harmony types, real dyes only.',
+    de: 'Baue eine Palette um einen beliebigen Farbstoff — zehn Harmonietypen, nur echte Farbstoffe.',
+    fr: "Construisez une palette autour d'une teinture — dix types d'harmonie, teintures réelles uniquement.",
+    ja: '好きなカララントを軸にパレットを構築。10種類のハーモニー、実在の染料のみ。',
+    ko: '원하는 염료를 중심으로 팔레트 구성 — 10가지 조화 유형, 실제 염료만.',
+    zh: '以任意染剂为中心构建调色板——十种和谐类型，仅限真实染剂。',
+  };
+  const subtitleLines = (svg: string) => [...svg.matchAll(
+    /<text x="13" y="([\d.]+)" fill="#9C9CA2" font-size="12" font-family="[^"]*">([^<]*)<\/text>/g
+  )].map((match) => ({
+    y: Number(match[1]),
+    text: match[2].replace(/&#39;|&apos;/g, "'").replace(/&quot;/g, '"')
+      .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&'),
+  }));
+
+  it.each(Object.entries(subtitles))('%s paints the complete ten-type subtitle within the Discord deck', async (locale, expected) => {
+    rendered.length = 0;
+    const res = await app.request(`/og/harmony/default.png?lang=${locale}`, {}, TEST_ENV);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Content-Type')).toBe('image/png');
+    expect(rendered).toHaveLength(1);
+    const svg = rendered[0];
+    expect(svg).toContain('width="400" height="350"');
+    const lines = subtitleLines(svg);
+    expect(lines.length).toBeGreaterThan(0);
+    expect(lines.length).toBeLessThanOrEqual(3);
+    // CJK can wrap at any character; spaces elsewhere are restored between lines.
+    expect(lines.map((line) => line.text).join(locale === 'ja' || locale === 'zh' ? '' : ' ')).toBe(expected);
+    for (const line of lines) {
+      expect(textWidth(line.text, 12, 'body'), line.text).toBeLessThanOrEqual(400 - 26);
+      expect(line.y).toBeLessThan(350 - 26 - 4);
+    }
+  });
+
+  it.each(Object.entries(subtitles))('%s omits the subtitle on the X frame', async (locale, expected) => {
+    rendered.length = 0;
+    const res = await app.request(`/og/harmony/default.png?lang=${locale}&frame=x`, {}, TEST_ENV);
+    expect(res.status).toBe(200);
+    expect(rendered).toHaveLength(1);
+    expect(rendered[0]).toContain('width="400" height="210"');
+    expect(subtitleLines(rendered[0])).toHaveLength(0);
+    expect(rendered[0]).not.toContain(expected);
+  });
+});
 
 describe('per-tool default OG images', () => {
   it('serves /og/{tool}/default.png for every supported tool', async () => {

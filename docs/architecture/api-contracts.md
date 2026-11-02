@@ -149,6 +149,18 @@ applies the viewer rules for `author_discord_id` / `is_owner` below). The exampl
 | `preview_image_status` | `none` \| `pending` \| `approved`. Safe to show everywhere. |
 | `rejection_reason` | Latest moderator `reject` reason. Populated **only** on `GET /presets/mine`; `null` elsewhere. |
 
+### `POST /api/v1/presets/batch`
+
+Signed v2 bot authentication with a configured signing secret and verified acting user is required,
+including in development. JWT and anonymous callers are refused. This is a logical read outside
+the mutation-ban middleware, so banned users can read; common body and acting-user limits apply.
+JSON body: `{ "ids": ["preset-id"] }`, one to fifty raw nonempty string IDs, at most 128 characters
+each, validated before deduplication. Parameterized approved-only lookup returns
+`{ "success": true, "presets": [], "missing_ids": [] }`. Results and missing IDs each preserve
+first-occurrence request order. Public serialization omits author IDs, revision, raw image keys
+and snapshots. Hidden/pending/rejected/nonexistent IDs are missing; auth, validation, rate-limit
+and database errors are request failures, never silently missing presets.
+
 ### GET /presets
 
 List presets with filtering and pagination. Public.
@@ -160,7 +172,7 @@ List presets with filtering and pagination. Public.
 | `search` | string | — | Substring match on name / description / tags |
 | `status` | string | `approved` | `pending`, `approved`, `rejected`, `flagged`. Anything else → 400; anything but `approved` → 403 unless the caller is a moderator. `hidden` is never listable. |
 | `sort` | string | `popular` | `popular` (votes desc, then newest), `recent`, `name` |
-| `page` | number | `1` | Clamped to ≥ 1 |
+| `page` | number | `1` | Clamped to 1–10,000 before offset arithmetic |
 | `limit` | number | `20` | Clamped to 1–50 |
 | `is_curated` | `true` \| `false` | — | Filter curated presets |
 
@@ -294,11 +306,12 @@ Every field is optional; at least one must be present (`No updates provided`).
   the approved text is taken: the moderator revert target. A pending, rejected or flagged preset's
   edit takes no snapshot and leaves any it already holds untouched, because a revert approves the
   snapshot (BUG-003 follow-up).
-- **What the edit does to the status** (FINDING-004). "New text" below means the submitted `name` or
-  `description` differs from the stored value (only such text is moderated, so text that tripped
-  moderation is always new text); everything else — tags, dyes, category, example link, or text
-  re-sent unchanged — is applied and changes no status and notifies nobody, however often it is
-  repeated.
+- **What the edit does to the status** (FINDING-004). "New text" below means a moderated field
+  differs from storage: name/description, plus tags/example links only when extended checks are
+  enabled by exact `PRESET_METADATA_MODERATION_ENABLED=true`. Enabled changed metadata follows
+  the same scoring, quota, snapshot, status and notification rules as changed name/description.
+  With the preparation default of false, tag/link-only edits change no status and notify nobody.
+  Dye/category edits and identical moderated values change no status or notification in either mode.
 
   | Stored status | New text | Any other edit |
   |---------------|----------|----------------|
@@ -313,7 +326,7 @@ Every field is optional; at least one must be present (`No updates provided`).
 - Every notification counts against `DAILY_FLAGGED_EDIT_LIMIT` (10 / UTC day — see the second 429
   below) and carries `moderation_status: "flagged"` when this edit tripped moderation, `"clean"`
   otherwise, plus `is_edit: true`, `edited_from_status` — the status the preset had before this
-  edit (BUG-003) — and `edited_from`, the `{ name, description, tags, dyes }` this edit replaced
+  edit (BUG-003) — and `edited_from`, the `{ name, description, tags, dyes, example_link }` this edit replaced
   (the moderator's diff base; see [POST /webhooks/preset-submission](#post-webhookspreset-submission)).
 - Vote counts are preserved across edits.
 
@@ -325,13 +338,13 @@ field entirely — `preset.status` carries it instead:
 { "success": true, "preset": { …preset… }, "moderation_status": "approved" }
 ```
 
-**429 (daily limit on name/description edits)** — checked before content moderation and before any
+**429 (daily limit on changed moderated fields)** — checked before content moderation and before any
 write, whatever the preset's status; nothing is written:
 ```json
 {
   "success": false,
   "error": "RATE_LIMITED",
-  "message": "You've reached your daily limit of name and description edits (30 per day). Try again tomorrow.",
+  "message": "You've reached your daily limit of text edits (30 per day). Try again tomorrow.",
   "remaining": 0,
   "reset_at": "…"
 }
@@ -779,8 +792,8 @@ resubmission (clean or flagged). An edit (here, the first flagged edit of an app
 |-------|--------|
 | `is_edit` | `true` when an owner edit (`PATCH /presets/:id`) sent the notification, `false` for a new preset (BUG-003). Optional: treat absent as `false` |
 | `edited_from_status` | The preset's status **before** this edit — same vocabulary as `preset.status`; in practice `approved`, `pending` or `rejected` (an edit of a `flagged` preset notifies nobody, a `hidden` one cannot be edited). Present on every edit, **absent** on a new preset. Needed because `preset.status` is `pending` on every edit notification |
-| `edited_from` | `{ name, description, tags, dyes }` exactly as the row held them immediately **before this edit's write** — **the diff base**: show the edit's changes as `edited_from` → `preset`. Present on every edit (including a pending edit and a rejected resubmission, which never create a snapshot and so usually have none), **absent** on a new preset; treat absent as "no diff available". Never stored and never restored by any endpoint — it is not the revert target. It coincides with `preset.previous_values` on the first flagged edit of an approved preset that had no snapshot yet, and diverges after that |
-| `preset.previous_values` | `{ name, description, tags, dyes }` — the write-once revert snapshot that `PATCH /moderation/:id/revert` restores (and approves), or `null`. Written by the first owner edit of an `approved` preset that trips moderation and cleared only by a revert, so it can be older than this edit; `null` after a rejected resubmission or a pending edit of a preset that was never snapshotted. **Not a diff base** — use `edited_from` |
+| `edited_from` | `{ name, description, tags, dyes, example_link }` (the link may be absent in legacy notifications) exactly as the row held them immediately **before this edit's write** — **the diff base**: show the edit's changes as `edited_from` → `preset`. Present on every edit (including a pending edit and a rejected resubmission, which never create a snapshot and so usually have none), **absent** on a new preset; treat absent as "no diff available". Never stored and never restored by any endpoint — it is not the revert target. It coincides with `preset.previous_values` on the first flagged edit of an approved preset that had no snapshot yet, and diverges after that |
+| `preset.previous_values` | `{ name, description, tags, dyes }` with optional `example_link` — the write-once revert snapshot that `PATCH /moderation/:id/revert` restores (and approves), or `null`. Written by the first owner edit of an `approved` preset that trips moderation and cleared only by a revert, so it can be older than this edit; `null` after a rejected resubmission or a pending edit of a preset that was never snapshotted. **Not a diff base** — use `edited_from` |
 | `preset.status` | `pending` → moderation-channel embed; `approved` → submission-log embed ("new preset published"); other statuses post nothing |
 | `preset.moderation_status` | `clean` \| `flagged` \| `auto_approved` |
 | `preset.content_revision` | The preset's revision counter when the notification was sent (FINDING-017); the embed's buttons bind the moderator's decision to it as `expected_revision` |
@@ -804,6 +817,21 @@ snapshot came from — a deploy consideration, see `apps/presets-api/CLAUDE.md`)
 usually none) and which can be older than the text being replaced. When Revert is offered, label it as restoring `previous_values`
 (and show that text), not as undoing this edit: approved A → a flagged edit B snapshots A → a
 moderator approves B → a flagged edit C reverts to **A**, discarding the approved B.
+
+**Link metadata and activation:** the API's extended checks remain explicitly disabled until
+Discord and moderation-worker production deployments are verified, followed by an activation-only
+PR. New enabled snapshots capture `example_link`; explicit recorded values are validated/restored
+even after disabling the flag. A genuinely missing legacy link preserves current state while
+disabled and clears it while enabled. Enabled privileged views expose that effective null target;
+raw stored JSON remains the CAS token. A malformed present value remains untrusted.
+
+Both consumers render the complete decoded current path (`Links`) and effective target
+(`Revert link`), safely escaped and never as an author-provided clickable URL. Hostnames,
+credentials, queries and fragments are not displayed. Query-only changes still count as changes.
+Missing fields are unavailable, never inferred from the current link. Required unsafe/oversized
+content withholds its corresponding action; Reject remains available. Before approval/Revert,
+the moderation consumer compares fresh revision/status and these displayed fields, refreshing
+old or stale messages first. No custom-ID or slash-command schema change is required.
 
 **Behavior:** the `submission` moderation embed is posted with `MODERATION_BOT_TOKEN` when set (so its
 approve/reject buttons route to moderation-worker); `preview_image` embeds are posted with this bot's
