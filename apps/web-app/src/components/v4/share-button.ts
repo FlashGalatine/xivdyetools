@@ -177,7 +177,7 @@ export class ShareButton extends BaseLitComponent {
       }
 
       button:focus-visible {
-        outline: 2px solid var(--theme-primary, #d4af37);
+        outline: 2px solid var(--theme-primary);
         outline-offset: 2px;
       }
 

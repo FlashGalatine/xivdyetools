@@ -196,7 +196,7 @@ export class PresetDetail extends BaseLitComponent {
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        color: var(--theme-primary, #d4af37);
+        color: var(--theme-primary);
         background: transparent;
         border: none;
         cursor: pointer;
@@ -211,7 +211,7 @@ export class PresetDetail extends BaseLitComponent {
       }
 
       .back-button:focus-visible {
-        outline: 2px solid var(--theme-primary, #d4af37);
+        outline: 2px solid var(--theme-primary);
         outline-offset: 2px;
       }
 
@@ -337,7 +337,7 @@ export class PresetDetail extends BaseLitComponent {
       }
 
       .action-btn:focus-visible {
-        outline: 2px solid var(--theme-primary, #d4af37);
+        outline: 2px solid var(--theme-primary);
         outline-offset: 2px;
       }
 
@@ -422,7 +422,7 @@ export class PresetDetail extends BaseLitComponent {
         width: 32px;
         height: 32px;
         border: 3px solid var(--theme-border, rgba(255, 255, 255, 0.1));
-        border-top-color: var(--theme-primary, #d4af37);
+        border-top-color: var(--theme-primary);
         border-radius: 50%;
         animation: spin 1s linear infinite;
       }

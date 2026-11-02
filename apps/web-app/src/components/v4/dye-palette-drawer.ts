@@ -313,7 +313,7 @@ export class DyePaletteDrawer extends BaseLitComponent {
       }
 
       .search-input:focus {
-        border-color: var(--theme-primary, #d4af37);
+        border-color: var(--theme-primary);
         background: rgba(255, 255, 255, 0.08);
       }
 
@@ -353,8 +353,8 @@ export class DyePaletteDrawer extends BaseLitComponent {
       }
 
       .filter-chip.active {
-        background: var(--theme-primary, #d4af37);
-        border-color: var(--theme-primary, #d4af37);
+        background: var(--theme-primary);
+        border-color: var(--theme-primary);
         color: var(--theme-text-on-primary);
       }
 
@@ -428,7 +428,7 @@ export class DyePaletteDrawer extends BaseLitComponent {
       .favorites-icon {
         width: 14px;
         height: 14px;
-        color: var(--theme-primary, #d4af37);
+        color: var(--theme-primary);
       }
 
       .chevron {
@@ -579,7 +579,7 @@ export class DyePaletteDrawer extends BaseLitComponent {
 
       .swatch-favorite-btn.is-favorite {
         opacity: 1;
-        color: var(--theme-primary, #d4af37);
+        color: var(--theme-primary);
       }
 
       .swatch-favorite-btn.is-favorite:hover {
@@ -614,7 +614,7 @@ export class DyePaletteDrawer extends BaseLitComponent {
         opacity: 1;
         transform: scale(1);
         background: rgba(0, 0, 0, 0.6);
-        color: var(--theme-primary, #d4af37);
+        color: var(--theme-primary);
       }
 
       .favorites-content .swatch-favorite-btn:hover {
@@ -708,7 +708,7 @@ export class DyePaletteDrawer extends BaseLitComponent {
       }
 
       .custom-hex-input:focus {
-        border-color: var(--theme-primary, #d4af37);
+        border-color: var(--theme-primary);
         background: rgba(255, 255, 255, 0.08);
       }
 
@@ -737,7 +737,7 @@ export class DyePaletteDrawer extends BaseLitComponent {
       .custom-apply-btn {
         width: 100%;
         padding: 10px 16px;
-        background: var(--theme-primary, #d4af37);
+        background: var(--theme-primary);
         color: var(--theme-text-on-primary);
         border: none;
         border-radius: 6px;

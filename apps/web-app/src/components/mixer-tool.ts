@@ -1837,12 +1837,12 @@ export class MixerTool extends BaseComponent {
           background: ${this.blendedColor || 'var(--v4-glass-bg, rgba(30, 30, 30, 0.5))'};
           backdrop-filter: blur(16px);
           -webkit-backdrop-filter: blur(16px);
-          border: 3px solid var(--theme-primary, #d4af37);
+          border: 3px solid var(--theme-primary);
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+          box-shadow: 0 0 20px color-mix(in srgb, var(--theme-primary) 30%, transparent);
           position: relative;
           flex-shrink: 0;
         `,
