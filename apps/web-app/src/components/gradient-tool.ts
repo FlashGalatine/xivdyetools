@@ -85,6 +85,13 @@ interface InterpolationStep {
 }
 
 /**
+ * The least the endpoints row fits in side by side: two 89px cards, which leaves each
+ * 30px of text past its padding and swatch, around the 44px swap and its 8px gaps. The
+ * tool's side padding gives way before the row has to stack.
+ */
+const ENDPOINTS_MIN_WIDTH = 238;
+
+/**
  * Storage keys for v3 mixer tool
  */
 const STORAGE_KEYS = {
@@ -689,13 +696,21 @@ export class GradientTool extends BaseComponent {
     // inside the shell's shadow root, so this <style> scopes there.
     const styles = document.createElement('style');
     styles.textContent = `
-      .v5-grad-workspace { padding: 32px; }
+      .v5-grad-workspace {
+        padding: 32px clamp(0px, calc((100% - ${ENDPOINTS_MIN_WIDTH}px) / 2), 32px);
+      }
+      .v5-grad-flow { container-type: inline-size; }
       .v5-grad-ep-card:hover { border-color: ${ACCENT_BORDER} !important; }
       .v5-grad-swap:hover:not([disabled]) { background: var(--theme-card-hover); }
       .v5-grad-pin:hover:not([disabled]) { background: var(--theme-card-hover); }
       .v5-grad-row:hover { border-color: ${ACCENT_BORDER} !important; }
       @media (max-width: 768px) {
         .v5-grad-workspace { padding: 16px 12px 24px; }
+      }
+      @container (width < ${ENDPOINTS_MIN_WIDTH}px) {
+        .v5-grad-endpoints { flex-direction: column; }
+        .v5-grad-swap { align-self: center; height: 44px; }
+        .v5-grad-swap svg { transform: rotate(90deg); }
       }
     `;
     right.appendChild(styles);
@@ -710,11 +725,13 @@ export class GradientTool extends BaseComponent {
 
     // One centred column for the endpoints row + pin rail (drawn geometry)
     const flowColumn = this.createElement('div', {
+      className: 'v5-grad-flow',
       attributes: { style: 'width: 100%; max-width: 720px; margin: 0 auto;' },
     });
 
     // ENDPOINTS ROW: FROM card | 44px swap | TO card
     this.endpointsRowContainer = this.createElement('div', {
+      className: 'v5-grad-endpoints',
       attributes: {
         'data-testid': 'gradient-endpoints-row',
         style:
@@ -798,20 +815,22 @@ export class GradientTool extends BaseComponent {
       className: 'section-header',
       attributes: {
         style:
-          'width: 100%; display: none; justify-content: space-between; align-items: center; gap: 10px;',
+          'width: 100%; display: none; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px;',
       },
     });
     this.resultsHeader = this.createElement('span', {
       textContent: LanguageService.t('gradient.gradientResults'),
       attributes: {
         style:
-          'font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--theme-text-muted); white-space: nowrap;',
+          'min-width: 0; overflow-wrap: break-word; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--theme-text-muted);',
       },
     });
+    // A basis of 0, so the header only wraps once the cluster's widest control can't fit
+    // beside the label. Until then the cluster wraps inside itself, as it always did.
     this.summaryCluster = this.createElement('div', {
       attributes: {
         style:
-          'display: flex; align-items: center; gap: 10px; min-width: 0; flex-wrap: wrap; justify-content: flex-end;',
+          'flex: 1 1 0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end;',
       },
     });
 
