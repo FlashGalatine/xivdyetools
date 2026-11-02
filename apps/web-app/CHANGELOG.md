@@ -20,7 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   palette drawer's Random button had the same gold written out as its hover tint,
   `rgba(212, 175, 55, 0.1)`, and now takes a 10% tint of the accent. The fallbacks in the other hover rules
   that named it, on Random, the favorite star and the share button, could never paint and are gone. The
-  JavaScript gets smaller and no budget moved.
+  code shrinks by 20 bytes; the one-locale payload grows by 302, all of it this entry in What's New, and
+  stays at 99.3% of its budget. No limit moved.
 
 ### Known issues
 
