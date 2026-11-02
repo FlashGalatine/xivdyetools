@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.16.9] - 2026-11-01
+
+### Fixed
+
+- **The Color Palette has no sideways scrollbar, and its dye tooltips are no longer cut off at the
+  sides.** Each swatch's name is a `::after` tooltip that rests at `opacity: 0`, and a hidden box
+  still counts as scrollable overflow. Centered on a last-column swatch, a long name ran past
+  `.drawer-content`: client width 309 and scroll width 322 at the 320px drawer with a classic
+  scrollbar (334 in French), on all seven tools with the palette, at any window width. On hover the
+  same centering cut names off: the scroller clipped the outer columns (38 px of the longest French
+  name in the first column, where no scrolling could reach it), and the Favorites section's
+  `overflow: hidden` clipped them tighter. Tooltips in the first and last of the five columns now
+  line up with their swatch's outer edge and grow inward.
+  `overflow-x` stays as it was, so a future overflow shows up rather than clipping a name silently.
+- **New checks in `e2e/content-scroll.spec.ts`:** no sideways scroll on each palette tool and at
+  769, 768, 390 and 320 px windows, and in all six languages the widest tooltip of each column, in
+  the main grid and in Favorites, stays inside its clipping box while hovered, at a 320px drawer and
+  at 310px (the columns a classic scrollbar leaves, which headless Chromium hides). They fail on the
+  old CSS.
+
 ## [5.16.8] - 2026-11-01
 
 ### Changed

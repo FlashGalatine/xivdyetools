@@ -2,6 +2,12 @@
 
 ---
 
+## Web-App Version 5.16.9 — November 1, 2026
+
+### Color Palette
+- **The sideways scrollbar is gone.** The small stray scrollbar along the bottom of the Color Palette no longer appears.
+- **Full dye names on hover.** Dyes in the first and last columns no longer have their names cut off at the sides of the panel.
+
 ## Web-App Version 5.16.8 — November 1, 2026
 
 ### Privacy Guide and Terms

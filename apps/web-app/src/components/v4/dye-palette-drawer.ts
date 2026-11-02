@@ -484,6 +484,21 @@ export class DyePaletteDrawer extends BaseLitComponent {
         opacity: 1;
       }
 
+      /* A hidden tooltip still counts as scrollable overflow. Centered on an
+         outer column, a long name ran past the drawer: a sideways scrollbar at
+         rest, and a cut-off name on hover. The outer columns of the five grow
+         inward from their swatch's edge instead. */
+      .swatch:nth-child(5n + 1)[title]::after {
+        left: 0;
+        transform: none;
+      }
+
+      .swatch:nth-child(5n)[title]::after {
+        left: auto;
+        right: 0;
+        transform: none;
+      }
+
       /* The pick control (BUG-028): transparent, and over the swatch's border
          as well, since the whole swatch was the click target as a <div>. */
       .swatch-pick {

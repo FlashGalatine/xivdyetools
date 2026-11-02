@@ -97,6 +97,136 @@ test.describe('Main content scrolling (#368)', () => {
   });
 });
 
+test.describe('Palette drawer sideways overflow', () => {
+  // Every tool with a palette; the extractor, presets and glamour have none.
+  const PALETTE_TOOLS = [
+    'harmony',
+    'accessibility',
+    'comparison',
+    'gradient',
+    'mixer',
+    'budget',
+    'swatch',
+  ];
+
+  async function expectNoSidewaysScroll(page: Page): Promise<void> {
+    const content = page.locator('dye-palette-drawer .drawer-content');
+    await expect(content.locator('.swatch').first()).toBeVisible();
+    await page.evaluate(() => document.fonts.ready);
+    const { clientWidth, scrollWidth } = await content.evaluate((el) => ({
+      clientWidth: el.clientWidth,
+      scrollWidth: el.scrollWidth,
+    }));
+    expect(scrollWidth).toBeLessThanOrEqual(clientWidth);
+  }
+
+  test.beforeEach(async ({ page }) => {
+    await seedStartupStorage(page);
+  });
+
+  for (const tool of PALETTE_TOOLS) {
+    test(`has no sideways scroll on ${tool}`, async ({ page }) => {
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await gotoTool(page, tool);
+      await expectNoSidewaysScroll(page);
+    });
+  }
+
+  for (const width of [769, 768, 390, 320]) {
+    test(`has no sideways scroll at a ${width}px window`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 844 });
+      await gotoTool(page, 'harmony');
+      if (width <= 768) await page.locator('.v4-palette-toggle').click();
+      await expectNoSidewaysScroll(page);
+    });
+  }
+
+  // Headless Chromium hides scrollbars, so the columns here are wider than a
+  // real browser's. 310px leaves the width a classic 11px scrollbar leaves.
+  for (const drawerWidth of ['320px', '310px']) {
+    for (const locale of ['en', 'de', 'fr', 'ja', 'ko', 'zh']) {
+      test(`keeps ${locale} dye tooltips inside a ${drawerWidth} drawer`, async ({ page }) => {
+        await page.setViewportSize({ width: 1440, height: 900 });
+        await page.addInitScript(
+          (code) => localStorage.setItem('xivdyetools_locale', code),
+          locale
+        );
+        await gotoTool(page, 'harmony');
+        const drawer = page.locator('dye-palette-drawer');
+        await drawer.evaluate((el, width) => {
+          el.style.setProperty('--v4-drawer-width', width);
+        }, drawerWidth);
+        await expectNoSidewaysScroll(page);
+
+        // The longest names go in Favorites, whose section clips tighter than
+        // the scroller: first added, first column.
+        const longestNames = await drawer.locator('.category-section .swatch').evaluateAll((els) =>
+          els
+            .map((el) => ({
+              name: el.getAttribute('title')!,
+              width: parseFloat(getComputedStyle(el, '::after').width),
+            }))
+            .sort((a, b) => b.width - a.width)
+            .slice(0, 5)
+            .map((row) => row.name)
+        );
+        for (const name of longestNames) {
+          await drawer
+            .locator(`.category-section .swatch[title="${name}"] .swatch-favorite-btn`)
+            .click();
+        }
+        await expect(drawer.locator('.favorites-content .swatch')).toHaveCount(5);
+
+        // Hover the widest tooltip of each column in each kind of grid.
+        const targets = await drawer.locator('.swatch').evaluateAll((els) => {
+          const widest = new Map<string, { index: number; width: number }>();
+          els.forEach((el, index) => {
+            const inFavorites = el.closest('.favorites-section') !== null;
+            const column = [...el.parentElement!.children].indexOf(el) % 5;
+            const key = `${inFavorites}-${column}`;
+            const width = parseFloat(getComputedStyle(el, '::after').width);
+            if (width > (widest.get(key)?.width ?? 0)) widest.set(key, { index, width });
+          });
+          return [...widest.values()].map((target) => target.index);
+        });
+        expect(targets).toHaveLength(10);
+
+        for (const index of targets) {
+          const swatch = drawer.locator('.swatch').nth(index);
+          await swatch.hover();
+          await expect
+            .poll(() => swatch.evaluate((el) => getComputedStyle(el, '::after').opacity))
+            .toBe('1');
+          await expect
+            .poll(() => swatch.evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).a))
+            .toBeCloseTo(1.1, 2);
+          // A pseudo-element has no rect of its own, so its box comes from the
+          // swatch's live (scaled) rect plus its used left, width and transform.
+          const box = await swatch.evaluate((el) => {
+            const tip = getComputedStyle(el, '::after');
+            const rect = el.getBoundingClientRect();
+            const scale = rect.width / el.offsetWidth;
+            const start = el.clientLeft + parseFloat(tip.left) + new DOMMatrix(tip.transform).m41;
+            const left = rect.left + start * scale;
+            const clipper = el.closest('.favorites-section') ?? el.closest('.drawer-content')!;
+            const clip = clipper.getBoundingClientRect();
+            const inset = clipper.clientLeft;
+            return {
+              name: el.getAttribute('title'),
+              left,
+              right: left + parseFloat(tip.width) * scale,
+              clipLeft: clip.left + inset,
+              clipRight: clip.left + inset + clipper.clientWidth,
+            };
+          });
+          expect(box.left, `${box.name} left edge`).toBeGreaterThanOrEqual(box.clipLeft);
+          expect(box.right, `${box.name} right edge`).toBeLessThanOrEqual(box.clipRight);
+        }
+      });
+    }
+  }
+});
+
 test.describe('Mixer content scrolling', () => {
   for (const viewport of [
     { width: 1718, height: 1385 },
