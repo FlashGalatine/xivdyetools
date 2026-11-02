@@ -498,14 +498,14 @@ consumers and disclosures, before a separate OAuth activation change.
 Preparation keeps API session checks and all new moderation ban/unban flows disabled in both
 environments. The presets wrapper preserves HTTP/cron and exports named `BanContinuity`.
 Both consumers declare OAuth `IdentityLookup` service bindings; the provider must be deployed
-and verified before either dependent deployment references it.
+and verified before either dependent deployment references it. The presets-api top-level (dev) block binds `xivdyetools-oauth-dev`, which this preparation does not deploy (its D1 is a placeholder; see the OAuth update above): do not run a bare presets-api `deploy` until that worker exists and exports `IdentityLookup`; production deploys are unaffected (2026-10-31).
 
 Apply additive presets migration `0016_ban_identity_continuity.sql` once before either consumer
 deploys, using `wrangler d1 execute --file`; never `d1 migrations apply` or a fresh-schema replay.
 Membership-aware queries require the new tables even while feature flags are false. Deploy and
 verify both policy units before any new confirmation storage/display. Then prepare a separate
 consumer activation for `OAUTH_SESSION_CHECK_ENABLED` and `LINKED_BAN_CONFIRMATION_ENABLED`;
-verify sessions, explicit ban/expansion/unban scope and private replies in production.
+verify sessions, explicit ban/expansion/unban scope and private replies in production. The session-check activation change must pin with a test, and must state in the presets `CLAUDE.md`, that a bearer JWT failing verification gets 401 on every route, public reads included (2026-10-31).
 
 Keep OAuth splitting disabled and its outbound continuity binding absent until all consumers
 are verified and the mandatory bounded-RPC/global-cleanup fix is implemented and tested. A
