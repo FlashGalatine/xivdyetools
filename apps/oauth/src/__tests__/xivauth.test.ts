@@ -106,6 +106,8 @@ interface XIVAuthFixture {
     characters?: Array<{ lodestone_id: number; name: string; home_world: string; verified: boolean }>;
     /** Raw /characters roster, sent as-is: mostly shapes this scope never gets, to test failing closed. */
     rawCharacters?: unknown[];
+    /** Replaces the /characters answer: a failed status, a rejection, or a body that is not a roster. */
+    rosterResponse?: () => Promise<Response>;
     tokenStatus?: number;
     tokenErrorBody?: string;
     userStatus?: number;
@@ -145,6 +147,7 @@ function mockXIVAuth(fixture: XIVAuthFixture = {}): ReturnType<typeof vi.fn> {
             }), { status: 200 }));
         }
         if (url.includes('xivauth.net/api/v1/characters')) {
+            if (fixture.rosterResponse) return fixture.rosterResponse();
             return Promise.resolve(new Response(JSON.stringify(fixture.rawCharacters ?? (fixture.characters ?? []).map(upstreamCharacter)), { status: 200 }));
         }
         return originalFetch(url);
@@ -1493,6 +1496,123 @@ describe('XIVAuth Handler', () => {
             expect(json.user.username).toBe('Verified Character');
             expect(json.user.global_name).toBe('Verified Character');
             expect(decodeJwtPayload(json.token).username).toBe('Verified Character');
+        });
+    });
+
+    /**
+     * A roster XIVAuth failed to deliver says nothing about the account's
+     * characters, so only a delivered one may change the stored name. A failed
+     * fetch used to overwrite it with the opaque label, and the web app's author
+     * refresh (presets-api: `global_name || username`) then copied that label onto
+     * every preset under the account until the next good sign-in.
+     */
+    describe('POST /auth/xivauth/callback — a failed roster fetch keeps the stored name', () => {
+        const USER_ID = 'xivauth-roster-outage-user';
+        const STORED_NAME = 'Stored Hero';
+        const FALLBACK_NAME = `XIVAuth User ${USER_ID.slice(0, 8)}`;
+        const signIn = async (fixture: XIVAuthFixture) => {
+            mockXIVAuth({ userId: USER_ID, ...fixture });
+            const response = await postXIVAuthCallback({ code: 'valid_code', code_verifier: VALID_CODE_VERIFIER, state: await boundState() });
+            return { response, json: (await response.json()) as Record<string, any> };
+        };
+        const verifiedRoster = (name: string) => [{ lodestone_id: 1, name, home_world: 'Excalibur', verified: true }];
+        const signInWithStoredName = () => signIn({ characters: verifiedRoster(STORED_NAME) });
+        const storedRow = () =>
+            env.DB.prepare('SELECT username,auth_provider FROM users WHERE xivauth_id=?').bind(USER_ID).first<{ username: string; auth_provider: string }>();
+        const body200 = (body: string) => () => Promise.resolve(new Response(body, { status: 200 }));
+        const expectIdentity = (json: Record<string, any>, name: string) => {
+            expect(json.user.username).toBe(name);
+            expect(json.user.global_name).toBeNull();
+            const payload = decodeJwtPayload(json.token);
+            expect(payload.username).toBe(name);
+            expect(payload.global_name).toBeNull();
+            // What presets-api's auth middleware hands the author refresh
+            expect(payload.global_name || payload.username).toBe(name);
+        };
+
+        const FAILED_FETCHES: Array<[string, () => Promise<Response>]> = [
+            ['a 500 status', () => Promise.resolve(new Response('Server Error', { status: 500 }))],
+            ['a 401 status', () => Promise.resolve(new Response('Unauthorized', { status: 401 }))],
+            ['a network error', () => Promise.reject(new TypeError('fetch failed'))],
+            ['a timeout', () => Promise.reject(new DOMException('The operation timed out.', 'TimeoutError'))],
+            ['a 200 whose body is not JSON', body200('<html>Bad Gateway</html>')],
+            ['a 200 whose body is an object', body200(JSON.stringify({ data: [] }))],
+            ['a 200 whose body is null', body200('null')],
+            ['a 200 whose body is a bare string', body200(JSON.stringify('nope'))],
+        ];
+
+        it.each(FAILED_FETCHES)('keeps an existing user\'s name after %s', async (_label, rosterResponse) => {
+            await signInWithStoredName();
+
+            const { response, json } = await signIn({ rosterResponse });
+
+            expect(response.status).toBe(200);
+            expect(json.success).toBe(true);
+            expectIdentity(json, STORED_NAME);
+            expect(await storedRow()).toMatchObject({ username: STORED_NAME, auth_provider: 'xivauth' });
+        });
+
+        it.each(FAILED_FETCHES)('gives a brand-new user the opaque label after %s', async (_label, rosterResponse) => {
+            const { response, json } = await signIn({ rosterResponse });
+
+            expect(response.status).toBe(200);
+            expectIdentity(json, FALLBACK_NAME);
+            expect((await storedRow())?.username).toBe(FALLBACK_NAME);
+        });
+
+        // FINDING-013: a name from an answer that is not a delivered roster is never read.
+        it.each<[string, () => Promise<Response>]>([
+            ['a failed status', () => Promise.resolve(new Response(JSON.stringify(verifiedRoster('Smuggled').map(upstreamCharacter)), { status: 500 }))],
+            ['a wrapped roster', body200(JSON.stringify({ data: verifiedRoster('Smuggled').map(upstreamCharacter) }))],
+        ])('does not read a character name out of %s', async (_label, rosterResponse) => {
+            await signInWithStoredName();
+
+            const { json } = await signIn({ rosterResponse });
+
+            expectIdentity(json, STORED_NAME);
+            expect(JSON.stringify(json.user)).not.toContain('Smuggled');
+        });
+
+        it.each<[string, XIVAuthFixture]>([
+            ['an empty roster', { rawCharacters: [] }],
+            ['only unverified characters', { characters: [{ lodestone_id: 2, name: 'Unverified', home_world: 'Excalibur', verified: false }] }],
+            ['a verified character with a blank name', { rawCharacters: [{ lodestone_id: 3, name: '   ', home_world: 'Excalibur', verified_at: UPSTREAM_VERIFIED_AT }] }],
+            ['only non-object elements', { rawCharacters: [null] }],
+        ])('still replaces an existing user\'s name with the opaque label for %s', async (_label, fixture) => {
+            await signInWithStoredName();
+
+            const { response, json } = await signIn(fixture);
+
+            expect(response.status).toBe(200);
+            expectIdentity(json, FALLBACK_NAME);
+            expect((await storedRow())?.username).toBe(FALLBACK_NAME);
+        });
+
+        it('takes the new verified name at the next good sign-in', async () => {
+            await signInWithStoredName();
+            await signIn({ rosterResponse: FAILED_FETCHES[0]![1] });
+
+            const { json } = await signIn({ characters: verifiedRoster('Renamed Hero') });
+
+            expect(json.user.username).toBe('Renamed Hero');
+            expect(json.user.global_name).toBe('Renamed Hero');
+            expect((await storedRow())?.username).toBe('Renamed Hero');
+        });
+
+        it('keeps the stored name of an account linked to Discord and records the XIVAuth sign-in', async () => {
+            const discordId = '123456789012345678';
+            await env.DB.prepare('INSERT INTO users (id,discord_id,xivauth_id,auth_provider,username) VALUES (?,?,?,?,?)')
+                .bind('10000000-0000-4000-8000-000000000002', discordId, USER_ID, 'discord', 'Discord Display Name')
+                .run();
+
+            const { json } = await signIn({
+                socialIdentities: [{ provider: 'discord', external_id: discordId }],
+                rosterResponse: FAILED_FETCHES[0]![1],
+            });
+
+            expectIdentity(json, 'Discord Display Name');
+            expect(decodeJwtPayload(json.token).discord_id).toBe(discordId);
+            expect(await storedRow()).toMatchObject({ username: 'Discord Display Name', auth_provider: 'xivauth' });
         });
     });
 

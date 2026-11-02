@@ -315,8 +315,10 @@ xivauthRouter.post('/xivauth/callback', async (c) => {
       hasVerifiedCharacters: !!xivauthUser.verified_characters,
     });
 
-    // Fetch characters separately (user endpoint doesn't include them)
-    let characters: XIVAuthRosterEntry[] = [];
+    // Fetch characters separately (user endpoint doesn't include them).
+    // Stays null unless XIVAuth delivered a roster: a failed fetch says nothing
+    // about the account's characters, so it must not change the stored name.
+    let characters: XIVAuthRosterEntry[] | null = null;
     try {
       const charactersResponse = await fetch(XIVAUTH_CHARACTERS_URL, {
         headers: {
@@ -335,29 +337,27 @@ xivauthRouter.post('/xivauth/callback', async (c) => {
         // further down then threw a TypeError outside that catch, reached the
         // handler's outer catch, and the user got
         // `500 { error: 'Authentication failed' }` instead of the degraded
-        // login with the `XIVAuth User <id>` fallback name this path exists
-        // for. Parse into a local first; the catch then genuinely means
-        // "continue without characters".
+        // login this path exists for. Parse into a local first; the catch then
+        // genuinely means "continue without characters".
         const roster = await charactersResponse.json();
 
         // BUG-057: the elements were never checked either. A `null` element
         // made the `.filter` / `.find` callbacks throw (500), so non-object
         // elements are dropped here and the display-name pick below requires a
         // usable string name.
-        characters = Array.isArray(roster)
-          ? roster.filter(
-              (ch): ch is XIVAuthRosterEntry => typeof ch === 'object' && ch !== null
-            )
-          : [];
-        if (!Array.isArray(roster)) {
+        if (Array.isArray(roster)) {
+          characters = roster.filter(
+            (ch): ch is XIVAuthRosterEntry => typeof ch === 'object' && ch !== null
+          );
+          logger?.debug('XIVAuth characters fetched', {
+            count: characters.length,
+            verifiedCount: characters.filter(isVerifiedRegistration).length,
+          });
+        } else {
           logger?.warn('XIVAuth character roster was not an array', {
             bodyType: roster === null ? 'null' : typeof roster,
           });
         }
-        logger?.debug('XIVAuth characters fetched', {
-          count: characters.length,
-          verifiedCount: characters.filter(isVerifiedRegistration).length,
-        });
       } else {
         logger?.warn('Failed to fetch XIVAuth characters', { status: charactersResponse.status });
       }
@@ -397,8 +397,14 @@ xivauthRouter.post('/xivauth/callback', async (c) => {
     // BUG-057: "verified" alone is not enough. `?? null` keeps an empty name,
     // which became an empty username / global_name in the JWT, so the first
     // verified character whose name is a non-blank string wins, trimmed.
+    //
+    // With no delivered roster, the opaque label only names a brand-new row: an
+    // existing row keeps its stored name. `global_name` stays null either way, as
+    // nothing was verified at this sign-in, so the token's `username` carries the
+    // stored name and presets-api's `global_name || username` refreshes the
+    // preset author to it instead of to the label.
     const verifiedCharacter =
-      characters.find(
+      characters?.find(
         (ch) => isVerifiedRegistration(ch) && typeof ch.name === 'string' && ch.name.trim().length > 0
       ) ?? null;
     // Spelled `verifiedCharacter?.name`: web-app's privacy-copy-parity test reads
@@ -408,7 +414,8 @@ xivauthRouter.post('/xivauth/callback', async (c) => {
 
     logger?.debug('Resolving XIVAuth user', {
       hasLinkedDiscord: linkedDiscordId !== null,
-      characterCount: characters.length,
+      rosterDelivered: characters !== null,
+      characterCount: characters?.length ?? 0,
       hasVerifiedCharacter: verifiedCharacter !== null,
     });
 
@@ -421,6 +428,7 @@ xivauthRouter.post('/xivauth/callback', async (c) => {
         discord_id: linkedDiscordId,
         username,
         auth_provider: 'xivauth',
+        keep_stored_username: characters === null,
       },
       logger,
       c.env

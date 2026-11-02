@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.2] - 2026-11-01
+
+### Fixed
+
+- **XIVAuth roster failure no longer renames the account:** a `GET /api/v1/characters` that failed
+  (a non-OK status, a thrown error or timeout, or a body that is not a JSON array) left the roster
+  empty, so the sign-in looked like one with no verified character. The stored `username` was
+  overwritten with `XIVAuth User <id8>`, and the web app's author refresh then wrote that label onto
+  all of the account's presets until the next good sign-in. Since 3.2.1 made verified names real, this
+  was the likeliest way to lose one. An existing user now keeps the stored name, in `users.username`
+  and in the token's `username`. `global_name` stays `null` because nothing was verified at that
+  sign-in, so presets-api's `global_name || username` refreshes the author to the stored name.
+- **Unchanged:** a roster that arrived with no usable verified character (empty, unverified only, blank
+  or non-string names, only non-object elements) still gives the fallback, even over a stored name, and
+  a brand-new user with a failed fetch still gets it. Only a verified character from a delivered roster
+  can set a name (FINDING-013), and nothing is read from an answer that is not one. No route, token
+  claim, D1 column or scope changed.
+- `findOrCreateUser` keeps the name with `COALESCE(?,username)` rather than writing back what it read,
+  so a slower failed sign-in cannot undo a newer good one.
+
 ## [3.2.1] - 2026-11-01
 
 ### Fixed

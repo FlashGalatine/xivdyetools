@@ -141,8 +141,10 @@ avatar).
 The `character` scope is used to find the caller's **verified** character, whose name becomes
 `username` and `global_name`: the first verified character whose name is non-blank, trimmed. Roster
 elements that are not objects are ignored. If none qualifies, the user signs in as
-`XIVAuth User <first 8 characters of the id>` with `global_name: null`. The rest of the roster is
-read in memory and discarded. The 400 / 413 / 415 errors listed for `POST /auth/callback` apply here too.
+`XIVAuth User <first 8 characters of the id>` with `global_name: null`. If the roster fetch itself
+fails (non-OK status, thrown error or timeout, or a body that is not a JSON array), `global_name` is
+still `null`, but an existing user keeps their stored `username`; only a new user gets that label. The
+rest of the roster is read in memory and discarded. The 400 / 413 / 415 errors listed for `POST /auth/callback` apply here too.
 
 **`primary_character` was removed in 3.0.0** — from the response body and from the JWT
 (FINDING-001 / FINDING-002, `docs/audits/2026-08-29-security`). It carried a character name,
