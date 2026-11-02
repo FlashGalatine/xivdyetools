@@ -7,6 +7,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.16.12] - 2026-11-02
+
+### Fixed
+
+- **A result card's menu and submenus stay inside the scroll pane.** The menu opens from the card's right
+  corner and each submenu opens left of that. With both panels open at 769 px the pane starts at x=252, but
+  the menu started at 214 and its submenus at 7. No submenu item could be hit in Comparison, Harmony or
+  Accessibility from 769 px to at least 860 px. At 1024 px their first 27 to 47 px were cut off, and on a
+  390 px phone they ran up to 78 px off the screen. The card now measures this when the menu opens, and again
+  on a window resize while it's open. The menu narrows to fit, and never moves right, because past the card's
+  own edge it goes under the next card in a phone's two-column grid. A submenu with no room on its left
+  overlaps the menu from 8 px inside the pane and leaves 44 px of each row uncovered, so a pointer or a finger
+  can reach the next row. Long words in a submenu break, such as German "Barrierefreiheitsprüfung". With room
+  for the designed layout nothing changes (`--submenu-right` and `--submenu-width` stay unset).
+- **Harmony's pucks follow a small wheel.** A fixed 42 px on a 139 px wheel put the base puck over its
+  neighbors: at 769 px the Monochromatic and Shades digits were under it, and only 2 or 3 of nine points
+  across each puck reached it. A puck is now `clamp(24px, 16%, 42px)` with `aspect-ratio: 1`, so at 769 px each
+  digit is on its own puck and 6 to 8 of those nine points reach it. It stays 42 px on a wheel of 263 px and up,
+  which is every phone from 320 px wide (a 272 px wheel). Nothing adds a minimum wheel size or scrolling.
+- **Comparison's "What actually differs" rows wrap.** A 92 px label and two values on one line left the values
+  0 px wide at 769 px, 0 to 7 px at 800 px, 15 to 22 px at 830 px and 30 to 37 px at 860 px. The two values and
+  the delta now move under the label when they'd have under 138 px beside it, and the delta takes its own line
+  when even that doesn't fit, as at 769 px. A value too long for its column wraps instead of ending in an
+  ellipsis. Rows are the same one line at 1024 px and up unless a value doesn't fit.
+- **A keyboard pick in the Swatch Matcher keeps the focused cell on screen.** At 1366x768 the scroll to the
+  verdict left cell 0 at y=-176 and cell 60 at y=34, above the pane, which starts at 54. The focused cell now
+  stays 8 px inside the pane with as much of the results as fits below it. In the first three rows of a
+  192-cell palette at that size, the verdict's label is still just below the fold. Pointer picks scroll as they
+  did (`block: 'nearest'`).
+- **Closing a side panel keeps revealed Swatch results on screen.** The results move up beside the grid and the
+  scroll position doesn't follow them, so at 1366x768 the verdict ended up at y=-391 to y=-560. A
+  `ResizeObserver` on the row now brings them back when they stop being under the grid. It doesn't act on
+  results that were never revealed or a pane that only resizes.
+- **The Swatch grid panel gets the whole of a narrow pane.** The tool's side padding gives way from 32 px to 0,
+  then the panel's from 20 px to 8 px. At 769 px the panel goes from 75 px to 139 px, and the grid starts 1,279 px
+  down instead of 5,440 px, most of which was the Evercold notice breaking in a 33 px column. With both panels
+  open, all eight columns show without sideways scrolling from an 884 px window instead of 972 px. Below that the
+  grid still scrolls sideways inside its panel. Padding is unchanged from 972 px up and on phones.
+
+### Changed
+
+- **`e2e/tool-narrow-pane.spec.ts` and `e2e/swatch-narrow-pane.spec.ts`** cover all of the above with real
+  scrollbars: menus at 769, 814, 860, 1024 and 390 px in three tools, including a click on a submenu item,
+  pucks at 769, 785 and 800 px, "What actually differs" at 769 to 860 px, and the designed sizes where
+  there's room. The vitest setup stubs `ResizeObserver`, which jsdom doesn't have.
+
 ## [5.16.11] - 2026-11-02
 
 ### Fixed
