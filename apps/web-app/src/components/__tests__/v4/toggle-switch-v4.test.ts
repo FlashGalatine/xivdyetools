@@ -94,5 +94,18 @@ describe('ToggleSwitchV4', () => {
       const { ToggleSwitchV4 } = await import('../../v4/toggle-switch-v4');
       expect(ToggleSwitchV4.styles).toBeDefined();
     });
+
+    it('takes the on-track hover from the theme, with no color of its own', async () => {
+      const { ToggleSwitchV4 } = await import('../../v4/toggle-switch-v4');
+      const css = [ToggleSwitchV4.styles]
+        .flat(Infinity as 1)
+        .map((sheet) => (sheet as { cssText: string }).cssText)
+        .join('\n')
+        .replace(/\s+/g, ' ');
+
+      expect(css).toContain(
+        ':host([checked]) .toggle-wrapper:not(.disabled):hover .toggle-track { background: var(--theme-primary-hover); }'
+      );
+    });
   });
 });

@@ -286,6 +286,19 @@ describe('DyePaletteDrawer keyboard access (BUG-028)', () => {
     // Touch screens never hover, so the star was unreachable there
     expect(css).toContain(`@media (hover: none) { .swatch-favorite-btn { ${shown} } }`);
   });
+
+  it('takes the Apply button hover from the theme, with no color of its own', async () => {
+    const { DyePaletteDrawer } = await import('../../v4/dye-palette-drawer');
+    const css = [DyePaletteDrawer.styles]
+      .flat(Infinity as 1)
+      .map((sheet) => (sheet as { cssText: string }).cssText)
+      .join('\n')
+      .replace(/\s+/g, ' ');
+
+    expect(css).toContain(
+      '.custom-apply-btn:hover:not(:disabled) { background: var(--theme-primary-hover);'
+    );
+  });
 });
 
 // BUG-107 (2026-10-04 deep-dive): the Metallic and Pastel chips matched the

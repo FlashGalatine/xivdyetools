@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.16.14] - 2026-11-02
+
+### Fixed
+
+- **Hovering no longer shows the gold of the retired themes.** No theme ever defined
+  `--theme-primary-hover`, so a toggle that is on and the palette drawer's Apply button painted their
+  fallbacks on hover in Light and Dark alike, `#c49d2f` and `#c49f2f`. `themes.css` now declares the token
+  beside its other aliases, from `--v4-accent-hover`: both palettes already pick that color as `accentHover`,
+  `#B01C1C` on Light and `#FF6257` on Dark. That goes deeper on Light and brighter on Dark, which one
+  `color-mix` of the accent can't do, and a new palette field would only have repeated the value. The
+  palette drawer's Random button had the same gold written out as its hover tint,
+  `rgba(212, 175, 55, 0.1)`, and now takes a 10% tint of the accent. The fallbacks in the other hover rules
+  that named it, on Random, the favorite star and the share button, could never paint and are gone. The
+  JavaScript gets smaller and no budget moved.
+
+### Known issues
+
+- **The Apply button and active filter chips keep a black label in Light.** Their
+  `--theme-text-on-primary` is still undeclared, so they paint its `#000` fallback: 3.88:1 on the resting
+  red, as before, and 3.03:1 on the deeper hover, where the gold gave 8.35:1. Dark is 5.30:1 and 7.14:1.
+
+### Tests
+
+- **`theme-token-contract.test.ts` fails on any `--theme-*` token the app reads and nothing declares**, the
+  gap that let this hide, and on the retired gold in any hover rule. The two tokens still undeclared sit in an
+  allow-list with their reasons, and an entry that stops being a gap fails too.
+- **`e2e/theme-hover.spec.ts` hovers the toggle, Apply and Random in a real browser**, switching theme with the
+  page open, because only a browser resolves the token through the stylesheet and the applied palette.
+
 ## [5.16.11] - 2026-11-02
 
 ### Fixed

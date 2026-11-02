@@ -37,6 +37,9 @@
      site and that one supplies its own fallback.) */
   --theme-text-secondary: var(--theme-text-muted);
   --theme-input-background: var(--theme-background-secondary);
+  /* The accent on hover. Each palette picks its own `accentHover`: deeper on
+     Light, brighter on Dark, which no single mix of the accent gives both. */
+  --theme-primary-hover: var(--v4-accent-hover, var(--theme-primary));
 
   /* ===== V4 STACKING ORDER =====
      One scale for everything that floats, so the order is a decision rather
