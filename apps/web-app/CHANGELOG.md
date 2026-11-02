@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.16.7] - 2026-11-01
+
+### Fixed
+
+- **The tutorial spotlight cancels its own delays.** It scheduled four and kept none: a step's
+  100 ms tooltip render, the 100 ms skip past a missing target, `show()`'s fade-in frame and
+  `hide()`'s 300 ms fade-out. Each now holds its handle (the timers through BaseComponent's
+  `safeTimeout`, so `destroy()` clears them) and goes when it no longer applies:
+  - the step's delay when the next step shows and when the tour ends, so an ended tour no longer
+    renders a tooltip or skips ahead, and a step that replaced a missing target is no longer skipped;
+  - the fade-out when a tour shows again inside it, which used to hide the new tour;
+  - the fade-in when the tour ends before its frame, which used to fade an ended tour back in.
+- **A green web-app test run no longer fails on an unhandled error.** The tooltip render outlived
+  `tutorial-spotlight.test.ts`, ran after jsdom was torn down and threw
+  `ReferenceError: document is not defined` from `createElement`, so Vitest exited 1 with every test
+  passing (PR #404, CI run 41213879557, attempt 1). Eight new tests drive each delay under fake
+  timers and fail on the old code.
+
+No player-facing What's New entry: the changed paths are races inside 100-300 ms of a tour step.
+
 ## [5.16.6] - 2026-11-01
 
 Build hardening only; nothing a visitor sees changes.
