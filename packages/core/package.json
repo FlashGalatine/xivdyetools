@@ -79,7 +79,7 @@
   },
   "devDependencies": {
     "@types/culori": "^4.0.1",
-    "@types/node": "^26.6.4",
+    "@types/node": "^26.6.6",
     "@vitest/coverage-v8": "^5.0.5",
     "csv-parse": "^7.0.3",
     "culori": "^4.0.2",
