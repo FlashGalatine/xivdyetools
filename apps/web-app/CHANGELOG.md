@@ -21,11 +21,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `overflow: hidden` clipped them tighter. Tooltips in the first and last of the five columns now
   line up with their swatch's outer edge and grow inward.
   `overflow-x` stays as it was, so a future overflow shows up rather than clipping a name silently.
+- **Dye tooltips are no longer cut off at the top of the scrolled panel.** A tooltip opens above its
+  swatch, so the scroller cut it off for a swatch within about 35 px of its top edge.
+  `placeSwatchTooltip` now opens it below such a swatch, on hover and on scroll, because a swatch can
+  also rise to the edge under a still pointer. `.favorites-section` drops `overflow: hidden`, which
+  would have cut off a tooltip opened below a single row of Favorites; its header rounds its own
+  corners instead.
 - **New checks in `e2e/content-scroll.spec.ts`:** no sideways scroll on each palette tool and at
-  769, 768, 390 and 320 px windows, and in all six languages the widest tooltip of each column, in
-  the main grid and in Favorites, stays inside its clipping box while hovered, at a 320px drawer and
-  at 310px (the columns a classic scrollbar leaves, which headless Chromium hides). They fail on the
-  old CSS.
+  769, 768, 390 and 320 px windows. In all six languages the widest tooltip of each column, in the
+  main grid and in Favorites, stays inside everything that clips it while hovered, at a 320px drawer
+  and at 310px (the columns a classic scrollbar leaves, which headless Chromium hides). Tooltips also
+  stay whole -15 to 60 px from the panel's top in both grids, stay above a swatch with room, and move
+  when the swatch scrolls up under a still pointer. They fail on the old code.
 
 ## [5.16.8] - 2026-11-01
 

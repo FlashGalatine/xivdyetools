@@ -6,7 +6,7 @@
 
 ### Color Palette
 - **The sideways scrollbar is gone.** The small stray scrollbar along the bottom of the Color Palette no longer appears.
-- **Full dye names on hover.** Dyes in the first and last columns no longer have their names cut off at the sides of the panel.
+- **Full dye names on hover.** Names are no longer cut off at the sides of the panel or at its top edge. Near the top, a name now opens below its dye.
 
 ## Web-App Version 5.16.8 — November 1, 2026
 

@@ -1,3 +1,4 @@
+import type { Locator } from '@playwright/test';
 import { test, expect, type Page } from './fixtures/coverage';
 import { gotoTool, seedStartupStorage } from './fixtures/navigation';
 
@@ -120,6 +121,77 @@ test.describe('Palette drawer sideways overflow', () => {
     expect(scrollWidth).toBeLessThanOrEqual(clientWidth);
   }
 
+  /**
+   * A hovered swatch's tooltip and what can clip it. A pseudo-element has no
+   * rect of its own, so its box comes from the swatch's live (scaled) rect plus
+   * its used position, size and transform.
+   */
+  function measureTooltip(swatch: Locator) {
+    return swatch.evaluate((el) => {
+      const tip = getComputedStyle(el, '::after');
+      const rect = el.getBoundingClientRect();
+      const scale = rect.width / el.offsetWidth;
+      const start = el.clientLeft + parseFloat(tip.left) + new DOMMatrix(tip.transform).m41;
+      const left = rect.left + start * scale;
+      const top = rect.top + (el.clientTop + parseFloat(tip.top)) * scale;
+      const clip = { left: -Infinity, right: Infinity, top: -Infinity, bottom: Infinity };
+      for (let parent = el.parentElement; parent; parent = parent.parentElement) {
+        const { overflowX, overflowY } = getComputedStyle(parent);
+        if (overflowX === 'visible' && overflowY === 'visible') continue;
+        const box = parent.getBoundingClientRect();
+        const clipLeft = box.left + parent.clientLeft;
+        const clipTop = box.top + parent.clientTop;
+        clip.left = Math.max(clip.left, clipLeft);
+        clip.right = Math.min(clip.right, clipLeft + parent.clientWidth);
+        clip.top = Math.max(clip.top, clipTop);
+        clip.bottom = Math.min(clip.bottom, clipTop + parent.clientHeight);
+      }
+      return {
+        name: el.getAttribute('title'),
+        left,
+        right: left + parseFloat(tip.width) * scale,
+        top,
+        bottom: top + parseFloat(tip.height) * scale,
+        swatchTop: rect.top,
+        swatchBottom: rect.bottom,
+        clip,
+      };
+    });
+  }
+
+  async function waitForHoveredTooltip(swatch: Locator): Promise<void> {
+    await expect
+      .poll(() => swatch.evaluate((el) => getComputedStyle(el, '::after').opacity))
+      .toBe('1');
+    await expect
+      .poll(() => swatch.evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).a))
+      .toBeCloseTo(1.1, 2);
+  }
+
+  async function expectTooltipWhole(swatch: Locator): Promise<void> {
+    const tip = await measureTooltip(swatch);
+    expect(tip.left, `${tip.name} left edge`).toBeGreaterThanOrEqual(tip.clip.left);
+    expect(tip.right, `${tip.name} right edge`).toBeLessThanOrEqual(tip.clip.right);
+    expect(tip.top, `${tip.name} top edge`).toBeGreaterThanOrEqual(tip.clip.top);
+    expect(tip.bottom, `${tip.name} bottom edge`).toBeLessThanOrEqual(tip.clip.bottom);
+  }
+
+  /** Scroll the panel until the swatch's top is this far below the panel's top. */
+  async function scrollSwatchTo(swatch: Locator, offset: number): Promise<void> {
+    await swatch.evaluate((el, gap) => {
+      const scroller = el.closest('.drawer-content')!;
+      const current = el.getBoundingClientRect().top - scroller.getBoundingClientRect().top;
+      scroller.scrollTop += current - gap;
+    }, offset);
+  }
+
+  /** Hover where the swatch is now: Locator.hover() can scroll it first. */
+  async function hoverInPlace(swatch: Locator, y?: number): Promise<void> {
+    const box = (await swatch.boundingBox())!;
+    await swatch.page().mouse.move(box.x + box.width / 2, box.y + (y ?? box.height / 2));
+    await waitForHoveredTooltip(swatch);
+  }
+
   test.beforeEach(async ({ page }) => {
     await seedStartupStorage(page);
   });
@@ -158,8 +230,8 @@ test.describe('Palette drawer sideways overflow', () => {
         }, drawerWidth);
         await expectNoSidewaysScroll(page);
 
-        // The longest names go in Favorites, whose section clips tighter than
-        // the scroller: first added, first column.
+        // The longest names go in Favorites, whose grid is narrower than the
+        // main one: first added, first column.
         const longestNames = await drawer.locator('.category-section .swatch').evaluateAll((els) =>
           els
             .map((el) => ({
@@ -194,37 +266,66 @@ test.describe('Palette drawer sideways overflow', () => {
         for (const index of targets) {
           const swatch = drawer.locator('.swatch').nth(index);
           await swatch.hover();
-          await expect
-            .poll(() => swatch.evaluate((el) => getComputedStyle(el, '::after').opacity))
-            .toBe('1');
-          await expect
-            .poll(() => swatch.evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).a))
-            .toBeCloseTo(1.1, 2);
-          // A pseudo-element has no rect of its own, so its box comes from the
-          // swatch's live (scaled) rect plus its used left, width and transform.
-          const box = await swatch.evaluate((el) => {
-            const tip = getComputedStyle(el, '::after');
-            const rect = el.getBoundingClientRect();
-            const scale = rect.width / el.offsetWidth;
-            const start = el.clientLeft + parseFloat(tip.left) + new DOMMatrix(tip.transform).m41;
-            const left = rect.left + start * scale;
-            const clipper = el.closest('.favorites-section') ?? el.closest('.drawer-content')!;
-            const clip = clipper.getBoundingClientRect();
-            const inset = clipper.clientLeft;
-            return {
-              name: el.getAttribute('title'),
-              left,
-              right: left + parseFloat(tip.width) * scale,
-              clipLeft: clip.left + inset,
-              clipRight: clip.left + inset + clipper.clientWidth,
-            };
-          });
-          expect(box.left, `${box.name} left edge`).toBeGreaterThanOrEqual(box.clipLeft);
-          expect(box.right, `${box.name} right edge`).toBeLessThanOrEqual(box.clipRight);
+          await waitForHoveredTooltip(swatch);
+          await expectTooltipWhole(swatch);
         }
       });
     }
   }
+
+  test.describe('at the top of the scrolled panel', () => {
+    test.beforeEach(async ({ page }) => {
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await gotoTool(page, 'harmony');
+      await expectNoSidewaysScroll(page);
+    });
+
+    for (const offset of [-15, 0, 10, 30, 60]) {
+      test(`keeps a dye tooltip whole ${offset}px from the top`, async ({ page }) => {
+        const drawer = page.locator('dye-palette-drawer');
+        // One row of Favorites: nothing below it in its section to open over.
+        await drawer.locator('.category-section .swatch-favorite-btn').first().click();
+        await expect(drawer.locator('.favorites-content .swatch')).toHaveCount(1);
+
+        for (const swatch of [
+          drawer.locator('.favorites-content .swatch').first(),
+          drawer.locator('.category-section .swatch').nth(60),
+        ]) {
+          await scrollSwatchTo(swatch, offset);
+          await hoverInPlace(swatch);
+          await expectTooltipWhole(swatch);
+        }
+      });
+    }
+
+    test('leaves a dye tooltip above a swatch with room for it', async ({ page }) => {
+      const swatch = page.locator('dye-palette-drawer .category-section .swatch').nth(60);
+      await scrollSwatchTo(swatch, 120);
+      await hoverInPlace(swatch);
+      const tip = await measureTooltip(swatch);
+      expect(tip.bottom).toBeLessThanOrEqual(tip.swatchTop);
+    });
+
+    test('moves a dye tooltip when its swatch scrolls up under a still pointer', async ({
+      page,
+    }) => {
+      const swatch = page.locator('dye-palette-drawer .category-section .swatch').nth(60);
+      await scrollSwatchTo(swatch, 65);
+      // Near the swatch's top edge, so it stays under the pointer as it rises.
+      await hoverInPlace(swatch, 4);
+      const before = await measureTooltip(swatch);
+      expect(before.bottom).toBeLessThanOrEqual(before.swatchTop);
+
+      await scrollSwatchTo(swatch, 20);
+      await expect
+        .poll(async () => {
+          const tip = await measureTooltip(swatch);
+          return tip.top >= tip.swatchBottom;
+        })
+        .toBe(true);
+      await expectTooltipWhole(swatch);
+    });
+  });
 });
 
 test.describe('Mixer content scrolling', () => {
