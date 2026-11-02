@@ -7,6 +7,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.16.7] - 2026-11-01
+
+### Fixed
+
+- **The tutorial spotlight cancels its own delays.** It scheduled four and kept none: a step's
+  100 ms tooltip render, the 100 ms skip past a missing target, `show()`'s fade-in frame and
+  `hide()`'s 300 ms fade-out. Each now holds its handle (the timers through BaseComponent's
+  `safeTimeout`, so `destroy()` clears them) and goes when it no longer applies:
+  - the step's delay when the next step shows and when the tour ends, so an ended tour no longer
+    renders a tooltip or skips ahead, and a step that replaced a missing target is no longer skipped;
+  - the fade-out when a tour shows again inside it, which used to hide the new tour;
+  - the fade-in when the tour ends before its frame, which used to fade an ended tour back in.
+- **A green web-app test run no longer fails on an unhandled error.** The tooltip render outlived
+  `tutorial-spotlight.test.ts`, ran after jsdom was torn down and threw
+  `ReferenceError: document is not defined` from `createElement`, so Vitest exited 1 with every test
+  passing (PR #404, CI run 41213879557, attempt 1). Eight new tests drive each delay under fake
+  timers and fail on the old code.
+
+No player-facing What's New entry: the changed paths are races inside 100-300 ms of a tour step.
+
+## [5.16.6] - 2026-11-01
+
+Build hardening only; nothing a visitor sees changes.
+
+### Maintenance
+
+- **Tailwind's class scan is rooted at `src/`.** `src/styles/tailwind.css` now reads
+  `@import "tailwindcss" source("../")`. Without `source()`, `@tailwindcss/postcss` scanned from
+  Vite's cwd (`apps/web-app`), and two things followed from that:
+  - The scan read this changelog, so 15 utilities named only in its prose shipped as dead CSS
+    (`bg-pink-600`, `bg-purple-600`, `bg-green-600`, `bg-blue-100`, `bg-gray-900`, `bg-gradient-to-r`,
+    `text-3xl`, `text-blue-900`, `text-green-600`, `border-blue-200`, `tabular-nums`, and the
+    `dark:` variants `border-blue-800`, `bg-blue-900`, `text-blue-100`, `text-green-400`), together
+    with their theme variables and the five `--tw-numeric-*` / `--tw-ordinal` / `--tw-slashed-zero`
+    `@property` rules. The index CSS drops from 55.6 KB to 53.1 KB. Every removed rule was checked
+    against `src/`, `public/`, `functions/` and `index.html`: none of them is rendered (the `src/`
+    mentions are `dark:bg-gray-900`, `dark:bg-blue-900/30` and the `font-variant-numeric` value, all
+    still generated or plain CSS), and no class is built from string pieces.
+  - The result depended on where the checkout lived. Inside a folder on Tailwind's ignored-dir list
+    (`.turbo`, `.next`, `.vercel`, `.svelte-kit`, ...), the oxide scanner turned off its ignore rules
+    and read `node_modules`, `dist` and `.git`, nearly doubling the index CSS (107.8 KB) and failing
+    a local `build:check` against the 105 KB CSS budget that CI passes at 53%. `src/` holds none of
+    those, so the CSS is now the same wherever the checkout sits.
+
+## [5.16.5] - 2026-11-01
+
+### Fixed
+
+- Main-content scrollbars sat inside the shell's 24px padding because each tool panel, including Community Presets, created a second scroll container (#368). Let the shell own scrolling and let the tool wrapper grow with its content. The scrollbar now meets the content-pane edge, including the window edge when the palette is closed. Preserve content padding and print expansion.
+- The Dye Mixer restored an inner `height: 100%` / `overflow-y: auto` panel after shell layout, producing a second scrollbar from just 3–5px of overflow. Let the panel grow in the shell, keeping all matching results reachable and Options/Color Palette scrolling independent.
+- On phones, the Palette Extractor pinned its image, color bar and palette header by giving the workspace the tool panel's full height, which the shell change above removed: they scrolled away and the card sheet kept a scrollbar of its own. Make them sticky inside the shell's scroller on a glass ground, so the cards scroll under them with the shell's single scrollbar, on phones at least 560px tall; on shorter (often landscape) phones they scroll away with the cards, which stay reachable.
+- Add browser regression checks for desktop palette states, mobile scrolling, bottom-content reachability, the Mixer's single scroll owner with all result details enabled, the Extractor's pinned image on phones and reachable cards on a landscape phone, and the sidebar-free reader's print layout.
+
 ## [5.16.4] - 2026-10-28
 
 ### Fixed

@@ -26,13 +26,13 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.16.4 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Web Application** | v5.16.7 | `xivdyetools-web-app` | Cloudflare Pages | Active |
 | **Discord Bot** | v5.9.7 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.5 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.9.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.2.1 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.8.2 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
-| **Public REST API** | v0.21.1 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
+| **Public REST API** | v0.21.2 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
 | **OpenGraph Worker** | v2.12.2 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.3.4 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
@@ -126,6 +126,9 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.16.7 | Nov 2026 | The tutorial spotlight cancels its pending delays (a step's tooltip render, the skip past a missing target, the fade-in and fade-out) when the step changes, the tour ends or it is destroyed; the render that ran after jsdom teardown failed the web-app test task with every test green |
+| v5.16.6 | Nov 2026 | Tailwind's class scan is rooted at `src/`: about 2.5 KB of dead utilities seeded by the changelog no longer ship (index CSS 55.6 → 53.1 KB), and a local `build:check` under `.turbo/` measures the same CSS as CI |
+| v5.16.5 | Nov 2026 | Main content scrolls at the pane edge, or the window edge when the palette is closed; tool wrappers grow naturally so long content remains reachable on desktop, mobile and in print (#368) |
 | v5.16.4 | Oct 2026 | Generic character-save names, named CSP connection hosts, validated previews/character replies and six-language privacy/Terms corrections |
 | v5.16.3 | Oct 2026 | Six-language identity-review, particular-ban continuity and recovery-retention privacy disclosures |
 | v5.16.2 | Oct 2026 | Six-language privacy alignment for preset metadata moderation, safe link snapshots and attempt/refund accounting |
@@ -670,6 +673,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v0.21.2 | Nov 2026 | Maintenance acquisition generation validates fixed game/schema pins, supports exact-request offline replay and completes review requests before output adoption; runtime tables unchanged |
 | v0.21.1 | Oct 2026 | A-API: bounded and sanitized upstream character data, dedicated cache-miss soft budgets, current-version-only icon overrides, IPv6 /64 adoption and numeric-only telemetry versions; pinned/checksummed item-name inputs and controlled ko/zh/ja refresh with 65 additional Korean names, using unchanged fonts |
 | v0.21.0 | Oct 2026 | Snapshot/schema-aware equipment caching, optional versioned icon URLs and conditional PNG refresh, isolate-local Item/Glasses miss coalescing |
 | v0.20.1 | Oct 2026 | Acquisition lines for 671 older tomestone items omit the redundant base-item upgrade exchange when a reachable vendor sells the item outright for Poetics |
