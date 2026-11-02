@@ -143,9 +143,11 @@ or atomic transaction spanning OAuth D1, presets D1, KV, R2 and Discord.
 
 The prepared session-check code validates the current revision, provider and Discord binding,
 but `OAUTH_SESSION_CHECK_ENABLED` is **false** in checked-in presets-api configuration; when
-false, that check returns valid without consulting OAuth. `IDENTITY_SPLIT_ENABLED` and
-`LINKED_BAN_CONFIRMATION_ENABLED` are also configured false in their owning workers. This
-document does not enable them. Do not assert deployed activation from the presence of code.
+false, that check returns valid without consulting OAuth. `IDENTITY_SPLIT_ENABLED` is also
+configured false in oauth. Moderation's `LINKED_BAN_CONFIRMATION_ENABLED` is configured
+`"true"` in its production vars since 1.9.2; confirm the deployed version before relying on
+it. This document does not enable any of them. Do not assert deployed activation from the
+presence of code.
 
 Known sessions can be revoked through the existing authenticated revoke flow; verify the
 response reports successful revocation. Do not collect tokens in the case file. The blacklist
