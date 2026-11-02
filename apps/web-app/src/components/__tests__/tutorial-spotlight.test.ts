@@ -349,3 +349,160 @@ describe('TutorialSpotlight — an overlay the rest of the page stands down for'
     expect(event.defaultPrevented).toBe(false);
   });
 });
+
+/*
+ * Every delay the spotlight scheduled was fire-and-forget: the step's 100 ms
+ * tooltip render, the 100 ms skip past a missing target, show()'s fade-in
+ * frame and hide()'s 300 ms fade-out. None was cancelled when the tour ended,
+ * the step changed or the spotlight was destroyed. The render outlived this
+ * very file: it ran after jsdom was torn down, `createElement` threw
+ * `document is not defined`, and Vitest failed the web-app task on an
+ * unhandled error with every test green (PR #404, CI run 41213879557,
+ * attempt 1).
+ */
+describe('TutorialSpotlight — delays that outlive their step', () => {
+  type Listener = Parameters<typeof TutorialService.subscribe>[0];
+  type State = Parameters<Listener>[0];
+  const ACTIVE: State = {
+    isActive: true,
+    currentTool: 'harmony',
+    currentStepIndex: 0,
+    totalSteps: 2,
+  };
+  const ENDED: State = { isActive: false, currentTool: null, currentStepIndex: 0, totalSteps: 0 };
+
+  let spotlight: TutorialSpotlight;
+  let notify: Listener;
+  let target: HTMLElement;
+
+  const part = (className: string): HTMLElement =>
+    document.querySelector(`.${className}`) as HTMLElement;
+
+  function showStep(stepIndex = 0, selector = '.swatch-grid'): void {
+    const step: TutorialStep = {
+      id: `step-${stepIndex + 1}`,
+      target: selector,
+      titleKey: 'tutorial.next',
+      descriptionKey: 'tutorial.next',
+    };
+    document.dispatchEvent(
+      new CustomEvent('tutorial:show-step', { detail: { step, stepIndex, totalSteps: 2 } })
+    );
+  }
+
+  /** As TutorialService's cleanup() ends a tour: the event, then the state. */
+  function endTour(): void {
+    document.dispatchEvent(new CustomEvent('tutorial:end'));
+    notify(ENDED);
+  }
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.stubGlobal('ResizeObserver', StubResizeObserver);
+    Element.prototype.scrollIntoView = vi.fn();
+    target = document.createElement('div');
+    target.className = 'swatch-grid';
+    document.body.appendChild(target);
+
+    spotlight = new TutorialSpotlight(document.body);
+    spotlight.init();
+    notify = vi.mocked(TutorialService.subscribe).mock.lastCall![0];
+    vi.mocked(TutorialService.next).mockClear();
+  });
+
+  afterEach(() => {
+    spotlight.destroy();
+    target.remove();
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+    delete (Element.prototype as { scrollIntoView?: unknown }).scrollIntoView;
+  });
+
+  it('leaves no timer running once destroyed mid-step', () => {
+    notify(ACTIVE);
+    showStep();
+    const render = vi.spyOn(spotlight, 'createElement');
+
+    spotlight.destroy();
+
+    expect(vi.getTimerCount()).toBe(0);
+    vi.runAllTimers();
+    expect(render).not.toHaveBeenCalled();
+  });
+
+  it('drops the step’s tooltip render when the tour ends first', () => {
+    notify(ACTIVE);
+    showStep();
+
+    endTour();
+    vi.advanceTimersByTime(100);
+
+    expect(part('tutorial-tooltip').childElementCount).toBe(0);
+  });
+
+  it('renders only the newest step when steps change inside the delay', () => {
+    notify(ACTIVE);
+    showStep(0);
+    vi.advanceTimersByTime(50);
+    notify({ ...ACTIVE, currentStepIndex: 1 });
+    showStep(1);
+
+    vi.advanceTimersByTime(50); // step 1's delay is up; step 2's is not
+    expect(part('tutorial-tooltip').childElementCount).toBe(0);
+
+    vi.advanceTimersByTime(50);
+    // Skip, Previous and Finish: step 2 of 2
+    expect(part('tutorial-tooltip').querySelectorAll('button')).toHaveLength(3);
+  });
+
+  it('does not skip past a missing target once the tour has ended', () => {
+    notify(ACTIVE);
+    showStep(0, '.not-in-the-page');
+
+    endTour();
+    vi.advanceTimersByTime(100);
+
+    expect(TutorialService.next).not.toHaveBeenCalled();
+  });
+
+  it('does not skip the step that replaced a missing target', () => {
+    notify(ACTIVE);
+    showStep(0, '.not-in-the-page');
+    showStep(1);
+
+    vi.advanceTimersByTime(100);
+
+    expect(TutorialService.next).not.toHaveBeenCalled();
+  });
+
+  it('keeps a tour that starts again during the last one’s fade-out', () => {
+    notify(ACTIVE);
+    endTour();
+    notify(ACTIVE);
+
+    vi.advanceTimersByTime(300);
+
+    expect(part('tutorial-spotlight-container').style.display).toBe('block');
+  });
+
+  it('does not fade a tour back in once it has ended', () => {
+    notify(ACTIVE);
+    endTour();
+
+    vi.advanceTimersToNextFrame();
+
+    expect(part('tutorial-overlay').style.opacity).toBe('0');
+  });
+
+  // show() runs on every step change, so a frame from the step before must
+  // not be left for hide() to miss
+  it('does not fade back in from an earlier step’s frame', () => {
+    notify(ACTIVE);
+    notify({ ...ACTIVE, currentStepIndex: 1 });
+    endTour();
+
+    vi.advanceTimersToNextFrame();
+
+    expect(part('tutorial-overlay').style.opacity).toBe('0');
+  });
+});
