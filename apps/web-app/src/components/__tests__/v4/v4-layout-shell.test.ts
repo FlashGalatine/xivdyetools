@@ -506,8 +506,7 @@ describe('V4LayoutShell — palette drawer default + first-run hint', () => {
         '.v4-layout-main',
         '.v4-layout-content',
         '.v4-layout-content-scroll',
-        // v4-layout.ts gives the tool's main panel an INLINE overflow-y:auto,
-        // which only an !important rule can override
+        // Include the tool wrapper as well as the shell's scroll container.
         '.v4-tool-main',
       ]) {
         expect(selectors, box).toContain(box);

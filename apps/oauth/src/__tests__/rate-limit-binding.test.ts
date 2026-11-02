@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { checkRateLimit, resetRateLimiter } from '../services/rate-limit.js';
+import { checkRateLimit, getClientIp, resetRateLimiter } from '../services/rate-limit.js';
 
 function fakeBinding(outcomes: boolean[]): RateLimit & { calls: string[] } {
     const calls: string[] = [];
@@ -46,6 +46,37 @@ function fakeKV(): KVNamespace & { puts: number } {
 }
 
 describe('oauth rate limiter backend selection', () => {
+    it('shares the captured native budget across IPv6 hosts in one /64 only', async () => {
+        await resetRateLimiter();
+        const counts = new Map<string, number>();
+        const calls: string[] = [];
+        const binding = {
+            limit: async ({ key }: { key: string }) => {
+                calls.push(key);
+                const count = (counts.get(key) ?? 0) + 1;
+                counts.set(key, count);
+                return { success: count <= 10 };
+            },
+        } as unknown as RateLimit;
+        const backends = { cloudflare: [{ limit: 10, binding }] };
+        const check = (address: string) => checkRateLimit(getClientIp(new Request('http://localhost/', {
+            headers: { 'CF-Connecting-IP': address, 'X-Forwarded-For': '203.0.113.99' },
+        })), '/auth/discord', backends);
+
+        for (let i = 0; i < 10; i++) {
+            expect((await check(i % 2 ? '2001:0db8:1234:5678:0:0:0:1' : '2001:db8:1234:5678::abcd')).allowed).toBe(true);
+        }
+        expect((await check('2001:db8:1234:5678::ffff')).allowed).toBe(false);
+        expect(calls).toEqual(Array(11).fill('rl:2001:db8:1234:5678:::/auth/discord:t10_60'));
+        expect((await check('2001:db8:1234:5679::1')).allowed).toBe(true);
+        expect(calls[11]).toBe('rl:2001:db8:1234:5679:::/auth/discord:t10_60');
+        for (let i = 0; i < 10; i++) expect((await check('::ffff:198.51.100.7')).allowed).toBe(true);
+        expect((await check('198.51.100.7')).allowed).toBe(false);
+        expect((await check('::ffff:198.51.100.8')).allowed).toBe(true);
+        expect(calls.slice(12, 23)).toEqual(Array(11).fill('rl:198.51.100.7:/auth/discord:t10_60'));
+        expect(calls[23]).toBe('rl:198.51.100.8:/auth/discord:t10_60');
+    });
+
     beforeEach(async () => {
         vi.useFakeTimers();
         vi.setSystemTime(new Date('2026-08-21T12:00:00Z'));

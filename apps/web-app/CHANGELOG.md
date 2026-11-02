@@ -7,6 +7,149 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.16.7] - 2026-11-01
+
+### Fixed
+
+- **The tutorial spotlight cancels its own delays.** It scheduled four and kept none: a step's
+  100 ms tooltip render, the 100 ms skip past a missing target, `show()`'s fade-in frame and
+  `hide()`'s 300 ms fade-out. Each now holds its handle (the timers through BaseComponent's
+  `safeTimeout`, so `destroy()` clears them) and goes when it no longer applies:
+  - the step's delay when the next step shows and when the tour ends, so an ended tour no longer
+    renders a tooltip or skips ahead, and a step that replaced a missing target is no longer skipped;
+  - the fade-out when a tour shows again inside it, which used to hide the new tour;
+  - the fade-in when the tour ends before its frame, which used to fade an ended tour back in.
+- **A green web-app test run no longer fails on an unhandled error.** The tooltip render outlived
+  `tutorial-spotlight.test.ts`, ran after jsdom was torn down and threw
+  `ReferenceError: document is not defined` from `createElement`, so Vitest exited 1 with every test
+  passing (PR #404, CI run 41213879557, attempt 1). Eight new tests drive each delay under fake
+  timers and fail on the old code.
+
+No player-facing What's New entry: the changed paths are races inside 100-300 ms of a tour step.
+
+## [5.16.6] - 2026-11-01
+
+Build hardening only; nothing a visitor sees changes.
+
+### Maintenance
+
+- **Tailwind's class scan is rooted at `src/`.** `src/styles/tailwind.css` now reads
+  `@import "tailwindcss" source("../")`. Without `source()`, `@tailwindcss/postcss` scanned from
+  Vite's cwd (`apps/web-app`), and two things followed from that:
+  - The scan read this changelog, so 15 utilities named only in its prose shipped as dead CSS
+    (`bg-pink-600`, `bg-purple-600`, `bg-green-600`, `bg-blue-100`, `bg-gray-900`, `bg-gradient-to-r`,
+    `text-3xl`, `text-blue-900`, `text-green-600`, `border-blue-200`, `tabular-nums`, and the
+    `dark:` variants `border-blue-800`, `bg-blue-900`, `text-blue-100`, `text-green-400`), together
+    with their theme variables and the five `--tw-numeric-*` / `--tw-ordinal` / `--tw-slashed-zero`
+    `@property` rules. The index CSS drops from 55.6 KB to 53.1 KB. Every removed rule was checked
+    against `src/`, `public/`, `functions/` and `index.html`: none of them is rendered (the `src/`
+    mentions are `dark:bg-gray-900`, `dark:bg-blue-900/30` and the `font-variant-numeric` value, all
+    still generated or plain CSS), and no class is built from string pieces.
+  - The result depended on where the checkout lived. Inside a folder on Tailwind's ignored-dir list
+    (`.turbo`, `.next`, `.vercel`, `.svelte-kit`, ...), the oxide scanner turned off its ignore rules
+    and read `node_modules`, `dist` and `.git`, nearly doubling the index CSS (107.8 KB) and failing
+    a local `build:check` against the 105 KB CSS budget that CI passes at 53%. `src/` holds none of
+    those, so the CSS is now the same wherever the checkout sits.
+
+## [5.16.5] - 2026-11-01
+
+### Fixed
+
+- Main-content scrollbars sat inside the shell's 24px padding because each tool panel, including Community Presets, created a second scroll container (#368). Let the shell own scrolling and let the tool wrapper grow with its content. The scrollbar now meets the content-pane edge, including the window edge when the palette is closed. Preserve content padding and print expansion.
+- The Dye Mixer restored an inner `height: 100%` / `overflow-y: auto` panel after shell layout, producing a second scrollbar from just 3–5px of overflow. Let the panel grow in the shell, keeping all matching results reachable and Options/Color Palette scrolling independent.
+- On phones, the Palette Extractor pinned its image, color bar and palette header by giving the workspace the tool panel's full height, which the shell change above removed: they scrolled away and the card sheet kept a scrollbar of its own. Make them sticky inside the shell's scroller on a glass ground, so the cards scroll under them with the shell's single scrollbar, on phones at least 560px tall; on shorter (often landscape) phones they scroll away with the cards, which stay reachable.
+- Add browser regression checks for desktop palette states, mobile scrolling, bottom-content reachability, the Mixer's single scroll owner with all result details enabled, the Extractor's pinned image on phones and reachable cards on a landscape phone, and the sidebar-free reader's print layout.
+
+## [5.16.4] - 2026-10-28
+
+### Fixed
+
+- Keep companion dyes when a 4.x saved palette from the German UI is migrated. Core 5.16.0
+  adopts XIVAPI's German names (118 change, for example Schneeweißer to Schneeweiß), so the
+  one-time migration also accepts a frozen table of the earlier German names, in any UI
+  locale; a current name always wins.
+- Restore Swatch match cards and sharing after locale changes without reloading the
+  character or duplicating live subscriptions. Close pending and open Glamour export
+  sheets when the loaded character changes.
+- Apply canonical display options before initial Accessibility and Comparison results;
+  synchronize Harmony type/count changes and pin clearing without duplicate generation.
+- Refresh prices for direct Comparison selections and completed Gradient calculations,
+  including restored endpoints and pin changes. Require Start before arming Gradient End.
+- Fence vote-cache writes across mutations and authentication changes, including silently
+  restored sessions. Refresh authoritative Mine submissions after edits and reject stale
+  responses. Dismiss only the originating edit modal; retain nested button keyboard behavior.
+- Carry matching-method identity through palette exports and use canonical distance tags
+  and display precision. Preserve the JSON `deltaE` field and existing precision while
+  retaining small OKLAB values; use matching precision in Swatch summaries and badges.
+- Localize every fatal startup sentence without requiring LanguageService, correct five
+  Korean Hue terms, and truncate file names without splitting surrogate pairs within the
+  existing 256 UTF-16-unit limit.
+- Restore Hair and Skin palette loading in Vite development after Core adopted native
+  JSON import attributes. A client-only transform adapts two compiled Core modules during
+  `vite dev`, retaining native Node imports, lazy loading, source maps and production
+  chunking. Regression tests assert actual race-specific colors and reject live module
+  errors.
+
+### Maintenance
+
+- Prepare Pages deployment retention in dry-run mode and verify current custom,
+  canonical, hash and branch origins against the built CSP, including actual 404
+  checks for retired hosts. Destructive cleanup activation remains held.
+- Remove unreachable character UI/DTO branches, unused result fields and duplicate font
+  constants while preserving response-envelope validation and worker dye-null guards.
+- Retire the English-only error formatter and its unused message table after startup
+  errors move to the standalone localized copy; retain normalization and logging.
+- Remove unused spectral/dye-selector chunk rules and stale documentation. Fresh builds
+  remain byte-identical; retain the generic future-vendor 30 KB guard and all active limits.
+- Do not cache a resolve answer whose item or facewear failed validation, so the next import
+  retries instead of keeping slot-only rows until reload.
+
+### Security
+
+- Save new Swatch character-color collections under the localized generic name instead of
+  persisting an imported nickname or file name. Preserve existing records and unique numbering.
+- Restrict production CSP connections to this site and the three named API hosts, keeping the
+  separate image policy intact.
+- Apply the shared HTTPS preview guard in the preset edit form, accept only actual clans from
+  the inspection worker, and validate equipment-resolution fields before rendering or caching.
+  Preserve valid family, alternate, rule and acquisition metadata; malformed rows become null.
+
+### Changed
+
+- Align all six Privacy and Terms variants with the actual local deletion controls, equipment
+  request contents, signed-in vote checks, approved-preset edit snapshots, Discord name fallback
+  and appeal identifiers. Older character names remain disclosed; no vote-check timing changes.
+- Remove the unlimited-browsing claim from all six sign-in notes and restore the German
+  example-link caption's linked/not-uploaded assurance.
+
+## [5.16.3] - 2026-10-27
+
+### Changed
+
+- Align all six privacy variants with private stored-ID review, particular-ban memberships and
+  continuity, ephemeral moderator responses, short-lived confirmations and interrupted-link
+  recovery retention. These disclosures precede separately activated consumer behavior.
+
+## [5.16.2] - 2026-10-27
+
+### Changed
+
+- Align all six privacy-policy variants with preset tag/link-path moderation, link snapshots,
+  submission-attempt accounting and preview-processing failure/refund boundaries.
+
+## [5.16.1] - 2026-10-27
+
+### Fixed
+
+- **Long imported character labels no longer end in a split surrogate pair.** Core 5.16.0
+  keeps nicknames and creating-tool labels within the existing 256 UTF-16-unit cap while
+  preserving complete supplementary characters.
+
+### Security
+
+- Adopt core 5.16.0's linear GPOSERS value joining without changing exported list contents
+  or ring grouping. This patch includes no API removals or new worker protocol fields.
+
 ## [5.16.0] - 2026-10-26
 
 The web half of the `xivcharakit` integration (Tasks 4-5 of the 2026-10-22 plan), on core 5.15.0.

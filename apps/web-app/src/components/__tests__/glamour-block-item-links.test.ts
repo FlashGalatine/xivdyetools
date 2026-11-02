@@ -87,13 +87,11 @@ const RING = {
 const RESOLVED: CharaResolveResult = {
   items: { HeadGear: MASK, Body: null },
   glasses: null,
-  version: 'test',
 };
 
 const RESOLVED_RING: CharaResolveResult = {
   items: { RightRing: RING },
   glasses: null,
-  version: 'test',
 };
 
 const TINTED = {
@@ -151,7 +149,10 @@ async function mount(fixture: string) {
   // The file card carries SWAP; the block draws whatever the session holds.
   const card = new CharaFileCard(container);
   card.init();
-  const block = new GlamourBlock(glamour);
+  const actionsHost = document.createElement('div');
+  const content = document.createElement('div');
+  glamour.append(actionsHost, content);
+  const block = new GlamourBlock(content, { actionsHost, onSubmitPalette: vi.fn() });
   block.init();
   mounted.push(card, block);
   const file = new File([fixture], 'test.chara', { type: 'application/json' });
@@ -401,7 +402,7 @@ describe('GlamourBlock — "Open in…" menu', () => {
       // Row 5 lives in the block whose base is row 1.
       expect(resolveMock).toHaveBeenLastCalledWith([], 1);
 
-      base.resolve({ items: {}, glasses: BASE_SPECTACLES, version: 'test' });
+      base.resolve({ items: {}, glasses: BASE_SPECTACLES });
       await vi.waitFor(() => {
         expect(entryIds()).toEqual(['mirapri', 'gamerEscape', 'lodestone']);
       });

@@ -3,6 +3,7 @@ import { resolve } from 'path'
 import { asyncCss } from './vite-plugin-async-css'
 import { changelogParser } from './vite-plugin-changelog-parser'
 import { betaBranding } from './vite-plugin-beta-branding'
+import { coreJsonCompatibility } from './vite-plugin-core-json'
 import pkg from './package.json'
 
 // Set by .github/workflows/deploy-web-app-beta.yml. Absent everywhere else.
@@ -39,7 +40,8 @@ export default defineConfig({
           }
           if (id.includes('node_modules')) {
             if (id.includes('lit') || id.includes('@lit')) return 'vendor-lit';
-            if (id.includes('spectral.js')) return 'vendor-spectral';
+            // Preserve the generic dependency chunk's deliberate budget for
+            // future packages; spectral.js currently merges into modals.
             return 'vendor';
           }
           if (
@@ -77,6 +79,7 @@ export default defineConfig({
     postcss: './postcss.config.js',
   },
   plugins: [
+    coreJsonCompatibility(),
     asyncCss(),
     changelogParser(),
     betaBranding(isBeta),

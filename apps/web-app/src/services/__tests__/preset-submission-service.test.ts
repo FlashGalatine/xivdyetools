@@ -13,6 +13,14 @@ vi.mock('../auth-service', () => ({
   authService: {
     isAuthenticated: vi.fn(() => true),
     getAuthHeaders: vi.fn(() => ({ Authorization: 'Bearer test-token' })),
+    getState: vi.fn(() => ({
+      isAuthenticated: true,
+      token: 'test-token',
+      user: { id: 'author-1' },
+      provider: 'discord',
+      expiresAt: null,
+    })),
+    subscribe: vi.fn(() => () => {}),
   },
 }));
 

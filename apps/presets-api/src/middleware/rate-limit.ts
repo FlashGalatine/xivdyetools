@@ -97,7 +97,7 @@ export function selectUserRateLimiter(env: Env): RateLimiter {
  * `perUserRateLimitMiddleware`, which runs after the signature check.
  */
 function publicRateLimitKey(c: Context<{ Bindings: Env }>): string {
-  return getClientIp(c.req.raw);
+  return getClientIp(c.req.raw, { ipv6Prefix64: true });
 }
 
 /**

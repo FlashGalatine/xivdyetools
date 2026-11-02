@@ -3,6 +3,8 @@
  */
 import { describe, it, expect } from 'vitest';
 import { createTestJWT, createExpiredJWT } from '../../src/auth/jwt.js';
+import { verifyJWT, verifyJWTSignatureOnly } from '@xivdyetools/auth/jwt';
+import { base64UrlDecodeBytes, base64UrlEncodeBytes } from '@xivdyetools/auth/encoding';
 
 describe('createTestJWT', () => {
   it('creates a valid JWT structure', async () => {
@@ -126,6 +128,28 @@ describe('createTestJWT', () => {
 });
 
 describe('createTestJWT signature', () => {
+  it('produces canonical tokens accepted by both real shared verifiers', async () => {
+    const secret = 'private-consumer-canonical-fixture-secret-32-bytes';
+    const payload = {
+      sub: 'canonical-user',
+      username: 'User \u65e5\u672c\u8a9e \ud83c\udf0d',
+      global_name: null,
+    };
+    const token = await createTestJWT(secret, payload, 3600, 'private-test-issuer');
+    for (const segment of token.split('.')) {
+      expect(segment).toMatch(/^[A-Za-z0-9_-]+$/);
+      expect(base64UrlEncodeBytes(base64UrlDecodeBytes(segment))).toBe(segment);
+    }
+    expect(await verifies(token, secret)).toBe(true);
+    expect(await verifyJWT(token, secret, { issuer: 'private-test-issuer' })).toMatchObject(
+      payload,
+    );
+    expect(await verifyJWTSignatureOnly(token, secret)).toMatchObject(payload);
+    const expired = await createExpiredJWT(secret, payload);
+    expect(await verifyJWT(expired, secret)).toBeNull();
+    expect(await verifyJWTSignatureOnly(expired, secret)).toMatchObject(payload);
+  });
+
   // Kept in-unit when the integration/ suite was removed (DEAD-041): this was
   // the only check in test-utils that the token is a genuine HS256 signature.
   async function verifies(token: string, secret: string): Promise<boolean> {

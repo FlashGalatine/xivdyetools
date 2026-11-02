@@ -36,6 +36,97 @@ describe('jwt.ts', () => {
     vi.useRealTimers();
   });
 
+  describe('canonical encodings (FINDING-042)', () => {
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+    const header = base64UrlEncode(
+      JSON.stringify({ alg: 'HS256', typ: 'JWT', note: '\uffff\uffff\uffff' }),
+    );
+    const payload = { sub: 'u', iat: 100, exp: 9999999999, note: '\uffff\uffff\uffff' };
+    // A trailing JSON space keeps this valid JSON while exercising unused encoding bits.
+    const payloadB64 = base64UrlEncode(JSON.stringify(payload) + ' ');
+    const aliases = (value: string) => {
+      expect(value.length % 4).not.toBe(0);
+      expect(value).toContain('_');
+      const last = alphabet.indexOf(value.at(-1)!);
+      return [
+        value + '='.repeat((4 - (value.length % 4)) % 4),
+        value.replace(/-/g, '+').replace(/_/g, '/'),
+        ' ' + value,
+        value.slice(0, 4) + '\t\n\r\f' + value.slice(4),
+        value.slice(0, -1) + alphabet[last + 1],
+      ];
+    };
+    const forgivingBytes = (value: string) => {
+      const raw = value
+        .replace(/[\t\n\r\f ]/g, '')
+        .replace(/-/g, '+')
+        .replace(/_/g, '/');
+      return Uint8Array.from(atob(raw + '='.repeat((4 - (raw.length % 4)) % 4)), (c) =>
+        c.charCodeAt(0),
+      );
+    };
+    async function signRaw(h: string, p: string): Promise<string> {
+      const key = await createHmacKey(secret, 'sign');
+      const bytes = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`${h}.${p}`));
+      return `${h}.${p}.${base64UrlEncodeBytes(new Uint8Array(bytes))}`;
+    }
+    async function nativeVerify(token: string): Promise<boolean> {
+      const [h, p, signature] = token.split('.');
+      const key = await createHmacKey(secret, 'verify');
+      return crypto.subtle.verify(
+        'HMAC',
+        key,
+        forgivingBytes(signature),
+        new TextEncoder().encode(`${h}.${p}`),
+      );
+    }
+
+    it('preserves canonical payloads in both verifiers and the debug decoder', async () => {
+      const token = await signRaw(header, payloadB64);
+      expect(await verifyJWT(token, secret)).toEqual(payload);
+      expect(await verifyJWTSignatureOnly(token, secret)).toEqual(payload);
+      expect(decodeJWT(token)).toEqual(payload);
+      // Debug decoding does not acquire signature or header verification.
+      expect(decodeJWT(`ignored.${payloadB64}.unverified`)).toEqual(payload);
+    });
+
+    it.each(['header', 'payload', 'signature'] as const)(
+      'rejects cryptographically valid %s aliases in both verifiers',
+      async (part) => {
+        const canonical = await signRaw(header, payloadB64);
+        const original = canonical.split('.');
+        const index = { header: 0, payload: 1, signature: 2 }[part];
+        // Ensure the signature fixture exercises the standard alphabet too.
+        expect(original[index]).toContain('_');
+        for (const alias of aliases(original[index])) {
+          expect(forgivingBytes(alias)).toEqual(forgivingBytes(original[index]));
+          const parts = [...original];
+          parts[index] = alias;
+          // Header/payload are authenticated as their raw text, so re-sign mutations.
+          const token = part === 'signature' ? parts.join('.') : await signRaw(parts[0], parts[1]);
+          expect(await nativeVerify(token)).toBe(true);
+          expect(await verifyJWT(token, secret)).toBeNull();
+          expect(await verifyJWTSignatureOnly(token, secret)).toBeNull();
+          if (part === 'payload') expect(decodeJWT(token)).toBeNull();
+        }
+      },
+    );
+
+    it.each(['A', '***'])(
+      'preserves null failure contracts for malformed segment %j',
+      async (bad) => {
+        const token = await signRaw(header, payloadB64);
+        for (let index = 0; index < 3; index++) {
+          const parts = token.split('.');
+          parts[index] = bad;
+          expect(await verifyJWT(parts.join('.'), secret)).toBeNull();
+          expect(await verifyJWTSignatureOnly(parts.join('.'), secret)).toBeNull();
+        }
+        expect(decodeJWT(`ignored.${bad}.ignored`)).toBeNull();
+      },
+    );
+  });
+
   describe('decodeJWT', () => {
     it('should decode a valid JWT payload', async () => {
       const payload: JWTPayload = {
@@ -414,7 +505,9 @@ describe('jwt.ts', () => {
       expect(await verifyJWT(token, secret, { issuer: 'https://auth.example' })).not.toBeNull();
       expect(await verifyJWT(token, secret, { issuer: 'https://evil.example' })).toBeNull();
       expect(
-        await verifyJWT(token, secret, { issuer: ['https://other.example', 'https://auth.example'] }),
+        await verifyJWT(token, secret, {
+          issuer: ['https://other.example', 'https://auth.example'],
+        }),
       ).not.toBeNull();
     });
 

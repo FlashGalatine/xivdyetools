@@ -18,7 +18,7 @@
  * parser, the api-worker resolver and the web-app client all share.
  */
 
-import type { CharaGearSlotId } from './chara-parser.js';
+import type { CharaGearSlotId } from './chara-types.js';
 
 /** A worn piece's model identity, as the `.chara` file spells it. */
 export interface CharaGearModel {

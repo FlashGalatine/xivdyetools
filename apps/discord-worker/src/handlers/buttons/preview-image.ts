@@ -29,7 +29,6 @@ import * as presetApi from '../../services/preset-api.js';
 import { isValidPresetId, isValidPreviewImageKey, PresetAPIError } from '../../types/preset.js';
 import { createTranslator } from '../../services/bot-i18n.js';
 import { STATE } from '../../utils/brand.js';
-import { sanitizeEmbedText } from '@xivdyetools/bot-logic';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 
 // ============================================================================
@@ -77,8 +76,6 @@ const REJECT_PREFIX = 'previewimg_reject_';
 // Moderator controls are English-only, matching createTranslator('en') below.
 const STALE_REVIEW_MESSAGE =
   'This preview image changed or was already moderated. Review the latest image notification.';
-/** Discord usernames / display names: 32 code points before escaping (moderation-worker's USER_MAX). */
-const MODERATOR_NAME_MAX = 64;
 
 // ============================================================================
 // Routing helpers
@@ -272,11 +269,6 @@ async function processPreviewImageAction(
   logger?: ExtendedLogger,
 ): Promise<void> {
   const adminT = createTranslator('en');
-  // BUG-041 / FINDING-008: never a `<@id>` mention — a footer renders it as
-  // raw text, and anywhere else it resolves. FINDING-019: the name is
-  // user-controlled, so it goes through the shared sanitiser; the plain id is
-  // the fallback when Discord sent no (or an all-invisible) username.
-  const displayName = sanitizeEmbedText(moderatorName, MODERATOR_NAME_MAX) || moderatorId;
 
   try {
     await presetApi.setPreviewImageStatus(
@@ -293,8 +285,8 @@ async function processPreviewImageAction(
       // The keys say "Footer" for history; the line now goes in the description.
       const outcomeLine =
         action === 'approve'
-          ? adminT.t('previewImage.approvedFooter', { moderator: displayName })
-          : adminT.t('previewImage.rejectedFooter', { moderator: displayName });
+          ? adminT.t('previewImage.approvedFooter')
+          : adminT.t('previewImage.rejectedFooter');
 
       // On success the outcome is visible and the buttons cannot be clicked
       // twice: the embed is edited (colour + outcome line) and components

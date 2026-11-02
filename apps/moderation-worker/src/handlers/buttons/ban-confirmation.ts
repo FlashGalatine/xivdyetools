@@ -1,164 +1,151 @@
-/**
- * Ban Confirmation Button Handlers
- *
- * Handles Yes/No buttons on the ban confirmation message.
- *
- * Button custom_id patterns:
- * - ban_confirm_{targetId} - Confirm ban (opens reason modal)
- * - ban_cancel_{targetId} - Cancel ban
- *
- * {targetId} is a Discord snowflake or an XIVAuth UUID (`isBanTargetId`).
- */
-
 import type { Env } from '../../types/env.js';
-import { InteractionResponseType } from '../../types/env.js';
-import { ephemeralResponse, updateMessageResponse, isBanTargetId } from '../../utils/response.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
-import * as presetApi from '../../services/preset-api.js';
+import { ephemeralResponse, updateMessageResponse } from '../../utils/response.js';
+import { parseModeratorIds } from '@xivdyetools/bot-logic';
+import { unbanUser } from '../../services/ban-service.js';
+import { linkedBansEnabled } from '../../services/identity-lookup.js';
+import {
+  loadBanReview,
+  selectBanParent,
+  reviewMessage,
+  INACTIVE_BANS,
+  REVIEW_UNAVAILABLE,
+} from '../../services/ban-confirmation-service.js';
 
-// ============================================================================
-// Types
-// ============================================================================
-
-interface ButtonInteraction {
+interface BanInteraction {
   id: string;
   token: string;
   application_id: string;
-  channel_id?: string;
-  message?: {
-    id: string;
-  };
-  member?: {
-    user: {
-      id: string;
-      username: string;
-    };
-  };
-  user?: {
-    id: string;
-    username: string;
-  };
-  data?: {
-    custom_id?: string;
-    component_type?: number;
-  };
+  member?: { user: { id: string; username?: string } };
+  user?: { id: string; username?: string };
+  data?: { custom_id?: string; component_type?: number; values?: string[] };
 }
-
-// ============================================================================
-// Handlers
-// ============================================================================
-
-/**
- * Handle the ban confirm button click
- */
-// eslint-disable-next-line @typescript-eslint/require-await
+function actor(interaction: BanInteraction, env: Env): string | null {
+  const id = interaction.member?.user.id ?? interaction.user?.id;
+  return id && parseModeratorIds(env.MODERATOR_IDS).has(id) ? id : null;
+}
 export async function handleBanConfirmButton(
-  interaction: ButtonInteraction,
+  interaction: BanInteraction,
   env: Env,
   _ctx: ExecutionContext,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
 ): Promise<Response> {
-  const customId = interaction.data?.custom_id || '';
-  const userId = interaction.member?.user?.id ?? interaction.user?.id;
-
-  if (!userId) {
-    return ephemeralResponse('Invalid button interaction.');
-  }
-
-  if (!presetApi.isModerator(env, userId)) {
-    return ephemeralResponse('You do not have permission to ban users.');
-  }
-
-  // Parse custom_id: ban_confirm_{targetId}
-  // FINDING-007 (2026-08-21 audit): the id is all we carry; the reason modal
-  // resolves the name from D1 at submit time, so nothing user-controlled can
-  // push a custom_id past Discord's 100-char cap. The pre-FINDING-007
-  // base64-username suffix is no longer parsed (DEAD-029, 2026-10-04): nothing
-  // has emitted it since, and a suffixed id fails `isBanTargetId` below.
-  const targetUserId = customId.replace('ban_confirm_', '');
-
-  if (!targetUserId) {
-    return ephemeralResponse('Invalid target user.');
-  }
-  // BUG-001 path (a): a Discord snowflake or an XIVAuth UUID (FINDING-007 / MOD-5's
-  // original intent, extended to the new shape — see `isBanTargetId`).
-  if (!isBanTargetId(targetUserId)) {
-    logger?.warn('Ban confirm button with a malformed target id', { customId });
-    return ephemeralResponse('Invalid button data.');
-  }
-
-  return Response.json({
-    type: InteractionResponseType.MODAL,
-    data: {
-      custom_id: `ban_reason_modal_${targetUserId}`,
-      title: 'Ban Reason',
-      components: [
-        {
-          type: 1,
-          components: [
-            {
-              type: 4,
-              custom_id: 'ban_reason',
-              label: 'Reason for banning this user',
-              style: 2,
-              min_length: 10,
-              max_length: 500,
-              required: true,
-              placeholder: 'Explain why this user is being banned from Preset Palettes...',
-            },
-          ],
-        },
-      ],
-    },
-  });
-}
-
-/**
- * Handle the ban cancel button click
- *
- * MOD-12 (FINDING-034, 2026-08-21 audit): moderator-gated like every other
- * button — the confirmation is ephemeral to the moderator who opened it, so
- * this changes nothing for them and keeps the authorization model uniform.
- */
-// eslint-disable-next-line @typescript-eslint/require-await
-export async function handleBanCancelButton(
-  interaction: ButtonInteraction,
-  env: Env,
-  _ctx: ExecutionContext,
-  _logger?: ExtendedLogger
-): Promise<Response> {
-  const userId = interaction.member?.user?.id ?? interaction.user?.id;
-
-  if (!userId) {
-    return ephemeralResponse('Invalid button interaction.');
-  }
-
-  if (!presetApi.isModerator(env, userId)) {
-    return ephemeralResponse('You do not have permission to ban users.');
-  }
-
-  return updateMessageResponse({
-    embeds: [
-      {
-        title: '\u274C Ban Cancelled',
-        description: 'The ban action was canceled.',
-        color: 0x5865f2,
+  if (!linkedBansEnabled(env)) return ephemeralResponse(INACTIVE_BANS);
+  const actorId = actor(interaction, env);
+  if (!actorId) return ephemeralResponse('You do not have permission to ban users.');
+  const customId = interaction.data?.custom_id ?? '';
+  if (!customId.startsWith('ban_confirm_') || customId.length > 100)
+    return ephemeralResponse(REVIEW_UNAVAILABLE);
+  const nonce = customId.slice('ban_confirm_'.length);
+  try {
+    const review = await loadBanReview(env, nonce, actorId, 'review');
+    if (review.proposal.action === 'unban') {
+      const result = await unbanUser(env, nonce, actorId, logger);
+      if (!result.success) return ephemeralResponse(REVIEW_UNAVAILABLE);
+      return updateMessageResponse({
+        embeds: [
+          {
+            title: 'Account unbanned',
+            description: 'The reviewed ban record was closed.',
+            color: 0x57f287,
+            fields: [
+              { name: 'Presets Restored', value: String(result.presetsRestored), inline: true },
+              {
+                name: 'Presets Still Hidden',
+                value: String(result.presetsStillHidden),
+                inline: true,
+              },
+            ],
+          },
+        ],
+        components: [],
+      });
+    }
+    return Response.json({
+      type: 9,
+      data: {
+        custom_id: `ban_reason_modal_${nonce}`,
+        title: 'Ban Reason',
+        components: [
+          {
+            type: 1,
+            components: [
+              {
+                type: 4,
+                custom_id: 'ban_reason',
+                label: 'Reason for banning this user',
+                style: 2,
+                min_length: 10,
+                max_length: 500,
+                required: true,
+              },
+            ],
+          },
+        ],
       },
-    ],
-    components: [],
-  });
+    });
+  } catch {
+    return ephemeralResponse(REVIEW_UNAVAILABLE);
+  }
 }
-
-/**
- * Check if a custom_id is a ban confirmation button
- */
+export async function handleBanCancelButton(
+  interaction: BanInteraction,
+  env: Env,
+  _ctx: ExecutionContext,
+  _logger?: ExtendedLogger,
+): Promise<Response> {
+  if (!linkedBansEnabled(env)) return ephemeralResponse(INACTIVE_BANS);
+  const actorId = actor(interaction, env);
+  if (!actorId) return ephemeralResponse('You do not have permission to ban users.');
+  const customId = interaction.data?.custom_id ?? '';
+  if (!customId.startsWith('ban_cancel_') || customId.length > 100)
+    return ephemeralResponse(REVIEW_UNAVAILABLE);
+  const nonce = customId.slice('ban_cancel_'.length);
+  try {
+    const review = await loadBanReview(env, nonce, actorId, 'review');
+    const result = await env.DB.prepare(
+      "DELETE FROM moderation_ban_confirmations WHERE nonce=? AND actor_id=? AND action=? AND mode=? AND proposal_hash=? AND phase='review' AND consumed_at IS NULL AND outcome IS NULL AND expires_at>unixepoch()",
+    )
+      .bind(review.nonce, actorId, review.proposal.action, review.proposal.mode, review.hash)
+      .run();
+    if (result.meta.changes !== 1) return ephemeralResponse(REVIEW_UNAVAILABLE);
+    return updateMessageResponse({
+      embeds: [
+        { title: '❌ Ban Cancelled', description: 'The ban action was canceled.', color: 0x5865f2 },
+      ],
+      components: [],
+    });
+  } catch {
+    return ephemeralResponse(REVIEW_UNAVAILABLE);
+  }
+}
+export async function handleBanParentSelect(
+  interaction: BanInteraction,
+  env: Env,
+  _ctx: ExecutionContext,
+  _logger?: ExtendedLogger,
+): Promise<Response> {
+  if (!linkedBansEnabled(env)) return ephemeralResponse(INACTIVE_BANS);
+  const actorId = actor(interaction, env);
+  if (!actorId) return ephemeralResponse('You do not have permission to ban users.');
+  const id = interaction.data?.custom_id ?? '';
+  const values = interaction.data?.values;
+  if (!id.startsWith('ban_choose_') || id.length > 100 || !values || values.length !== 1)
+    return ephemeralResponse(REVIEW_UNAVAILABLE);
+  try {
+    return Response.json({
+      type: 7,
+      data: reviewMessage(
+        await selectBanParent(env, actorId, id.slice('ban_choose_'.length), values[0]),
+      ),
+    });
+  } catch {
+    return ephemeralResponse(REVIEW_UNAVAILABLE);
+  }
+}
 export function isBanConfirmButton(customId: string): boolean {
   return customId.startsWith('ban_confirm_');
 }
-
-/**
- * Check if a custom_id is a ban cancel button
- */
 export function isBanCancelButton(customId: string): boolean {
   return customId.startsWith('ban_cancel_');
 }

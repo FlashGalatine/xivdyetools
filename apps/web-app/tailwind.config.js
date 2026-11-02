@@ -2,10 +2,11 @@
 export default {
   // Loaded through `@config` from src/styles/tailwind.css (Tailwind v4).
   //
-  // No `content` array: v4's automatic source detection scans the tree
-  // (src/index.html included) and is what has actually been generating the
-  // utilities -- the old `content: ['./index.html', ...]` pointed at a file
-  // that no longer existed (2026-08-16 audit, DEAD-021).
+  // No `content` array: v4's automatic source detection generates the
+  // utilities, rooted at src/ (index.html included) by the `source("../")` on
+  // the `@import "tailwindcss"` in src/styles/tailwind.css -- the old
+  // `content: ['./index.html', ...]` pointed at a file that no longer existed
+  // (2026-08-16 audit, DEAD-021).
   //
   // No `darkMode` key: v4's default emits `dark:` variants under
   // `@media (prefers-color-scheme: dark)`; the app's own Light/Dark themes are

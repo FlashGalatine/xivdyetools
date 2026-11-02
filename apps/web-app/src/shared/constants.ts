@@ -127,21 +127,3 @@ export const COMPANION_DYES_DEFAULT = 1;
  * settings and collection imports read their `.json` files without a cap.
  */
 export const MAX_USER_FILE_BYTES = 20 * 1024 * 1024;
-
-// ============================================================================
-// Error Messages
-// ============================================================================
-
-export const ERROR_MESSAGES = {
-  INVALID_HEX: 'Invalid hexadecimal color format. Use #RRGGBB.',
-  INVALID_RGB: 'RGB values must be between 0 and 255.',
-  INVALID_HSV: 'HSV values must be in ranges: H(0-360), S(0-100), V(0-100).',
-  DYE_NOT_FOUND: 'Dye not found in database.',
-  DATABASE_LOAD_FAILED: 'Failed to load dye database. Please refresh the page.',
-  STORAGE_FULL: 'Storage quota exceeded. Please clear some data and try again.',
-  API_FAILURE: 'Failed to fetch data from Universalis API.',
-  NETWORK_ERROR: 'Network connection error. Please check your internet connection.',
-  IMAGE_LOAD_FAILED: 'Failed to load image. Please ensure it is a valid image file.',
-  THEME_INVALID: 'Invalid theme selected. Using default theme.',
-  UNKNOWN_ERROR: 'An unexpected error occurred. Please try again.',
-} as const;

@@ -75,6 +75,9 @@ export const DISCORD_COMMAND_LIMITS: Record<string, RateLimitConfig> = {
   'extractor:image': { maxRequests: 5, windowMs: 60_000 },
   extractor: { maxRequests: 15, windowMs: 60_000 },
 
+  // Character equipment resolution through api-worker (5 per minute).
+  glamour: { maxRequests: 5, windowMs: 60_000 },
+
   // Accessibility / analysis features (10 per minute)
   accessibility: { maxRequests: 10, windowMs: 60_000 },
 

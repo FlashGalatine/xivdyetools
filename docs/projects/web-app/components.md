@@ -189,7 +189,7 @@ The flow for a tool: `init()` reads its config (normalizing `matchingMethod`), s
 
 ## Code Splitting
 
-`vite.config.ts` `manualChunks`: `vendor-core` (`@xivdyetools/core` — in practice the two lazily-loaded race color tables), `vendor-lit`, `vendor-spectral` (spectral.js), `vendor` (other `node_modules`), `modals` (welcome + changelog modals; note the label — the shared color engine lands here too). Each tool is a natural dynamic-import boundary from `v4-layout.ts` (`harmony-tool-<hash>.js` etc.), and `language-service` dynamically imports exactly one locale chunk. `scripts/check-bundle-size.js` reports **JS payload (one locale)** against a 2,250 KB total with per-chunk limits (60 KB default); `src/__tests__/bundle-budget.test.ts` locks the arithmetic.
+`vite.config.ts` `manualChunks`: `vendor-core` (`@xivdyetools/core` — in practice the two lazily-loaded race color tables), `vendor-lit`, `vendor` (a reserved chunk for future other `node_modules` dependencies, retaining its 30 KB guard), and `modals` (welcome + changelog modals; note the label — the shared color engine and spectral.js land here too). The dye selector is shared through `collapsible-panel`; neither it nor spectral.js emits a separate chunk. Each tool is a natural dynamic-import boundary from `v4-layout.ts` (`harmony-tool-<hash>.js` etc.), and `language-service` dynamically imports exactly one locale chunk. `scripts/check-bundle-size.js` reports **JS payload (one locale)** against a 2,250 KB total with per-chunk limits (60 KB default); `src/__tests__/bundle-budget.test.ts` locks the arithmetic.
 
 ---
 

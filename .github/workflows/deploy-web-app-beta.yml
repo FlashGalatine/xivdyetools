@@ -27,6 +27,8 @@ on:
       - master
       # Dependency bumps should not seize beta from whoever is testing on it.
       - 'dependabot/**'
+      # Isolated release candidates run PR CI without taking over shared beta.
+      - 'codex/release-cut-*'
     paths:
       - 'apps/web-app/**'
       - 'packages/core/**'
@@ -196,8 +198,33 @@ jobs:
         # nothing, so a future filter typo would silently turn this gate into a
         # passing no-op. A direct node invocation cannot do that.
         working-directory: apps/web-app
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN_BETA }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          DEPLOYMENT_URL: ${{ steps.deploy.outputs.deployment-url }}
+          EXPECTED_COMMIT: ${{ github.sha }}
         run: >
           node scripts/smoke-test-pages.js
-          --deployment-url "${{ steps.deploy.outputs.deployment-url }}"
+          --deployment-url "$DEPLOYMENT_URL"
           --domain https://beta.xivdyetools.app
           --expect-robots noindex
+          --project xivdyetools-beta
+          --commit "$EXPECTED_COMMIT"
+          --headers-file dist/_headers
+
+      # FINDING-009: always dry-run during source preparation, including every
+      # beta feature push. Future cleanup needs a reviewed --apply addition after
+      # merge AND PAGES_RETENTION_APPLY=true in the protected beta environment.
+      - name: Pages retention (dry-run; activation deferred)
+        working-directory: apps/web-app
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN_BETA }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PAGES_RETENTION_APPLY: ${{ vars.PAGES_RETENTION_APPLY }}
+          DEPLOYMENT_URL: ${{ steps.deploy.outputs.deployment-url }}
+          EXPECTED_COMMIT: ${{ github.sha }}
+        run: >
+          node scripts/retain-pages-deployments.mjs
+          --project xivdyetools-beta
+          --deployment-url "$DEPLOYMENT_URL"
+          --commit "$EXPECTED_COMMIT"

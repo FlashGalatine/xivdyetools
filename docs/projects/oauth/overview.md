@@ -155,6 +155,7 @@ const code_challenge = base64url(sha256(code_verifier));
     "global_name": "Display Name",
     "avatar": "avatar_hash",
     "auth_provider": "discord",
+    "identity_revision": 0,
     "discord_id": "123456789012345678"
   }
 }
@@ -167,12 +168,15 @@ const code_challenge = base64url(sha256(code_verifier));
 - `iss` - Issuer URL (`WORKER_URL`) — pinned on verification, so a token signed with the same secret by anything else is rejected
 - `jti` - Unique token ID, the key `POST /auth/revoke` blacklists
 - `auth_provider` - `discord` or `xivauth`
+- `identity_revision` - local relationship revision; profile edits do not increment it
 - `discord_id` - Discord user ID; **omitted** on an XIVAuth-only account
 - `username` - Discord username (or the verified character name on XIVAuth)
 - `global_name` - Display name
 - `avatar` - Avatar hash for URL construction
 
-Nothing else is carried: an XIVAuth-only account gets nine claims, a Discord one ten.
+An XIVAuth-only account gets ten claims; a Discord ID adds the eleventh. OAuth checks the
+current revision and provider relationship before returning `/auth/me`. Legacy missing revision
+means zero only against a nonpending revision-zero row.
 
 ---
 
@@ -247,3 +251,12 @@ attacker's chain outlived the logout.
 - [PKCE Flow](pkce-flow.md) - Detailed PKCE implementation
 - [JWT Structure](jwt.md) - Token format and verification
 - [Endpoints](endpoints.md) - Full API reference
+
+## Private identity preparation
+
+The named `IdentityLookup` service export adds no public HTTP route. It returns a current
+stored association and supports session revision validation. `IDENTITY_SPLIT_ENABLED` remains
+false; the first release has no outbound continuity binding and refuses detected existing
+relationship changes. Apply the additive users migration before deployment and verify the
+later presets/moderation consumers before a separate activation. See
+[the identity and moderation contract](../../architecture/identity-moderation.md).

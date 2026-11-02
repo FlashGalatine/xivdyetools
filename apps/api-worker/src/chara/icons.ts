@@ -17,11 +17,13 @@ export async function loadIcon(
   context: XivapiAssetContext,
   iconId: number,
   cache: CharaIconCache,
+  admit?: () => Promise<void>,
 ): Promise<IconPayload> {
   const retained = await cache.get(context, iconId);
   if (retained && Date.now() - retained.cachedAt < ICON_FRESH_MS) {
     return { bytes: retained.bytes, cacheStatus: 'HIT', cacheUpdate: null };
   }
+  if (admit) await admit();
   const upstream = await client.fetchIcon(iconId, context, retained?.etag ?? undefined);
   if (upstream.status === 304) {
     if (!retained || !retained.etag)

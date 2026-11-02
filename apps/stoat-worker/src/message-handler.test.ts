@@ -236,7 +236,8 @@ describe('createMessageHandler', () => {
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         'Unhandled error in command handler',
-        expect.objectContaining({ command: '(unregistered)', subcommand: null }),
+        undefined,
+        { command: '(unregistered)', subcommand: null, error: '403: Missing Permission' },
       );
 
       const allErrorCalls = JSON.stringify(mockLogger.error.mock.calls);

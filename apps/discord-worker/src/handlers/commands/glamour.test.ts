@@ -8,14 +8,16 @@ import type { GlamourInput } from '@xivdyetools/bot-logic';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { handleGlamourCommand } from './glamour.js';
 import type { Env, DiscordInteraction, InteractionResponseBody } from '../../types/env.js';
+import type { safeEditOriginalResponse, FollowUpOptions } from '../../utils/discord-api.js';
+import { startCommandTrace } from '../../services/command-trace.js';
 
 vi.mock('../../services/svg/renderer.js', () => ({
   renderSvgToPng: vi.fn().mockResolvedValue(new Uint8Array([1])),
 }));
 
-const mockSafeEdit = vi.fn().mockResolvedValue(true);
+const mockSafeEdit = vi.fn<typeof safeEditOriginalResponse>().mockResolvedValue(true);
 vi.mock('../../utils/discord-api.js', () => ({
-  safeEditOriginalResponse: (...args: unknown[]) => mockSafeEdit(...args),
+  safeEditOriginalResponse: (...args: Parameters<typeof safeEditOriginalResponse>) => mockSafeEdit(...args),
 }));
 
 vi.mock('../../services/preferences.js', () => ({
@@ -33,7 +35,10 @@ vi.mock('../../services/bot-i18n.js', async () => {
 const markMock = vi.fn();
 vi.mock('../../services/command-trace.js', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../services/command-trace.js')>();
-  return { ...actual, markCommandOutcome: (...args: unknown[]) => markMock(...args) };
+  return { ...actual, markCommandOutcome: (...args: Parameters<typeof actual.markCommandOutcome>) => {
+    markMock(...args);
+    actual.markCommandOutcome(...args);
+  } };
 });
 
 const mockExecuteGlamour = vi.fn();
@@ -75,12 +80,14 @@ describe('/glamour', () => {
 
   const settle = () => Promise.all(pending);
   const lastEdit = () => (mockSafeEdit.mock.calls.at(-1) as unknown[])[2] as {
+    content?: string;
     embeds: Array<{ title?: string; description?: string; image?: { url: string } }>;
     file?: { name: string; contentType: string };
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSafeEdit.mockResolvedValue(true);
     pending = [];
     binding = {
       fetch: vi.fn(async () =>
@@ -150,7 +157,8 @@ describe('/glamour', () => {
     await settle();
 
     const call = mockExecuteGlamour.mock.calls[0][0] as GlamourInput;
-    expect(call.fileText).toBe('{"REyeColor":42}');
+    expect(call.fileBytes).toEqual(new TextEncoder().encode('{"REyeColor":42}'));
+    expect(call).not.toHaveProperty('fileText');
     expect(call.locale).toBe('en');
     expect(call.theme).toBe('light');
 
@@ -185,6 +193,57 @@ describe('/glamour', () => {
     await settle();
 
     expect((mockExecuteGlamour.mock.calls[0][0] as GlamourInput).logger).toBe(logger);
+  });
+
+  it.each([true, false])('marks a failed card delivery and attempts only one short fallback (fallback delivered: %s)', async (fallbackDelivered) => {
+    mockSafeEdit.mockResolvedValueOnce(false).mockResolvedValueOnce(fallbackDelivered);
+    const interaction = makeInteraction(CDN_URL);
+    const trace = startCommandTrace(interaction, { command: 'glamour', subcommand: '', userId: 'user-1', locale: 'en' });
+    await handleGlamourCommand(interaction, env, ctx);
+    await settle();
+    expect(markMock).toHaveBeenCalledWith(interaction, 'unknown', { served: false });
+    expect(trace).toMatchObject({ outcome: 'unknown', served: false });
+    expect(mockSafeEdit).toHaveBeenCalledTimes(2);
+    expect(lastEdit().file).toBeUndefined();
+    expect(lastEdit().content).toBe('An error occurred while generating the visualization. Please try again later.');
+    expect(lastEdit().embeds).toEqual([]);
+  });
+
+  it.each([
+    ['PARSE_FAILED', 'image_input'],
+    ['RESOLVE_FAILED', 'unknown'],
+    ['RESOLVE_BUSY', 'rate_limited'],
+    ['GENERATION_FAILED', 'render'],
+  ])('preserves the prior %s outcome when both error deliveries fail', async (error, outcome) => {
+    mockExecuteGlamour.mockResolvedValueOnce({ ok: false, error, errorMessage: 'Original refusal' });
+    mockSafeEdit.mockResolvedValue(false);
+    const interaction = makeInteraction(CDN_URL);
+    const trace = startCommandTrace(interaction, { command: 'glamour', subcommand: '', userId: 'user-1', locale: 'en' });
+    await handleGlamourCommand(interaction, env, ctx);
+    await settle();
+    expect(markMock.mock.calls[0]).toEqual([interaction, outcome]);
+    expect(trace).toMatchObject({ outcome, served: false });
+    expect(mockSafeEdit).toHaveBeenCalledTimes(2);
+    expect(lastEdit().content).toBe('An error occurred while generating the visualization. Please try again later.');
+    expect(lastEdit().embeds).toEqual([]);
+  });
+
+  it.each(['cdn-refusal', 'cdn-network', 'renderer'] as const)('bounds failed %s error delivery and preserves its cause', async (stage) => {
+    if (stage === 'cdn-refusal') vi.mocked(fetch).mockResolvedValueOnce(new Response(null, { status: 403 }));
+    if (stage === 'cdn-network') vi.mocked(fetch).mockRejectedValueOnce(new Error('offline'));
+    if (stage === 'renderer') {
+      const { renderSvgToPng } = await import('../../services/svg/renderer.js');
+      vi.mocked(renderSvgToPng).mockRejectedValueOnce(new Error('render failed'));
+    }
+    mockSafeEdit.mockResolvedValue(false);
+    const interaction = makeInteraction(CDN_URL);
+    const trace = startCommandTrace(interaction, { command: 'glamour', subcommand: '', userId: 'user-1', locale: 'en' });
+    await handleGlamourCommand(interaction, env, ctx);
+    await settle();
+    expect(trace).toMatchObject({ outcome: stage === 'cdn-refusal' ? 'image_input' : stage === 'renderer' ? 'render' : 'unknown', served: false });
+    expect(mockSafeEdit).toHaveBeenCalledTimes(2);
+    const payload: FollowUpOptions = mockSafeEdit.mock.calls[1][2];
+    expect(payload).toEqual({ content: 'An error occurred while generating the visualization. Please try again later.', embeds: [] });
   });
 
   it('logs the failure code, never the reply text, when bot-logic fails', async () => {

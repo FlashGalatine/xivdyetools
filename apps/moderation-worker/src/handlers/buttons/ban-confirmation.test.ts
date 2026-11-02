@@ -2,452 +2,195 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   handleBanConfirmButton,
   handleBanCancelButton,
+  handleBanParentSelect,
   isBanConfirmButton,
   isBanCancelButton,
 } from './ban-confirmation.js';
 import type { Env } from '../../types/env.js';
-import { InteractionResponseType } from '../../types/env.js';
-import * as presetApi from '../../services/preset-api.js';
-
-// Mock modules
-vi.mock('../../services/preset-api.js', async () => {
-  const actual = await vi.importActual('../../services/preset-api.js');
-  return {
-    ...actual,
-    isModerator: vi.fn(),
-  };
+import * as confirmations from '../../services/ban-confirmation-service.js';
+import { unbanUser } from '../../services/ban-service.js';
+vi.mock('../../services/ban-confirmation-service.js', async () => ({
+  ...(await vi.importActual('../../services/ban-confirmation-service.js')),
+  loadBanReview: vi.fn(),
+  selectBanParent: vi.fn(),
+}));
+vi.mock('../../services/ban-service.js', () => ({ unbanUser: vi.fn() }));
+const MOD = '987654321098765432',
+  NONCE = 'b0000000-0000-4000-8000-000000000001',
+  P = 'b0000000-0000-4000-8000-000000000002';
+let env: Env;
+let run: ReturnType<typeof vi.fn>;
+let bind: ReturnType<typeof vi.fn>;
+const ctx = {} as ExecutionContext;
+const interaction = (prefix = 'ban_confirm_', id = NONCE) => ({
+  id: 'i',
+  token: 't',
+  application_id: 'a',
+  user: { id: MOD, username: 'Private actor' },
+  data: { custom_id: `${prefix}${id}`, values: [P] },
 });
-
-describe('handleBanConfirmButton', () => {
-  let env: Env;
-  let ctx: ExecutionContext;
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-
-    env = {
-      DISCORD_PUBLIC_KEY: 'test-key',
-      DISCORD_TOKEN: 'test-bot-token',
-      DISCORD_CLIENT_ID: 'app-123',
-      MODERATOR_IDS: 'mod-1,mod-2',
-      MODERATION_CHANNEL_ID: 'channel-mod',
-      SUBMISSION_LOG_CHANNEL_ID: 'channel-log',
-      BOT_API_SECRET: 'test-secret',
-      BOT_SIGNING_SECRET: 'test-signing-secret-padding-1234',
-      DB: undefined as unknown as D1Database,
-      KV: undefined as unknown as KVNamespace,
-      PRESETS_API: undefined,
-      PRESETS_API_URL: 'https://presets-api.example.com',
-    };
-
-    ctx = {
-      waitUntil: vi.fn(),
-      passThroughOnException: vi.fn(),
-    } as unknown as ExecutionContext;
+const review = () =>
+  ({
+    nonce: NONCE,
+    actorId: MOD,
+    phase: 'review',
+    hash: 'a'.repeat(64),
+    proposal: {
+      action: 'ban',
+      mode: 'new',
+      banId: P,
+      ids: ['123456789012345678'],
+      inputs: ['123456789012345678'],
+      scope: [],
+      snapshots: [],
+      candidates: [],
+      parentIds: [],
+    },
+  }) as unknown as confirmations.BanReview;
+beforeEach(() => {
+  vi.clearAllMocks();
+  run = vi.fn(async () => ({ meta: { changes: 1 } }));
+  bind = vi.fn(() => ({ run }));
+  env = {
+    LINKED_BAN_CONFIRMATION_ENABLED: 'true',
+    MODERATOR_IDS: MOD,
+    DB: { prepare: vi.fn(() => ({ bind })) },
+  } as unknown as Env;
+  vi.mocked(confirmations.loadBanReview).mockResolvedValue(review());
+  vi.mocked(confirmations.selectBanParent).mockResolvedValue(review());
+  vi.mocked(unbanUser).mockResolvedValue({
+    success: true,
+    presetsRestored: 2,
+    presetsStillHidden: 1,
   });
-
-  it('should return error when user ID is missing', async () => {
-    const interaction = {
-      id: 'int-1',
-      token: 'token-1',
-      application_id: 'app-123',
-      data: { custom_id: 'ban_confirm_123456789012345678' },
-    };
-
-    const response = await handleBanConfirmButton(interaction, env, ctx);
-    const json = (await response.json()) as any;
-
-    expect(json.data.content).toContain('Invalid button interaction');
-    expect(json.data.flags).toBe(64);
+});
+describe('actor-bound nonce controls', () => {
+  it('reviewed ban opens reason modal with nonce only and native100-char bounds', async () => {
+    const body = (await (await handleBanConfirmButton(interaction(), env, ctx)).json()) as any;
+    expect(body.type).toBe(9);
+    expect(body.data.custom_id).toBe(`ban_reason_modal_${NONCE}`);
+    expect(body.data.custom_id.length).toBeLessThanOrEqual(100);
+    expect(body.data.components[0].components[0]).toMatchObject({
+      min_length: 10,
+      max_length: 500,
+    });
+    expect(confirmations.loadBanReview).toHaveBeenCalledWith(env, NONCE, MOD, 'review');
+    expect(unbanUser).not.toHaveBeenCalled();
   });
-
-  it('should deny access for non-moderators', async () => {
-    vi.mocked(presetApi.isModerator).mockReturnValue(false);
-
-    const interaction = {
-      id: 'int-1',
-      token: 'token-1',
-      application_id: 'app-123',
-      data: { custom_id: 'ban_confirm_123456789012345678' },
-      member: { user: { id: '123456789012345678', username: 'NormalUser' } },
-    };
-
-    const response = await handleBanConfirmButton(interaction, env, ctx);
-    const json = (await response.json()) as any;
-
-    expect(json.data.content).toContain('do not have permission');
+  it('unban confirms exactly reviewed record via nonce with no public IDs or actor name', async () => {
+    const row = review();
+    row.proposal.action = 'unban';
+    vi.mocked(confirmations.loadBanReview).mockResolvedValue(row);
+    const response = await handleBanConfirmButton(interaction(), env, ctx);
+    const body = (await response.json()) as any;
+    expect(body.type).toBe(7);
+    expect(unbanUser).toHaveBeenCalledWith(env, NONCE, MOD, undefined);
+    expect(body.data.embeds[0].fields).toContainEqual({
+      name: 'Presets Restored',
+      value: '2',
+      inline: true,
+    });
+    expect(JSON.stringify(body)).not.toContain(MOD);
+    expect(JSON.stringify(body)).not.toContain(P);
+    expect(JSON.stringify(body)).not.toContain('Private actor');
   });
-
-  it('should return error for invalid custom_id format', async () => {
-    vi.mocked(presetApi.isModerator).mockReturnValue(true);
-
-    const interaction = {
-      id: 'int-1',
-      token: 'token-1',
-      application_id: 'app-123',
-      data: { custom_id: 'ban_confirm_invalidformat' },
-      member: { user: { id: 'mod-1', username: 'Moderator' } },
-    };
-
-    const response = await handleBanConfirmButton(interaction, env, ctx);
-    const json = (await response.json()) as any;
-
-    expect(json.data.content).toContain('Invalid button data');
+  it('failed unban claim produces only private refusal', async () => {
+    vi.mocked(unbanUser).mockResolvedValue({ success: false, presetsRestored: 0 });
+    const row = review();
+    row.proposal.action = 'unban';
+    vi.mocked(confirmations.loadBanReview).mockResolvedValue(row);
+    expect(
+      ((await (await handleBanConfirmButton(interaction(), env, ctx)).json()) as any).data.flags,
+    ).toBe(64);
   });
-
-  it('should return error when target user ID is missing', async () => {
-    vi.mocked(presetApi.isModerator).mockReturnValue(true);
-
-    const interaction = {
-      id: 'int-1',
-      token: 'token-1',
-      application_id: 'app-123',
-      data: { custom_id: 'ban_confirm_' },
-      member: { user: { id: 'mod-1', username: 'Moderator' } },
-    };
-
-    const response = await handleBanConfirmButton(interaction, env, ctx);
-    const json = (await response.json()) as any;
-
-    expect(json.data.content).toContain('Invalid target user');
-  });
-
-  it('should open ban reason modal with correct data', async () => {
-    vi.mocked(presetApi.isModerator).mockReturnValue(true);
-
-    const interaction = {
-      id: 'int-1',
-      token: 'token-1',
-      application_id: 'app-123',
-      data: { custom_id: 'ban_confirm_123456789012345678' },
-      member: { user: { id: 'mod-1', username: 'Moderator' } },
-    };
-
-    const response = await handleBanConfirmButton(interaction, env, ctx);
-    const json = (await response.json()) as any;
-
-    expect(json.type).toBe(InteractionResponseType.MODAL);
-    expect(json.data.custom_id).toBe('ban_reason_modal_123456789012345678');
-    expect(json.data.title).toBe('Ban Reason');
-    expect(json.data.components[0].components[0]).toEqual(
-      expect.objectContaining({
-        type: 4,
-        custom_id: 'ban_reason',
-        label: 'Reason for banning this user',
-        style: 2,
-        min_length: 10,
-        max_length: 500,
-        required: true,
-        placeholder: expect.stringContaining('Explain why'),
-      }),
+  it.each([handleBanConfirmButton, handleBanCancelButton, handleBanParentSelect])(
+    'inactive controls refuse with no storage, scope display or lookup %#',
+    async (handler) => {
+      env.LINKED_BAN_CONFIRMATION_ENABLED = 'false';
+      const body = (await (await handler(interaction(), env, ctx)).json()) as any;
+      expect(body.data.flags).toBe(64);
+      expect(confirmations.loadBanReview).not.toHaveBeenCalled();
+      expect(confirmations.selectBanParent).not.toHaveBeenCalled();
+      expect(env.DB.prepare).not.toHaveBeenCalled();
+      expect(JSON.stringify(body)).not.toContain(P);
+    },
+  );
+  it.each([handleBanConfirmButton, handleBanCancelButton, handleBanParentSelect])(
+    'revoked moderator controls refuse before load %#',
+    async (handler) => {
+      env.MODERATOR_IDS = '899999999999999999';
+      await handler(interaction(), env, ctx);
+      expect(confirmations.loadBanReview).not.toHaveBeenCalled();
+      expect(confirmations.selectBanParent).not.toHaveBeenCalled();
+    },
+  );
+  it.each(['123456789012345678', 'a0000000-0000-4000-8000-000000000001', 'invalid'])(
+    'legacy target or forged nonce %s refuses without fallback',
+    async (id) => {
+      vi.mocked(confirmations.loadBanReview).mockRejectedValue(new Error('unknown nonce'));
+      const body = (await (
+        await handleBanConfirmButton(interaction('ban_confirm_', id), env, ctx)
+      ).json()) as any;
+      expect(body.data.flags).toBe(64);
+      expect(unbanUser).not.toHaveBeenCalled();
+    },
+  );
+  it('cancel deletes only the live reviewed nonce bound to the actor', async () => {
+    const body = (await (
+      await handleBanCancelButton(interaction('ban_cancel_'), env, ctx)
+    ).json()) as any;
+    expect(body.type).toBe(7);
+    expect(body.data.components).toEqual([]);
+    expect(confirmations.loadBanReview).toHaveBeenCalledWith(env, NONCE, MOD, 'review');
+    expect(env.DB.prepare).toHaveBeenCalledTimes(1);
+    const sql = vi.mocked(env.DB.prepare).mock.calls[0][0];
+    expect(sql).toBe(
+      "DELETE FROM moderation_ban_confirmations WHERE nonce=? AND actor_id=? AND action=? AND mode=? AND proposal_hash=? AND phase='review' AND consumed_at IS NULL AND outcome IS NULL AND expires_at>unixepoch()",
     );
+    expect(sql).not.toContain("'applied'");
+    expect(bind).toHaveBeenCalledWith(NONCE, MOD, 'ban', 'new', 'a'.repeat(64));
+    expect(run).toHaveBeenCalledTimes(1);
   });
-
-  it('should handle user object instead of member', async () => {
-    vi.mocked(presetApi.isModerator).mockReturnValue(true);
-
-    const interaction = {
-      id: 'int-1',
-      token: 'token-1',
-      application_id: 'app-123',
-      data: { custom_id: 'ban_confirm_123456789012345678' },
-      user: { id: 'mod-1', username: 'Moderator' },
-    };
-
-    const response = await handleBanConfirmButton(interaction, env, ctx);
-    const json = (await response.json()) as any;
-
-    expect(json.type).toBe(InteractionResponseType.MODAL);
+  it('cancel that claims no row refuses privately', async () => {
+    run.mockResolvedValueOnce({ meta: { changes: 0 } });
+    const response = await handleBanCancelButton(interaction('ban_cancel_'), env, ctx);
+    const text = await response.text();
+    const body = JSON.parse(text);
+    expect(body.type).toBe(4);
+    expect(body.data.flags).toBe(64);
+    expect(text).not.toContain('Ban Cancelled');
   });
-});
-
-describe('handleBanConfirmButton — FINDING-007 (custom_id carries only the id)', () => {
-  let env: Env;
-  let ctx: ExecutionContext;
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    vi.mocked(presetApi.isModerator).mockReturnValue(true);
-    env = {
-      DISCORD_PUBLIC_KEY: 'test-key',
-      DISCORD_TOKEN: 'test-bot-token',
-      DISCORD_CLIENT_ID: 'app-123',
-      MODERATOR_IDS: 'mod-1,mod-2',
-      MODERATION_CHANNEL_ID: 'channel-mod',
-      SUBMISSION_LOG_CHANNEL_ID: 'channel-log',
-      BOT_API_SECRET: 'test-secret',
-      BOT_SIGNING_SECRET: 'test-signing-secret-padding-1234',
-      DB: undefined as unknown as D1Database,
-      KV: undefined as unknown as KVNamespace,
-      PRESETS_API: undefined,
-      PRESETS_API_URL: 'https://presets-api.example.com',
-    };
-    ctx = { waitUntil: vi.fn(), passThroughOnException: vi.fn() } as unknown as ExecutionContext;
+  it('cancel of an unloadable nonce never writes', async () => {
+    vi.mocked(confirmations.loadBanReview).mockRejectedValue(new Error('unknown nonce'));
+    const body = (await (
+      await handleBanCancelButton(interaction('ban_cancel_'), env, ctx)
+    ).json()) as any;
+    expect(body.data.flags).toBe(64);
+    expect(env.DB.prepare).not.toHaveBeenCalled();
   });
-
-  it('opens the reason modal for a bare ban_confirm_<id> and keeps the modal custom_id id-only', async () => {
-    const interaction = {
-      id: 'int-1',
-      token: 'token-1',
-      application_id: 'app-123',
-      data: { custom_id: 'ban_confirm_123456789012345678' },
-      member: { user: { id: 'mod-1', username: 'Moderator' } },
-    };
-
-    const response = await handleBanConfirmButton(interaction, env, ctx);
-    const json = (await response.json()) as any;
-
-    expect(json.type).toBe(InteractionResponseType.MODAL);
-    expect(json.data.custom_id).toBe('ban_reason_modal_123456789012345678');
-    expect((json.data.custom_id as string).length).toBeLessThanOrEqual(100);
+  it('selection passes exact nonce/one choice to atomic selector and renders fresh private review', async () => {
+    const body = (await (
+      await handleBanParentSelect(interaction('ban_choose_'), env, ctx)
+    ).json()) as any;
+    expect(confirmations.selectBanParent).toHaveBeenCalledWith(env, MOD, NONCE, P);
+    expect(body.type).toBe(7);
+    expect(body.data.flags).toBe(64);
   });
-
-  // BUG-001 path (a) (2026-09-16 deep-dive): an XIVAuth-only preset author's
-  // ban target is a UUID, not a snowflake — the confirm button must still
-  // open the reason modal for one.
-  it('opens the reason modal for a UUID-shaped ban target (BUG-001 path (a))', async () => {
-    const uuid = 'a1b2c3d4-e5f6-4789-a1b2-c3d4e5f67890';
-    const interaction = {
-      id: 'int-1',
-      token: 'token-1',
-      application_id: 'app-123',
-      data: { custom_id: `ban_confirm_${uuid}` },
-      member: { user: { id: 'mod-1', username: 'Moderator' } },
-    };
-
-    const response = await handleBanConfirmButton(interaction, env, ctx);
-    const json = (await response.json()) as any;
-
-    expect(json.type).toBe(InteractionResponseType.MODAL);
-    expect(json.data.custom_id).toBe(`ban_reason_modal_${uuid}`);
-    expect((json.data.custom_id as string).length).toBeLessThanOrEqual(100);
+  it.each([[[]], [[P, P]]])('selector rejects wrong number of choices %#', async (values) => {
+    const i = interaction('ban_choose_');
+    i.data.values = values;
+    await handleBanParentSelect(i, env, ctx);
+    expect(confirmations.selectBanParent).not.toHaveBeenCalled();
   });
-
-  it('still rejects a malformed target id that is neither a snowflake nor a UUID', async () => {
-    const interaction = {
-      id: 'int-1',
-      token: 'token-1',
-      application_id: 'app-123',
-      data: { custom_id: 'ban_confirm_not-a-real-id' },
-      member: { user: { id: 'mod-1', username: 'Moderator' } },
-    };
-
-    const response = await handleBanConfirmButton(interaction, env, ctx);
-    const json = (await response.json()) as any;
-
-    expect(json.data.content).toContain('Invalid button data');
+  it('select exceptions remain private', async () => {
+    vi.mocked(confirmations.selectBanParent).mockRejectedValue(new Error('private payload'));
+    const text = await (await handleBanParentSelect(interaction('ban_choose_'), env, ctx)).text();
+    expect(text).not.toContain('private payload');
   });
-
-  // DEAD-029 (2026-10-04 dead-code audit): the pre-FINDING-007 shape
-  // ban_confirm_{id}_{base64url username} is no longer parsed. Nothing emits it,
-  // and should an old ephemeral button survive, it is refused — it never opens
-  // a modal, so it can never lead to a ban.
-  it('refuses a legacy custom_id that carries a base64 username suffix', async () => {
-    const interaction = {
-      id: 'int-1',
-      token: 'token-1',
-      application_id: 'app-123',
-      // 'VGVzdFVzZXI' is base64url('TestUser')
-      data: { custom_id: 'ban_confirm_123456789012345678_VGVzdFVzZXI' },
-      member: { user: { id: 'mod-1', username: 'Moderator' } },
-    };
-
-    const response = await handleBanConfirmButton(interaction, env, ctx);
-    const json = (await response.json()) as any;
-
-    expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-    expect(json.data.flags).toBe(64);
-    expect(json.data.content).toContain('Invalid button data');
-  });
-});
-
-describe('handleBanCancelButton', () => {
-  let env: Env;
-  let ctx: ExecutionContext;
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    // MOD-12 (FINDING-034): cancel is moderator-gated like every other button
-    vi.mocked(presetApi.isModerator).mockReturnValue(true);
-
-    env = {
-      DISCORD_PUBLIC_KEY: 'test-key',
-      DISCORD_TOKEN: 'test-bot-token',
-      DISCORD_CLIENT_ID: 'app-123',
-      MODERATOR_IDS: 'mod-1,mod-2',
-      MODERATION_CHANNEL_ID: 'channel-mod',
-      SUBMISSION_LOG_CHANNEL_ID: 'channel-log',
-      BOT_API_SECRET: 'test-secret',
-      BOT_SIGNING_SECRET: 'test-signing-secret-padding-1234',
-      DB: undefined as unknown as D1Database,
-      KV: undefined as unknown as KVNamespace,
-      PRESETS_API: undefined,
-      PRESETS_API_URL: 'https://presets-api.example.com',
-    };
-
-    ctx = {
-      waitUntil: vi.fn(),
-      passThroughOnException: vi.fn(),
-    } as unknown as ExecutionContext;
-  });
-
-  it('should update message with cancellation', async () => {
-    const interaction = {
-      id: 'int-1',
-      token: 'token-1',
-      application_id: 'app-123',
-      data: { custom_id: 'ban_cancel_123456789012345678' },
-      member: { user: { id: 'mod-1', username: 'Moderator' } },
-    };
-
-    const response = await handleBanCancelButton(interaction, env, ctx);
-    const json = (await response.json()) as any;
-
-    expect(json.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
-    expect(json.data.embeds[0]).toEqual(
-      expect.objectContaining({
-        title: expect.stringContaining('Cancelled'),
-        description: 'The ban action was canceled.',
-        color: 0x5865f2,
-      }),
-    );
-    expect(json.data.components).toEqual([]);
-  });
-
-  it('should remove all components from message', async () => {
-    const interaction = {
-      id: 'int-1',
-      token: 'token-1',
-      application_id: 'app-123',
-      data: { custom_id: 'ban_cancel_123456789012345679' },
-      member: { user: { id: 'mod-1', username: 'Moderator' } },
-    };
-
-    const response = await handleBanCancelButton(interaction, env, ctx);
-    const json = (await response.json()) as any;
-
-    expect(json.data.components).toHaveLength(0);
-  });
-
-});
-
-describe('isBanConfirmButton', () => {
-  it('should return true for ban confirm buttons', () => {
-    expect(isBanConfirmButton('ban_confirm_123456789012345678')).toBe(true);
-    expect(isBanConfirmButton('ban_confirm_456')).toBe(true);
-  });
-
-  it('should return false for other buttons', () => {
-    expect(isBanConfirmButton('ban_cancel_123456789012345678')).toBe(false);
-    expect(isBanConfirmButton('preset_approve_123')).toBe(false);
-    expect(isBanConfirmButton('other_button')).toBe(false);
-  });
-
-  it('should return false for empty string', () => {
-    expect(isBanConfirmButton('')).toBe(false);
-  });
-
-  it('should return false for partial match', () => {
+  it('recognizes only exact supported prefixes', () => {
+    expect(isBanConfirmButton(`ban_confirm_${NONCE}`)).toBe(true);
     expect(isBanConfirmButton('ban_confirm')).toBe(false);
-  });
-});
-
-describe('isBanCancelButton', () => {
-  it('should return true for ban cancel buttons', () => {
-    expect(isBanCancelButton('ban_cancel_123456789012345678')).toBe(true);
-    expect(isBanCancelButton('ban_cancel_456')).toBe(true);
-  });
-
-  it('should return false for other buttons', () => {
-    expect(isBanCancelButton('ban_confirm_123456789012345678')).toBe(false);
-    expect(isBanCancelButton('preset_reject_123')).toBe(false);
-    expect(isBanCancelButton('other_button')).toBe(false);
-  });
-
-  it('should return false for empty string', () => {
-    expect(isBanCancelButton('')).toBe(false);
-  });
-
-  it('should return false for partial match', () => {
-    expect(isBanCancelButton('ban_cancel')).toBe(false);
-  });
-});
-
-// ============================================================================
-// 2026-08-21 security audit — FINDING-034 (MOD-12) / FINDING-019
-// ============================================================================
-describe('handleBanCancelButton — MOD-12 moderator gate', () => {
-  let env: Env;
-  let ctx: ExecutionContext;
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    env = {
-      DISCORD_PUBLIC_KEY: 'test-key',
-      DISCORD_TOKEN: 'test-bot-token',
-      DISCORD_CLIENT_ID: 'app-123',
-      MODERATOR_IDS: 'mod-1,mod-2',
-      MODERATION_CHANNEL_ID: 'channel-mod',
-      SUBMISSION_LOG_CHANNEL_ID: 'channel-log',
-      BOT_API_SECRET: 'test-secret',
-      BOT_SIGNING_SECRET: 'test-signing-secret-padding-1234',
-      DB: undefined as unknown as D1Database,
-      KV: undefined as unknown as KVNamespace,
-      PRESETS_API: undefined,
-      PRESETS_API_URL: 'https://presets-api.example.com',
-    };
-    ctx = { waitUntil: vi.fn(), passThroughOnException: vi.fn() } as unknown as ExecutionContext;
-  });
-
-  it('denies a non-moderator (uniform with every other button)', async () => {
-    vi.mocked(presetApi.isModerator).mockReturnValue(false);
-
-    const response = await handleBanCancelButton(
-      {
-        id: 'int-1',
-        token: 'token-1',
-        application_id: 'app-123',
-        data: { custom_id: 'ban_cancel_123456789012345678' },
-        user: { id: '999999999999999999', username: 'AnyUser' },
-      },
-      env,
-      ctx,
-    );
-    const json = (await response.json()) as any;
-
-    expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-    expect(json.data.flags).toBe(64);
-    expect(json.data.content).toContain('do not have permission');
-  });
-
-  it('denies when the user cannot be identified', async () => {
-    const response = await handleBanCancelButton(
-      { id: 'int-1', token: 'token-1', application_id: 'app-123', data: { custom_id: 'ban_cancel_1' } },
-      env,
-      ctx,
-    );
-    const json = (await response.json()) as any;
-    expect(json.data.flags).toBe(64);
-  });
-
-  it('a moderator still gets the UPDATE_MESSAGE with allowed_mentions (FINDING-019)', async () => {
-    vi.mocked(presetApi.isModerator).mockReturnValue(true);
-
-    const response = await handleBanCancelButton(
-      {
-        id: 'int-1',
-        token: 'token-1',
-        application_id: 'app-123',
-        data: { custom_id: 'ban_cancel_123456789012345678' },
-        member: { user: { id: 'mod-1', username: 'Moderator' } },
-      },
-      env,
-      ctx,
-    );
-    const json = (await response.json()) as any;
-
-    expect(json.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
-    expect(json.data.allowed_mentions).toEqual({ parse: [] });
-    expect(json.data.components).toEqual([]);
+    expect(isBanCancelButton('ban_cancel_x')).toBe(true);
+    expect(isBanCancelButton('preset_reject_x')).toBe(false);
   });
 });

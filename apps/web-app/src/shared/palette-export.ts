@@ -19,6 +19,8 @@
  */
 
 import type { Dye } from '@xivdyetools/types';
+import { BAND_METHOD_DP, normalizeMatchingMethod, type MatchingMethod } from '@xivdyetools/core';
+import { METHOD_TAGS } from './method-tags';
 
 /** Formats offered by the export sheet. */
 export type ExportFormat = 'css' | 'scss' | 'json' | 'hex' | 'tailwind';
@@ -63,7 +65,7 @@ export interface ExportEntry {
   source?: string | null;
   /** The dye the source resolved to, when there is one. */
   dye?: Dye | null;
-  /** ΔE between source and dye, when the pairing is a real match. */
+  /** Distance between source and dye, measured with the payload matching method. */
   delta?: number | null;
 }
 
@@ -103,6 +105,8 @@ export interface ExportPayload {
   /** Human title for the header comment. */
   title: string;
   entries: ExportEntry[];
+  /** Metric used for every distance; omitted legacy payloads default to CIEDE2000. */
+  matchingMethod?: MatchingMethod;
   /** Extra header lines: blend model, interpolation space, step count. */
   meta?: string[];
   /**
@@ -148,14 +152,18 @@ export function localDateStamp(): string {
  * The per-entry annotation shared by every commented format: which dye it is,
  * its canonical stainID, and how far the match drifted.
  */
-function describeEntry(entry: ExportEntry, nameOf: (dye: Dye) => string): string {
+function describeEntry(
+  entry: ExportEntry,
+  nameOf: (dye: Dye) => string,
+  method: MatchingMethod
+): string {
   const parts: string[] = [];
   if (entry.dye) {
     parts.push(nameOf(entry.dye));
     if (typeof entry.dye.stainID === 'number') parts.push(`stainID ${entry.dye.stainID}`);
   }
   if (typeof entry.delta === 'number' && Number.isFinite(entry.delta)) {
-    parts.push(`ΔE ${entry.delta.toFixed(1)}`);
+    parts.push(`${METHOD_TAGS[method]} ${entry.delta.toFixed(BAND_METHOD_DP[method])}`);
   }
   return parts.join(' · ');
 }
@@ -182,13 +190,14 @@ function headerLines(payload: ExportPayload): string[] {
 
 function generateCss(payload: ExportPayload): string {
   const nameOf = payload.nameOf ?? canonicalName;
+  const method = normalizeMatchingMethod(payload.matchingMethod);
   const head = headerLines(payload)
     .map((line) => ` * ${line}`)
     .join('\n');
   const body = payload.entries
     .map((entry) => {
       const lines: string[] = [];
-      const note = describeEntry(entry, nameOf);
+      const note = describeEntry(entry, nameOf, method);
       lines.push(`  /* ${entry.key}${note ? ` — ${note}` : ''} */`);
       if (entry.source) {
         lines.push(`  --${entry.key}${suffix(entry, 'source')}: ${normalizeHex(entry.source)};`);
@@ -204,13 +213,14 @@ function generateCss(payload: ExportPayload): string {
 
 function generateScss(payload: ExportPayload): string {
   const nameOf = payload.nameOf ?? canonicalName;
+  const method = normalizeMatchingMethod(payload.matchingMethod);
   const head = headerLines(payload)
     .map((line) => `// ${line}`)
     .join('\n');
   const body = payload.entries
     .map((entry) => {
       const lines: string[] = [];
-      const note = describeEntry(entry, nameOf);
+      const note = describeEntry(entry, nameOf, method);
       lines.push(`// ${entry.key}${note ? ` — ${note}` : ''}`);
       if (entry.source) {
         lines.push(`$${entry.key}${suffix(entry, 'source')}: ${normalizeHex(entry.source)};`);
@@ -230,13 +240,14 @@ function generateScss(payload: ExportPayload): string {
  */
 function generateTailwind(payload: ExportPayload): string {
   const nameOf = payload.nameOf ?? canonicalName;
+  const method = normalizeMatchingMethod(payload.matchingMethod);
   const head = headerLines(payload)
     .map((line) => ` * ${line}`)
     .join('\n');
   const body = payload.entries
     .map((entry) => {
       const lines: string[] = [];
-      const note = describeEntry(entry, nameOf);
+      const note = describeEntry(entry, nameOf, method);
       lines.push(`  /* ${entry.key}${note ? ` — ${note}` : ''} */`);
       if (entry.source) {
         lines.push(
@@ -255,11 +266,13 @@ function generateTailwind(payload: ExportPayload): string {
 }
 
 function generateJson(payload: ExportPayload): string {
+  const method = normalizeMatchingMethod(payload.matchingMethod);
   return `${JSON.stringify(
     {
       tool: payload.tool,
       title: payload.title,
       generated: localDateStamp(),
+      matchingMethod: method,
       ...(payload.meta?.length ? { meta: payload.meta } : {}),
       entries: payload.entries.map((entry) => ({
         key: entry.key,
@@ -274,7 +287,7 @@ function generateJson(payload: ExportPayload): string {
             }
           : {}),
         ...(typeof entry.delta === 'number' && Number.isFinite(entry.delta)
-          ? { deltaE: Number(entry.delta.toFixed(2)) }
+          ? { deltaE: Number(entry.delta.toFixed(Math.max(2, BAND_METHOD_DP[method]))) }
           : {}),
       })),
     },

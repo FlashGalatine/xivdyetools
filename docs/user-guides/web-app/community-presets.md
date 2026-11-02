@@ -111,7 +111,8 @@ Then **Cancel** or **Submit Preset**.
 - A submission that passes the automatic content check goes live at once (*"Preset submitted successfully!"*); one that trips it waits for a moderator (*"Preset submitted! It will appear after moderator review."*)
 - A preview picture always waits for a moderator, whatever the text did — until then the card shows the palette or the example link
 - The same dye combination as an existing preset is refused: *"This dye combination already exists as "{name}""* — and if you're signed in, your vote is added to that one instead
-- 10 submissions per day per account
+- 10 submission attempts reaching moderation per day per account; an attempt remains counted if creation then fails
+- Extended checks may also review tags and example-link path text; queries and fragments are excluded and links are never fetched
 
 ---
 
