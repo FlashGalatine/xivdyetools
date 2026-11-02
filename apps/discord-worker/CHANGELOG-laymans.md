@@ -35,6 +35,10 @@ Rules:
   path filter.
 -->
 
+## [5.9.8] - 2026-11-01
+### Changed
+- The privacy policy now explains that every time you sign in to the web app, the name from that sign-in (your Discord name, or your XIVAuth verified character's name or an "XIVAuth User" label if you have none) replaces the author name on the presets under that account, unless a ban is active. That includes presets you submitted through the bot if you sign in with Discord or an XIVAuth account linked to it. All six language versions are updated.
+
 ## [5.9.7] - 2026-10-27
 ### Favorite lists and clearer replies
 - `/preset favorite list` keeps your saved order, fits long names into its reply, and distinguishes unavailable presets from a temporary service problem. Your favorites stay saved.

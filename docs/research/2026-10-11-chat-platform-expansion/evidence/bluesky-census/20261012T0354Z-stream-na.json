@@ -1,0 +1,29 @@
+{
+  "window": {
+    "start": "2026-10-12T03:54:03.763Z",
+    "minutes": 60,
+    "coveredMinutes": 60,
+    "reconnects": 3
+  },
+  "allPosts": 156577,
+  "ffxivPosts": 143,
+  "ffxivPerHour": 143,
+  "allPerHour": 156583,
+  "ffxivSharePct": 0.0913,
+  "byLang": {
+    "en": 91,
+    "ja": 43,
+    "?": 6,
+    "pt": 2,
+    "es": 1
+  },
+  "byTerm": {
+    "ffxiv": 54,
+    "gpose": 57,
+    "eorzea": 5,
+    "ff14": 56,
+    "final fantasy xiv": 2,
+    "エオルゼア": 2
+  },
+  "publicationNote": "Historical aggregate-only publication. Account, profile, creator and post records are not retained. Contributor thresholds introduced for later collection cannot be verified from these retained aggregates."
+}

@@ -2,7 +2,7 @@
 
 > Dies ist eine zur Verständlichkeit bereitgestellte Übersetzung. Maßgeblich ist die englische Fassung; weichen beide voneinander ab, gilt die englische Fassung. [Englisch](PRIVACY_POLICY.md)
 
-**Zuletzt aktualisiert**: 2026-10-27
+**Zuletzt aktualisiert**: 2026-11-01
 
 ## 1. Einführung
 
@@ -20,7 +20,7 @@ Verbindung zu Square Enix.
 | Datentyp | Zweck | Aufbewahrung |
 |-----------|---------|-----------|
 | Discord-Benutzer-ID | Identifiziert Nutzer für Einstellungen, favorisierte Vorlagen, Abstimmungen, Ratenbegrenzung und die Markierung des Erstlauf-Hinweises; dient außerdem als Schlüssel für einen täglichen Aktivitäts-Marker pro Nutzer und wird (nie aufgelistet) in Nutzungsstatistiken gezählt — siehe *Nutzungsanalyse* unten | Bis eine Datenlöschung beantragt wird (Nutzungsstatistik-Datensätze: siehe *Nutzungsanalyse*) |
-| Autorenname: dein Discord-Anzeigename (dein Benutzername, wenn du keinen Anzeigenamen hast). Eine Vorlage, die du in der Web-App nach der Anmeldung mit XIVAuth einreichst, zeigt stattdessen den Namen deines verifizierten Charakters oder "XIVAuth User", gefolgt von den ersten 8 Zeichen deiner XIVAuth-ID, wenn bei deiner Anmeldung kein verifizierter Charakter verfügbar ist | Wird öffentlich als Autor der von dir eingereichten Community-Vorlagen angezeigt | Bis eine Datenlöschung beantragt wird |
+| Autorenname: der Name, der bei deinen Vorlagen angezeigt wird. Eine Vorlage, die du über den Bot oder in der Web-App nach der Anmeldung mit Discord einreichst, zeigt deinen Discord-Anzeigenamen (deinen Benutzernamen, wenn du keinen Anzeigenamen hast). Eine Vorlage, die du in der Web-App nach der Anmeldung mit XIVAuth einreichst, zeigt den Namen deines verifizierten Charakters oder "XIVAuth User", gefolgt von den ersten 8 Zeichen deiner XIVAuth-ID, wenn bei deiner Anmeldung kein verifizierter Charakter verfügbar ist. Bei jeder Anmeldung in der Web-App ersetzt der Name aus dieser Anmeldung den Autorennamen bei allen Vorlagen unter diesem Konto (nicht, solange eine Sperre aktiv ist). Vorlagen, die du über den Bot oder in der Web-App nach der Anmeldung mit Discord eingereicht hast, gehören zu deinem Discord-Konto: Sie werden mitaktualisiert, wenn du dich mit Discord oder mit einem XIVAuth-Konto anmeldest, das mit deinem Discord-Konto verknüpft ist. Ist dein XIVAuth-Konto nicht mit Discord verknüpft, sind seine Vorlagen und deine Discord-Vorlagen getrennt, und jede Gruppe wird nur durch die eigene Anmeldung aktualisiert | Wird öffentlich als Autor der von dir eingereichten Community-Vorlagen angezeigt | Bis eine Datenlöschung beantragt wird |
 | Nutzer-Gebietsschema | Stellt lokalisierte Bot-Antworten bereit; die Sprache des Discord-Clients (eingeordnet in eine der sechs vom Bot unterstützten Sprachen, oder "andere") wird ebenfalls in Nutzungsstatistiken erfasst — siehe *Nutzungsanalyse* unten | Gespeicherte Einstellung: bis sie gelöscht wird. Nutzungsstatistik-Kategorie: siehe *Nutzungsanalyse* |
 | Server-ID / Kanal-ID | Verarbeitet Befehle im Kontext | Wird nicht gespeichert. Nutzungsstatistiken erfassen nur, *ob* ein Befehl in einem Server oder in einer DM ausgeführt wurde (die Werte `guild` / `dm`) — niemals die ID des Servers oder des Kanals |
 
