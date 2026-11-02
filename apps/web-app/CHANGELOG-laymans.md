@@ -10,6 +10,20 @@
 - **Text can still get cut short when space is tight.** Some names, values and menus shorten or hide, and a few rows may need a little sideways scrolling. Closing a side panel makes more room.
 - **Less sideways scrolling.** Long headings and the Accessibility Checker's share controls move to a new line when they need to, on phones too.
 
+## Web-App Version 5.16.10 — November 2, 2026
+
+### Swatch Matcher
+- **The Swatch grid no longer loses its left side in smaller windows.** With Options and the Color Palette both open, every column, the heading and all the category tabs can be reached.
+- **Tight windows can still need sideways scrolling.** The grid scrolls inside its panel, and some details below it can run past the edge. Closing a side panel makes more room.
+- **Matches move under the grid when there's no room beside it.** In a desktop window, picking a swatch or a dye scrolls to its results. Small windows and long results can scroll the grid off screen.
+- **Phones can reach the first column.** The grid now scrolls sideways all the way to its left edge.
+
+## Web-App Version 5.16.9 — November 2, 2026
+
+### Color Palette
+- **The sideways scrollbar is gone.** The small stray scrollbar along the bottom of the Color Palette no longer appears.
+- **Full dye names on hover.** Names are no longer cut off at the sides of the panel or at its top edge. Near the top, a name now opens below its dye.
+
 ## Web-App Version 5.16.8 — November 1, 2026
 
 ### Privacy Guide and Terms

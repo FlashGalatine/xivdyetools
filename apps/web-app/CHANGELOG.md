@@ -54,6 +54,87 @@ left of the pane as well.
   runs with real scrollbars, because the 10 px that headless Chromium's hidden ones leave the pane
   concealed a pair chip's 4 px overflow.
 
+## [5.16.10] - 2026-11-02
+
+### Fixed
+
+- **The Swatch Matcher no longer cuts off its grid in a narrow pane.** With both side panels open at
+  1024x768 the heading read "OLORS (192)", the Eye tab and the panel's left edge could not be reached,
+  and the matches column had no width at all, so a pick showed no result cards. The palette tabs' one-line width
+  (521 px in English) set the grid panel's width: it is `flex: 0 0 auto`, and `updateSwatchLayout()`
+  clears its `width: fit-content`. The row's `justify-content: center` then split the excess across both
+  sides of the 340 px or so inside the pane's padding, and nothing can scroll to what hangs off the left.
+  The panel now has
+  `max-width: 100%`, so its tabs wrap, and it scrolls sideways inside itself if even the 236 px grid
+  does not fit. The row wraps too, which moves the matches under the grid when they would have under
+  190 px beside it. With both panels open in English that is below about 1,430 px, or about 1,530 px on
+  Lips and Face paint, whose Dark/Light toggle widens the panel, and it also ends the right-edge clipping
+  of the matches at 1280 and 1366. Longer languages stack sooner, up to about 1,680 px on French Lips.
+  Both follow the pane rather than the window, so closing a side panel re-lays the tool out with no
+  resize. In English, measured geometry is unchanged at 1536, 1600, 1718, 1920 and 2560 px, and at 1440 px
+  on the palettes without that toggle, with and without a selection. In the six languages nothing stacks
+  at 1718 px and wider.
+- **A phone can reach the grid's first column.** The 44 px grid overflows its panel on a phone, and
+  `align-items: center` put its start 51 px left of the panel at 390 px wide, where scrolling could
+  not reach it. `align-items: safe center` starts it at the panel's edge.
+- **A grid pick, or in a desktop window a palette pick, shared link or dye from another tool, brings
+  its results into view where they sit under the grid.** The check was `window.innerWidth < 768`, but a
+  desktop window can stack them now too, and the grid panel can be taller than the window, so a pick
+  there could have changed nothing on screen. A grid pick or a shared
+  link's cell goes to the verdict, and a dye or custom color from the palette, or a dye sent from another
+  tool, goes to the closest swatches. A desktop window uses `block: 'nearest'`, which moves nothing if
+  they're already on screen and keeps rows of the grid in view for the next pick, unless the results are
+  too tall for the pane, as a palette pick's are at 800x600. A phone's grid pick still takes the card to
+  the top, and at 768 px and under palette picks still don't scroll, since the open palette covers the
+  tool. A THIS CHARACTER slot doesn't scroll, because its own card shows the answer, and neither do results
+  beside the grid, even where a long column reaches past a short grid's bottom. A double-click's second
+  click is ignored, because the grid may have moved under the pointer. The scroll now honors
+  `prefers-reduced-motion`, on phones too.
+
+### Changed
+
+- **The Swatch Matcher's pane no longer declares `overflow-y: auto`.** It was the one tool panel left
+  with it after 5.16.5 moved scrolling to the shell. It never overflowed vertically, but it made the
+  pane a sideways scroll container of its own.
+- **New `e2e/swatch-narrow-pane.spec.ts`:** at 1024x768 and 1280x800 with both panels open, the
+  heading, all seven tabs and both ends of the top row sit inside the pane, with no sideways overflow
+  and the shell as the only vertical scroller. It also covers the stacked matches and the scroll to the
+  verdict, the re-layout when panels close, the grid's own scrolling at 800x600 and 390x844, and the
+  1920x1080 layout. Its five narrow-pane tests failed on the old code; the phone test was added with the
+  fix, and removing `safe center` fails it. It runs with real scrollbars, and also covers palette picks,
+  shared links, a grid pick that keeps cells in view, no jump with the verdict already on screen, and the
+  results staying beside the grid at 1440 on Eye and at 1536 on Lips and Face paint, after a palette pick
+  too.
+
+## [5.16.9] - 2026-11-02
+
+### Fixed
+
+- **The Color Palette has no sideways scrollbar, and its dye tooltips are no longer cut off at the
+  sides.** Each swatch's name is a `::after` tooltip that rests at `opacity: 0`, and a hidden box
+  still counts as scrollable overflow. Centered on a last-column swatch, a long name ran past
+  `.drawer-content`: client width 309 and scroll width 322 at the 320px drawer with a classic
+  scrollbar (334 in French; 316 and 322 on Budget Suggestions), on all seven tools with the palette, at any window width. On hover the
+  same centering cut names off: the scroller clipped the outer columns (38 px of the longest French
+  name in the first column, where no scrolling could reach it), and the Favorites section's
+  `overflow: hidden` clipped them tighter. Tooltips in the first and last of the five columns now
+  line up with their swatch's outer edge and grow inward.
+  `overflow-x` stays as it was, so a future overflow shows up rather than clipping a name silently.
+- **Dye tooltips are no longer cut off at the top of the scrolled panel.** A tooltip opens above its
+  swatch, so the scroller cut it off for a swatch within about 35 px of its top edge.
+  `placeSwatchTooltip` now opens it below such a swatch, on hover and on scroll, because a swatch can
+  also rise to the edge under a still pointer. `.favorites-section` drops `overflow: hidden`, which
+  would have cut off a tooltip opened below a single row of Favorites; its header rounds its own
+  corners instead. A hovered swatch now ranks above the favorite stars (`z-index` 21 over 20), because
+  the tooltip lives in its stacking context and the stars of the row it opens over would paint across
+  the name.
+- **New checks in `e2e/content-scroll.spec.ts`:** no sideways scroll on each palette tool and at
+  769, 768, 390 and 320 px windows. In all six languages the widest tooltip of each column, in the
+  main grid and in Favorites, stays inside everything that clips it while hovered, at a 320px drawer
+  and at 310px (the columns a classic scrollbar leaves, which headless Chromium hides). Tooltips also
+  stay whole -15 to 60 px from the panel's top in both grids, stay above a swatch with room, and move
+  when the swatch scrolls up under a still pointer. They fail on the old code.
+
 ## [5.16.8] - 2026-11-01
 
 ### Changed
