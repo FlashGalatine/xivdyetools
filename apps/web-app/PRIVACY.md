@@ -52,9 +52,10 @@ and the sections below are the complete list.
 
 `localStorage` holds lightweight preferences and your own saved work: theme, language, per-tool
 settings (including the analytics switch below), favorite dyes, saved palettes and collections,
-any Acquisition lines you rewrote in the Glamour Reader's "Glamour list", and — if you sign in —
-your community-presets session token. Nothing here is a tracking identifier. Your browser's
-site-data controls clear all of it. Inside the app, each of these clears one part:
+any Acquisition lines (and Abridged's Obtained lines) you rewrote in the Glamour Reader's
+"Glamour list", and — if you sign in — your community-presets session token. Nothing here is a
+tracking identifier. Your browser's site-data controls clear all of it. Inside the app, each of
+these clears one part:
 
 - **Advanced Settings → Reset Settings** puts every tool's settings back to their defaults. It
   does not delete your saved work.

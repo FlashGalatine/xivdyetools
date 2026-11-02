@@ -93,10 +93,15 @@ function fullLine(piece: GlamourSheetPiece): string {
   return edit ? edit.text : (piece.generated ?? '');
 }
 
+/** The key this form's own edits are stored under. */
+function ownKey(piece: GlamourSheetPiece, format: GlamourListFormat): string {
+  return format === 'abridged' ? abridgedEditKey(piece.hash) : piece.hash;
+}
+
 /** The key of the edit that decides a row: Abridged's own when it has one, else the full one. */
 function activeKey(piece: GlamourSheetPiece, format: GlamourListFormat): string {
-  const key = abridgedEditKey(piece.hash);
-  return format === 'abridged' && AcquisitionEdits.get(key) ? key : piece.hash;
+  const key = ownKey(piece, format);
+  return AcquisitionEdits.get(key) ? key : piece.hash;
 }
 
 function activeEdit(piece: GlamourSheetPiece, format: GlamourListFormat): AcquisitionEdit | null {
@@ -378,7 +383,7 @@ export function openGlamourSheet(
     }; box-sizing: border-box;`;
     field.addEventListener('input', () => {
       const abridged = format === 'abridged';
-      const key = abridged ? abridgedEditKey(piece.hash) : piece.hash;
+      const key = ownKey(piece, format);
       const baseline = abridged ? abridgeAcquisition(fullLine(piece)) : (piece.generated ?? '');
       if (field.value === baseline) AcquisitionEdits.remove(key);
       else
@@ -424,7 +429,9 @@ export function openGlamourSheet(
       );
       warn.appendChild(
         action('sheet-use-new', 'glamour.sheet.useNew', () => {
-          AcquisitionEdits.remove(activeKey(piece, format));
+          // This form's own key, not the active one: typing the baseline back removes
+          // an Abridged edit and leaves the warning up, and that must not cost the full edit.
+          AcquisitionEdits.remove(ownKey(piece, format));
           // A stale full edit under a removed Abridged one is not the new source
           // either; a fresh one is the line this row should fall back to.
           if (editIsStale(AcquisitionEdits.get(piece.hash), piece)) {

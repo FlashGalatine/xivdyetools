@@ -201,7 +201,7 @@ Acquisition:
 - **Off Hand is written only under a weapon that really takes one:** a Paladin weapon, a Beastmaster weapon, a one-handed Thaumaturge or Conjurer weapon, or a crafting or gathering tool. A fist pair, a quiver, a focus or a tool's own second model is part of the main weapon, so it isn't listed a second time. Any case the reader can't tell yet keeps its line.
 - **Only the list changes.** The list and its export sheet leave these pieces out; the reader itself is unchanged, and **Show all** still lists every worn piece.
 - **A piece whose name never arrived** keeps its slot label with nothing after it, for you to fill in after copying.
-- **Your character's name is never in the list**, and the download is always called `glamour-equipment.md`.
+- **Your character's name is never in the list**, and it is not in the download's name either: the file is always `glamour-equipment.md`, or `glamour-equipment-abridged.md` in Abridged.
 
 ### The Glamour list sheet
 
@@ -219,6 +219,21 @@ The table is rebuilt after each game patch from the game's data and Teamcraft's 
 
 Typing a filled line back to what it was turns the row back to **FILLED**.
 
+#### Abridged
+
+The **Abridged** switch in the sheet's header (on a phone, its own strip) writes the shorter form meant for a social-media post. It is off by default, and the sheet remembers your choice on this device (if your browser refuses to save it, the choice lasts until you leave the page). The preview, the fields, **Copy list** and **Save .md** all follow the switch.
+
+- **The form.** There is no "Glamour Items:" header, and the whole "Slot: Name" line is bold. Each piece then has a **Dyes:** line, if it wears a dye, and an **Obtained:** line. Rings are still written once as **Rings:** when identical.
+- **Dyes.** *A / B* for two dyes. On a piece that takes two dyes and wears one, *A / None* or *None / B*. On a piece with one dye slot, just *A*. If the reader couldn't find out how many slots a piece has (its name never arrived, say), a dye in its first slot is also just *A*. An undyed piece, an accessory or facewear has no Dyes line.
+- **Obtained** names one source, chosen from the full line in this order:
+  1. A dungeon, trial or raid at the start of the line, at the lowest difficulty among them only (no label, then Hard, Extreme, Savage, Ultimate; The Minstrel's Ballad counts as Extreme). If several instances sit at that level, all of them stay. A map dungeon such as The Aquapolis loses to a craft or a purchase. Instances stop counting at the first craft, priced vendor, quest, coffer or similar source. The site's own lines list instances first, so this only matters for a line you typed.
+  2. A craft, with its job and level.
+  3. A Gil vendor, with the price.
+  4. Any other vendor: the first one listed, with no amounts or upgrade items.
+  5. Otherwise every source on the line stays as written.
+- **Editing.** A line you type in Abridged is kept word for word and only in Abridged; it never changes the full list. An edit you made in the full list carries over to Abridged, shortened by the same rules, until you type over it there. Typing the suggested line back removes what you typed in Abridged; the row then leaves **EDITED** unless the piece also has a full-list edit. **Reset all** clears both forms.
+- **Language.** *Dyes:*, *Obtained:* and *None* are English form words in every language. Item and dye names follow the app's language, and the source lines are English.
+
 ### Your edits stay on this device
 
 Only the lines you edit are saved, in this browser's storage; filled lines are never saved, because the table supplies them again. As the sheet's footer says, *"Edits are kept on this device for each piece of gear. The character's name is never in the list, and the file itself is never saved."*
@@ -231,8 +246,8 @@ Picking another twin never overwrites an edit. The row warns you instead (*"You 
 
 ### Copy or save
 
-- **Copy list** copies the list with real bold, which survives a paste into Word or Google Docs. Anywhere that takes only plain text gets the same lines, without `**` marks.
-- **Save .md** downloads the same list as `glamour-equipment.md`, with the bold written as Markdown `**…**`.
+- **Copy list** copies the list (the Abridged form, when that switch is on) with real bold, which survives a paste into Word or Google Docs. Anywhere that takes only plain text gets the same lines, without `**` marks.
+- **Save .md** downloads the same list as `glamour-equipment.md` (`glamour-equipment-abridged.md` in Abridged), with the bold written as Markdown `**…**`.
 
 Close the sheet with **×**, `Esc` or a click outside it.
 

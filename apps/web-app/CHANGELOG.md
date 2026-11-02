@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.17.0] - 2026-11-02
+
+### Added
+
+- **The Glamour list sheet has an Abridged toggle.** It writes the shorter social-media form of the GPOSERS
+  list: no `Glamour Items:` header, the whole `Slot: Name` line in bold, one `Dyes:` line if the piece wears
+  a dye (accessories and facewear never have one) and one `Obtained:` line. The toggle is off by default and
+  remembered on the device (`FORMAT_KEY` in `glamour-sheet.ts`; if storage refuses, it lasts until the page
+  is left). It switches the preview, the fields, Copy list and Save .md together, and the download is
+  `glamour-equipment-abridged.md`. `Dyes:` reads `A / B`, `A / None` or `None / B` on a piece that takes two
+  dyes and wears one, and `A` on a one-dye piece or on a piece dyed only on channel 1 whose dye count is
+  unknown (the resolve failed or returned no rules). The labels `Dyes:`, `Obtained:` and `None` are English
+  form words in every language; item and dye names follow the app language, and the source lines are English.
+  The full list, the API and the `/glamour` bot are unchanged.
+- **`shared/glamour-abridged.ts` picks the one source for `Obtained:`.** It reads the full line's text, in
+  this order: (1) every dungeon, trial or raid at the lowest difficulty among those leading the line, up to
+  the first craft, priced vendor or known non-instance (none, then Hard, Extreme, Savage, Ultimate; The
+  Minstrel's Ballad counts as Extreme), where a map dungeon such as The Aquapolis loses to a craft or a
+  purchase; (2) the first craft, with job and level; (3) the first Gil vendor, with the price; (4) the first
+  other vendor, with no amounts or upgrade items; (5) otherwise the line as it is.
+- **A line typed in Abridged stays word for word, and only in Abridged.** It is stored under its own key
+  (`abridgedEditKey`). A full-list edit carries over to Abridged, trimmed by the same rules, until it is
+  typed over. Typing the picked source back removes the edit. Reset all clears both forms.
+- **CI's always-run step now runs `src/shared/__tests__/glamour-abridged.test.ts`.** It pins every line of
+  api-worker's `acquisition.en.json` where Abridged's instance rule drops a source (a result with no craft
+  and no priced vendor) against `glamour-abridged-drops.json`, so a table refresh that adds one fails in its
+  own pull request instead of on the next unrelated web-app one. Lines cut down to a craft or a vendor are
+  covered only by the whole-table invariants and the worked examples. The step runs it with `--root` on that
+  folder, which needs no build.
+  `docs/maintainer/acquisition-generation.md` says what to do when it fails.
+
 ## [5.16.11] - 2026-11-02
 
 ### Fixed

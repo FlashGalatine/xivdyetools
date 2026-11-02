@@ -985,6 +985,20 @@ describe('glamour export sheet — the Abridged toggle', () => {
       expect(field('Body').value).toBe('Crafted (ALC Lvl. 1)');
     });
 
+    it('Use new source keeps a fresh full edit after the stale Abridged edit was typed away', async () => {
+      AcquisitionEdits.set(BODY_HASH, { text: 'Mine', baseItemId: 5000 });
+      AcquisitionEdits.set(BODY_ABRIDGED, { text: 'Short', baseItemId: 2 });
+      StorageService.setItem(FORMAT_KEY, 'abridged');
+      openGlamourSheet(twoSources());
+      // The baseline: this removes the Abridged edit, and the warning stays up
+      type('Body', 'Mine');
+      expect(AcquisitionEdits.get(BODY_ABRIDGED)).toBeNull();
+      rowOf('Body').querySelector<HTMLButtonElement>('[data-role="sheet-use-new"]')!.click();
+
+      expect(AcquisitionEdits.get(BODY_HASH)).toEqual({ text: 'Mine', baseItemId: 5000 });
+      expect(field('Body').value).toBe('Mine');
+    });
+
     it('a stale full edit warns in Abridged too, and the actions land on the full key', async () => {
       AcquisitionEdits.set(BODY_HASH, { text: 'Full', baseItemId: 1 });
       StorageService.setItem(FORMAT_KEY, 'abridged');

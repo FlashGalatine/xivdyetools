@@ -2,6 +2,17 @@
 
 ---
 
+## Web-App Version 5.17.0 — November 2, 2026
+
+### Glamour Reader: a shorter list for social media
+- **The Glamour list sheet has a new Abridged switch.** It's off until you turn it on, and the app remembers your choice on this device.
+- **Abridged is the short version for a post.** There's no header, each "Slot: Name" line is bold, and each piece gets one Obtained line, plus one Dyes line if it's wearing a dye. Accessories and facewear never have a Dyes line.
+- **Dyes show both slots when a piece has two.** One dye on a two-dye piece reads "Dye / None" (or "None / Dye"); a piece with one slot just lists its dye. So does a piece the app couldn't look up, when its dye is in the first slot.
+- **Obtained is cut down to the best source.** It picks the easiest dungeon, trial or raid (all of them, if several tie), or else the craft with its job and level, or else a Gil vendor with the price, or else the first vendor, without prices or upgrade items. A treasure map dungeon such as The Aquapolis loses to a craft or a purchase. If none of those apply, you get the line as it was.
+- **Copy list and Save .md follow the switch.** The preview, the fields and the download all show the short form, and the file is saved as glamour-equipment-abridged.md.
+- **Your edits stay where you made them.** A line you type in Abridged is kept word for word and never changes the full list. A change you make in the full list carries over, shortened the same way, until you type over it. Reset all clears both.
+- **The full list is the same as before.** "Dyes:", "Obtained:" and "None" stay in English in every language. Item and dye names follow your language.
+
 ## Web-App Version 5.16.11 — November 2, 2026
 
 ### Harmony Explorer, Dye Comparison and Accessibility Checker
