@@ -13,6 +13,8 @@ export interface CreateUserParams {
   xivauth_id?: string | null;
   username: string;
   auth_provider: AuthProvider;
+  /** `username` then only names a new row: an existing row keeps its stored name. */
+  keep_stored_username?: boolean;
 }
 export interface UserServiceLogger {
   info(message: string, context?: Record<string, unknown>): void;
@@ -83,10 +85,10 @@ async function resolveUser(
     const resources = identityResources(existing);
     const updated = await db
       .prepare(
-        `UPDATE users SET username=?,auth_provider=?,updated_at=datetime('now') WHERE id=? AND identity_revision=? AND discord_id IS ? AND xivauth_id IS ? AND NOT EXISTS (SELECT 1 FROM identity_operation_locks WHERE resource_key IN (${resources.map(() => '?').join(',')})) RETURNING *`,
+        `UPDATE users SET username=COALESCE(?,username),auth_provider=?,updated_at=datetime('now') WHERE id=? AND identity_revision=? AND discord_id IS ? AND xivauth_id IS ? AND NOT EXISTS (SELECT 1 FROM identity_operation_locks WHERE resource_key IN (${resources.map(() => '?').join(',')})) RETURNING *`,
       )
       .bind(
-        params.username,
+        params.keep_stored_username ? null : params.username,
         params.auth_provider,
         existing.id,
         existing.identity_revision ?? 0,

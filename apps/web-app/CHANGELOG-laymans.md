@@ -2,6 +2,12 @@
 
 ---
 
+## Web-App Version 5.16.8 — November 1, 2026
+
+### Privacy Guide and Terms
+- **If XIVAuth can't return your characters when you sign in, your name stays.** All six languages of the Privacy Guide, the Terms and the sign-in note now say so.
+- **A new account in that case gets the "XIVAuth User" name** until a later sign-in finds a verified character.
+
 ## Web-App Version 5.16.5 — November 1, 2026
 
 ### Easier scrolling

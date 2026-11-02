@@ -621,7 +621,9 @@ The body must be a JSON object sent as `application/json` (case-insensitive, par
 A non-empty body with any other media type gets `415`, and a JSON body that is not an object
 (`null`, `true`, a number, a string) gets `400 { "success": false, "error": "Invalid request body" }`
 (oauth 3.1.3). `POST /auth/xivauth/callback` follows the same two rules; there, a character roster
-with no verified character whose name is non-blank falls back to the `XIVAuth User <id8>` login.
+with no verified character whose name is non-blank falls back to the `XIVAuth User <id8>` login. A
+roster fetch that fails instead keeps an existing user's stored `username` (oauth 3.2.2), with
+`global_name: null`.
 
 **Response:**
 ```json

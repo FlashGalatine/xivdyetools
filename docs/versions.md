@@ -26,11 +26,11 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.16.7 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v5.9.8 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
+| **Web Application** | v5.16.8 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Discord Bot** | v5.9.9 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.5 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.9.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
-| **OAuth Worker** | v3.2.1 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
+| **OAuth Worker** | v3.2.2 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.8.2 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
 | **Public REST API** | v0.21.2 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
 | **OpenGraph Worker** | v2.12.2 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
@@ -126,6 +126,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.16.8 | Nov 2026 | Documents and the sign-in note only — the Privacy Guide, Terms and `preset.privacyNote` in all six languages now say that when XIVAuth cannot return the characters, the name already on the account stays and a new account gets the `XIVAuth User` name, matching oauth 3.2.2 |
 | v5.16.7 | Nov 2026 | The tutorial spotlight cancels its pending delays (a step's tooltip render, the skip past a missing target, the fade-in and fade-out) when the step changes, the tour ends or it is destroyed; the render that ran after jsdom teardown failed the web-app test task with every test green |
 | v5.16.6 | Nov 2026 | Tailwind's class scan is rooted at `src/`: about 2.5 KB of dead utilities seeded by the changelog no longer ship (index CSS 55.6 → 53.1 KB), and a local `build:check` under `.turbo/` measures the same CSS as CI |
 | v5.16.5 | Nov 2026 | Main content scrolls at the pane edge, or the window edge when the palette is closed; tool wrappers grow naturally so long content remains reachable on desktop, mobile and in print (#368) |
@@ -216,7 +217,8 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| v5.9.8 | Nov 2026 | Documents only — the Privacy Policy in all six languages now covers every web sign-in, not only XIVAuth: each sign-in replaces the author name on the presets under that account with the name from that sign-in (not while a ban is active), bot-submitted ones included for a Discord or linked XIVAuth sign-in. No discord-worker source changed, no `register-commands` |
+| v5.9.9 | Nov 2026 | Documents only — the Privacy Policy's Author name row in all six languages now says that when XIVAuth cannot return the characters, the name already on the account stays and a new account gets the `XIVAuth User` name, matching oauth 3.2.2. No discord-worker source changed; the production deploy's `register-commands` step re-registers an unchanged roster |
+| v5.9.8 | Nov 2026 | Documents only — the Privacy Policy in all six languages now covers every web sign-in, not only XIVAuth: each sign-in replaces the author name on the presets under that account with the name from that sign-in (not while a ban is active), bot-submitted ones included for a Discord or linked XIVAuth sign-in. No discord-worker source changed |
 | v5.9.7 | Oct 2026 | A-DISCORD: one-request favorite lists, bounded/checkable delivery, localized choices/clan labels, byte-only attachments, preview attribution removal and native request guards; bot-logic 4.12.0 locale companion must publish first |
 | v5.9.6 | Oct 2026 | Six-language identity-review, particular-ban continuity and recovery-retention privacy disclosures |
 | v5.9.5 | Oct 2026 | Complete path-only preset reviews and Revert targets; six-language privacy alignment for optional metadata moderation and attempt/refund accounting |
@@ -292,6 +294,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v3.2.2 | Nov 2026 | A failed XIVAuth roster fetch (non-OK status, thrown error or timeout, or a body that is not a JSON array) no longer overwrites an existing user's stored name with `XIVAuth User <id8>`, so the web app's author refresh no longer rewrites their presets to it; `global_name` stays `null`, the token's `username` carries the stored name, a delivered roster with no usable verified character still gives the fallback, and so does a brand-new user with a failed fetch |
 | v3.2.1 | Nov 2026 | XIVAuth sign-in reads a character's verification from `verified_at`, the field the `character` scope actually sends, instead of the `verified` boolean that XIVAuth emits only for `character:manage` — a verified character's name now becomes `username` / `global_name` as documented, instead of every sign-in falling back to `XIVAuth User <id8>`; a contradictory, blank or unparseable entry still fails closed |
 | v3.2.0 | Oct 2026 | Private stored-identity/session provider and inactive identity-transition preparation; migration required before deployment; state HMAC input separation with finite legacy compatibility, routeless development and IPv6 /64 keying; consumer verification before separate activation |
 | v3.1.3 | Oct 2026 | 2026-10-04 remediation Sprint 10 — `/auth/*` rate limiting keys and tiers on the decoded path, so a percent-encoded route spelling shares the real bucket (BUG-007); a non-object JSON body gets 400 on both callbacks (BUG-056); a malformed XIVAuth roster falls back to `XIVAuth User <id8>` instead of a 500 or an empty name (BUG-057); a non-empty callback body must be `application/json` (415), closing the `text/plain` bypass of the body guard (BUG-149, oauth half); dead `decodeJWT` wrapper and coverage excludes removed (DEAD-036, DEAD-037) |
@@ -746,7 +749,7 @@ and the [rollout runbook](operations/security-remediation-2026-09-15.md) for the
 | xivdyetools-og-worker v2.12.2 | @xivdyetools/core v5.16.0; @xivdyetools/svg v4.4.1; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
 | xivdyetools-web-app v5.16.4 | @xivdyetools/core v5.16.0; @xivdyetools/logger v2.4.0; @xivdyetools/svg v4.4.1; @xivdyetools/types v3.3.0 | Prepared source; publication and deployed acceptance remain pending |
 | xivdyetools-api-worker v0.21.1 | @xivdyetools/core v5.16.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
-| xivdyetools-discord-worker v5.9.8 | @xivdyetools/auth v3.0.0; @xivdyetools/bot-logic v4.12.0; @xivdyetools/svg v4.4.1; @xivdyetools/core v5.16.0; @xivdyetools/logger v2.4.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
+| xivdyetools-discord-worker v5.9.9 | @xivdyetools/auth v3.0.0; @xivdyetools/bot-logic v4.12.0; @xivdyetools/svg v4.4.1; @xivdyetools/core v5.16.0; @xivdyetools/logger v2.4.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
 | xivdyetools-presets-api v2.8.1 | @xivdyetools/auth v3.0.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
 | xivdyetools-oauth-worker v3.2.0 | @xivdyetools/auth v3.0.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
 | @xivdyetools/bot-logic v4.12.0 | @xivdyetools/core v5.16.0; @xivdyetools/svg v4.4.1; @xivdyetools/types v3.3.0 | Prepared source; publication and deployed acceptance remain pending |

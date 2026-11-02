@@ -90,7 +90,7 @@ Frontend                       OAuth Worker                       Discord
    │ ◄─ { jwt, user, expires_at } ──│                                │
 ```
 
-XIVAuth follows the same shape under `/auth/xivauth` and `/auth/xivauth/callback`, plus pulls `/api/v1/characters` to pick the first **verified** character with a non-blank name (trimmed) — that name becomes `username` / `global_name`. Non-object roster elements are dropped; with no usable character the user gets `XIVAuth User <id8>` and `global_name: null` (BUG-057). The roster is read in memory and discarded — none of it is stored (FINDING-001, 2026-08-29 audit).
+XIVAuth follows the same shape under `/auth/xivauth` and `/auth/xivauth/callback`, plus pulls `/api/v1/characters` to pick the first **verified** character with a non-blank name (trimmed) — that name becomes `username` / `global_name`. Non-object roster elements are dropped; with no usable character the user gets `XIVAuth User <id8>` and `global_name: null` (BUG-057). A fetch that fails (non-OK status, thrown error or timeout, a body that is not a JSON array) delivers no roster: `global_name` is still `null`, but an existing user keeps the stored `username` (`keep_stored_username`) and only a new user gets the label. The roster is read in memory and discarded — none of it is stored (FINDING-001, 2026-08-29 audit).
 
 ### Key Directories
 

@@ -283,7 +283,9 @@ describe('bounded identity continuity waits', () => {
         { ...peer.config, IDENTITY_SPLIT_ENABLED: 'false' },
       ),
     );
-    await vi.waitFor(() => expect(count).toBeGreaterThan(0), { interval: 1 });
+    // Each acknowledgement first hashes its journal row, and crypto.subtle runs on the real clock,
+    // not fake time. Advancing before all eight start can leave the login waiting on a hash.
+    await vi.waitFor(() => expect(count).toBe(8), { interval: 1 });
     await vi.advanceTimersByTimeAsync(1000);
     expect(login).toMatchObject({
       status: 'fulfilled',
@@ -303,14 +305,21 @@ describe('bounded identity continuity waits', () => {
     await findOrCreateUser(fixture.db, { ...params, xivauth_id: secondX }, undefined, peer.config);
     fixture.sqlite.prepare('UPDATE identity_operations SET acknowledged_at=NULL').run();
     const acknowledge = peer.remote.acknowledge;
-    peer.remote.acknowledge = async (input) =>
-      input.operationId === stalled.id ? new Promise(() => {}) : acknowledge(input);
+    let stalledEntered = false;
+    peer.remote.acknowledge = async (input) => {
+      if (input.operationId !== stalled.id) return acknowledge(input);
+      stalledEntered = true;
+      return new Promise(() => {});
+    };
     const cleanup = observe(cleanupIdentityOperations(fixture.db, peer.remote));
+    // Wait for the stalled row as well: its hash runs on the real clock, as in the test above.
     await vi.waitFor(
-      () =>
+      () => {
+        expect(stalledEntered).toBe(true);
         expect(journal().find((row) => row.id !== stalled.id)!.acknowledged_at).toEqual(
           expect.any(Number),
-        ),
+        );
+      },
       { interval: 1 },
     );
     expect(cleanup.status).toBe('waiting');

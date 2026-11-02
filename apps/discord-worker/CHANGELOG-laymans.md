@@ -35,6 +35,10 @@ Rules:
   path filter.
 -->
 
+## [5.9.9] - 2026-11-01
+### Changed
+- The privacy policy now says what happens to your preset author name if XIVAuth can't return your characters when you sign in to the web app: the name already on your account stays, and a new account gets the "XIVAuth User" label. All six languages were updated.
+
 ## [5.9.8] - 2026-11-01
 ### Changed
 - The privacy policy now explains that every time you sign in to the web app, the name from that sign-in (your Discord name, or your XIVAuth verified character's name or an "XIVAuth User" label if you have none) replaces the author name on the presets under that account, unless a ban is active. That includes presets you submitted through the bot if you sign in with Discord or an XIVAuth account linked to it. All six language versions are updated.

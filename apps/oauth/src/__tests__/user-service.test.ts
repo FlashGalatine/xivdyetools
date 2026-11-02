@@ -60,6 +60,26 @@ describe('provider account creation and profile updates with actual SQLite', () 
     });
     expect(fixture.sqlite.prepare('SELECT * FROM identity_operations').all()).toEqual([]);
   });
+  it('keep_stored_username leaves the name alone but still records the sign-in', async () => {
+    fixture.seed({ id: U, xivauth_id: X, username: 'Stored', auth_provider: 'discord' });
+    const row = await findOrCreateUser(fixture.db, { ...xiv, keep_stored_username: true });
+    expect(row).toMatchObject({ id: U, username: 'Stored', auth_provider: 'xivauth' });
+  });
+  it('keep_stored_username never restores a stale read over a name written after lookup', async () => {
+    fixture.seed({ id: U, xivauth_id: X, username: 'Stored', auth_provider: 'xivauth' });
+    const original = fixture.db.prepare.bind(fixture.db);
+    vi.spyOn(fixture.db, 'prepare').mockImplementation((sql) => {
+      if (sql.startsWith('UPDATE users SET username='))
+        fixture.sqlite.prepare('UPDATE users SET username=? WHERE id=?').run('Newer', U);
+      return original(sql);
+    });
+    const row = await findOrCreateUser(fixture.db, { ...xiv, keep_stored_username: true });
+    expect(row.username).toBe('Newer');
+  });
+  it('keep_stored_username still names a new account', async () => {
+    const row = await findOrCreateUser(fixture.db, { ...xiv, keep_stored_username: true });
+    expect(row.username).toBe('Character name');
+  });
   it('inactive: an XIVAuth sign-in asserting a new Discord ID for an XIVAuth-only row is refused', async () => {
     fixture.seed({ id: U, xivauth_id: X, auth_provider: 'xivauth' });
     await expect(findOrCreateUser(fixture.db, { ...xiv, discord_id: D })).rejects.toMatchObject({
