@@ -142,10 +142,11 @@ const BUNDLE_LIMITS = [
   // out of the swatch chunk in 5.12.7, now the reader's body with the IN THE
   // GAME verdict and the twin picker) and the export sheet each load on
   // demand. Calibrated like the tools, ~30% headroom over what 5.13.0
-  // measured: block 34.4 KB, sheet 11.9 KB, shell 3.7 KB.
+  // measured: block 34.4 KB, sheet 11.9 KB, shell 3.7 KB. The sheet was
+  // re-budgeted in 5.17.0 for the Abridged form: 16.0 KB measured, ~25% headroom.
   { label: 'tool: glamour', pattern: /^glamour-tool-/, limit: 10 * KB },
   { label: 'glamour: block', pattern: /^glamour-block-/, limit: 45 * KB },
-  { label: 'glamour: export sheet', pattern: /^glamour-sheet-/, limit: 16 * KB },
+  { label: 'glamour: export sheet', pattern: /^glamour-sheet-/, limit: 20 * KB },
 
   // The .chara inspection worker, the app's first Web Worker (both .chara tools
   // read a file through it). It holds no palette or dye tables: the page answers

@@ -38,6 +38,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   folder, which needs no build.
   `docs/maintainer/acquisition-generation.md` says what to do when it fails.
 
+### Changed
+
+- **The `glamour: export sheet` bundle budget goes from 16 KB to 20 KB.** The chunk measures 16.0 KB with the
+  Abridged form, which left it 12 bytes under the old limit; 20 KB gives it about 25% headroom.
+
 ## [5.16.11] - 2026-11-02
 
 ### Fixed
