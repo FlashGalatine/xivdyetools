@@ -8,6 +8,7 @@ The source snapshot is `ee4dd0b65375ed994d8ab0dafc3a695b614c1a3d`, from local `o
 |---|---|
 | [DEEP_DIVE_REPORT.md](DEEP_DIVE_REPORT.md) | Ranked recommendations, measured baseline, whole-project disposition and semver analysis |
 | [REMEDIATION_PLAN.md](REMEDIATION_PLAN.md) | Conditional evaluation stages and consumer rollout dependencies |
+| [TODO.md](TODO.md) | Draft follow-up checklist with the audit PR attached |
 | [findings/](findings/) | Five concise findings with source locations and verification requirements |
 | [evidence/README.md](evidence/README.md) | Method, commands, limitations and evidence index |
 
