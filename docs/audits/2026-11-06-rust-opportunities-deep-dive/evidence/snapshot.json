@@ -1,0 +1,428 @@
+{
+  "recordedAt": "2026-11-06T05:48:11.555Z",
+  "commit": "ee4dd0b65375ed994d8ab0dafc3a695b614c1a3d",
+  "branch": "codex/rust-opportunities-20261106",
+  "source": "Local checkout only. Registry and deployed versions unverified.",
+  "packages": [
+    {
+      "path": "packages/auth",
+      "name": "@xivdyetools/auth",
+      "version": "3.0.0",
+      "private": false,
+      "exports": {
+        ".": {
+          "types": "./dist/index.d.ts",
+          "import": "./dist/index.js"
+        },
+        "./encoding": {
+          "types": "./dist/encoding/index.d.ts",
+          "import": "./dist/encoding/index.js"
+        },
+        "./jwt": {
+          "types": "./dist/jwt.d.ts",
+          "import": "./dist/jwt.js"
+        },
+        "./hmac": {
+          "types": "./dist/hmac.d.ts",
+          "import": "./dist/hmac.js"
+        },
+        "./timing": {
+          "types": "./dist/timing.d.ts",
+          "import": "./dist/timing.js"
+        },
+        "./discord": {
+          "types": "./dist/discord.d.ts",
+          "import": "./dist/discord.js"
+        },
+        "./revocation": {
+          "types": "./dist/revocation.d.ts",
+          "import": "./dist/revocation.js"
+        }
+      },
+      "dependencies": {
+        "discord-interactions": "^4.4.0"
+      }
+    },
+    {
+      "path": "packages/bot-logic",
+      "name": "@xivdyetools/bot-logic",
+      "version": "4.12.0",
+      "private": false,
+      "engines": {
+        "node": ">=18.0.0"
+      },
+      "exports": {
+        ".": {
+          "types": "./dist/index.d.ts",
+          "import": "./dist/index.js"
+        },
+        "./i18n": {
+          "types": "./dist/i18n/index.d.ts",
+          "import": "./dist/i18n/index.js"
+        }
+      },
+      "dependencies": {
+        "@xivdyetools/core": "workspace:*",
+        "@xivdyetools/svg": "workspace:*",
+        "@xivdyetools/types": "workspace:*"
+      }
+    },
+    {
+      "path": "packages/core",
+      "name": "@xivdyetools/core",
+      "version": "5.16.0",
+      "private": false,
+      "engines": {
+        "node": ">=18.0.0"
+      },
+      "exports": {
+        ".": {
+          "types": "./dist/index.d.ts",
+          "import": "./dist/index.js"
+        },
+        "./blending": {
+          "types": "./dist/blending/index.d.ts",
+          "import": "./dist/blending/index.js"
+        },
+        "./chara": {
+          "types": "./dist/chara.d.ts",
+          "import": "./dist/chara.js"
+        },
+        "./package.json": "./package.json"
+      },
+      "dependencies": {
+        "@xivdyetools/logger": "workspace:*",
+        "@xivdyetools/types": "workspace:*",
+        "spectral.js": "^3.0.0",
+        "xivcharakit": "0.1.0-beta.4"
+      }
+    },
+    {
+      "path": "packages/logger",
+      "name": "@xivdyetools/logger",
+      "version": "2.4.0",
+      "private": false,
+      "engines": {
+        "node": ">=18.0.0"
+      },
+      "exports": {
+        ".": {
+          "types": "./dist/index.d.ts",
+          "import": "./dist/index.js"
+        },
+        "./browser": {
+          "types": "./dist/presets/browser.d.ts",
+          "import": "./dist/presets/browser.js"
+        },
+        "./worker": {
+          "types": "./dist/presets/worker.d.ts",
+          "import": "./dist/presets/worker.js"
+        },
+        "./library": {
+          "types": "./dist/presets/library.d.ts",
+          "import": "./dist/presets/library.js"
+        }
+      }
+    },
+    {
+      "path": "packages/svg",
+      "name": "@xivdyetools/svg",
+      "version": "4.4.1",
+      "private": false,
+      "engines": {
+        "node": ">=18.0.0"
+      },
+      "exports": {
+        ".": {
+          "types": "./dist/index.d.ts",
+          "import": "./dist/index.js"
+        }
+      },
+      "dependencies": {
+        "@xivdyetools/core": "workspace:*",
+        "@xivdyetools/types": "workspace:*"
+      }
+    },
+    {
+      "path": "packages/test-utils",
+      "name": "@xivdyetools/test-utils",
+      "version": "3.0.0",
+      "private": true,
+      "engines": {
+        "node": ">=18.0.0"
+      },
+      "exports": {
+        ".": {
+          "types": "./dist/index.d.ts",
+          "import": "./dist/index.js"
+        },
+        "./cloudflare": {
+          "types": "./dist/cloudflare/index.d.ts",
+          "import": "./dist/cloudflare/index.js"
+        },
+        "./factories": {
+          "types": "./dist/factories/index.d.ts",
+          "import": "./dist/factories/index.js"
+        },
+        "./constants": {
+          "types": "./dist/constants/index.d.ts",
+          "import": "./dist/constants/index.js"
+        }
+      },
+      "dependencies": {
+        "@xivdyetools/auth": "workspace:*",
+        "@xivdyetools/types": "workspace:*"
+      }
+    },
+    {
+      "path": "packages/types",
+      "name": "@xivdyetools/types",
+      "version": "3.3.0",
+      "private": false,
+      "engines": {
+        "node": ">=18.0.0"
+      },
+      "exports": {
+        ".": {
+          "types": "./dist/index.d.ts",
+          "import": "./dist/index.js"
+        },
+        "./color": {
+          "types": "./dist/color/index.d.ts",
+          "import": "./dist/color/index.js"
+        },
+        "./dye": {
+          "types": "./dist/dye/index.d.ts",
+          "import": "./dist/dye/index.js"
+        },
+        "./character": {
+          "types": "./dist/character/index.d.ts",
+          "import": "./dist/character/index.js"
+        },
+        "./preset": {
+          "types": "./dist/preset/index.d.ts",
+          "import": "./dist/preset/index.js"
+        },
+        "./auth": {
+          "types": "./dist/auth/index.d.ts",
+          "import": "./dist/auth/index.js"
+        },
+        "./api": {
+          "types": "./dist/api/index.d.ts",
+          "import": "./dist/api/index.js"
+        },
+        "./error": {
+          "types": "./dist/error/index.d.ts",
+          "import": "./dist/error/index.js"
+        },
+        "./localization": {
+          "types": "./dist/localization/index.d.ts",
+          "import": "./dist/localization/index.js"
+        }
+      }
+    },
+    {
+      "path": "packages/worker-kit",
+      "name": "@xivdyetools/worker-kit",
+      "version": "1.6.0",
+      "private": false,
+      "engines": {
+        "node": ">=18.0.0"
+      },
+      "exports": {
+        ".": {
+          "types": "./dist/index.d.ts",
+          "import": "./dist/index.js"
+        },
+        "./middleware": {
+          "types": "./dist/middleware/index.d.ts",
+          "import": "./dist/middleware/index.js"
+        },
+        "./body-guards": {
+          "types": "./dist/body-guards/index.d.ts",
+          "import": "./dist/body-guards/index.js"
+        },
+        "./image-sniff": {
+          "types": "./dist/image-sniff/index.d.ts",
+          "import": "./dist/image-sniff/index.js"
+        },
+        "./rate-limiter": {
+          "types": "./dist/rate-limiter/index.d.ts",
+          "import": "./dist/rate-limiter/index.js"
+        },
+        "./rate-limiter/memory": {
+          "types": "./dist/rate-limiter/backends/memory.d.ts",
+          "import": "./dist/rate-limiter/backends/memory.js"
+        },
+        "./rate-limiter/kv": {
+          "types": "./dist/rate-limiter/backends/kv.d.ts",
+          "import": "./dist/rate-limiter/backends/kv.js"
+        },
+        "./rate-limiter/upstash": {
+          "types": "./dist/rate-limiter/backends/upstash.d.ts",
+          "import": "./dist/rate-limiter/backends/upstash.js"
+        },
+        "./rate-limiter/cloudflare": {
+          "types": "./dist/rate-limiter/backends/cloudflare.d.ts",
+          "import": "./dist/rate-limiter/backends/cloudflare.js"
+        },
+        "./rate-limiter/presets": {
+          "types": "./dist/rate-limiter/presets/index.d.ts",
+          "import": "./dist/rate-limiter/presets/index.js"
+        },
+        "./package.json": "./package.json"
+      },
+      "dependencies": {
+        "@upstash/redis": "^1.39.0",
+        "@xivdyetools/logger": "workspace:*"
+      }
+    },
+    {
+      "path": "apps/api-worker",
+      "name": "xivdyetools-api-worker",
+      "version": "0.21.2",
+      "private": true,
+      "engines": {
+        "node": ">=18.0.0"
+      },
+      "dependencies": {
+        "@xivdyetools/core": "workspace:*",
+        "@xivdyetools/types": "workspace:*",
+        "@xivdyetools/worker-kit": "workspace:*",
+        "hono": "^4.13.13"
+      }
+    },
+    {
+      "path": "apps/discord-worker",
+      "name": "xivdyetools-discord-worker",
+      "version": "5.9.9",
+      "private": true,
+      "engines": {
+        "node": ">=18.0.0"
+      },
+      "dependencies": {
+        "@resvg/resvg-wasm": "^2.6.2",
+        "@xivdyetools/auth": "workspace:*",
+        "@xivdyetools/bot-logic": "workspace:*",
+        "@xivdyetools/svg": "workspace:*",
+        "@xivdyetools/core": "workspace:*",
+        "@xivdyetools/logger": "workspace:*",
+        "@xivdyetools/types": "workspace:*",
+        "@xivdyetools/worker-kit": "workspace:*",
+        "hono": "^4.13.13"
+      }
+    },
+    {
+      "path": "apps/image-worker",
+      "name": "xivdyetools-image-worker",
+      "version": "1.3.5",
+      "private": true,
+      "engines": {
+        "node": ">=18.0.0"
+      },
+      "dependencies": {
+        "@cf-wasm/photon": "0.4.0",
+        "@cloudflare/workers-types": "^5.20261023.1",
+        "@xivdyetools/worker-kit": "workspace:*",
+        "hono": "^4.13.13"
+      }
+    },
+    {
+      "path": "apps/moderation-worker",
+      "name": "xivdyetools-moderation-worker",
+      "version": "1.9.0",
+      "private": true,
+      "engines": {
+        "node": ">=18.0.0"
+      },
+      "dependencies": {
+        "@cloudflare/workers-types": "^5.20261023.1",
+        "@xivdyetools/auth": "workspace:*",
+        "@xivdyetools/bot-logic": "workspace:*",
+        "@xivdyetools/logger": "workspace:*",
+        "@xivdyetools/types": "workspace:*",
+        "@xivdyetools/worker-kit": "workspace:*",
+        "hono": "^4.13.13"
+      }
+    },
+    {
+      "path": "apps/oauth",
+      "name": "xivdyetools-oauth-worker",
+      "version": "3.2.2",
+      "private": true,
+      "engines": {
+        "node": ">=22.16.0"
+      },
+      "dependencies": {
+        "@xivdyetools/auth": "workspace:*",
+        "@xivdyetools/types": "workspace:*",
+        "@xivdyetools/worker-kit": "workspace:*",
+        "hono": "^4.13.13"
+      }
+    },
+    {
+      "path": "apps/og-worker",
+      "name": "xivdyetools-og-worker",
+      "version": "2.12.2",
+      "private": true,
+      "engines": {
+        "node": ">=18.0.0"
+      },
+      "dependencies": {
+        "@cloudflare/workers-types": "^5.20261023.1",
+        "@resvg/resvg-wasm": "^2.6.2",
+        "@xivdyetools/core": "workspace:*",
+        "@xivdyetools/svg": "workspace:*",
+        "@xivdyetools/types": "workspace:*",
+        "@xivdyetools/worker-kit": "workspace:*",
+        "hono": "^4.13.13"
+      }
+    },
+    {
+      "path": "apps/presets-api",
+      "name": "xivdyetools-presets-api",
+      "version": "2.8.2",
+      "private": true,
+      "engines": {
+        "node": ">=18.0.0"
+      },
+      "dependencies": {
+        "@xivdyetools/auth": "workspace:*",
+        "@xivdyetools/types": "workspace:*",
+        "@xivdyetools/worker-kit": "workspace:*",
+        "hono": "^4.13.13"
+      }
+    },
+    {
+      "path": "apps/stoat-worker",
+      "name": "xivdyetools-stoat-worker",
+      "version": "0.3.4",
+      "private": true,
+      "engines": {
+        "node": ">=22.0.0"
+      },
+      "dependencies": {
+        "@xivdyetools/bot-logic": "workspace:*",
+        "@xivdyetools/logger": "workspace:*",
+        "@xivdyetools/types": "workspace:*",
+        "revolt.js": "^7.1.1"
+      }
+    },
+    {
+      "path": "apps/web-app",
+      "name": "xivdyetools-web-app",
+      "version": "5.16.11",
+      "private": true,
+      "engines": {
+        "node": ">=18.0.0"
+      },
+      "dependencies": {
+        "@xivdyetools/core": "workspace:*",
+        "@xivdyetools/logger": "workspace:*",
+        "@xivdyetools/svg": "workspace:*",
+        "@xivdyetools/types": "workspace:*",
+        "lit": "^3.3.3"
+      }
+    }
+  ]
+}

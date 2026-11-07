@@ -1,0 +1,21 @@
+{
+  "checkedAt": "2026-11-07T04:44:50.262Z",
+  "linksChecked": 106,
+  "citationsChecked": 246,
+  "findingCount": 5,
+  "unitCount": 17,
+  "trackedChanges": [
+    "docs/audits/2026-11-06-rust-opportunities-deep-dive/DEEP_DIVE_REPORT.md",
+    "docs/audits/2026-11-06-rust-opportunities-deep-dive/REMEDIATION_PLAN.md",
+    "docs/audits/2026-11-06-rust-opportunities-deep-dive/evidence/README.md",
+    "docs/audits/2026-11-06-rust-opportunities-deep-dive/evidence/review-rust-comparison.md",
+    "docs/audits/2026-11-06-rust-opportunities-deep-dive/evidence/scripts/benchmark-rust-comparison.mjs",
+    "docs/audits/2026-11-06-rust-opportunities-deep-dive/evidence/snapshot.json",
+    "docs/audits/2026-11-06-rust-opportunities-deep-dive/evidence/validation.json",
+    "docs/audits/2026-11-06-rust-opportunities-deep-dive/evidence/verification.md",
+    "docs/audits/2026-11-06-rust-opportunities-deep-dive/findings/OPT-001.md",
+    "docs/audits/2026-11-06-rust-opportunities-deep-dive/findings/OPT-003.md",
+    "docs/audits/2026-11-06-rust-opportunities-deep-dive/findings/REFACTOR-001.md"
+  ],
+  "errors": []
+}
