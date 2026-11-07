@@ -2,6 +2,8 @@
 
 Audit date 2026-11-06. Source `ee4dd0b65375ed994d8ab0dafc3a695b614c1a3d`. Five OPEN evaluation findings, comprising four optimizations and one compatibility concern. Sprint 0 has no shipped implementation. Source locations below refer to this commit.
 
+**Addendum 2026-11-07.** A Node comparison of the palette kernel ran after the audit, against packed TypeScript and a Rust/WASM port. It recommends the TypeScript squared-distance change first and defers Rust adoption. The [addendum section](#addendum-2026-11-07--measured-rust-comparison) summarizes it, and the sections before it are unchanged.
+
 ## Recommendation
 
 Start with a bounded comparison of the palette-clustering kernel. It repeatedly processes thousands of pixels and creates temporary arrays on every iteration. Rust could improve data locality and allocation behavior here. First establish an equivalent packed TypeScript baseline, then compare a single batched WebAssembly call including its input/output costs. The existing Node baseline places ordinary synthetic clustering in the single-to-double-digit millisecond range, so browser responsiveness and total interaction latency should decide whether adoption pays for its maintenance.
@@ -133,14 +135,33 @@ Core's planned 6.0 legacy character API removal and bot-logic's planned 5.0 remo
 
 Evidence and exact locations for these controls are retained in the three review notes.
 
+## Addendum 2026-11-07 — measured Rust comparison
+
+The kernel-level part of Stage 2 ran in Node on synthetic inputs. Built core, a verbatim copy of its k-means, packed TypeScript and a Rust/WASM port of the same algorithm all produced identical centroids and cluster sizes under the same injected random draws. This held on every case, including fractional channels, so numerical parity is achievable. [Comparison evidence](evidence/review-rust-comparison.md), [raw measurements](evidence/rust-comparison-node.json), [kernel source](evidence/rust-kernel/src/lib.rs), [harness](evidence/scripts/benchmark-rust-comparison.mjs)
+
+| Case (upper median ms) | Iterations | Current | Packed TS, squared | Rust/WASM | Rust/WASM, squared |
+|---|---:|---:|---:|---:|---:|
+| Blobs, 10k, 4 colors | 5 | 3.99 | 2.60 | 2.37 | 1.72 |
+| Blobs, 10k, 10 colors | 16 | 14.81 | 10.99 | 8.85 | 7.46 |
+| Uniform, 10k, 10 colors | 25 | 25.19 | 18.38 | 16.58 | 12.10 |
+| Uniform, 100k, 10 colors | 23 | 277.25 | 172.37 | 152.22 | 119.63 |
+
+- Rust/WASM measured 1.2–1.4× faster than equivalent packed TS. With squared distances in both, the margin was 1.4–1.6×. A `+simd128` build gained nothing.
+- Packed TS with squared-distance assignment measured 1.35–1.6× faster than current code, with no new toolchain. The substitution keeps square roots in k-means++ and centroid movement. It is provably order-preserving for integer channels, which every in-repo caller supplies.
+- After that TypeScript change, Rust saved 0.9–3.9 ms per representative 10,000-sample extraction in the kernel alone. Whole-interaction savings can only be smaller, and all fall under the plan's proposed 5 ms bar. Uniform-noise and fractional 10-color inputs (6.3–6.5 ms) and the explicit 100,000-sample stress case (53 ms) exceeded it.
+- The 25 KB kernel compiled and instantiated in a 0.24 ms median. Startup and size are not the obstacle; [REFACTOR-001](findings/REFACTOR-001.md)'s loader, publication and CSP work is.
+- Iteration count moves cost more than language. Replaying the original baseline's inputs and seed shows 8 iterations for its default four-color row, 25 for the ten-color row, and 26 under the 100-iteration cap. That explains why the baseline's 25- and 100-cap rows nearly match.
+
+**Revised ordering.** First, land the packed counts/sums and squared-distance assignment in core with seeded parity tests. That is a compatible internal change and a patch candidate. Second, run the browser worker experiment ([OPT-003](findings/OPT-003.md)), which fixes responsiveness whichever language clusters. Defer a Rust kernel until real-screenshot, browser or workerd evidence, or a larger workload, shows a margin above the agreed bar. If one is adopted, land it first in image-worker as a separate module ([OPT-002](findings/OPT-002.md)), not in published core and not inside the vendored Photon build. Image-worker is private, runs on one runtime, already loads WASM, and has no npm publication or browser CSP. These measurements are one Linux container, kernel only. They exclude decode, readback, transfer, matching, rendering, memory, browsers, workerd and mobile.
+
 ## Status and next decision
 
 | Finding | Status | Commit implementing change |
 |---|---|---|
-| OPT-001 | OPEN — evaluation proposed | — |
-| OPT-002 | OPEN — conditional evaluation | — |
-| OPT-003 | OPEN — evaluation proposed | — |
+| OPT-001 | OPEN — Node comparison recorded 2026-11-07, TS squared-distance change recommended, Rust deferred | — |
+| OPT-002 | OPEN — conditional evaluation, preferred first Rust landing site | — |
+| OPT-003 | OPEN — evaluation proposed, worker first regardless of kernel language | — |
 | OPT-004 | OPEN — deferred pending real batch profile | — |
 | REFACTOR-001 | OPEN — compatibility design required for adoption | — |
 
-The [evaluation plan](REMEDIATION_PLAN.md) proposes measurable go/no-go criteria, correctness fixtures and staged consumer adoption. Benchmark thresholds are proposals for review. This audit's evidence supports choosing an experiment, while adoption remains conditional on its results.
+The [evaluation plan](REMEDIATION_PLAN.md) proposes measurable go/no-go criteria, correctness fixtures and staged consumer adoption. Benchmark thresholds are proposals for review. This audit's evidence supports choosing an experiment, while adoption remains conditional on its results. The 2026-11-07 addendum completes the Node kernel comparison only. The browser, workerd, real-screenshot and agreed-budget steps remain open.

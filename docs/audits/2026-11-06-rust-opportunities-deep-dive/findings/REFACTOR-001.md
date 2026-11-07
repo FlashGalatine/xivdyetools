@@ -13,6 +13,7 @@
 - Vite browsers, native Node ESM and Cloudflare require different loader tests. Current package scripts build TS, and the isolated publisher uses prebuilt artifacts. [Release review](../evidence/review-runtime-release.md)
 - Mandatory initialization, sync-to-async changes, narrower inputs/platforms, or changed output contracts can require a major. An additive opt-in entry can preserve the existing contract.
 - Core 6.0 and bot-logic 5.0 have separate deprecation prerequisites, and package-path merges can trigger consumer deployment before npm publication.
+- 2026-11-07 addendum: a 25 KB raw-ABI comparison kernel compiled and instantiated in 0.24 ms. Loaders, publication and the browser CSP's missing WASM allowance dominate cost, and a private-app landing (OPT-002) defers them. [Comparison](../evidence/review-rust-comparison.md)
 
 ## Fix
 

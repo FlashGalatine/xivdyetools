@@ -4,7 +4,7 @@ This proposed plan covers the five findings in [the catalog](DEEP_DIVE_REPORT.md
 
 ## Stage 0 — Baseline recorded
 
-The audit records a fresh three-package build, 334 passing tests and a reproducible synthetic Node baseline. Production traces, mobile/browser traces, Rust comparisons, peak isolate memory, artifact startup and npm registry state remain open measurements. See [evidence](evidence/README.md).
+The audit records a fresh three-package build, 334 passing tests and a reproducible synthetic Node baseline. Production traces, mobile/browser traces, Rust comparisons, peak isolate memory, artifact startup and npm registry state remain open measurements. See [evidence](evidence/README.md). The 2026-11-07 addendum adds a Node-only Rust kernel comparison and kernel startup time. The other open measurements remain open.
 
 ## Stage 1 — Core compatibility contract
 
@@ -22,6 +22,8 @@ Compare existing code, TS counts/sums with packed inputs, and a Rust/WASM implem
 
 Ends with a go/no-go result based on total work and parity. A promising private module proceeds to packed-artifact smoke tests. If a public core change is selected, it gets its own build/type-check/lint/test and compatibility checks, version decision and controlled publication stage. The actual version is selected when implementation starts.
 
+**2026-11-07 progress.** The kernel comparison ran in Node on synthetic inputs ([evidence](evidence/review-rust-comparison.md)). All variants matched built core exactly under injected draws. Packed TS with squared-distance assignment measured 1.35–1.6× faster than current code. Rust/WASM measured a further 1.4–1.6× on top of that, which saved 0.9–3.9 ms per representative extraction in the kernel alone. The provisional result is to go ahead with the TypeScript change, as a compatible core patch candidate with seeded parity tests, and not to adopt Rust yet. Still open: the real-screenshot corpus, full-path, memory, browser and workerd measurements, and the agreed budget.
+
 ## Stage 3 — Browser responsiveness evaluation
 
 **Primary finding OPT-003. Primary unit apps/web-app. Priority P3.**
@@ -37,6 +39,8 @@ Ends with browser E2E, stale-result/cancellation tests, served CSP tests, bundle
 Use an additive palette endpoint for the experiment. Compare TS fusion within this service against a fused Rust extension of Photon. Preserve `/extract` and `/thumbnail` contracts and artifact ownership provenance. The experiment must measure admission occupancy, busy responses, abort cleanup, thumbnail throughput, cold starts and total isolate memory under mixed traffic. Test retained dimensions, encoded-size limits and malformed headers. A second independent WASM heap/copy must appear in the memory budget if that design is used.
 
 Ends with local workerd correctness/resource evidence and a separately approved provider acceptance exercise. The existing A-IMAGE hold remains a prerequisite for production activation. The audit's Node timings do not close that hold. [Image release constraints](../../../docs/operations/REMEDIATION_RELEASE_2026_10.md)
+
+**2026-11-07 note.** If Stage 2 ever selects a Rust kernel, this stage is its cheaper first landing site, ahead of a published core artifact. Image-worker is private, binding-only and single-runtime, and already loads WASM. Use a separate module, since extending the vendored Photon build means another Windows-only reconstruction outside CI. Promote the comparison harness's seeded parity check to a test, because the algorithm would then exist in two languages. [Evidence](evidence/review-rust-comparison.md)
 
 ## Stage 5 — Exact matching batch evaluation
 

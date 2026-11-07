@@ -29,6 +29,11 @@ Repository-specific audit conventions determined the README/report/findings/evid
 | [verification.md](verification.md) | Independent finding verdicts and corrections incorporated |
 | [docs-check-links.log](docs-check-links.log) | Repository living-doc link check, which deliberately excludes audits |
 | [docs-check-versions.log](docs-check-versions.log) | Repository canonical version-table check |
+| [review-rust-comparison.md](review-rust-comparison.md) | 2026-11-07 addendum: method, results, parity argument, interpretation and limits |
+| [rust-comparison-node.json](rust-comparison-node.json) | Addendum raw samples, p95, iteration counts, parity flags, environment and kernel hash |
+| [rust-comparison-console.log](rust-comparison-console.log) | Tabular rendering of the same addendum run |
+| [rust-kernel/](rust-kernel/src/lib.rs) | Addendum Rust comparison kernel (`Cargo.toml`, `Cargo.lock`, `src/lib.rs`), audit evidence only |
+| [scripts/benchmark-rust-comparison.mjs](scripts/benchmark-rust-comparison.mjs) | Addendum harness, which asserts built-core fidelity and exact variant parity before timing |
 
 Captured build and test logs have trailing whitespace and extra end-of-file blank lines normalized for Git; command output and results are otherwise retained.
 
@@ -50,6 +55,10 @@ git diff --check
 ```
 
 The final benchmark ran after the tests completed. Fixed seed 20261106 generates the uniform RGB input. Seed 91403 resets k-means random draws before each repetition. Five warmups precede 30 measured samples. Cases run in the listed order in one process. Arrays and services are prepared outside timing. Assertions validate populated palette bounds, sample counts and match results after the timed call. The retained JSON field `medianMs` is the upper median, the 16th ordered sample out of 30. The report labels this explicitly. Sample p95 uses the nearest-rank value. Actual k-means iteration counts were not instrumented. The RGBA conversion row benchmarks a synthetic equivalent of the caller loop.
+
+## 2026-11-07 addendum
+
+A Claude Code session ran the addendum on branch `codex/rust-opportunities-20261106` at `3c0f265`, in a Linux container with Node 22.23.4 and rustc 1.97.0. Runtime source at that commit is identical to the snapshot. It installed dependencies with `pnpm install --frozen-lockfile --ignore-scripts`, built core and its dependencies, compiled [the kernel](rust-kernel/src/lib.rs) to `wasm32-unknown-unknown` with build output outside the repository, and ran the [harness](scripts/benchmark-rust-comparison.mjs). Before timing, the harness asserts that built core's `extractPalette` (with `Math.random` replaced by the shared LCG) equals its verbatim copy, and that every variant equals the copy. Exact commands, results and limits are in [review-rust-comparison.md](review-rust-comparison.md). The [validator](scripts/validate-audit.mjs) was re-run afterwards. Its regenerated `snapshot.json` was restored, so the file still records the audited snapshot.
 
 ## Interpretation limits
 
