@@ -4,7 +4,7 @@
 //
 // Variants, all driven by the same seeded LCG in place of Math.random:
 //   coreBuilt        packages/core/dist PaletteService.extractPalette (Math.random stubbed), RGB[] in
-//   current          verbatim copy of core's k-means helpers, RGB[] in (kernel only)
+//   current          copy of core's k-means helpers (unreachable guard clauses omitted), RGB[] in (kernel only)
 //   packedTS         Float64Array input, per-cluster counts/sums, no per-pass allocation
 //   packedTSFromRGB  packedTS including the RGB[] -> Float64Array packing
 //   packedTSSquared  packedTS comparing squared distances in the assignment loop only
@@ -40,7 +40,7 @@ const lcg = (seed) => {
   };
 };
 
-// ---------- current: PaletteService.ts k-means helpers, copied verbatim (Math.random -> rnd) ----------
+// ---------- current: PaletteService.ts k-means helpers (Math.random -> rnd; guards these inputs never reach omitted) ----------
 function rgbDistance(a, b) {
   const dr = a.r - b.r, dg = a.g - b.g, db = a.b - b.b;
   return Math.sqrt(dr * dr + dg * dg + db * db);
