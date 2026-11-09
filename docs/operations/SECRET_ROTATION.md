@@ -219,6 +219,11 @@ To verify it without changing what beta serves, **re-run rather than dispatch**:
 1. Open the latest successful run of *Deploy Beta OG Worker* (Workers Scripts and Routes) and choose *Re-run all jobs*. If you also want to check the Pages grant, do the same for *Deploy Beta Web App*.
 2. A re-run deploys the same commit with the current secrets, so beta keeps serving whatever branch it already had. A *workflow_dispatch* would deploy the selected branch over it.
 3. GitHub only allows re-runs within 30 days of the original run. If the latest beta run is older than that, the next ordinary beta push is the test.
+4. **Make sure the deploy actually ran.** A green run is not enough: open the *Deploy Beta …* job and confirm that its deploy and smoke-test steps executed and passed.
+
+   A re-run of a `push` run recomputes the `changes` job against the **current** `origin/main` (`git merge-base origin/main HEAD`). If that branch has since been merged into `main`, the merge base is `HEAD`, so the job emits `deploy=false`. The deploy job is then skipped, and the run still finishes green without using the token.
+
+   If that happens, keep the old token. Test the new one with the next ordinary beta push, or dispatch the workflow from `main`: a dispatch always deploys, so beta then serves `main`.
 
 Record the creation in the rotation log below the same way `CACHE_PURGE_API_TOKEN` was ("created, not rotated").
 
