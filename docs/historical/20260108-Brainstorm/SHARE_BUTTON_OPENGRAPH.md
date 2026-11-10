@@ -596,7 +596,7 @@ When a crawler visits a shared URL, the Cloudflare Worker returns:
 
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:site" content="@AsheJunius">
+  <meta name="twitter:site" content="@FlashGalatine">
   <meta name="twitter:title" content="Carmine Red - Complementary Harmony">
   <meta name="twitter:description" content="Explore Carmine Red's complementary color harmonies.">
   <meta name="twitter:image" content="https://og.xivdyetools.app/harmony/48227/complementary.png">

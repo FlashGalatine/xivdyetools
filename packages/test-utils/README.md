@@ -107,7 +107,7 @@ This package includes full TypeScript support. Cloudflare Workers types are incl
 
 🎮 **FFXIV**: [Lodestone Character](https://na.finalfantasyxiv.com/lodestone/character/7677106/)
 💻 **GitHub**: [@FlashGalatine](https://github.com/FlashGalatine)
-🐦 **X/Twitter**: [@AsheJunius](https://x.com/AsheJunius)
+🐦 **X/Twitter**: [@FlashGalatine](https://x.com/FlashGalatine)
 📺 **Twitch**: [flashgalatine](https://www.twitch.tv/flashgalatine)
 🌐 **BlueSky**: [projectgalatine.com](https://bsky.app/profile/projectgalatine.com)
 ❤️ **Patreon**: [ProjectGalatine](https://patreon.com/ProjectGalatine)

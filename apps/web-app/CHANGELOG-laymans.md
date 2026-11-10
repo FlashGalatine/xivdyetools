@@ -2,6 +2,11 @@
 
 ---
 
+## Web-App Version 5.16.12 — November 10, 2026
+
+### About
+- **New X/Twitter handle.** The X link in the About window now goes to @FlashGalatine, the account's new name.
+
 ## Web-App Version 5.16.11 — November 2, 2026
 
 ### Harmony Explorer, Dye Comparison and Accessibility Checker

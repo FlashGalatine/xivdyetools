@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.16.12] - 2026-11-10
+
+### Changed
+
+- **The X/Twitter handle is now @FlashGalatine.** The account was renamed from @AsheJunius, so the old
+  links pointed at a handle that no longer exists. The About modal's X link comes from core's
+  `SOCIAL_LINKS`, which now points at `https://x.com/FlashGalatine`, and the `twitter:site` and
+  `twitter:creator` tags in `src/index.html` name the new handle on share cards. No other source change.
+
 ## [5.16.11] - 2026-11-02
 
 ### Fixed

@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Manual Stain discovery/comparison (`audit:dyes`, issue #322).** Enumerates the complete XIVAPI sheet with canonical pins and bounded requests, then saves raw evidence and review-only JSON/Markdown reports. Verified offline replay preserves all six local locale sources and existing identity mappings. Builds and runtime dye access keep their existing offline behavior. The private scripts are covered by dedicated type/lint checks and fixture/subprocess tests. No dye values or public exports change.
 
+### Changed
+
+- **`SOCIAL_LINKS` X/Twitter URL is now `https://x.com/FlashGalatine`.** The account was renamed from
+  @AsheJunius, so the old URL pointed at a handle that no longer exists. The label and every other link
+  are unchanged.
+
 ## [5.16.0] - 2026-10-27
 
 ### Hardening adoption

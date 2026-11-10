@@ -35,6 +35,10 @@ Rules:
   path filter.
 -->
 
+## [5.9.10] - 2026-11-10
+### Changed
+- `/about` now links to @FlashGalatine on X, the account's new name.
+
 ## [5.9.9] - 2026-11-01
 ### Changed
 - The privacy policy now says what happens to your preset author name if XIVAuth can't return your characters when you sign in to the web app: the name already on your account stays, and a new account gets the "XIVAuth User" label. All six languages were updated.
