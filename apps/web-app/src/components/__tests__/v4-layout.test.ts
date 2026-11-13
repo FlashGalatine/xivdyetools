@@ -11,6 +11,9 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { initializeV4Layout } from '../v4-layout';
 import { showChangelogModal } from '../changelog-modal';
 import { createTestContainer, cleanupTestContainer } from '../../__tests__/component-utils';
+import type { Dye } from '@xivdyetools/types';
+import { PALETTE_SLOTS_CHANGED, type PaletteSlot } from '../palette-slots';
+import { isCustomDye } from '@shared/custom-dye';
 
 // Use vi.hoisted() to ensure mock functions are available before vi.mock() hoisting
 const {
@@ -169,18 +172,81 @@ class MockTool {
 }
 // Mixer accepts drawer picks (selectDye); Harmony's mock deliberately does not,
 // so the drawer-pick telemetry test can tell "taken by a tool" from "dropped".
+const mockToolSelectDye = vi.fn();
 class MockToolWithSelect extends MockTool {
-  selectDye() {}
+  selectDye(dye: unknown) {
+    mockToolSelectDye(dye);
+  }
+}
+/** Observation points for the slot-contract mock below. */
+const slotToolCalls = {
+  placeDyeAt: vi.fn(),
+  removeDyeAt: vi.fn(),
+  setPaletteTarget: vi.fn(),
+  selectDye: vi.fn(),
+  selectCustomColor: vi.fn(),
+};
+let mockSlots: PaletteSlot[] = [];
+let mockSlotsDense = false;
+
+/**
+ * A multi-input tool on the palette slot contract. Like a real tool, it
+ * announces a slot change from its container, so a routed pick also fires
+ * palette-slots-changed while the layout is still routing it.
+ */
+class MockSlotTool extends MockTool {
+  readonly paletteSlotMode = 'multi' as const;
+  private readonly container: HTMLElement;
+  constructor(container: HTMLElement) {
+    super();
+    this.container = container;
+  }
+  get paletteSlotsDense(): boolean {
+    return mockSlotsDense;
+  }
+  getPaletteSlots(): PaletteSlot[] {
+    return mockSlots;
+  }
+  placeDyeAt(index: number, dye: Dye) {
+    slotToolCalls.placeDyeAt(index, dye);
+    this.announceSlots();
+  }
+  removeDyeAt(index: number) {
+    slotToolCalls.removeDyeAt(index);
+    this.announceSlots();
+  }
+  setPaletteTarget(index: number | null) {
+    slotToolCalls.setPaletteTarget(index);
+  }
+  selectDye(dye: Dye) {
+    slotToolCalls.selectDye(dye);
+    this.announceSlots();
+  }
+  selectCustomColor(hex: string) {
+    slotToolCalls.selectCustomColor(hex);
+  }
+  private announceSlots() {
+    this.container.dispatchEvent(
+      new CustomEvent(PALETTE_SLOTS_CHANGED, { bubbles: true, composed: true })
+    );
+  }
 }
 vi.mock('@components/harmony-tool', () => ({ HarmonyTool: MockTool }));
 vi.mock('@components/mixer-tool', () => ({ MixerTool: MockToolWithSelect }));
+vi.mock('@components/comparison-tool', () => ({ ComparisonTool: MockSlotTool }));
 // The Presets tool is a Lit element created by tag name; the module import is
 // for side effects only, so an empty module lets the load complete.
 vi.mock('../v4/preset-tool', () => ({}));
 
+const mockClearPaletteTarget = vi.fn();
+
 // Mock V4LayoutShell custom element
 class MockV4LayoutShell extends HTMLElement {
   updateComplete = Promise.resolve(true);
+  paletteSlots: PaletteSlot[] = [];
+  paletteSlotMode: string | null = null;
+  paletteSlotsDense = false;
+  clearPaletteTarget = mockClearPaletteTarget;
 
   connectedCallback() {
     // Simulate shadow DOM structure
@@ -519,6 +585,182 @@ describe('V4Layout', () => {
       mockTelemetry.trackDyePick.mockClear();
       dropPick(true);
       expect(mockTelemetry.trackDyePick).not.toHaveBeenCalled();
+    });
+  });
+
+  // ============================================================================
+  // Palette slot routing
+  // ============================================================================
+
+  describe('palette slot routing', () => {
+    const JET = { id: 1, stainID: 102, name: 'Jet Black', hex: '#000000' } as unknown as Dye;
+    const SNOW = { id: 2, stainID: 101, name: 'Snow White', hex: '#FFFFFF' } as unknown as Dye;
+
+    function slot(label: string, dye: Dye | null): PaletteSlot {
+      return { label, targetLabel: `Choosing dye ${label}`, dye };
+    }
+
+    function shell(): MockV4LayoutShell {
+      return container.querySelector('v4-layout-shell') as unknown as MockV4LayoutShell;
+    }
+
+    /** Boot straight into a tool and wait until it is mounted. */
+    async function bootInto(toolId: string): Promise<void> {
+      mockGetCurrentToolId.mockReturnValue(toolId);
+      await initializeV4Layout(container);
+    }
+
+    function pick(dye: Dye, target: number | null, random?: boolean): void {
+      shell().dispatchEvent(
+        new CustomEvent('dye-selected', {
+          detail: { dye, target, ...(random ? { random: true } : {}) },
+        })
+      );
+    }
+
+    beforeEach(() => {
+      Object.values(slotToolCalls).forEach((fn) => fn.mockReset());
+      mockSlots = [slot('1', JET), slot('2', null)];
+      mockSlotsDense = false;
+    });
+
+    afterEach(() => {
+      mockGetCurrentToolId.mockReturnValue('harmony');
+    });
+
+    it('pushes the mounted tool’s slots and mode to the shell', async () => {
+      mockSlotsDense = true;
+      await bootInto('comparison');
+
+      expect(shell().paletteSlotMode).toBe('multi');
+      expect(shell().paletteSlots).toEqual(mockSlots);
+      expect(shell().paletteSlotsDense).toBe(true);
+    });
+
+    it('routes an untargeted pick of an unheld dye to selectDye', async () => {
+      await bootInto('comparison');
+
+      pick(SNOW, null);
+
+      expect(slotToolCalls.selectDye).toHaveBeenCalledWith(SNOW);
+      expect(slotToolCalls.placeDyeAt).not.toHaveBeenCalled();
+      expect(slotToolCalls.removeDyeAt).not.toHaveBeenCalled();
+      expect(mockTelemetry.trackDyePick).toHaveBeenCalledWith(101, 'drawer');
+    });
+
+    it('routes an untargeted pick of a held dye to removeDyeAt and does not record a dye pick', async () => {
+      await bootInto('comparison');
+
+      pick(JET, null);
+
+      expect(slotToolCalls.removeDyeAt).toHaveBeenCalledWith(0);
+      expect(slotToolCalls.selectDye).not.toHaveBeenCalled();
+      expect(mockTelemetry.trackDyePick).not.toHaveBeenCalled();
+    });
+
+    it('routes a targeted pick to placeDyeAt with the target index', async () => {
+      await bootInto('comparison');
+      const placed = [slot('1', JET), slot('2', SNOW)];
+      slotToolCalls.placeDyeAt.mockImplementation(() => {
+        mockSlots = placed;
+      });
+
+      pick(SNOW, 1);
+
+      expect(slotToolCalls.placeDyeAt).toHaveBeenCalledWith(1, SNOW);
+      expect(slotToolCalls.selectDye).not.toHaveBeenCalled();
+      expect(mockTelemetry.trackDyePick).toHaveBeenCalledWith(101, 'drawer');
+      // The shell clears the target it routed; the layout must not clear it early
+      expect(mockClearPaletteTarget).not.toHaveBeenCalled();
+      expect(shell().paletteSlots).toEqual(placed);
+    });
+
+    it('treats a target outside the tool’s slots as no target', async () => {
+      await bootInto('comparison');
+
+      pick(SNOW, 5);
+
+      expect(slotToolCalls.placeDyeAt).not.toHaveBeenCalled();
+      expect(slotToolCalls.selectDye).toHaveBeenCalledWith(SNOW);
+    });
+
+    it('does nothing for a targeted pick of the target slot’s own dye', async () => {
+      await bootInto('comparison');
+
+      pick(JET, 0);
+
+      expect(slotToolCalls.placeDyeAt).not.toHaveBeenCalled();
+      expect(slotToolCalls.removeDyeAt).not.toHaveBeenCalled();
+      expect(slotToolCalls.selectDye).not.toHaveBeenCalled();
+      expect(mockTelemetry.trackDyePick).not.toHaveBeenCalled();
+    });
+
+    it('never removes on a random pick', async () => {
+      await bootInto('comparison');
+
+      pick(JET, null, true);
+
+      expect(slotToolCalls.removeDyeAt).not.toHaveBeenCalled();
+      expect(slotToolCalls.selectDye).not.toHaveBeenCalled();
+      expect(slotToolCalls.placeDyeAt).not.toHaveBeenCalled();
+    });
+
+    it('routes a targeted custom color to placeDyeAt with a custom dye', async () => {
+      await bootInto('comparison');
+
+      shell().dispatchEvent(
+        new CustomEvent('custom-color-selected', { detail: { hex: '#123456', target: 1 } })
+      );
+
+      expect(slotToolCalls.placeDyeAt).toHaveBeenCalledTimes(1);
+      const [index, dye] = slotToolCalls.placeDyeAt.mock.calls[0] as [number, Dye];
+      expect(index).toBe(1);
+      expect(isCustomDye(dye)).toBe(true);
+      expect(dye.hex.toUpperCase()).toBe('#123456');
+      expect(slotToolCalls.selectCustomColor).not.toHaveBeenCalled();
+
+      // Untargeted, the tool's own custom-color path still takes it
+      shell().dispatchEvent(
+        new CustomEvent('custom-color-selected', { detail: { hex: '#654321', target: null } })
+      );
+      expect(slotToolCalls.selectCustomColor).toHaveBeenCalledWith('#654321');
+      expect(slotToolCalls.placeDyeAt).toHaveBeenCalledTimes(1);
+    });
+
+    it('forwards palette-target-change to setPaletteTarget', async () => {
+      await bootInto('comparison');
+
+      shell().dispatchEvent(new CustomEvent('palette-target-change', { detail: { index: 1 } }));
+      shell().dispatchEvent(new CustomEvent('palette-target-change', { detail: { index: null } }));
+
+      expect(slotToolCalls.setPaletteTarget.mock.calls).toEqual([[1], [null]]);
+    });
+
+    it('re-syncs slots on palette-slots-changed and clears a target the pick did not cause', async () => {
+      await bootInto('comparison');
+      const toolContainer = shell().shadowRoot!.querySelector('.v4-tool-container')!;
+
+      // The tool's own Remove button (or a share-link load) changed its slots
+      mockSlots = [slot('1', null), slot('2', null)];
+      toolContainer.dispatchEvent(
+        new CustomEvent(PALETTE_SLOTS_CHANGED, { bubbles: true, composed: true })
+      );
+
+      expect(mockClearPaletteTarget).toHaveBeenCalledTimes(1);
+      expect(shell().paletteSlots).toEqual(mockSlots);
+    });
+
+    it('leaves a tool without the contract on the old selectDye path', async () => {
+      await bootInto('mixer');
+
+      expect(shell().paletteSlotMode).toBeNull();
+      expect(shell().paletteSlots).toEqual([]);
+      expect(shell().paletteSlotsDense).toBe(false);
+
+      pick(JET, 0);
+
+      expect(mockToolSelectDye).toHaveBeenCalledWith(JET);
+      expect(mockTelemetry.trackDyePick).toHaveBeenCalledWith(102, 'drawer');
     });
   });
 });
