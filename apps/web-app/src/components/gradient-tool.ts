@@ -57,6 +57,16 @@ import {
   getDefaultConfig,
 } from '@shared/tool-config-types';
 import { isDyeExcluded, filterDyes } from '@shared/dye-filter-utils';
+import {
+  OPEN_PALETTE_DRAWER,
+  PALETTE_SLOTS_CHANGED,
+  SLOT_TARGET_BORDER,
+} from '@components/palette-slots';
+import type {
+  OpenPaletteDrawerDetail,
+  PaletteSlot,
+  PaletteSlotHost,
+} from '@components/palette-slots';
 
 // ============================================================================
 // Types and Constants
@@ -171,7 +181,6 @@ function isInterpolationMode(value: unknown): value is InterpolationMode {
 }
 
 const ACCENT_SOFT = 'color-mix(in srgb, var(--theme-primary) 14%, transparent)';
-const ACCENT_BORDER = 'color-mix(in srgb, var(--theme-primary) 45%, transparent)';
 
 /** Shared 5.0 tier ramps (same as result-card / 7C Duel / 9C Ledger). */
 const TIER_RAMP_DARK = ['#5bbd68', '#8bc34a', '#ffc107', '#f4645a'] as const;
@@ -198,7 +207,9 @@ const ICON_END_ANCHOR =
  * Creates smooth color transitions between two dyes with intermediate matches.
  */
 
-export class GradientTool extends BaseComponent {
+export class GradientTool extends BaseComponent implements PaletteSlotHost {
+  readonly paletteSlotMode = 'multi' as const;
+
   private options: GradientToolOptions;
 
   // State - selectedDyes[0] = start, selectedDyes[1] = end
@@ -255,7 +266,7 @@ export class GradientTool extends BaseComponent {
   private summaryCluster: HTMLElement | null = null;
   private exportButton: HTMLElement | null = null;
 
-  /** 4C: armed endpoint — the dye-palette drawer's next pick lands here */
+  /** The endpoint the palette is targeting; drawn state only, set by setPaletteTarget */
   private activeEndpoint: 0 | 1 | null = null;
   /** 4C: focused rail step (accent ring on the row + selected card below) */
   private focusedStep: number | null = null;
@@ -690,10 +701,10 @@ export class GradientTool extends BaseComponent {
     const styles = document.createElement('style');
     styles.textContent = `
       .v5-grad-workspace { padding: 32px; }
-      .v5-grad-ep-card:hover { border-color: ${ACCENT_BORDER} !important; }
+      .v5-grad-ep-card:hover { border-color: ${SLOT_TARGET_BORDER} !important; }
       .v5-grad-swap:hover:not([disabled]) { background: var(--theme-card-hover); }
       .v5-grad-pin:hover:not([disabled]) { background: var(--theme-card-hover); }
-      .v5-grad-row:hover { border-color: ${ACCENT_BORDER} !important; }
+      .v5-grad-row:hover { border-color: ${SLOT_TARGET_BORDER} !important; }
       @media (max-width: 768px) {
         .v5-grad-workspace { padding: 16px 12px 24px; }
       }
@@ -884,9 +895,9 @@ export class GradientTool extends BaseComponent {
   }
 
   /**
-   * ENDPOINTS ROW (4C): FROM card + swap + TO card. Clicking a card arms
-   * that endpoint — the dye-palette drawer's next selection lands in it via
-   * the existing selectDye() path. Swap exchanges start/end; pins clear via
+   * ENDPOINTS ROW (4C): FROM card + swap + TO card. Clicking a card opens the
+   * palette targeted at that endpoint; the layout then routes the pick through
+   * placeDyeAt(). Swap exchanges start/end; pins clear via
    * the endpoints-key check in calculateInterpolation().
    */
   private updateEndpointCards(): void {
@@ -931,11 +942,12 @@ export class GradientTool extends BaseComponent {
       className: 'v5-grad-ep-card',
       attributes: {
         type: 'button',
+        'data-palette-slot': String(slot),
         'data-testid': slot === 0 ? 'gradient-start-node' : 'gradient-end-node',
         title: LanguageService.t(
           slot === 0 || needsStart ? 'gradient.clickToSelectStart' : 'gradient.clickToSelectEnd'
         ),
-        style: `flex: 1; min-width: 0; display: flex; align-items: center; gap: 9px; min-height: 52px; padding: 7px 9px; border-radius: 11px; cursor: pointer; text-align: left; font-family: inherit; background: var(--theme-card-background); border: 1px solid ${active ? ACCENT_BORDER : 'var(--theme-border)'};`,
+        style: `flex: 1; min-width: 0; display: flex; align-items: center; gap: 9px; min-height: 52px; padding: 7px 9px; border-radius: 11px; cursor: pointer; text-align: left; font-family: inherit; background: var(--theme-card-background); border: 1px solid ${active ? SLOT_TARGET_BORDER : 'var(--theme-border)'};`,
       },
     }) as HTMLButtonElement;
     card.disabled = needsStart;
@@ -978,9 +990,13 @@ export class GradientTool extends BaseComponent {
 
     this.on(card, 'click', () => {
       if (needsStart) return;
-      // Arm this endpoint: the next palette selection replaces it
-      this.activeEndpoint = slot;
-      this.updateEndpointCards();
+      this.container.dispatchEvent(
+        new CustomEvent<OpenPaletteDrawerDetail>(OPEN_PALETTE_DRAWER, {
+          detail: { slot },
+          bubbles: true,
+          composed: true,
+        })
+      );
     });
     return card;
   }
@@ -1118,7 +1134,7 @@ export class GradientTool extends BaseComponent {
             title: LanguageService.t(isPinned ? 'gradient.unpinStep' : 'gradient.pinStep'),
             'aria-pressed': isPinned ? 'true' : 'false',
             ...(canPin ? {} : { disabled: '' }),
-            style: `width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; padding: 0; border-radius: 9px; cursor: ${canPin ? 'pointer' : 'default'}; border: 1px solid ${isPinned ? ACCENT_BORDER : 'var(--theme-border)'}; background: ${isPinned ? ACCENT_SOFT : 'transparent'}; color: ${isPinned ? 'var(--theme-primary)' : 'var(--theme-text-muted)'}; opacity: ${canPin ? '1' : '0.45'};`,
+            style: `width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; padding: 0; border-radius: 9px; cursor: ${canPin ? 'pointer' : 'default'}; border: 1px solid ${isPinned ? SLOT_TARGET_BORDER : 'var(--theme-border)'}; background: ${isPinned ? ACCENT_SOFT : 'transparent'}; color: ${isPinned ? 'var(--theme-primary)' : 'var(--theme-text-muted)'}; opacity: ${canPin ? '1' : '0.45'};`,
           },
         }) as HTMLButtonElement;
         pinBtn.innerHTML = isPinned ? ICON_PIN_FILLED : ICON_PIN_OUTLINE;
@@ -1152,7 +1168,7 @@ export class GradientTool extends BaseComponent {
           type: 'button',
           'data-gradient-rail-step': String(i + 1),
           title: dye ? `${name} · ${deLabel}` : LanguageService.t('gradient.noMatchesFound'),
-          style: `display: flex; align-items: stretch; width: 100%; height: 44px; padding: 0; overflow: hidden; border-radius: 8px; cursor: pointer; text-align: left; font-family: inherit; border: 1px solid ${isFocused ? ACCENT_BORDER : 'var(--theme-border)'}; box-shadow: ${isFocused ? `0 0 0 2px ${ACCENT_SOFT}` : 'none'}; background: var(--theme-card-background);`,
+          style: `display: flex; align-items: stretch; width: 100%; height: 44px; padding: 0; overflow: hidden; border-radius: 8px; cursor: pointer; text-align: left; font-family: inherit; border: 1px solid ${isFocused ? SLOT_TARGET_BORDER : 'var(--theme-border)'}; box-shadow: ${isFocused ? `0 0 0 2px ${ACCENT_SOFT}` : 'none'}; background: var(--theme-card-background);`,
         },
       }) as HTMLButtonElement;
 
@@ -1791,6 +1807,56 @@ export class GradientTool extends BaseComponent {
   private updateAfterSlotSelection(): void {
     this.saveSelectedDyes();
     this.updateInterpolation();
+    this.notifyPaletteSlotsChanged();
+  }
+
+  // ============================================================================
+  // Palette slot contract (PaletteSlotHost)
+  // ============================================================================
+
+  getPaletteSlots(): PaletteSlot[] {
+    return ([0, 1] as const).map((i) => {
+      const label = LanguageService.t(i === 0 ? 'gradient.fromLabel' : 'gradient.toLabel');
+      return {
+        label,
+        targetLabel: LanguageService.tInterpolate('colorPalette.choosingEndpoint', { slot: label }),
+        dye: i === 0 ? this.startDye : this.endDye,
+        // TO cannot be targeted before FROM exists (the selection model fills FROM first)
+        disabled: i === 1 && !this.startDye,
+      };
+    });
+  }
+
+  /** Put `dye` in endpoint `index`; setEndpoint swaps when the other endpoint holds it. */
+  placeDyeAt(index: number, dye: Dye): void {
+    if ((index !== 0 && index !== 1) || !dye) return;
+    this.setEndpoint(index, dye);
+  }
+
+  removeDyeAt(index: number): void {
+    if (index === 1) {
+      this.selectedDyes = this.selectedDyes.slice(0, 1);
+    } else if (index === 0) {
+      // The dense model has no gap: TO's dye (if any) becomes FROM
+      this.selectedDyes = this.selectedDyes.slice(1, 2);
+    } else {
+      return;
+    }
+    this.currentSteps = [];
+    this.focusedStep = null;
+    if (this.selectedDyes.length === 0) StorageService.removeItem(STORAGE_KEYS.selectedDyes);
+    this.updateAfterSlotSelection();
+  }
+
+  setPaletteTarget(index: number | null): void {
+    this.activeEndpoint = index === 0 || index === 1 ? index : null;
+    this.updateEndpointCards();
+  }
+
+  private notifyPaletteSlotsChanged(): void {
+    this.container.dispatchEvent(
+      new CustomEvent(PALETTE_SLOTS_CHANGED, { bubbles: true, composed: true })
+    );
   }
 
   /**
@@ -1877,7 +1943,6 @@ export class GradientTool extends BaseComponent {
   public clearDyes(): void {
     this.selectedDyes = [];
     this.currentSteps = [];
-    this.activeEndpoint = null;
     this.focusedStep = null;
 
     // Clear from storage (main key used for persistence)
@@ -1893,6 +1958,7 @@ export class GradientTool extends BaseComponent {
     this.showEmptyState(true);
     this.updateEndpointCards();
     this.renderPinRail();
+    this.notifyPaletteSlotsChanged();
   }
 
   /**
@@ -1903,13 +1969,6 @@ export class GradientTool extends BaseComponent {
    */
   public selectDye(dye: Dye): void {
     if (!dye) return;
-
-    // 4C endpoints row: a card click arms an endpoint — palette selections
-    // land in the armed slot instead of the legacy fill-then-shift flow.
-    if (this.activeEndpoint !== null) {
-      this.setEndpoint(this.activeEndpoint, dye);
-      return;
-    }
 
     // Check if this dye is already selected
     const isAlreadyStart = this.startDye && this.startDye.id === dye.id;
@@ -1957,8 +2016,7 @@ export class GradientTool extends BaseComponent {
     }
 
     // Persist and update UI
-    this.saveSelectedDyes();
-    this.updateInterpolation();
+    this.updateAfterSlotSelection();
   }
 
   /**
