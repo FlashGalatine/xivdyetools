@@ -44,9 +44,10 @@ import { setupMarketBoardListeners } from '@services/pricing-mixin';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
 import { hasActiveFilters, isDyeExcluded } from '@shared/dye-filter-utils';
-import { makeCustomDye, isCustomDye } from '@shared/custom-dye';
+import { makeCustomDye } from '@shared/custom-dye';
 import type { Dye, PriceData } from '@xivdyetools/types';
 import {
+  findHeldSlot,
   notifyPaletteSlotsChanged,
   type PaletteSlot,
   type PaletteSlotSource,
@@ -2081,14 +2082,7 @@ export class HarmonyTool extends BaseComponent implements PaletteSlotSource {
   public selectDye(dye: Dye): void {
     if (!dye) return;
     // Picking the dye already held changes nothing
-    if (
-      this.selectedDye &&
-      !isCustomDye(this.selectedDye) &&
-      !isCustomDye(dye) &&
-      this.selectedDye.id === dye.id
-    ) {
-      return;
-    }
+    if (findHeldSlot(this.getPaletteSlots(), dye) !== -1) return;
 
     this.selectedDye = dye;
 

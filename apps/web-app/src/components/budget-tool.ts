@@ -48,11 +48,12 @@ import { ThemeService } from '@services/theme-service';
 import { ICON_TOOL_BUDGET } from '@shared/tool-icons';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
-import { makeCustomDye, isCustomDye } from '@shared/custom-dye';
+import { makeCustomDye } from '@shared/custom-dye';
 import { formatGil, formatNumber } from '@shared/format';
 import type { Dye, DyeId, PriceData } from '@xivdyetools/types';
 import {
   requestPalette,
+  findHeldSlot,
   notifyPaletteSlotsChanged,
   type PaletteSlot,
   type PaletteSlotSource,
@@ -2091,14 +2092,7 @@ export class BudgetTool extends BaseComponent implements PaletteSlotSource {
   public selectDye(dye: Dye): void {
     if (!dye) return;
     // Picking the dye already held changes nothing
-    if (
-      this.targetDye &&
-      !isCustomDye(this.targetDye) &&
-      !isCustomDye(dye) &&
-      this.targetDye.id === dye.id
-    ) {
-      return;
-    }
+    if (findHeldSlot(this.getPaletteSlots(), dye) !== -1) return;
 
     this.targetDye = dye;
 

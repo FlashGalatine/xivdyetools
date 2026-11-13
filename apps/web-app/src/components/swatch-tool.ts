@@ -42,10 +42,10 @@ import {
 } from '@shared/tool-icons';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
-import { isCustomDye } from '@shared/custom-dye';
 import type { Dye, PriceData } from '@xivdyetools/types';
 import {
   requestPalette,
+  findHeldSlot,
   notifyPaletteSlotsChanged,
   type PaletteSlot,
   type PaletteSlotSource,
@@ -751,7 +751,7 @@ export class SwatchTool extends BaseComponent implements PaletteSlotSource {
   public selectDye(dye: Dye): void {
     if (!dye) return;
     // Picking the dye already held changes nothing
-    if (this.reverseDye && !isCustomDye(dye) && this.reverseDye.id === dye.id) return;
+    if (findHeldSlot(this.getPaletteSlots(), dye) !== -1) return;
     this.reverseDyeHex = dye.hex;
     this.reverseDye = dye;
     this.reverseDyeName = LanguageService.getDyeName(dye.itemID) || dye.name;

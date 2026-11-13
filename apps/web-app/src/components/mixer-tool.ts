@@ -1802,6 +1802,7 @@ export class MixerTool extends BaseComponent implements PaletteSlotHost {
   private createDyeSlot(index: 0 | 1 | 2): HTMLElement {
     const dye = this.selectedDyes[index];
     const size = SLOT_SIZE.input;
+    const slotName = LanguageService.t(index === 0 ? 'mixer.dye1' : 'mixer.dye2');
 
     const slot = this.createElement('button', {
       className: 'mixer-dye-slot',
@@ -1809,8 +1810,8 @@ export class MixerTool extends BaseComponent implements PaletteSlotHost {
         type: 'button',
         // Name the slot (and its dye) instead of leaving "+" / digit-and-name
         'aria-label': dye
-          ? `${LanguageService.t(index === 0 ? 'mixer.dye1' : 'mixer.dye2')}: ${LanguageService.getDyeName(dye.itemID) || dye.name}`
-          : LanguageService.t(index === 0 ? 'mixer.dye1' : 'mixer.dye2'),
+          ? `${slotName}: ${LanguageService.getDyeName(dye.itemID) || dye.name}`
+          : slotName,
         'data-slot-index': String(index),
         'data-palette-slot': String(index),
         style: `
