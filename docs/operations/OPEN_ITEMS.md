@@ -1,6 +1,6 @@
 # Open operational items
 
-**Status:** living list, last walked 2026-09-05; individual items updated through 2026-10-27.
+**Status:** living list, last walked 2026-09-05; individual items updated through 2026-11-09.
 **Owner:** the maintainer — every item needs credentials CI does not have (GitHub settings,
 the Cloudflare dashboard, `wrangler` against production, a browser session).
 **Where it came from:** the 5.0 post-merge checklist
@@ -47,13 +47,19 @@ Verified with `gh api` on 2026-09-05; the state noted is the state found.
       [Verification evidence](../audits/2026-10-26-security/evidence/remediation-finding-051-2026-10-26.md).
 - [ ] **Branch protection on `main`: turn on linear history.** Still disabled after the
       narrowly scoped 2026-10-26 change; this separate item was not selected.
-- [ ] **`CLOUDFLARE_API_TOKEN` scoped to Workers Scripts: Edit + Pages: Edit on the account, and
-      Workers Routes: Edit on the `xivdyetools.app` zone — no KV / D1 / R2 Edit** (2026-08-29
-      FINDING-030, [SECRET_ROTATION.md](SECRET_ROTATION.md) §7). Inspect the live token's grants
-      first; re-issue only if it carries storage grants, then update the secret, re-run one
-      deploy via *workflow_dispatch*, revoke the old token, log the date. The token's *homing* is
-      done: it is an environment secret on `production`, `CLOUDFLARE_API_TOKEN_BETA` is one on
-      `beta`, and no repository-level copy of either exists (verified 2026-09-05).
+- [x] **`CLOUDFLARE_API_TOKEN` scoped to Workers Scripts: Edit + Pages: Edit on the account, and
+      Workers Routes: Edit on the `xivdyetools.app` zone — no KV / D1 / R2 Edit** (2026-08-29 audit
+      FINDING-030). Done 2026-11-09 during the quarterly rotation. A new token was issued at exactly
+      those grants with an expiry of 2027-03-01, and the *Deploy API Worker*, *Deploy Presets API*
+      and *Deploy OG Worker* dispatches from `main` passed with it. Between them those runs
+      showed that the token can upload Worker scripts, attach custom domains and zone routes,
+      publish static assets, and deploy Workers that carry KV, D1 and R2 bindings. None of the
+      three deploys Pages, so the production token's Pages grant has not been exercised yet; the
+      next *Deploy Web App* run will be its first use. The old token was then revoked.
+      `CLOUDFLARE_API_TOKEN_BETA` was re-issued the same way and verified on beta.
+      [Rotation log](SECRET_ROTATION.md#rotation-log). The tokens' *homing* was already done: each
+      is an environment secret (`production` and `beta`), with no repository-level copy (verified
+      2026-09-05).
 - [x] 2026-10-03 audit FINDING-023 / 2026-10-26 FINDING-028: deleted the four repository-scope
       Discord secret copies on 2026-10-26 after verifying successful production command registration.
       `DISCORD_TOKEN` and `MODERATION_DISCORD_TOKEN` remain on `production`;
@@ -132,13 +138,34 @@ checklist §2.
 
 ## 3. Secrets
 
+- [ ] **Rotate the Discord credentials after the M-line release → prod.** These are the main,
+      moderation and beta bot tokens, plus `DISCORD_CLIENT_SECRET`. The schedule only calls for
+      rotating them after a compromise. FINDING-023's condition for resetting the bot tokens was
+      never met: every run of the workflows that read the production bot tokens has been on
+      `main` (checked 2026-11-09). So this is hygiene, and the main bot token has no logged
+      rotation. It was deferred from the 2026-11-09 rotation to 2026-11-15:
+  - Start only **after the M-line merges' deploys have finished green**. Both bot deploys run
+    *Register Discord commands* with the GitHub copy, so resetting a token while one of them is
+    pending would turn that step red.
+  - Per [SECRET_ROTATION.md](SECRET_ROTATION.md) §4–§5, update every holder of a token in one
+    sitting, pasting the value at wrangler's prompt.
+  - Then dispatch *Deploy Discord Worker* and *Deploy Moderation Worker* from `main` to prove
+    the new GitHub copies.
+  - Log it. Resetting the moderation bot token also settles the next item.
 - [ ] Confirm production `moderation-worker` `DISCORD_TOKEN` and `discord-worker`
       `MODERATION_BOT_TOKEN` carry the token that was reset on 2026-08-29 (moderation embeds and
       channel posts 401 otherwise) — [SECRET_ROTATION.md](SECRET_ROTATION.md) rotation log.
 - [ ] Any secret set with a bare `wrangler secret put` before 2026-08-21 landed on the **dev**
       worker — re-set it on production (`--env production`) per SECRET_ROTATION.md.
-- [ ] Optional but recommended: rotate `BOT_SIGNING_SECRET` (all three consumers, one window)
-      now that the v2 scheme is live; log it.
+      2026-11-09: `wrangler secret list` on all four production workers showed every secret the
+      code reads, and the four quarterly secrets were re-set there that day. The Discord
+      credentials will be re-set by the item above. What remains unproven is whether the older
+      configuration values (`PERSPECTIVE_API_KEY`, `MODERATOR_IDS`, the channel IDs,
+      `STATS_AUTHORIZED_USERS`) are current on production. Close this item after the Discord
+      rotation, once those have been checked.
+- [x] Rotate `BOT_SIGNING_SECRET` (all three consumers, one window) now that the v2 scheme is
+      live. Done 2026-11-09 with the quarterly rotation, together with `BOT_API_SECRET`,
+      `JWT_SECRET` and `INTERNAL_WEBHOOK_SECRET` ([rotation log](SECRET_ROTATION.md#rotation-log)).
 
 ## 4. Manual verification still to run
 
