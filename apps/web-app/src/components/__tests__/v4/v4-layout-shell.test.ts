@@ -443,6 +443,377 @@ describe('V4LayoutShell — palette drawer default + first-run hint', () => {
   });
 
   /*
+   * Slot-aware picking (issue 422): the shell owns the palette target (the
+   * slot the next pick fills) and the close rule (on a phone the palette
+   * closes after a pick only when a slot tap opened it).
+   */
+  describe('slot-aware palette', () => {
+    type SlotShell = ShellEl & {
+      paletteSlots: Array<{ label: string; targetLabel: string; dye: unknown; disabled?: boolean }>;
+      paletteSlotMode: 'single' | 'multi' | null;
+      paletteSlotsDense: boolean;
+      readonly paletteTarget: number | null;
+      clearPaletteTarget(): void;
+    };
+
+    const emptySlots = (n: number) =>
+      Array.from({ length: n }, (_, i) => ({
+        label: String(i + 1),
+        targetLabel: `Choosing dye ${i + 1} of ${n}`,
+        dye: null,
+      }));
+
+    async function mountMulti(mobile: boolean, slotCount = 4) {
+      const vp = stubViewport(mobile);
+      const el = (await mountShell('comparison')) as SlotShell;
+      el.paletteSlots = emptySlots(slotCount);
+      el.paletteSlotMode = 'multi';
+      // Tool content is slotted light DOM: the slot buttons live there.
+      for (let i = 0; i < slotCount; i++) {
+        const btn = document.createElement('button');
+        btn.dataset.paletteSlot = String(i);
+        el.appendChild(btn);
+      }
+      await el.updateComplete;
+      const targetChanges: Array<number | null> = [];
+      el.addEventListener('palette-target-change', (e) =>
+        targetChanges.push((e as CustomEvent<{ index: number | null }>).detail.index)
+      );
+      return { el, vp, targetChanges };
+    }
+
+    const slotTap = (el: ShellEl, slot?: number) =>
+      el
+        .querySelector(
+          slot === undefined ? '[data-palette-slot]' : `[data-palette-slot="${slot}"]`
+        )!
+        .dispatchEvent(
+          new CustomEvent('open-palette-drawer', {
+            detail: slot === undefined ? undefined : { slot },
+            bubbles: true,
+            composed: true,
+          })
+        );
+
+    const isOpen = (el: ShellEl) => drawer(el)!.hasAttribute('is-open');
+
+    /** Fire a palette pick and return the detail the shell re-emits. */
+    function pick(el: ShellEl, name = 'dye-selected', detail: unknown = { dye: { id: 5 } }) {
+      const heard = vi.fn();
+      el.addEventListener(name, heard);
+      drawer(el)!.dispatchEvent(new CustomEvent(name, { detail, bubbles: true, composed: true }));
+      el.removeEventListener(name, heard);
+      expect(heard).toHaveBeenCalledTimes(1);
+      return (heard.mock.calls[0][0] as CustomEvent).detail;
+    }
+
+    const strip = (el: ShellEl, index: number | null) =>
+      drawer(el)!.dispatchEvent(
+        new CustomEvent('slot-target-change', {
+          detail: { index },
+          bubbles: true,
+          composed: true,
+        })
+      );
+
+    it('a slot tap opens the palette, sets the target and announces it', async () => {
+      const { el, targetChanges } = await mountMulti(true);
+
+      slotTap(el, 2);
+      await el.updateComplete;
+
+      expect(isOpen(el)).toBe(true);
+      expect(el.paletteTarget).toBe(2);
+      expect(targetChanges).toEqual([2]);
+      // The palette is handed the slot contract and the target.
+      const d = drawer(el) as unknown as Record<string, unknown>;
+      expect(d.slotTarget).toBe(2);
+      expect(d.slotMode).toBe('multi');
+      expect(d.slots).toBe(el.paletteSlots);
+    });
+
+    it('a dense list collapses an empty slot tap to the first empty slot', async () => {
+      const { el } = await mountMulti(false);
+      el.paletteSlotsDense = true;
+
+      slotTap(el, 3);
+      await el.updateComplete;
+
+      expect(el.paletteTarget).toBe(0);
+    });
+
+    it('stamps the target on the re-emitted dye-selected and then clears it', async () => {
+      const { el, targetChanges } = await mountMulti(false);
+      slotTap(el, 1);
+      await el.updateComplete;
+
+      const detail = pick(el, 'dye-selected', { dye: { id: 7 }, random: true });
+      await el.updateComplete;
+
+      expect(detail).toEqual({ dye: { id: 7 }, random: true, target: 1 });
+      expect(el.paletteTarget).toBeNull();
+      expect(targetChanges).toEqual([1, null]);
+      expect((drawer(el) as unknown as Record<string, unknown>).slotTarget).toBeNull();
+    });
+
+    it('stamps the target on the re-emitted custom-color-selected and then clears it', async () => {
+      const { el } = await mountMulti(false);
+      slotTap(el, 3);
+      await el.updateComplete;
+
+      const detail = pick(el, 'custom-color-selected', { hex: '#112233' });
+
+      expect(detail).toEqual({ hex: '#112233', target: 3 });
+      expect(el.paletteTarget).toBeNull();
+    });
+
+    it('closes after a pick on a phone when a slot tap opened it', async () => {
+      const { el } = await mountMulti(true);
+      slotTap(el, 0);
+      await el.updateComplete;
+
+      pick(el);
+      await el.updateComplete;
+
+      expect(isOpen(el)).toBe(false);
+    });
+
+    it('stays open after a pick on a phone when the round button opened it', async () => {
+      const { el } = await mountMulti(true);
+      fab(el).click();
+      await el.updateComplete;
+
+      const detail = pick(el);
+      await el.updateComplete;
+
+      expect(isOpen(el)).toBe(true);
+      expect(detail.target).toBeNull();
+    });
+
+    it('never closes after a pick on desktop', async () => {
+      const { el } = await mountMulti(false);
+      slotTap(el, 2);
+      await el.updateComplete;
+
+      pick(el);
+      await el.updateComplete;
+
+      expect(isOpen(el)).toBe(true);
+    });
+
+    it('a bare open-palette-drawer sets no target but still closes after the pick on a phone', async () => {
+      const { el, targetChanges } = await mountMulti(true);
+      slotTap(el);
+      await el.updateComplete;
+      expect(isOpen(el)).toBe(true);
+      expect(el.paletteTarget).toBeNull();
+      expect(targetChanges).toEqual([]);
+
+      const detail = pick(el);
+      await el.updateComplete;
+
+      expect(detail.target).toBeNull();
+      expect(isOpen(el)).toBe(false);
+    });
+
+    it.each([
+      ['✕', (el: ShellEl) => drawer(el)!.dispatchEvent(new CustomEvent('drawer-toggle'))],
+      [
+        'scrim',
+        (el: ShellEl) =>
+          [...el.shadowRoot!.querySelectorAll<HTMLElement>('.v4-drawer-overlay')]
+            .find((n) => n.classList.contains('visible'))!
+            .click(),
+      ],
+    ])('closing with %s clears the target and the slot-tap flag', async (_label, close) => {
+      const { el, targetChanges } = await mountMulti(true);
+      slotTap(el, 2);
+      await el.updateComplete;
+
+      close(el);
+      await el.updateComplete;
+
+      expect(isOpen(el)).toBe(false);
+      expect(el.paletteTarget).toBeNull();
+      expect(targetChanges).toEqual([2, null]);
+
+      // Reopened from the round button, a pick neither closes nor targets.
+      fab(el).click();
+      await el.updateComplete;
+      const detail = pick(el);
+      await el.updateComplete;
+      expect(isOpen(el)).toBe(true);
+      expect(detail.target).toBeNull();
+    });
+
+    it('the round button closing the palette clears the target', async () => {
+      const { el } = await mountMulti(true);
+      slotTap(el, 1);
+      await el.updateComplete;
+      // On a phone the FAB sits under the open sheet; drive its handler anyway.
+      fab(el).click();
+      await el.updateComplete;
+
+      expect(isOpen(el)).toBe(false);
+      expect(el.paletteTarget).toBeNull();
+    });
+
+    it('the round button opening the palette leaves a desktop target alone', async () => {
+      const { el } = await mountMulti(false);
+      // ✕ clears the target, so set one after collapsing the docked palette.
+      drawer(el)!.dispatchEvent(new CustomEvent('drawer-toggle'));
+      await el.updateComplete;
+      strip(el, 2);
+      await el.updateComplete;
+      expect(el.paletteTarget).toBe(2);
+
+      fab(el).click();
+      await el.updateComplete;
+
+      expect(isOpen(el)).toBe(true);
+      expect(el.paletteTarget).toBe(2);
+    });
+
+    it.each([
+      [
+        'from the app bar',
+        (el: ShellEl) =>
+          el
+            .shadowRoot!.querySelector('v4-app-header')!
+            .dispatchEvent(new CustomEvent('tool-select', { detail: { toolId: 'mixer' } })),
+      ],
+      ['from the route', (el: ShellEl) => el.setAttribute('active-tool', 'gradient')],
+    ])('a tool change %s clears the target', async (_label, change) => {
+      const { el, targetChanges } = await mountMulti(false);
+      slotTap(el, 2);
+      await el.updateComplete;
+
+      change(el);
+      await el.updateComplete;
+
+      expect(el.paletteTarget).toBeNull();
+      expect(targetChanges).toEqual([2, null]);
+    });
+
+    it('crossing into the phone layout clears the target', async () => {
+      const { el, vp } = await mountMulti(false);
+      slotTap(el, 2);
+      await el.updateComplete;
+
+      vp.fireChange(true);
+      await el.updateComplete;
+
+      expect(el.paletteTarget).toBeNull();
+    });
+
+    it('clear-all-dyes clears the target', async () => {
+      const { el } = await mountMulti(false);
+      slotTap(el, 3);
+      await el.updateComplete;
+
+      drawer(el)!.dispatchEvent(
+        new CustomEvent('clear-all-dyes', { bubbles: true, composed: true })
+      );
+      await el.updateComplete;
+
+      expect(el.paletteTarget).toBeNull();
+    });
+
+    it('clearPaletteTarget clears the target and announces it once', async () => {
+      const { el, targetChanges } = await mountMulti(false);
+      slotTap(el, 1);
+      await el.updateComplete;
+
+      el.clearPaletteTarget();
+      el.clearPaletteTarget();
+
+      expect(el.paletteTarget).toBeNull();
+      expect(targetChanges).toEqual([1, null]);
+    });
+
+    it('slot-target-change from the palette sets and clears the target without changing the close rule', async () => {
+      // Opened by the round button: the strip targets, the pick still stays open.
+      const { el, targetChanges } = await mountMulti(true);
+      fab(el).click();
+      await el.updateComplete;
+      const outside = vi.fn();
+      el.addEventListener('slot-target-change', outside);
+
+      strip(el, 1);
+      await el.updateComplete;
+      expect(el.paletteTarget).toBe(1);
+      expect(outside).not.toHaveBeenCalled();
+
+      let detail = pick(el);
+      await el.updateComplete;
+      expect(detail.target).toBe(1);
+      expect(isOpen(el)).toBe(true);
+
+      // Opened by a slot tap: clearing from the strip keeps the close rule.
+      drawer(el)!.dispatchEvent(new CustomEvent('drawer-toggle'));
+      await el.updateComplete;
+      slotTap(el, 2);
+      await el.updateComplete;
+      strip(el, null);
+      await el.updateComplete;
+      expect(el.paletteTarget).toBeNull();
+
+      detail = pick(el);
+      await el.updateComplete;
+      expect(detail.target).toBeNull();
+      expect(isOpen(el)).toBe(false);
+      expect(targetChanges).toEqual([1, null, 2, null]);
+    });
+
+    it('ignores a slot index for a single-input tool', async () => {
+      const { el, targetChanges } = await mountMulti(true, 1);
+      el.paletteSlotMode = 'single';
+
+      slotTap(el, 0);
+      await el.updateComplete;
+
+      expect(isOpen(el)).toBe(true);
+      expect(el.paletteTarget).toBeNull();
+      expect(targetChanges).toEqual([]);
+    });
+
+    it('returns focus to the tapped slot after the palette closes', async () => {
+      const { el } = await mountMulti(true);
+      slotTap(el, 2);
+      await el.updateComplete;
+
+      pick(el);
+
+      await vi.waitFor(() =>
+        expect(document.activeElement).toBe(el.querySelector('[data-palette-slot="2"]'))
+      );
+    });
+
+    it('a bare open falls back to the first slot for focus', async () => {
+      const { el } = await mountMulti(true);
+      slotTap(el);
+      await el.updateComplete;
+
+      pick(el);
+
+      await vi.waitFor(() =>
+        expect(document.activeElement).toBe(el.querySelector('[data-palette-slot]'))
+      );
+    });
+
+    it("moves focus to the palette's close button when a slot tap opens it on a phone", async () => {
+      const { el } = await mountMulti(true);
+      const closeBtn = document.createElement('button');
+      closeBtn.className = 'close-btn';
+      drawer(el)!.attachShadow({ mode: 'open' }).appendChild(closeBtn);
+
+      slotTap(el, 1);
+
+      await vi.waitFor(() => expect(drawer(el)!.shadowRoot!.activeElement).toBe(closeBtn));
+    });
+  });
+
+  /*
    * BUG-112 (2026-10-04 deep-dive): the shell had no print rules, so Ctrl+P
    * gave one clipped sheet — the 100vh, overflow-hidden host and the
    * content scroller cut the tool off, with the app bar, FABs and Options
