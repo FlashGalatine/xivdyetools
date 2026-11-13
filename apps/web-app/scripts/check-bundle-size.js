@@ -213,8 +213,15 @@ const LOCALE_CHUNK_LIMIT = 95 * KB;
  * was left), and the Glamour Reader's three chunks (~52 KB) put the payload
  * 649 B over 2200 KB. Every one of them loads on demand, so first paint does
  * not pay for it. The next tool or data table trims something first.
+ *
+ * 2026-11-13 (web app 5.18.0) raises it to 2252 KB. Slot-aware dye picking put
+ * the payload 7.70 KB over 2250 KB. The branch was trimmed first (shared
+ * dense-list slot taps and palette dispatches: 2257.70 -> 2251.77 KB); the
+ * remaining 1.77 KB is indentation inside Lit templates, so the limit rises by
+ * 2 KB for that remainder only. Minifying template whitespace at build time is
+ * the proposed follow-up that would let it come back down.
  */
-const PAYLOAD_JS_LIMIT = 2250 * KB;
+const PAYLOAD_JS_LIMIT = 2252 * KB;
 
 /**
  * Artifact budget: everything we emit, all locales included.

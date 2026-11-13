@@ -60,8 +60,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   persist until Clear all.
 - **Dye Comparison and Accessibility Checker placeholders use theme tokens** (`--theme-border`,
   `--theme-card-hover`) instead of fixed `rgba` colors.
-- **Bundle budget:** the `v4-layout` chunk went from 217.39 KB to 225.83 KB, so the `layout shell` row
+- **Bundle budget:** the `v4-layout` chunk went from 217.39 KB to 226.29 KB, so the `layout shell` row
   in `scripts/check-bundle-size.js` is 228 KB (was 218 KB).
+- **JS payload limit 2252 KB (was 2250 KB):** the feature put the one-locale payload 7.70 KB over; the
+  shared dense-list slot taps (`palette-slot-tiles.ts`) and palette dispatches trimmed it from 2257.70 KB
+  to 2251.77 KB, and the limit rises 2 KB for the remaining Lit-template indentation.
 
 ### Tests
 
