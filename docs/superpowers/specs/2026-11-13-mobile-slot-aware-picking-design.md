@@ -3,7 +3,7 @@
 - Date: 2026-11-13
 - Issue: FlashGalatine/xivdyetools#422 ("Improve the mobile version's functionality")
 - Unit: `apps/web-app` only
-- Status: design, awaiting the maintainer's approval
+- Status: approved by the maintainer 2026-11-13; implemented in web-app 5.18.0
 
 In this document, "the maintainer decided" marks a ruling made in the design
 conversation. "Call" marks a choice the author made that the maintainer has

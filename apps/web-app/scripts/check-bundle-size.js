@@ -94,8 +94,9 @@ const BUNDLE_LIMITS = [
   // 2026-11-13 re-budgets it to 228 KB for slot-aware picking (issue 422): the
   // shell tracks the palette target, the palette gained held-dye marks, the
   // slot strip and the header line, and the layout routes picks by slot. It
-  // went from 217.39 KB to 225.96 KB, 225.83 KB after trimming the new code;
-  // the limit is that rounded up plus 2 KB.
+  // went from 217.39 KB to 225.96 KB, 225.83 KB after trimming the new code
+  // (the limit is that rounded up plus 2 KB), and measured 226.23 KB once the
+  // branch was finished.
   { label: 'layout shell', pattern: /^v4-layout-/, limit: 228 * KB },
   // Named `modals` by vite.config's manualChunks, but that is not what it holds.
   // Rolldown ignored 34 of the 51 assignments manualChunks returned and merged

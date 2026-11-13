@@ -254,7 +254,6 @@ export async function initializeV4Layout(container: HTMLElement): Promise<void> 
     }
   }) as EventListener);
 
-  // Listen for dye selections from the Color Palette drawer
   // Listen for dye selections from the Color Palette drawer. Route by the
   // detail's target: the shell clears its own target only after this runs.
   layoutElement.addEventListener('dye-selected', ((

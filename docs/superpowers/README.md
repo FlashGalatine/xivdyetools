@@ -24,6 +24,7 @@ For the investigation that preceded a decision, see [`../research/`](../research
 | GitHub webhook bytes (Sprint 0 follow-up) | — (spec: [FINDING-003](../audits/2026-09-15-security/findings/FINDING-003.md)) | [plan](plans/2026-09-15-sprint-0-webhook-bytes.md) | Shipped — PR #184, discord-worker 5.5.5 |
 | Glamour export — automatic Acquisition line | [spec](specs/2026-09-27-glamour-acquisition-design.md) | [plan](plans/2026-09-27-glamour-acquisition.md) | Shipped 2026-09-28 — PR #207 (api-worker 0.15.0); the web-app half shipped with the Glamour Reader, PR #208 |
 | Glamour Reader — the tenth tool | [spec](specs/2026-09-27-glamour-reader-design.md) | [plan](plans/2026-09-27-glamour-reader.md) | Shipped 2026-09-28 — PR #208 (web-app + api-worker), #209 (og-worker) and #210 (bot), the last two landed on `main` by #216 |
+| Slot-aware dye picking (issue #422) | [spec](specs/2026-11-13-mobile-slot-aware-picking-design.md) | [plan](plans/2026-11-13-mobile-slot-aware-picking.md) | Implemented in web-app 5.18.0; awaiting PR integration |
 
 ## Conventions
 

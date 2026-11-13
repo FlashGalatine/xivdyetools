@@ -1777,9 +1777,6 @@ export class HarmonyTool extends BaseComponent implements PaletteSlotSource {
   }
 
   /**
-   * Show/hide empty state
-   */
-  /**
    * The shell returns focus to the first [data-palette-slot] after a pick. The
    * empty-state button carries it only while visible, so a hidden one is never
    * that first match.
@@ -1794,6 +1791,9 @@ export class HarmonyTool extends BaseComponent implements PaletteSlotSource {
     }
   }
 
+  /**
+   * Show/hide empty state
+   */
   private showEmptyState(show: boolean): void {
     if (this.emptyStateContainer) {
       this.emptyStateContainer.style.display = show ? 'flex' : 'none';
