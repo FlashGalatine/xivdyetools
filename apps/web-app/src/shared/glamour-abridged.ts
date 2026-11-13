@@ -19,7 +19,7 @@
 
 const SEPARATOR = ' / ';
 
-/** The game's Treasure Hunt content: an instance only when nothing better is on the line. */
+/** The game's Treasure Hunt content: a source only when nothing else is on the line. */
 const MAP_DUNGEONS: ReadonlySet<string> = new Set([
   'The Aquapolis',
   'The Lost Canals of Uznair',
@@ -107,15 +107,17 @@ function cleanPart(raw: string): string {
 
 /**
  * Abridge one acquisition line (English, sources joined by ` / `) to the one
- * source worth posting. The first rule that applies decides:
+ * source worth posting. A map dungeon is a source only when the line has no
+ * other: when any part is not a map dungeon, the map dungeons are dropped and
+ * the rest go through the rules below. Then the first rule that applies decides:
  *
  * 1. Instances (dungeon, trial, raid) lead the line: keep every one at the
- *    lowest difficulty present. A map dungeon counts only when the line has
- *    no craft and no priced vendor; otherwise it is passed over.
+ *    lowest difficulty present.
  * 2. A craft: the first one.
  * 3. A Gil vendor: the first one, price kept.
  * 4. Any other priced vendor: the first one, price removed.
- * 5. Otherwise the line unchanged (sidequests, free vendors, the store).
+ * 5. Otherwise the line unchanged (sidequests, free vendors, the store), less
+ *    any map dungeon dropped above.
  *
  * An empty part (a stray separator in a player's edit) is no source at all, and
  * whitespace around a part does not change what it is. Every part kept is
@@ -128,14 +130,15 @@ export function abridgeAcquisition(line: string): string {
     .split(SEPARATOR)
     .map(cleanPart)
     .filter((part) => part !== '');
-  const hasCraftOrPrice = parts.some((p) => isCraft(p) || isPricedVendor(p));
+  // Any other source beats a map dungeon: drop the map dungeons unless they are all there is.
+  const others = parts.filter((p) => !MAP_DUNGEONS.has(p));
+  const sources = others.length > 0 ? others : parts;
 
-  // Instances are the leading parts, up to the first craft, priced vendor or
-  // known non-instance. An excluded map dungeon does not count, and does not stop the run.
+  // Instances are the leading sources, up to the first craft, priced vendor or
+  // known non-instance.
   const instances: string[] = [];
-  for (const part of parts) {
+  for (const part of sources) {
     if (isCraft(part) || isPricedVendor(part) || isKnownNonInstance(part)) break;
-    if (hasCraftOrPrice && MAP_DUNGEONS.has(part)) continue;
     instances.push(part);
   }
   if (instances.length > 0) {
@@ -144,14 +147,15 @@ export function abridgeAcquisition(line: string): string {
     return instances.filter((p) => tier(p) === lowest).join(SEPARATOR);
   }
 
-  const craft = parts.find(isCraft);
+  const craft = sources.find(isCraft);
   if (craft !== undefined) return craft;
 
-  const gil = parts.find(isGilVendor);
+  const gil = sources.find(isGilVendor);
   if (gil !== undefined) return gil;
 
-  const priced = parts.find(isPricedVendor);
+  const priced = sources.find(isPricedVendor);
   if (priced !== undefined) return withoutPrice(priced);
 
-  return line;
+  // A dropped map dungeon leaves the other sources; otherwise the line as it is.
+  return sources.length < parts.length ? sources.join(SEPARATOR) : line;
 }

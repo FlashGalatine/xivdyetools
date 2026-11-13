@@ -24,9 +24,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`shared/glamour-abridged.ts` picks the one source for `Obtained:`.** It reads the full line's text, in
   this order: (1) every dungeon, trial or raid at the lowest difficulty among those leading the line, up to
   the first craft, priced vendor or known non-instance (none, then Hard, Extreme, Savage, Ultimate; The
-  Minstrel's Ballad counts as Extreme), where a map dungeon such as The Aquapolis loses to a craft or a
-  purchase; (2) the first craft, with job and level; (3) the first Gil vendor, with the price; (4) the first
-  other vendor, with no amounts or upgrade items; (5) otherwise the line as it is.
+  Minstrel's Ballad counts as Extreme); (2) the first craft, with job and level; (3) the first Gil vendor, with
+  the price; (4) the first other vendor, with no amounts or upgrade items; (5) otherwise the line as it is. A
+  map dungeon such as The Aquapolis loses to any other source: when the line names one, the map dungeons are
+  dropped before these steps (maintainer ruling, 2026-11-13).
 - **A line typed in Abridged stays word for word, and only in Abridged.** It is stored under its own key
   (`abridgedEditKey`). A full-list edit carries over to Abridged, trimmed by the same rules, until it is
   typed over. Typing the picked source back removes the edit. Reset all clears both forms.
@@ -55,8 +56,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **The `glamour: export sheet` bundle budget goes from 16 KB to 20 KB.** The chunk measures 16.0 KB with the
-  Abridged form, which left it 12 bytes under the old limit; 20 KB gives it about 25% headroom.
+- **The `glamour: export sheet` bundle budget goes from 16 KB to 20 KB.** The chunk measures 17.52 KB with the
+  Abridged form and the per-piece switches, past the old limit; 20 KB gives it about 14% headroom.
 
 ## [5.16.11] - 2026-11-02
 

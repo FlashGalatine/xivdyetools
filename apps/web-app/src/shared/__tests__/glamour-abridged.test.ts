@@ -56,7 +56,10 @@ const EXAMPLES: ReadonlyArray<readonly [string, string]> = [
     'The Aquapolis / Spoils Collector - Ishgard - The Pillars (1 Copper Voyage Spoil)',
     'Spoils Collector - Ishgard - The Pillars',
   ],
-  ['The Aquapolis / I Hope Mentor Will Notice Me III (Achievement)', 'The Aquapolis'],
+  [
+    'The Aquapolis / I Hope Mentor Will Notice Me III (Achievement)',
+    'I Hope Mentor Will Notice Me III (Achievement)',
+  ],
   ["Matoya's Relict / Moogle Treasure Trove", "Matoya's Relict"],
   ["Baelsar's Wall / Sohm Al (Hard) / Shire Custodian's Accessories Coffer", "Baelsar's Wall"],
   [
@@ -137,6 +140,21 @@ describe('abridgeAcquisition: an excluded map dungeon does not end the instances
     ],
     ['Sastasha / The Aquapolis / The Aery / Crafted (WVR Lvl. 60)', 'Sastasha / The Aery'],
     ['The Aquapolis / Moogle Treasure Trove / Crafted (WVR Lvl. 60)', 'Crafted (WVR Lvl. 60)'],
+  ])('%s', (line, expected) => {
+    expect(abridgeAcquisition(line)).toBe(expected);
+  });
+});
+
+describe('abridgeAcquisition: any other source beats a map dungeon', () => {
+  // The maintainer's ruling of 2026-11-13: not only a craft or a purchase.
+  it.each([
+    [
+      'The Aquapolis / I Hope Mentor Will Notice Me III (Achievement)',
+      'I Hope Mentor Will Notice Me III (Achievement)',
+    ],
+    ['The Aquapolis / Sastasha', 'Sastasha'],
+    ['The Aquapolis', 'The Aquapolis'],
+    ['Cenote Ja Ja Gural / Vault Oneiron', 'Cenote Ja Ja Gural / Vault Oneiron'],
   ])('%s', (line, expected) => {
     expect(abridgeAcquisition(line)).toBe(expected);
   });
