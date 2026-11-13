@@ -46,6 +46,14 @@ import { ThemeService } from '@services/theme-service';
 import '@components/v4/share-button';
 import type { ShareButton } from '@components/v4/share-button';
 import { ShareService } from '@services/share-service';
+import {
+  OPEN_PALETTE_DRAWER,
+  PALETTE_SLOTS_CHANGED,
+  SLOT_TARGET_BORDER,
+  type OpenPaletteDrawerDetail,
+  type PaletteSlot,
+  type PaletteSlotHost,
+} from '@components/palette-slots';
 
 // ============================================================================
 // Types and Constants
@@ -154,6 +162,16 @@ const DEFAULT_VISION_TYPES: VisionTypeId[] = [
   'achromatopsia',
 ];
 
+/** The checker holds at most this many dyes; the palette always sees this many slots. */
+const MAX_DYES = 4;
+
+/** The "+" of the Add Dye placeholders and tile (static markup, decorative). */
+const ADD_DYE_PLUS_SVG = `
+  <svg viewBox="0 0 24 24" fill="var(--theme-text-muted)" aria-hidden="true" style="width: 24px; height: 24px; opacity: 0.4;">
+    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+  </svg>
+`;
+
 // ============================================================================
 // AccessibilityTool Component
 // ============================================================================
@@ -164,7 +182,10 @@ const DEFAULT_VISION_TYPES: VisionTypeId[] = [
  * Simulates colorblindness and analyzes dye distinguishability
  * for up to 4 selected dyes.
  */
-export class AccessibilityTool extends BaseComponent {
+export class AccessibilityTool extends BaseComponent implements PaletteSlotHost {
+  readonly paletteSlotMode = 'multi' as const;
+  readonly paletteSlotsDense = true;
+
   private options: AccessibilityToolOptions;
 
   // State
@@ -203,6 +224,13 @@ export class AccessibilityTool extends BaseComponent {
   private pairRowsContainer: HTMLElement | null = null;
   private pairUnitLabel: HTMLElement | null = null;
   private emptyStateContainer: HTMLElement | null = null;
+
+  // Palette slot taps: the four empty-state placeholders and the Add dye tile
+  private emptySlotsContainer: HTMLElement | null = null;
+  private addDyeTileRow: HTMLElement | null = null;
+  private addDyeTile: HTMLElement | null = null;
+  /** The slot the palette is targeting; drawn state only, set by setPaletteTarget */
+  private paletteTarget: number | null = null;
 
   // V4 Result Card references for selected dyes display
   private v4ResultCards: ResultCard[] = [];
@@ -366,12 +394,11 @@ export class AccessibilityTool extends BaseComponent {
       clearContainer(this.selectedDyesContainer);
     }
 
-    // Show empty state and hide other sections
-    this.showEmptyState(true);
+    // Show the empty state and its placeholders. updateResults also refreshes
+    // the Share button, so it never offers a link to the cleared set (BUG-019).
+    this.updateResults();
     this.updateDrawerContent();
-    // BUG-019: this path never reaches updateResults(), so the Share button
-    // would keep offering a link to the palette the user just cleared.
-    this.updateShareButton();
+    this.notifyPaletteSlotsChanged();
   }
 
   /**
@@ -386,26 +413,11 @@ export class AccessibilityTool extends BaseComponent {
       return;
     }
 
-    // Check max selection limit
-    if (this.selectedDyes.length >= 4) {
-      // Remove oldest dye and add new one
-      this.selectedDyes.shift();
-    }
-
-    // Add the dye
-    this.selectedDyes.push(dye);
-
-    // Save to storage
-    const dyeIds = this.selectedDyes.map((d) => d.id);
-    StorageService.setItem(STORAGE_KEYS.selectedDyes, dyeIds);
-
-    // Update selectors
-    this.dyeSelector?.setSelectedDyes(this.selectedDyes);
-    this.drawerDyeSelector?.setSelectedDyes(this.selectedDyes);
-
-    // Update displays
-    this.updateResults();
-    this.updateDrawerContent();
+    // At the limit the oldest dye gives way to the new one
+    const next = [...this.selectedDyes];
+    if (next.length >= MAX_DYES) next.shift();
+    next.push(dye);
+    this.commitSelection(next);
 
     logger.info(`[AccessibilityTool] Selected dye from palette: ${dye.name}`);
   }
@@ -948,6 +960,14 @@ export class AccessibilityTool extends BaseComponent {
 
     contentWrapper.appendChild(this.selectedDyesSection);
 
+    // One "Add dye" tile after the cards while 1-3 dyes are held (the
+    // placeholders cover zero). updateAddDyeTile fills it.
+    this.addDyeTileRow = this.createElement('div', {
+      attributes: { style: 'display: none; justify-content: center;' },
+    });
+    this.addDyeTile = null;
+    contentWrapper.appendChild(this.addDyeTileRow);
+
     right.appendChild(contentWrapper);
   }
 
@@ -977,7 +997,7 @@ export class AccessibilityTool extends BaseComponent {
       },
     });
 
-    // Placeholder slots section
+    // Placeholder slots section, filled only while no dye is held (renderEmptySlots)
     const slotsContainer = this.createElement('div', {
       attributes: {
         style: `
@@ -994,81 +1014,8 @@ export class AccessibilityTool extends BaseComponent {
       },
     });
 
-    // Create 4 placeholder slots
-    for (let i = 0; i < 4; i++) {
-      const slot = this.createElement('div', {
-        attributes: {
-          style: `
-            width: 200px;
-            height: 280px;
-            border: 2px dashed rgba(255, 255, 255, 0.2);
-            border-radius: 12px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: rgba(0, 0, 0, 0.1);
-            transition: all 0.2s ease;
-            cursor: pointer;
-          `
-            .replace(/\s+/g, ' ')
-            .trim(),
-        },
-      });
-
-      // Hover effect
-      this.on(slot, 'mouseenter', () => {
-        slot.style.borderColor = 'rgba(255, 255, 255, 0.35)';
-        slot.style.background = 'rgba(255, 255, 255, 0.05)';
-      });
-      this.on(slot, 'mouseleave', () => {
-        slot.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-        slot.style.background = 'rgba(0, 0, 0, 0.1)';
-      });
-
-      // Plus icon in a dashed circle
-      const iconContainer = this.createElement('div', {
-        attributes: {
-          style: `
-            width: 48px;
-            height: 48px;
-            border: 2px dashed rgba(255, 255, 255, 0.25);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 12px;
-          `
-            .replace(/\s+/g, ' ')
-            .trim(),
-        },
-      });
-
-      iconContainer.innerHTML = `
-        <svg viewBox="0 0 24 24" fill="var(--theme-text-muted)" style="width: 24px; height: 24px; opacity: 0.4;">
-          <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
-        </svg>
-      `;
-
-      // "Add Dye" text
-      const text = this.createElement('span', {
-        textContent: LanguageService.t('accessibility.addDye'),
-        attributes: {
-          style: `
-            font-size: 0.85rem;
-            color: var(--theme-text-muted);
-            opacity: 0.6;
-          `
-            .replace(/\s+/g, ' ')
-            .trim(),
-        },
-      });
-
-      slot.appendChild(iconContainer);
-      slot.appendChild(text);
-      slotsContainer.appendChild(slot);
-    }
-
+    this.emptySlotsContainer = slotsContainer;
+    this.renderEmptySlots();
     container.appendChild(slotsContainer);
 
     // Empty state message
@@ -1129,6 +1076,184 @@ export class AccessibilityTool extends BaseComponent {
     container.appendChild(messageContainer);
 
     this.emptyStateContainer.appendChild(container);
+  }
+
+  /**
+   * The four "Add Dye" placeholders, present only while no dye is held: the
+   * shell returns focus to the first [data-palette-slot] it finds, and a
+   * hidden placeholder would swallow it.
+   */
+  private renderEmptySlots(): void {
+    const host = this.emptySlotsContainer;
+    if (!host) return;
+    const wanted = this.selectedDyes.length === 0;
+    if (wanted !== host.childElementCount > 0) {
+      clearContainer(host);
+      if (wanted) {
+        for (let i = 0; i < MAX_DYES; i++) host.appendChild(this.createEmptySlot());
+      }
+    }
+    const border = this.slotBorderColor();
+    for (const slot of Array.from(host.children)) {
+      (slot as HTMLElement).style.borderColor = border;
+    }
+  }
+
+  /** One placeholder: a slot tap aimed at the first dye, as every empty slot is in a dense list. */
+  private createEmptySlot(): HTMLElement {
+    const slot = this.createElement('button', {
+      attributes: {
+        type: 'button',
+        'data-palette-slot': '0',
+        style: `
+          padding: 0;
+          font: inherit;
+          color: inherit;
+          appearance: none;
+          -webkit-appearance: none;
+          width: 200px;
+          height: 280px;
+          border: 2px dashed var(--theme-border);
+          border-radius: 12px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          background: transparent;
+          transition: all 0.2s ease;
+          cursor: pointer;
+        `
+          .replace(/\s+/g, ' ')
+          .trim(),
+      },
+    });
+
+    // Hover tints the background only; the border carries the target state
+    this.on(slot, 'mouseenter', () => {
+      slot.style.background = 'var(--theme-card-hover)';
+    });
+    this.on(slot, 'mouseleave', () => {
+      slot.style.background = 'transparent';
+    });
+
+    // Plus icon in a dashed circle
+    const iconContainer = this.createElement('div', {
+      attributes: {
+        style: `
+          width: 48px;
+          height: 48px;
+          border: 2px dashed var(--theme-border);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 12px;
+        `
+          .replace(/\s+/g, ' ')
+          .trim(),
+      },
+    });
+    iconContainer.innerHTML = ADD_DYE_PLUS_SVG;
+
+    // "Add Dye" text, which is also the button's accessible name
+    const text = this.createElement('span', {
+      textContent: LanguageService.t('accessibility.addDye'),
+      attributes: {
+        style: `
+          font-size: 0.85rem;
+          color: var(--theme-text-muted);
+          opacity: 0.6;
+        `
+          .replace(/\s+/g, ' ')
+          .trim(),
+      },
+    });
+
+    slot.appendChild(iconContainer);
+    slot.appendChild(text);
+    this.on(slot, 'click', () => this.requestPaletteForSlot(slot, 0));
+    return slot;
+  }
+
+  /**
+   * The "Add dye" tile: the placeholder's dashed look as one compact row, a
+   * result card wide, so it fits a phone without pushing the pane sideways.
+   */
+  private createAddDyeTile(): HTMLElement {
+    const tile = this.createElement('button', {
+      attributes: {
+        type: 'button',
+        style: [
+          'box-sizing: border-box; width: 280px; max-width: 100%; min-height: 72px;',
+          'display: flex; align-items: center; justify-content: center; gap: 12px;',
+          'padding: 12px 16px; margin: 0; font: inherit; color: inherit;',
+          'appearance: none; -webkit-appearance: none; cursor: pointer;',
+          'border: 2px dashed var(--theme-border); border-radius: 12px;',
+          'background: transparent; transition: border-color 0.2s ease;',
+        ].join(' '),
+      },
+    });
+
+    const icon = this.createElement('span', {
+      attributes: {
+        style:
+          'flex-shrink: 0; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border: 2px dashed var(--theme-border); border-radius: 50%;',
+      },
+    });
+    icon.innerHTML = ADD_DYE_PLUS_SVG;
+
+    tile.appendChild(icon);
+    tile.appendChild(
+      this.createElement('span', {
+        textContent: LanguageService.t('accessibility.addDye'),
+        attributes: { style: 'font-size: 0.85rem; color: var(--theme-text-muted);' },
+      })
+    );
+
+    // Read the count at tap time: the tile always means "the next free slot"
+    this.on(tile, 'click', () => this.requestPaletteForSlot(tile, this.selectedDyes.length));
+    return tile;
+  }
+
+  /**
+   * The tile exists only while 1-3 dyes are held, aimed at the next free
+   * slot. Absent rather than hidden, like the placeholders, so neither focus
+   * return nor an "Add Dye" text lookup finds a stale one.
+   */
+  private updateAddDyeTile(): void {
+    const row = this.addDyeTileRow;
+    if (!row) return;
+    const count = this.selectedDyes.length;
+    const shown = count >= 1 && count < MAX_DYES;
+    row.style.display = shown ? 'flex' : 'none';
+    if (!shown) {
+      if (this.addDyeTile) clearContainer(row);
+      this.addDyeTile = null;
+      return;
+    }
+    if (!this.addDyeTile) {
+      this.addDyeTile = this.createAddDyeTile();
+      row.appendChild(this.addDyeTile);
+    }
+    this.addDyeTile.setAttribute('data-palette-slot', String(count));
+    this.addDyeTile.style.borderColor = this.slotBorderColor();
+  }
+
+  /** In a dense list any target past the last dye means "the next free slot". */
+  private slotBorderColor(): string {
+    const targeted = this.paletteTarget !== null && this.paletteTarget >= this.selectedDyes.length;
+    return targeted ? SLOT_TARGET_BORDER : 'var(--theme-border)';
+  }
+
+  /** A slot tap: ask the shell to open the palette aimed at `slot`. */
+  private requestPaletteForSlot(from: HTMLElement, slot: number): void {
+    from.dispatchEvent(
+      new CustomEvent<OpenPaletteDrawerDetail>(OPEN_PALETTE_DRAWER, {
+        bubbles: true,
+        composed: true,
+        detail: { slot },
+      })
+    );
   }
 
   /**
@@ -1198,28 +1323,85 @@ export class AccessibilityTool extends BaseComponent {
    * Remove a dye from the selection
    */
   private removeDyeFromSelection(dye: Dye): void {
-    const newSelection = this.selectedDyes.filter((d) => d.id !== dye.id);
+    this.commitSelection(this.selectedDyes.filter((d) => d.id !== dye.id));
+    logger.info(`[AccessibilityTool] Removed dye: ${dye.name}`);
+  }
 
-    // Update selectors
-    this.dyeSelector?.setSelectedDyes(newSelection);
-    this.drawerDyeSelector?.setSelectedDyes(newSelection);
-    this.selectedDyes = newSelection;
+  /**
+   * The one path for a palette add, place or remove: adopt the new selection,
+   * persist it, redraw everything that shows it, and tell the layout.
+   */
+  private commitSelection(dyes: Dye[]): void {
+    this.selectedDyes = dyes;
+    StorageService.setItem(
+      STORAGE_KEYS.selectedDyes,
+      dyes.map((d) => d.id)
+    );
+    this.dyeSelector?.setSelectedDyes(dyes);
+    this.drawerDyeSelector?.setSelectedDyes(dyes);
 
-    // Save to storage
-    const dyeIds = newSelection.map((d) => d.id);
-    StorageService.setItem(STORAGE_KEYS.selectedDyes, dyeIds);
-
-    // Update all displays
     this.updateResults();
     this.updateDrawerContent();
-
-    // Update left panel selected dyes display
     const leftPanelDisplay = this.options.leftPanel.querySelector('.selected-dyes-display');
     if (leftPanelDisplay) {
       this.updateSelectedDyesDisplay(leftPanelDisplay as HTMLElement);
     }
+    this.notifyPaletteSlotsChanged();
+  }
 
-    logger.info(`[AccessibilityTool] Removed dye: ${dye.name}`);
+  private notifyPaletteSlotsChanged(): void {
+    this.container.dispatchEvent(
+      new CustomEvent(PALETTE_SLOTS_CHANGED, { bubbles: true, composed: true })
+    );
+  }
+
+  // ============================================================================
+  // Palette slot contract (PaletteSlotHost)
+  // ============================================================================
+
+  /** Always four slots, the held dyes first (a dense list). */
+  getPaletteSlots(): PaletteSlot[] {
+    return Array.from({ length: MAX_DYES }, (_, i) => ({
+      label: String(i + 1),
+      targetLabel: LanguageService.tInterpolate('colorPalette.choosingDyeOf', {
+        // Digits, not words: the key already says "dye {current} of {total}"
+        current: String(i + 1),
+        total: String(MAX_DYES),
+      }),
+      dye: this.selectedDyes[i] ?? null,
+    }));
+  }
+
+  /**
+   * Put `dye` at `index`. Past the last held dye it appends (or moves a held
+   * dye to the end); on a held position it replaces, swapping with the dye's
+   * old position when it is held elsewhere. It never drops another dye.
+   */
+  placeDyeAt(index: number, dye: Dye): void {
+    if (!dye || !Number.isInteger(index) || index < 0 || index >= MAX_DYES) return;
+    const next = [...this.selectedDyes];
+    const held = next.findIndex((d) => d.id === dye.id);
+    if (index >= next.length) {
+      if (held !== -1) next.splice(held, 1);
+      next.push(dye);
+    } else {
+      if (held === index) return;
+      if (held !== -1) next[held] = next[index];
+      next[index] = dye;
+    }
+    this.commitSelection(next);
+  }
+
+  /** Remove the dye at `index`; later dyes move up, as the Remove button does. */
+  removeDyeAt(index: number): void {
+    const dye = this.selectedDyes[index];
+    if (dye) this.removeDyeFromSelection(dye);
+  }
+
+  setPaletteTarget(index: number | null): void {
+    this.paletteTarget = index;
+    this.renderEmptySlots();
+    this.updateAddDyeTile();
   }
 
   /**
@@ -1233,6 +1415,8 @@ export class AccessibilityTool extends BaseComponent {
     // this sits ABOVE the empty-state return so clearing the last dye disables
     // the button rather than leaving the previous link in place.
     this.updateShareButton();
+    this.renderEmptySlots();
+    this.updateAddDyeTile();
 
     if (this.selectedDyes.length === 0) {
       this.showEmptyState(true);
