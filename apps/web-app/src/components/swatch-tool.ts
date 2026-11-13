@@ -43,6 +43,12 @@ import {
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
 import type { Dye, PriceData } from '@xivdyetools/types';
+import {
+  OPEN_PALETTE_DRAWER,
+  PALETTE_SLOTS_CHANGED,
+  type PaletteSlot,
+  type PaletteSlotSource,
+} from '@components/palette-slots';
 import type {
   SwatchConfig,
   DisplayOptionsConfig,
@@ -306,7 +312,9 @@ interface SwatchSelectionContext {
  *
  * Match character customization colors to FFXIV dyes.
  */
-export class SwatchTool extends BaseComponent {
+export class SwatchTool extends BaseComponent implements PaletteSlotSource {
+  readonly paletteSlotMode = 'single' as const;
+
   private options: SwatchToolOptions;
   private characterColorService: CharacterColorService;
   /** 10A .chara views — each draws the file loaded in CharaSessionService */
@@ -359,6 +367,8 @@ export class SwatchTool extends BaseComponent {
   // Reverse matching state (dye/hex → closest swatch)
   private reverseDyeHex: string | null = null;
   private reverseDyeName: string | null = null;
+  /** The palette dye of the last reverse match; null for a custom color or no match. */
+  private reverseDye: Dye | null = null;
   private reverseMatchedSwatches: Array<{
     color: CharacterColor;
     distance: number;
@@ -531,6 +541,7 @@ export class SwatchTool extends BaseComponent {
     this.colors = [];
     this.priceData.clear();
     this.reverseDyeHex = null;
+    this.reverseDye = null;
     this.reverseDyeName = null;
     this.reverseMatchedSwatches = [];
 
@@ -739,9 +750,11 @@ export class SwatchTool extends BaseComponent {
   public selectDye(dye: Dye): void {
     if (!dye) return;
     this.reverseDyeHex = dye.hex;
+    this.reverseDye = dye;
     this.reverseDyeName = LanguageService.getDyeName(dye.itemID) || dye.name;
     logger.info(`[SwatchTool] Reverse match: dye "${this.reverseDyeName}" (${dye.hex})`);
     this.performReverseMatch();
+    this.notifyPaletteSlotsChanged();
     this.revealOutsideGridPick(this.reverseSection);
   }
 
@@ -754,14 +767,26 @@ export class SwatchTool extends BaseComponent {
     this.revealOutsideGridPick(this.reverseSection);
   }
 
+  getPaletteSlots(): PaletteSlot[] {
+    return [{ label: '', targetLabel: '', dye: this.reverseDye }];
+  }
+
+  private notifyPaletteSlotsChanged(): void {
+    this.container.dispatchEvent(
+      new CustomEvent(PALETTE_SLOTS_CHANGED, { bubbles: true, composed: true })
+    );
+  }
+
   /** The match itself. A THIS CHARACTER slot uses this: its own card already shows the answer. */
   private applyCustomColor(hex: string): void {
     this.reverseDyeHex = hex.startsWith('#') ? hex : `#${hex}`;
+    this.reverseDye = null;
     this.reverseDyeName = LanguageService.tInterpolate('common.customColorName', {
       hex: this.reverseDyeHex.toUpperCase(),
     });
     logger.info(`[SwatchTool] Reverse match: custom color ${this.reverseDyeHex}`);
     this.performReverseMatch();
+    this.notifyPaletteSlotsChanged();
   }
 
   /**
@@ -881,9 +906,18 @@ export class SwatchTool extends BaseComponent {
     this.reverseSection.style.display = 'flex';
 
     // Source dye card
-    const sourceCard = this.createElement('div', {
+    const sourceCard = this.createElement('button', {
       attributes: {
+        type: 'button',
+        'data-palette-slot': '0',
         style: `
+          appearance: none;
+          -webkit-appearance: none;
+          font: inherit;
+          text-align: inherit;
+          cursor: pointer;
+          width: 100%;
+          box-sizing: border-box;
           display: flex;
           align-items: center;
           gap: 12px;
@@ -946,6 +980,11 @@ export class SwatchTool extends BaseComponent {
     sourceInfo.appendChild(sourceHex);
     sourceCard.appendChild(sourceInfo);
 
+    sourceCard.addEventListener('click', () => {
+      sourceCard.dispatchEvent(
+        new CustomEvent(OPEN_PALETTE_DRAWER, { bubbles: true, composed: true })
+      );
+    });
     this.reverseResultsContainer.appendChild(sourceCard);
 
     // Matched swatch rows
@@ -1088,11 +1127,14 @@ export class SwatchTool extends BaseComponent {
    * Clear reverse matching state and visuals.
    */
   private clearReverseMatch(): void {
+    const hadDye = this.reverseDye !== null;
+    this.reverseDye = null;
     this.reverseDyeHex = null;
     this.reverseDyeName = null;
     this.reverseMatchedSwatches = [];
     this.updateReverseHighlights();
     this.updateReverseResults();
+    if (hadDye) this.notifyPaletteSlotsChanged();
   }
 
   // ============================================================================

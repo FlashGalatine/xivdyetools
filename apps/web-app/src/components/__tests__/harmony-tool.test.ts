@@ -1964,4 +1964,50 @@ describe('HarmonyTool', () => {
       expect(fetches).toBe(passes);
     });
   });
+
+  describe('palette slots', () => {
+    const mountTool = (): HarmonyTool => {
+      const t = new HarmonyTool(container, { leftPanel, rightPanel, drawerContent });
+      t.init();
+      return t;
+    };
+
+    it('getPaletteSlots returns one slot holding the current dye, or null', () => {
+      tool = mountTool();
+      expect(tool.paletteSlotMode).toBe('single');
+      expect(tool.getPaletteSlots()).toEqual([{ label: '', targetLabel: '', dye: null }]);
+
+      tool.selectDye(mockDyes[0]);
+      expect(tool.getPaletteSlots()).toEqual([{ label: '', targetLabel: '', dye: mockDyes[0] }]);
+    });
+
+    it('returns a custom base dye as-is', () => {
+      tool = mountTool();
+      tool.selectCustomColor('#123456');
+
+      const [slot] = tool.getPaletteSlots();
+      expect(slot.dye?.hex.toLowerCase()).toBe('#123456');
+    });
+
+    it('dispatches palette-slots-changed when the dye changes or is cleared', () => {
+      tool = mountTool();
+      const heard = vi.fn();
+      container.addEventListener('palette-slots-changed', heard);
+
+      tool.selectDye(mockDyes[0]);
+      expect(heard).toHaveBeenCalled();
+
+      heard.mockClear();
+      tool.clearDyes();
+      expect(heard).toHaveBeenCalledTimes(1);
+    });
+
+    it('picking the dye already held is harmless', () => {
+      tool = mountTool();
+      tool.selectDye(mockDyes[0]);
+
+      expect(() => tool!.selectDye(mockDyes[0])).not.toThrow();
+      expect(tool.getPaletteSlots()[0].dye).toBe(mockDyes[0]);
+    });
+  });
 });

@@ -47,6 +47,11 @@ import { hasActiveFilters, isDyeExcluded } from '@shared/dye-filter-utils';
 import { makeCustomDye } from '@shared/custom-dye';
 import type { Dye, PriceData } from '@xivdyetools/types';
 import {
+  PALETTE_SLOTS_CHANGED,
+  type PaletteSlot,
+  type PaletteSlotSource,
+} from '@components/palette-slots';
+import {
   DisplayOptionsConfig,
   DEFAULT_DISPLAY_OPTIONS,
   type MatchingMethod,
@@ -122,8 +127,10 @@ const STORAGE_KEYS = {
  * Generates color harmony palettes from a base dye selection.
  * Integrates existing v2 components into the new panel structure.
  */
-export class HarmonyTool extends BaseComponent {
+export class HarmonyTool extends BaseComponent implements PaletteSlotSource {
   private options: HarmonyToolOptions;
+
+  readonly paletteSlotMode = 'single' as const;
 
   // State
   private selectedDye: Dye | null = null;
@@ -638,6 +645,7 @@ export class HarmonyTool extends BaseComponent {
           // base the user had picked since. A dye that did not resolve stays;
           // the next base change drops it.
           this.dropDeepLinkedDye();
+          this.notifyPaletteSlotsChanged();
           logger.info(`[HarmonyTool] Share URL loaded dye: ${dye.name} (itemID=${dye.itemID})`);
 
           // Update the desktop dye selector if it exists
@@ -1054,6 +1062,7 @@ export class HarmonyTool extends BaseComponent {
       }
       // A stale ?dye= link would override that on the way back (BUG-013)
       this.dropDeepLinkedDye();
+      this.notifyPaletteSlotsChanged();
 
       // Clear swapped dyes when base dye changes
       this.swappedDyes.clear();
@@ -1232,6 +1241,7 @@ export class HarmonyTool extends BaseComponent {
     const wheel = document.createElement('v4-color-wheel') as V4ColorWheel;
     wheel.setAttribute('harmony-type', this.selectedHarmonyType);
     wheel.setAttribute('size', '300');
+    wheel.setAttribute('data-palette-slot', '0'); // the hub inside is the slot tap
 
     if (this.selectedDye) {
       // Get matched dyes for the selected harmony type
@@ -1388,6 +1398,8 @@ export class HarmonyTool extends BaseComponent {
         );
       })
     );
+    // The shell returns focus to the slot-tap element after a pick
+    this.emptyStateContainer.querySelector('button')?.setAttribute('data-palette-slot', '0');
   }
 
   // ============================================================================
@@ -1434,6 +1446,7 @@ export class HarmonyTool extends BaseComponent {
           StorageService.removeItem(STORAGE_KEYS.selectedDyeId);
         }
         this.dropDeepLinkedDye();
+        this.notifyPaletteSlotsChanged();
 
         // Clear swapped dyes when base dye changes
         this.swappedDyes.clear();
@@ -2024,6 +2037,7 @@ export class HarmonyTool extends BaseComponent {
     StorageService.removeItem(STORAGE_KEYS.selectedDyeId);
     this.dropDeepLinkedDye();
     logger.info('[HarmonyTool] All dyes cleared');
+    this.notifyPaletteSlotsChanged();
 
     // Update dye selectors
     this.dyeSelector?.setSelectedDyes([]);
@@ -2037,6 +2051,16 @@ export class HarmonyTool extends BaseComponent {
     // Show empty state
     this.showEmptyState(true);
     this.renderColorWheel();
+  }
+
+  getPaletteSlots(): PaletteSlot[] {
+    return [{ label: '', targetLabel: '', dye: this.selectedDye }];
+  }
+
+  private notifyPaletteSlotsChanged(): void {
+    this.container.dispatchEvent(
+      new CustomEvent(PALETTE_SLOTS_CHANGED, { bubbles: true, composed: true })
+    );
   }
 
   /**
@@ -2054,6 +2078,7 @@ export class HarmonyTool extends BaseComponent {
     StorageService.setItem(STORAGE_KEYS.selectedDyeId, dye.itemID);
     this.dropDeepLinkedDye();
     logger.info(`[HarmonyTool] External dye selected: ${dye.name} (itemID=${dye.itemID})`);
+    this.notifyPaletteSlotsChanged();
 
     // BUG-073: update BOTH selectors. clearDyes() already does; these two
     // touched only the desktop one, so the drawer's base-dye panel kept showing
@@ -2095,6 +2120,7 @@ export class HarmonyTool extends BaseComponent {
     // Clear from storage (custom colors are not persisted)
     StorageService.removeItem(STORAGE_KEYS.selectedDyeId);
     logger.info(`[HarmonyTool] Custom color selected: ${hex}`);
+    this.notifyPaletteSlotsChanged();
 
     // Clear dye selector selection (custom color is not in the list).
     // BUG-073: the drawer's selector too -- it kept the last real dye's swatch

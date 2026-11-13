@@ -2608,4 +2608,93 @@ describe('SwatchTool', () => {
       expect(handoffChips().every((c) => c.disabled)).toBe(true);
     });
   });
+
+  describe('palette slots', () => {
+    const dye = { ...mockDyes[0], hex: '#AABBCC', name: 'Test Dye', itemID: 5729 } as Dye;
+    const internals = () =>
+      tool as unknown as { reverseDye: Dye | null; clearReverseMatch(): void };
+
+    it('getPaletteSlots returns one slot holding the last palette dye, or null', async () => {
+      tool = mount();
+      await flush();
+      expect(tool.paletteSlotMode).toBe('single');
+      expect(tool.getPaletteSlots()).toEqual([{ label: '', targetLabel: '', dye: null }]);
+
+      tool.selectDye(dye);
+      expect(tool.getPaletteSlots()[0].dye).toBe(dye);
+    });
+
+    it('reports no dye for a custom color match', async () => {
+      tool = mount();
+      await flush();
+      tool.selectDye(dye);
+
+      tool.selectCustomColor('#112233');
+      expect(tool.getPaletteSlots()[0].dye).toBeNull();
+    });
+
+    it('remembers the Dye object of the last reverse match and forgets it on clearReverseMatch', async () => {
+      tool = mount();
+      await flush();
+      tool.selectDye(dye);
+      expect(internals().reverseDye).toBe(dye);
+
+      internals().clearReverseMatch();
+      expect(internals().reverseDye).toBeNull();
+      expect(tool.getPaletteSlots()[0].dye).toBeNull();
+    });
+
+    it('dispatches palette-slots-changed when the dye changes or is cleared', async () => {
+      tool = mount();
+      await flush();
+      const heard = vi.fn();
+      container.addEventListener('palette-slots-changed', heard);
+
+      tool.selectDye(dye);
+      expect(heard).toHaveBeenCalledTimes(1);
+
+      internals().clearReverseMatch();
+      expect(heard).toHaveBeenCalledTimes(2);
+    });
+
+    it('the source card is a button that dispatches open-palette-drawer', async () => {
+      tool = mount();
+      await flush();
+      tool.selectDye(dye);
+      await flush();
+      const heard = vi.fn();
+      container.addEventListener('open-palette-drawer', heard);
+
+      const card = rightPanel.querySelector<HTMLButtonElement>('button[data-palette-slot="0"]');
+      expect(card).not.toBeNull();
+      expect(card!.type).toBe('button');
+      card!.click();
+
+      expect(heard).toHaveBeenCalledTimes(1);
+    });
+
+    it('the empty-state card is not a button and dispatches nothing', async () => {
+      tool = mount();
+      await flush();
+      const heard = vi.fn();
+      container.addEventListener('open-palette-drawer', heard);
+
+      const empty = rightPanel.querySelector<HTMLElement>('.v5-empty-state');
+      expect(empty).not.toBeNull();
+      expect(empty!.tagName).not.toBe('BUTTON');
+      expect(empty!.closest('button')).toBeNull();
+      empty!.click();
+
+      expect(heard).not.toHaveBeenCalled();
+    });
+
+    it('picking the dye already held is harmless', async () => {
+      tool = mount();
+      await flush();
+      tool.selectDye(dye);
+
+      expect(() => tool!.selectDye(dye)).not.toThrow();
+      expect(tool.getPaletteSlots()[0].dye).toBe(dye);
+    });
+  });
 });

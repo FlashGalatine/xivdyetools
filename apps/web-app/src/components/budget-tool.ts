@@ -51,6 +51,12 @@ import { clearContainer } from '@shared/utils';
 import { makeCustomDye } from '@shared/custom-dye';
 import { formatGil, formatNumber } from '@shared/format';
 import type { Dye, DyeId, PriceData } from '@xivdyetools/types';
+import {
+  OPEN_PALETTE_DRAWER,
+  PALETTE_SLOTS_CHANGED,
+  type PaletteSlot,
+  type PaletteSlotSource,
+} from '@components/palette-slots';
 import { GLYPH_ACCENT_LIGHT, GLYPH_ACCENT_DARK } from '@xivdyetools/svg';
 import type { BudgetConfig, MatchingMethod } from '@shared/tool-config-types';
 import { DEFAULT_DISPLAY_OPTIONS, DEFAULT_DYE_FILTERS } from '@shared/tool-config-types';
@@ -158,7 +164,13 @@ const MONO = 'var(--font-mono)';
  * Budget tool — the 9C Ledger. Prices what a target dye's colour is worth,
  * line by line, against everything within the match line.
  */
-export class BudgetTool extends BaseComponent {
+/** Strips default button chrome so a slot-tap card keeps its existing look. */
+const BUTTON_RESET =
+  'appearance: none; -webkit-appearance: none; font: inherit; color: inherit; cursor: pointer; text-align: inherit;';
+
+export class BudgetTool extends BaseComponent implements PaletteSlotSource {
+  readonly paletteSlotMode = 'single' as const;
+
   private options: BudgetToolOptions;
 
   // State
@@ -492,6 +504,7 @@ export class BudgetTool extends BaseComponent {
       if (dye) {
         this.targetDye = dye;
         this.updateTargetDyeDisplay();
+        this.notifyPaletteSlotsChanged();
         StorageService.setItem(STORAGE_KEYS.targetDyeId, dye.id);
         // BUG-013 (2026-10-04 deep-dive): consumed once stored. The result
         // card's "Set as budget target" lands here as ?dye=, and left in the
@@ -505,6 +518,7 @@ export class BudgetTool extends BaseComponent {
       // ?hex= is a bare colour target — exclusive with `dye`, never persisted
       this.targetDye = makeCustomDye(`#${hexParam.replace(/^#/, '')}`);
       this.updateTargetDyeDisplay();
+      this.notifyPaletteSlotsChanged();
     }
 
     if (maxDeltaParam !== null) {
@@ -887,13 +901,16 @@ export class BudgetTool extends BaseComponent {
   private buildTargetDyeCard(): HTMLElement {
     const target = this.targetDye;
     if (!target) {
-      return this.createElement('div', {
+      const emptyCard = this.createElement('button', {
         textContent: LanguageService.t('budget.selectTargetDye'),
         attributes: {
-          style:
-            'padding: 16px; border-radius: 8px; border: 2px dashed var(--theme-border); text-align: center; color: var(--theme-text-muted);',
+          type: 'button',
+          'data-palette-slot': '0',
+          style: `${BUTTON_RESET} width: 100%; padding: 16px; border-radius: 8px; border: 2px dashed var(--theme-border); background: transparent; text-align: center; color: var(--theme-text-muted);`,
         },
       });
+      this.bindPaletteOpen(emptyCard);
+      return emptyCard;
     }
 
     const isLight = this.isLightColor(target.hex);
@@ -902,11 +919,15 @@ export class BudgetTool extends BaseComponent {
       ? '0 1px 2px rgba(255, 255, 255, 0.3)'
       : '0 1px 2px rgba(0, 0, 0, 0.3)';
 
-    const card = this.createElement('div', {
+    const card = this.createElement('button', {
       attributes: {
-        style: `padding: 16px; border-radius: 8px; background: ${target.hex}; border: 1px solid var(--theme-border);`,
+        type: 'button',
+        'data-palette-slot': '0',
+        'aria-label': `${LanguageService.t('budget.targetDye')}: ${this.dyeName(target)}`,
+        style: `${BUTTON_RESET} display: block; width: 100%; padding: 16px; border-radius: 8px; background: ${target.hex}; border: 1px solid var(--theme-border);`,
       },
     });
+    this.bindPaletteOpen(card);
 
     card.appendChild(
       this.createElement('p', {
@@ -946,6 +967,23 @@ export class BudgetTool extends BaseComponent {
     );
 
     return card;
+  }
+
+  getPaletteSlots(): PaletteSlot[] {
+    return [{ label: '', targetLabel: '', dye: this.targetDye }];
+  }
+
+  private notifyPaletteSlotsChanged(): void {
+    this.container.dispatchEvent(
+      new CustomEvent(PALETTE_SLOTS_CHANGED, { bubbles: true, composed: true })
+    );
+  }
+
+  /** A slot tap: ask the shell to open the palette (single-input tools send no slot). */
+  private bindPaletteOpen(el: HTMLElement): void {
+    el.addEventListener('click', () => {
+      el.dispatchEvent(new CustomEvent(OPEN_PALETTE_DRAWER, { bubbles: true, composed: true }));
+    });
   }
 
   private updateTargetDyeDisplay(): void {
@@ -1211,14 +1249,20 @@ export class BudgetTool extends BaseComponent {
 
     // Shared empty-state treatment (shaded box + dimmed glyph + instruction).
     // Rules come from the shell's injected stylesheet — see v4-layout.ts.
-    const empty = this.createElement('div', {
+    const empty = this.createElement('button', {
       className: 'v5-empty-state',
+      attributes: {
+        type: 'button',
+        'data-palette-slot': '0',
+        style: 'appearance: none; -webkit-appearance: none; font: inherit; cursor: pointer;',
+      },
     });
 
     empty.innerHTML = `
-      <div class="v5-empty-state-icon" aria-hidden="true">${ICON_TOOL_BUDGET}</div>
-      <p class="v5-empty-state-text">${LanguageService.t('budget.selectTargetToStart')}</p>
+      <span class="v5-empty-state-icon" aria-hidden="true">${ICON_TOOL_BUDGET}</span>
+      <span class="v5-empty-state-text" style="display: block;">${LanguageService.t('budget.selectTargetToStart')}</span>
     `;
+    this.bindPaletteOpen(empty);
 
     this.emptyStateContainer.appendChild(empty);
   }
@@ -2031,6 +2075,7 @@ export class BudgetTool extends BaseComponent {
     StorageService.removeItem(STORAGE_KEYS.targetDyeId);
     this.releaseLinkedTarget();
     logger.info('[BudgetTool] All dyes cleared');
+    this.notifyPaletteSlotsChanged();
 
     if (this.ledgerContainer) clearContainer(this.ledgerContainer);
     if (this.verdictContainer) clearContainer(this.verdictContainer);
@@ -2060,6 +2105,7 @@ export class BudgetTool extends BaseComponent {
     StorageService.setItem(STORAGE_KEYS.targetDyeId, dye.id);
     this.releaseLinkedTarget();
     logger.info(`[BudgetTool] Target selected: ${dye.name}`);
+    this.notifyPaletteSlotsChanged();
 
     void this.findAlternatives();
     this.updateTargetDyeDisplay();
