@@ -2,6 +2,27 @@
 
 ---
 
+## Web-App Version 5.18.0 — November 13, 2026
+
+### Tap a slot to pick its dye
+- **Empty slots open the Color Palette.** Tap an empty slot or card in a tool, then pick a dye to fill it.
+- **Filled slots can be replaced.** Tap a filled slot, and the next dye you pick takes its place. In Dye Comparison and Accessibility Checker, use the slot buttons in the palette.
+- **On phones, the palette closes by itself after the pick** when a slot tap opened it. Opened with the round palette button, it stays open so you can keep browsing.
+- **Dye Comparison and Accessibility Checker have an "Add Dye" tile** after your dyes, until all four slots are full.
+- **Gradient Builder's highlighted FROM or TO card clears after the pick.** It used to stay highlighted until you cleared everything.
+- **Swatch Matcher's empty card is unchanged.** It still asks for a color from the grid.
+
+### Color Palette
+- **Dyes in use are marked.** Each dye the tool is using gets a ring and a check mark, and the dye in the slot you're filling is highlighted in the theme color.
+- **Slot buttons at the top.** Dye Mixer, Gradient Builder, Dye Comparison and Accessibility Checker show one button per slot. Tap one to choose the slot to fill, and tap it again to cancel.
+- **In those four tools, the palette says which slot you're filling,** for example "Choosing dye 2 of 4".
+- **Tap a marked dye to remove it** in Dye Mixer, Gradient Builder, Dye Comparison and Accessibility Checker, when no slot is selected. With a slot selected, the marked dye moves into that slot instead.
+- **In the other tools, picking the dye already in use changes nothing.** The random dye button skips dyes you're using in the four tools above, so it never removes one.
+
+### Dye Mixer
+- **Dye Mixer no longer takes the same dye twice.** A saved or shared pair with the same dye in both slots now loads with only the first slot filled.
+- **Its slot buttons read 1 and 2,** matching the two slots.
+
 ## Web-App Version 5.16.11 — November 2, 2026
 
 ### Harmony Explorer, Dye Comparison and Accessibility Checker

@@ -70,6 +70,13 @@ import type { ResultCardData, ContextAction } from '@components/v4/result-card';
 import '@components/v4/share-button';
 import type { ShareButton } from '@components/v4/share-button';
 import { openExportSheet } from '@components/export-sheet';
+import {
+  notifyPaletteSlotsChanged,
+  requestPalette,
+  SLOT_TARGET_BORDER,
+  type PaletteSlot,
+  type PaletteSlotHost,
+} from '@components/palette-slots';
 import type { ExportEntry } from '@shared/palette-export';
 import { ShareService } from '@services/share-service';
 import { formatGil } from '@shared/format';
@@ -147,8 +154,12 @@ function toMaxResults(value: unknown): number | null {
  * Blend two dyes together to find matching FFXIV dyes.
  */
 
-export class MixerTool extends BaseComponent {
+export class MixerTool extends BaseComponent implements PaletteSlotHost {
   private options: MixerToolOptions;
+
+  readonly paletteSlotMode = 'multi' as const;
+  /** The slot the palette is aiming at (accent border), or null. */
+  private paletteTarget: number | null = null;
 
   // State
   private selectedDyes: [Dye | null, Dye | null, Dye | null] = [null, null, null];
@@ -264,7 +275,9 @@ export class MixerTool extends BaseComponent {
         savedDyeIds[1] ? (dyeService.getDyeById(savedDyeIds[1]) ?? null) : null,
         null,
       ];
-      if (savedDyeIds[2]) {
+      // The pair never holds one dye twice (older builds allowed it)
+      const droppedCopy = this.dropDuplicateB();
+      if (savedDyeIds[2] || droppedCopy) {
         this.saveSelectedDyes();
       }
 
@@ -274,6 +287,16 @@ export class MixerTool extends BaseComponent {
         this.blendedColor = this.blendColorsInternal(hexColors);
       }
     }
+  }
+
+  /** Empty B when it holds the same dye as A. Returns true when it did. */
+  private dropDuplicateB(): boolean {
+    const [a, b] = this.selectedDyes;
+    if (a && b && a.id === b.id) {
+      this.selectedDyes[1] = null;
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -374,7 +397,7 @@ export class MixerTool extends BaseComponent {
     const selector = new DyeSelector(selectorContainer, {
       maxSelections: 3,
       allowMultiple: true,
-      allowDuplicates: true,
+      allowDuplicates: false,
       showCategories: true,
       showPrices: true,
       excludeFacewear: true,
@@ -777,6 +800,9 @@ export class MixerTool extends BaseComponent {
       this.mixRatio = params.ratio / 100;
     }
 
+    // A link naming one dye twice (or A over a stored B) keeps only slot A
+    this.dropDuplicateB();
+
     // If we loaded dyes, save to storage and update selectors
     if (this.selectedDyes[0] || this.selectedDyes[1]) {
       this.saveSelectedDyes();
@@ -851,6 +877,54 @@ export class MixerTool extends BaseComponent {
     this.showEmptyState(true);
     this.updateCraftingUI();
     this.updateDrawerContent();
+    notifyPaletteSlotsChanged(this.container);
+  }
+
+  // ============================================================================
+  // Palette slot contract (PaletteSlotHost)
+  // ============================================================================
+
+  getPaletteSlots(): PaletteSlot[] {
+    return ([0, 1] as const).map((i) => ({
+      // Same digit the slot box shows
+      label: String(i + 1),
+      targetLabel: LanguageService.tInterpolate('colorPalette.choosingDyeNamed', {
+        // The key already says "dye {slot}": pass the digit, not "Dye 1"
+        slot: String(i + 1),
+      }),
+      dye: this.selectedDyes[i],
+    }));
+  }
+
+  /** Put `dye` in slot `index`; a dye already in the other slot swaps places with it. */
+  placeDyeAt(index: number, dye: Dye): void {
+    if ((index !== 0 && index !== 1) || !dye) return;
+    const other = index === 0 ? 1 : 0;
+    if (this.selectedDyes[other]?.id === dye.id) {
+      this.selectedDyes[other] = this.selectedDyes[index];
+    }
+    this.selectedDyes[index] = dye;
+    this.selectedDyes[2] = null;
+    this.commitSlots();
+  }
+
+  removeDyeAt(index: number): void {
+    if (index !== 0 && index !== 1) return;
+    this.handleSlotRemove(index);
+  }
+
+  setPaletteTarget(index: number | null): void {
+    this.paletteTarget = index;
+    ([this.slot1Element, this.slot2Element] as const).forEach((el, i) => {
+      if (el) this.applyTargetBorder(el, i);
+    });
+  }
+
+  private applyTargetBorder(slot: HTMLElement, index: number): void {
+    slot.style.borderColor =
+      this.paletteTarget === index
+        ? SLOT_TARGET_BORDER
+        : 'var(--v4-glass-border, rgba(255, 255, 255, 0.1))';
   }
 
   /**
@@ -860,12 +934,9 @@ export class MixerTool extends BaseComponent {
   public selectDye(dye: Dye): void {
     if (!dye) return;
 
-    // Allow duplicates but not triplicates (max 2 of same dye)
-    const existingCount = this.selectedDyes.filter((d) => d?.id === dye.id).length;
-    if (existingCount >= 2) {
-      // Already have 2 of this dye, don't add a third
-      return;
-    }
+    // The pair never holds one dye twice. The layout turns a tap on a held
+    // dye into a remove before it gets here; this guards any other caller.
+    if (this.selectedDyes.some((d) => d?.id === dye.id)) return;
 
     // Two slots: fill the first empty one, else shift the pair (A←B, B←new)
     if (!this.selectedDyes[0]) {
@@ -903,6 +974,7 @@ export class MixerTool extends BaseComponent {
     }
 
     this.updateDrawerContent();
+    notifyPaletteSlotsChanged(this.container);
     logger.info(`[MixerTool] Selected dye from palette: ${dye.name}`);
   }
 
@@ -1150,6 +1222,7 @@ export class MixerTool extends BaseComponent {
     }
 
     this.updateDrawerContent();
+    notifyPaletteSlotsChanged(this.container);
   }
 
   /**
@@ -1166,6 +1239,11 @@ export class MixerTool extends BaseComponent {
    */
   private handleSlotRemove(index: 0 | 1 | 2): void {
     this.selectedDyes[index] = null;
+    this.commitSlots();
+  }
+
+  /** Persist and redraw after the slots changed in place (remove, place). */
+  private commitSlots(): void {
     this.saveSelectedDyes();
 
     // Update DyeSelector
@@ -1179,6 +1257,9 @@ export class MixerTool extends BaseComponent {
       this.blendedColor = this.blendColorsInternal(hexColors);
       this.findMatchingDyesInternal();
       this.showEmptyState(false);
+      if (this.showPrices) {
+        void this.fetchPricesForDisplayedDyes();
+      }
     } else {
       this.blendedColor = null;
       this.matchedResults = [];
@@ -1189,6 +1270,7 @@ export class MixerTool extends BaseComponent {
     this.updateCraftingUI();
     this.renderResultsGrid();
     this.updateDrawerContent();
+    notifyPaletteSlotsChanged(this.container);
   }
 
   /**
@@ -1720,12 +1802,24 @@ export class MixerTool extends BaseComponent {
   private createDyeSlot(index: 0 | 1 | 2): HTMLElement {
     const dye = this.selectedDyes[index];
     const size = SLOT_SIZE.input;
+    const slotName = LanguageService.t(index === 0 ? 'mixer.dye1' : 'mixer.dye2');
 
-    const slot = this.createElement('div', {
+    const slot = this.createElement('button', {
       className: 'mixer-dye-slot',
       attributes: {
+        type: 'button',
+        // Name the slot (and its dye) instead of leaving "+" / digit-and-name
+        'aria-label': dye
+          ? `${slotName}: ${LanguageService.getDyeName(dye.itemID) || dye.name}`
+          : slotName,
         'data-slot-index': String(index),
+        'data-palette-slot': String(index),
         style: `
+          padding: 0;
+          font: inherit;
+          color: inherit;
+          appearance: none;
+          -webkit-appearance: none;
           width: ${size}px;
           height: ${size}px;
           border-radius: 12px;
@@ -1807,6 +1901,12 @@ export class MixerTool extends BaseComponent {
       });
       slot.appendChild(plusSign);
     }
+
+    // A re-render keeps the palette's target mark
+    if (this.paletteTarget === index) this.applyTargetBorder(slot, index);
+
+    // Empty or filled, a tap aims the palette at this slot
+    this.on(slot, 'click', () => requestPalette(slot, index));
 
     // Hover effect
     this.on(slot, 'mouseenter', () => {
@@ -2109,15 +2209,14 @@ export class MixerTool extends BaseComponent {
     switch (action) {
       case 'add-mixer-slot-1':
         // Explicitly replace Slot 1
-        this.selectedDyes[0] = dye;
-        this.handleDyeSelection(this.selectedDyes.filter((d): d is Dye => d !== null));
+        // placeDyeAt swaps rather than duplicating a dye B already holds
+        this.placeDyeAt(0, dye);
         ToastService.success(LanguageService.t('mixer.replacedSlot1'));
         break;
 
       case 'add-mixer-slot-2':
         // Explicitly replace Slot 2
-        this.selectedDyes[1] = dye;
-        this.handleDyeSelection(this.selectedDyes.filter((d): d is Dye => d !== null));
+        this.placeDyeAt(1, dye);
         ToastService.success(LanguageService.t('mixer.replacedSlot2'));
         break;
     }

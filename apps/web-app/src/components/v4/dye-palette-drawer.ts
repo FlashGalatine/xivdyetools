@@ -11,6 +11,7 @@
 import { html, css, CSSResultGroup, TemplateResult, nothing, type PropertyValues } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
+import { classMap } from 'lit/directives/class-map.js';
 import { BaseLitComponent } from './base-lit-component';
 import { DyeService, type Dye } from '@services/dye-service-wrapper';
 import { filterDyesBySpectra, ALL_SPECTRA } from '@shared/spectrum-filter-utils';
@@ -23,6 +24,7 @@ import { ICON_DICE, ICON_BROOM, ICON_CLOSE } from '@shared/ui-icons';
 import { LanguageService } from '@services/index';
 import type { ToolId } from '@services/router-service';
 import { DYE_CATEGORIES } from '@xivdyetools/core';
+import { findHeldSlot, type PaletteSlot, type PaletteSlotMode } from '@components/palette-slots';
 
 /**
  * Filter types for dye categories
@@ -66,6 +68,8 @@ const SWATCH_TOOLTIP_CLEARANCE_PX = 12;
  *     button, so consumers (telemetry) can tell a deliberate pick from a random one
  * @fires drawer-toggle - When close button is clicked
  * @fires clear-all-dyes - When clear all button is clicked, signals tool to reset
+ * @fires slot-target-change - When a slot chip is clicked
+ *   - detail: { index: number | null } — null when the chip was already the target
  *
  * @example
  * ```html
@@ -91,6 +95,18 @@ export class DyePaletteDrawer extends BaseLitComponent {
    */
   @property({ type: String, attribute: 'active-tool' })
   activeTool: ToolId = 'harmony';
+
+  /** The active tool's dye slots; a swatch whose dye one of them holds is marked. */
+  @property({ attribute: false })
+  slots: PaletteSlot[] = [];
+
+  /** 'multi' adds the slot strip and the target line; null for tools without slots. */
+  @property({ attribute: false })
+  slotMode: PaletteSlotMode | null = null;
+
+  /** Index of the slot the next pick fills, or null. */
+  @property({ attribute: false })
+  slotTarget: number | null = null;
 
   /**
    * Tools that support the Custom Color feature
@@ -144,6 +160,9 @@ export class DyePaletteDrawer extends BaseLitComponent {
   private unsubscribeFavorites: (() => void) | null = null;
   private languageUnsubscribe: (() => void) | null = null;
 
+  // Slot marks (issue 422), noted here because CSS comments ship: a held dye
+  // gets a two-layer ring (a background-color gap, then --ring) that reads on
+  // any dye color, and a check badge bottom-left, as the star owns top-right.
   static override styles: CSSResultGroup = [
     BaseLitComponent.baseStyles,
     css`
@@ -184,6 +203,18 @@ export class DyePaletteDrawer extends BaseLitComponent {
         text-transform: uppercase;
         letter-spacing: 1px;
         color: var(--theme-text, #e0e0e0);
+      }
+
+      .drawer-heading {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+      }
+
+      .drawer-target-line {
+        font-size: 12px;
+        color: var(--theme-primary);
       }
 
       .close-btn {
@@ -286,6 +317,59 @@ export class DyePaletteDrawer extends BaseLitComponent {
       .drawer-content::-webkit-scrollbar-thumb {
         background: var(--theme-border, rgba(255, 255, 255, 0.2));
         border-radius: 3px;
+      }
+
+      .slot-strip,
+      .slot-chip {
+        display: flex;
+        gap: 6px;
+      }
+
+      .slot-strip {
+        margin-bottom: 16px;
+      }
+
+      .slot-chip {
+        flex: 1 1 0;
+        min-width: 0;
+        height: 34px;
+        align-items: center;
+        padding: 0 8px;
+        border: 1px solid var(--theme-border);
+        border-radius: 8px;
+        background: transparent;
+        color: var(--theme-text-muted);
+        font-family: var(--font-mono);
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .slot-chip.is-target {
+        border-color: var(--theme-primary);
+        color: var(--theme-primary);
+      }
+
+      .slot-chip:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      .slot-chip-swatch {
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+        border-radius: 5px;
+      }
+
+      .slot-chip-swatch.empty {
+        border: 1px dashed var(--theme-border);
+      }
+
+      .slot-chip-label {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       /* Search Box */
@@ -539,6 +623,60 @@ export class DyePaletteDrawer extends BaseLitComponent {
         background: transparent;
         font: inherit;
         cursor: pointer;
+      }
+
+      .swatch.in-use {
+        --ring: var(--theme-text);
+        box-shadow:
+          0 0 0 2px var(--theme-background),
+          0 0 0 4px var(--ring);
+      }
+
+      .swatch.is-target {
+        --ring: var(--theme-primary);
+      }
+
+      .swatch-mark {
+        position: absolute;
+        left: -5px;
+        bottom: -5px;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        border: 1.5px solid var(--ring);
+        background: var(--theme-background);
+        color: var(--ring);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+      }
+
+      .is-target .swatch-mark {
+        background: var(--ring);
+        color: var(--theme-text-header);
+      }
+
+      .swatch-mark svg {
+        width: 10px;
+        height: 10px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      @media (prefers-reduced-motion: no-preference) {
+        .swatch.just-picked {
+          animation: swatch-pulse 300ms ease-out;
+        }
+
+        @keyframes swatch-pulse {
+          50% {
+            transform: scale(1.15);
+          }
+        }
       }
 
       /* Favorite Star Button */
@@ -931,13 +1069,44 @@ export class DyePaletteDrawer extends BaseLitComponent {
     this.favoritesExpanded = !this.favoritesExpanded;
   }
 
-  private handleDyeClick(dye: Dye): void {
+  private handleDyeClick(dye: Dye, e?: Event): void {
+    const swatch = (e?.currentTarget as Element | null)?.closest<HTMLElement>('.swatch');
+    if (swatch) this.pulseSwatch(swatch);
     this.emit('dye-selected', { dye });
     logger.debug(`[DyePaletteDrawer] Dye selected: ${dye.name}`);
   }
 
+  /**
+   * One pulse where the pick landed. The swatch's classes are bound through
+   * classMap, so the re-render that marks the dye leaves this class alone.
+   * Under reduced motion nothing would ever end it, so it is never added; a
+   * pick that closes the palette (display: none) cancels it instead of ending it.
+   */
+  private pulseSwatch(swatch: HTMLElement): void {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (swatch.classList.contains('just-picked')) return;
+    swatch.classList.add('just-picked');
+    const done = new AbortController();
+    const finish = (): void => {
+      swatch.classList.remove('just-picked');
+      done.abort();
+    };
+    swatch.addEventListener('animationend', finish, { signal: done.signal });
+    swatch.addEventListener('animationcancel', finish, { signal: done.signal });
+  }
+
   private handleClose(): void {
     this.emit('drawer-toggle');
+  }
+
+  /** Focus the close button: the shell moves focus into a palette a slot tap opened. */
+  focusClose(): void {
+    this.renderRoot.querySelector<HTMLButtonElement>('.close-btn')?.focus();
+  }
+
+  /** A chip targets its slot; the target chip clears the target. */
+  private handleSlotChipClick(index: number): void {
+    this.emit('slot-target-change', { index: this.slotTarget === index ? null : index });
   }
 
   private handleSwatchHover(e: MouseEvent): void {
@@ -972,13 +1141,19 @@ export class DyePaletteDrawer extends BaseLitComponent {
    * Emits dye-selected with the randomly chosen dye.
    */
   private handleRandomDye(): void {
-    if (this.allDyes.length === 0) {
+    // A held dye picked untargeted would be removed, so multi-input tools
+    // roll only among the dyes they do not hold.
+    const pool =
+      this.slotMode === 'multi'
+        ? this.allDyes.filter((d) => findHeldSlot(this.slots, d) === -1)
+        : this.allDyes;
+    if (pool.length === 0) {
       ToastService.warning(LanguageService.t('colorPalette.noDyesAvailable'));
       return;
     }
 
-    const randomIndex = Math.floor(Math.random() * this.allDyes.length);
-    const randomDye = this.allDyes[randomIndex];
+    const randomIndex = Math.floor(Math.random() * pool.length);
+    const randomDye = pool[randomIndex];
 
     // `random: true` lets the layout exclude this from dye-popularity telemetry
     this.emit('dye-selected', { dye: randomDye, random: true });
@@ -1097,11 +1272,20 @@ export class DyePaletteDrawer extends BaseLitComponent {
 
   protected override render(): TemplateResult {
     const groupedDyes = this.groupByCategory(this.filteredDyes);
+    const targetSlot = this.slotTarget === null ? undefined : this.slots[this.slotTarget];
+    // The target line is always rendered, empty (no height) without a target:
+    // a live region inserted together with its first text is often not announced,
+    // so it is never display: none.
 
     return html`
       <aside class="drawer">
         <div class="drawer-header">
-          <span class="drawer-title">${LanguageService.t('colorPalette.title')}</span>
+          <div class="drawer-heading">
+            <span class="drawer-title">${LanguageService.t('colorPalette.title')}</span>
+            <span class="drawer-target-line" aria-live="polite"
+              >${targetSlot?.targetLabel ?? nothing}</span
+            >
+          </div>
           <div class="header-actions">
             <button
               class="action-btn random-btn"
@@ -1135,7 +1319,8 @@ export class DyePaletteDrawer extends BaseLitComponent {
           @mouseover=${this.handleSwatchHover}
           @scroll=${this.handleDrawerScroll}
         >
-          ${this.renderSearch()} ${this.renderFilters()} ${this.renderSpectrumFilters()}
+          ${this.slotMode === 'multi' ? this.renderSlotStrip() : nothing} ${this.renderSearch()}
+          ${this.renderFilters()} ${this.renderSpectrumFilters()}
           ${this.shouldShowCustomColor ? this.renderCustomColor() : nothing}
           ${this.renderFavorites()} ${this.renderDyeGrid(groupedDyes)}
         </div>
@@ -1311,19 +1496,47 @@ export class DyePaletteDrawer extends BaseLitComponent {
   private renderSwatch(dye: Dye): TemplateResult {
     const isFav = this.isFavorite(dye.stainID ?? 0);
     const localizedName = this.getLocalizedDyeName(dye);
+    const held = findHeldSlot(this.slots, dye);
+    const multi = this.slotMode === 'multi';
+    let pickLabel = localizedName;
+    if (held !== -1) {
+      pickLabel = multi
+        ? LanguageService.tInterpolate('colorPalette.swatchInSlot', {
+            name: localizedName,
+            slot: this.slots[held].label,
+          })
+        : LanguageService.tInterpolate('colorPalette.swatchInUse', { name: localizedName });
+    }
 
     // BUG-028 (2026-10-04 deep-dive): the swatch was a click-only <div>, so
     // Tab skipped every dye. The pick is a native button (Enter and Space for
     // free) beside the star rather than around it: a button inside a button
     // is invalid HTML, and the parser would split them apart.
     return html`
-      <div class="swatch" style="background-color: ${dye.hex}" title="${localizedName}">
+      <div
+        class="swatch ${classMap({
+          'in-use': held !== -1,
+          'is-target': held !== -1 && held === this.slotTarget,
+        })}"
+        style="background-color: ${dye.hex}"
+        title="${localizedName}"
+      >
         <button
           class="swatch-pick"
           type="button"
-          aria-label="${localizedName}"
-          @click=${() => this.handleDyeClick(dye)}
+          aria-label="${pickLabel}"
+          aria-pressed=${multi ? String(held !== -1) : nothing}
+          @click=${(e: Event) => this.handleDyeClick(dye, e)}
         ></button>
+        ${
+          held !== -1
+            ? html`<span class="swatch-mark" aria-hidden="true">
+                <svg viewBox="0 0 12 12">
+                  <path d="M2.5 6.5l2.5 2.5 4.5-5" />
+                </svg>
+              </span>`
+            : nothing
+        }
         <button
           class="swatch-favorite-btn ${isFav ? 'is-favorite' : ''}"
           type="button"
@@ -1355,6 +1568,46 @@ export class DyePaletteDrawer extends BaseLitComponent {
                 </svg>`
           }
         </button>
+      </div>
+    `;
+  }
+
+  /** One chip per slot of a multi-input tool: what each holds, and which is the target. */
+  private renderSlotStrip(): TemplateResult {
+    return html`
+      <div
+        class="slot-strip"
+        role="group"
+        aria-label=${LanguageService.t('colorPalette.slotStripLabel')}
+      >
+        ${this.slots.map((slot, index) => {
+          const isTarget = index === this.slotTarget;
+          return html`
+            <button
+              class="slot-chip ${classMap({ 'is-target': isTarget })}"
+              type="button"
+              aria-pressed=${isTarget ? 'true' : 'false'}
+              aria-label=${
+                slot.dye
+                  ? LanguageService.tInterpolate('colorPalette.slotChipFilled', {
+                      slot: slot.label,
+                      name: this.getLocalizedDyeName(slot.dye),
+                    })
+                  : LanguageService.tInterpolate('colorPalette.slotChipEmpty', {
+                      slot: slot.label,
+                    })
+              }
+              ?disabled=${slot.disabled === true}
+              @click=${() => this.handleSlotChipClick(index)}
+            >
+              <span
+                class="slot-chip-swatch ${slot.dye ? '' : 'empty'}"
+                style=${slot.dye ? `background-color: ${slot.dye.hex}` : nothing}
+              ></span>
+              <span class="slot-chip-label">${slot.label}</span>
+            </button>
+          `;
+        })}
       </div>
     `;
   }

@@ -269,7 +269,15 @@
     "noDyesAvailable": "利用可能な染料がありません",
     "randomDyeSelected": "{name}を選択しました",
     "mobileHint": "初めてですか？パレットボタンをタップしてカララントを選択できます。",
-    "favoritesWithCount": "お気に入り（{count}）"
+    "favoritesWithCount": "お気に入り（{count}）",
+    "slotStripLabel": "染料スロット",
+    "slotChipEmpty": "スロット {slot}：空き",
+    "slotChipFilled": "スロット {slot}：{name}",
+    "swatchInSlot": "{name}（スロット {slot}）",
+    "swatchInUse": "{name}（使用中）",
+    "choosingDyeOf": "染料 {current}/{total} を選択中",
+    "choosingDyeNamed": "染料 {slot} を選択中",
+    "choosingEndpoint": "{slot}の色を選択中"
   },
   "harmony": {
     "companionDyes": "ハーモニーカラーごとの追加カララント",

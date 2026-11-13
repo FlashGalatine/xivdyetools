@@ -269,7 +269,15 @@
     "noDyesAvailable": "No dyes available",
     "randomDyeSelected": "Selected: {name}",
     "mobileHint": "New here? Tap the palette button to pick dyes.",
-    "favoritesWithCount": "Favorites ({count})"
+    "favoritesWithCount": "Favorites ({count})",
+    "slotStripLabel": "Dye slots",
+    "slotChipEmpty": "Slot {slot}, empty",
+    "slotChipFilled": "Slot {slot}: {name}",
+    "swatchInSlot": "{name}, in slot {slot}",
+    "swatchInUse": "{name}, in use",
+    "choosingDyeOf": "Choosing dye {current} of {total}",
+    "choosingDyeNamed": "Choosing dye {slot}",
+    "choosingEndpoint": "Choosing the {slot} color"
   },
   "harmony": {
     "companionDyes": "Additional Dyes per Harmony Color",

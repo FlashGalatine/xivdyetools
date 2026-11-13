@@ -10,12 +10,18 @@
  * @module components/v4/v4-layout-shell
  */
 
-import { html, css, CSSResultGroup, TemplateResult, nothing } from 'lit';
+import { html, css, CSSResultGroup, TemplateResult, nothing, type PropertyValues } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { BaseLitComponent } from './base-lit-component';
 import type { ToolId } from '@services/router-service';
 import { LanguageService, StorageService } from '@services/index';
 import { STORAGE_KEYS } from '@shared/constants';
+import { normalizeTarget } from '@components/palette-slots';
+import type {
+  OpenPaletteDrawerDetail,
+  PaletteSlot,
+  PaletteSlotMode,
+} from '@components/palette-slots';
 
 // Import child components to ensure registration
 import './v4-app-header';
@@ -29,8 +35,9 @@ import type { Dye } from '@services/dye-service-wrapper';
  * V4 Layout Shell - Main application layout container
  *
  * @fires tool-change - When active tool changes, with detail: { toolId: ToolId }
- * @fires dye-selected - When a dye is selected from the palette drawer, with detail: { dye: Dye }
- * @fires custom-color-selected - When a custom color is applied from the palette drawer, with detail: { hex: string }
+ * @fires dye-selected - When a dye is selected from the palette drawer, with detail: { dye: Dye, random?: boolean, target: number | null }
+ * @fires custom-color-selected - When a custom color is applied from the palette drawer, with detail: { hex: string, target: number | null }
+ * @fires palette-target-change - When the palette target (the slot the next pick fills) changes, with detail: { index: number | null }
  * @fires clear-all-dyes - When clear all dyes button is clicked in palette drawer
  * @fires changelog-click - Bubbled from V4AppHeader
  * @fires theme-click - Bubbled from V4AppHeader
@@ -90,6 +97,46 @@ export class V4LayoutShell extends BaseLitComponent {
    */
   @state()
   private optionsCollapsed = false;
+
+  /** The active tool's dye slots, handed on to the palette's slot strip. */
+  @property({ attribute: false })
+  paletteSlots: PaletteSlot[] = [];
+
+  /** Whether the active tool takes one dye or several; null when it has no palette contract. */
+  @property({ attribute: false })
+  paletteSlotMode: PaletteSlotMode | null = null;
+
+  /** The slots are a dense list: any empty slot means "the next one". */
+  @property({ attribute: false })
+  paletteSlotsDense = false;
+
+  /** The slot the next pick fills, or null. One owner, so tool and palette agree. */
+  @state()
+  private target: number | null = null;
+
+  /**
+   * Whether a slot tap opened the palette. On a phone only that opening
+   * closes it after a pick; the round button leaves it open for browsing.
+   */
+  private openedBySlotTap = false;
+
+  /** The slot that opened the palette, so focus can go back to it on close. */
+  private openingSlot: number | null = null;
+
+  /**
+   * Read-only view of the target. The layout routes by the target carried in
+   * each pick's event detail instead.
+   * @testonly v4-layout-shell.test.ts reads it to assert which slot a slot tap,
+   * a strip chip or a pick leaves targeted
+   */
+  get paletteTarget(): number | null {
+    return this.target;
+  }
+
+  /** Drop the target (and announce it) if there is one. */
+  clearPaletteTarget(): void {
+    this.setTarget(null);
+  }
 
   /**
    * Tools that should NOT show the Color Palette drawer
@@ -517,6 +564,7 @@ export class V4LayoutShell extends BaseLitComponent {
    */
   private handleMediaQueryChange = (e: MediaQueryListEvent): void => {
     this.isMobile = e.matches;
+    this.resetPaletteTarget();
     // Crossing into the mobile layout turns both docked panels into
     // overlays — close them so they don't land on top of the tool.
     if (this.isMobile) {
@@ -524,6 +572,37 @@ export class V4LayoutShell extends BaseLitComponent {
       this.optionsCollapsed = true;
     }
   };
+
+  /**
+   * Any tool change clears the target: the app bar's tool-select and a route
+   * change (Back, a cross-link) both arrive here as activeTool.
+   */
+  protected override willUpdate(changed: PropertyValues<this>): void {
+    super.willUpdate(changed);
+    if (changed.has('activeTool') && changed.get('activeTool') !== undefined) {
+      this.resetPaletteTarget();
+    }
+  }
+
+  /** Set the target and announce it, only when it actually changes. */
+  private setTarget(index: number | null): void {
+    if (index === this.target) return;
+    this.target = index;
+    this.emit('palette-target-change', { index });
+  }
+
+  /** A slot index from a tool or the strip, made valid; single-input tools have no target. */
+  private resolveTarget(index: number | null): number | null {
+    if (this.paletteSlotMode !== 'multi') return null;
+    return normalizeTarget(this.paletteSlots, index, this.paletteSlotsDense);
+  }
+
+  /** Shared by every close path: no target, no slot-tap close rule. */
+  private resetPaletteTarget(): void {
+    this.openedBySlotTap = false;
+    this.openingSlot = null;
+    this.setTarget(null);
+  }
 
   /**
    * Handle tool selection from the app bar's title menu
@@ -547,6 +626,7 @@ export class V4LayoutShell extends BaseLitComponent {
    */
   private handleDrawerOverlayClick(): void {
     this.paletteDrawerOpen = false;
+    this.resetPaletteTarget();
   }
 
   /**
@@ -568,6 +648,12 @@ export class V4LayoutShell extends BaseLitComponent {
     if (this.paletteDrawerOpen) {
       // The user found the palette — the hint has done its job.
       this.dismissPaletteHint();
+      // Opened for browsing: keep a target set on desktop, but a pick no
+      // longer closes the palette.
+      this.openedBySlotTap = false;
+      this.openingSlot = null;
+    } else {
+      this.resetPaletteTarget();
     }
   }
 
@@ -576,15 +662,69 @@ export class V4LayoutShell extends BaseLitComponent {
    */
   private handlePaletteDrawerToggle(): void {
     this.paletteDrawerOpen = false;
+    this.resetPaletteTarget();
   }
 
   /**
-   * A tool asked for the picker (1A's hub button). The drawer is the app's
-   * dye picker, so "open the sheet" means reveal it.
+   * A tool asked for the picker: a slot tap, or a bare request such as 1A's
+   * hub button. The drawer is the app's dye picker, so "open the sheet" means
+   * reveal it; a slot index also makes that slot the target.
    */
-  private handleOpenPaletteDrawer(): void {
+  private handleOpenPaletteDrawer(e: CustomEvent<OpenPaletteDrawerDetail | undefined>): void {
     this.paletteDrawerOpen = true;
     this.dismissPaletteHint();
+    this.openedBySlotTap = true;
+    const slot = e.detail?.slot;
+    this.openingSlot = typeof slot === 'number' ? slot : null;
+    if (typeof slot === 'number' && this.paletteSlotMode === 'multi') {
+      this.setTarget(this.resolveTarget(slot));
+    }
+    if (this.isMobile) void this.focusPaletteClose();
+  }
+
+  /** The palette's strip changed the target; the close rule stays as it was. */
+  private handleSlotTargetChange(e: CustomEvent<{ index: number | null }>): void {
+    e.stopPropagation();
+    this.setTarget(this.resolveTarget(e.detail.index));
+  }
+
+  /** Move focus into the palette a slot tap just opened on a phone. */
+  private async focusPaletteClose(): Promise<void> {
+    await this.updateComplete;
+    this.renderRoot.querySelector('dye-palette-drawer')?.focusClose();
+  }
+
+  /**
+   * A pick closed the palette: hand focus back to the slot that opened it,
+   * else any slot, else the round button. v4-layout mounts the tool inside
+   * this shadow root's content scroller, so search there, not light DOM.
+   */
+  private async returnFocusAfterClose(slot: number | null): Promise<void> {
+    await this.updateComplete;
+    requestAnimationFrame(() => {
+      const content = this.renderRoot.querySelector('.v4-layout-content-scroll');
+      const target =
+        (slot === null
+          ? null
+          : content?.querySelector<HTMLElement>(`[data-palette-slot="${slot}"]`)) ??
+        content?.querySelector<HTMLElement>('[data-palette-slot]') ??
+        this.renderRoot.querySelector<HTMLElement>('.v4-palette-toggle');
+      target?.focus();
+    });
+  }
+
+  /**
+   * Shared tail of a palette pick: the target is used up, and on a phone a
+   * palette that a slot tap opened closes again.
+   */
+  private afterPick(): void {
+    this.setTarget(null);
+    if (this.isMobile && this.openedBySlotTap) {
+      const slot = this.openingSlot;
+      this.paletteDrawerOpen = false;
+      this.resetPaletteTarget();
+      void this.returnFocusAfterClose(slot);
+    }
   }
 
   /**
@@ -601,11 +741,12 @@ export class V4LayoutShell extends BaseLitComponent {
    * Handle dye selection from DyePaletteDrawer
    * Re-emits for parent to route to active tool
    */
-  private handleDyeSelected(e: CustomEvent<{ dye: Dye }>): void {
+  private handleDyeSelected(e: CustomEvent<{ dye: Dye; random?: boolean }>): void {
     // Stop the original event from bubbling further to prevent duplicate handling
     // (we re-emit it ourselves for the parent v4-layout.ts to receive)
     e.stopPropagation();
-    this.emit('dye-selected', e.detail);
+    this.emit('dye-selected', { ...e.detail, target: this.target });
+    this.afterPick();
   }
 
   /**
@@ -615,6 +756,8 @@ export class V4LayoutShell extends BaseLitComponent {
   private handleClearAllDyes(e: Event): void {
     e.stopPropagation(); // BUG-113: see handleConfigChange
     this.emit('clear-all-dyes');
+    // Clears the target only: a palette a slot tap opened still closes on the next pick.
+    this.setTarget(null);
   }
 
   /**
@@ -623,7 +766,8 @@ export class V4LayoutShell extends BaseLitComponent {
    */
   private handleCustomColorSelected(e: CustomEvent<{ hex: string }>): void {
     e.stopPropagation();
-    this.emit('custom-color-selected', e.detail);
+    this.emit('custom-color-selected', { ...e.detail, target: this.target });
+    this.afterPick();
   }
 
   /**
@@ -774,6 +918,10 @@ export class V4LayoutShell extends BaseLitComponent {
                 <dye-palette-drawer
                   ?is-open=${this.paletteDrawerOpen}
                   active-tool=${this.activeTool}
+                  .slots=${this.paletteSlots}
+                  .slotMode=${this.paletteSlotMode}
+                  .slotTarget=${this.target}
+                  @slot-target-change=${this.handleSlotTargetChange}
                   @drawer-toggle=${this.handlePaletteDrawerToggle}
                   @dye-selected=${this.handleDyeSelected}
                   @custom-color-selected=${this.handleCustomColorSelected}

@@ -7,6 +7,74 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.18.0] - 2026-11-13
+
+### Added
+
+- **Slot-aware dye picking (issue 422, first slice).** A tool's dye slots are now the way to fill them.
+  Tapping a slot or an empty-state card opens the Color Palette for that slot (`open-palette-drawer`
+  now carries an optional `{ slot }`), and the next pick fills or replaces that slot. The shell owns
+  the one target (`V4LayoutShell`), the palette shows it, and `v4-layout.ts` routes `dye-selected` and
+  `custom-color-selected` by the target the shell adds to their detail. Spec:
+  `docs/superpowers/specs/2026-11-13-mobile-slot-aware-picking-design.md`.
+  - **Slot taps per tool:** Harmony Explorer's wheel hub and empty-state button (as before), Budget
+    Suggestions' empty-state card and target card, Swatch Matcher's source card once a reverse match
+    exists, Dye Mixer's two slot boxes, Gradient Builder's FROM and TO cards (TO stays unavailable until
+    FROM is set), and in Dye Comparison and Accessibility Checker the four "Add Dye" placeholders at zero
+    dyes plus a new single "Add Dye" tile after the cards while they hold one to three dyes. Swatch
+    Matcher's empty card is unchanged: it still asks for a color from the grid. Every slot tap is a
+    real button.
+  - **Phones close the palette after the pick** (`(max-width: 768px)`), but only when a slot tap opened
+    it. Opened from the round palette button it stays open for browsing. When it closes, focus returns
+    to the slot that was tapped, or to its replacement. On desktop a slot tap sets the target and
+    reopens a closed docked palette; nothing closes after a pick.
+  - **Palette marks:** every dye the active tool holds gets a double ring and a check badge; the target
+    slot's dye takes the primary color. A pick pulses its swatch once (not under
+    `prefers-reduced-motion`). The pick button's accessible name names the slot, and it is
+    `aria-pressed` in multi-dye tools. Custom colors are never marked.
+  - **Slot strip and header line (multi-dye tools):** a row of chips, one per slot (1 to 4 in Dye
+    Comparison and Accessibility Checker, 1 and 2 in Dye Mixer, FROM and TO in Gradient Builder), each
+    showing its dye or an empty box. A chip sets the target, the target chip clears it, and Gradient
+    Builder's TO chip is disabled until FROM is set. While a target is set, a polite live line under the
+    palette title names it ("Choosing dye 2 of 4", "Choosing dye 1", "Choosing the FROM color"). The
+    targeted slot in the tool takes the accent border Gradient Builder used for its armed endpoint.
+  - **Pick rules (`resolvePick` in `components/palette-slots.ts`):** single-dye tools (Harmony Explorer,
+    Budget Suggestions, Swatch Matcher) use the picked dye as before, and picking the dye they already
+    hold changes nothing. Without a target, multi-dye tools add an unmarked dye by their existing rule
+    (Dye Comparison ignores it when full, Accessibility Checker drops the oldest, Dye Mixer and Gradient
+    Builder shift) and remove a marked one. With a target, a pick fills that slot: a marked dye held in
+    another slot swaps with the target slot's dye (or moves there if it is empty) and is never removed,
+    and the target clears afterwards. Random never removes: in a
+    multi-dye tool it rolls only among dyes the tool does not hold. Clear all and switching tools clear
+    the target.
+  - **Removing:** Dye Comparison and Accessibility Checker close the gap, as their Remove buttons do;
+    Dye Mixer empties the slot in place; removing FROM in Gradient Builder while TO is set moves TO's
+    dye to FROM.
+
+### Changed
+
+- **Dye Mixer no longer holds the same dye twice.** `selectDye` refuses a second copy, and a saved or
+  shared pair with the same dye in both slots loads with only the first slot filled. The tests that
+  asserted duplicates were replaced by tests of the new rule.
+- **Gradient Builder's armed endpoint clears after a pick,** like every other target; it used to
+  persist until Clear all.
+- **Dye Comparison and Accessibility Checker placeholders use theme tokens** (`--theme-border`,
+  `--theme-card-hover`) instead of fixed `rgba` colors.
+- **Bundle budget:** the `v4-layout` chunk went from 217.39 KB to 226.29 KB, so the `layout shell` row
+  in `scripts/check-bundle-size.js` is 228 KB (was 218 KB).
+- **JS payload limit 2252 KB (was 2250 KB):** the feature put the one-locale payload 7.70 KB over; the
+  shared dense-list slot taps (`palette-slot-tiles.ts`) and palette dispatches trimmed it from 2257.70 KB
+  to 2251.77 KB, and the limit rises 2 KB for the remaining Lit-template indentation.
+
+### Tests
+
+- Unit tests for the slot contract and pick resolution (`palette-slots.test.ts`), the shell's target
+  and close rule, the palette's marks, strip and header line, the layout's routing, and every tool's
+  slots. New `e2e/slot-aware-picking.spec.ts` runs the phone flows (tap an empty slot and see the
+  palette close, pick twice from the round button, add from the "Add Dye" tile, replace a filled slot
+  from the strip, tap a marked dye with no slot selected to remove it) in every Playwright project through explicit
+  viewports.
+
 ## [5.16.11] - 2026-11-02
 
 ### Fixed

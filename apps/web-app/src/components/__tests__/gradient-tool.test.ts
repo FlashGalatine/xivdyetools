@@ -24,6 +24,7 @@ import {
 import { ConfigController as RealConfigController } from '@services/config-controller';
 import { DEFAULT_DISPLAY_OPTIONS, DEFAULT_DYE_FILTERS } from '@shared/tool-config-types';
 import type { Dye } from '@xivdyetools/types';
+import { OPEN_PALETTE_DRAWER, PALETTE_SLOTS_CHANGED } from '../palette-slots';
 
 // Use vi.hoisted() to ensure mock functions are available before vi.mock() hoisting
 const { mockGetAllDyes, mockGetDyeById, mockFindClosestDyes, fakeConfigController } = vi.hoisted(
@@ -272,18 +273,138 @@ describe('GradientTool', () => {
         panel.querySelector<HTMLButtonElement>('[data-testid="gradient-end-node"]')!;
       expect(end().disabled).toBe(true);
       expect(end().title).toBe('gradient.clickToSelectStart');
-      end().click();
       tool.selectDye(mockDyes[0]);
       expect(start().textContent).toContain(`Dye-${mockDyes[0].itemID}`);
       expect(end().disabled).toBe(false);
-      end().click();
-      tool.selectDye(mockDyes[1]);
+      // The layout routes a targeted pick through placeDyeAt
+      tool.placeDyeAt(1, mockDyes[1]);
       expect(start().textContent).toContain(`Dye-${mockDyes[0].itemID}`);
       expect(end().textContent).toContain(`Dye-${mockDyes[1].itemID}`);
       expect(shareParams()!.shareParams).toMatchObject({
         start: mockDyes[0].stainID,
         end: mockDyes[1].stainID,
       });
+    });
+  });
+
+  describe('palette slot contract', () => {
+    const card = (i: 0 | 1) =>
+      panel.querySelector<HTMLButtonElement>(
+        `[data-testid="gradient-${i === 0 ? 'start' : 'end'}-node"]`
+      )!;
+
+    it('getPaletteSlots returns FROM and TO; TO is disabled until FROM is set', () => {
+      tool = mount();
+      expect(tool.paletteSlotMode).toBe('multi');
+      let slots = tool.getPaletteSlots();
+      expect(slots.map((s) => s.label)).toEqual(['gradient.fromLabel', 'gradient.toLabel']);
+      expect(slots[0].disabled).toBeFalsy();
+      expect(slots[1].disabled).toBe(true);
+      tool.selectDye(mockDyes[0]);
+      slots = tool.getPaletteSlots();
+      expect(slots[0].dye?.id).toBe(mockDyes[0].id);
+      expect(slots[1].disabled).toBeFalsy();
+      expect(slots[1].dye).toBeNull();
+      expect(slots[1].targetLabel).toContain('colorPalette.choosingEndpoint');
+    });
+
+    it('clicking an endpoint card dispatches open-palette-drawer with its slot', () => {
+      tool = mount();
+      tool.selectDye(mockDyes[0]);
+      const seen: Array<number | undefined> = [];
+      container.addEventListener(OPEN_PALETTE_DRAWER, (e) =>
+        seen.push((e as CustomEvent<{ slot?: number }>).detail.slot)
+      );
+      card(1).click();
+      card(0).click();
+      expect(seen).toEqual([1, 0]);
+    });
+
+    it('clicking the disabled TO card dispatches nothing', () => {
+      tool = mount();
+      const spy = vi.fn();
+      container.addEventListener(OPEN_PALETTE_DRAWER, spy);
+      card(1).click();
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('setPaletteTarget draws the accent border, and null clears it', () => {
+      tool = mount();
+      tool.selectDye(mockDyes[0]);
+      tool.setPaletteTarget(1);
+      expect(card(1).style.border).toContain('color-mix');
+      expect(card(0).style.border).not.toContain('color-mix');
+      tool.setPaletteTarget(null);
+      expect(card(1).style.border).not.toContain('color-mix');
+    });
+
+    it('placeDyeAt(1, dyeInFrom) swaps the endpoints', () => {
+      tool = mount();
+      tool.selectDye(mockDyes[0]);
+      tool.placeDyeAt(1, mockDyes[1]);
+      tool.placeDyeAt(1, mockDyes[0]);
+      const slots = tool.getPaletteSlots();
+      expect(slots[0].dye?.id).toBe(mockDyes[1].id);
+      expect(slots[1].dye?.id).toBe(mockDyes[0].id);
+    });
+
+    it('removeDyeAt(1) empties TO', () => {
+      tool = mount();
+      tool.selectDye(mockDyes[0]);
+      tool.placeDyeAt(1, mockDyes[1]);
+      tool.removeDyeAt(1);
+      const slots = tool.getPaletteSlots();
+      expect(slots[0].dye?.id).toBe(mockDyes[0].id);
+      expect(slots[1].dye).toBeNull();
+    });
+
+    it('removeDyeAt(0) with TO set moves TO’s dye to FROM', () => {
+      tool = mount();
+      tool.selectDye(mockDyes[0]);
+      tool.placeDyeAt(1, mockDyes[1]);
+      tool.removeDyeAt(0);
+      const slots = tool.getPaletteSlots();
+      expect(slots[0].dye?.id).toBe(mockDyes[1].id);
+      expect(slots[1].dye).toBeNull();
+    });
+
+    it('removeDyeAt(0) with only FROM set leaves the tool empty', () => {
+      tool = mount();
+      tool.selectDye(mockDyes[0]);
+      tool.removeDyeAt(0);
+      const slots = tool.getPaletteSlots();
+      expect(slots[0].dye).toBeNull();
+      expect(slots[1].dye).toBeNull();
+      expect(slots[1].disabled).toBe(true);
+    });
+
+    it('selectDye no longer consults an armed endpoint', () => {
+      tool = mount();
+      tool.selectDye(mockDyes[0]);
+      tool.setPaletteTarget(1); // drawn state only
+      tool.selectDye(mockDyes[1]); // untargeted add: fills the empty End
+      const slots = tool.getPaletteSlots();
+      expect(slots[0].dye?.id).toBe(mockDyes[0].id);
+      expect(slots[1].dye?.id).toBe(mockDyes[1].id);
+      tool.setPaletteTarget(0);
+      tool.selectDye(mockDyes[2]); // both set: legacy shift, not a replace of slot 0
+      const after = tool.getPaletteSlots();
+      expect(after[0].dye?.id).toBe(mockDyes[2].id);
+      expect(after[1].dye?.id).toBe(mockDyes[0].id);
+    });
+
+    it('dispatches palette-slots-changed after every endpoint change', () => {
+      tool = mount();
+      const spy = vi.fn();
+      container.addEventListener(PALETTE_SLOTS_CHANGED, spy);
+      tool.selectDye(mockDyes[0]);
+      expect(spy).toHaveBeenCalledTimes(1);
+      tool.placeDyeAt(1, mockDyes[1]);
+      expect(spy).toHaveBeenCalledTimes(2);
+      tool.removeDyeAt(1);
+      expect(spy).toHaveBeenCalledTimes(3);
+      tool.clearDyes();
+      expect(spy).toHaveBeenCalledTimes(4);
     });
   });
 

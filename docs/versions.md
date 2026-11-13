@@ -26,7 +26,7 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.16.11 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Web Application** | v5.18.0 | `xivdyetools-web-app` | Cloudflare Pages | Active |
 | **Discord Bot** | v5.9.9 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.5 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.9.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
@@ -126,6 +126,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.18.0 | Nov 2026 | Slot-aware dye picking (issue 422, first slice): tapping a slot or an empty-state card in a tool opens the Color Palette for that slot, a pick fills or replaces it, and on a phone the palette closes again after a pick a slot tap started. The palette marks every dye the tool holds, and multi-dye tools get a strip of slot chips, a header line naming the target slot and, with no slot targeted, tap-again-to-remove (with a slot targeted, a marked dye moves into it). Dye Comparison and Accessibility Checker gain an "Add Dye" tile; Dye Mixer no longer holds the same dye twice |
 | v5.16.11 | Nov 2026 | Harmony, Comparison and Accessibility fit a narrow pane: the wheel, result cards, pair chips, empty-state slots and vision tabs shrink instead of hanging off the pane's left, and Accessibility's share row and the header rows wrap, which also ends a phone's 139 px of sideways scrolling. Geometry is unchanged at 1440 px and wider |
 | v5.16.10 | Nov 2026 | The Swatch Matcher fits a narrow pane: the grid panel stays inside the pane and scrolls sideways inside itself if even the grid does not fit, and the matches wrap under it below 190 px of room, following the pane rather than the window. A phone can reach the grid's first column, and a grid pick, or a palette pick in a desktop window, brings its results into view where they sit under the grid. In English, geometry is unchanged at 1536 px and wider, and at 1440 px on the palettes without a Dark/Light toggle; longer languages stack sooner, up to about 1,680 px |
 | v5.16.9 | Nov 2026 | The Color Palette has no sideways scrollbar: a hidden dye tooltip centered on a last-column swatch counted as scrollable overflow. Tooltips in the outer columns now grow inward from their swatch's edge, so they are no longer cut off at the sides on hover either, and near the panel's top edge a tooltip opens below its swatch |

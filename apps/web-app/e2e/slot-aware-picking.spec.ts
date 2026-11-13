@@ -1,0 +1,253 @@
+/**
+ * Slot-aware picking: tapping a dye slot in a tool opens the palette for that
+ * slot, a pick on a phone closes it again, and the palette marks the dyes the
+ * tool holds. Each describe sets its own viewport, so every case runs in any project.
+ *
+ * Slots live inside `<v4-layout-shell>`'s shadow root and the palette is its
+ * own shadow-rooted element; Playwright's CSS engine pierces both.
+ */
+import type { Locator, Page } from '@playwright/test';
+import { test, expect } from './fixtures/coverage';
+import { gotoTool, seedStartupStorage } from './fixtures/navigation';
+
+const palette = (page: Page): Locator => page.locator('dye-palette-drawer');
+const targetLine = (page: Page): Locator => palette(page).locator('.drawer-target-line');
+const roundButton = (page: Page): Locator => page.locator('.v4-palette-toggle');
+const slot = (page: Page, index: number): Locator =>
+  page.locator(`[data-palette-slot="${index}"]`).filter({ visible: true }).first();
+const resultCards = (page: Page): Locator =>
+  page.locator('.comparison-cards-container > v4-result-card');
+
+async function open(page: Page, tool: string): Promise<void> {
+  await seedStartupStorage(page);
+  await gotoTool(page, tool);
+  await expect(slot(page, 0)).toBeVisible({ timeout: 20000 });
+}
+
+async function expectOpen(page: Page): Promise<void> {
+  await expect(palette(page)).toHaveAttribute('is-open');
+}
+
+async function expectClosed(page: Page): Promise<void> {
+  await expect(palette(page)).not.toHaveAttribute('is-open');
+}
+
+/** Open the palette with the round button (no target). */
+async function openWithButton(page: Page): Promise<void> {
+  await roundButton(page).click();
+  await expectOpen(page);
+  await expect(targetLine(page)).toHaveText('');
+}
+
+/** Pick the nth dye the palette does not mark as held; returns its name. */
+async function pickUnmarked(page: Page, nth = 0): Promise<string> {
+  const pick = palette(page).locator('.swatch:not(.in-use) .swatch-pick').nth(nth);
+  const name = (await pick.getAttribute('aria-label')) ?? '';
+  expect(name).not.toBe('');
+  await pick.click();
+  return name;
+}
+
+/**
+ * The element holding focus, found through shadow roots, described by its tag,
+ * classes, whether it carries data-palette-slot and the tag of its shadow host.
+ */
+async function focused(page: Page): Promise<{
+  tag: string;
+  classes: string;
+  slot: boolean;
+  host: string;
+}> {
+  return page.evaluate(() => {
+    let active: Element | null = document.activeElement;
+    while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
+    const root = active?.getRootNode();
+    return {
+      tag: active?.tagName.toLowerCase() ?? '',
+      classes: active?.className?.toString() ?? '',
+      slot: active?.hasAttribute('data-palette-slot') ?? false,
+      host: root instanceof ShadowRoot ? root.host.tagName.toLowerCase() : '',
+    };
+  });
+}
+
+test.describe('slot-aware picking: phone', () => {
+  // The shell's phone check is matchMedia('(max-width: 768px)'), so the viewport is
+  // what matters; this runs the same in every project (CI runs only chromium).
+  test.use({ viewport: { width: 375, height: 812 } });
+
+  test('Dye Comparison: tap an empty slot, pick, palette closes, slot filled', async ({ page }) => {
+    await open(page, 'comparison');
+    await slot(page, 0).click();
+    await expectOpen(page);
+    await expect(targetLine(page)).not.toHaveText('');
+
+    await pickUnmarked(page);
+
+    await expectClosed(page);
+    await expect(resultCards(page)).toHaveCount(1);
+
+    // Focus returns to a slot element: the Add dye tile that replaced the empty slot.
+    await expect.poll(async () => (await focused(page)).slot).toBe(true);
+  });
+
+  test('Dye Comparison: Add dye tile adds the second dye and the palette closes', async ({
+    page,
+  }) => {
+    await open(page, 'comparison');
+    await slot(page, 0).click();
+    await pickUnmarked(page);
+    await expectClosed(page);
+
+    const tile = slot(page, 1);
+    await expect(tile).toBeVisible();
+    await tile.click();
+    await expectOpen(page);
+    await pickUnmarked(page);
+
+    await expectClosed(page);
+    // With two dyes held the Add dye tile moves on to the third slot.
+    await expect(slot(page, 2)).toBeVisible();
+  });
+
+  test('Dye Comparison: round button, two picks, palette stays open, marks show in-use', async ({
+    page,
+  }) => {
+    await open(page, 'comparison');
+    await openWithButton(page);
+
+    await pickUnmarked(page);
+    await pickUnmarked(page);
+
+    await expectOpen(page);
+    await expect(palette(page).locator('.swatch.in-use')).toHaveCount(2);
+    await expect(slot(page, 2)).toBeVisible();
+  });
+
+  test('Dye Comparison: target chip 1 in the strip, pick, first dye replaced, header line gone', async ({
+    page,
+  }) => {
+    await open(page, 'comparison');
+    await openWithButton(page);
+    const first = await pickUnmarked(page);
+    const second = await pickUnmarked(page);
+
+    await palette(page).locator('.slot-chip').nth(0).click();
+    await expect(palette(page).locator('.slot-chip').nth(0)).toHaveClass(/is-target/);
+    await expect(targetLine(page)).not.toHaveText('');
+
+    const replacement = await pickUnmarked(page);
+
+    // Opened with the round button, so the palette stays open after the pick.
+    await expectOpen(page);
+    await expect(targetLine(page)).toHaveText('');
+    await expect(
+      palette(page).locator(`.swatch-pick[aria-label="${replacement}, in slot 1"]`)
+    ).toHaveCount(1);
+    await expect(
+      palette(page).locator(`.swatch-pick[aria-label="${second}, in slot 2"]`)
+    ).toHaveCount(1);
+    // The replaced dye is no longer held.
+    await expect(palette(page).locator(`.swatch-pick[aria-label="${first}"]`)).toHaveCount(1);
+    await expect(palette(page).locator('.swatch.in-use')).toHaveCount(2);
+  });
+
+  test('Dye Comparison: tapping a marked swatch removes that dye', async ({ page }) => {
+    await open(page, 'comparison');
+    await openWithButton(page);
+    const first = await pickUnmarked(page);
+    await pickUnmarked(page);
+    await expect(slot(page, 2)).toBeVisible();
+
+    await palette(page).locator(`.swatch-pick[aria-label="${first}, in slot 1"]`).click();
+
+    await expect(slot(page, 1)).toBeVisible();
+    await expect(slot(page, 2)).toHaveCount(0);
+    await expect(palette(page).locator('.swatch.in-use')).toHaveCount(1);
+    await expect(palette(page).locator(`.swatch-pick[aria-label="${first}"]`)).toHaveCount(1);
+  });
+
+  test('Dye Mixer: tap slot B first, pick, B is filled and A is still empty', async ({ page }) => {
+    await open(page, 'mixer');
+    await slot(page, 1).click();
+    await expectOpen(page);
+    await expect(targetLine(page)).not.toHaveText('');
+
+    await pickUnmarked(page);
+    await expectClosed(page);
+
+    await openWithButton(page);
+    const chips = palette(page).locator('.slot-chip');
+    await expect(chips).toHaveCount(2);
+    await expect(chips.nth(0).locator('.slot-chip-swatch.empty')).toHaveCount(1);
+    await expect(chips.nth(1).locator('.slot-chip-swatch.empty')).toHaveCount(0);
+  });
+
+  test('Gradient Builder: tap FROM, pick, palette closes; TO chip is enabled afterwards', async ({
+    page,
+  }) => {
+    await open(page, 'gradient');
+    await slot(page, 0).click();
+    await expectOpen(page);
+    await expect(palette(page).locator('.slot-chip').nth(1)).toBeDisabled();
+
+    await pickUnmarked(page);
+    await expectClosed(page);
+
+    await openWithButton(page);
+    await expect(palette(page).locator('.slot-chip').nth(1)).toBeEnabled();
+  });
+
+  test('Harmony Explorer: hub tap, pick, palette closes, swatch is marked in use', async ({
+    page,
+  }) => {
+    await open(page, 'harmony');
+    // Give the wheel a base dye first, then use the hub itself.
+    await slot(page, 0).click();
+    await expectOpen(page);
+    await pickUnmarked(page);
+    await expectClosed(page);
+
+    const hub = page.locator('v4-color-wheel .main-swatch-display');
+    await expect(hub).toBeVisible();
+    await hub.click();
+    await expectOpen(page);
+    const chosen = await pickUnmarked(page);
+    await expectClosed(page);
+
+    // Focus returns to the wheel's hub.
+    await expect
+      .poll(async () => {
+        const f = await focused(page);
+        return f.host === 'v4-color-wheel' && f.classes.includes('main-swatch-display');
+      })
+      .toBe(true);
+
+    await openWithButton(page);
+    await expect(palette(page).locator('.swatch.in-use')).toHaveCount(1);
+    await expect(
+      palette(page).locator(`.swatch.in-use .swatch-pick[aria-label^="${chosen}"]`)
+    ).toHaveCount(1);
+  });
+});
+
+test.describe('slot-aware picking: desktop', () => {
+  test.use({ viewport: { width: 1280, height: 800 } });
+
+  test('desktop: a slot click sets the target and the docked palette stays open after the pick', async ({
+    page,
+  }) => {
+    await open(page, 'comparison');
+    await expectOpen(page);
+
+    await slot(page, 0).click();
+    await expectOpen(page);
+    await expect(targetLine(page)).not.toHaveText('');
+
+    await pickUnmarked(page);
+
+    await expectOpen(page);
+    await expect(targetLine(page)).toHaveText('');
+    await expect(resultCards(page)).toHaveCount(1);
+  });
+});
