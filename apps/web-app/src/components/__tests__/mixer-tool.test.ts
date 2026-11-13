@@ -619,37 +619,16 @@ describe('MixerTool', () => {
       expect(await slots()).toEqual([3, 4, null]);
     });
 
-    it('ALLOWS the same dye in both slots', async () => {
+    it('does not accept the same dye in both slots through selectDye', async () => {
       tool = mount();
 
       tool.selectDye(dye(1));
       tool.selectDye(dye(1));
 
-      // Blending a colour with itself is a legitimate (identity) mix, so
-      // unlike gradient this is accepted rather than warned about
-      expect(await slots()).toEqual([1, 1, null]);
-    });
-
-    it('refuses a third copy of the same dye', async () => {
-      tool = mount();
-      tool.selectDye(dye(1));
-      tool.selectDye(dye(1));
-
-      tool.selectDye(dye(1));
-
-      // Two is a mix; three has nowhere to go and would just churn the slots
-      expect(await slots()).toEqual([1, 1, null]);
-    });
-
-    it('accepts a duplicate again after one copy is shifted out', async () => {
-      tool = mount();
-      tool.selectDye(dye(1));
-      tool.selectDye(dye(1));
-      tool.selectDye(dye(2)); // shifts one copy of 1 out -> [1, 2]
-
-      tool.selectDye(dye(1));
-
-      expect(await slots()).toEqual([2, 1, null]);
+      // The layout turns a tap on a held dye into a remove before it gets
+      // here; this is the guard for any other caller. B stays empty.
+      expect(await slots()).toEqual([1, null, null]);
+      expect(tool.getPaletteSlots()[1].dye).toBeNull();
     });
 
     it('clears the result slot on every new input', async () => {
@@ -699,6 +678,168 @@ describe('MixerTool', () => {
       const s = await slots();
       expect(s![0]).toBe(1);
       expect(s![1]).not.toBeNull();
+    });
+  });
+
+  // ==========================================================================
+  // Palette slot contract: the layout reads the two inputs through
+  // getPaletteSlots() and routes slot-aware picks through placeDyeAt /
+  // removeDyeAt / setPaletteTarget.
+  // ==========================================================================
+
+  describe('palette slot contract', () => {
+    const held = (t: MixerTool) => t.getPaletteSlots().map((s) => s.dye?.id ?? null);
+
+    it('getPaletteSlots returns A and B with their dyes and a targetLabel', () => {
+      tool = mount();
+      tool.selectDye(dye(1));
+
+      const slotList = tool.getPaletteSlots();
+
+      expect(tool.paletteSlotMode).toBe('multi');
+      expect(slotList).toHaveLength(2);
+      expect(slotList.map((s) => s.label)).toEqual(['1', '2']);
+      expect(slotList[0].dye?.id).toBe(1);
+      expect(slotList[1].dye).toBeNull();
+      expect(slotList[0].targetLabel).toBeTruthy();
+      expect(slotList[0].targetLabel).not.toBe(slotList[1].targetLabel);
+    });
+
+    it('placeDyeAt(1, dye) fills B and leaves A', () => {
+      tool = mount();
+      tool.selectDye(dye(1));
+
+      tool.placeDyeAt(1, dye(2));
+
+      expect(held(tool)).toEqual([1, 2]);
+    });
+
+    it('placeDyeAt(1, dye) replaces what B held', () => {
+      tool = mount();
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2));
+
+      tool.placeDyeAt(1, dye(3));
+
+      expect(held(tool)).toEqual([1, 3]);
+    });
+
+    it('placeDyeAt(0, dyeInB) swaps A and B', () => {
+      tool = mount();
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2));
+
+      tool.placeDyeAt(0, dye(2));
+
+      expect(held(tool)).toEqual([2, 1]);
+    });
+
+    it('placeDyeAt(1, dyeInA) with B empty moves the dye to B', () => {
+      tool = mount();
+      tool.selectDye(dye(1));
+
+      tool.placeDyeAt(1, dye(1));
+
+      expect(held(tool)).toEqual([null, 1]);
+    });
+
+    it('placeDyeAt accepts a custom color, and two custom colors are different dyes', () => {
+      tool = mount();
+      tool.selectCustomColor('#aabbcc');
+      const first = tool.getPaletteSlots()[0].dye!;
+
+      tool.placeDyeAt(1, { ...first, id: first.id - 1 });
+
+      // Same hex, different custom dyes: both slots stay filled, no swap
+      const [a, b] = tool.getPaletteSlots().map((s) => s.dye);
+      expect(a?.id).toBe(first.id);
+      expect(b?.id).toBe(first.id - 1);
+    });
+
+    it('removeDyeAt(0) empties A in place and keeps B', async () => {
+      tool = mount();
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2));
+
+      tool.removeDyeAt(0);
+
+      expect(held(tool)).toEqual([null, 2]);
+      expect(await slots()).toEqual([null, 2, null]);
+    });
+
+    it('a click on an empty or a filled slot box dispatches open-palette-drawer with its slot', () => {
+      tool = mount();
+      tool.selectDye(dye(1));
+      const details: unknown[] = [];
+      container.addEventListener('open-palette-drawer', (e) =>
+        details.push((e as CustomEvent).detail)
+      );
+
+      container.querySelector<HTMLElement>('[data-palette-slot="0"]')!.click();
+      container.querySelector<HTMLElement>('[data-palette-slot="1"]')!.click();
+
+      expect(details).toEqual([{ slot: 0 }, { slot: 1 }]);
+    });
+
+    it('slot boxes are buttons carrying data-palette-slot', () => {
+      tool = mount();
+
+      const boxes = [...container.querySelectorAll<HTMLElement>('[data-palette-slot]')];
+
+      expect(boxes.map((b) => b.tagName)).toEqual(['BUTTON', 'BUTTON']);
+      expect(boxes.map((b) => b.getAttribute('data-palette-slot'))).toEqual(['0', '1']);
+      expect(boxes.every((b) => b.getAttribute('type') === 'button')).toBe(true);
+      expect(boxes.every((b) => b.classList.contains('mixer-dye-slot'))).toBe(true);
+    });
+
+    it('setPaletteTarget(1) puts the accent border on B and null removes it', () => {
+      tool = mount();
+      const box = (i: number) =>
+        container.querySelector<HTMLElement>(`[data-palette-slot="${i}"]`)!;
+
+      tool.setPaletteTarget(1);
+      expect(box(1).style.borderColor).toContain('--theme-primary');
+      expect(box(0).style.borderColor).not.toContain('--theme-primary');
+
+      // A re-render (any dye change) keeps the mark on the new element
+      tool.selectDye(dye(1));
+      expect(box(1).style.borderColor).toContain('--theme-primary');
+
+      tool.setPaletteTarget(null);
+      expect(box(1).style.borderColor).not.toContain('--theme-primary');
+    });
+
+    it('dispatches palette-slots-changed after select, place, remove and clear', () => {
+      tool = mount();
+      const changed = vi.fn();
+      container.addEventListener('palette-slots-changed', changed);
+
+      tool.selectDye(dye(1));
+      expect(changed).toHaveBeenCalledTimes(1);
+      tool.placeDyeAt(1, dye(2));
+      expect(changed).toHaveBeenCalledTimes(2);
+      tool.removeDyeAt(1);
+      expect(changed).toHaveBeenCalledTimes(3);
+      tool.clearDyes();
+      expect(changed).toHaveBeenCalledTimes(4);
+    });
+  });
+
+  describe('saved state holding the same dye twice', () => {
+    afterEach(async () => {
+      const { StorageService } = await import('@services/index');
+      vi.mocked(StorageService.getItem).mockReturnValue(null);
+    });
+
+    it('loads saved state holding the same dye twice with only slot A filled', async () => {
+      const { StorageService } = await import('@services/index');
+      vi.mocked(StorageService.getItem).mockImplementation(((key: string) =>
+        key === DYES_KEY ? [mockDyes[0].id, mockDyes[0].id, null] : null) as never);
+
+      tool = mount();
+
+      expect(tool.getPaletteSlots().map((s) => s.dye?.id ?? null)).toEqual([mockDyes[0].id, null]);
+      expect(await slots()).toEqual([mockDyes[0].id, null, null]);
     });
   });
 
@@ -779,6 +920,12 @@ describe('MixerTool', () => {
       expect(s![0]).not.toBeNull();
       expect(s![1]).not.toBeNull();
       expect(s![0]).not.toBe(s![1]);
+    });
+
+    it('loads a share link holding the same dye twice with only slot A filled', () => {
+      tool = mountAt('?dyeA=1&dyeB=1&ratio=50&v=1');
+
+      expect(tool.getPaletteSlots().map((s) => s.dye?.id ?? null)).toEqual([mockDyes[0].id, null]);
     });
 
     it('lets the stainID slot win when both dyeA and hexA are present', () => {
