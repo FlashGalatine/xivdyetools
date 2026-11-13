@@ -1,6 +1,7 @@
 /**
  * Palette slot contract: how a tool tells the dye palette which dye slots it
- * has, and how a pick in the palette resolves against them. Pure logic, no DOM.
+ * has, and how a pick in the palette resolves against them. Pure logic, plus
+ * the two small dispatches every tool sends to the layout.
  *
  * @module components/palette-slots
  */
@@ -42,6 +43,25 @@ export const PALETTE_SLOTS_CHANGED = 'palette-slots-changed';
 export const OPEN_PALETTE_DRAWER = 'open-palette-drawer';
 export interface OpenPaletteDrawerDetail {
   slot?: number;
+}
+
+/**
+ * Tell the layout the tool's slots changed. `composed`, or it never leaves the
+ * shell's shadow root to reach the layout.
+ */
+export function notifyPaletteSlotsChanged(from: EventTarget): void {
+  from.dispatchEvent(new CustomEvent(PALETTE_SLOTS_CHANGED, { bubbles: true, composed: true }));
+}
+
+/** A slot tap: ask the shell to open the palette, aimed at `slot` when one is given. */
+export function requestPalette(from: EventTarget, slot?: number): void {
+  from.dispatchEvent(
+    new CustomEvent<OpenPaletteDrawerDetail | null>(OPEN_PALETTE_DRAWER, {
+      bubbles: true,
+      composed: true,
+      detail: slot === undefined ? null : { slot },
+    })
+  );
 }
 
 export function isPaletteSlotSource(tool: unknown): tool is PaletteSlotSource {
@@ -91,6 +111,33 @@ export function normalizeTarget(
 
 /** The accent border of a targeted slot in a tool (Gradient Builder's former ACCENT_BORDER value). */
 export const SLOT_TARGET_BORDER = 'color-mix(in srgb, var(--theme-primary) 45%, transparent)';
+
+/**
+ * Put `dye` at `index` of a dense list holding at most `max` dyes. Past the
+ * last held dye it appends (or moves a held dye to the end); on a held
+ * position it replaces, swapping with the dye's old position when it is held
+ * elsewhere. It never drops another dye. Returns the new list, or null when
+ * the index is out of range or the dye is already there.
+ */
+export function placeInDenseList<T extends Pick<Dye, 'id'>>(
+  list: readonly T[],
+  index: number,
+  dye: T,
+  max: number
+): T[] | null {
+  if (!dye || !Number.isInteger(index) || index < 0 || index >= max) return null;
+  const next = [...list];
+  const held = next.findIndex((d) => d.id === dye.id);
+  if (index >= next.length) {
+    if (held !== -1) next.splice(held, 1);
+    next.push(dye);
+  } else {
+    if (held === index) return null;
+    if (held !== -1) next[held] = next[index];
+    next[index] = dye;
+  }
+  return next;
+}
 
 export type PickAction =
   | { kind: 'add' } // use the tool's existing selectDye/addDye

@@ -7,6 +7,11 @@ import {
   isPaletteSlotHost,
   isPaletteSlotSource,
   normalizeTarget,
+  notifyPaletteSlotsChanged,
+  OPEN_PALETTE_DRAWER,
+  PALETTE_SLOTS_CHANGED,
+  placeInDenseList,
+  requestPalette,
   resolvePick,
   SLOT_TARGET_BORDER,
   type PaletteSlot,
@@ -128,5 +133,69 @@ describe('type guards', () => {
 describe('SLOT_TARGET_BORDER', () => {
   it('matches the accent border Gradient Builder used', () => {
     expect(SLOT_TARGET_BORDER).toBe('color-mix(in srgb, var(--theme-primary) 45%, transparent)');
+  });
+});
+
+describe('placeInDenseList', () => {
+  const [a, b, c, d, e] = mockDyes;
+  const ids = (list: Dye[] | null) => list?.map((x) => x.id) ?? null;
+
+  it('past the last held dye it appends', () => {
+    expect(ids(placeInDenseList([a, b], 2, c, 4))).toEqual([a.id, b.id, c.id]);
+    // Any empty index means "the next one" in a dense list
+    expect(ids(placeInDenseList([a], 3, c, 4))).toEqual([a.id, c.id]);
+  });
+  it('past the last held dye, a dye held elsewhere moves to the end', () => {
+    expect(ids(placeInDenseList([a, b, c], 3, a, 4))).toEqual([b.id, c.id, a.id]);
+  });
+  it('on a held position it replaces', () => {
+    expect(ids(placeInDenseList([a, b], 1, c, 4))).toEqual([a.id, c.id]);
+  });
+  it('on a held position, a dye held elsewhere swaps with it', () => {
+    expect(ids(placeInDenseList([a, b, c], 0, c, 4))).toEqual([c.id, b.id, a.id]);
+  });
+  it('never drops another dye when full', () => {
+    expect(ids(placeInDenseList([a, b, c, d], 3, e, 4))).toEqual([a.id, b.id, c.id, e.id]);
+  });
+  it('returns null for a no-op or an out-of-range index, and leaves the input alone', () => {
+    const list = [a, b];
+    expect(placeInDenseList(list, 1, b, 4)).toBeNull();
+    expect(placeInDenseList(list, -1, c, 4)).toBeNull();
+    expect(placeInDenseList(list, 4, c, 4)).toBeNull();
+    expect(placeInDenseList(list, 1.5, c, 4)).toBeNull();
+    expect(ids(list)).toEqual([a.id, b.id]);
+  });
+});
+
+describe('palette dispatches', () => {
+  function capture(name: string): { target: HTMLElement; events: CustomEvent[] } {
+    const parent = document.createElement('div');
+    const target = document.createElement('button');
+    parent.appendChild(target);
+    const events: CustomEvent[] = [];
+    parent.addEventListener(name, (ev) => events.push(ev as CustomEvent));
+    return { target, events };
+  }
+
+  it('notifyPaletteSlotsChanged sends a bubbling, composed palette-slots-changed', () => {
+    const { target, events } = capture(PALETTE_SLOTS_CHANGED);
+    notifyPaletteSlotsChanged(target);
+    expect(events).toHaveLength(1);
+    expect(events[0].bubbles).toBe(true);
+    expect(events[0].composed).toBe(true);
+  });
+  it('requestPalette with a slot sends it in the detail', () => {
+    const { target, events } = capture(OPEN_PALETTE_DRAWER);
+    requestPalette(target, 2);
+    expect(events).toHaveLength(1);
+    expect(events[0].bubbles).toBe(true);
+    expect(events[0].composed).toBe(true);
+    expect(events[0].detail).toEqual({ slot: 2 });
+  });
+  it('requestPalette without a slot sends no detail', () => {
+    const { target, events } = capture(OPEN_PALETTE_DRAWER);
+    requestPalette(target);
+    expect(events).toHaveLength(1);
+    expect(events[0].detail).toBeNull();
   });
 });
