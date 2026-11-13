@@ -1,8 +1,7 @@
 /**
  * Slot-aware picking: tapping a dye slot in a tool opens the palette for that
  * slot, a pick on a phone closes it again, and the palette marks the dyes the
- * tool holds. The phone flows run in `mobile-chrome`; the desktop case runs in
- * `chromium`.
+ * tool holds. Each describe sets its own viewport, so every case runs in any project.
  *
  * Slots live inside `<v4-layout-shell>`'s shadow root and the palette is its
  * own shadow-rooted element; Playwright's CSS engine pierces both.
@@ -73,9 +72,9 @@ async function focusChain(page: Page): Promise<string[]> {
 }
 
 test.describe('slot-aware picking: phone', () => {
-  test.beforeEach(({}, testInfo) => {
-    test.skip(testInfo.project.name !== 'mobile-chrome', 'phone flows run in mobile-chrome');
-  });
+  // The shell's phone check is matchMedia('(max-width: 768px)'), so the viewport is
+  // what matters; this runs the same in every project (CI runs only chromium).
+  test.use({ viewport: { width: 375, height: 812 } });
 
   test('Dye Comparison: tap an empty slot, pick, palette closes, slot filled', async ({ page }) => {
     await open(page, 'comparison');
@@ -237,9 +236,7 @@ test.describe('slot-aware picking: phone', () => {
 });
 
 test.describe('slot-aware picking: desktop', () => {
-  test.beforeEach(({}, testInfo) => {
-    test.skip(testInfo.project.name !== 'chromium', 'desktop case runs in chromium');
-  });
+  test.use({ viewport: { width: 1280, height: 800 } });
 
   test('desktop: a slot click sets the target and the docked palette stays open after the pick', async ({
     page,
