@@ -60,13 +60,13 @@ describe('resolvePick', () => {
   it('never matches a custom dye as held', () => {
     const custom = makeCustomDye('#123456');
     const customSlots = [slot('1', custom), slot('2', null)];
-    expect(findHeldSlot(customSlots, makeCustomDye('#123456'))).toBe(-1);
+    expect(findHeldSlot(customSlots, custom)).toBe(-1);
     expect(
       resolvePick({
         mode: 'multi',
         slots: customSlots,
         target: null,
-        dye: makeCustomDye('#123456'),
+        dye: custom,
       })
     ).toEqual({ kind: 'add' });
   });
