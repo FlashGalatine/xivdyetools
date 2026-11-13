@@ -2,7 +2,7 @@
 
 ---
 
-## Web-App Version 5.16.12 — November 10, 2026
+## Web-App Version 5.17.2 — November 10, 2026
 
 ### About
 - **New X/Twitter handle.** The X link in the About window now goes to @FlashGalatine, the account's new name.
