@@ -48,11 +48,14 @@ Verified with `gh api` on 2026-09-05; the state noted is the state found.
 - [ ] **Branch protection on `main`: turn on linear history.** Still disabled after the
       narrowly scoped 2026-10-26 change; this separate item was not selected.
 - [x] **`CLOUDFLARE_API_TOKEN` scoped to Workers Scripts: Edit + Pages: Edit on the account, and
-      Workers Routes: Edit on the `xivdyetools.app` zone — no KV / D1 / R2 Edit** (2026-08-29
+      Workers Routes: Edit on the `xivdyetools.app` zone — no KV / D1 / R2 Edit** (2026-08-29 audit
       FINDING-030). Done 2026-11-09 during the quarterly rotation. A new token was issued at exactly
       those grants with an expiry of 2027-03-01, and the *Deploy API Worker*, *Deploy Presets API*
-      and *Deploy OG Worker* dispatches from `main` passed with it. Between them those deploys
-      exercise custom domains, zone routes and KV/D1/R2 bindings. The old token was then revoked.
+      and *Deploy OG Worker* dispatches from `main` passed with it. Between them those runs
+      showed that the token can upload Worker scripts, attach custom domains and zone routes,
+      publish static assets, and deploy Workers that carry KV, D1 and R2 bindings. None of the
+      three deploys Pages, so the production token's Pages grant has not been exercised yet; the
+      next *Deploy Web App* run will be its first use. The old token was then revoked.
       `CLOUDFLARE_API_TOKEN_BETA` was re-issued the same way and verified on beta.
       [Rotation log](SECRET_ROTATION.md#rotation-log). The tokens' *homing* was already done: each
       is an environment secret (`production` and `beta`), with no repository-level copy (verified
