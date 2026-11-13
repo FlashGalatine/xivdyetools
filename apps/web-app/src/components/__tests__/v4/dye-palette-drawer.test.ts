@@ -16,6 +16,8 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import type { Dye } from '@xivdyetools/types';
+import type { PaletteSlot, PaletteSlotMode } from '../../palette-slots';
+import { ToastService } from '@services/toast-service';
 
 const { warnSpy, getCategorySpy, tSpy } = vi.hoisted(() => ({
   warnSpy: vi.fn(),
@@ -371,5 +373,277 @@ describe('DyePaletteDrawer type chips (BUG-107)', () => {
 
   it('Pastel follows the isPastel flag, not the English name', async () => {
     expect(await shownAfter('colorPalette.pastel')).toEqual([`Dye-${softPink.itemID}`]);
+  });
+});
+
+// Issue 422: the palette shows which dyes the active tool holds, and in
+// multi-input tools carries a strip of the tool's slots and the target line.
+describe('DyePaletteDrawer slot marks, strip and target line (issue 422)', () => {
+  let container: HTMLElement;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    container.remove();
+    vi.restoreAllMocks();
+  });
+
+  type Drawer = HTMLElement & {
+    isOpen: boolean;
+    updateComplete: Promise<boolean>;
+    slots: PaletteSlot[];
+    slotMode: PaletteSlotMode | null;
+    slotTarget: number | null;
+    favoriteDyes: Dye[];
+    focusClose(): void;
+  };
+
+  const slot = (label: string, dye: Dye | null, disabled?: boolean): PaletteSlot => ({
+    label,
+    targetLabel: `Choosing dye ${label}`,
+    dye,
+    ...(disabled ? { disabled } : {}),
+  });
+
+  const mount = async (
+    slots: PaletteSlot[],
+    slotMode: PaletteSlotMode | null,
+    slotTarget: number | null = null
+  ): Promise<Drawer> => {
+    await import('../../v4/dye-palette-drawer');
+    const drawer = document.createElement('dye-palette-drawer') as unknown as Drawer;
+    drawer.isOpen = true;
+    drawer.slots = slots;
+    drawer.slotMode = slotMode;
+    drawer.slotTarget = slotTarget;
+    container.appendChild(drawer);
+    await drawer.updateComplete;
+    return drawer;
+  };
+
+  const root = (drawer: Drawer) => drawer.shadowRoot!;
+  /** Every rendered swatch of a dye, favorites row included. */
+  const swatchesOf = (drawer: Drawer, dye: Dye) =>
+    [...root(drawer).querySelectorAll<HTMLElement>('.swatch')].filter(
+      (s) => s.getAttribute('title') === `Dye-${dye.id}`
+    );
+  const gridSwatch = (drawer: Drawer, dye: Dye) =>
+    swatchesOf(drawer, dye).find((s) => s.closest('.category-section'))!;
+  const pickOf = (swatch: Element) => swatch.querySelector<HTMLButtonElement>('.swatch-pick')!;
+  const chips = (drawer: Drawer) => [
+    ...root(drawer).querySelectorAll<HTMLButtonElement>('.slot-strip .slot-chip'),
+  ];
+
+  it('marks a held dye in both the favorites row and the main grid', async () => {
+    const drawer = await mount([slot('1', redDye), slot('2', null)], 'multi');
+    drawer.favoriteDyes = [redDye];
+    await drawer.updateComplete;
+
+    const reds = swatchesOf(drawer, redDye);
+    expect(reds).toHaveLength(2);
+    expect(reds.some((s) => s.closest('.favorites-content'))).toBe(true);
+    for (const swatch of reds) {
+      expect(swatch.classList.contains('in-use')).toBe(true);
+      expect(swatch.querySelector('.swatch-mark')?.getAttribute('aria-hidden')).toBe('true');
+    }
+
+    const blue = gridSwatch(drawer, blueDye);
+    expect(blue.classList.contains('in-use')).toBe(false);
+    expect(blue.querySelector('.swatch-mark')).toBeNull();
+  });
+
+  it('gives the target slot’s dye the is-target class', async () => {
+    const drawer = await mount([slot('1', redDye), slot('2', blueDye)], 'multi', 1);
+
+    expect(gridSwatch(drawer, blueDye).classList.contains('is-target')).toBe(true);
+    const red = gridSwatch(drawer, redDye);
+    expect(red.classList.contains('in-use')).toBe(true);
+    expect(red.classList.contains('is-target')).toBe(false);
+  });
+
+  it('labels a marked swatch with its slot and sets aria-pressed in multi mode', async () => {
+    const drawer = await mount([slot('A', null), slot('B', redDye)], 'multi');
+
+    const red = pickOf(gridSwatch(drawer, redDye));
+    expect(red.getAttribute('aria-label')).toBe(
+      'colorPalette.swatchInSlot:{"name":"Dye-1","slot":"B"}'
+    );
+    expect(red.getAttribute('aria-pressed')).toBe('true');
+
+    const blue = pickOf(gridSwatch(drawer, blueDye));
+    expect(blue.getAttribute('aria-label')).toBe('Dye-2');
+    expect(blue.hasAttribute('aria-pressed')).toBe(false);
+  });
+
+  it('labels a marked swatch as in use, without aria-pressed, in single mode', async () => {
+    const drawer = await mount([slot('', redDye)], 'single');
+
+    const swatch = gridSwatch(drawer, redDye);
+    expect(swatch.classList.contains('in-use')).toBe(true);
+    expect(pickOf(swatch).getAttribute('aria-label')).toBe(
+      'colorPalette.swatchInUse:{"name":"Dye-1"}'
+    );
+    expect(pickOf(swatch).hasAttribute('aria-pressed')).toBe(false);
+  });
+
+  it('renders one chip per slot in multi mode and none in single mode', async () => {
+    const multi = await mount(
+      [slot('1', redDye), slot('2', null), slot('3', null), slot('4', null)],
+      'multi'
+    );
+    const strip = root(multi).querySelector('.slot-strip')!;
+    expect(strip.getAttribute('role')).toBe('group');
+    expect(strip.getAttribute('aria-label')).toBe('colorPalette.slotStripLabel');
+    // First thing in the scrolling content, above the search box
+    expect(root(multi).querySelector('.drawer-content')!.firstElementChild).toBe(strip);
+
+    const all = chips(multi);
+    expect(all).toHaveLength(4);
+    expect(all.map((c) => c.textContent?.trim())).toEqual(['1', '2', '3', '4']);
+    expect(all.every((c) => c.type === 'button')).toBe(true);
+    expect(all[0].getAttribute('aria-label')).toBe(
+      'colorPalette.slotChipFilled:{"slot":"1","name":"Dye-1"}'
+    );
+    expect(all[1].getAttribute('aria-label')).toBe('colorPalette.slotChipEmpty:{"slot":"2"}');
+
+    const single = await mount([slot('', redDye)], 'single');
+    expect(root(single).querySelector('.slot-strip')).toBeNull();
+  });
+
+  it('emits slot-target-change with the index, and null when the target chip is clicked again', async () => {
+    const drawer = await mount([slot('1', redDye), slot('2', null), slot('3', null)], 'multi');
+    const indexes: Array<number | null> = [];
+    drawer.addEventListener('slot-target-change', ((e: CustomEvent<{ index: number | null }>) => {
+      expect(e.bubbles && e.composed).toBe(true);
+      indexes.push(e.detail.index);
+    }) as EventListener);
+
+    chips(drawer)[2].click();
+    drawer.slotTarget = 2;
+    await drawer.updateComplete;
+    expect(chips(drawer)[2].getAttribute('aria-pressed')).toBe('true');
+    expect(chips(drawer)[2].classList.contains('is-target')).toBe(true);
+    expect(chips(drawer)[0].getAttribute('aria-pressed')).toBe('false');
+    chips(drawer)[2].click();
+
+    expect(indexes).toEqual([2, null]);
+  });
+
+  it('disables a chip whose slot is disabled', async () => {
+    const drawer = await mount([slot('FROM', null), slot('TO', null, true)], 'multi');
+
+    expect(chips(drawer).map((c) => c.disabled)).toEqual([false, true]);
+  });
+
+  it('shows the target line only while a target is set', async () => {
+    const drawer = await mount([slot('1', redDye), slot('2', null)], 'multi');
+    const line = () => root(drawer).querySelector('.drawer-header .drawer-target-line');
+    expect(line()).toBeNull();
+
+    drawer.slotTarget = 1;
+    await drawer.updateComplete;
+    expect(line()?.textContent?.trim()).toBe('Choosing dye 2');
+    expect(line()?.getAttribute('aria-live')).toBe('polite');
+
+    // A target past the last slot names nothing
+    drawer.slotTarget = 5;
+    await drawer.updateComplete;
+    expect(line()).toBeNull();
+
+    drawer.slotTarget = null;
+    await drawer.updateComplete;
+    expect(line()).toBeNull();
+  });
+
+  it('random dye never returns a held dye in multi mode', async () => {
+    const drawer = await mount([slot('1', redDye), slot('2', null)], 'multi');
+    const picked: Dye[] = [];
+    drawer.addEventListener('dye-selected', ((e: CustomEvent<{ dye: Dye }>) => {
+      picked.push(e.detail.dye);
+    }) as EventListener);
+    const random = vi.spyOn(Math, 'random');
+    const roll = () => (drawer as unknown as { handleRandomDye(): void }).handleRandomDye();
+
+    // 0 lands on red (index 0 of all dyes), 0.99 on blue: both must give blue
+    random.mockReturnValue(0);
+    roll();
+    random.mockReturnValue(0.99);
+    roll();
+    expect(picked.map((d) => d.id)).toEqual([blueDye.id, blueDye.id]);
+
+    // Every dye held: nothing to roll
+    drawer.slots = [slot('1', redDye), slot('2', blueDye)];
+    await drawer.updateComplete;
+    roll();
+    expect(picked).toHaveLength(2);
+    expect(ToastService.warning).toHaveBeenCalledWith('colorPalette.noDyesAvailable');
+
+    // Single-input tools roll among every dye, as before
+    drawer.slotMode = 'single';
+    drawer.slots = [slot('', redDye)];
+    await drawer.updateComplete;
+    random.mockReturnValue(0);
+    roll();
+    expect(picked[2].id).toBe(redDye.id);
+  });
+
+  it('does not mark a swatch for a custom dye held by the tool', async () => {
+    // A custom color with the same hex as a palette dye
+    const custom = makeDye({
+      id: -1700000000001,
+      itemID: -1700000000001,
+      stainID: null,
+      name: 'Custom (#FF0000)',
+      hex: redDye.hex,
+      category: '__custom__',
+      acquisition: '__custom__',
+    });
+    const drawer = await mount([slot('1', custom), slot('2', null)], 'multi');
+
+    expect(root(drawer).querySelectorAll('.swatch.in-use')).toHaveLength(0);
+    expect(root(drawer).querySelectorAll('.swatch-mark')).toHaveLength(0);
+  });
+
+  it('pulses a picked swatch once, and the pulse survives the re-render that marks it', async () => {
+    const drawer = await mount([slot('1', null), slot('2', null)], 'multi');
+    pickOf(gridSwatch(drawer, redDye)).click();
+    expect(gridSwatch(drawer, redDye).classList.contains('just-picked')).toBe(true);
+
+    // The tool takes the dye and the shell rebinds the slots mid-animation
+    drawer.slots = [slot('1', redDye), slot('2', null)];
+    await drawer.updateComplete;
+    const red = gridSwatch(drawer, redDye);
+    expect(red.classList.contains('in-use')).toBe(true);
+    expect(red.classList.contains('just-picked')).toBe(true);
+
+    red.dispatchEvent(new Event('animationend'));
+    expect(red.classList.contains('just-picked')).toBe(false);
+  });
+
+  it('plays the pulse only for users who have not asked for reduced motion', async () => {
+    const { DyePaletteDrawer } = await import('../../v4/dye-palette-drawer');
+    const css = [DyePaletteDrawer.styles]
+      .flat(Infinity as 1)
+      .map((sheet) => (sheet as { cssText: string }).cssText)
+      .join('\n')
+      .replace(/\s+/g, ' ');
+
+    // The only just-picked rule and the keyframes sit in the motion query
+    const media = css.indexOf('@media (prefers-reduced-motion: no-preference)');
+    expect(media).toBeGreaterThan(-1);
+    expect(css.split('just-picked')).toHaveLength(2);
+    expect(css.indexOf('.swatch.just-picked')).toBeGreaterThan(media);
+    expect(css.indexOf('@keyframes swatch-pulse')).toBeGreaterThan(media);
+  });
+
+  it('focusClose() moves focus to the close button', async () => {
+    const drawer = await mount([], null);
+    drawer.focusClose();
+
+    expect(root(drawer).activeElement).toBe(root(drawer).querySelector('.close-btn'));
   });
 });

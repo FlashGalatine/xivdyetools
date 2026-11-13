@@ -686,10 +686,7 @@ export class V4LayoutShell extends BaseLitComponent {
   /** Move focus into the palette a slot tap just opened on a phone. */
   private async focusPaletteClose(): Promise<void> {
     await this.updateComplete;
-    this.renderRoot
-      .querySelector('dye-palette-drawer')
-      ?.shadowRoot?.querySelector<HTMLElement>('.close-btn')
-      ?.focus();
+    this.renderRoot.querySelector('dye-palette-drawer')?.focusClose();
   }
 
   /**

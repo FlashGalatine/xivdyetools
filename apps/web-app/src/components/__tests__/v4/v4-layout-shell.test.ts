@@ -41,7 +41,21 @@ vi.mock('@services/index', () => ({
 // Child components: registration side-effects only, not under test here.
 vi.mock('../../v4/v4-app-header', () => ({}));
 vi.mock('../../v4/config-sidebar', () => ({}));
-vi.mock('../../v4/dye-palette-drawer', () => ({}));
+// The palette stands in as a bare element with the one method the shell calls.
+const { focusCloseSpy } = vi.hoisted(() => ({ focusCloseSpy: vi.fn() }));
+vi.mock('../../v4/dye-palette-drawer', () => {
+  if (!customElements.get('dye-palette-drawer')) {
+    customElements.define(
+      'dye-palette-drawer',
+      class extends HTMLElement {
+        focusClose(): void {
+          focusCloseSpy(this);
+        }
+      }
+    );
+  }
+  return {};
+});
 
 import { STORAGE_KEYS } from '@shared/constants';
 
@@ -803,13 +817,10 @@ describe('V4LayoutShell — palette drawer default + first-run hint', () => {
 
     it("moves focus to the palette's close button when a slot tap opens it on a phone", async () => {
       const { el } = await mountMulti(true);
-      const closeBtn = document.createElement('button');
-      closeBtn.className = 'close-btn';
-      drawer(el)!.attachShadow({ mode: 'open' }).appendChild(closeBtn);
 
       slotTap(el, 1);
 
-      await vi.waitFor(() => expect(drawer(el)!.shadowRoot!.activeElement).toBe(closeBtn));
+      await vi.waitFor(() => expect(focusCloseSpy).toHaveBeenCalledWith(drawer(el)));
     });
   });
 
