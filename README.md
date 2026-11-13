@@ -25,8 +25,8 @@ Published to npm under the `@xivdyetools` scope (except `test-utils`, which is w
 
 | App | Version | Description |
 |-----|---------|-------------|
-| [`web-app`](apps/web-app/) | 5.16.11 | Main web app at [xivdyetools.app](https://xivdyetools.app) (Vite + Lit + Tailwind) |
-| [`discord-worker`](apps/discord-worker/) | 5.9.9 | Primary Discord bot — 18 slash commands (CF Worker + Hono, HTTP Interactions) |
+| [`web-app`](apps/web-app/) | 5.17.2 | Main web app at [xivdyetools.app](https://xivdyetools.app) (Vite + Lit + Tailwind) |
+| [`discord-worker`](apps/discord-worker/) | 5.9.11 | Primary Discord bot — 18 slash commands (CF Worker + Hono, HTTP Interactions) |
 | [`image-worker`](apps/image-worker/) | 1.3.5 | Photon host — `POST /extract` (raw pixels for the bot) and `POST /thumbnail` (WebP previews for presets-api), service-binding-only (CF Worker) |
 | [`moderation-worker`](apps/moderation-worker/) | 1.9.0 | Moderation bot for community presets (CF Worker) |
 | [`presets-api`](apps/presets-api/) | 2.8.2 | Community presets REST API + preview-image storage (CF Worker + D1 + R2) |
@@ -163,7 +163,7 @@ All bundled fonts are licensed under the [SIL Open Font License 1.1](https://ope
 
 🎮 **FFXIV**: [Lodestone Character](https://na.finalfantasyxiv.com/lodestone/character/7677106/)
 💻 **GitHub**: [@FlashGalatine](https://github.com/FlashGalatine)
-🐦 **X/Twitter**: [@AsheJunius](https://x.com/AsheJunius)
+🐦 **X/Twitter**: [@FlashGalatine](https://x.com/FlashGalatine)
 📺 **Twitch**: [flashgalatine](https://www.twitch.tv/flashgalatine)
 🌐 **BlueSky**: [projectgalatine.com](https://bsky.app/profile/projectgalatine.com)
 ❤️ **Patreon**: [ProjectGalatine](https://patreon.com/ProjectGalatine)
