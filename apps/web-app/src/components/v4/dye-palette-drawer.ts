@@ -363,7 +363,6 @@ export class DyePaletteDrawer extends BaseLitComponent {
         width: 18px;
         height: 18px;
         flex-shrink: 0;
-        box-sizing: border-box;
         border-radius: 5px;
       }
 
@@ -647,7 +646,6 @@ export class DyePaletteDrawer extends BaseLitComponent {
         bottom: -5px;
         width: 18px;
         height: 18px;
-        box-sizing: border-box;
         border-radius: 50%;
         border: 1.5px solid var(--ring);
         background: var(--theme-background);

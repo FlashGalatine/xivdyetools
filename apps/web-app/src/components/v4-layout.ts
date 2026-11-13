@@ -26,8 +26,8 @@ import {
   PALETTE_SLOTS_CHANGED,
   isPaletteSlotHost,
   isPaletteSlotSource,
+  normalizeTarget,
   resolvePick,
-  type PaletteSlot,
 } from './palette-slots';
 import type { V4LayoutShell } from './v4/v4-layout-shell';
 import { ModalContainer } from './modal-container';
@@ -102,15 +102,6 @@ function routed<T>(call: () => T): T {
   } finally {
     routingPick = false;
   }
-}
-
-/** The shell normalized the target, but against slots it read earlier: re-check the range. */
-function targetInRange(
-  target: number | null | undefined,
-  slots: readonly PaletteSlot[]
-): number | null {
-  if (typeof target !== 'number' || !Number.isInteger(target)) return null;
-  return target >= 0 && target < slots.length ? target : null;
 }
 
 /** The pre-contract path: selectDye, else addDye. Returns whether the tool took the dye. */
@@ -279,7 +270,8 @@ export async function initializeV4Layout(container: HTMLElement): Promise<void> 
       const action = resolvePick({
         mode: tool.paletteSlotMode,
         slots,
-        target: targetInRange(target, slots),
+        // The shell normalized the target against slots it read earlier: check it again
+        target: normalizeTarget(slots, target ?? null, false),
         dye,
         random,
       });
@@ -341,7 +333,7 @@ export async function initializeV4Layout(container: HTMLElement): Promise<void> 
 
     const tool = activeTool;
     const slotIndex = isPaletteSlotHost(tool)
-      ? targetInRange(target, tool.getPaletteSlots())
+      ? normalizeTarget(tool.getPaletteSlots(), target ?? null, false)
       : null;
     if (isPaletteSlotHost(tool) && slotIndex !== null) {
       routed(() => tool.placeDyeAt(slotIndex, makeCustomDye(hex)));
