@@ -37,7 +37,7 @@ Unchanged in 5.0.0 (`packages/bot-logic/CHANGELOG.md:15-16`): `fileText`/`fileBy
 
 Gate text: `DEPRECATIONS.md:453` reads "Recheck external npm consumer usage; cancel removal if an active consumer still needs the field." It is unchecked at the reference tree.
 
-State fact (section 2, query 1): the deprecation minors core 5.16.0 and bot-logic 4.12.0 are NOT on the npm registry yet (`latest` is core 5.15.0 and bot-logic 4.11.0, re-checked 2026-10-30 13:17Z). No external user has yet seen a `@deprecated` tag for these symbols. (Superseded: both were published on 2026-11-01; see section 6, "Window set 2026-11-01".)
+State fact (section 2, query 1): the deprecation minors core 5.16.0 and bot-logic 4.12.0 are NOT on the npm registry yet (`latest` is core 5.15.0 and bot-logic 4.11.0, re-checked 2026-10-30 13:17Z). No external user has yet seen a `@deprecated` tag for these symbols. (Superseded: both were published on 2026-11-01; see "Window set 2026-11-01 (AP-43)" in section 6.)
 
 ## 2. Method and queries
 
@@ -103,7 +103,7 @@ Interpretation (not provable from these data): the counts are download requests,
 - deps.dev `:dependents` returns counts of distinct dependent packages with no names (https://docs.deps.dev/api/v3alpha/, retrieved 13:16Z); it sees only public npm packages it has indexed.
 - npm search is keyword-based and the public registry offers no reverse-dependency API, so a package depending on `@xivdyetools/core` without mentioning "xivdyetools" in its own metadata would not be found.
 - The legacy split repositories (last pushed 2026-02) predate the chara API, which core introduced in 4.0.0 on 2026-08-16 (`packages/core/CHANGELOG.md:1032-1074`); query 17 also finds no use of the legacy names there.
-- Core 5.16.0 and bot-logic 4.12.0 are unpublished (query 1), so no consumer has seen the `@deprecated` guidance. The absence of objections is weaker evidence than it would be after a deprecation window.
+- Core 5.16.0 and bot-logic 4.12.0 are unpublished (query 1), so no consumer has seen the `@deprecated` guidance. The absence of objections is weaker evidence than it would be after a deprecation window. (Superseded: published 2026-11-01; see "Window set 2026-11-01 (AP-43)" in section 6.)
 
 ### Items previously UNKNOWN that are now settled
 
@@ -115,12 +115,12 @@ Interpretation (not provable from these data): the counts are download requests,
 
 - Private, bundled or vendored users (not observable with public data).
 - Whether any download is a distinct real user (section 4).
-- Whether any external project will adopt core 5.16.0 or bot-logic 4.12.0 and be affected after publication (the releases do not exist yet).
+- Whether any external project will adopt core 5.16.0 or bot-logic 4.12.0 and be affected after publication (the releases do not exist yet). (Superseded: published 2026-11-01; see "Window set 2026-11-01 (AP-43)" in section 6.)
 
 ## 6. Recommendation
 
 On the evidence retrieved, no removal needs to be revisited now. No public npm dependent, repository, fork or `package.json` outside the maintainer's own repositories imports `parseCharaFile`, `resolveCharaColors`, `OFF_GRID_DELTA_E2000`, `ParsedCharaFile`, `CharaColorSlotRaw`, `CharaGearDye` or `SwatchCharacter`, or reads `SwatchResult.character`. The only external-looking hits are the maintainer's own planning documents and unrelated name collisions, and `@xivdyetools/core/chara` plus the retained live types remain available.
 
-The evidence is nevertheless too weak for a decisive "no consumer" claim: the deprecation releases are not yet published (nobody has been warned), downloads cannot be attributed to real users (core 1,176 and bot-logic 716 in the last month), and private or bundled users are unobservable. Keep the `DEPRECATIONS.md:453` gate unchecked until core 5.16.0 and bot-logic 4.12.0 are published and have been live for the agreed window, then repeat queries 5, 7 and 12 with a new retrieval time. If the removals proceed, the semver MAJOR bump and the migration text already written (`inspectCharaForTools` plus `resolveCharaForTools`, or `@xivdyetools/core/chara` plus `resolveCharaWithProvider`; use `svgString` and `embed` instead of `.character`) are the appropriate protection for unseen users.
+The evidence is nevertheless too weak for a decisive "no consumer" claim: the deprecation releases are not yet published (nobody has been warned), downloads cannot be attributed to real users (core 1,176 and bot-logic 716 in the last month), and private or bundled users are unobservable. Keep the `DEPRECATIONS.md:453` gate unchecked until core 5.16.0 and bot-logic 4.12.0 are published and have been live for the agreed window, then repeat queries 5, 7 and 12 with a new retrieval time. If the removals proceed, the semver MAJOR bump and the migration text already written (`inspectCharaForTools` plus `resolveCharaForTools`, or `@xivdyetools/core/chara` plus `resolveCharaWithProvider`; use `svgString` and `embed` instead of `.character`) are the appropriate protection for unseen users. (Superseded: published 2026-11-01; see "Window set 2026-11-01 (AP-43)" in section 6.)
 
 **Window set 2026-11-01 (AP-43).** The maintainer set the agreed window to 14 days. The agent proposed the following with it, and the maintainer did not object: count from bot-logic 4.12.0's npm timestamp, 2026-11-01T16:08:53.344Z. The recheck runs no earlier than 2026-11-15T16:08:53Z and no more than about 7 days before #391 merges; rerun it if the merge slips past that. For the rerun, add core 5.16.0, svg 4.4.1 and bot-logic 4.12.0 to query 7 (expected 2, 1 and 0), read query 5 by date range so publish days and npm's statistics gaps can be excluded, and compare query 12 with its known positives so a broken query cannot read as a pass. The pass rule is in the unit acceptance checklist, section 6. The notice reaches few people: there is no runtime warning, no GitHub release, and the changelog is not in the package; only the README and the `@deprecated` tags carry it. A wider warning would be a separate maintainer decision.

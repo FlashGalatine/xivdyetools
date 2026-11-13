@@ -6,7 +6,7 @@
   "main": {
     "sha": "ee4dd0b65375ed994d8ab0dafc3a695b614c1a3d",
     "unchangedSince": "2026-11-02",
-    "fridayRuling": "The ruling of 2026-11-06 (pull requests produced by Thursday 2026-11-05 that do not rely on M-specific changes could merge on Friday) lapsed with nothing merged under it."
+    "fridayRuling": "The ruling of 2026-11-06 (pull requests produced by Thursday 2026-11-05 that do not rely on M-specific changes could merge on Friday) lapsed (the agent's reading; not ruled) with nothing merged under it."
   },
   "rulings": [
     {
@@ -18,13 +18,15 @@
     {
       "item": "#439 (X handle rename)",
       "by": "maintainer",
-      "answer": "Drop its app and package README edits; renumber it; merge it after the M line's three package publishes",
+      "answer": "Drop README edits",
+      "question": "The question also stated that #439 would be renumbered and merged after the M line's three package publishes.",
       "effect": "#439 takes web 5.17.2 and discord 5.9.11 (head 63118a74) and no longer edits every README."
     },
     {
       "item": "#432 (Abridged glamour list)",
       "by": "maintainer",
-      "answer": "Any other source beats a map dungeon in the Abridged list",
+      "answer": "The achievement",
+      "note": "Asked which item was affected first; the option chosen meant any other source beats a map dungeon.",
       "effect": "Applied on #432 (head 6ab9159b)."
     },
     {
@@ -70,10 +72,11 @@
       { "run": 42668497099, "workflow": "Deploy Presets API", "event": "workflow_dispatch", "headSha": "ee4dd0b65375ed994d8ab0dafc3a695b614c1a3d", "conclusion": "success" },
       { "run": 42668526198, "workflow": "Deploy OG Worker", "event": "workflow_dispatch", "headSha": "ee4dd0b65375ed994d8ab0dafc3a695b614c1a3d", "conclusion": "success" }
     ],
+    "rejectedRun": "A fourth Deploy API Worker dispatch on 2026-11-09 (run 42671052321, from #435's branch) was rejected by environment protection before any step ran.",
     "notExercised": "None of the three runs deploys Pages, so the new production credential's Pages grant is unused. No Deploy Web App, Deploy Discord Worker or Deploy Moderation Worker run has started since 2026-11-02 (run list read 2026-11-13).",
     "beta": "The beta credential was re-issued the same way and verified on beta.",
     "discordCredentials": "Deferred in OPEN_ITEMS.md to after the M line's deploys have finished green, because both bot deploys register commands with their GitHub copy.",
-    "consequence": "The first approved Deploy Web App run after 2026-11-09 is the first use of the new Pages grant: under the ruled order, the run approved for the independents (each of #427, #431, #433, #434 and #432 starts one), and M-WEB's run only if no independent's run is approved first. M-DISCORD's and M-MODERATION's selected runs are the first approved runs of those two workflows under the new credential: no independent matches their path filters. The AP-24(i) acceptance rests on runs made before the rotation."
+    "consequence": "The first use of the new Pages grant is the first approved Deploy Web App run, whichever that is. Each of #427, #431, #433, #434 and #432 starts one; none is approved. M-DISCORD's and M-MODERATION's selected runs are the first approved runs of those two workflows under the new credential: no independent matches their path filters. The AP-24(i) acceptance rests on runs made before the rotation."
   },
   "review": {
     "openPullRequests": 28,
