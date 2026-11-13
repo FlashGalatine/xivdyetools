@@ -21,7 +21,7 @@ const resultCards = (page: Page): Locator =>
 async function open(page: Page, tool: string): Promise<void> {
   await seedStartupStorage(page);
   await gotoTool(page, tool);
-  await page.waitForTimeout(600);
+  await expect(slot(page, 0)).toBeVisible({ timeout: 20000 });
 }
 
 async function expectOpen(page: Page): Promise<void> {
@@ -49,25 +49,25 @@ async function pickUnmarked(page: Page, nth = 0): Promise<string> {
 }
 
 /**
- * The element holding focus plus its ancestors across shadow boundaries, as
- * descriptors, so a test can ask "is focus on a slot / inside the wheel".
+ * The element holding focus, found through shadow roots, described by its tag,
+ * classes, whether it carries data-palette-slot and the tag of its shadow host.
  */
-async function focusChain(page: Page): Promise<string[]> {
+async function focused(page: Page): Promise<{
+  tag: string;
+  classes: string;
+  slot: boolean;
+  host: string;
+}> {
   return page.evaluate(() => {
     let active: Element | null = document.activeElement;
     while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
-    const chain: string[] = [];
-    let node: Node | null = active;
-    while (node) {
-      if (node instanceof Element) {
-        let d = node.tagName.toLowerCase();
-        if (node.hasAttribute('data-palette-slot')) d += '[data-palette-slot]';
-        if (node.classList.contains('v4-palette-toggle')) d += '.v4-palette-toggle';
-        chain.push(d);
-      }
-      node = node.parentNode ?? (node as ShadowRoot).host ?? null;
-    }
-    return chain;
+    const root = active?.getRootNode();
+    return {
+      tag: active?.tagName.toLowerCase() ?? '',
+      classes: active?.className?.toString() ?? '',
+      slot: active?.hasAttribute('data-palette-slot') ?? false,
+      host: root instanceof ShadowRoot ? root.host.tagName.toLowerCase() : '',
+    };
   });
 }
 
@@ -87,15 +87,8 @@ test.describe('slot-aware picking: phone', () => {
     await expectClosed(page);
     await expect(resultCards(page)).toHaveCount(1);
 
-    // Focus returns to the slot that opened the palette, or the round button.
-    await expect
-      .poll(async () => {
-        const chain = await focusChain(page);
-        return chain.some(
-          (d) => d.includes('[data-palette-slot]') || d.includes('.v4-palette-toggle')
-        );
-      })
-      .toBe(true);
+    // Focus returns to a slot element: the Add dye tile that replaced the empty slot.
+    await expect.poll(async () => (await focused(page)).slot).toBe(true);
   });
 
   test('Dye Comparison: Add dye tile adds the second dye and the palette closes', async ({
@@ -224,7 +217,10 @@ test.describe('slot-aware picking: phone', () => {
 
     // Focus returns to the wheel's hub.
     await expect
-      .poll(async () => (await focusChain(page)).some((d) => d.startsWith('v4-color-wheel')))
+      .poll(async () => {
+        const f = await focused(page);
+        return f.host === 'v4-color-wheel' && f.classes.includes('main-swatch-display');
+      })
       .toBe(true);
 
     await openWithButton(page);
