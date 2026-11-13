@@ -123,7 +123,12 @@ export class V4LayoutShell extends BaseLitComponent {
   /** The slot that opened the palette, so focus can go back to it on close. */
   private openingSlot: number | null = null;
 
-  /** Read-only view of the target for the layout's pick routing. */
+  /**
+   * Read-only view of the target. The layout routes by the target carried in
+   * each pick's event detail instead.
+   * @testonly v4-layout-shell.test.ts reads it to assert which slot a slot tap,
+   * a strip chip or a pick leaves targeted
+   */
   get paletteTarget(): number | null {
     return this.target;
   }
