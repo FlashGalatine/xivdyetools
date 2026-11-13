@@ -1388,6 +1388,41 @@ describe('ComparisonTool', () => {
       expect(tile().style.borderColor).not.toContain('--theme-primary');
     });
 
+    it('setPaletteTarget(0) with no dyes held marks all four placeholders, and null restores them', () => {
+      const panel = mount();
+      const borders = () => visibleSlotButtons(panel).map((b) => b.style.borderColor);
+
+      expect(borders()).toHaveLength(4);
+      expect(borders().every((c) => c.includes('--theme-border'))).toBe(true);
+
+      tool!.setPaletteTarget(0);
+      expect(borders().every((c) => c.includes('--theme-primary'))).toBe(true);
+
+      tool!.setPaletteTarget(null);
+      expect(borders().every((c) => c.includes('--theme-border'))).toBe(true);
+    });
+
+    it('rebuilt placeholders keep the target border', () => {
+      const panel = mount([A]);
+      tool!.setPaletteTarget(0);
+
+      tool!.removeDyeAt(0);
+
+      const borders = visibleSlotButtons(panel).map((b) => b.style.borderColor);
+      expect(borders).toHaveLength(4);
+      expect(borders.every((c) => c.includes('--theme-primary'))).toBe(true);
+    });
+
+    it('placeholders use theme tokens, not hardcoded colors', () => {
+      const panel = mount();
+
+      for (const slot of visibleSlotButtons(panel)) {
+        const style = slot.getAttribute('style') ?? '';
+        expect(style).not.toMatch(/rgba?\(/);
+        expect(slot.firstElementChild?.getAttribute('style') ?? '').not.toMatch(/rgba?\(/);
+      }
+    });
+
     it('setPaletteTarget does not throw with no dyes held', () => {
       mount();
 

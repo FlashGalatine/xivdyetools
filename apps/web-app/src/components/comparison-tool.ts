@@ -1171,7 +1171,8 @@ export class ComparisonTool extends BaseComponent implements PaletteSlotHost {
     const host = this.emptySlotsContainer;
     if (!host) return;
     const wanted = this.selectedDyes.length === 0;
-    if (wanted === host.childElementCount > 0) return;
+    const hasSlots = host.childElementCount > 0;
+    if (wanted === hasSlots) return;
     clearContainer(host);
     if (!wanted) return;
 
@@ -1189,13 +1190,13 @@ export class ComparisonTool extends BaseComponent implements PaletteSlotHost {
             -webkit-appearance: none;
             width: 200px;
             height: 280px;
-            border: 2px dashed rgba(255, 255, 255, 0.2);
+            border: 2px dashed var(--theme-border);
             border-radius: 12px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background: rgba(0, 0, 0, 0.1);
+            background: transparent;
             transition: all 0.2s ease;
             cursor: pointer;
           `
@@ -1206,12 +1207,10 @@ export class ComparisonTool extends BaseComponent implements PaletteSlotHost {
 
       // Hover effect
       this.on(slot, 'mouseenter', () => {
-        slot.style.borderColor = 'rgba(255, 255, 255, 0.35)';
-        slot.style.background = 'rgba(255, 255, 255, 0.05)';
+        slot.style.background = 'var(--theme-card-hover)';
       });
       this.on(slot, 'mouseleave', () => {
-        slot.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-        slot.style.background = 'rgba(0, 0, 0, 0.1)';
+        slot.style.background = 'transparent';
       });
 
       // Plus icon in a dashed circle
@@ -1220,7 +1219,7 @@ export class ComparisonTool extends BaseComponent implements PaletteSlotHost {
           style: `
             width: 48px;
             height: 48px;
-            border: 2px dashed rgba(255, 255, 255, 0.25);
+            border: 2px dashed var(--theme-border);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -1253,6 +1252,22 @@ export class ComparisonTool extends BaseComponent implements PaletteSlotHost {
       this.on(slot, 'click', () => this.requestPaletteForSlot(slot, 0));
       host.appendChild(slot);
     }
+    this.applyPlaceholderTarget();
+  }
+
+  /** While empty, a target means slot 1, which every placeholder stands for: mark all four. */
+  private applyPlaceholderTarget(): void {
+    const host = this.emptySlotsContainer;
+    if (!host) return;
+    const color = this.isAddTargeted() ? SLOT_TARGET_BORDER : 'var(--theme-border)';
+    for (const slot of host.querySelectorAll<HTMLElement>('[data-palette-slot]')) {
+      slot.style.borderColor = color;
+    }
+  }
+
+  /** Whether the target is the next free slot, which the placeholders or the tile stand for. */
+  private isAddTargeted(): boolean {
+    return this.paletteTarget !== null && this.paletteTarget >= this.selectedDyes.length;
   }
 
   /**
@@ -1317,8 +1332,9 @@ export class ComparisonTool extends BaseComponent implements PaletteSlotHost {
       row.appendChild(this.addDyeTile);
     }
     this.addDyeTile.setAttribute('data-palette-slot', String(count));
-    const targeted = this.paletteTarget !== null && this.paletteTarget >= count;
-    this.addDyeTile.style.borderColor = targeted ? SLOT_TARGET_BORDER : 'var(--theme-border)';
+    this.addDyeTile.style.borderColor = this.isAddTargeted()
+      ? SLOT_TARGET_BORDER
+      : 'var(--theme-border)';
   }
 
   /** A slot tap: ask the shell to open the palette aimed at `slot`. */
@@ -2660,6 +2676,7 @@ export class ComparisonTool extends BaseComponent implements PaletteSlotHost {
 
   setPaletteTarget(index: number | null): void {
     this.paletteTarget = index;
+    this.applyPlaceholderTarget();
     this.updateAddDyeTile();
   }
 
