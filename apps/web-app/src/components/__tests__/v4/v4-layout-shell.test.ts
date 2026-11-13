@@ -482,11 +482,13 @@ describe('V4LayoutShell — palette drawer default + first-run hint', () => {
       const el = (await mountShell('comparison')) as SlotShell;
       el.paletteSlots = emptySlots(slotCount);
       el.paletteSlotMode = 'multi';
-      // Tool content is slotted light DOM: the slot buttons live there.
+      // v4-layout mounts each tool inside the shell's shadow content scroller
+      // (getContentContainer), not as slotted light DOM; mount the slots there.
+      const scroller = el.shadowRoot!.querySelector('.v4-layout-content-scroll')!;
       for (let i = 0; i < slotCount; i++) {
         const btn = document.createElement('button');
         btn.dataset.paletteSlot = String(i);
-        el.appendChild(btn);
+        scroller.appendChild(btn);
       }
       await el.updateComplete;
       const targetChanges: Array<number | null> = [];
@@ -496,18 +498,21 @@ describe('V4LayoutShell — palette drawer default + first-run hint', () => {
       return { el, vp, targetChanges };
     }
 
-    const slotTap = (el: ShellEl, slot?: number) =>
-      el
-        .querySelector(
+    const slotButton = (el: ShellEl, slot?: number) =>
+      el.shadowRoot!.querySelector<HTMLElement>(
+        `.v4-layout-content-scroll ${
           slot === undefined ? '[data-palette-slot]' : `[data-palette-slot="${slot}"]`
-        )!
-        .dispatchEvent(
-          new CustomEvent('open-palette-drawer', {
-            detail: slot === undefined ? undefined : { slot },
-            bubbles: true,
-            composed: true,
-          })
-        );
+        }`
+      );
+
+    const slotTap = (el: ShellEl, slot?: number) =>
+      slotButton(el, slot)!.dispatchEvent(
+        new CustomEvent('open-palette-drawer', {
+          detail: slot === undefined ? undefined : { slot },
+          bubbles: true,
+          composed: true,
+        })
+      );
 
     const isOpen = (el: ShellEl) => drawer(el)!.hasAttribute('is-open');
 
@@ -798,9 +803,7 @@ describe('V4LayoutShell — palette drawer default + first-run hint', () => {
 
       pick(el);
 
-      await vi.waitFor(() =>
-        expect(document.activeElement).toBe(el.querySelector('[data-palette-slot="2"]'))
-      );
+      await vi.waitFor(() => expect(el.shadowRoot!.activeElement).toBe(slotButton(el, 2)));
     });
 
     it('a bare open falls back to the first slot for focus', async () => {
@@ -810,9 +813,18 @@ describe('V4LayoutShell — palette drawer default + first-run hint', () => {
 
       pick(el);
 
-      await vi.waitFor(() =>
-        expect(document.activeElement).toBe(el.querySelector('[data-palette-slot]'))
-      );
+      await vi.waitFor(() => expect(el.shadowRoot!.activeElement).toBe(slotButton(el, 0)));
+    });
+
+    it('falls back to the round palette button when the tool has no slot elements', async () => {
+      const { el } = await mountMulti(true);
+      slotTap(el, 1);
+      await el.updateComplete;
+      el.shadowRoot!.querySelectorAll('[data-palette-slot]').forEach((n) => n.remove());
+
+      pick(el);
+
+      await vi.waitFor(() => expect(el.shadowRoot!.activeElement).toBe(fab(el)));
     });
 
     it("moves focus to the palette's close button when a slot tap opens it on a phone", async () => {

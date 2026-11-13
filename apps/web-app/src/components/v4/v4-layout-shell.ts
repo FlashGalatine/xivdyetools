@@ -690,15 +690,19 @@ export class V4LayoutShell extends BaseLitComponent {
   }
 
   /**
-   * A pick closed the palette: hand focus back to the slot that opened it
-   * (tool content is slotted light DOM), else any slot, else the round button.
+   * A pick closed the palette: hand focus back to the slot that opened it,
+   * else any slot, else the round button. v4-layout mounts the tool inside
+   * this shadow root's content scroller, so search there, not light DOM.
    */
   private async returnFocusAfterClose(slot: number | null): Promise<void> {
     await this.updateComplete;
     requestAnimationFrame(() => {
+      const content = this.renderRoot.querySelector('.v4-layout-content-scroll');
       const target =
-        (slot === null ? null : this.querySelector<HTMLElement>(`[data-palette-slot="${slot}"]`)) ??
-        this.querySelector<HTMLElement>('[data-palette-slot]') ??
+        (slot === null
+          ? null
+          : content?.querySelector<HTMLElement>(`[data-palette-slot="${slot}"]`)) ??
+        content?.querySelector<HTMLElement>('[data-palette-slot]') ??
         this.renderRoot.querySelector<HTMLElement>('.v4-palette-toggle');
       target?.focus();
     });
