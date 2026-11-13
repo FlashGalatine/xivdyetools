@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     Suggestions' empty-state card and target card, Swatch Matcher's source card once a reverse match
     exists, Dye Mixer's two slot boxes, Gradient Builder's FROM and TO cards (TO stays unavailable until
     FROM is set), and in Dye Comparison and Accessibility Checker the four "Add Dye" placeholders at zero
-    dyes plus a new single "Add dye" tile after the cards while they hold one to three dyes. Swatch
+    dyes plus a new single "Add Dye" tile after the cards while they hold one to three dyes. Swatch
     Matcher's empty card is unchanged: it still asks for a color from the grid. Every slot tap is a
     real button.
   - **Phones close the palette after the pick** (`(max-width: 768px)`), but only when a slot tap opened
@@ -40,10 +40,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     targeted slot in the tool takes the accent border Gradient Builder used for its armed endpoint.
   - **Pick rules (`resolvePick` in `components/palette-slots.ts`):** single-dye tools (Harmony Explorer,
     Budget Suggestions, Swatch Matcher) use the picked dye as before, and picking the dye they already
-    hold changes nothing. Multi-dye tools without a target add an unmarked dye by their existing rule
+    hold changes nothing. Without a target, multi-dye tools add an unmarked dye by their existing rule
     (Dye Comparison ignores it when full, Accessibility Checker drops the oldest, Dye Mixer and Gradient
-    Builder shift), and tapping a marked dye removes it. With a target, a pick fills that slot, a dye
-    held in another slot swaps with it, and the target clears afterwards. Random never removes: in a
+    Builder shift) and remove a marked one. With a target, a pick fills that slot: a marked dye held in
+    another slot swaps with the target slot's dye (or moves there if it is empty) and is never removed,
+    and the target clears afterwards. Random never removes: in a
     multi-dye tool it rolls only among dyes the tool does not hold. Clear all and switching tools clear
     the target.
   - **Removing:** Dye Comparison and Accessibility Checker close the gap, as their Remove buttons do;
@@ -67,8 +68,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Unit tests for the slot contract and pick resolution (`palette-slots.test.ts`), the shell's target
   and close rule, the palette's marks, strip and header line, the layout's routing, and every tool's
   slots. New `e2e/slot-aware-picking.spec.ts` runs the phone flows (tap an empty slot and see the
-  palette close, pick twice from the round button, add from the "Add dye" tile, replace a filled slot
-  from the strip, tap a marked dye to remove it) in every Playwright project through explicit
+  palette close, pick twice from the round button, add from the "Add Dye" tile, replace a filled slot
+  from the strip, tap a marked dye with no slot selected to remove it) in every Playwright project through explicit
   viewports.
 
 ## [5.16.11] - 2026-11-02

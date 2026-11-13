@@ -15,9 +15,9 @@
 ### Color Palette
 - **Dyes in use are marked.** Each dye the tool is using gets a ring and a check mark, and the dye in the slot you're filling is highlighted in the theme color.
 - **Slot buttons at the top.** Dye Mixer, Gradient Builder, Dye Comparison and Accessibility Checker show one button per slot. Tap one to choose the slot to fill, and tap it again to cancel.
-- **The palette says which slot you're filling,** for example "Choosing dye 2 of 4".
-- **Tap a marked dye to remove it** in Dye Mixer, Gradient Builder, Dye Comparison and Accessibility Checker. In the other tools, picking the dye already in use changes nothing.
-- **The random dye button skips dyes you're using** in those four tools, so it never removes one.
+- **In those four tools, the palette says which slot you're filling,** for example "Choosing dye 2 of 4".
+- **Tap a marked dye to remove it** in Dye Mixer, Gradient Builder, Dye Comparison and Accessibility Checker, when no slot is selected. With a slot selected, the marked dye moves into that slot instead.
+- **In the other tools, picking the dye already in use changes nothing.** The random dye button skips dyes you're using in the four tools above, so it never removes one.
 
 ### Dye Mixer
 - **Dye Mixer no longer takes the same dye twice.** A saved or shared pair with the same dye in both slots now loads with only the first slot filled.
