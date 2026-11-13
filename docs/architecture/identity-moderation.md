@@ -49,12 +49,13 @@ before ownership/moderator context or rekey; runtime lookup failure is unavailab
 reply cannot resume authority. Bot HMAC remains a separate path. Membership predicates cover
 all five rekey mutations and approval/Revert SQL, preserving their concurrency/audit guards.
 
-Moderation keeps `LINKED_BAN_CONFIRMATION_ENABLED=false`. All ban/unban commands, selection
-controls and modals refuse privately until a separate consumer activation. When enabled,
-`ban_user` resolves `user` and optional `additional_user` independently, shows exact stored IDs
-and one selected parent ban privately, and requires explicit confirmation. Existing partial
-bans can be expanded; independent parents are never merged implicitly. More than 16 matching
-parents refuses for manual review, and a parent holds at most 64 effective IDs.
+Moderation activated `LINKED_BAN_CONFIRMATION_ENABLED` in production in 1.9.2, a separate
+consumer activation. With the flag false, all ban/unban commands, selection controls and modals
+refuse privately. When enabled, `ban_user` resolves `user` and optional `additional_user`
+independently, shows exact stored IDs and one selected parent ban privately, and requires
+explicit confirmation. Existing partial bans can be expanded; independent parents are never
+merged implicitly. More than 16 matching parents refuses for manual review, and a parent holds
+at most 64 effective IDs.
 
 Server-held confirmation nonces expire within 15 minutes. Selection consumes its nonce and
 creates a fresh immutable review. The claim, SQL scope/parent set comparison in both directions,
