@@ -217,10 +217,6 @@ export class DyePaletteDrawer extends BaseLitComponent {
         color: var(--theme-primary);
       }
 
-      .drawer-target-line:empty {
-        display: none;
-      }
-
       .close-btn {
         background: rgba(255, 255, 255, 0.08);
         border: 1px solid var(--v4-border-subtle, rgba(255, 255, 255, 0.15));
@@ -1277,8 +1273,9 @@ export class DyePaletteDrawer extends BaseLitComponent {
   protected override render(): TemplateResult {
     const groupedDyes = this.groupByCategory(this.filteredDyes);
     const targetSlot = this.slotTarget === null ? undefined : this.slots[this.slotTarget];
-    // The target line is always rendered, empty and hidden without a target:
-    // a live region inserted together with its first text is often not announced.
+    // The target line is always rendered, empty (no height) without a target:
+    // a live region inserted together with its first text is often not announced,
+    // so it is never display: none.
 
     return html`
       <aside class="drawer">

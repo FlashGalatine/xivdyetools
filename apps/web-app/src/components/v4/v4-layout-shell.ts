@@ -756,7 +756,8 @@ export class V4LayoutShell extends BaseLitComponent {
   private handleClearAllDyes(e: Event): void {
     e.stopPropagation(); // BUG-113: see handleConfigChange
     this.emit('clear-all-dyes');
-    this.resetPaletteTarget();
+    // Clears the target only: a palette a slot tap opened still closes on the next pick.
+    this.setTarget(null);
   }
 
   /**

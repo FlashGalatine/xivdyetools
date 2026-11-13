@@ -449,6 +449,10 @@ export async function initializeV4Layout(container: HTMLElement): Promise<void> 
     logger.info('[V4 Layout] Language changed, tool may need refresh');
     // Route titles are locale keys, so the tab title is stale until re-read.
     RouterService.refreshDocumentTitle();
+    // Slot labels are locale strings too. Every getPaletteSlots() reads
+    // LanguageService at call time, and listeners run only after the new
+    // locale is committed, so this needs no wait for the tool's own re-render.
+    syncPaletteSlots();
   });
 
   // Wait for V4LayoutShell to complete its initial Lit render

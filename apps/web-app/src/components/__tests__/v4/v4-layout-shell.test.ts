@@ -726,7 +726,7 @@ describe('V4LayoutShell — palette drawer default + first-run hint', () => {
     });
 
     it('clear-all-dyes clears the target', async () => {
-      const { el } = await mountMulti(false);
+      const { el, targetChanges } = await mountMulti(false);
       slotTap(el, 3);
       await el.updateComplete;
 
@@ -736,6 +736,26 @@ describe('V4LayoutShell — palette drawer default + first-run hint', () => {
       await el.updateComplete;
 
       expect(el.paletteTarget).toBeNull();
+      expect(targetChanges).toEqual([3, null]);
+      expect(isOpen(el)).toBe(true);
+    });
+
+    it('clear-all-dyes keeps the slot-tap close rule on a phone', async () => {
+      const { el } = await mountMulti(true);
+      slotTap(el, 2);
+      await el.updateComplete;
+
+      drawer(el)!.dispatchEvent(
+        new CustomEvent('clear-all-dyes', { bubbles: true, composed: true })
+      );
+      await el.updateComplete;
+      expect(isOpen(el)).toBe(true);
+
+      const detail = pick(el);
+      await el.updateComplete;
+
+      expect(detail.target).toBeNull();
+      expect(isOpen(el)).toBe(false);
     });
 
     it('clearPaletteTarget clears the target and announces it once', async () => {

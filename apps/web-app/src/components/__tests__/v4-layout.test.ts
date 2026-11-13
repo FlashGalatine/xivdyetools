@@ -750,6 +750,19 @@ describe('V4Layout', () => {
       expect(shell().paletteSlots).toEqual(mockSlots);
     });
 
+    it('re-syncs slots on a language change so the palette labels follow the locale', async () => {
+      await bootInto('comparison');
+      const localeListener = mockLanguageSubscribe.mock.calls.at(-1)?.[0] as () => void;
+
+      // getPaletteSlots() reads the new locale's strings; nothing else announced a change
+      const translated = [slot('Eins', JET), slot('Zwei', null)];
+      mockSlots = translated;
+      localeListener();
+
+      expect(shell().paletteSlots).toBe(translated);
+      expect(mockClearPaletteTarget).not.toHaveBeenCalled();
+    });
+
     it('leaves a tool without the contract on the old selectDye path', async () => {
       await bootInto('mixer');
 

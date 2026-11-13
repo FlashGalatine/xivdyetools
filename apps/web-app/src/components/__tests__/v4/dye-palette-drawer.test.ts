@@ -562,7 +562,9 @@ describe('DyePaletteDrawer slot marks, strip and target line (issue 422)', () =>
     expect(line.textContent).toBe('');
   });
 
-  it('hides the empty target line', async () => {
+  it('keeps the empty target line rendered, never display: none', async () => {
+    // Hiding the empty line would take the live region out of the
+    // accessibility tree, so its first text would arrive with the region.
     const { DyePaletteDrawer } = await import('../../v4/dye-palette-drawer');
     const css = [DyePaletteDrawer.styles]
       .flat(Infinity as 1)
@@ -570,7 +572,13 @@ describe('DyePaletteDrawer slot marks, strip and target line (issue 422)', () =>
       .join('\n')
       .replace(/\s+/g, ' ');
 
-    expect(css).toContain('.drawer-target-line:empty { display: none; }');
+    expect(css).not.toContain('.drawer-target-line:empty');
+    expect(css).not.toMatch(/\.drawer-target-line[^{]*\{[^}]*(display: none|visibility: hidden)/);
+
+    const drawer = await mount([slot('1', redDye), slot('2', null)], 'multi');
+    const line = root(drawer).querySelector('.drawer-header .drawer-target-line');
+    expect(line).not.toBeNull();
+    expect(line!.textContent).toBe('');
   });
 
   it('random dye never returns a held dye in multi mode', async () => {
