@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "preparedLocalDate": "2026-11-13",
+  "timezone": "America/New_York",
+  "scope": "Record update of 2026-11-13: the review of all 28 open pull requests before Merge Day (Sunday 2026-11-15), the maintainer's rulings that day, the review fixes applied at the maintainer's request, the 2026-11-09 Cloudflare token rotation as it bears on the M line, and the M runbook's renumbering rerun for the ruled order. Nothing was merged, published or deployed for this record.",
+  "main": {
+    "sha": "ee4dd0b65375ed994d8ab0dafc3a695b614c1a3d",
+    "unchangedSince": "2026-11-02",
+    "fridayRuling": "The ruling of 2026-11-06 (pull requests produced by Thursday 2026-11-05 that do not rely on M-specific changes could merge on Friday) lapsed with nothing merged under it."
+  },
+  "rulings": [
+    {
+      "item": "Order on Merge Day",
+      "by": "maintainer",
+      "answer": "Independents first",
+      "effect": "The web and docs independents #438, #427, #431, #433, #434, #432 and #435 merge on Sunday 2026-11-15, before the M line."
+    },
+    {
+      "item": "#439 (X handle rename)",
+      "by": "maintainer",
+      "answer": "Drop its app and package README edits; renumber it; merge it after the M line's three package publishes",
+      "effect": "#439 takes web 5.17.2 and discord 5.9.11 (head 63118a74) and no longer edits every README."
+    },
+    {
+      "item": "#432 (Abridged glamour list)",
+      "by": "maintainer",
+      "answer": "Any other source beats a map dungeon in the Abridged list",
+      "effect": "Applied on #432 (head 6ab9159b)."
+    },
+    {
+      "item": "The review's fixes",
+      "by": "maintainer",
+      "answer": "Yes, apply fixes",
+      "effect": "Applied and pushed on 2026-11-13 (appliedHeads)."
+    }
+  ],
+  "notMergeApprovals": "None of these rulings is a merge, publish or deploy approval. AP-01 for every pull request, AP-26, AP-46, AP-04/AP-03, AP-05, AP-15, AP-27, AP-47 and every other row keep the status the approvals register gives them. Unit 14's acceptance stays open.",
+  "appliedHeads": [
+    {
+      "pr": 438,
+      "head": "b49d6b54cc192780b63f8dab785085cd9de0213a",
+      "parent": "1c3b44b8cc9724c63404ea70c526658749c9c2a3",
+      "change": "States that the three test deploys did not exercise the production token's Pages grant; restores FINDING-030's 2026-08-29 audit date."
+    },
+    {
+      "pr": 429,
+      "head": "0b2db0d338f6d0ac985a3cba9f81ab4c4e8215dd",
+      "parent": "4cb99b8eafaaa2effe4a43773940021267725f88",
+      "change": "Forwards mapVirtualHost through discord-worker's traced ExecutionContext (the TS2741 type-check failure)."
+    },
+    {
+      "pr": 439,
+      "head": "63118a74a7a4796c4f230b6716bca628ac3e7592",
+      "parent": "9d218354edaa14f836346ce65c826a7c028fbb9c",
+      "change": "Keeps the rename to core's shared link and the web meta tags, drops the README edits, renumbers to web 5.17.2 and discord 5.9.11."
+    },
+    {
+      "pr": 432,
+      "head": "6ab9159b9e6b6ba5d49803c0709bf8ae6281d865",
+      "parent": "05ab0fb7348dbc662f93c5a1220ba178d272cc50",
+      "change": "Any other source beats a map dungeon in the Abridged list."
+    }
+  ],
+  "cloudflareRotation": {
+    "date": "2026-11-09",
+    "source": "Open PR #438 (branch claude/sweet-clarke-t2cykz): docs/operations/SECRET_ROTATION.md, section 7 and the rotation log, and docs/operations/OPEN_ITEMS.md, sections 1 and 3.",
+    "production": "The maintainer re-issued the production Cloudflare deploy credential as a new one at the minimum scope (Workers Scripts and Pages on the account, Workers Routes on the xivdyetools.app zone, no KV, D1 or R2), which closes 2026-08-29 audit FINDING-030, and revoked the old one after the test runs.",
+    "testRuns": [
+      { "run": 42668470928, "workflow": "Deploy API Worker", "event": "workflow_dispatch", "headSha": "ee4dd0b65375ed994d8ab0dafc3a695b614c1a3d", "conclusion": "success" },
+      { "run": 42668497099, "workflow": "Deploy Presets API", "event": "workflow_dispatch", "headSha": "ee4dd0b65375ed994d8ab0dafc3a695b614c1a3d", "conclusion": "success" },
+      { "run": 42668526198, "workflow": "Deploy OG Worker", "event": "workflow_dispatch", "headSha": "ee4dd0b65375ed994d8ab0dafc3a695b614c1a3d", "conclusion": "success" }
+    ],
+    "notExercised": "None of the three runs deploys Pages, so the new production credential's Pages grant is unused. No Deploy Web App, Deploy Discord Worker or Deploy Moderation Worker run has started since 2026-11-02 (run list read 2026-11-13).",
+    "beta": "The beta credential was re-issued the same way and verified on beta.",
+    "discordCredentials": "Deferred in OPEN_ITEMS.md to after the M line's deploys have finished green, because both bot deploys register commands with their GitHub copy.",
+    "consequence": "The first approved Deploy Web App run after 2026-11-09 is the first use of the new Pages grant: under the ruled order, the run approved for the independents (each of #427, #431, #433, #434 and #432 starts one), and M-WEB's run only if no independent's run is approved first. M-DISCORD's and M-MODERATION's selected runs are the first approved runs of those two workflows under the new credential: no independent matches their path filters. The AP-24(i) acceptance rests on runs made before the rotation."
+  },
+  "review": {
+    "openPullRequests": 28,
+    "report": "Local and untracked; not part of this record.",
+    "preview": {
+      "branch": "preview/integration-2026-11-13 (local, never pushed)",
+      "tip": "f966778c",
+      "covers": "Every open pull request except #436 and the Dependabot pull requests, in the order independents, #439, the M and F lines, #411, #414; #438, #432 and #439 at their heads before the 2026-11-13 fixes.",
+      "gate": "62 of 62 turbo tasks, 17,964 tests, every local repository gate and gitleaks clean",
+      "jsPayload": "One-locale JS payload 2,241.36 of 2,250 KB (99.62%)"
+    },
+    "findings": [
+      "#436 (core source, a draft, head 3a57afbe) and #439 change packages/core, so they merge only after core 6.0.0, svg 4.4.2 and bot-logic 5.0.0 are published, #436 as core 6.0.1.",
+      "#437 changes devDependencies in the packed package.json of core, svg and bot-logic, so it merges after those publishes.",
+      "#428 changes publish-packages.yml and is recommended after those publishes.",
+      "#429 needed a type fix (now applied) and conflicts with #437 in six package.json files and pnpm-lock.yaml, so it goes after #437 and is updated by hand.",
+      "Two medium seroval alerts stay open: the lockfile has 1.6.8 and the fix is 1.6.11. Neither Dependabot pull request fixes them; they need their own pull request.",
+      "No open pull request touches the root CHANGELOG-laymans.md, and root 5.13.0 is taken, so the M line's entry needs a later number."
+    ]
+  },
+  "mLineRenumber": {
+    "targets": { "M-WEB": "5.17.1", "M-API": "0.21.3", "M-DISCORD": "5.9.10", "M-OG": "2.12.3, then F-OG 2.12.4", "M-MODERATION": "1.9.1, then #414 1.9.2", "M-STOAT": "0.3.5" },
+    "afterPublishes": { "#439": "web 5.17.2, discord 5.9.11", "#436": "core 6.0.1, not yet bumped" },
+    "simulatedOn": "ee4dd0b65375ed994d8ab0dafc3a695b614c1a3d",
+    "order": "#438, #427, #431, #433, #434, #432, #435, #391, #392, #394, #395, #396, #397, #398, #399, #400, #402, #403, #404, #405, #406, #411, #414, #436, #439, #428, #437, #429",
+    "headsUsed": "Each pull request's head on 2026-11-13; #411 at 811d3083 and #414 at 9d056543, both older than this record's.",
+    "lastCleanStep": "93f1444d (after #437; tree 445cafa5), local and never pushed",
+    "stoppedAt": "#429: six package.json files and pnpm-lock.yaml (9 hunks) conflict with #437 on dependency lines. Outside the version-row and changelog rules, so the step was stopped and not resolved.",
+    "silent": [
+      "#395: api package.json, the README api row, the current docs/versions.md row and the Conditional M row merge cleanly at the used 0.21.2; set to 0.21.3 by hand.",
+      "#398: the Conditional M discord row merges cleanly at v5.9.8; set to v5.9.10 by hand.",
+      "#436 and #439: core's package.json stays 6.0.0 while its source changes; both changelog entries land under [Unreleased]. Bump core to 6.0.1 by hand before either merges.",
+      "#437: changes the devDependencies of the published core, svg and bot-logic package.json with no version change."
+    ],
+    "checks": "On the tree after #437: docs:check-versions (34 claims) and docs:check-links (1,306 links) pass, the changelog checker reports nothing beyond main's baseline, 'Restore Hair and Skin' appears once in the web changelog, and root test:scripts keeps publish-packages.test.ts and test:research-privacy. Merge level only: no install, build or tests.",
+    "limits": "Rerun after any other merge to main. The preview of 2026-11-13 merged #439 before the M line, which gave M-WEB 5.17.2 and M-DISCORD 5.9.11 and a core changelog conflict at #391; in the ruled order that conflict moves to #439."
+  }
+}
