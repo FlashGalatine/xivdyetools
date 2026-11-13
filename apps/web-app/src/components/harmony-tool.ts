@@ -44,7 +44,7 @@ import { setupMarketBoardListeners } from '@services/pricing-mixin';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
 import { hasActiveFilters, isDyeExcluded } from '@shared/dye-filter-utils';
-import { makeCustomDye } from '@shared/custom-dye';
+import { makeCustomDye, isCustomDye } from '@shared/custom-dye';
 import type { Dye, PriceData } from '@xivdyetools/types';
 import {
   PALETTE_SLOTS_CHANGED,
@@ -1398,8 +1398,7 @@ export class HarmonyTool extends BaseComponent implements PaletteSlotSource {
         );
       })
     );
-    // The shell returns focus to the slot-tap element after a pick
-    this.emptyStateContainer.querySelector('button')?.setAttribute('data-palette-slot', '0');
+    this.markEmptyStateSlot();
   }
 
   // ============================================================================
@@ -1779,9 +1778,25 @@ export class HarmonyTool extends BaseComponent implements PaletteSlotSource {
   /**
    * Show/hide empty state
    */
+  /**
+   * The shell returns focus to the first [data-palette-slot] after a pick. The
+   * empty-state button carries it only while visible, so a hidden one is never
+   * that first match.
+   */
+  private markEmptyStateSlot(): void {
+    const button = this.emptyStateContainer?.querySelector('button');
+    if (!button) return;
+    if (this.emptyStateContainer!.style.display === 'flex') {
+      button.setAttribute('data-palette-slot', '0');
+    } else {
+      button.removeAttribute('data-palette-slot');
+    }
+  }
+
   private showEmptyState(show: boolean): void {
     if (this.emptyStateContainer) {
       this.emptyStateContainer.style.display = show ? 'flex' : 'none';
+      this.markEmptyStateSlot();
     }
     if (this.resultsSection) {
       this.resultsSection.style.display = show ? 'none' : 'block';
@@ -2071,6 +2086,15 @@ export class HarmonyTool extends BaseComponent implements PaletteSlotSource {
    */
   public selectDye(dye: Dye): void {
     if (!dye) return;
+    // Picking the dye already held changes nothing
+    if (
+      this.selectedDye &&
+      !isCustomDye(this.selectedDye) &&
+      !isCustomDye(dye) &&
+      this.selectedDye.id === dye.id
+    ) {
+      return;
+    }
 
     this.selectedDye = dye;
 

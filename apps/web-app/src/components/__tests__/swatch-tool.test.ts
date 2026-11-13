@@ -2688,13 +2688,21 @@ describe('SwatchTool', () => {
       expect(heard).not.toHaveBeenCalled();
     });
 
-    it('picking the dye already held is harmless', async () => {
+    it('picking the dye already held fires no second event and no second match', async () => {
       tool = mount();
       await flush();
       tool.selectDye(dye);
+      const heard = vi.fn();
+      container.addEventListener('palette-slots-changed', heard);
+      const match = vi.spyOn(
+        tool as unknown as { performReverseMatch(): void },
+        'performReverseMatch'
+      );
 
-      expect(() => tool!.selectDye(dye)).not.toThrow();
-      expect(tool.getPaletteSlots()[0].dye).toBe(dye);
+      tool.selectDye(dye);
+
+      expect(heard).not.toHaveBeenCalled();
+      expect(match).not.toHaveBeenCalled();
     });
   });
 });

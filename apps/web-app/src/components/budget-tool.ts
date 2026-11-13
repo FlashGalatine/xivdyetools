@@ -48,7 +48,7 @@ import { ThemeService } from '@services/theme-service';
 import { ICON_TOOL_BUDGET } from '@shared/tool-icons';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
-import { makeCustomDye } from '@shared/custom-dye';
+import { makeCustomDye, isCustomDye } from '@shared/custom-dye';
 import { formatGil, formatNumber } from '@shared/format';
 import type { Dye, DyeId, PriceData } from '@xivdyetools/types';
 import {
@@ -160,14 +160,14 @@ const MONO = 'var(--font-mono)';
 // BudgetTool Component
 // ============================================================================
 
-/**
- * Budget tool — the 9C Ledger. Prices what a target dye's colour is worth,
- * line by line, against everything within the match line.
- */
 /** Strips default button chrome so a slot-tap card keeps its existing look. */
 const BUTTON_RESET =
   'appearance: none; -webkit-appearance: none; font: inherit; color: inherit; cursor: pointer; text-align: inherit;';
 
+/**
+ * Budget tool — the 9C Ledger. Prices what a target dye's colour is worth,
+ * line by line, against everything within the match line.
+ */
 export class BudgetTool extends BaseComponent implements PaletteSlotSource {
   readonly paletteSlotMode = 'single' as const;
 
@@ -923,25 +923,24 @@ export class BudgetTool extends BaseComponent implements PaletteSlotSource {
       attributes: {
         type: 'button',
         'data-palette-slot': '0',
-        'aria-label': `${LanguageService.t('budget.targetDye')}: ${this.dyeName(target)}`,
         style: `${BUTTON_RESET} display: block; width: 100%; padding: 16px; border-radius: 8px; background: ${target.hex}; border: 1px solid var(--theme-border);`,
       },
     });
     this.bindPaletteOpen(card);
 
     card.appendChild(
-      this.createElement('p', {
+      this.createElement('span', {
         textContent: this.dyeName(target),
         attributes: {
-          style: `font-weight: 600; font-size: 17px; margin: 0 0 4px; color: ${textColor} !important; text-shadow: ${textShadow};`,
+          style: `display: block; font-weight: 600; font-size: 17px; margin: 0 0 4px; color: ${textColor} !important; text-shadow: ${textShadow};`,
         },
       })
     );
     card.appendChild(
-      this.createElement('p', {
+      this.createElement('span', {
         textContent: target.hex,
         attributes: {
-          style: `font-family: ${MONO}; font-size: 12px; margin: 0 0 8px; color: ${textColor} !important; opacity: 0.8; text-shadow: ${textShadow};`,
+          style: `display: block; font-family: ${MONO}; font-size: 12px; margin: 0 0 8px; color: ${textColor} !important; opacity: 0.8; text-shadow: ${textShadow};`,
         },
       })
     );
@@ -958,10 +957,10 @@ export class BudgetTool extends BaseComponent implements PaletteSlotSource {
       priceText = '—';
     }
     card.appendChild(
-      this.createElement('p', {
+      this.createElement('span', {
         textContent: priceText,
         attributes: {
-          style: `font-family: ${MONO}; font-size: 13px; font-weight: 500; margin: 0; color: ${textColor} !important; text-shadow: ${textShadow};`,
+          style: `display: block; font-family: ${MONO}; font-size: 13px; font-weight: 500; margin: 0; color: ${textColor} !important; text-shadow: ${textShadow};`,
         },
       })
     );
@@ -2099,6 +2098,15 @@ export class BudgetTool extends BaseComponent implements PaletteSlotSource {
    */
   public selectDye(dye: Dye): void {
     if (!dye) return;
+    // Picking the dye already held changes nothing
+    if (
+      this.targetDye &&
+      !isCustomDye(this.targetDye) &&
+      !isCustomDye(dye) &&
+      this.targetDye.id === dye.id
+    ) {
+      return;
+    }
 
     this.targetDye = dye;
 

@@ -2002,12 +2002,29 @@ describe('HarmonyTool', () => {
       expect(heard).toHaveBeenCalledTimes(1);
     });
 
-    it('picking the dye already held is harmless', () => {
+    it('picking the dye already held fires no second palette-slots-changed', () => {
       tool = mountTool();
       tool.selectDye(mockDyes[0]);
+      const heard = vi.fn();
+      container.addEventListener('palette-slots-changed', heard);
 
-      expect(() => tool!.selectDye(mockDyes[0])).not.toThrow();
-      expect(tool.getPaletteSlots()[0].dye).toBe(mockDyes[0]);
+      tool.selectDye(mockDyes[0]);
+
+      expect(heard).not.toHaveBeenCalled();
+    });
+
+    it('never leaves a hidden slot marker ahead of the wheel', () => {
+      tool = mountTool();
+      const markers = () => Array.from(container.querySelectorAll('[data-palette-slot]'));
+      expect(markers().some((m) => m.tagName === 'BUTTON')).toBe(true);
+
+      tool.selectDye(mockDyes[0]);
+
+      expect(markers().filter((m) => m.tagName === 'BUTTON')).toHaveLength(0);
+      expect(markers()[0].tagName.toLowerCase()).toBe('v4-color-wheel');
+
+      tool.clearDyes();
+      expect(markers().some((m) => m.tagName === 'BUTTON')).toBe(true);
     });
   });
 });

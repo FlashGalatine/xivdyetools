@@ -1889,12 +1889,31 @@ describe('BudgetTool', () => {
       expect(heard).toHaveBeenCalledTimes(1);
     });
 
-    it('picking the dye already held is harmless', () => {
+    it('picking the dye already held fires no second event and no second price fetch', async () => {
+      tool = mountTool();
+      tool.selectDye(mockDyes[0]);
+      await new Promise((r) => setTimeout(r, 0));
+      const heard = vi.fn();
+      container.addEventListener('palette-slots-changed', heard);
+      const fetchPrices = vi.mocked(MarketBoardService.getInstance().fetchPricesForDyes);
+      fetchPrices.mockClear();
+
+      tool.selectDye(mockDyes[0]);
+      await new Promise((r) => setTimeout(r, 0));
+
+      expect(heard).not.toHaveBeenCalled();
+      expect(fetchPrices).not.toHaveBeenCalled();
+    });
+
+    it('the target card is named by its content and holds no paragraph', () => {
       tool = mountTool();
       tool.selectDye(mockDyes[0]);
 
-      expect(() => tool!.selectDye(mockDyes[0])).not.toThrow();
-      expect(tool.getPaletteSlots()[0].dye).toBe(mockDyes[0]);
+      const card = Array.from(
+        container.querySelectorAll<HTMLButtonElement>('button[data-palette-slot="0"]')
+      ).find((b) => !b.classList.contains('v5-empty-state'))!;
+      expect(card.hasAttribute('aria-label')).toBe(false);
+      expect(card.querySelector('p')).toBeNull();
     });
   });
 });

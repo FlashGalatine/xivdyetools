@@ -375,4 +375,12 @@ describe('V4ColorWheel rendering', () => {
 
     expect(mockGetHarmonyType).toHaveBeenCalledWith('triadic');
   });
+
+  it('focus() lands on the hub button, the slot tap inside the shadow root', async () => {
+    await mount({ baseColor: '#ff0000', harmonyType: 'triadic' });
+
+    el.focus();
+
+    expect(el.shadowRoot!.activeElement).toBe(hub());
+  });
 });
