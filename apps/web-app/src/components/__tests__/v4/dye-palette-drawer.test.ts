@@ -476,7 +476,7 @@ describe('DyePaletteDrawer slot marks, strip and target line (issue 422)', () =>
 
     const blue = pickOf(gridSwatch(drawer, blueDye));
     expect(blue.getAttribute('aria-label')).toBe('Dye-2');
-    expect(blue.hasAttribute('aria-pressed')).toBe(false);
+    expect(blue.getAttribute('aria-pressed')).toBe('false');
   });
 
   it('labels a marked swatch as in use, without aria-pressed, in single mode', async () => {
@@ -488,6 +488,7 @@ describe('DyePaletteDrawer slot marks, strip and target line (issue 422)', () =>
       'colorPalette.swatchInUse:{"name":"Dye-1"}'
     );
     expect(pickOf(swatch).hasAttribute('aria-pressed')).toBe(false);
+    expect(pickOf(gridSwatch(drawer, blueDye)).hasAttribute('aria-pressed')).toBe(false);
   });
 
   it('renders one chip per slot in multi mode and none in single mode', async () => {
@@ -541,22 +542,35 @@ describe('DyePaletteDrawer slot marks, strip and target line (issue 422)', () =>
 
   it('shows the target line only while a target is set', async () => {
     const drawer = await mount([slot('1', redDye), slot('2', null)], 'multi');
-    const line = () => root(drawer).querySelector('.drawer-header .drawer-target-line');
-    expect(line()).toBeNull();
+    // The live region is always there, so its first text is announced
+    const line = root(drawer).querySelector('.drawer-header .drawer-target-line')!;
+    expect(line.getAttribute('aria-live')).toBe('polite');
+    expect(line.textContent).toBe('');
 
     drawer.slotTarget = 1;
     await drawer.updateComplete;
-    expect(line()?.textContent?.trim()).toBe('Choosing dye 2');
-    expect(line()?.getAttribute('aria-live')).toBe('polite');
+    expect(root(drawer).querySelector('.drawer-target-line')).toBe(line);
+    expect(line.textContent).toBe('Choosing dye 2');
 
     // A target past the last slot names nothing
     drawer.slotTarget = 5;
     await drawer.updateComplete;
-    expect(line()).toBeNull();
+    expect(line.textContent).toBe('');
 
     drawer.slotTarget = null;
     await drawer.updateComplete;
-    expect(line()).toBeNull();
+    expect(line.textContent).toBe('');
+  });
+
+  it('hides the empty target line', async () => {
+    const { DyePaletteDrawer } = await import('../../v4/dye-palette-drawer');
+    const css = [DyePaletteDrawer.styles]
+      .flat(Infinity as 1)
+      .map((sheet) => (sheet as { cssText: string }).cssText)
+      .join('\n')
+      .replace(/\s+/g, ' ');
+
+    expect(css).toContain('.drawer-target-line:empty { display: none; }');
   });
 
   it('random dye never returns a held dye in multi mode', async () => {
@@ -622,6 +636,41 @@ describe('DyePaletteDrawer slot marks, strip and target line (issue 422)', () =>
 
     red.dispatchEvent(new Event('animationend'));
     expect(red.classList.contains('just-picked')).toBe(false);
+  });
+
+  it('drops the pulse when closing the palette cancels it, so reopening does not replay it', async () => {
+    const drawer = await mount([slot('1', null), slot('2', null)], 'multi');
+    const red = gridSwatch(drawer, redDye);
+    pickOf(red).click();
+    expect(red.classList.contains('just-picked')).toBe(true);
+
+    // display: none on the closed host cancels the animation; animationend never comes
+    red.dispatchEvent(new Event('animationcancel'));
+    expect(red.classList.contains('just-picked')).toBe(false);
+
+    // The next pick pulses again
+    pickOf(red).click();
+    expect(red.classList.contains('just-picked')).toBe(true);
+  });
+
+  it('adds no pulse under reduced motion, where nothing would ever end it', async () => {
+    vi.spyOn(window, 'matchMedia').mockImplementation(
+      (query: string) =>
+        ({
+          matches: query === '(prefers-reduced-motion: reduce)',
+          media: query,
+        }) as MediaQueryList
+    );
+    const drawer = await mount([slot('1', null), slot('2', null)], 'multi');
+    const picked: Dye[] = [];
+    drawer.addEventListener('dye-selected', ((e: CustomEvent<{ dye: Dye }>) => {
+      picked.push(e.detail.dye);
+    }) as EventListener);
+
+    pickOf(gridSwatch(drawer, redDye)).click();
+
+    expect(picked.map((d) => d.id)).toEqual([redDye.id]);
+    expect(root(drawer).querySelectorAll('.just-picked')).toHaveLength(0);
   });
 
   it('plays the pulse only for users who have not asked for reduced motion', async () => {

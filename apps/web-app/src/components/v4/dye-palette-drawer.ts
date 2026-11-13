@@ -160,6 +160,9 @@ export class DyePaletteDrawer extends BaseLitComponent {
   private unsubscribeFavorites: (() => void) | null = null;
   private languageUnsubscribe: (() => void) | null = null;
 
+  // Slot marks (issue 422), noted here because CSS comments ship: a held dye
+  // gets a two-layer ring (a background-color gap, then --ring) that reads on
+  // any dye color, and a check badge bottom-left, as the star owns top-right.
   static override styles: CSSResultGroup = [
     BaseLitComponent.baseStyles,
     css`
@@ -212,6 +215,10 @@ export class DyePaletteDrawer extends BaseLitComponent {
       .drawer-target-line {
         font-size: 12px;
         color: var(--theme-primary);
+      }
+
+      .drawer-target-line:empty {
+        display: none;
       }
 
       .close-btn {
@@ -316,10 +323,13 @@ export class DyePaletteDrawer extends BaseLitComponent {
         border-radius: 3px;
       }
 
-      /* Slot strip (multi-input tools) */
-      .slot-strip {
+      .slot-strip,
+      .slot-chip {
         display: flex;
         gap: 6px;
+      }
+
+      .slot-strip {
         margin-bottom: 16px;
       }
 
@@ -327,9 +337,7 @@ export class DyePaletteDrawer extends BaseLitComponent {
         flex: 1 1 0;
         min-width: 0;
         height: 34px;
-        display: flex;
         align-items: center;
-        gap: 6px;
         padding: 0 8px;
         border: 1px solid var(--theme-border);
         border-radius: 8px;
@@ -622,20 +630,17 @@ export class DyePaletteDrawer extends BaseLitComponent {
         cursor: pointer;
       }
 
-      /* A dye the active tool holds: a ring that reads on any dye color */
       .swatch.in-use {
+        --ring: var(--theme-text);
         box-shadow:
           0 0 0 2px var(--theme-background),
-          0 0 0 4px var(--theme-text);
+          0 0 0 4px var(--ring);
       }
 
-      .swatch.in-use.is-target {
-        box-shadow:
-          0 0 0 2px var(--theme-background),
-          0 0 0 4px var(--theme-primary);
+      .swatch.is-target {
+        --ring: var(--theme-primary);
       }
 
-      /* Bottom-left: the favorite star owns top-right */
       .swatch-mark {
         position: absolute;
         left: -5px;
@@ -644,18 +649,17 @@ export class DyePaletteDrawer extends BaseLitComponent {
         height: 18px;
         box-sizing: border-box;
         border-radius: 50%;
-        border: 1.5px solid var(--theme-text);
+        border: 1.5px solid var(--ring);
         background: var(--theme-background);
-        color: var(--theme-text);
+        color: var(--ring);
         display: flex;
         align-items: center;
         justify-content: center;
         pointer-events: none;
       }
 
-      .swatch.is-target .swatch-mark {
-        border-color: var(--theme-primary);
-        background: var(--theme-primary);
+      .is-target .swatch-mark {
+        background: var(--ring);
         color: var(--theme-text-header);
       }
 
@@ -1081,12 +1085,20 @@ export class DyePaletteDrawer extends BaseLitComponent {
   /**
    * One pulse where the pick landed. The swatch's classes are bound through
    * classMap, so the re-render that marks the dye leaves this class alone.
+   * Under reduced motion nothing would ever end it, so it is never added; a
+   * pick that closes the palette (display: none) cancels it instead of ending it.
    */
   private pulseSwatch(swatch: HTMLElement): void {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (swatch.classList.contains('just-picked')) return;
     swatch.classList.add('just-picked');
-    swatch.addEventListener('animationend', () => swatch.classList.remove('just-picked'), {
-      once: true,
-    });
+    const done = new AbortController();
+    const finish = (): void => {
+      swatch.classList.remove('just-picked');
+      done.abort();
+    };
+    swatch.addEventListener('animationend', finish, { signal: done.signal });
+    swatch.addEventListener('animationcancel', finish, { signal: done.signal });
   }
 
   private handleClose(): void {
@@ -1267,19 +1279,17 @@ export class DyePaletteDrawer extends BaseLitComponent {
   protected override render(): TemplateResult {
     const groupedDyes = this.groupByCategory(this.filteredDyes);
     const targetSlot = this.slotTarget === null ? undefined : this.slots[this.slotTarget];
+    // The target line is always rendered, empty and hidden without a target:
+    // a live region inserted together with its first text is often not announced.
 
     return html`
       <aside class="drawer">
         <div class="drawer-header">
           <div class="drawer-heading">
             <span class="drawer-title">${LanguageService.t('colorPalette.title')}</span>
-            ${
-              targetSlot
-                ? html`<span class="drawer-target-line" aria-live="polite"
-                    >${targetSlot.targetLabel}</span
-                  >`
-                : nothing
-            }
+            <span class="drawer-target-line" aria-live="polite"
+              >${targetSlot?.targetLabel ?? nothing}</span
+            >
           </div>
           <div class="header-actions">
             <button
@@ -1520,7 +1530,7 @@ export class DyePaletteDrawer extends BaseLitComponent {
           class="swatch-pick"
           type="button"
           aria-label="${pickLabel}"
-          aria-pressed=${multi && held !== -1 ? 'true' : nothing}
+          aria-pressed=${multi ? String(held !== -1) : nothing}
           @click=${(e: Event) => this.handleDyeClick(dye, e)}
         ></button>
         ${
