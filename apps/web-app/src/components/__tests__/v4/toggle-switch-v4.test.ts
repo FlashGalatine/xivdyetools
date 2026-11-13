@@ -80,6 +80,43 @@ describe('ToggleSwitchV4', () => {
   });
 
   // ============================================================================
+  // Accessible Name Tests
+  // ============================================================================
+
+  describe('Accessible name', () => {
+    const mounted = async (props: { label?: string; accessibleName?: string }) => {
+      const { ToggleSwitchV4 } = await import('../../v4/toggle-switch-v4');
+      const toggle = new ToggleSwitchV4();
+      Object.assign(toggle, props);
+      container.appendChild(toggle);
+      await toggle.updateComplete;
+      return {
+        name: toggle.shadowRoot!.querySelector('[role="switch"]')!.getAttribute('aria-label'),
+        text: toggle.shadowRoot!.querySelector('.toggle-label')?.textContent ?? null,
+      };
+    };
+
+    it('names the switch after accessibleName, with no visible text', async () => {
+      expect(await mounted({ accessibleName: 'Include Hempen Coif in the list' })).toEqual({
+        name: 'Include Hempen Coif in the list',
+        text: null,
+      });
+    });
+
+    it('prefers accessibleName to the label, which stays the visible text', async () => {
+      expect(await mounted({ label: 'Abridged', accessibleName: 'Longer name' })).toEqual({
+        name: 'Longer name',
+        text: 'Abridged',
+      });
+    });
+
+    it('still falls back to the label, then the generic name', async () => {
+      expect((await mounted({ label: 'Abridged' })).name).toBe('Abridged');
+      expect((await mounted({})).name).toBe('aria.toggle');
+    });
+  });
+
+  // ============================================================================
   // Component Structure Tests
   // ============================================================================
 
