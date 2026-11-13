@@ -277,7 +277,7 @@
     "swatchInUse": "{name}, utilisée",
     "choosingDyeOf": "Choix de la teinture {current} sur {total}",
     "choosingDyeNamed": "Choix de la teinture {slot}",
-    "choosingEndpoint": "Choix de la couleur {slot}"
+    "choosingEndpoint": "{slot} : choix de la couleur"
   },
   "harmony": {
     "companionDyes": "Teintures Supplémentaires par Couleur d'Harmonie",

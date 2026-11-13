@@ -277,7 +277,7 @@
     "swatchInUse": "{name}, in Verwendung",
     "choosingDyeOf": "Farbstoff {current} von {total} wählen",
     "choosingDyeNamed": "Farbstoff {slot} wählen",
-    "choosingEndpoint": "Farbe für {slot} wählen"
+    "choosingEndpoint": "{slot}: Farbe wählen"
   },
   "harmony": {
     "companionDyes": "Zusätzliche Farbstoffe pro Harmoniefarbe",
