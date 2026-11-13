@@ -1,5 +1,7 @@
 # Slot-Aware Dye Picking Implementation Plan
 
+**Status:** executed 2026-11-13, a subagent per task with a review after each; implemented in web-app 5.18.0; awaiting PR integration. A twelfth task (payload trim) and one final fix wave were added during execution.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** In the web app, a tapped dye slot becomes the target of the next palette pick, the palette closes after that pick on a phone, and the palette shows which dyes the active tool holds.
