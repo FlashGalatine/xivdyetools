@@ -701,8 +701,19 @@ describe('MixerTool', () => {
       expect(slotList.map((s) => s.label)).toEqual(['1', '2']);
       expect(slotList[0].dye?.id).toBe(1);
       expect(slotList[1].dye).toBeNull();
-      expect(slotList[0].targetLabel).toBeTruthy();
-      expect(slotList[0].targetLabel).not.toBe(slotList[1].targetLabel);
+      // The key already says "dye {slot}", so the argument is the digit only
+      expect(slotList[0].targetLabel).toBe('colorPalette.choosingDyeNamed: 1');
+      expect(slotList[1].targetLabel).toBe('colorPalette.choosingDyeNamed: 2');
+    });
+
+    it('slot buttons carry an accessible name, with the dye name when filled', () => {
+      tool = mount();
+      tool.selectDye(dye(1));
+      const box = (i: number) =>
+        container.querySelector<HTMLElement>(`[data-palette-slot="${i}"]`)!;
+
+      expect(box(0).getAttribute('aria-label')).toBe(`mixer.dye1: Dye-${5001}`);
+      expect(box(1).getAttribute('aria-label')).toBe('mixer.dye2');
     });
 
     it('placeDyeAt(1, dye) fills B and leaves A', () => {

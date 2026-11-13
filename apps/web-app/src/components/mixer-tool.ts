@@ -398,7 +398,7 @@ export class MixerTool extends BaseComponent implements PaletteSlotHost {
     const selector = new DyeSelector(selectorContainer, {
       maxSelections: 3,
       allowMultiple: true,
-      allowDuplicates: true,
+      allowDuplicates: false,
       showCategories: true,
       showPrices: true,
       excludeFacewear: true,
@@ -890,7 +890,8 @@ export class MixerTool extends BaseComponent implements PaletteSlotHost {
       // Same digit the slot box shows
       label: String(i + 1),
       targetLabel: LanguageService.tInterpolate('colorPalette.choosingDyeNamed', {
-        slot: LanguageService.t(i === 0 ? 'mixer.dye1' : 'mixer.dye2'),
+        // The key already says "dye {slot}": pass the digit, not "Dye 1"
+        slot: String(i + 1),
       }),
       dye: this.selectedDyes[i],
     }));
@@ -1813,6 +1814,10 @@ export class MixerTool extends BaseComponent implements PaletteSlotHost {
       className: 'mixer-dye-slot',
       attributes: {
         type: 'button',
+        // Name the slot (and its dye) instead of leaving "+" / digit-and-name
+        'aria-label': dye
+          ? `${LanguageService.t(index === 0 ? 'mixer.dye1' : 'mixer.dye2')}: ${LanguageService.getDyeName(dye.itemID) || dye.name}`
+          : LanguageService.t(index === 0 ? 'mixer.dye1' : 'mixer.dye2'),
         'data-slot-index': String(index),
         'data-palette-slot': String(index),
         style: `
