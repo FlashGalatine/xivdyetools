@@ -2,13 +2,13 @@
 
 **PREPARATION ONLY — production activation is on hold.** This document authorizes no merge, package publication, remote database access, hosted request, deployment, workflow dispatch, command registration or announcement.
 
-Reference tree: branch `codex/release-cut-f-03-readiness-20261030` at `2ac97b6fb37c12640a70af0aebac42d4086912e0`, evidence gathered 2026-10-30; line citations are to that tree unless a row says otherwise. The reference tree already carries the conditional M source (core 6.0.0, bot-logic 5.0.0), so the line numbers of the *removed* names are cited on the pre-removal base branches `codex/release-cut-03-core-20261029` and `codex/release-cut-06-bot-logic-20261029` (read with `git show <branch>:<path>`). See the [October 2026 A/R/H release and adoption runbook](REMEDIATION_RELEASE_2026_10.md), the [M runbook](REMEDIATION_M_RELEASE_2026_10.md) and the [deprecation register](../../DEPRECATIONS.md).
+Reference tree: branch `codex/release-cut-f-03-readiness-20261030` at `2ac97b6fb37c12640a70af0aebac42d4086912e0`, evidence gathered 2026-10-30; line citations are to that tree unless a row says otherwise. The reference tree already carries the conditional M source (core 6.0.0, bot-logic 5.0.0), so the line numbers of the *removed* names are cited on the pre-removal base branches `codex/release-cut-03-core-20261029` and `codex/release-cut-06-bot-logic-20261029` (read with `git show <branch>:<path>`). **Update 2026-11-13:** both branches were deleted on 2026-11-02. Their last tips stay at `refs/pull/373/head` (`cd951e2a73229714d4285a3a8c39635672706c2d`) and `refs/pull/377/head` (`c0ec48fec4d7b830b0eaf92dd26808bc1a381ba4`), the merges of `main` into each branch on 2026-11-01. Their first parents are the heads read here, `0fed2b3744c2` and `ebba1baaa08a`; spot checks give the same cited lines at both. Fetch them with `git fetch origin refs/pull/373/head refs/pull/377/head`. See the [October 2026 A/R/H release and adoption runbook](REMEDIATION_RELEASE_2026_10.md), the [M runbook](REMEDIATION_M_RELEASE_2026_10.md) and the [deprecation register](../../DEPRECATIONS.md).
 
 This is a read-only record. No person or project was contacted; no issue, comment or post was made. Raw outputs were not retained; every query is listed in section 2 for re-running. The individual third-party repositories behind the aggregate counts are kept in private operator evidence (a private appendix to this document); they are deliberately not named here.
 
 ## 1. Removal list
 
-Sources: `packages/core/CHANGELOG.md:14-28` (6.0.0), `:30-44` (5.16.0, Deprecated at `:37`); `packages/bot-logic/CHANGELOG.md:8-20` (5.0.0), `:61-65` (4.12.0 Deprecated); `DEPRECATIONS.md:392-456`. The code was confirmed with `git diff codex/release-cut-03-core-20261029 codex/release-cut-m-01-core-20261029` and `git diff codex/release-cut-06-bot-logic-20261029 codex/release-cut-m-03-bot-20261029`.
+Sources: `packages/core/CHANGELOG.md:14-28` (6.0.0), `:30-44` (5.16.0, Deprecated at `:37`); `packages/bot-logic/CHANGELOG.md:8-20` (5.0.0), `:61-65` (4.12.0 Deprecated); `DEPRECATIONS.md:392-456`. The code was confirmed with `git diff codex/release-cut-03-core-20261029 codex/release-cut-m-01-core-20261029` and `git diff codex/release-cut-06-bot-logic-20261029 codex/release-cut-m-03-bot-20261029`. (2026-11-13: the 03 and 06 branches no longer exist; diff from their 2026-10-30 heads `0fed2b3744c2` and `ebba1baaa08a` instead, named above.)
 
 ### Core 6.0.0 (branch m-01 versus 03)
 
@@ -37,7 +37,7 @@ Unchanged in 5.0.0 (`packages/bot-logic/CHANGELOG.md:15-16`): `fileText`/`fileBy
 
 Gate text: `DEPRECATIONS.md:453` reads "Recheck external npm consumer usage; cancel removal if an active consumer still needs the field." It is unchecked at the reference tree.
 
-State fact (section 2, query 1): the deprecation minors core 5.16.0 and bot-logic 4.12.0 are NOT on the npm registry yet (`latest` is core 5.15.0 and bot-logic 4.11.0, re-checked 2026-10-30 13:17Z). No external user has yet seen a `@deprecated` tag for these symbols.
+State fact (section 2, query 1): the deprecation minors core 5.16.0 and bot-logic 4.12.0 are NOT on the npm registry yet (`latest` is core 5.15.0 and bot-logic 4.11.0, re-checked 2026-10-30 13:17Z). No external user has yet seen a `@deprecated` tag for these symbols. (Superseded: both were published on 2026-11-01; see section 6, "Window set 2026-11-01".)
 
 ## 2. Method and queries
 
