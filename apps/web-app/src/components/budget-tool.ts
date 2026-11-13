@@ -52,8 +52,8 @@ import { makeCustomDye, isCustomDye } from '@shared/custom-dye';
 import { formatGil, formatNumber } from '@shared/format';
 import type { Dye, DyeId, PriceData } from '@xivdyetools/types';
 import {
-  OPEN_PALETTE_DRAWER,
-  PALETTE_SLOTS_CHANGED,
+  requestPalette,
+  notifyPaletteSlotsChanged,
   type PaletteSlot,
   type PaletteSlotSource,
 } from '@components/palette-slots';
@@ -504,7 +504,7 @@ export class BudgetTool extends BaseComponent implements PaletteSlotSource {
       if (dye) {
         this.targetDye = dye;
         this.updateTargetDyeDisplay();
-        this.notifyPaletteSlotsChanged();
+        notifyPaletteSlotsChanged(this.container);
         StorageService.setItem(STORAGE_KEYS.targetDyeId, dye.id);
         // BUG-013 (2026-10-04 deep-dive): consumed once stored. The result
         // card's "Set as budget target" lands here as ?dye=, and left in the
@@ -518,7 +518,7 @@ export class BudgetTool extends BaseComponent implements PaletteSlotSource {
       // ?hex= is a bare colour target — exclusive with `dye`, never persisted
       this.targetDye = makeCustomDye(`#${hexParam.replace(/^#/, '')}`);
       this.updateTargetDyeDisplay();
-      this.notifyPaletteSlotsChanged();
+      notifyPaletteSlotsChanged(this.container);
     }
 
     if (maxDeltaParam !== null) {
@@ -972,17 +972,9 @@ export class BudgetTool extends BaseComponent implements PaletteSlotSource {
     return [{ label: '', targetLabel: '', dye: this.targetDye }];
   }
 
-  private notifyPaletteSlotsChanged(): void {
-    this.container.dispatchEvent(
-      new CustomEvent(PALETTE_SLOTS_CHANGED, { bubbles: true, composed: true })
-    );
-  }
-
   /** A slot tap: ask the shell to open the palette (single-input tools send no slot). */
   private bindPaletteOpen(el: HTMLElement): void {
-    el.addEventListener('click', () => {
-      el.dispatchEvent(new CustomEvent(OPEN_PALETTE_DRAWER, { bubbles: true, composed: true }));
-    });
+    el.addEventListener('click', () => requestPalette(el));
   }
 
   private updateTargetDyeDisplay(): void {
@@ -2074,7 +2066,7 @@ export class BudgetTool extends BaseComponent implements PaletteSlotSource {
     StorageService.removeItem(STORAGE_KEYS.targetDyeId);
     this.releaseLinkedTarget();
     logger.info('[BudgetTool] All dyes cleared');
-    this.notifyPaletteSlotsChanged();
+    notifyPaletteSlotsChanged(this.container);
 
     if (this.ledgerContainer) clearContainer(this.ledgerContainer);
     if (this.verdictContainer) clearContainer(this.verdictContainer);
@@ -2113,7 +2105,7 @@ export class BudgetTool extends BaseComponent implements PaletteSlotSource {
     StorageService.setItem(STORAGE_KEYS.targetDyeId, dye.id);
     this.releaseLinkedTarget();
     logger.info(`[BudgetTool] Target selected: ${dye.name}`);
-    this.notifyPaletteSlotsChanged();
+    notifyPaletteSlotsChanged(this.container);
 
     void this.findAlternatives();
     this.updateTargetDyeDisplay();

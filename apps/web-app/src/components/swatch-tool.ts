@@ -45,8 +45,8 @@ import { clearContainer } from '@shared/utils';
 import { isCustomDye } from '@shared/custom-dye';
 import type { Dye, PriceData } from '@xivdyetools/types';
 import {
-  OPEN_PALETTE_DRAWER,
-  PALETTE_SLOTS_CHANGED,
+  requestPalette,
+  notifyPaletteSlotsChanged,
   type PaletteSlot,
   type PaletteSlotSource,
 } from '@components/palette-slots';
@@ -757,7 +757,7 @@ export class SwatchTool extends BaseComponent implements PaletteSlotSource {
     this.reverseDyeName = LanguageService.getDyeName(dye.itemID) || dye.name;
     logger.info(`[SwatchTool] Reverse match: dye "${this.reverseDyeName}" (${dye.hex})`);
     this.performReverseMatch();
-    this.notifyPaletteSlotsChanged();
+    notifyPaletteSlotsChanged(this.container);
     this.revealOutsideGridPick(this.reverseSection);
   }
 
@@ -774,12 +774,6 @@ export class SwatchTool extends BaseComponent implements PaletteSlotSource {
     return [{ label: '', targetLabel: '', dye: this.reverseDye }];
   }
 
-  private notifyPaletteSlotsChanged(): void {
-    this.container.dispatchEvent(
-      new CustomEvent(PALETTE_SLOTS_CHANGED, { bubbles: true, composed: true })
-    );
-  }
-
   /** The match itself. A THIS CHARACTER slot uses this: its own card already shows the answer. */
   private applyCustomColor(hex: string): void {
     this.reverseDyeHex = hex.startsWith('#') ? hex : `#${hex}`;
@@ -789,7 +783,7 @@ export class SwatchTool extends BaseComponent implements PaletteSlotSource {
     });
     logger.info(`[SwatchTool] Reverse match: custom color ${this.reverseDyeHex}`);
     this.performReverseMatch();
-    this.notifyPaletteSlotsChanged();
+    notifyPaletteSlotsChanged(this.container);
   }
 
   /**
@@ -983,11 +977,7 @@ export class SwatchTool extends BaseComponent implements PaletteSlotSource {
     sourceInfo.appendChild(sourceHex);
     sourceCard.appendChild(sourceInfo);
 
-    sourceCard.addEventListener('click', () => {
-      sourceCard.dispatchEvent(
-        new CustomEvent(OPEN_PALETTE_DRAWER, { bubbles: true, composed: true })
-      );
-    });
+    sourceCard.addEventListener('click', () => requestPalette(sourceCard));
     this.reverseResultsContainer.appendChild(sourceCard);
 
     // Matched swatch rows
@@ -1137,7 +1127,7 @@ export class SwatchTool extends BaseComponent implements PaletteSlotSource {
     this.reverseMatchedSwatches = [];
     this.updateReverseHighlights();
     this.updateReverseResults();
-    if (hadDye) this.notifyPaletteSlotsChanged();
+    if (hadDye) notifyPaletteSlotsChanged(this.container);
   }
 
   // ============================================================================

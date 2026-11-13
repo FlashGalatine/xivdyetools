@@ -58,15 +58,11 @@ import {
 } from '@shared/tool-config-types';
 import { isDyeExcluded, filterDyes } from '@shared/dye-filter-utils';
 import {
-  OPEN_PALETTE_DRAWER,
-  PALETTE_SLOTS_CHANGED,
+  notifyPaletteSlotsChanged,
+  requestPalette,
   SLOT_TARGET_BORDER,
 } from '@components/palette-slots';
-import type {
-  OpenPaletteDrawerDetail,
-  PaletteSlot,
-  PaletteSlotHost,
-} from '@components/palette-slots';
+import type { PaletteSlot, PaletteSlotHost } from '@components/palette-slots';
 
 // ============================================================================
 // Types and Constants
@@ -989,14 +985,7 @@ export class GradientTool extends BaseComponent implements PaletteSlotHost {
     card.appendChild(col);
 
     this.on(card, 'click', () => {
-      if (needsStart) return;
-      this.container.dispatchEvent(
-        new CustomEvent<OpenPaletteDrawerDetail>(OPEN_PALETTE_DRAWER, {
-          detail: { slot },
-          bubbles: true,
-          composed: true,
-        })
-      );
+      if (!needsStart) requestPalette(this.container, slot);
     });
     return card;
   }
@@ -1807,7 +1796,7 @@ export class GradientTool extends BaseComponent implements PaletteSlotHost {
   private updateAfterSlotSelection(): void {
     this.saveSelectedDyes();
     this.updateInterpolation();
-    this.notifyPaletteSlotsChanged();
+    notifyPaletteSlotsChanged(this.container);
   }
 
   // ============================================================================
@@ -1851,12 +1840,6 @@ export class GradientTool extends BaseComponent implements PaletteSlotHost {
   setPaletteTarget(index: number | null): void {
     this.activeEndpoint = index === 0 || index === 1 ? index : null;
     this.updateEndpointCards();
-  }
-
-  private notifyPaletteSlotsChanged(): void {
-    this.container.dispatchEvent(
-      new CustomEvent(PALETTE_SLOTS_CHANGED, { bubbles: true, composed: true })
-    );
   }
 
   /**
@@ -1958,7 +1941,7 @@ export class GradientTool extends BaseComponent implements PaletteSlotHost {
     this.showEmptyState(true);
     this.updateEndpointCards();
     this.renderPinRail();
-    this.notifyPaletteSlotsChanged();
+    notifyPaletteSlotsChanged(this.container);
   }
 
   /**

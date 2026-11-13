@@ -71,10 +71,9 @@ import '@components/v4/share-button';
 import type { ShareButton } from '@components/v4/share-button';
 import { openExportSheet } from '@components/export-sheet';
 import {
-  OPEN_PALETTE_DRAWER,
-  PALETTE_SLOTS_CHANGED,
+  notifyPaletteSlotsChanged,
+  requestPalette,
   SLOT_TARGET_BORDER,
-  type OpenPaletteDrawerDetail,
   type PaletteSlot,
   type PaletteSlotHost,
 } from '@components/palette-slots';
@@ -878,7 +877,7 @@ export class MixerTool extends BaseComponent implements PaletteSlotHost {
     this.showEmptyState(true);
     this.updateCraftingUI();
     this.updateDrawerContent();
-    this.notifyPaletteSlotsChanged();
+    notifyPaletteSlotsChanged(this.container);
   }
 
   // ============================================================================
@@ -928,12 +927,6 @@ export class MixerTool extends BaseComponent implements PaletteSlotHost {
         : 'var(--v4-glass-border, rgba(255, 255, 255, 0.1))';
   }
 
-  private notifyPaletteSlotsChanged(): void {
-    this.container.dispatchEvent(
-      new CustomEvent(PALETTE_SLOTS_CHANGED, { bubbles: true, composed: true })
-    );
-  }
-
   /**
    * Select a dye from the Color Palette drawer
    * Fills the first empty slot of the pair, or shifts the pair (A←B, B←new) once both are full
@@ -981,7 +974,7 @@ export class MixerTool extends BaseComponent implements PaletteSlotHost {
     }
 
     this.updateDrawerContent();
-    this.notifyPaletteSlotsChanged();
+    notifyPaletteSlotsChanged(this.container);
     logger.info(`[MixerTool] Selected dye from palette: ${dye.name}`);
   }
 
@@ -1229,7 +1222,7 @@ export class MixerTool extends BaseComponent implements PaletteSlotHost {
     }
 
     this.updateDrawerContent();
-    this.notifyPaletteSlotsChanged();
+    notifyPaletteSlotsChanged(this.container);
   }
 
   /**
@@ -1277,7 +1270,7 @@ export class MixerTool extends BaseComponent implements PaletteSlotHost {
     this.updateCraftingUI();
     this.renderResultsGrid();
     this.updateDrawerContent();
-    this.notifyPaletteSlotsChanged();
+    notifyPaletteSlotsChanged(this.container);
   }
 
   /**
@@ -1912,15 +1905,7 @@ export class MixerTool extends BaseComponent implements PaletteSlotHost {
     if (this.paletteTarget === index) this.applyTargetBorder(slot, index);
 
     // Empty or filled, a tap aims the palette at this slot
-    this.on(slot, 'click', () => {
-      slot.dispatchEvent(
-        new CustomEvent<OpenPaletteDrawerDetail>(OPEN_PALETTE_DRAWER, {
-          bubbles: true,
-          composed: true,
-          detail: { slot: index },
-        })
-      );
-    });
+    this.on(slot, 'click', () => requestPalette(slot, index));
 
     // Hover effect
     this.on(slot, 'mouseenter', () => {
