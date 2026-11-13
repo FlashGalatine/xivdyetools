@@ -449,7 +449,7 @@ or resolve the raw-producer concern scheduled for the major removal (FINDING-043
 
 - [x] Prepare the 4.12.0 tags and replace display/matching test oracles with card/embed assertions.
 - [ ] Publish and verify core 5.16.0, SVG 4.4.1, then bot-logic 4.12.0.
-- [ ] Record consumer beta/production acceptance while retaining compatibility/privacy tests.
+- [ ] Record consumer beta/production acceptance while retaining compatibility/privacy tests. **Ruling (2026-10-31, R1):** beta acceptance is retired for this wave; production acceptance of the named A/R/H consumer units (discord 5.9.7, API 0.21.1, web 5.16.4, OG 2.12.2 and moderation 1.9.0 with `LINKED_BAN_CONFIRMATION_ENABLED=false`) stands in for it before core 6.0.0 ([unit acceptance checklist](docs/operations/REMEDIATION_UNIT_ACCEPTANCE_2026_10.md), units 9 and 11-14 and section 6). Beta dispatch stays unauthorized.
 - [ ] Recheck external npm consumer usage; cancel removal if an active consumer still needs the field.
 - [ ] After the major prerequisite releases, remove the approved field/type/back-mapping in
       M-BOT-LOGIC 5.0.0. Keep fileText, NO_INPUT and familySize unless separately approved.

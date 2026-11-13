@@ -1,0 +1,664 @@
+{
+  "schemaVersion": 1,
+  "preparedLocalDate": "2026-11-01",
+  "timezone": "America/New_York",
+  "scope": "Pre-merge part of AP-46 (re-freeze after the 2026-10-31 low-finding fixes): predicted post-merge trees and local native archive proofs only. No merge, no push of the predicted trees, no package publication, deployment, workflow dispatch, registry write or remote database access. The CI publisher packs its own archives; these hashes are the expected content, compared per file because pnpm pack writes dependency keys in a varying order.",
+  "authorization": "Maintainer in chat, 2026-11-01 ('Yes, do it now'), for the pre-merge agent work. AP-46 itself stays NOT GIVEN; every merge, publish and deploy approval stays NOT GIVEN.",
+  "references": {
+    "ER": "docs/audits/2026-10-26-security/evidence/earlier-minor-reconciliation-2026-10-30.json (nativeProofs: e01b = [1], e02b = [3])",
+    "MR": "docs/audits/2026-10-26-security/evidence/m-sprint-preparation-2026-10-29.json",
+    "FR": "docs/audits/2026-10-26-i18n/evidence/f-adoption-preparation-2026-10-30.json",
+    "units, AP rows and G14": "docs/operations/REMEDIATION_UNIT_ACCEPTANCE_2026_10.md",
+    "section 9 merge order": "docs/operations/REMEDIATION_RELEASE_2026_10.md"
+  },
+  "main": "13c386e5983fe58ff17ac08fb5712239feb2e696",
+  "tools": {
+    "node": "v22.21.0",
+    "pnpm": "11.17.0",
+    "typescript": "5.9.3"
+  },
+  "predictedTrees": {
+    "construction": "git merge --no-ff of each PR head into a local branch from main, in the order of the release runbook's section 9, stopping at each conflict. #336's head carries #333-#335 as ancestors, so its single merge stands in for the four audit-docs merges. Three conflicts, each resolved by its recorded rule: cut 00 (root CHANGELOG.md: [Unreleased] above #412's [2.3.4]; FINDING-009.md: main's text plus the cut's 2026-10-28 paragraph, blob a7de77ee0dee), cut 17 (FINDING-046.md: the cut blob bcb43593) and M-API #395 (apps/api-worker/CHANGELOG.md: 0.21.2, then [0.21.1] - 2026-10-29). Every other merge was clean. The M-point package subtrees equal those of the full local integration preview.",
+    "assumption": "Every PR in that order merges, including the logger repair e-00 (#407; AP-30 and AP-31 NOT GIVEN). If e-00 does not merge before P1, no current logger archive is recorded: re-pack and re-prove from main.",
+    "points": [
+      {
+        "label": "after401",
+        "role": "Predicted main after the declaration companions (#393, #401) and the logger repair (e-00): the refreshed integrated tip that e-01 (#408) predicted before the 2026-10-31 low-finding commits",
+        "commit": "646580db6d9f7528c3dc6222d325c9102d044c6d",
+        "tree": "1697792c79c3355a0bb8b64a51c1a814e0f26dcb",
+        "localOnly": true,
+        "mergedAfterPrevious": [
+          {
+            "pr": 336,
+            "head": "282dfdfe0240289e333e4009565934930cd67c1b"
+          },
+          {
+            "pr": 412,
+            "head": "51b88feb87a73c2a94d8f98c507dccda62458b83"
+          },
+          {
+            "pr": 369,
+            "head": "2ed5020caa1a784bbab56d2963cd106d7e7d3a95"
+          },
+          {
+            "pr": 370,
+            "head": "50157b9974ad745d3961d060bc4e284d1db6fa58"
+          },
+          {
+            "pr": 407,
+            "head": "f461b94578c7fef10e7a860d862d513b05e095c8"
+          },
+          {
+            "pr": 371,
+            "head": "9958553e11a3ebaeea07c6d9b63645bc4f6aa85a"
+          },
+          {
+            "pr": 373,
+            "head": "0fed2b3744c2a52ac944d038c5e0a4eded183dbd"
+          },
+          {
+            "pr": 393,
+            "head": "d1e0c467f97fd553628726432460c540508b9f7c"
+          },
+          {
+            "pr": 374,
+            "head": "e09f3cc6c452a679834ce03758e77b6a80da5ec8"
+          },
+          {
+            "pr": 375,
+            "head": "f42786596cf154bf8ae5d9d43fbb35c258ba106b"
+          },
+          {
+            "pr": 376,
+            "head": "c2d6231190d6e91cb613ba2f597386eba5fd84c8"
+          },
+          {
+            "pr": 377,
+            "head": "ebba1baaa08a4d78b3c55baf7261273cd1fe12af"
+          },
+          {
+            "pr": 401,
+            "head": "698b7cefa2fb6a829a84425012e2ce584f14f25d"
+          }
+        ],
+        "packageSubtrees": [
+          {
+            "package": "logger",
+            "subtree": "a5e27af5dcffcf8f74db9410bfe74e8f494d8abc"
+          },
+          {
+            "package": "auth",
+            "subtree": "718d478e40dfaad3ac1f79fac7ee552aaa64bec9"
+          },
+          {
+            "package": "core",
+            "subtree": "08182a64135611a5d6d3a5f9bc1475d5a059f222"
+          },
+          {
+            "package": "worker-kit",
+            "subtree": "b6ed3e8776ea65f8d610a6968dc368340ea8ff21"
+          },
+          {
+            "package": "svg",
+            "subtree": "332d583b62278524a4e80631b5fe63cc9148ae4d"
+          },
+          {
+            "package": "bot-logic",
+            "subtree": "866ae0a2680a4c7e8160a2dd2605a93d3101e811"
+          },
+          {
+            "package": "types",
+            "subtree": "03346ef406241acfbb9b34c351c1e33912821bd7"
+          }
+        ]
+      },
+      {
+        "label": "pPoint",
+        "role": "Predicted main for P1-P6: after401 plus #415 and e-02 (#409)",
+        "commit": "2508b1a47296f690637d81ad56de7dda451d2883",
+        "tree": "1edd0d7bc70f772141bd31157c654cb99d82eaba",
+        "localOnly": true,
+        "mergedAfterPrevious": [
+          {
+            "pr": 415,
+            "head": "cc9bac5ac55cb735a00217df26f63ddeaf0952ca"
+          },
+          {
+            "pr": 409,
+            "head": "4c0bd11f8955abe7145ad3d68686f04209c52054"
+          }
+        ],
+        "packageSubtrees": [
+          {
+            "package": "logger",
+            "subtree": "a5e27af5dcffcf8f74db9410bfe74e8f494d8abc"
+          },
+          {
+            "package": "auth",
+            "subtree": "718d478e40dfaad3ac1f79fac7ee552aaa64bec9"
+          },
+          {
+            "package": "core",
+            "subtree": "682d397b92fa56feb7225f4fc2074aaa4e57b76e"
+          },
+          {
+            "package": "worker-kit",
+            "subtree": "b6ed3e8776ea65f8d610a6968dc368340ea8ff21"
+          },
+          {
+            "package": "svg",
+            "subtree": "332d583b62278524a4e80631b5fe63cc9148ae4d"
+          },
+          {
+            "package": "bot-logic",
+            "subtree": "831453c1b7156f3da75d2c7b0a4579d29c1c5b28"
+          },
+          {
+            "package": "types",
+            "subtree": "03346ef406241acfbb9b34c351c1e33912821bd7"
+          }
+        ]
+      },
+      {
+        "label": "mPoint",
+        "role": "Predicted main for M1-M3: pPoint plus cuts 07-17, #410, #416, #413, the M line #391-#403 and #404",
+        "commit": "f0c5f024e53cd5f1e7457ef07084e3570585484f",
+        "tree": "5ec5e33e4056436758418a0620ae837a206911b2",
+        "localOnly": true,
+        "mergedAfterPrevious": [
+          {
+            "pr": 378,
+            "head": "4969440c37475224305e420395986117fa10f8a3"
+          },
+          {
+            "pr": 379,
+            "head": "6b0f638a82d715fca0d5776d9c55fd351852470c"
+          },
+          {
+            "pr": 380,
+            "head": "8bab49bcc307a410e0791be22611ec62fea7b7b3"
+          },
+          {
+            "pr": 381,
+            "head": "f54c8d832ba2672398b9845f7e708dd7a656cffc"
+          },
+          {
+            "pr": 382,
+            "head": "e34824da0ac39a244ea72bd4d4424a1910d79503"
+          },
+          {
+            "pr": 383,
+            "head": "9ddc33941ff3d8b87b9013c49a6b0f33b7fbd170"
+          },
+          {
+            "pr": 410,
+            "head": "e1293ba5e0695b50bc5713528a98f9d93651fe44"
+          },
+          {
+            "pr": 416,
+            "head": "56d08828046c8f8b6aa3dfca8104a5df7c1c139a"
+          },
+          {
+            "pr": 384,
+            "head": "6ae454f0ccb73c36da0c03bed4fce7fd8a409165"
+          },
+          {
+            "pr": 385,
+            "head": "a6e73d06eb1cf490972b154cbe0361ce2be2f863"
+          },
+          {
+            "pr": 413,
+            "head": "df502a1c081d7d5db797377682167ecc6c5b172e"
+          },
+          {
+            "pr": 386,
+            "head": "97e89ae42340f42f973d17e88870211e7fceef74"
+          },
+          {
+            "pr": 387,
+            "head": "315f40075dae94e3f171ae30bc577b11f53c3a47"
+          },
+          {
+            "pr": 388,
+            "head": "2b95c0df20b0585d405f2684b10b982d61a48bf6"
+          },
+          {
+            "pr": 391,
+            "head": "3cd1b6df23fb64e276efe868b89a7e3d398e4d75"
+          },
+          {
+            "pr": 392,
+            "head": "ebeb016e8437e714ddf706aacbabdce4636cf406"
+          },
+          {
+            "pr": 394,
+            "head": "7215c3660ade7b2adb1a0c53f6129034390a50c0"
+          },
+          {
+            "pr": 395,
+            "head": "ac6fd77d79e8d0e5af98845f06a72772fbb95102"
+          },
+          {
+            "pr": 396,
+            "head": "4ed3ad35a28b3c618aad664deba17512771711f6"
+          },
+          {
+            "pr": 397,
+            "head": "f95dd83798a37aa943223b6c0b31d707054a2211"
+          },
+          {
+            "pr": 398,
+            "head": "929f8f6c1cf98bdfe1ae2b8c9525c51e82af6db6"
+          },
+          {
+            "pr": 399,
+            "head": "c79d2b24180d84865950e9b8ea2030cc4e9789c9"
+          },
+          {
+            "pr": 400,
+            "head": "876dadb33bbefdaa0dc12d982e539eddd13cf1d0"
+          },
+          {
+            "pr": 402,
+            "head": "a33e7f588f6f94e8acd630a07028f2c1a1f2dfed"
+          },
+          {
+            "pr": 403,
+            "head": "3ad26ae6666f6a8823e86198cb0873fc03d6cec7"
+          },
+          {
+            "pr": 404,
+            "head": "aad41c3feebde988e36ea5e24efec502d0a06c86"
+          }
+        ],
+        "packageSubtrees": [
+          {
+            "package": "logger",
+            "subtree": "a5e27af5dcffcf8f74db9410bfe74e8f494d8abc"
+          },
+          {
+            "package": "auth",
+            "subtree": "718d478e40dfaad3ac1f79fac7ee552aaa64bec9"
+          },
+          {
+            "package": "core",
+            "subtree": "e583422ddccf266fbde82c254a99d3f62d8970ef"
+          },
+          {
+            "package": "worker-kit",
+            "subtree": "b6ed3e8776ea65f8d610a6968dc368340ea8ff21"
+          },
+          {
+            "package": "svg",
+            "subtree": "9081ee426576809ea53f0bcd288ffee23c7ff778"
+          },
+          {
+            "package": "bot-logic",
+            "subtree": "eb45146d8f2d2e1747e83f4bfd6e10f1a073d3f9"
+          },
+          {
+            "package": "types",
+            "subtree": "03346ef406241acfbb9b34c351c1e33912821bd7"
+          }
+        ]
+      }
+    ]
+  },
+  "proofs": {
+    "pp401": {
+      "status": "PASS",
+      "source": {
+        "commit": "646580db6d9f7528c3dc6222d325c9102d044c6d",
+        "tree": "1697792c79c3355a0bb8b64a51c1a814e0f26dcb",
+        "builderCleanAtEnd": true
+      },
+      "comparedWith": "e01b (ER nativeProofs[1], integrated tip 71ed0595)",
+      "packages": [
+        {
+          "name": "@xivdyetools/logger",
+          "version": "2.4.0",
+          "archiveSha256": "145849bd0738814444b22dbb17107ffcf7a780a3460dc8eca60991713d32e1dc",
+          "archiveSri": "sha512-5GHwkXTMYPmfaTlOD8ixPdMaM1YHJxNVbbMctdFn/ev5ujRHVPf7DuPoPeydCM9X6ogzjLLGJ79iKdjm6uoHYw==",
+          "bytes": 50386,
+          "distFiles": 52,
+          "distMatchesFreshEmit": true,
+          "dependencyKeyOrder": "(no dependencies)",
+          "comparison": "Against e01b's 8af98d82ce32: README.md and dist/core/base-logger.{js,js.map,d.ts,d.ts.map} differ, all from cut 01's 50157b99; the .d.ts change is the scrubString JSDoc text only."
+        },
+        {
+          "name": "@xivdyetools/auth",
+          "version": "3.0.0",
+          "archiveSha256": "e5b67734e419fc036a6db0ee2792f88e1d3c559efa50a8b2e4914b57159e0a4a",
+          "archiveSri": "sha512-euz8IHGns2gr+Sn/CYn+2RppF/1P4pPquNwqYLpTEHP2NvNpIYgbS4Do3cDQAqChcmf0nEsEi5d7Jgj2lLXi7Q==",
+          "bytes": 47776,
+          "distFiles": 36,
+          "distMatchesFreshEmit": true,
+          "dependencyKeyOrder": "discord-interactions",
+          "comparison": "Identical to e01b's."
+        },
+        {
+          "name": "@xivdyetools/core",
+          "version": "5.16.0",
+          "archiveSha256": "d9b71b31c719bf3c2ecdff026c7a950fc85d86ca025a596e89b6d73c8f380b95",
+          "archiveSri": "sha512-qEi03GWZq/Xu6e99F1508Kv79dkZEq75sJ/xG9t3nXINjLIEEQfKoJ9ApdBVBs+6CQfdLNJccqO/NdQ6U7Ox5w==",
+          "bytes": 544860,
+          "distFiles": 246,
+          "distMatchesFreshEmit": true,
+          "dependencyKeyOrder": "spectral.js,xivcharakit,@xivdyetools/logger,@xivdyetools/types",
+          "comparison": "Against e01b's cde357071f3b: package.json dependency-key order only (all 246 dist files identical). Byte-identical to MR's #393 backport archive d9b71b31."
+        },
+        {
+          "name": "@xivdyetools/worker-kit",
+          "version": "1.6.0",
+          "archiveSha256": "769284216c94b8057677aef27005b53b44d32fad195e95822b77206f6e8477f4",
+          "archiveSri": "sha512-/Fn9Zd26dQ/axDHDuLQ8+XstmKKntqF9nepPlE1Vth+XCHgdQhJF0GA5+A8Tp2jbxBcJd1q3Ac7NkMbcOd6ECQ==",
+          "bytes": 63527,
+          "distFiles": 92,
+          "distMatchesFreshEmit": true,
+          "dependencyKeyOrder": "@upstash/redis,@xivdyetools/logger",
+          "comparison": "Identical to e01b's (cut 04's CLAUDE.md and test change are not packed)."
+        },
+        {
+          "name": "@xivdyetools/svg",
+          "version": "4.4.1",
+          "archiveSha256": "2c545784f2ad1c1a5f9ecf13f81b9f26a4352484028d916e85f4eacae00e48c2",
+          "archiveSri": "sha512-OXFYja3uyqCYD0oexYkF4GZgUs59cuIpI4Fsi7Dt68v2hC6tF67LT30lNs7HVCQUUI/osPAj/FBJqIX4pc7smQ==",
+          "bytes": 115948,
+          "distFiles": 76,
+          "distMatchesFreshEmit": true,
+          "dependencyKeyOrder": "@xivdyetools/core,@xivdyetools/types",
+          "comparison": "Identical to e01b's."
+        },
+        {
+          "name": "@xivdyetools/bot-logic",
+          "version": "4.12.0",
+          "archiveSha256": "ec17d729637f31ff4ac4a4040df64bc26b14e1d3a2ac9b5f9dbd5808c937d618",
+          "archiveSri": "sha512-fFtVy6YJrdzFIZjRpvO6ETIs8imgT1tXuE36kLoYodSyM6RFmCbDaBKEMhHrHpZg/SJe5V1k7gGieQtcuTrxqQ==",
+          "bytes": 201361,
+          "distFiles": 94,
+          "distMatchesFreshEmit": true,
+          "dependencyKeyOrder": "@xivdyetools/svg,@xivdyetools/core,@xivdyetools/types",
+          "comparison": "Against e01b's 9062159de489: package.json dependency-key order only. Not the P6 value: this tree has neither #415 nor e-02."
+        }
+      ],
+      "install": "Offline, from the pnpm store and SRI-verified seeds; lifecycle scripts suppressed.",
+      "probe": "27 exports imported (logger 4, auth 7, core 3, worker-kit 10, svg 1, bot-logic 2), each resolved inside the consumer; 414 manual strings checked in 6 locales; 3 of 3 JWT cases; core's JSON import attributes load without a loader; the six core locale payloads equal source; 750 runtime names, 0 fetch calls. The e-02 German/French checks do not apply (e-02 is not in this tree).",
+      "strictDeclarations": "tsc 5.9.3 --noEmit with strict, skipLibCheck:false and NodeNext: exit 0, 0 diagnostics; all 19 symbol directives consumed; 247 program files, none outside the consumer or the TypeScript lib. The contract's 27 type imports equal all 27 packed export-map entries of the six packages. A supplementary named-import check of logger's public API, including createWorkerLogger from /worker, also exits 0.",
+      "negativeControl": "Rerun, because the packed logger base-logger.d.ts differs from e01b's. e01b's revert patch (16 @internal tags) was applied to a snapshot of this tree; the strict compile then exits 2 with 41 diagnostics naming all 16 symbols, the same set as e01b's negative control. A first attempt stopped on a harness assertion and is kept as a failed attempt.",
+      "deviations": [
+        "A first negative-control attempt stopped on a harness assertion; it is kept as a failed attempt."
+      ],
+      "independentVerification": {
+        "verdict": "CONFIRMED_WITH_NOTES",
+        "confidence": "high",
+        "claimsChecked": 16,
+        "claimsRefuted": 0,
+        "claimsUnverifiable": 0
+      }
+    },
+    "ppt": {
+      "status": "PASS",
+      "source": {
+        "commit": "2508b1a47296f690637d81ad56de7dda451d2883",
+        "tree": "1edd0d7bc70f772141bd31157c654cb99d82eaba",
+        "builderCleanAtEnd": true
+      },
+      "comparedWith": "e02b (ER nativeProofs[3], e-02 b0efa0f2); bot-logic against cdf02e4f (unit 6, 2026-10-31)",
+      "packages": [
+        {
+          "name": "@xivdyetools/logger",
+          "version": "2.4.0",
+          "archiveSha256": "145849bd0738814444b22dbb17107ffcf7a780a3460dc8eca60991713d32e1dc",
+          "archiveSri": "sha512-5GHwkXTMYPmfaTlOD8ixPdMaM1YHJxNVbbMctdFn/ev5ujRHVPf7DuPoPeydCM9X6ogzjLLGJ79iKdjm6uoHYw==",
+          "bytes": 50386,
+          "distFiles": 52,
+          "distMatchesFreshEmit": true,
+          "dependencyKeyOrder": "(no dependencies)",
+          "comparison": "Against e02b's 8af98d82ce32: README.md and dist/core/base-logger.{js,js.map,d.ts,d.ts.map} differ, all from cut 01's 50157b99; the .d.ts change is the scrubString JSDoc text only."
+        },
+        {
+          "name": "@xivdyetools/auth",
+          "version": "3.0.0",
+          "archiveSha256": "e5b67734e419fc036a6db0ee2792f88e1d3c559efa50a8b2e4914b57159e0a4a",
+          "archiveSri": "sha512-euz8IHGns2gr+Sn/CYn+2RppF/1P4pPquNwqYLpTEHP2NvNpIYgbS4Do3cDQAqChcmf0nEsEi5d7Jgj2lLXi7Q==",
+          "bytes": 47776,
+          "distFiles": 36,
+          "distMatchesFreshEmit": true,
+          "dependencyKeyOrder": "discord-interactions",
+          "comparison": "Identical to e02b's."
+        },
+        {
+          "name": "@xivdyetools/core",
+          "version": "5.16.0",
+          "archiveSha256": "c11b905d9104b0e4cd6fdd8ec8b4dc1b1e809fef2bb6ccbb831594a277281d4b",
+          "archiveSri": "sha512-f9BgMxfD7qnVUKJAIZKyHGZK4Tdc7eakFROPWwRoMiBgi7wW5NbI+u62IBMXhOoABLo57zk27GoQAFO9D3Do5g==",
+          "bytes": 544832,
+          "distFiles": 246,
+          "distMatchesFreshEmit": true,
+          "dependencyKeyOrder": "spectral.js,xivcharakit,@xivdyetools/logger,@xivdyetools/types",
+          "comparison": "Identical to e02b's (core changes since are CHANGELOG.md and two tests, none packed)."
+        },
+        {
+          "name": "@xivdyetools/worker-kit",
+          "version": "1.6.0",
+          "archiveSha256": "769284216c94b8057677aef27005b53b44d32fad195e95822b77206f6e8477f4",
+          "archiveSri": "sha512-/Fn9Zd26dQ/axDHDuLQ8+XstmKKntqF9nepPlE1Vth+XCHgdQhJF0GA5+A8Tp2jbxBcJd1q3Ac7NkMbcOd6ECQ==",
+          "bytes": 63527,
+          "distFiles": 92,
+          "distMatchesFreshEmit": true,
+          "dependencyKeyOrder": "@upstash/redis,@xivdyetools/logger",
+          "comparison": "Identical to e02b's."
+        },
+        {
+          "name": "@xivdyetools/svg",
+          "version": "4.4.1",
+          "archiveSha256": "2c545784f2ad1c1a5f9ecf13f81b9f26a4352484028d916e85f4eacae00e48c2",
+          "archiveSri": "sha512-OXFYja3uyqCYD0oexYkF4GZgUs59cuIpI4Fsi7Dt68v2hC6tF67LT30lNs7HVCQUUI/osPAj/FBJqIX4pc7smQ==",
+          "bytes": 115948,
+          "distFiles": 76,
+          "distMatchesFreshEmit": true,
+          "dependencyKeyOrder": "@xivdyetools/core,@xivdyetools/types",
+          "comparison": "Identical to e02b's."
+        },
+        {
+          "name": "@xivdyetools/bot-logic",
+          "version": "4.12.0",
+          "archiveSha256": "846a1e20cada191cbd5848af8ab797f7dea47c5689de32629de886d289575673",
+          "archiveSri": "sha512-l8hUfDIGQmOmWnsbTaWAEEQgwgtaSM0pAlFQM0VRPJ+IUno23yHMARZdm6Z83yMGf/qQCURmroPr8vZOq8P+JA==",
+          "bytes": 202160,
+          "distFiles": 94,
+          "distMatchesFreshEmit": true,
+          "dependencyKeyOrder": "@xivdyetools/core,@xivdyetools/svg,@xivdyetools/types",
+          "comparison": "Against cdf02e4f (the e-02-only re-record): 7 packed files differ, all from #415's e627fca8 (an ancestor of its head cc9bac5a): dist/commands/glamour.{js,js.map,d.ts.map} and dist/discord-markdown.{js,js.map,d.ts,d.ts.map}. The only declaration change adds sanitizeLineValue and its JSDoc."
+        }
+      ],
+      "install": "Offline, from the pnpm store and SRI-verified seeds; lifecycle scripts suppressed.",
+      "probe": "27 exports imported, each resolved inside the consumer; 414 manual strings in 6 locales; 3 of 3 JWT cases; core's JSON import attributes load without a loader; core locale probe: 750 runtime names, 250 pinned German/French names, sentinels 5729 (Schneeweiß / Blanc neige), 48164 and 48227 pass, 0 fetch calls.",
+      "strictDeclarations": "tsc 5.9.3 --noEmit with strict, skipLibCheck:false and NodeNext: exit 0, 0 diagnostics; all 19 symbol directives consumed; 247 program files, none outside the consumer or the TypeScript lib. The contract (identical to e01b's and e02b's) covers all 27 packed export-map entries.",
+      "negativeControl": "Rerun, because packed .d.ts files differ from e02b's (logger base-logger.d.ts; bot-logic discord-markdown.d.ts). The 16 repairs were reverted by patch in a snapshot of this tree; the strict compile exits 2 with 41 diagnostics naming all 16 symbols, as e01b's did.",
+      "deviations": [
+        "The negative control reverted the repairs by patch rather than overwriting whole files, because later commits changed those files."
+      ],
+      "independentVerification": {
+        "verdict": "CONFIRMED_WITH_NOTES",
+        "confidence": "high",
+        "claimsChecked": 15,
+        "claimsRefuted": 0,
+        "claimsUnverifiable": 0
+      }
+    },
+    "mpt": {
+      "status": "PASS",
+      "source": {
+        "commit": "f0c5f024e53cd5f1e7457ef07084e3570585484f",
+        "tree": "5ec5e33e4056436758418a0620ae837a206911b2",
+        "builderCleanAtEnd": true
+      },
+      "comparedWith": "MR cuts[0..2].nativeArtifact and FR native.phases[0..2]",
+      "packages": [
+        {
+          "name": "@xivdyetools/core",
+          "version": "6.0.0",
+          "archiveSha256": "2438a97de7865eda7cdb954e4dff9ee60e961ebbc4b3a77aad62a2fb7d9b160b",
+          "archiveSri": "sha512-cqzgVtdZSO6YJo6ivnCl9+GMWCwiRR/GcUfGchf16KddpUwL49yMo+laR1s6mk+FtEnu+o8p877tfPeKZCW7/Q==",
+          "bytes": 525575,
+          "distFiles": 238,
+          "distMatchesFreshEmit": true,
+          "dependencyKeyOrder": "spectral.js,xivcharakit,@xivdyetools/logger,@xivdyetools/types",
+          "comparison": "Byte-identical to FR native.phases[0]. Against MR's a4d9b9e7 only dist/data/locales/de.json and fr.json differ (e-02). #391's 2026-10-31 commit is test-only."
+        },
+        {
+          "name": "@xivdyetools/svg",
+          "version": "4.4.2",
+          "archiveSha256": "e8da73a282f646f1697a9cfa3e643c483261f72132c90bb72e77225e9d195cc8",
+          "archiveSri": "sha512-0C8RbZcmRuZWHKaSgs3B1a6RPTIPBflLZjsQNbS1rceflTPiTs1Ubs7ym5xVxuSLoiI6u1mWX8+0mYyiROZFJQ==",
+          "bytes": 115947,
+          "distFiles": 76,
+          "distMatchesFreshEmit": true,
+          "dependencyKeyOrder": "@xivdyetools/core,@xivdyetools/types",
+          "comparison": "Packed content equal to MR's and FR's e7edd114; package.json dependency-key order only."
+        },
+        {
+          "name": "@xivdyetools/bot-logic",
+          "version": "5.0.0",
+          "archiveSha256": "1d1473c190ca309ec15a071c6b917f7a6a4b6870a271c5e769d53722bebc83ef",
+          "archiveSri": "sha512-CKILlTzXHPNR576pyJmq1fUI1/1b0Ol48R9i0zQkheSUfNt224a5Psimz0tLOTSvG7fepvbzowPyBYtImTcO6g==",
+          "bytes": 199894,
+          "distFiles": 94,
+          "distMatchesFreshEmit": true,
+          "dependencyKeyOrder": "@xivdyetools/core,@xivdyetools/types,@xivdyetools/svg",
+          "comparison": "Against FR's 3c77a23f: 9 dist files differ, #415's glamour and discord-markdown outputs (7) and e-02's comment in dist/input-resolution.{js,js.map} (2); package.json identical (measured during the 2026-11-01 receipt review; not part of the mpt independent verification). Against MR's e1efc04a: the same 9 files plus package.json dependency-key order."
+        },
+        {
+          "name": "@xivdyetools/logger",
+          "version": "2.4.0",
+          "archiveSha256": "145849bd0738814444b22dbb17107ffcf7a780a3460dc8eca60991713d32e1dc",
+          "archiveSri": "sha512-5GHwkXTMYPmfaTlOD8ixPdMaM1YHJxNVbbMctdFn/ev5ujRHVPf7DuPoPeydCM9X6ogzjLLGJ79iKdjm6uoHYw==",
+          "bytes": 50386,
+          "distFiles": 52,
+          "distMatchesFreshEmit": true,
+          "dependencyKeyOrder": "(no dependencies)",
+          "comparison": "The repaired logger as packed from the M-point; the earlier MR and FR proofs installed the unrepaired 13055dc4."
+        }
+      ],
+      "install": "Offline, from the pnpm store and SRI-verified seeds; lifecycle scripts suppressed.",
+      "probe": "The M probes ran unchanged except for the fixture path, with fetch disabled: the native probe imported 19 export subpaths; the svg phase probe and its swatch card are byte-equal to the earlier svg proof; the bot phase probe and its 4 swatch files are byte-equal to the earlier bot re-proof (4 success and 6 error cases; 6 locales, 69 manual strings each).",
+      "strictDeclarations": "tsc 5.9.3 with strict, skipLibCheck:false and NodeNext: the M contracts for core, svg and bot-logic exit 0 with every directive consumed. An added compile over all 19 public subpaths the majors' consumer reaches (core . /blending /chara, svg ., bot-logic . /i18n, logger . /browser /worker /library, types 3.3.0 . and its 8 subpaths) exits 0 with 0 diagnostics. Both run with types: [] so no ancestor @types package reaches the program.",
+      "negativeControl": "Not run: the M recipe has no negative control, and none was created.",
+      "deviations": [
+        "The M recipe's freeze precondition was replaced by a dist-freshness assertion.",
+        "logger 2.4.0 was packed from the M-point; the M recipe's seed was the unrepaired 13055dc4.",
+        "Two harness copy errors are kept as failed attempts; the reruns passed.",
+        "The types: [] compile variants were added for isolation."
+      ],
+      "independentVerification": {
+        "verdict": "CONFIRMED_WITH_NOTES",
+        "confidence": "high",
+        "claimsChecked": 13,
+        "claimsRefuted": 0,
+        "claimsUnverifiable": 0
+      }
+    }
+  },
+  "p6Archive": {
+    "package": "@xivdyetools/bot-logic",
+    "version": "4.12.0",
+    "archiveSha256": "846a1e20cada191cbd5848af8ab797f7dea47c5689de32629de886d289575673",
+    "dependencyKeyOrder": "core, svg, types",
+    "supersedes": "cdf02e4f399af6eb716209b7c247cdf1a351a85cbe790162f74b956341e64e13",
+    "difference": "Against cdf02e4f (the e-02-only re-record): 7 packed files differ, all from #415's e627fca8 (an ancestor of its head cc9bac5a): dist/commands/glamour.{js,js.map,d.ts.map} and dist/discord-markdown.{js,js.map,d.ts,d.ts.map}. The only declaration change adds sanitizeLineValue and its JSDoc."
+  },
+  "mergeDayCheck": "Before each publish, run git rev-parse <SHA the publish run checks out>:packages/<name> and compare it with predictedTrees (pPoint for P1-P6, mPoint for M1-M3). If equal, the CI-packed files should equal the recorded archive file by file, dependency-key order aside; stop the publish on any other difference. If different, re-pack and rerun that phase's native proof, including the strict all-entry-point compile, before the publish. The CI-packed files must then equal the new pack file by file, with the same stop rule. A change to an unpacked file inside the package, such as a test, also changes the subtree and takes this branch.",
+  "previewRefresh": {
+    "head": "aebae591d320bbf436219d47670935fed631aad2",
+    "tree": "4a28744cb2fc0e3c586c08ae3fda57fcea40304c",
+    "localOnly": true,
+    "merged": [
+      "#372 78f7ed33",
+      "#417 7270a023",
+      "#418 bd52c2b2"
+    ],
+    "gates": [
+      {
+        "gate": "pnpm turbo run build type-check lint test --force",
+        "exit": 0,
+        "summary": "62 of 62 tasks, 0 cached"
+      },
+      {
+        "gate": "pnpm test:scripts",
+        "exit": 0,
+        "summary": "225 of 225; test:research-privacy 103 of 103"
+      },
+      {
+        "gate": "pnpm type-check:scripts",
+        "exit": 0,
+        "summary": "clean"
+      },
+      {
+        "gate": "pnpm dead-code:check",
+        "exit": 0,
+        "summary": "no violations (651 production and 662 test files)"
+      },
+      {
+        "gate": "pnpm docs:check-versions",
+        "exit": 0,
+        "summary": "34 version claims match"
+      },
+      {
+        "gate": "pnpm docs:check-links",
+        "exit": 0,
+        "summary": "1294 relative links in 291 documents resolve"
+      },
+      {
+        "gate": "pnpm workers:check-logs",
+        "exit": 0,
+        "summary": "7 worker configs pin Workers Logs off"
+      },
+      {
+        "gate": "web-app build:check",
+        "exit": 0,
+        "summary": "PASSED: CSS 53.16 KB of 105 KB (50.6%); JS payload (one locale) 2.18 MB of 2.20 MB (99.2%); JS emitted (all locales) 2.46 MB of 2.73 MB (90.1%)"
+      },
+      {
+        "gate": "Playwright chromium, full suite, run 1",
+        "exit": 1,
+        "summary": "178 passed, 1 failed: extractor-tool.spec.ts:214 page.goto ERR_CONNECTION_REFUSED on localhost:5173 after 356 ms"
+      },
+      {
+        "gate": "Playwright chromium, extractor-tool.spec.ts x3",
+        "exit": 0,
+        "summary": "36 of 36"
+      },
+      {
+        "gate": "Playwright chromium, full suite, run 2",
+        "exit": 0,
+        "summary": "179 of 179"
+      },
+      {
+        "gate": "gitleaks git (the three merged PRs' commits)",
+        "exit": 0,
+        "summary": "no leaks"
+      }
+    ],
+    "notRunLocally": [
+      "the CI-only wrangler-invariants step",
+      "Playwright projects other than chromium"
+    ],
+    "independentVerification": {
+      "verdict": "CONFIRMED_WITH_NOTES",
+      "confidence": "high",
+      "claimsChecked": 14,
+      "claimsRefuted": 0,
+      "claimsUnverifiable": 1,
+      "unverifiable": [
+        "whether port 5173 was free before the Playwright runs (no netstat output was saved)"
+      ]
+    }
+  },
+  "observations": [
+    "The earlier M and F proofs (MR, FR) installed logger 13055dc4, the 2.4.0 pack without the e-00 repair; the M-point proof covers all four logger entry points with the repaired 145849bd and passes.",
+    "The M-recipe consumer tsconfig sets no \"types\", so tsc can pull @types/node from an ancestor node_modules; the pass rests on the types: [] variants. Future consumer tsconfigs should set types: [].",
+    "pnpm pack wrote different dependency-key orders for identical content within one builder state.",
+    "auth 3.0.0 still declares peer @cloudflare/workers-types ^4.0.0 while the lock resolves 5.x (G14; not a failure)."
+  ]
+}
