@@ -4,6 +4,7 @@ import { asyncCss } from './vite-plugin-async-css'
 import { changelogParser } from './vite-plugin-changelog-parser'
 import { betaBranding } from './vite-plugin-beta-branding'
 import { coreJsonCompatibility } from './vite-plugin-core-json'
+import { minifyTemplatesPlugin } from './vite-plugin-minify-templates'
 import pkg from './package.json'
 
 // Set by .github/workflows/deploy-web-app-beta.yml. Absent everywhere else.
@@ -83,5 +84,8 @@ export default defineConfig({
     asyncCss(),
     changelogParser(),
     betaBranding(isBeta),
+    // Build only: collapses indentation inside Lit html/svg/css templates,
+    // which the minifier leaves as written. See the file for what it skips.
+    minifyTemplatesPlugin(),
   ],
 })

@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.18.1] - 2026-11-13
+
+### Changed
+
+- **Production builds collapse the whitespace inside Lit templates.** The minifier leaves template
+  literal contents as written, so every line of indentation in an `html`, `svg` or `css` tagged
+  template shipped: about 63 KB across the chunks, half of it in the layout shell. The new build-only
+  plugin `vite-plugin-minify-templates.ts` (`apply: 'build'`, so `vite dev` and vitest are unaffected)
+  rewrites the static parts of templates whose tag is imported from `lit`:
+  - `html` / `svg`: a whitespace run in text becomes one character (a newline if it held one, so
+    `white-space: pre-line` still breaks; a space inside `<svg>`, where SVG text drops newlines), and
+    a run between attributes becomes one space. Nothing is removed outright.
+  - `css`: a run becomes one space and is removed beside `{`, `}` and `;`; a comment with whitespace
+    beside it is removed with it.
+  - Untouched: `${...}` expressions, attribute values, HTML comments, the contents of `<pre>`,
+    `<textarea>`, `<script>`, `<style>` and `<title>`, CSS strings, whitespace beside `:`, `,` and
+    `calc()` operators, and any template containing a backslash.
+  - No new dependency. Templates are found with Vite's own `parseAst`, and the source map is
+    generated in the plugin (a segment per word boundary); all 2,082 sampled call sites in the emitted
+    chunks still map to their exact source position, the same as before.
+- **Sizes, same source:** JS payload 2251.71 KB to 2186.67 KB (-65.04 KB), layout shell 226.23 KB to
+  188.34 KB, result card 40.56 KB to 27.01 KB, preset tool 56.02 KB to 45.99 KB.
+- **Budgets come back down** (`scripts/check-bundle-size.js`): `PAYLOAD_JS_LIMIT` 2252 KB to 2250 KB,
+  the limit before 5.18.0, and the `layout shell` row 228 KB to 200 KB.
+- **`E2E_SERVER=preview`** makes `playwright.config.ts` serve the production build with `vite preview`
+  on port 4173 instead of the dev server, which never runs build-only plugins.
+
+### Notes
+
+- The plugin cannot see CSS applied from elsewhere: text in an element styled `white-space: pre` or
+  `pre-wrap` must come from an `${expression}` or sit in a `<pre>`. No template in the app does
+  otherwise today (checked: the two `pre` / `pre-wrap` elements are filled with `textContent`).
+- Untagged template strings (the tool components' `innerHTML` templates, about 8 KB of whitespace) are
+  not touched; nothing marks them as HTML.
+
 ## [5.18.0] - 2026-11-13
 
 ### Added

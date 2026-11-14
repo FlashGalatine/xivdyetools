@@ -97,7 +97,12 @@ const BUNDLE_LIMITS = [
   // went from 217.39 KB to 225.96 KB, 225.83 KB after trimming the new code
   // (the limit is that rounded up plus 2 KB), and measured 226.23 KB once the
   // branch was finished.
-  { label: 'layout shell', pattern: /^v4-layout-/, limit: 228 * KB },
+  // 2026-11-13 (web app 5.18.1) brings it down to 200 KB. Production builds now
+  // collapse the indentation inside Lit templates (vite-plugin-minify-templates),
+  // and the shell, which is nearly all Lit, measured 188.34 KB with the same
+  // source. 200 KB is the limit it had before the 5.0 shell features; the
+  // 11.66 KB between is room for the open shell PRs, not a target.
+  { label: 'layout shell', pattern: /^v4-layout-/, limit: 200 * KB },
   // Named `modals` by vite.config's manualChunks, but that is not what it holds.
   // Rolldown ignored 34 of the 51 assignments manualChunks returned and merged
   // the shared colour engine into this chunk -- ColorConverter, ColorService,
@@ -221,8 +226,14 @@ const LOCALE_CHUNK_LIMIT = 95 * KB;
  * remaining 1.77 KB is indentation inside Lit templates, so the limit rises by
  * 2 KB for that remainder only. Minifying template whitespace at build time is
  * the proposed follow-up that would let it come back down.
+ *
+ * 2026-11-13 (web app 5.18.1) is that follow-up, and the limit is 2250 KB
+ * again. vite-plugin-minify-templates collapses the whitespace inside Lit
+ * `html`, `svg` and `css` templates at build time: the payload went from
+ * 2251.71 KB to 2186.67 KB with no source change. The 63 KB that opened up is
+ * what the next tools spend; it is not a reason to stop trimming first.
  */
-const PAYLOAD_JS_LIMIT = 2252 * KB;
+const PAYLOAD_JS_LIMIT = 2250 * KB;
 
 /**
  * Artifact budget: everything we emit, all locales included.

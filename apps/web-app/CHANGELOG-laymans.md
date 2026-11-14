@@ -2,6 +2,11 @@
 
 ---
 
+## Web-App Version 5.18.1 — November 13, 2026
+
+### A smaller download
+- **The app is about 65 KB lighter to load.** Nothing looks or works differently.
+
 ## Web-App Version 5.18.0 — November 13, 2026
 
 ### Tap a slot to pick its dye
