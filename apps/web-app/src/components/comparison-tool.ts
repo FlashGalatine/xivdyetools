@@ -48,6 +48,13 @@ import type { ShareButton } from '@components/v4/share-button';
 import { openExportSheet } from '@components/export-sheet';
 import { ShareService } from '@services/share-service';
 import { formatGil } from '@shared/format';
+import {
+  notifyPaletteSlotsChanged,
+  placeInDenseList,
+  type PaletteSlot,
+  type PaletteSlotHost,
+} from '@components/palette-slots';
+import { DenseSlotTaps } from '@components/palette-slot-tiles';
 
 // ============================================================================
 // Types and Constants
@@ -101,6 +108,9 @@ const COMPARISON_TIER_COLORS_DARK = ['#5bbd68', '#8bc34a', '#ffc107', '#f4645a']
 const COMPARISON_TIER_COLORS_LIGHT = ['#137A33', '#1C7D3A', '#B45309', '#B91C1C'] as const;
 const TIER_KEYS = ['tierSame', 'tierClose', 'tierNear', 'tierFar'] as const;
 
+/** The comparison holds at most this many dyes; the palette always sees this many slots. */
+const MAX_DYES = 4;
+
 /**
  * Default comparison options
  */
@@ -124,7 +134,10 @@ const DEFAULT_OPTIONS: ComparisonOptions = {
  *
  * Compares up to 4 selected dyes with visual charts and distance analysis.
  */
-export class ComparisonTool extends BaseComponent {
+export class ComparisonTool extends BaseComponent implements PaletteSlotHost {
+  readonly paletteSlotMode = 'multi' as const;
+  readonly paletteSlotsDense = true;
+
   private options: ComparisonToolOptions;
 
   // State
@@ -170,6 +183,16 @@ export class ComparisonTool extends BaseComponent {
   /** Export + Share row — lives outside the single-dye section so the duel
    *  (2–4 dyes) keeps both actions reachable */
   private actionsRow: HTMLElement | null = null;
+
+  // Palette slot taps: the four empty-state placeholders and the Add dye tile
+  private readonly slotTaps = new DenseSlotTaps(
+    'comparison.addDye',
+    MAX_DYES,
+    () => this.selectedDyes.length,
+    'comparison-add-dye-tile'
+  );
+  /** The slot the palette is targeting; drawn state only, set by setPaletteTarget */
+  private paletteTarget: number | null = null;
 
   // Subscriptions
   private marketBoardEventCleanup: (() => void) | null = null;
@@ -1017,6 +1040,14 @@ export class ComparisonTool extends BaseComponent {
     this.duelSection.appendChild(this.duelContainer);
     contentWrapper.appendChild(this.duelSection);
 
+    // One "Add dye" tile after the cards while 1-3 dyes are held (the
+    // placeholders cover zero). slotTaps.sync fills it.
+    const tileRow = this.createElement('div', {
+      attributes: { style: 'display: none; justify-content: center; margin: 16px 0;' },
+    });
+    this.slotTaps.tileRow = tileRow;
+    contentWrapper.appendChild(tileRow);
+
     // Append wrapper to right panel
     right.appendChild(contentWrapper);
   }
@@ -1046,7 +1077,7 @@ export class ComparisonTool extends BaseComponent {
       },
     });
 
-    // Placeholder slots section
+    // Placeholder slots section, filled only while no dye is held (slotTaps.sync)
     const slotsContainer = this.createElement('div', {
       attributes: {
         style: `
@@ -1063,81 +1094,8 @@ export class ComparisonTool extends BaseComponent {
       },
     });
 
-    // Create 4 placeholder slots
-    for (let i = 0; i < 4; i++) {
-      const slot = this.createElement('div', {
-        attributes: {
-          style: `
-            width: 200px;
-            height: 280px;
-            border: 2px dashed rgba(255, 255, 255, 0.2);
-            border-radius: 12px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: rgba(0, 0, 0, 0.1);
-            transition: all 0.2s ease;
-            cursor: pointer;
-          `
-            .replace(/\s+/g, ' ')
-            .trim(),
-        },
-      });
-
-      // Hover effect
-      this.on(slot, 'mouseenter', () => {
-        slot.style.borderColor = 'rgba(255, 255, 255, 0.35)';
-        slot.style.background = 'rgba(255, 255, 255, 0.05)';
-      });
-      this.on(slot, 'mouseleave', () => {
-        slot.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-        slot.style.background = 'rgba(0, 0, 0, 0.1)';
-      });
-
-      // Plus icon in a dashed circle
-      const iconContainer = this.createElement('div', {
-        attributes: {
-          style: `
-            width: 48px;
-            height: 48px;
-            border: 2px dashed rgba(255, 255, 255, 0.25);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 12px;
-          `
-            .replace(/\s+/g, ' ')
-            .trim(),
-        },
-      });
-
-      iconContainer.innerHTML = `
-        <svg viewBox="0 0 24 24" fill="var(--theme-text-muted)" style="width: 24px; height: 24px; opacity: 0.4;">
-          <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
-        </svg>
-      `;
-
-      // "Add Dye" text
-      const text = this.createElement('span', {
-        textContent: LanguageService.t('comparison.addDye'),
-        attributes: {
-          style: `
-            font-size: 0.85rem;
-            color: var(--theme-text-muted);
-            opacity: 0.6;
-          `
-            .replace(/\s+/g, ' ')
-            .trim(),
-        },
-      });
-
-      slot.appendChild(iconContainer);
-      slot.appendChild(text);
-      slotsContainer.appendChild(slot);
-    }
-
+    this.slotTaps.placeholders = slotsContainer;
+    this.slotTaps.sync(this.paletteTarget);
     container.appendChild(slotsContainer);
 
     // Empty state message
@@ -1207,6 +1165,7 @@ export class ComparisonTool extends BaseComponent {
     const hasEnoughForAnalysis = count >= 2;
 
     this.showEmptyState(count === 0);
+    this.slotTaps.sync(this.paletteTarget);
 
     // Export + Share stay reachable for any loaded selection (1–4 dyes)
     if (this.actionsRow) {
@@ -2100,6 +2059,7 @@ export class ComparisonTool extends BaseComponent {
     this.updateDrawerSelectedDyesDisplay();
     this.updateResults();
     this.saveSelectedDyes();
+    notifyPaletteSlotsChanged(this.container);
   }
 
   /**
@@ -2438,6 +2398,7 @@ export class ComparisonTool extends BaseComponent {
     this.updateResults();
     this.updateDrawerSelectedDyesDisplay();
     this.updateShareButton(); // Disable share button when dyes are cleared
+    notifyPaletteSlotsChanged(this.container);
   }
 
   /**
@@ -2475,6 +2436,46 @@ export class ComparisonTool extends BaseComponent {
     this.updateResults();
     this.updateShareButton(); // Update share button with new dye selection
     void this.fetchAndUpdatePrices();
+    notifyPaletteSlotsChanged(this.container);
+  }
+
+  // ============================================================================
+  // Palette slot contract (PaletteSlotHost)
+  // ============================================================================
+
+  /** Always four slots, the held dyes first (a dense list). */
+  getPaletteSlots(): PaletteSlot[] {
+    return this.slotTaps.slots(this.selectedDyes);
+  }
+
+  /** Put `dye` at `index` of the dense list; placeInDenseList has the rules. */
+  placeDyeAt(index: number, dye: Dye): void {
+    const next = placeInDenseList(this.selectedDyes, index, dye, MAX_DYES);
+    if (next) this.commitSelection(next);
+  }
+
+  /** Remove the dye at `index`; later dyes move up, as the Remove button does. */
+  removeDyeAt(index: number): void {
+    const dye = this.selectedDyes[index];
+    if (dye) this.removeDye(dye);
+  }
+
+  setPaletteTarget(index: number | null): void {
+    this.paletteTarget = index;
+    this.slotTaps.sync(index);
+  }
+
+  /** Adopt a new selection from a palette placement and redraw everything. */
+  private commitSelection(dyes: Dye[]): void {
+    this.selectedDyes = dyes;
+    this.dyeSelector?.setSelectedDyes(dyes);
+    this.drawerDyeSelector?.setSelectedDyes(dyes);
+    this.saveSelectedDyes();
+    this.updateSelectedDyesDisplay();
+    this.updateDrawerSelectedDyesDisplay();
+    this.updateResults();
+    void this.fetchAndUpdatePrices();
+    notifyPaletteSlotsChanged(this.container);
   }
 
   /**

@@ -91,7 +91,18 @@ const BUNDLE_LIMITS = [
   // 215 KB. The About dialog's POLICIES row (Privacy / Terms links, 2026-09-16)
   // then put it at 215.67 KB. Re-budgeted for that measured growth; it is not
   // headroom for more -- the next shell feature trims or splits something.
-  { label: 'layout shell', pattern: /^v4-layout-/, limit: 218 * KB },
+  // 2026-11-13 re-budgets it to 228 KB for slot-aware picking (issue 422): the
+  // shell tracks the palette target, the palette gained held-dye marks, the
+  // slot strip and the header line, and the layout routes picks by slot. It
+  // went from 217.39 KB to 225.96 KB, 225.83 KB after trimming the new code
+  // (the limit is that rounded up plus 2 KB), and measured 226.23 KB once the
+  // branch was finished.
+  // 2026-11-13 (web app 5.18.1) brings it down to 200 KB. Production builds now
+  // collapse the indentation inside Lit templates (vite-plugin-minify-templates),
+  // and the shell, which is nearly all Lit, measured 188.34 KB with the same
+  // source. 200 KB is the limit it had before the 5.0 shell features; the
+  // 11.66 KB between is room for the open shell PRs, not a target.
+  { label: 'layout shell', pattern: /^v4-layout-/, limit: 200 * KB },
   // Named `modals` by vite.config's manualChunks, but that is not what it holds.
   // Rolldown ignored 34 of the 51 assignments manualChunks returned and merged
   // the shared colour engine into this chunk -- ColorConverter, ColorService,
@@ -208,6 +219,19 @@ const LOCALE_CHUNK_LIMIT = 95 * KB;
  * was left), and the Glamour Reader's three chunks (~52 KB) put the payload
  * 649 B over 2200 KB. Every one of them loads on demand, so first paint does
  * not pay for it. The next tool or data table trims something first.
+ *
+ * 2026-11-13 (web app 5.18.0) raises it to 2252 KB. Slot-aware dye picking put
+ * the payload 7.70 KB over 2250 KB. The branch was trimmed first (shared
+ * dense-list slot taps and palette dispatches: 2257.70 -> 2251.77 KB); the
+ * remaining 1.77 KB is indentation inside Lit templates, so the limit rises by
+ * 2 KB for that remainder only. Minifying template whitespace at build time is
+ * the proposed follow-up that would let it come back down.
+ *
+ * 2026-11-13 (web app 5.18.1) is that follow-up, and the limit is 2250 KB
+ * again. vite-plugin-minify-templates collapses the whitespace inside Lit
+ * `html`, `svg` and `css` templates at build time: the payload went from
+ * 2251.71 KB to 2186.67 KB with no source change. The 63 KB that opened up is
+ * what the next tools spend; it is not a reason to stop trimming first.
  */
 const PAYLOAD_JS_LIMIT = 2250 * KB;
 

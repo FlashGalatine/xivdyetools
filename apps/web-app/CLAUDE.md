@@ -247,6 +247,22 @@ There is **no service worker** — the app has no offline cache. (The v3 `servic
 | `changelogParser` | `vite-plugin-changelog-parser.ts` | Parses `CHANGELOG-laymans.md` into the `virtual:changelog` module the What's New modal imports. The module is **bounded in bytes** (`boundChangelog`, 36 KB of JSON, newest first, never fewer than ten releases) because its chunk is gated in bytes (`check-bundle-size.js`, 40 KB); `olderReleases` tells the modal to link the full file. Do not swap the bound back to a release count — the two units never agree |
 | `coreJsonCompatibility` | `vite-plugin-core-json.ts` | Client-only `vite dev` bridge for native JSON import attributes in two compiled Core modules; preserves Node packages and production chunking |
 | `betaBranding` | `vite-plugin-beta-branding.ts` | `VITE_APP_ENV=beta` only: `[BETA]` title, beta icon set, `__APP_ENV__` define, `X-Robots-Tag: noindex` on `dist/_headers`. Inert without the flag |
+| `minifyTemplatesPlugin` | `vite-plugin-minify-templates.ts` | Build only: collapses whitespace inside Lit `html` / `svg` / `css` tagged templates, which the minifier leaves as written (payload 2251.71 KB to 2186.67 KB, layout shell 226.23 KB to 188.34 KB on 2026-11-13). No dependency: Vite's own `parseAst` finds the templates, and the source map is written by hand |
+
+**What the template minifier does to a template you write.** In `html` and `svg`, a whitespace run in
+text becomes one character (a newline if it held one, otherwise a space) and a run between attributes
+becomes one space; it is never removed, because a space between inline elements shows. In `css`, a
+run becomes one space and goes entirely beside `{`, `}` and `;`, and a comment with whitespace beside
+it goes too. It leaves alone: `${...}` expressions, attribute values, HTML comments, the contents of
+`<pre>`, `<textarea>`, `<script>`, `<style>` and `<title>`, CSS strings, and any template containing a
+backslash. It only reads tags imported from `lit`, so untagged template strings (the `innerHTML`
+templates in the tool components, about 8 KB of whitespace) ship as written.
+
+It cannot see CSS that is applied from elsewhere. **Text inside an element styled `white-space: pre`
+or `pre-wrap` must come from an `${expression}` or sit in a `<pre>`**, or the build will change how it
+looks; `pre-line` is safe (line breaks survive). `vite dev` and vitest never run the plugin, so a
+template problem shows only in a production build: run the Playwright suite against one with
+`npm run build`, then `E2E_SERVER=preview npx playwright test --project=chromium` (port 4173).
 
 Core retains JSON import attributes for native Node. The dev bridge uses Vite's existing
 `transformWithEsbuild` with both import-attribute/assertion syntax disabled and `esnext` output.
@@ -272,7 +288,7 @@ Production builds and SSR do not apply it.
 
 ## Build & Bundle Notes
 
-- `npm run build:check` runs `vite build` then `scripts/check-bundle-size.js`, which enforces per-bundle byte ceilings (e.g. CSS ≤ 105 KB, main entry ≤ 150 KB raw, layout shell ≤ 218 KB). CI fails if a chunk grows past its budget. The `.chara` inspection worker chunk has its own named row (35 KB; it measured 30 KB, 11 KB gzipped, at 5.16.0): a new limit for a new chunk, not a raised one. If it grows, the worker has started importing something beyond `@xivdyetools/core/chara` (usually the core barrel, which drags the whole library in) or has started shipping palette JSON; fix the import, don't raise the row.
+- `npm run build:check` runs `vite build` then `scripts/check-bundle-size.js`, which enforces per-bundle byte ceilings (e.g. CSS ≤ 105 KB, main entry ≤ 150 KB raw, layout shell ≤ 200 KB; the one-locale JS payload ≤ 2250 KB, at 2186.67 KB since the template minifier in 5.18.1). CI fails if a chunk grows past its budget. The `.chara` inspection worker chunk has its own named row (35 KB; it measured 30 KB, 11 KB gzipped, at 5.16.0): a new limit for a new chunk, not a raised one. If it grows, the worker has started importing something beyond `@xivdyetools/core/chara` (usually the core barrel, which drags the whole library in) or has started shipping palette JSON; fix the import, don't raise the row.
 - **Fonts are a contract, not a per-file choice.** All three faces are self-hosted woff2 in `public/fonts/` (Space Grotesk display, Onest body, Fragment Mono numeric/mono — matching `FONTS` in `packages/svg`). The `@font-face` blocks and the `--font-display` / `--font-body` / `--font-mono` / `--font-cjk` variables in `src/styles/globals.css` are the **single** declaration site; `tailwind.config.js` points its `sans`/`mono` families at the same variables; the `.number` rule (Fragment Mono + tabular figures) lives in `src/styles/tool-content.css`, which is loaded both page-side and inside the layout shell's shadow root. Nothing else should name a family — that is how four sources ended up disagreeing before `REFACTOR-002`. There is no runtime Google Fonts request, and the CSP's `font-src` is `'self'` only. `--font-cjk` names locally-installed CJK families (nothing is downloaded) so ja/ko/zh rendering is a decision rather than an OS accident. The web app renders no SVG-to-PNG of its own; the Noto Sans JP/SC/KR subsets used for card rasterization live in `apps/discord-worker/src/fonts/` and `apps/og-worker/src/fonts/` (`@xivdyetools/svg` ships no font files — it only names the stacks in `FONTS`).
 - `src/index.html` is the Vite entry; `vite.config.ts` sets `root: 'src'` and `outDir: '../dist'`.
 - Tailwind v4 is compiled inside Vite by `@tailwindcss/postcss` (`postcss.config.js`) from `src/styles/tailwind.css` (`@import "tailwindcss" source("../")` + `@config "../../tailwind.config.js"`); there is no separate CSS build step and no committed CSS output. **The class scan is rooted at `src/`**, so a class written anywhere else (`public/`, `functions/`, a changelog, a script) generates nothing. Without `source()` the base was Vite's cwd: the scan read `CHANGELOG.md` and shipped about 2.5 KB of dead utilities, and a checkout under `.turbo/` (or any folder on Tailwind's ignored-dir list, such as `.next` or `.vercel`) turned off the scanner's ignore rules, pulled in `node_modules`, `dist` and `.git`, and pushed the index CSS past its 105 KB budget on a local `build:check` while CI passed.

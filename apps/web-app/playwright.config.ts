@@ -11,7 +11,16 @@ import { defineConfig, devices } from '@playwright/test';
  * - chromium: Standard E2E tests (fast)
  * - chromium-coverage: E2E tests with V8 coverage collection
  * - mobile-chrome: Mobile viewport tests
+ *
+ * E2E_SERVER=preview runs the suite against the PRODUCTION build served by
+ * `vite preview` (run `npm run build` first) instead of the dev server. Build
+ * plugins that are `apply: 'build'` (the Lit template whitespace minifier,
+ * async CSS) and the minifier itself are only exercised this way. It uses its
+ * own port so a dev server already on 5173 is never mistaken for it.
  */
+const usePreview = process.env.E2E_SERVER === 'preview';
+const baseURL = usePreview ? 'http://localhost:4173' : 'http://localhost:5173';
+
 export default defineConfig({
   // Test directory
   testDir: './e2e',
@@ -37,7 +46,7 @@ export default defineConfig({
   // Shared settings for all projects
   use: {
     // Base URL for navigation
-    baseURL: 'http://localhost:5173',
+    baseURL,
 
     // Collect trace when retrying the failed test
     trace: 'on-first-retry',
@@ -78,8 +87,8 @@ export default defineConfig({
 
   // Run your local dev server before starting the tests
   webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:5173',
+    command: usePreview ? 'npm run preview -- --port 4173 --strictPort' : 'npm run dev',
+    url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
   },

@@ -1189,4 +1189,269 @@ describe('ComparisonTool', () => {
       expect(shareButton().shareParams.dyes).toEqual([mockDyes[0].stainID]);
     });
   });
+
+  // ==========================================================================
+  // Palette slot contract: four dense slots, placeholders and the Add dye tile
+  // open the palette, and every change tells the layout.
+  // ==========================================================================
+
+  describe('palette slots', () => {
+    beforeEach(resetStorageReads);
+
+    const [A, B, C, D, E] = mockDyes;
+
+    /** Mounted as the v4 shell mounts it: one element as both panels. */
+    const mount = (dyes: (typeof mockDyes)[number][] = []): HTMLElement => {
+      const panel = document.createElement('div');
+      container.appendChild(panel);
+      tool = new ComparisonTool(container, {
+        leftPanel: panel,
+        rightPanel: panel,
+        drawerContent: null,
+      });
+      tool.init();
+      for (const dye of dyes) tool.addDye(dye);
+      return panel;
+    };
+
+    const heldIds = (): (number | null)[] => tool!.getPaletteSlots().map((s) => s.dye?.id ?? null);
+
+    /** Visible slot-tap buttons, in DOM order. */
+    const visibleSlotButtons = (panel: HTMLElement): HTMLElement[] =>
+      [...panel.querySelectorAll<HTMLElement>('[data-palette-slot]')].filter(
+        (el) => !isHiddenWithin(el, panel)
+      );
+
+    const openRequests = (): Array<{ slot?: number }> => {
+      const details: Array<{ slot?: number }> = [];
+      container.addEventListener('open-palette-drawer', (e) =>
+        details.push((e as CustomEvent<{ slot?: number }>).detail)
+      );
+      return details;
+    };
+
+    it('getPaletteSlots always returns four slots, filled first', () => {
+      mount([A, B]);
+
+      const slots = tool!.getPaletteSlots();
+
+      expect(tool!.paletteSlotMode).toBe('multi');
+      expect(tool!.paletteSlotsDense).toBe(true);
+      expect(slots.map((s) => s.label)).toEqual(['1', '2', '3', '4']);
+      expect(slots.map((s) => s.targetLabel)).toEqual([
+        'colorPalette.choosingDyeOf: 1/4',
+        'colorPalette.choosingDyeOf: 2/4',
+        'colorPalette.choosingDyeOf: 3/4',
+        'colorPalette.choosingDyeOf: 4/4',
+      ]);
+      expect(heldIds()).toEqual([A.id, B.id, null, null]);
+    });
+
+    it('each empty-state placeholder is a button that dispatches open-palette-drawer with slot 0', () => {
+      const panel = mount();
+      const details = openRequests();
+
+      const placeholders = visibleSlotButtons(panel);
+      expect(placeholders).toHaveLength(4);
+      for (const el of placeholders) {
+        expect(el.tagName).toBe('BUTTON');
+        expect(el.getAttribute('type')).toBe('button');
+        expect(el.getAttribute('data-palette-slot')).toBe('0');
+        expect(el.textContent?.trim()).toBe('comparison.addDye');
+        el.click();
+      }
+
+      expect(details).toEqual([{ slot: 0 }, { slot: 0 }, { slot: 0 }, { slot: 0 }]);
+    });
+
+    it('shows one Add dye tile after the cards when holding 1, 2 or 3 dyes', () => {
+      const panel = mount();
+
+      for (const [dye, count] of [
+        [A, 1],
+        [B, 2],
+        [C, 3],
+      ] as const) {
+        tool!.addDye(dye);
+        const buttons = visibleSlotButtons(panel);
+        expect(buttons).toHaveLength(1);
+        const tile = buttons[0];
+        expect(tile.tagName).toBe('BUTTON');
+        expect(tile.getAttribute('type')).toBe('button');
+        expect(tile.getAttribute('data-palette-slot')).toBe(String(count));
+        expect(tile.textContent?.trim()).toBe('comparison.addDye');
+        // After every result card the tool shows
+        const cards = [...panel.querySelectorAll('v4-result-card')].filter(
+          (el) => !isHiddenWithin(el, panel)
+        );
+        expect(cards.length).toBeGreaterThan(0);
+        for (const card of cards) {
+          expect(
+            card.compareDocumentPosition(tile) & Node.DOCUMENT_POSITION_FOLLOWING
+          ).toBeTruthy();
+        }
+      }
+    });
+
+    it('shows no Add dye tile when holding 0 or 4 dyes', () => {
+      const panel = mount();
+      // Zero: only the four placeholders, all slot 0
+      expect(visibleSlotButtons(panel).map((b) => b.getAttribute('data-palette-slot'))).toEqual([
+        '0',
+        '0',
+        '0',
+        '0',
+      ]);
+      // Not even a hidden tile: the narrow-pane e2e counts four "Add Dye" texts
+      const addDyeTexts = () =>
+        [...panel.querySelectorAll('span')].filter((s) => s.textContent === 'comparison.addDye');
+      expect(addDyeTexts()).toHaveLength(4);
+
+      for (const dye of [A, B, C, D]) tool!.addDye(dye);
+      expect(addDyeTexts()).toHaveLength(0);
+
+      expect(panel.querySelectorAll('[data-palette-slot]')).toHaveLength(0);
+    });
+
+    it('drops the placeholders once a dye is held, so focus never returns to a hidden one', () => {
+      const panel = mount([A]);
+
+      expect(
+        [...panel.querySelectorAll<HTMLElement>('[data-palette-slot]')].every(
+          (el) => !isHiddenWithin(el, panel)
+        )
+      ).toBe(true);
+      expect(panel.querySelectorAll('[data-palette-slot="0"]')).toHaveLength(0);
+    });
+
+    it('the Add dye tile dispatches open-palette-drawer with the next free slot', () => {
+      const panel = mount([A, B]);
+      const details = openRequests();
+
+      visibleSlotButtons(panel)[0].click();
+
+      expect(details).toEqual([{ slot: 2 }]);
+    });
+
+    it('placeDyeAt(1, newDye) replaces the second dye and keeps order', () => {
+      mount([A, B, C]);
+
+      tool!.placeDyeAt(1, E);
+
+      expect(heldIds()).toEqual([A.id, E.id, C.id, null]);
+    });
+
+    it('placeDyeAt(0, thirdDye) swaps the first and third dyes', () => {
+      mount([A, B, C]);
+
+      tool!.placeDyeAt(0, C);
+
+      expect(heldIds()).toEqual([C.id, B.id, A.id, null]);
+    });
+
+    it('placeDyeAt(index >= count, newDye) appends', () => {
+      mount([A, B]);
+
+      tool!.placeDyeAt(3, C);
+
+      expect(heldIds()).toEqual([A.id, B.id, C.id, null]);
+    });
+
+    it('placeDyeAt(index >= count, heldDye) moves that dye to the end', () => {
+      mount([A, B, C]);
+
+      tool!.placeDyeAt(3, A);
+
+      expect(heldIds()).toEqual([B.id, C.id, A.id, null]);
+    });
+
+    it('removeDyeAt(1) removes the second dye and closes the gap', () => {
+      mount([A, B, C]);
+
+      tool!.removeDyeAt(1);
+
+      expect(heldIds()).toEqual([A.id, C.id, null, null]);
+    });
+
+    it('setPaletteTarget on the next free slot highlights the Add dye tile', () => {
+      const panel = mount([A, B]);
+      const tile = () => visibleSlotButtons(panel)[0];
+
+      tool!.setPaletteTarget(2);
+      expect(tile().style.borderColor).toContain('--theme-primary');
+
+      tool!.setPaletteTarget(0);
+      expect(tile().style.borderColor).not.toContain('--theme-primary');
+
+      tool!.setPaletteTarget(2);
+      tool!.setPaletteTarget(null);
+      expect(tile().style.borderColor).not.toContain('--theme-primary');
+    });
+
+    it('setPaletteTarget(0) with no dyes held marks all four placeholders, and null restores them', () => {
+      const panel = mount();
+      const borders = () => visibleSlotButtons(panel).map((b) => b.style.borderColor);
+
+      expect(borders()).toHaveLength(4);
+      expect(borders().every((c) => c.includes('--theme-border'))).toBe(true);
+
+      tool!.setPaletteTarget(0);
+      expect(borders().every((c) => c.includes('--theme-primary'))).toBe(true);
+
+      tool!.setPaletteTarget(null);
+      expect(borders().every((c) => c.includes('--theme-border'))).toBe(true);
+    });
+
+    it('rebuilt placeholders keep the target border', () => {
+      const panel = mount([A]);
+      tool!.setPaletteTarget(0);
+
+      tool!.removeDyeAt(0);
+
+      const borders = visibleSlotButtons(panel).map((b) => b.style.borderColor);
+      expect(borders).toHaveLength(4);
+      expect(borders.every((c) => c.includes('--theme-primary'))).toBe(true);
+    });
+
+    it('placeholders use theme tokens, not hardcoded colors', () => {
+      const panel = mount();
+
+      for (const slot of visibleSlotButtons(panel)) {
+        const style = slot.getAttribute('style') ?? '';
+        expect(style).not.toMatch(/rgba?\(/);
+        expect(slot.firstElementChild?.getAttribute('style') ?? '').not.toMatch(/rgba?\(/);
+      }
+    });
+
+    it('setPaletteTarget does not throw with no dyes held', () => {
+      mount();
+
+      expect(() => tool!.setPaletteTarget(0)).not.toThrow();
+      expect(() => tool!.setPaletteTarget(null)).not.toThrow();
+    });
+
+    it('dispatches palette-slots-changed after add, place, remove and clear', () => {
+      mount();
+      let changes = 0;
+      container.addEventListener('palette-slots-changed', () => changes++);
+
+      tool!.addDye(A);
+      expect(changes).toBe(1);
+      tool!.placeDyeAt(1, B);
+      expect(changes).toBe(2);
+      tool!.removeDyeAt(0);
+      expect(changes).toBe(3);
+      tool!.clearDyes();
+      expect(changes).toBe(4);
+    });
+
+    it('addDye still ignores a duplicate and a fifth dye', () => {
+      mount([A, B, C, D]);
+
+      tool!.addDye(A);
+      tool!.addDye(E);
+
+      expect(heldIds()).toEqual([A.id, B.id, C.id, D.id]);
+    });
+  });
 });
