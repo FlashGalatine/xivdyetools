@@ -1,5 +1,10 @@
 import { test, expect } from './fixtures/coverage';
-import { seedStartupStorage, dismissBlockingOverlays } from './fixtures/navigation';
+import {
+  seedStartupStorage,
+  dismissBlockingOverlays,
+  openOptionsPanel,
+  openPaletteDrawer,
+} from './fixtures/navigation';
 
 async function waitForGradientReady(page: Parameters<typeof test>[0]['page']): Promise<void> {
   await page.waitForLoadState('networkidle');
@@ -105,6 +110,12 @@ test.describe('Gradient Builder Tool', () => {
   });
 
   test.describe('Settings Panel', () => {
+    // The settings live in the Options column: docked and open on a desktop,
+    // closed behind the Options button at 768px and under.
+    test.beforeEach(async ({ page }) => {
+      await openOptionsPanel(page);
+    });
+
     test('should show interpolation settings', async ({ page }) => {
       // V4 uses a slider role for step count in the config sidebar
       const stepSlider = page.getByRole('slider');
@@ -129,6 +140,10 @@ test.describe('Gradient Builder Tool', () => {
   });
 
   test.describe('Display Options', () => {
+    test.beforeEach(async ({ page }) => {
+      await openOptionsPanel(page);
+    });
+
     test('should show display options panel', async ({ page }) => {
       // V4 has expandable display options sections with buttons
       const displayOptionsButton = page.getByRole('button', { expanded: true });
@@ -178,6 +193,8 @@ test.describe('Gradient Builder - Interaction Flow', () => {
   });
 
   test('should select a dye from the palette', async ({ page }) => {
+    await openPaletteDrawer(page);
+
     // Find dye buttons in the palette drawer (complementary role)
     const dyePalette = page.locator('[role="complementary"]').last();
     const dyeButtons = dyePalette.locator('button');
@@ -191,6 +208,9 @@ test.describe('Gradient Builder - Interaction Flow', () => {
   });
 
   test('should update gradient when changing step count', async ({ page }) => {
+    // Without this the guard below skipped the whole test on a phone.
+    await openOptionsPanel(page);
+
     // Find step count slider
     const stepSlider = page.getByRole('slider').first();
 
@@ -207,6 +227,8 @@ test.describe('Gradient Builder - Interaction Flow', () => {
   });
 
   test('should change color space selection', async ({ page }) => {
+    await openOptionsPanel(page);
+
     // Find color space combobox (native select element)
     const colorSpaceCombo = page.getByRole('combobox').first();
 
@@ -274,6 +296,8 @@ test.describe('Gradient Builder - Accessibility', () => {
   });
 
   test('should have proper form controls', async ({ page }) => {
+    await openOptionsPanel(page);
+
     // Check for accessible form controls
     const sliders = page.getByRole('slider');
     const switches = page.getByRole('switch');
