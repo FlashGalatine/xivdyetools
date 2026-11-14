@@ -91,6 +91,10 @@ function endOfWhitespace(text: string, from: number): number {
  * `white-space: pre-line` must keep its breaks, and a space in SVG, where the
  * SVG 1.1 text rules drop newlines before collapsing spaces, so a break plus
  * indentation between two words reads as one space and must not vanish.
+ *
+ * @testonly the string-in, string-out form the unit tests in
+ * src/__tests__/vite-plugin-minify-templates.test.ts assert the HTML and SVG
+ * rules against; the build path works on offsets, for the source map.
  */
 export function collapseHtmlWhitespace(quasis: readonly string[], inSvg = false): string[] {
   return htmlGaps(quasis, inSvg).map((gaps, index) => applyGaps(quasis[index], gaps));
@@ -235,6 +239,10 @@ function htmlGaps(quasis: readonly string[], inSvg: boolean): Gap[][] {
  * grammar gives it meaning. It stays beside `:` (`a :hover` is not `a:hover`),
  * beside `+` and `-` (`calc(1px + 2px)`), and beside an expression, whose value
  * this cannot see.
+ *
+ * @testonly the string-in, string-out form the unit tests in
+ * src/__tests__/vite-plugin-minify-templates.test.ts assert the stylesheet
+ * rules against; the build path works on offsets, for the source map.
  */
 export function collapseCssWhitespace(quasis: readonly string[]): string[] {
   return cssGaps(quasis).map((gaps, index) => applyGaps(quasis[index], gaps));
