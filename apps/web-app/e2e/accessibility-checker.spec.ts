@@ -5,6 +5,8 @@ import {
   seedStartupStorage,
   dismissBlockingOverlays,
   closePaletteDrawer,
+  openOptionsPanel,
+  openPaletteDrawer,
 } from './fixtures/navigation';
 
 /**
@@ -49,6 +51,9 @@ test.describe('Accessibility Checker Tool', () => {
 
     await page.goto('/');
     await navigateToAccessibilityTool(page);
+    // The vision types live in the Options column: docked and open on a
+    // desktop, closed behind the Options button at 768px and under.
+    await openOptionsPanel(page);
   });
 
   test.describe('Tool Loading', () => {
@@ -176,29 +181,39 @@ test.describe('Accessibility Checker - Color Palette', () => {
     await navigateToAccessibilityTool(page);
   });
 
-  test('should have color palette drawer visible', async ({ page }) => {
-    // Look for the color palette section
-    const colorPalette = page.getByText('Color Palette').first();
-    await expect(colorPalette).toBeVisible();
+  test.describe('docked on a desktop', () => {
+    // A statement about the desktop layout only: at 768px and under the
+    // palette starts closed on purpose (it would cover the tool), so this is
+    // pinned to a desktop viewport and runs the same in every project.
+    test.use({ viewport: { width: 1280, height: 720 }, isMobile: false, hasTouch: false });
+
+    test('should have color palette drawer visible', async ({ page }) => {
+      // No helper here: the palette is open on load, with nothing tapped.
+      const colorPalette = page.getByText('Color Palette').first();
+      await expect(colorPalette).toBeVisible();
+    });
   });
 
   test('should display dye categories in palette', async ({ page }) => {
+    await openPaletteDrawer(page);
+
     // Look for dye categories (Neutral, Reds, Browns, etc.)
     const neutralCategory = page.getByText('Neutral').first();
     await expect(neutralCategory).toBeVisible();
   });
 
   test('should select a dye from palette', async ({ page }) => {
-    // Click on a specific dye (Snow White is typically visible)
+    await openPaletteDrawer(page);
+
+    // Click on a specific dye
     const snowWhiteDye = page.locator('[aria-label*="Snow White"]').first();
+    await expect(snowWhiteDye).toBeVisible();
+    await snowWhiteDye.click();
 
-    if ((await snowWhiteDye.count()) > 0) {
-      await snowWhiteDye.click();
-      await page.waitForTimeout(500);
-
-      // The main content area should update (looking for any result display)
-      // After selecting a dye, some analysis content should appear
-    }
+    // The pick reaches the tool: it is stored as the tool's selection.
+    await expect
+      .poll(() => page.evaluate(() => localStorage.getItem('v3_accessibility_selected_dyes')))
+      .toMatch(/\d/);
   });
 });
 

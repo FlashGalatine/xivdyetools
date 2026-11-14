@@ -19,7 +19,7 @@
  */
 
 import { readFileSync } from 'node:fs';
-import type { Locator, Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 /** Route path per tool id (mirrors ROUTES in services/router-service). */
 const TOOL_PATHS: Record<string, string> = {
@@ -149,6 +149,36 @@ export async function closePaletteDrawer(page: Page): Promise<void> {
   if ((await overlay.count()) === 0) return;
   await overlay.first().click({ position: { x: 8, y: 8 } });
   await overlay.first().waitFor({ state: 'detached' }).catch(() => undefined);
+}
+
+/**
+ * Make the tool's Options column usable, whatever the shell's default is.
+ *
+ * Above 768px the column is docked and open on load, so this is a no-op. At
+ * 768px and under it starts closed (`collapsed`, parked off-screen with
+ * `visibility: hidden`, so role and text locators find nothing in it) and the
+ * bottom-left Options button is the way in, as it is for a person on a phone.
+ * `aria-expanded` on that button is the shell's own statement of which it is.
+ */
+export async function openOptionsPanel(page: Page): Promise<void> {
+  const toggle = page.locator('.v4-options-toggle');
+  if ((await toggle.getAttribute('aria-expanded')) !== 'true') {
+    await toggle.click();
+  }
+  await expect(page.locator('v4-config-sidebar')).not.toHaveAttribute('collapsed');
+}
+
+/**
+ * Make the Color Palette usable, whatever the shell's default is: docked and
+ * open above 768px (a no-op), closed behind the bottom-right palette button at
+ * 768px and under, where `dye-palette-drawer` is `display: none` until opened.
+ */
+export async function openPaletteDrawer(page: Page): Promise<void> {
+  const toggle = page.locator('.v4-palette-toggle');
+  if ((await toggle.getAttribute('aria-expanded')) !== 'true') {
+    await toggle.click();
+  }
+  await expect(page.locator('dye-palette-drawer')).toHaveAttribute('is-open');
 }
 
 /**

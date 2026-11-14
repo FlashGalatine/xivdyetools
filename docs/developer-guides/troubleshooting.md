@@ -51,7 +51,11 @@ CI pins `--concurrency=3` for this reason. If you change that, expect wide sweep
 
 ### Playwright `mobile-chrome` project is red
 
-Pre-existing, not caused by your change. The Chromium project is the one that gates.
+It was green on 2026-11-13 (252 of 252), so a red run is no longer pre-existing: read the
+failure. The usual cause is a test reaching for a control in the Options column or the Color
+Palette, which both start closed at 768px and under; open them first with `openOptionsPanel` /
+`openPaletteDrawer` from `apps/web-app/e2e/fixtures/navigation.ts`. CI still runs the Chromium
+project only, so run `npm run test:e2e:mobile` yourself after touching a spec or the shell.
 
 ---
 
