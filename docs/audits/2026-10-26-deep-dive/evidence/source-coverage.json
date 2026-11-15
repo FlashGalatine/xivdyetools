@@ -1,0 +1,7 @@
+{
+  "scope": "tracked non-test TS/JS/Python/SQL executable/declaration/config source in apps, packages, scripts; test helpers and fixtures excluded; CSS/HTML/data additionally listed in reviewer ledgers",
+  "files": 650,
+  "original_lines": 169904,
+  "covered": 650,
+  "missing": []
+}

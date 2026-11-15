@@ -33,7 +33,7 @@ import type { EmbedData } from './types.js';
 // Types
 // ============================================================================
 
-/** @internal Reference constant — not required by external consumers. */
+/** Reference constant for the supported command choices. */
 /**
  * The harmony types the bot serves.
  *

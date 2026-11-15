@@ -2,7 +2,7 @@
 
 > Dies ist eine zur Verständlichkeit bereitgestellte Übersetzung. Maßgeblich ist die englische Fassung; weichen beide voneinander ab, gilt die englische Fassung. [Englisch](TERMS_OF_SERVICE.md)
 
-**Zuletzt aktualisiert:** 2026-10-28 · Gilt für **xivdyetools.app** und **beta.xivdyetools.app**. Wie
+**Zuletzt aktualisiert:** 2026-11-01 · Gilt für **xivdyetools.app** und **beta.xivdyetools.app**. Wie
 wir mit deinen Daten umgehen, ist ein eigenes Dokument: [`PRIVACY.md`](PRIVACY.de.md). Der
 Discord-Bot hat eigene Bedingungen:
 [`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.de.md).
@@ -31,8 +31,10 @@ Community-Vorlagen einzureichen, zu bearbeiten oder darüber abzustimmen.
 - Die Anmeldung läuft über Discord oder XIVAuth. Wir sehen oder speichern niemals ein Passwort.
 - Die Anmeldung legt einen Kontodatensatz mit deiner Anbieter-ID und einem Namen an. Bei Discord
   ist der Name dein Anzeigename oder, wenn du keinen hast, dein Benutzername. Bei XIVAuth ist der Name der Name deines verifizierten
-  Charakters oder "XIVAuth User", gefolgt von den ersten 8 Zeichen deiner XIVAuth-ID, wenn bei
-  deiner Anmeldung kein verifizierter Charakter verfügbar ist, wie in den Datenschutzhinweisen
+  Charakters oder "XIVAuth User", gefolgt von den ersten 8 Zeichen deiner XIVAuth-ID, wenn du bei
+  deiner Anmeldung keinen verifizierten Charakter hast. Kann XIVAuth deine Charaktere bei deiner
+  Anmeldung nicht liefern, bleibt der bereits in deinem Konto hinterlegte Name bestehen (ein neues
+  Konto erhält denselben "XIVAuth User"-Namen), wie in den Datenschutzhinweisen
   beschrieben. Ist dein XIVAuth-Konto mit Discord verknüpft, enthält der Datensatz
   zusätzlich diese Discord-Benutzer-ID. Der Name im Datensatz wird als Autor jeder
   Vorlage angezeigt, die du veröffentlichst.

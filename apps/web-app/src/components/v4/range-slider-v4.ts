@@ -133,7 +133,7 @@ export class RangeSliderV4 extends BaseLitComponent {
       .slider-value {
         font-size: 13px;
         font-weight: 600;
-        color: var(--theme-primary, #d4af37);
+        color: var(--theme-primary);
         font-family: 'Consolas', 'Monaco', monospace;
         min-width: 40px;
         text-align: right;
@@ -178,7 +178,7 @@ export class RangeSliderV4 extends BaseLitComponent {
         appearance: none;
         width: 18px;
         height: 18px;
-        background: var(--theme-primary, #d4af37);
+        background: var(--theme-primary);
         border-radius: 50%;
         cursor: pointer;
         margin-top: -6px;
@@ -191,7 +191,7 @@ export class RangeSliderV4 extends BaseLitComponent {
       .slider-input::-moz-range-thumb {
         width: 18px;
         height: 18px;
-        background: var(--theme-primary, #d4af37);
+        background: var(--theme-primary);
         border-radius: 50%;
         cursor: pointer;
         border: none;
@@ -227,12 +227,12 @@ export class RangeSliderV4 extends BaseLitComponent {
       }
 
       .slider-input:focus-visible::-webkit-slider-thumb {
-        outline: 2px solid var(--theme-primary, #d4af37);
+        outline: 2px solid var(--theme-primary);
         outline-offset: 3px;
       }
 
       .slider-input:focus-visible::-moz-range-thumb {
-        outline: 2px solid var(--theme-primary, #d4af37);
+        outline: 2px solid var(--theme-primary);
         outline-offset: 3px;
       }
 
@@ -241,7 +241,7 @@ export class RangeSliderV4 extends BaseLitComponent {
         position: absolute;
         left: 0;
         height: 6px;
-        background: var(--theme-primary, #d4af37);
+        background: var(--theme-primary);
         border-radius: 3px 0 0 3px;
         pointer-events: none;
         z-index: 1;

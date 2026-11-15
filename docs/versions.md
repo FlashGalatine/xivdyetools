@@ -26,13 +26,13 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.16.4 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v5.9.7 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
+| **Web Application** | v5.17.0 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Discord Bot** | v5.9.9 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.5 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.9.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
-| **OAuth Worker** | v3.2.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
+| **OAuth Worker** | v3.2.2 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.8.2 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
-| **Public REST API** | v0.21.1 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
+| **Public REST API** | v0.21.2 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
 | **OpenGraph Worker** | v2.12.2 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.3.4 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
@@ -127,6 +127,18 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.17.0 | Nov 2026 | The Glamour Reader's Glamour list sheet gains an Abridged toggle (off by default, remembered on the device) for the shorter social-media form: no header, the whole `Slot: Name` line bold, one `Dyes:` line if the piece wears a dye and an `Obtained:` line cut to the best source — every dungeon, trial or raid at the lowest difficulty (a map dungeon loses to any other source), else the craft, else a Gil vendor with its price, else another vendor without its currency, else the line as written. Preview, fields, Copy list and Save .md follow it (`glamour-equipment-abridged.md`); a line typed in Abridged is kept apart, and a full-list edit carries over until typed over. Each row also gets its own include switch (both forms): a piece switched off is dimmed and left out of the preview, counts, Copy list and Save .md until the page reloads (never stored); Reset all turns the outfit's pieces back on, and with all off Copy list and Save .md disable. The full list, the API and the `/glamour` bot are unchanged. CI's always-run step runs `glamour-abridged.test.ts` |
+| v5.16.15 | Nov 2026 | The Dye Mixer's result slot glows in the theme's accent instead of the gold of the retired themes, and the 33 `var(--theme-primary, #d4af37)` fallbacks that could never paint are gone, so no non-test source names that gold any more. The theme-token contract test now checks every source, not only hover rules. The one-locale payload shrinks by 362 bytes and stays at 99.3% of its budget |
+| v5.16.14 | Nov 2026 | A hovered toggle that is on and the palette drawer's Apply and Random buttons stop turning gold: `--theme-primary-hover` is declared at last, from each palette's own hover accent (`#B01C1C` on Light, `#FF6257` on Dark), the palette's Apply button and active filter chips get a readable label (`--theme-text-on-primary`, white on Light), and a new contract test fails any `--theme-*` token the app reads but nothing declares |
+| v5.16.13 | Nov 2026 | The Dye Mixer and Gradient Builder fit a narrow pane: the Mixer's field stops needing 348 px (its cells narrow, then its row names move above their cells, all 30 from a 769 px window), both tools' side padding gives way and their results headers wrap, and the Gradient's endpoint cards stack. That ends 217 px of sideways scrolling at 769 px and the same bug's 24 px on a 390 px phone. The tools' geometry is unchanged at 1,042 px and wider, apart from one invisible box in each results header |
+| v5.16.12 | Nov 2026 | More narrow-pane fixes: a result card's menu narrows and its submenus overlap it so that all of them stay inside the pane (also on phones), Harmony's pucks follow a small wheel down to 24 px and keep 42 px on phones from 320 px, Comparison's "What actually differs" rows wrap, and the Swatch Matcher's side padding gives way (8 columns from an 884 px window, down from 972 px), a keyboard pick keeps the focused cell on screen, and closing a panel keeps revealed results in view. |
+| v5.16.11 | Nov 2026 | Harmony, Comparison and Accessibility fit a narrow pane: the wheel, result cards, pair chips, empty-state slots and vision tabs shrink instead of hanging off the pane's left, and Accessibility's share row and the header rows wrap, which also ends a phone's 139 px of sideways scrolling. Geometry is unchanged at 1440 px and wider |
+| v5.16.10 | Nov 2026 | The Swatch Matcher fits a narrow pane: the grid panel stays inside the pane and scrolls sideways inside itself if even the grid does not fit, and the matches wrap under it below 190 px of room, following the pane rather than the window. A phone can reach the grid's first column, and a grid pick, or a palette pick in a desktop window, brings its results into view where they sit under the grid. In English, geometry is unchanged at 1536 px and wider, and at 1440 px on the palettes without a Dark/Light toggle; longer languages stack sooner, up to about 1,680 px |
+| v5.16.9 | Nov 2026 | The Color Palette has no sideways scrollbar: a hidden dye tooltip centered on a last-column swatch counted as scrollable overflow. Tooltips in the outer columns now grow inward from their swatch's edge, so they are no longer cut off at the sides on hover either, and near the panel's top edge a tooltip opens below its swatch |
+| v5.16.8 | Nov 2026 | Documents and the sign-in note only — the Privacy Guide, Terms and `preset.privacyNote` in all six languages now say that when XIVAuth cannot return the characters, the name already on the account stays and a new account gets the `XIVAuth User` name, matching oauth 3.2.2 |
+| v5.16.7 | Nov 2026 | The tutorial spotlight cancels its pending delays (a step's tooltip render, the skip past a missing target, the fade-in and fade-out) when the step changes, the tour ends or it is destroyed; the render that ran after jsdom teardown failed the web-app test task with every test green |
+| v5.16.6 | Nov 2026 | Tailwind's class scan is rooted at `src/`: about 2.5 KB of dead utilities seeded by the changelog no longer ship (index CSS 55.6 → 53.1 KB), and a local `build:check` under `.turbo/` measures the same CSS as CI |
+| v5.16.5 | Nov 2026 | Main content scrolls at the pane edge, or the window edge when the palette is closed; tool wrappers grow naturally so long content remains reachable on desktop, mobile and in print (#368) |
 | v5.16.4 | Oct 2026 | Generic character-save names, named CSP connection hosts, validated previews/character replies and six-language privacy/Terms corrections |
 | v5.16.3 | Oct 2026 | Six-language identity-review, particular-ban continuity and recovery-retention privacy disclosures |
 | v5.16.2 | Oct 2026 | Six-language privacy alignment for preset metadata moderation, safe link snapshots and attempt/refund accounting |
@@ -214,6 +226,8 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.9.9 | Nov 2026 | Documents only — the Privacy Policy's Author name row in all six languages now says that when XIVAuth cannot return the characters, the name already on the account stays and a new account gets the `XIVAuth User` name, matching oauth 3.2.2. No discord-worker source changed; the production deploy's `register-commands` step re-registers an unchanged roster |
+| v5.9.8 | Nov 2026 | Documents only — the Privacy Policy in all six languages now covers every web sign-in, not only XIVAuth: each sign-in replaces the author name on the presets under that account with the name from that sign-in (not while a ban is active), bot-submitted ones included for a Discord or linked XIVAuth sign-in. No discord-worker source changed |
 | v5.9.7 | Oct 2026 | A-DISCORD: one-request favorite lists, bounded/checkable delivery, localized choices/clan labels, byte-only attachments, preview attribution removal and native request guards; bot-logic 4.12.0 locale companion must publish first |
 | v5.9.6 | Oct 2026 | Six-language identity-review, particular-ban continuity and recovery-retention privacy disclosures |
 | v5.9.5 | Oct 2026 | Complete path-only preset reviews and Revert targets; six-language privacy alignment for optional metadata moderation and attempt/refund accounting |
@@ -289,6 +303,8 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v3.2.2 | Nov 2026 | A failed XIVAuth roster fetch (non-OK status, thrown error or timeout, or a body that is not a JSON array) no longer overwrites an existing user's stored name with `XIVAuth User <id8>`, so the web app's author refresh no longer rewrites their presets to it; `global_name` stays `null`, the token's `username` carries the stored name, a delivered roster with no usable verified character still gives the fallback, and so does a brand-new user with a failed fetch |
+| v3.2.1 | Nov 2026 | XIVAuth sign-in reads a character's verification from `verified_at`, the field the `character` scope actually sends, instead of the `verified` boolean that XIVAuth emits only for `character:manage` — a verified character's name now becomes `username` / `global_name` as documented, instead of every sign-in falling back to `XIVAuth User <id8>`; a contradictory, blank or unparseable entry still fails closed |
 | v3.2.0 | Oct 2026 | Private stored-identity/session provider and inactive identity-transition preparation; migration required before deployment; state HMAC input separation with finite legacy compatibility, routeless development and IPv6 /64 keying; consumer verification before separate activation |
 | v3.1.3 | Oct 2026 | 2026-10-04 remediation Sprint 10 — `/auth/*` rate limiting keys and tiers on the decoded path, so a percent-encoded route spelling shares the real bucket (BUG-007); a non-object JSON body gets 400 on both callbacks (BUG-056); a malformed XIVAuth roster falls back to `XIVAuth User <id8>` instead of a 500 or an empty name (BUG-057); a non-empty callback body must be `application/json` (415), closing the `text/plain` bypass of the body guard (BUG-149, oauth half); dead `decodeJWT` wrapper and coverage excludes removed (DEAD-036, DEAD-037) |
 | v3.1.2 | Oct 2026 | 2026-10-03 security audit Sprint 6 — retired `xivdyetools.projectgalatine.com` origin removed from the redirect + CORS allowlist and the retired `auth.` custom-domain route dropped, both pinned by tests (FINDING-006); `[observability] enabled = false` pinned and asserted (FINDING-022) |
@@ -671,6 +687,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v0.21.2 | Nov 2026 | Maintenance acquisition generation validates fixed game/schema pins, supports exact-request offline replay and completes review requests before output adoption; runtime tables unchanged |
 | v0.21.1 | Oct 2026 | A-API: bounded and sanitized upstream character data, dedicated cache-miss soft budgets, current-version-only icon overrides, IPv6 /64 adoption and numeric-only telemetry versions; pinned/checksummed item-name inputs and controlled ko/zh/ja refresh with 65 additional Korean names, using unchanged fonts |
 | v0.21.0 | Oct 2026 | Snapshot/schema-aware equipment caching, optional versioned icon URLs and conditional PNG refresh, isolate-local Item/Glasses miss coalescing |
 | v0.20.1 | Oct 2026 | Acquisition lines for 671 older tomestone items omit the redundant base-item upgrade exchange when a reachable vendor sells the item outright for Poetics |
@@ -744,7 +761,7 @@ and the [rollout runbook](operations/security-remediation-2026-09-15.md) for the
 | xivdyetools-og-worker v2.12.2 | @xivdyetools/core v5.16.0; @xivdyetools/svg v4.4.1; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
 | xivdyetools-web-app v5.16.4 | @xivdyetools/core v5.16.0; @xivdyetools/logger v2.4.0; @xivdyetools/svg v4.4.1; @xivdyetools/types v3.3.0 | Prepared source; publication and deployed acceptance remain pending |
 | xivdyetools-api-worker v0.21.1 | @xivdyetools/core v5.16.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
-| xivdyetools-discord-worker v5.9.7 | @xivdyetools/auth v3.0.0; @xivdyetools/bot-logic v4.12.0; @xivdyetools/svg v4.4.1; @xivdyetools/core v5.16.0; @xivdyetools/logger v2.4.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
+| xivdyetools-discord-worker v5.9.9 | @xivdyetools/auth v3.0.0; @xivdyetools/bot-logic v4.12.0; @xivdyetools/svg v4.4.1; @xivdyetools/core v5.16.0; @xivdyetools/logger v2.4.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
 | xivdyetools-presets-api v2.8.1 | @xivdyetools/auth v3.0.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
 | xivdyetools-oauth-worker v3.2.0 | @xivdyetools/auth v3.0.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
 | @xivdyetools/bot-logic v4.12.0 | @xivdyetools/core v5.16.0; @xivdyetools/svg v4.4.1; @xivdyetools/types v3.3.0 | Prepared source; publication and deployed acceptance remain pending |

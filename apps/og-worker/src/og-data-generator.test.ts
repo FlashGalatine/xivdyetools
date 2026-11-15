@@ -849,8 +849,8 @@ describe('localized embed copy', () => {
     expect(ja.title).toContain('スノウホワイト');
     expect(ja.title).not.toContain('Snow White');
     const de = await generateOGDataForTool('gradient', new URLSearchParams('start=1&end=102&steps=5'), mockEnv, 'de');
-    expect(de.title).toContain('Schneeweißer');
-    expect(de.title).toContain('Rabenschwarzer');
+    expect(de.title).toContain('Schneeweiß');
+    expect(de.title).toContain('Rabenschwarz');
   });
 
   it('extractor / presets / budget defaults take the ×6 deck names, not a formatted key (OG-I18N-004)', async () => {
@@ -859,6 +859,13 @@ describe('localized embed copy', () => {
     expect((await generateOGDataForTool('budget', new URLSearchParams(), mockEnv, 'fr')).title).toContain('Budget');
     // TERM-011: the web app's fr title (fr.json tools.presets.title)
     expect((await generateOGDataForTool('presets', new URLSearchParams(), mockEnv, 'fr', 'gc-maelstrom')).title).toContain('Préréglages communautaires');
+  });
+
+  it('German titles carry the 5.16.0 dye names, not the earlier inflected ones (PR #390)', async () => {
+    const de = await generateOGDataForTool('gradient', new URLSearchParams('start=1&end=102&steps=5'), mockEnv, 'de');
+    expect(de.title).not.toContain('Schneeweißer');
+    expect(de.title).not.toContain('Rabenschwarzer');
+    expect(de.title).toMatch(/Schneeweiß(?!er)/);
   });
 
   it('tool names in the title match the card deck, not core tools.* (OG-I18N-005)', async () => {

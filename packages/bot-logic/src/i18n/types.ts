@@ -14,7 +14,7 @@ export type LocaleCode = (typeof LOCALE_CODES)[number];
 
 /**
  * Structure of a locale JSON file.
- * @internal Exported for type completeness; not intended for external use.
+ * Exported for type completeness; not intended for external use.
  */
 export interface LocaleData {
   meta: {
@@ -27,7 +27,7 @@ export interface LocaleData {
 /**
  * Minimal logger interface accepted by Translator.
  * Compatible with @xivdyetools/logger's ExtendedLogger.
- * @internal Exported for type completeness; not intended for external use.
+ * Exported for type completeness; not intended for external use.
  */
 export interface TranslatorLogger {
   warn: (msg: string) => void;

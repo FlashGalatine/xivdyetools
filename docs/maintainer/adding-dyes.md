@@ -44,10 +44,14 @@ with IDs persisted before schema v2.
 
 ### Game-data sources (preferred over scraping)
 
+For translations, [XIVAPI's matching game-data field takes precedence](../reference/ffxiv-terminology.md) over our existing wording. Keep six-locale coverage and source provenance when adopting a comparison report; color-value changes still require their own verification.
+
 - **`Stain` sheet** (XIVAPI v2 `sheet/Stain`, or a Dalamud/Lumina export): new rows give stainID, name (no "Dye" prefix — no stripping needed), packed color (XIVAPI v2's integer reads as `0xRRGGBB`), and the gloss/metallic flag.
 - **`Stain.Item[]` relationships**: stainID → purchasable item(s) — determines `itemID` and whether the dye resolves to a consolidated Spectrum item (`consolidationType`).
 - **Item sheet fallback:** if you must fetch Item names (en/ja/de/fr), strip the localized "Dye" prefix — try `prefix + ":"`, then `prefix + "："` (full-width colon U+FF1A), then the bare prefix, longest first (this was BUG-081's fix in the old GUI).
 - ko/zh names remain manually sourced into `dyenames.csv`.
+
+For existing dye-name corrections, prefer a complete pinned `audit:dyes` capture and its `Stain.Name` fields over the legacy Item-name fetcher. Match rows by canonical `stainID`, then retain the existing CSV key (`legacyItemID ?? stainID`). XIVAPI wins when en/ja/de/fr names differ from our translations; retain its capitalization and the locale generator's surrounding-whitespace trim. Preserve regional ko/zh cells. See the [terminology rule](../reference/ffxiv-terminology.md#dye-names-125-dyes) and [worked adoption receipt](../research/2026-10-29-dye-name-translations/README.md).
 
 ### Discovering and comparing dyes with XIVAPI
 
