@@ -1,6 +1,6 @@
 {
   "name": "xivdyetools-og-worker",
-  "version": "2.12.2",
+  "version": "2.12.3",
   "private": true,
   "description": "XIV Dye Tools OpenGraph Worker - Dynamic social media previews for shared dye tool links",
   "type": "module",
@@ -16,7 +16,12 @@
     "lint:dead": "knip",
     "lint:dead:prod": "knip --production"
   },
-  "keywords": ["cloudflare-workers", "opengraph", "ffxiv", "dye-tools"],
+  "keywords": [
+    "cloudflare-workers",
+    "opengraph",
+    "ffxiv",
+    "dye-tools"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
