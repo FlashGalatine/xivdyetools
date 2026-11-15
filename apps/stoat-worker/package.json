@@ -1,6 +1,6 @@
 {
   "name": "xivdyetools-stoat-worker",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "private": true,
   "description": "XIV Dye Tools Stoat (Revolt) Bot — WebSocket-based Node.js bot",
   "type": "module",
