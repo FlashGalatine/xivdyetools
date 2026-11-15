@@ -1,0 +1,2602 @@
+[
+  {
+    "path": "apps/api-worker/docs/.vitepress/config.ts",
+    "lines": 88
+  },
+  {
+    "path": "apps/api-worker/docs/.vitepress/env.d.ts",
+    "lines": 8
+  },
+  {
+    "path": "apps/api-worker/docs/.vitepress/search-index.ts",
+    "lines": 43
+  },
+  {
+    "path": "apps/api-worker/docs/.vitepress/theme/index.ts",
+    "lines": 21
+  },
+  {
+    "path": "apps/api-worker/docs/.vitepress/theme/lib/endpoints.ts",
+    "lines": 202
+  },
+  {
+    "path": "apps/api-worker/docs/.vitepress/theme/lib/fields.ts",
+    "lines": 84
+  },
+  {
+    "path": "apps/api-worker/docs/.vitepress/theme/lib/live.ts",
+    "lines": 215
+  },
+  {
+    "path": "apps/api-worker/docs/.vitepress/theme/lib/shiki-theme.ts",
+    "lines": 33
+  },
+  {
+    "path": "apps/api-worker/scripts/acquisition/facewear.ts",
+    "lines": 37
+  },
+  {
+    "path": "apps/api-worker/scripts/acquisition/format.ts",
+    "lines": 164
+  },
+  {
+    "path": "apps/api-worker/scripts/acquisition/inputs.ts",
+    "lines": 407
+  },
+  {
+    "path": "apps/api-worker/scripts/acquisition/labels.ts",
+    "lines": 59
+  },
+  {
+    "path": "apps/api-worker/scripts/acquisition/model.ts",
+    "lines": 137
+  },
+  {
+    "path": "apps/api-worker/scripts/acquisition/select.ts",
+    "lines": 248
+  },
+  {
+    "path": "apps/api-worker/scripts/acquisition/sources.ts",
+    "lines": 24
+  },
+  {
+    "path": "apps/api-worker/scripts/build-acquisition.ts",
+    "lines": 563
+  },
+  {
+    "path": "apps/api-worker/scripts/build-item-names.mjs",
+    "lines": 273
+  },
+  {
+    "path": "apps/api-worker/src/chara/acquisition.ts",
+    "lines": 45
+  },
+  {
+    "path": "apps/api-worker/src/chara/cache.ts",
+    "lines": 91
+  },
+  {
+    "path": "apps/api-worker/src/chara/icon-cache.ts",
+    "lines": 67
+  },
+  {
+    "path": "apps/api-worker/src/chara/icons.ts",
+    "lines": 64
+  },
+  {
+    "path": "apps/api-worker/src/chara/lookup-loader.ts",
+    "lines": 157
+  },
+  {
+    "path": "apps/api-worker/src/chara/regional-names.ts",
+    "lines": 60
+  },
+  {
+    "path": "apps/api-worker/src/chara/resolver.ts",
+    "lines": 214
+  },
+  {
+    "path": "apps/api-worker/src/chara/router.ts",
+    "lines": 343
+  },
+  {
+    "path": "apps/api-worker/src/chara/types.ts",
+    "lines": 150
+  },
+  {
+    "path": "apps/api-worker/src/chara/xivapi.ts",
+    "lines": 474
+  },
+  {
+    "path": "apps/api-worker/src/index.ts",
+    "lines": 257
+  },
+  {
+    "path": "apps/api-worker/src/lib/api-error.ts",
+    "lines": 37
+  },
+  {
+    "path": "apps/api-worker/src/lib/bounded-body.ts",
+    "lines": 60
+  },
+  {
+    "path": "apps/api-worker/src/lib/dye-serializer.ts",
+    "lines": 82
+  },
+  {
+    "path": "apps/api-worker/src/lib/harmony.ts",
+    "lines": 92
+  },
+  {
+    "path": "apps/api-worker/src/lib/response.ts",
+    "lines": 80
+  },
+  {
+    "path": "apps/api-worker/src/lib/services.ts",
+    "lines": 20
+  },
+  {
+    "path": "apps/api-worker/src/lib/validation.ts",
+    "lines": 504
+  },
+  {
+    "path": "apps/api-worker/src/middleware/locale.ts",
+    "lines": 25
+  },
+  {
+    "path": "apps/api-worker/src/middleware/rate-limit.ts",
+    "lines": 219
+  },
+  {
+    "path": "apps/api-worker/src/routes/dyes.ts",
+    "lines": 381
+  },
+  {
+    "path": "apps/api-worker/src/routes/harmony.ts",
+    "lines": 140
+  },
+  {
+    "path": "apps/api-worker/src/routes/match.ts",
+    "lines": 131
+  },
+  {
+    "path": "apps/api-worker/src/routes/wheels.ts",
+    "lines": 58
+  },
+  {
+    "path": "apps/api-worker/src/telemetry/origin.ts",
+    "lines": 69
+  },
+  {
+    "path": "apps/api-worker/src/telemetry/router.ts",
+    "lines": 113
+  },
+  {
+    "path": "apps/api-worker/src/telemetry/schema.ts",
+    "lines": 197
+  },
+  {
+    "path": "apps/api-worker/src/types.ts",
+    "lines": 74
+  },
+  {
+    "path": "apps/api-worker/src/universalis/config/cache.ts",
+    "lines": 47
+  },
+  {
+    "path": "apps/api-worker/src/universalis/config/datacenters.ts",
+    "lines": 176
+  },
+  {
+    "path": "apps/api-worker/src/universalis/config/service-budget.ts",
+    "lines": 14
+  },
+  {
+    "path": "apps/api-worker/src/universalis/router.ts",
+    "lines": 399
+  },
+  {
+    "path": "apps/api-worker/src/universalis/services/cache-service.ts",
+    "lines": 201
+  },
+  {
+    "path": "apps/api-worker/src/universalis/services/cached-fetch.ts",
+    "lines": 278
+  },
+  {
+    "path": "apps/api-worker/src/universalis/services/rate-limiter.ts",
+    "lines": 146
+  },
+  {
+    "path": "apps/api-worker/src/universalis/services/request-coalescer.ts",
+    "lines": 186
+  },
+  {
+    "path": "apps/api-worker/src/universalis/types.ts",
+    "lines": 32
+  },
+  {
+    "path": "apps/api-worker/vitest.config.ts",
+    "lines": 37
+  },
+  {
+    "path": "apps/discord-worker/scripts/check-bundle-size.mjs",
+    "lines": 109
+  },
+  {
+    "path": "apps/discord-worker/scripts/gen-option-description-keys.ts",
+    "lines": 93
+  },
+  {
+    "path": "apps/discord-worker/scripts/instance-latin-fonts.py",
+    "lines": 120
+  },
+  {
+    "path": "apps/discord-worker/scripts/register-commands.ts",
+    "lines": 116
+  },
+  {
+    "path": "apps/discord-worker/scripts/subset-cjk-fonts.py",
+    "lines": 426
+  },
+  {
+    "path": "apps/discord-worker/scripts/upload-emojis.ts",
+    "lines": 261
+  },
+  {
+    "path": "apps/discord-worker/src/commands/localize.ts",
+    "lines": 308
+  },
+  {
+    "path": "apps/discord-worker/src/commands/registry.ts",
+    "lines": 69
+  },
+  {
+    "path": "apps/discord-worker/src/commands/schemas.ts",
+    "lines": 1406
+  },
+  {
+    "path": "apps/discord-worker/src/handlers/buttons/copy.ts",
+    "lines": 162
+  },
+  {
+    "path": "apps/discord-worker/src/handlers/buttons/index.ts",
+    "lines": 99
+  },
+  {
+    "path": "apps/discord-worker/src/handlers/buttons/preview-image.ts",
+    "lines": 380
+  },
+  {
+    "path": "apps/discord-worker/src/handlers/commands/about.ts",
+    "lines": 159
+  },
+  {
+    "path": "apps/discord-worker/src/handlers/commands/accessibility.ts",
+    "lines": 186
+  },
+  {
+    "path": "apps/discord-worker/src/handlers/commands/budget.ts",
+    "lines": 697
+  },
+  {
+    "path": "apps/discord-worker/src/handlers/commands/changelog.ts",
+    "lines": 119
+  },
+  {
+    "path": "apps/discord-worker/src/handlers/commands/comparison.ts",
+    "lines": 155
+  },
+  {
+    "path": "apps/discord-worker/src/handlers/commands/contrast.ts",
+    "lines": 150
+  },
+  {
+    "path": "apps/discord-worker/src/handlers/commands/dye.ts",
+    "lines": 502
+  },
+  {
+    "path": "apps/discord-worker/src/handlers/commands/extractor.ts",
+    "lines": 659
+  },
+  {
+    "path": "apps/discord-worker/src/handlers/commands/glamour.ts",
+    "lines": 201
+  },
+  {
+    "path": "apps/discord-worker/src/handlers/commands/gradient.ts",
+    "lines": 277
+  },
+  {
+    "path": "apps/discord-worker/src/handlers/commands/harmony.ts",
+    "lines": 228
+  },
+  {
+    "path": "apps/discord-worker/src/handlers/commands/index.ts",
+    "lines": 26
+  },
+  {
+    "path": "apps/discord-worker/src/handlers/commands/manual.ts",
+    "lines": 473
+  },
+  {
+    "path": "apps/discord-worker/src/handlers/commands/mixer-v4.ts",
+    "lines": 149
+  },
+  {
+    "path": "apps/discord-worker/src/handlers/commands/preferences.ts",
+    "lines": 978
+  },
+  {
+    "path": "apps/discord-worker/src/handlers/commands/preset-notifications.ts",
+    "lines": 316
+  },
+  {
+    "path": "apps/discord-worker/src/handlers/commands/preset.ts",
+    "lines": 1349
+  },
+  {
+    "path": "apps/discord-worker/src/handlers/commands/stats.ts",
+    "lines": 463
+  },
+  {
+    "path": "apps/discord-worker/src/handlers/commands/swatch.ts",
+    "lines": 165
+  },
+  {
+    "path": "apps/discord-worker/src/index.ts",
+    "lines": 1548
+  },
+  {
+    "path": "apps/discord-worker/src/services/analytics.ts",
+    "lines": 344
+  },
+  {
+    "path": "apps/discord-worker/src/services/announcements.ts",
+    "lines": 112
+  },
+  {
+    "path": "apps/discord-worker/src/services/bot-i18n.ts",
+    "lines": 71
+  },
+  {
+    "path": "apps/discord-worker/src/services/budget/budget-calculator.ts",
+    "lines": 386
+  },
+  {
+    "path": "apps/discord-worker/src/services/budget/index.ts",
+    "lines": 33
+  },
+  {
+    "path": "apps/discord-worker/src/services/budget/price-cache.ts",
+    "lines": 260
+  },
+  {
+    "path": "apps/discord-worker/src/services/budget/quick-picks.ts",
+    "lines": 185
+  },
+  {
+    "path": "apps/discord-worker/src/services/budget/universalis-client.ts",
+    "lines": 440
+  },
+  {
+    "path": "apps/discord-worker/src/services/changelog-parser.ts",
+    "lines": 101
+  },
+  {
+    "path": "apps/discord-worker/src/services/command-trace.ts",
+    "lines": 357
+  },
+  {
+    "path": "apps/discord-worker/src/services/emoji.ts",
+    "lines": 62
+  },
+  {
+    "path": "apps/discord-worker/src/services/font-coverage.ts",
+    "lines": 220
+  },
+  {
+    "path": "apps/discord-worker/src/services/fonts.ts",
+    "lines": 139
+  },
+  {
+    "path": "apps/discord-worker/src/services/i18n.ts",
+    "lines": 44
+  },
+  {
+    "path": "apps/discord-worker/src/services/image-client.ts",
+    "lines": 80
+  },
+  {
+    "path": "apps/discord-worker/src/services/image-input-errors.ts",
+    "lines": 60
+  },
+  {
+    "path": "apps/discord-worker/src/services/preferences.ts",
+    "lines": 776
+  },
+  {
+    "path": "apps/discord-worker/src/services/preset-api.ts",
+    "lines": 525
+  },
+  {
+    "path": "apps/discord-worker/src/services/preset-favorites.ts",
+    "lines": 237
+  },
+  {
+    "path": "apps/discord-worker/src/services/rate-limiter.ts",
+    "lines": 326
+  },
+  {
+    "path": "apps/discord-worker/src/services/svg/renderer.ts",
+    "lines": 151
+  },
+  {
+    "path": "apps/discord-worker/src/types/budget.ts",
+    "lines": 181
+  },
+  {
+    "path": "apps/discord-worker/src/types/env.ts",
+    "lines": 278
+  },
+  {
+    "path": "apps/discord-worker/src/types/github.ts",
+    "lines": 49
+  },
+  {
+    "path": "apps/discord-worker/src/types/markdown.d.ts",
+    "lines": 13
+  },
+  {
+    "path": "apps/discord-worker/src/types/preferences.ts",
+    "lines": 271
+  },
+  {
+    "path": "apps/discord-worker/src/types/preset.ts",
+    "lines": 225
+  },
+  {
+    "path": "apps/discord-worker/src/utils/brand.ts",
+    "lines": 48
+  },
+  {
+    "path": "apps/discord-worker/src/utils/chara-attachment.ts",
+    "lines": 127
+  },
+  {
+    "path": "apps/discord-worker/src/utils/discord-api.ts",
+    "lines": 466
+  },
+  {
+    "path": "apps/discord-worker/src/utils/env-validation.ts",
+    "lines": 184
+  },
+  {
+    "path": "apps/discord-worker/src/utils/github-verify.ts",
+    "lines": 84
+  },
+  {
+    "path": "apps/discord-worker/src/utils/read-text-capped.ts",
+    "lines": 82
+  },
+  {
+    "path": "apps/discord-worker/src/utils/response.ts",
+    "lines": 165
+  },
+  {
+    "path": "apps/discord-worker/src/utils/sanitize.ts",
+    "lines": 73
+  },
+  {
+    "path": "apps/discord-worker/src/utils/text.ts",
+    "lines": 27
+  },
+  {
+    "path": "apps/discord-worker/vitest.config.ts",
+    "lines": 91
+  },
+  {
+    "path": "apps/discord-worker/vitest.integration.config.ts",
+    "lines": 20
+  },
+  {
+    "path": "apps/discord-worker/vitest.markdown-plugin.ts",
+    "lines": 24
+  },
+  {
+    "path": "apps/image-worker/src/dimensions.ts",
+    "lines": 134
+  },
+  {
+    "path": "apps/image-worker/src/index.ts",
+    "lines": 221
+  },
+  {
+    "path": "apps/image-worker/src/photon.ts",
+    "lines": 304
+  },
+  {
+    "path": "apps/image-worker/src/types.ts",
+    "lines": 54
+  },
+  {
+    "path": "apps/image-worker/src/validators.ts",
+    "lines": 546
+  },
+  {
+    "path": "apps/image-worker/vitest.config.ts",
+    "lines": 21
+  },
+  {
+    "path": "apps/moderation-worker/scripts/register-commands.ts",
+    "lines": 188
+  },
+  {
+    "path": "apps/moderation-worker/src/handlers/buttons/ban-confirmation.ts",
+    "lines": 164
+  },
+  {
+    "path": "apps/moderation-worker/src/handlers/buttons/index.ts",
+    "lines": 99
+  },
+  {
+    "path": "apps/moderation-worker/src/handlers/buttons/preset-moderation.ts",
+    "lines": 367
+  },
+  {
+    "path": "apps/moderation-worker/src/handlers/commands/index.ts",
+    "lines": 7
+  },
+  {
+    "path": "apps/moderation-worker/src/handlers/commands/preset.ts",
+    "lines": 701
+  },
+  {
+    "path": "apps/moderation-worker/src/handlers/modals/ban-reason.ts",
+    "lines": 263
+  },
+  {
+    "path": "apps/moderation-worker/src/handlers/modals/index.ts",
+    "lines": 14
+  },
+  {
+    "path": "apps/moderation-worker/src/handlers/modals/preset-rejection.ts",
+    "lines": 382
+  },
+  {
+    "path": "apps/moderation-worker/src/handlers/review-message.ts",
+    "lines": 333
+  },
+  {
+    "path": "apps/moderation-worker/src/index.ts",
+    "lines": 688
+  },
+  {
+    "path": "apps/moderation-worker/src/middleware/rate-limit.ts",
+    "lines": 255
+  },
+  {
+    "path": "apps/moderation-worker/src/services/ban-service.ts",
+    "lines": 758
+  },
+  {
+    "path": "apps/moderation-worker/src/services/bot-i18n.ts",
+    "lines": 195
+  },
+  {
+    "path": "apps/moderation-worker/src/services/i18n.ts",
+    "lines": 33
+  },
+  {
+    "path": "apps/moderation-worker/src/services/preset-api.ts",
+    "lines": 568
+  },
+  {
+    "path": "apps/moderation-worker/src/types/ban.ts",
+    "lines": 119
+  },
+  {
+    "path": "apps/moderation-worker/src/types/env.ts",
+    "lines": 158
+  },
+  {
+    "path": "apps/moderation-worker/src/types/modal.ts",
+    "lines": 109
+  },
+  {
+    "path": "apps/moderation-worker/src/types/preset.ts",
+    "lines": 107
+  },
+  {
+    "path": "apps/moderation-worker/src/utils/discord-api.ts",
+    "lines": 271
+  },
+  {
+    "path": "apps/moderation-worker/src/utils/embed-text.ts",
+    "lines": 79
+  },
+  {
+    "path": "apps/moderation-worker/src/utils/env-validation.ts",
+    "lines": 179
+  },
+  {
+    "path": "apps/moderation-worker/src/utils/response.ts",
+    "lines": 351
+  },
+  {
+    "path": "apps/moderation-worker/src/utils/safe-json.ts",
+    "lines": 350
+  },
+  {
+    "path": "apps/moderation-worker/src/utils/sql-helpers.ts",
+    "lines": 185
+  },
+  {
+    "path": "apps/moderation-worker/src/utils/url-sanitizer.ts",
+    "lines": 140
+  },
+  {
+    "path": "apps/moderation-worker/src/utils/verify.ts",
+    "lines": 15
+  },
+  {
+    "path": "apps/moderation-worker/vitest.config.ts",
+    "lines": 34
+  },
+  {
+    "path": "apps/oauth/migrations/0001_drop_xivauth_characters.sql",
+    "lines": 80
+  },
+  {
+    "path": "apps/oauth/schema/users.sql",
+    "lines": 31
+  },
+  {
+    "path": "apps/oauth/src/constants/oauth.ts",
+    "lines": 74
+  },
+  {
+    "path": "apps/oauth/src/handlers/authorize.ts",
+    "lines": 30
+  },
+  {
+    "path": "apps/oauth/src/handlers/callback.ts",
+    "lines": 283
+  },
+  {
+    "path": "apps/oauth/src/handlers/oauth-flow.ts",
+    "lines": 305
+  },
+  {
+    "path": "apps/oauth/src/handlers/token.ts",
+    "lines": 194
+  },
+  {
+    "path": "apps/oauth/src/handlers/xivauth.ts",
+    "lines": 428
+  },
+  {
+    "path": "apps/oauth/src/index.ts",
+    "lines": 335
+  },
+  {
+    "path": "apps/oauth/src/middleware/body-validation.ts",
+    "lines": 73
+  },
+  {
+    "path": "apps/oauth/src/services/jwt-service.ts",
+    "lines": 243
+  },
+  {
+    "path": "apps/oauth/src/services/rate-limit.ts",
+    "lines": 169
+  },
+  {
+    "path": "apps/oauth/src/services/user-service.ts",
+    "lines": 310
+  },
+  {
+    "path": "apps/oauth/src/types.ts",
+    "lines": 101
+  },
+  {
+    "path": "apps/oauth/src/utils/env-validation.ts",
+    "lines": 160
+  },
+  {
+    "path": "apps/oauth/src/utils/oauth-validation.ts",
+    "lines": 153
+  },
+  {
+    "path": "apps/oauth/src/utils/pkce-binding.ts",
+    "lines": 82
+  },
+  {
+    "path": "apps/oauth/src/utils/state-signing.ts",
+    "lines": 119
+  },
+  {
+    "path": "apps/oauth/vitest.config.ts",
+    "lines": 26
+  },
+  {
+    "path": "apps/og-worker/scripts/subset-cjk-fonts.py",
+    "lines": 360
+  },
+  {
+    "path": "apps/og-worker/src/crawler-detector.ts",
+    "lines": 99
+  },
+  {
+    "path": "apps/og-worker/src/index.ts",
+    "lines": 1437
+  },
+  {
+    "path": "apps/og-worker/src/og-data-generator.ts",
+    "lines": 1103
+  },
+  {
+    "path": "apps/og-worker/src/og-params.ts",
+    "lines": 209
+  },
+  {
+    "path": "apps/og-worker/src/services/character-cells.ts",
+    "lines": 79
+  },
+  {
+    "path": "apps/og-worker/src/services/fonts.ts",
+    "lines": 88
+  },
+  {
+    "path": "apps/og-worker/src/services/og-embed.ts",
+    "lines": 354
+  },
+  {
+    "path": "apps/og-worker/src/services/og-strings.ts",
+    "lines": 432
+  },
+  {
+    "path": "apps/og-worker/src/services/renderer.ts",
+    "lines": 168
+  },
+  {
+    "path": "apps/og-worker/src/services/svg/accessibility.ts",
+    "lines": 107
+  },
+  {
+    "path": "apps/og-worker/src/services/svg/band-shared.ts",
+    "lines": 85
+  },
+  {
+    "path": "apps/og-worker/src/services/svg/band.ts",
+    "lines": 541
+  },
+  {
+    "path": "apps/og-worker/src/services/svg/budget.ts",
+    "lines": 114
+  },
+  {
+    "path": "apps/og-worker/src/services/svg/comparison.ts",
+    "lines": 112
+  },
+  {
+    "path": "apps/og-worker/src/services/svg/default-card.ts",
+    "lines": 250
+  },
+  {
+    "path": "apps/og-worker/src/services/svg/dye-helpers.ts",
+    "lines": 130
+  },
+  {
+    "path": "apps/og-worker/src/services/svg/extractor.ts",
+    "lines": 127
+  },
+  {
+    "path": "apps/og-worker/src/services/svg/gradient.ts",
+    "lines": 271
+  },
+  {
+    "path": "apps/og-worker/src/services/svg/harmony.ts",
+    "lines": 215
+  },
+  {
+    "path": "apps/og-worker/src/services/svg/index.ts",
+    "lines": 19
+  },
+  {
+    "path": "apps/og-worker/src/services/svg/mixer.ts",
+    "lines": 156
+  },
+  {
+    "path": "apps/og-worker/src/services/svg/presets.ts",
+    "lines": 69
+  },
+  {
+    "path": "apps/og-worker/src/services/svg/swatch.ts",
+    "lines": 97
+  },
+  {
+    "path": "apps/og-worker/src/services/svg/tokens.ts",
+    "lines": 37
+  },
+  {
+    "path": "apps/og-worker/src/services/translator.ts",
+    "lines": 90
+  },
+  {
+    "path": "apps/og-worker/src/types.ts",
+    "lines": 199
+  },
+  {
+    "path": "apps/og-worker/vitest.config.ts",
+    "lines": 30
+  },
+  {
+    "path": "apps/presets-api/migrations/0002_add_previous_values.sql",
+    "lines": 11
+  },
+  {
+    "path": "apps/presets-api/migrations/0003_add_banned_users.sql",
+    "lines": 44
+  },
+  {
+    "path": "apps/presets-api/migrations/0004_unique_dye_signature.sql",
+    "lines": 22
+  },
+  {
+    "path": "apps/presets-api/migrations/0005_failed_notifications.sql",
+    "lines": 17
+  },
+  {
+    "path": "apps/presets-api/migrations/0006_partial_dye_signature_drop_rate_limits.sql",
+    "lines": 21
+  },
+  {
+    "path": "apps/presets-api/migrations/0007_drop_community_category.sql",
+    "lines": 35
+  },
+  {
+    "path": "apps/presets-api/migrations/0008_add_example_link.sql",
+    "lines": 10
+  },
+  {
+    "path": "apps/presets-api/migrations/0009_add_preview_image.sql",
+    "lines": 12
+  },
+  {
+    "path": "apps/presets-api/migrations/0010_add_secondary_categories.sql",
+    "lines": 19
+  },
+  {
+    "path": "apps/presets-api/migrations/0011_submission_events.sql",
+    "lines": 28
+  },
+  {
+    "path": "apps/presets-api/migrations/0012_submission_events_text_edit.sql",
+    "lines": 62
+  },
+  {
+    "path": "apps/presets-api/migrations/0013_moderation_log_user_actions.sql",
+    "lines": 115
+  },
+  {
+    "path": "apps/presets-api/migrations/0014_add_content_revision.sql",
+    "lines": 19
+  },
+  {
+    "path": "apps/presets-api/migrations/0015_rewrite_legacy_dead_letters.sql",
+    "lines": 8
+  },
+  {
+    "path": "apps/presets-api/migrations/002_add_composite_indexes.sql",
+    "lines": 22
+  },
+  {
+    "path": "apps/presets-api/schema.sql",
+    "lines": 229
+  },
+  {
+    "path": "apps/presets-api/scripts/migrate-presets.ts",
+    "lines": 130
+  },
+  {
+    "path": "apps/presets-api/src/data/profanity/de.ts",
+    "lines": 15
+  },
+  {
+    "path": "apps/presets-api/src/data/profanity/en.ts",
+    "lines": 15
+  },
+  {
+    "path": "apps/presets-api/src/data/profanity/fr.ts",
+    "lines": 15
+  },
+  {
+    "path": "apps/presets-api/src/data/profanity/index.ts",
+    "lines": 30
+  },
+  {
+    "path": "apps/presets-api/src/data/profanity/ja.ts",
+    "lines": 15
+  },
+  {
+    "path": "apps/presets-api/src/data/profanity/ko.ts",
+    "lines": 15
+  },
+  {
+    "path": "apps/presets-api/src/data/profanity/zh.ts",
+    "lines": 15
+  },
+  {
+    "path": "apps/presets-api/src/handlers/categories.ts",
+    "lines": 147
+  },
+  {
+    "path": "apps/presets-api/src/handlers/moderation.ts",
+    "lines": 610
+  },
+  {
+    "path": "apps/presets-api/src/handlers/presets.ts",
+    "lines": 1534
+  },
+  {
+    "path": "apps/presets-api/src/handlers/votes.ts",
+    "lines": 251
+  },
+  {
+    "path": "apps/presets-api/src/index.ts",
+    "lines": 305
+  },
+  {
+    "path": "apps/presets-api/src/middleware/auth.ts",
+    "lines": 451
+  },
+  {
+    "path": "apps/presets-api/src/middleware/ban-check.ts",
+    "lines": 157
+  },
+  {
+    "path": "apps/presets-api/src/middleware/body-validation.ts",
+    "lines": 88
+  },
+  {
+    "path": "apps/presets-api/src/middleware/rate-limit.ts",
+    "lines": 176
+  },
+  {
+    "path": "apps/presets-api/src/retention-job.ts",
+    "lines": 133
+  },
+  {
+    "path": "apps/presets-api/src/services/category-service.ts",
+    "lines": 60
+  },
+  {
+    "path": "apps/presets-api/src/services/identity-rekey-service.ts",
+    "lines": 71
+  },
+  {
+    "path": "apps/presets-api/src/services/moderation-retention-service.ts",
+    "lines": 97
+  },
+  {
+    "path": "apps/presets-api/src/services/moderation-service.ts",
+    "lines": 393
+  },
+  {
+    "path": "apps/presets-api/src/services/notification-service.ts",
+    "lines": 569
+  },
+  {
+    "path": "apps/presets-api/src/services/preset-service.ts",
+    "lines": 722
+  },
+  {
+    "path": "apps/presets-api/src/services/preview-image-service.ts",
+    "lines": 219
+  },
+  {
+    "path": "apps/presets-api/src/services/rate-limit-service.ts",
+    "lines": 431
+  },
+  {
+    "path": "apps/presets-api/src/services/validation-service.ts",
+    "lines": 499
+  },
+  {
+    "path": "apps/presets-api/src/types.ts",
+    "lines": 203
+  },
+  {
+    "path": "apps/presets-api/src/utils/api-response.ts",
+    "lines": 136
+  },
+  {
+    "path": "apps/presets-api/src/utils/env-validation.ts",
+    "lines": 207
+  },
+  {
+    "path": "apps/presets-api/src/utils/request-body.ts",
+    "lines": 33
+  },
+  {
+    "path": "apps/presets-api/vitest.config.ts",
+    "lines": 29
+  },
+  {
+    "path": "apps/stoat-worker/src/commands/about.ts",
+    "lines": 32
+  },
+  {
+    "path": "apps/stoat-worker/src/commands/help.ts",
+    "lines": 80
+  },
+  {
+    "path": "apps/stoat-worker/src/commands/info.ts",
+    "lines": 131
+  },
+  {
+    "path": "apps/stoat-worker/src/commands/parser.ts",
+    "lines": 267
+  },
+  {
+    "path": "apps/stoat-worker/src/commands/ping.ts",
+    "lines": 16
+  },
+  {
+    "path": "apps/stoat-worker/src/config.ts",
+    "lines": 59
+  },
+  {
+    "path": "apps/stoat-worker/src/index.ts",
+    "lines": 101
+  },
+  {
+    "path": "apps/stoat-worker/src/message-handler.ts",
+    "lines": 157
+  },
+  {
+    "path": "apps/stoat-worker/src/router.ts",
+    "lines": 109
+  },
+  {
+    "path": "apps/stoat-worker/src/services/command-throttle.ts",
+    "lines": 63
+  },
+  {
+    "path": "apps/stoat-worker/src/services/dye-resolver.ts",
+    "lines": 171
+  },
+  {
+    "path": "apps/stoat-worker/src/services/loading-indicator.ts",
+    "lines": 44
+  },
+  {
+    "path": "apps/stoat-worker/src/services/message-context.ts",
+    "lines": 76
+  },
+  {
+    "path": "apps/stoat-worker/src/services/response-formatter.ts",
+    "lines": 171
+  },
+  {
+    "path": "apps/stoat-worker/vitest.config.ts",
+    "lines": 31
+  },
+  {
+    "path": "apps/web-app/eslint-rules/no-hardcoded-ui-strings.js",
+    "lines": 373
+  },
+  {
+    "path": "apps/web-app/eslint-rules/no-i18n-fallback.js",
+    "lines": 135
+  },
+  {
+    "path": "apps/web-app/eslint.config.js",
+    "lines": 116
+  },
+  {
+    "path": "apps/web-app/functions/_middleware.ts",
+    "lines": 43
+  },
+  {
+    "path": "apps/web-app/playwright.config.ts",
+    "lines": 86
+  },
+  {
+    "path": "apps/web-app/postcss.config.js",
+    "lines": 6
+  },
+  {
+    "path": "apps/web-app/scripts/analyze-unused-keys.d.ts",
+    "lines": 29
+  },
+  {
+    "path": "apps/web-app/scripts/analyze-unused-keys.js",
+    "lines": 168
+  },
+  {
+    "path": "apps/web-app/scripts/check-beta-build.js",
+    "lines": 87
+  },
+  {
+    "path": "apps/web-app/scripts/check-bundle-size.d.ts",
+    "lines": 54
+  },
+  {
+    "path": "apps/web-app/scripts/check-bundle-size.js",
+    "lines": 442
+  },
+  {
+    "path": "apps/web-app/scripts/copy-chara-notices.mjs",
+    "lines": 163
+  },
+  {
+    "path": "apps/web-app/scripts/generate-api-docs-icons.mjs",
+    "lines": 97
+  },
+  {
+    "path": "apps/web-app/scripts/generate-beta-icons.mjs",
+    "lines": 57
+  },
+  {
+    "path": "apps/web-app/scripts/generate-icons.mjs",
+    "lines": 90
+  },
+  {
+    "path": "apps/web-app/scripts/i18n-key-patterns.mjs",
+    "lines": 327
+  },
+  {
+    "path": "apps/web-app/scripts/i18n-parity.mjs",
+    "lines": 502
+  },
+  {
+    "path": "apps/web-app/scripts/reorder-locales.mjs",
+    "lines": 113
+  },
+  {
+    "path": "apps/web-app/scripts/smoke-test-pages.js",
+    "lines": 323
+  },
+  {
+    "path": "apps/web-app/scripts/validate-i18n.js",
+    "lines": 608
+  },
+  {
+    "path": "apps/web-app/src/components/about-modal.ts",
+    "lines": 542
+  },
+  {
+    "path": "apps/web-app/src/components/accessibility-tool.ts",
+    "lines": 2046
+  },
+  {
+    "path": "apps/web-app/src/components/add-to-collection-menu.ts",
+    "lines": 277
+  },
+  {
+    "path": "apps/web-app/src/components/advanced-options-panel.ts",
+    "lines": 396
+  },
+  {
+    "path": "apps/web-app/src/components/base-component.ts",
+    "lines": 736
+  },
+  {
+    "path": "apps/web-app/src/components/budget-tool.ts",
+    "lines": 2079
+  },
+  {
+    "path": "apps/web-app/src/components/changelog-modal.ts",
+    "lines": 462
+  },
+  {
+    "path": "apps/web-app/src/components/chara-file-card.ts",
+    "lines": 409
+  },
+  {
+    "path": "apps/web-app/src/components/chara-sheet.ts",
+    "lines": 598
+  },
+  {
+    "path": "apps/web-app/src/components/chara-ui.ts",
+    "lines": 418
+  },
+  {
+    "path": "apps/web-app/src/components/collapsible-panel.ts",
+    "lines": 204
+  },
+  {
+    "path": "apps/web-app/src/components/collection-manager-modal.ts",
+    "lines": 651
+  },
+  {
+    "path": "apps/web-app/src/components/comparison-tool.ts",
+    "lines": 2580
+  },
+  {
+    "path": "apps/web-app/src/components/dye-grid.ts",
+    "lines": 539
+  },
+  {
+    "path": "apps/web-app/src/components/dye-search-box.ts",
+    "lines": 319
+  },
+  {
+    "path": "apps/web-app/src/components/dye-selector.ts",
+    "lines": 772
+  },
+  {
+    "path": "apps/web-app/src/components/empty-state.ts",
+    "lines": 183
+  },
+  {
+    "path": "apps/web-app/src/components/export-sheet.ts",
+    "lines": 175
+  },
+  {
+    "path": "apps/web-app/src/components/extractor-tool.ts",
+    "lines": 2383
+  },
+  {
+    "path": "apps/web-app/src/components/glamour-block.ts",
+    "lines": 1860
+  },
+  {
+    "path": "apps/web-app/src/components/glamour-list-actions.ts",
+    "lines": 242
+  },
+  {
+    "path": "apps/web-app/src/components/glamour-sheet.ts",
+    "lines": 439
+  },
+  {
+    "path": "apps/web-app/src/components/glamour-tool.ts",
+    "lines": 170
+  },
+  {
+    "path": "apps/web-app/src/components/glamour-twin-picker.ts",
+    "lines": 270
+  },
+  {
+    "path": "apps/web-app/src/components/gradient-tool.ts",
+    "lines": 1970
+  },
+  {
+    "path": "apps/web-app/src/components/harmony-tool.ts",
+    "lines": 2093
+  },
+  {
+    "path": "apps/web-app/src/components/image-zoom-controller.ts",
+    "lines": 936
+  },
+  {
+    "path": "apps/web-app/src/components/item-links-menu.ts",
+    "lines": 376
+  },
+  {
+    "path": "apps/web-app/src/components/market-board.ts",
+    "lines": 495
+  },
+  {
+    "path": "apps/web-app/src/components/metric-help.ts",
+    "lines": 380
+  },
+  {
+    "path": "apps/web-app/src/components/mixer-tool.ts",
+    "lines": 2253
+  },
+  {
+    "path": "apps/web-app/src/components/modal-container.ts",
+    "lines": 657
+  },
+  {
+    "path": "apps/web-app/src/components/my-submissions-modal.ts",
+    "lines": 300
+  },
+  {
+    "path": "apps/web-app/src/components/offline-banner.ts",
+    "lines": 189
+  },
+  {
+    "path": "apps/web-app/src/components/preset-category-selector.ts",
+    "lines": 190
+  },
+  {
+    "path": "apps/web-app/src/components/preset-edit-form.ts",
+    "lines": 896
+  },
+  {
+    "path": "apps/web-app/src/components/preset-submission-form.ts",
+    "lines": 803
+  },
+  {
+    "path": "apps/web-app/src/components/shortcuts-panel.ts",
+    "lines": 154
+  },
+  {
+    "path": "apps/web-app/src/components/signin-modal.ts",
+    "lines": 79
+  },
+  {
+    "path": "apps/web-app/src/components/swatch-tool.ts",
+    "lines": 2745
+  },
+  {
+    "path": "apps/web-app/src/components/toast-container.ts",
+    "lines": 314
+  },
+  {
+    "path": "apps/web-app/src/components/tutorial-spotlight.ts",
+    "lines": 700
+  },
+  {
+    "path": "apps/web-app/src/components/v4-layout.ts",
+    "lines": 764
+  },
+  {
+    "path": "apps/web-app/src/components/v4/base-lit-component.ts",
+    "lines": 98
+  },
+  {
+    "path": "apps/web-app/src/components/v4/config-sidebar.ts",
+    "lines": 2168
+  },
+  {
+    "path": "apps/web-app/src/components/v4/display-options-v4.ts",
+    "lines": 534
+  },
+  {
+    "path": "apps/web-app/src/components/v4/dye-filters-v4.ts",
+    "lines": 393
+  },
+  {
+    "path": "apps/web-app/src/components/v4/dye-palette-drawer.ts",
+    "lines": 1373
+  },
+  {
+    "path": "apps/web-app/src/components/v4/language-modal.ts",
+    "lines": 250
+  },
+  {
+    "path": "apps/web-app/src/components/v4/preset-card.ts",
+    "lines": 455
+  },
+  {
+    "path": "apps/web-app/src/components/v4/preset-detail.ts",
+    "lines": 1127
+  },
+  {
+    "path": "apps/web-app/src/components/v4/preset-tool.ts",
+    "lines": 1432
+  },
+  {
+    "path": "apps/web-app/src/components/v4/range-slider-v4.ts",
+    "lines": 349
+  },
+  {
+    "path": "apps/web-app/src/components/v4/result-card.ts",
+    "lines": 1996
+  },
+  {
+    "path": "apps/web-app/src/components/v4/share-button.ts",
+    "lines": 370
+  },
+  {
+    "path": "apps/web-app/src/components/v4/theme-modal.ts",
+    "lines": 206
+  },
+  {
+    "path": "apps/web-app/src/components/v4/toggle-switch-v4.ts",
+    "lines": 227
+  },
+  {
+    "path": "apps/web-app/src/components/v4/v4-app-header.ts",
+    "lines": 700
+  },
+  {
+    "path": "apps/web-app/src/components/v4/v4-color-wheel.ts",
+    "lines": 565
+  },
+  {
+    "path": "apps/web-app/src/components/v4/v4-layout-shell.ts",
+    "lines": 854
+  },
+  {
+    "path": "apps/web-app/src/components/welcome-modal.ts",
+    "lines": 290
+  },
+  {
+    "path": "apps/web-app/src/main.ts",
+    "lines": 204
+  },
+  {
+    "path": "apps/web-app/src/services/api-service-wrapper.ts",
+    "lines": 260
+  },
+  {
+    "path": "apps/web-app/src/services/api-worker-origin.ts",
+    "lines": 19
+  },
+  {
+    "path": "apps/web-app/src/services/auth-service.ts",
+    "lines": 909
+  },
+  {
+    "path": "apps/web-app/src/services/chara-file-loader.ts",
+    "lines": 131
+  },
+  {
+    "path": "apps/web-app/src/services/chara-inspection-protocol.ts",
+    "lines": 940
+  },
+  {
+    "path": "apps/web-app/src/services/chara-inspection-service.ts",
+    "lines": 319
+  },
+  {
+    "path": "apps/web-app/src/services/chara-resolve-service.ts",
+    "lines": 246
+  },
+  {
+    "path": "apps/web-app/src/services/chara-session-service.ts",
+    "lines": 75
+  },
+  {
+    "path": "apps/web-app/src/services/collection-service.ts",
+    "lines": 1158
+  },
+  {
+    "path": "apps/web-app/src/services/community-preset-service.ts",
+    "lines": 570
+  },
+  {
+    "path": "apps/web-app/src/services/config-controller.ts",
+    "lines": 532
+  },
+  {
+    "path": "apps/web-app/src/services/display-options-helper.ts",
+    "lines": 142
+  },
+  {
+    "path": "apps/web-app/src/services/dye-service-wrapper.ts",
+    "lines": 92
+  },
+  {
+    "path": "apps/web-app/src/services/harmony-generator.ts",
+    "lines": 70
+  },
+  {
+    "path": "apps/web-app/src/services/hybrid-preset-service.ts",
+    "lines": 406
+  },
+  {
+    "path": "apps/web-app/src/services/index.ts",
+    "lines": 127
+  },
+  {
+    "path": "apps/web-app/src/services/indexeddb-service.ts",
+    "lines": 318
+  },
+  {
+    "path": "apps/web-app/src/services/keyboard-service.ts",
+    "lines": 304
+  },
+  {
+    "path": "apps/web-app/src/services/language-service.ts",
+    "lines": 387
+  },
+  {
+    "path": "apps/web-app/src/services/market-board-service.ts",
+    "lines": 503
+  },
+  {
+    "path": "apps/web-app/src/services/mixer-blending-engine.ts",
+    "lines": 173
+  },
+  {
+    "path": "apps/web-app/src/services/modal-service.ts",
+    "lines": 329
+  },
+  {
+    "path": "apps/web-app/src/services/preset-submission-service.ts",
+    "lines": 630
+  },
+  {
+    "path": "apps/web-app/src/services/pricing-mixin.ts",
+    "lines": 89
+  },
+  {
+    "path": "apps/web-app/src/services/router-service.ts",
+    "lines": 450
+  },
+  {
+    "path": "apps/web-app/src/services/saved-presets-service.ts",
+    "lines": 196
+  },
+  {
+    "path": "apps/web-app/src/services/share-service.ts",
+    "lines": 732
+  },
+  {
+    "path": "apps/web-app/src/services/storage-service.ts",
+    "lines": 344
+  },
+  {
+    "path": "apps/web-app/src/services/telemetry-service.ts",
+    "lines": 273
+  },
+  {
+    "path": "apps/web-app/src/services/theme-service.ts",
+    "lines": 384
+  },
+  {
+    "path": "apps/web-app/src/services/theme-switch.ts",
+    "lines": 33
+  },
+  {
+    "path": "apps/web-app/src/services/toast-service.ts",
+    "lines": 234
+  },
+  {
+    "path": "apps/web-app/src/services/tutorial-service.ts",
+    "lines": 656
+  },
+  {
+    "path": "apps/web-app/src/services/world-service.ts",
+    "lines": 164
+  },
+  {
+    "path": "apps/web-app/src/shared/acquisition-edits.ts",
+    "lines": 93
+  },
+  {
+    "path": "apps/web-app/src/shared/app-logo.ts",
+    "lines": 82
+  },
+  {
+    "path": "apps/web-app/src/shared/beta-branding.ts",
+    "lines": 191
+  },
+  {
+    "path": "apps/web-app/src/shared/browser-api-types.ts",
+    "lines": 19
+  },
+  {
+    "path": "apps/web-app/src/shared/category-icons.ts",
+    "lines": 50
+  },
+  {
+    "path": "apps/web-app/src/shared/clipboard.ts",
+    "lines": 125
+  },
+  {
+    "path": "apps/web-app/src/shared/constants.ts",
+    "lines": 147
+  },
+  {
+    "path": "apps/web-app/src/shared/custom-dye.ts",
+    "lines": 71
+  },
+  {
+    "path": "apps/web-app/src/shared/download-file.ts",
+    "lines": 25
+  },
+  {
+    "path": "apps/web-app/src/shared/dye-filter-utils.ts",
+    "lines": 38
+  },
+  {
+    "path": "apps/web-app/src/shared/dye-name.ts",
+    "lines": 35
+  },
+  {
+    "path": "apps/web-app/src/shared/error-handler.ts",
+    "lines": 112
+  },
+  {
+    "path": "apps/web-app/src/shared/example-link.ts",
+    "lines": 80
+  },
+  {
+    "path": "apps/web-app/src/shared/fatal-error.ts",
+    "lines": 72
+  },
+  {
+    "path": "apps/web-app/src/shared/format.ts",
+    "lines": 48
+  },
+  {
+    "path": "apps/web-app/src/shared/glamour-markdown.ts",
+    "lines": 137
+  },
+  {
+    "path": "apps/web-app/src/shared/glyph-accent.ts",
+    "lines": 20
+  },
+  {
+    "path": "apps/web-app/src/shared/harmony-icons.ts",
+    "lines": 31
+  },
+  {
+    "path": "apps/web-app/src/shared/i18n-types.ts",
+    "lines": 32
+  },
+  {
+    "path": "apps/web-app/src/shared/item-links.ts",
+    "lines": 202
+  },
+  {
+    "path": "apps/web-app/src/shared/logger.ts",
+    "lines": 211
+  },
+  {
+    "path": "apps/web-app/src/shared/method-tags.ts",
+    "lines": 35
+  },
+  {
+    "path": "apps/web-app/src/shared/palette-export.ts",
+    "lines": 331
+  },
+  {
+    "path": "apps/web-app/src/shared/preset-i18n.ts",
+    "lines": 171
+  },
+  {
+    "path": "apps/web-app/src/shared/region-name.ts",
+    "lines": 33
+  },
+  {
+    "path": "apps/web-app/src/shared/social-icons.ts",
+    "lines": 58
+  },
+  {
+    "path": "apps/web-app/src/shared/spectrum-filter-utils.ts",
+    "lines": 52
+  },
+  {
+    "path": "apps/web-app/src/shared/state-icons.ts",
+    "lines": 35
+  },
+  {
+    "path": "apps/web-app/src/shared/subrace-clan.ts",
+    "lines": 36
+  },
+  {
+    "path": "apps/web-app/src/shared/subscription-manager.ts",
+    "lines": 65
+  },
+  {
+    "path": "apps/web-app/src/shared/tool-config-types.ts",
+    "lines": 511
+  },
+  {
+    "path": "apps/web-app/src/shared/tool-handoff.ts",
+    "lines": 108
+  },
+  {
+    "path": "apps/web-app/src/shared/tool-icons.ts",
+    "lines": 54
+  },
+  {
+    "path": "apps/web-app/src/shared/types.ts",
+    "lines": 105
+  },
+  {
+    "path": "apps/web-app/src/shared/ui-icons.ts",
+    "lines": 246
+  },
+  {
+    "path": "apps/web-app/src/shared/utils.ts",
+    "lines": 50
+  },
+  {
+    "path": "apps/web-app/src/vite-env.d.ts",
+    "lines": 52
+  },
+  {
+    "path": "apps/web-app/src/workers/chara-inspection.worker.ts",
+    "lines": 215
+  },
+  {
+    "path": "apps/web-app/tailwind.config.js",
+    "lines": 28
+  },
+  {
+    "path": "apps/web-app/vite-plugin-async-css.ts",
+    "lines": 100
+  },
+  {
+    "path": "apps/web-app/vite-plugin-beta-branding.ts",
+    "lines": 76
+  },
+  {
+    "path": "apps/web-app/vite-plugin-changelog-parser.ts",
+    "lines": 388
+  },
+  {
+    "path": "apps/web-app/vite.config.ts",
+    "lines": 84
+  },
+  {
+    "path": "apps/web-app/vitest.config.ts",
+    "lines": 111
+  },
+  {
+    "path": "packages/auth/src/discord.ts",
+    "lines": 187
+  },
+  {
+    "path": "packages/auth/src/encoding/base64.ts",
+    "lines": 104
+  },
+  {
+    "path": "packages/auth/src/encoding/hex.ts",
+    "lines": 49
+  },
+  {
+    "path": "packages/auth/src/encoding/index.ts",
+    "lines": 30
+  },
+  {
+    "path": "packages/auth/src/hmac.ts",
+    "lines": 335
+  },
+  {
+    "path": "packages/auth/src/index.ts",
+    "lines": 116
+  },
+  {
+    "path": "packages/auth/src/jwt.ts",
+    "lines": 335
+  },
+  {
+    "path": "packages/auth/src/revocation.ts",
+    "lines": 97
+  },
+  {
+    "path": "packages/auth/src/timing.ts",
+    "lines": 55
+  },
+  {
+    "path": "packages/auth/vitest.config.ts",
+    "lines": 21
+  },
+  {
+    "path": "packages/bot-logic/src/commands/accessibility.ts",
+    "lines": 280
+  },
+  {
+    "path": "packages/bot-logic/src/commands/chara-identity.ts",
+    "lines": 90
+  },
+  {
+    "path": "packages/bot-logic/src/commands/comparison.ts",
+    "lines": 171
+  },
+  {
+    "path": "packages/bot-logic/src/commands/contrast.ts",
+    "lines": 153
+  },
+  {
+    "path": "packages/bot-logic/src/commands/dye-info.ts",
+    "lines": 313
+  },
+  {
+    "path": "packages/bot-logic/src/commands/failure-kind.ts",
+    "lines": 18
+  },
+  {
+    "path": "packages/bot-logic/src/commands/glamour.ts",
+    "lines": 622
+  },
+  {
+    "path": "packages/bot-logic/src/commands/gradient.ts",
+    "lines": 415
+  },
+  {
+    "path": "packages/bot-logic/src/commands/harmony.ts",
+    "lines": 383
+  },
+  {
+    "path": "packages/bot-logic/src/commands/mixer.ts",
+    "lines": 182
+  },
+  {
+    "path": "packages/bot-logic/src/commands/swatch.ts",
+    "lines": 642
+  },
+  {
+    "path": "packages/bot-logic/src/commands/types.ts",
+    "lines": 27
+  },
+  {
+    "path": "packages/bot-logic/src/css-colors.ts",
+    "lines": 176
+  },
+  {
+    "path": "packages/bot-logic/src/discord-markdown.ts",
+    "lines": 77
+  },
+  {
+    "path": "packages/bot-logic/src/i18n/index.ts",
+    "lines": 24
+  },
+  {
+    "path": "packages/bot-logic/src/i18n/locale-resolution.ts",
+    "lines": 204
+  },
+  {
+    "path": "packages/bot-logic/src/i18n/translator.ts",
+    "lines": 147
+  },
+  {
+    "path": "packages/bot-logic/src/i18n/types.ts",
+    "lines": 34
+  },
+  {
+    "path": "packages/bot-logic/src/index.ts",
+    "lines": 153
+  },
+  {
+    "path": "packages/bot-logic/src/input-resolution.ts",
+    "lines": 358
+  },
+  {
+    "path": "packages/bot-logic/src/localization.ts",
+    "lines": 251
+  },
+  {
+    "path": "packages/bot-logic/src/moderators.ts",
+    "lines": 48
+  },
+  {
+    "path": "packages/bot-logic/vitest.config.ts",
+    "lines": 34
+  },
+  {
+    "path": "packages/core/eslint.audit-dyes.config.mjs",
+    "lines": 11
+  },
+  {
+    "path": "packages/core/scripts/audit-dyes.ts",
+    "lines": 193
+  },
+  {
+    "path": "packages/core/scripts/build-character-colors.ts",
+    "lines": 164
+  },
+  {
+    "path": "packages/core/scripts/build-locales.ts",
+    "lines": 1348
+  },
+  {
+    "path": "packages/core/scripts/build-munsell-hues.ts",
+    "lines": 173
+  },
+  {
+    "path": "packages/core/scripts/build-oklch-hue-table.ts",
+    "lines": 35
+  },
+  {
+    "path": "packages/core/scripts/calibrate-bands.ts",
+    "lines": 21
+  },
+  {
+    "path": "packages/core/scripts/copy-locales.ts",
+    "lines": 55
+  },
+  {
+    "path": "packages/core/scripts/fetch_dye_names.py",
+    "lines": 313
+  },
+  {
+    "path": "packages/core/scripts/lib/oklch-hue-table.ts",
+    "lines": 37
+  },
+  {
+    "path": "packages/core/scripts/stain-audit/compare.ts",
+    "lines": 270
+  },
+  {
+    "path": "packages/core/scripts/stain-audit/fetch.ts",
+    "lines": 180
+  },
+  {
+    "path": "packages/core/scripts/stain-audit/model.ts",
+    "lines": 194
+  },
+  {
+    "path": "packages/core/scripts/stain-audit/output.ts",
+    "lines": 352
+  },
+  {
+    "path": "packages/core/src/blending/blending.ts",
+    "lines": 269
+  },
+  {
+    "path": "packages/core/src/blending/conversions.ts",
+    "lines": 336
+  },
+  {
+    "path": "packages/core/src/blending/index.ts",
+    "lines": 12
+  },
+  {
+    "path": "packages/core/src/blending/types.ts",
+    "lines": 95
+  },
+  {
+    "path": "packages/core/src/chara.ts",
+    "lines": 23
+  },
+  {
+    "path": "packages/core/src/config/band-calibration.ts",
+    "lines": 261
+  },
+  {
+    "path": "packages/core/src/config/band-vocabulary.ts",
+    "lines": 165
+  },
+  {
+    "path": "packages/core/src/config/consolidated-ids.ts",
+    "lines": 127
+  },
+  {
+    "path": "packages/core/src/config/dye-vocabulary.ts",
+    "lines": 72
+  },
+  {
+    "path": "packages/core/src/config/facewear.ts",
+    "lines": 45
+  },
+  {
+    "path": "packages/core/src/config/learn-links.ts",
+    "lines": 210
+  },
+  {
+    "path": "packages/core/src/config/product-links.ts",
+    "lines": 51
+  },
+  {
+    "path": "packages/core/src/constants/index.ts",
+    "lines": 177
+  },
+  {
+    "path": "packages/core/src/index.ts",
+    "lines": 383
+  },
+  {
+    "path": "packages/core/src/services/APIService.ts",
+    "lines": 1195
+  },
+  {
+    "path": "packages/core/src/services/CharacterColorService.ts",
+    "lines": 443
+  },
+  {
+    "path": "packages/core/src/services/ColorService.ts",
+    "lines": 786
+  },
+  {
+    "path": "packages/core/src/services/DyeService.ts",
+    "lines": 381
+  },
+  {
+    "path": "packages/core/src/services/LocalizationService.ts",
+    "lines": 654
+  },
+  {
+    "path": "packages/core/src/services/PaletteService.ts",
+    "lines": 624
+  },
+  {
+    "path": "packages/core/src/services/PresetService.ts",
+    "lines": 268
+  },
+  {
+    "path": "packages/core/src/services/chara/chara-game-rules.ts",
+    "lines": 153
+  },
+  {
+    "path": "packages/core/src/services/chara/chara-gposers.ts",
+    "lines": 219
+  },
+  {
+    "path": "packages/core/src/services/chara/chara-library-resolve.ts",
+    "lines": 40
+  },
+  {
+    "path": "packages/core/src/services/chara/chara-library-types.ts",
+    "lines": 46
+  },
+  {
+    "path": "packages/core/src/services/chara/chara-library.ts",
+    "lines": 279
+  },
+  {
+    "path": "packages/core/src/services/chara/chara-models.ts",
+    "lines": 112
+  },
+  {
+    "path": "packages/core/src/services/chara/chara-palette-provider.ts",
+    "lines": 142
+  },
+  {
+    "path": "packages/core/src/services/chara/chara-parser.ts",
+    "lines": 615
+  },
+  {
+    "path": "packages/core/src/services/chara/chara-resolver.ts",
+    "lines": 453
+  },
+  {
+    "path": "packages/core/src/services/chara/chara-shader-colors.ts",
+    "lines": 72
+  },
+  {
+    "path": "packages/core/src/services/chara/chara-twins.ts",
+    "lines": 183
+  },
+  {
+    "path": "packages/core/src/services/color/ColorAccessibility.ts",
+    "lines": 95
+  },
+  {
+    "path": "packages/core/src/services/color/ColorConverter.ts",
+    "lines": 1790
+  },
+  {
+    "path": "packages/core/src/services/color/ColorManipulator.ts",
+    "lines": 78
+  },
+  {
+    "path": "packages/core/src/services/color/ColorblindnessSimulator.ts",
+    "lines": 166
+  },
+  {
+    "path": "packages/core/src/services/dye/DyeDatabase.ts",
+    "lines": 594
+  },
+  {
+    "path": "packages/core/src/services/dye/DyeFilter.ts",
+    "lines": 80
+  },
+  {
+    "path": "packages/core/src/services/dye/DyeSearch.ts",
+    "lines": 325
+  },
+  {
+    "path": "packages/core/src/services/dye/HarmonyGenerator.ts",
+    "lines": 577
+  },
+  {
+    "path": "packages/core/src/services/dye/HarmonySelector.ts",
+    "lines": 320
+  },
+  {
+    "path": "packages/core/src/services/dye/wheels/ColorWheel.ts",
+    "lines": 74
+  },
+  {
+    "path": "packages/core/src/services/dye/wheels/hue-warp.ts",
+    "lines": 166
+  },
+  {
+    "path": "packages/core/src/services/dye/wheels/munsell.ts",
+    "lines": 21
+  },
+  {
+    "path": "packages/core/src/services/dye/wheels/oklch-hue.ts",
+    "lines": 26
+  },
+  {
+    "path": "packages/core/src/services/dye/wheels/oklch-lightness.ts",
+    "lines": 74
+  },
+  {
+    "path": "packages/core/src/services/dye/wheels/rgb-ryb.ts",
+    "lines": 51
+  },
+  {
+    "path": "packages/core/src/services/dye/wheels/types.ts",
+    "lines": 40
+  },
+  {
+    "path": "packages/core/src/services/localization/LocaleLoader.ts",
+    "lines": 105
+  },
+  {
+    "path": "packages/core/src/services/localization/LocaleRegistry.ts",
+    "lines": 98
+  },
+  {
+    "path": "packages/core/src/services/localization/TranslationProvider.ts",
+    "lines": 523
+  },
+  {
+    "path": "packages/core/src/types/index.ts",
+    "lines": 109
+  },
+  {
+    "path": "packages/core/src/types/spectral-js.d.ts",
+    "lines": 18
+  },
+  {
+    "path": "packages/core/src/utils/index.ts",
+    "lines": 587
+  },
+  {
+    "path": "packages/core/src/utils/kd-tree.ts",
+    "lines": 253
+  },
+  {
+    "path": "packages/core/vitest.config.ts",
+    "lines": 37
+  },
+  {
+    "path": "packages/logger/src/adapters/console-adapter.ts",
+    "lines": 131
+  },
+  {
+    "path": "packages/logger/src/adapters/index.ts",
+    "lines": 23
+  },
+  {
+    "path": "packages/logger/src/adapters/json-adapter.ts",
+    "lines": 47
+  },
+  {
+    "path": "packages/logger/src/adapters/noop-adapter.ts",
+    "lines": 55
+  },
+  {
+    "path": "packages/logger/src/constants.ts",
+    "lines": 58
+  },
+  {
+    "path": "packages/logger/src/core/base-logger.ts",
+    "lines": 1128
+  },
+  {
+    "path": "packages/logger/src/core/index.ts",
+    "lines": 20
+  },
+  {
+    "path": "packages/logger/src/index.ts",
+    "lines": 133
+  },
+  {
+    "path": "packages/logger/src/presets/browser.ts",
+    "lines": 150
+  },
+  {
+    "path": "packages/logger/src/presets/index.ts",
+    "lines": 39
+  },
+  {
+    "path": "packages/logger/src/presets/library.ts",
+    "lines": 95
+  },
+  {
+    "path": "packages/logger/src/presets/worker.ts",
+    "lines": 128
+  },
+  {
+    "path": "packages/logger/src/types.ts",
+    "lines": 230
+  },
+  {
+    "path": "packages/logger/vitest.config.ts",
+    "lines": 38
+  },
+  {
+    "path": "packages/svg/src/a11y-card.ts",
+    "lines": 465
+  },
+  {
+    "path": "packages/svg/src/base.ts",
+    "lines": 330
+  },
+  {
+    "path": "packages/svg/src/budget-ledger.ts",
+    "lines": 314
+  },
+  {
+    "path": "packages/svg/src/comparison-card.ts",
+    "lines": 329
+  },
+  {
+    "path": "packages/svg/src/contrast-card.ts",
+    "lines": 493
+  },
+  {
+    "path": "packages/svg/src/dye-info-card.ts",
+    "lines": 250
+  },
+  {
+    "path": "packages/svg/src/emitted-glyphs.ts",
+    "lines": 610
+  },
+  {
+    "path": "packages/svg/src/frame.ts",
+    "lines": 657
+  },
+  {
+    "path": "packages/svg/src/glamour-card.ts",
+    "lines": 398
+  },
+  {
+    "path": "packages/svg/src/gradient.ts",
+    "lines": 268
+  },
+  {
+    "path": "packages/svg/src/harmony-card.ts",
+    "lines": 413
+  },
+  {
+    "path": "packages/svg/src/icons/tool-icons.ts",
+    "lines": 361
+  },
+  {
+    "path": "packages/svg/src/index.ts",
+    "lines": 251
+  },
+  {
+    "path": "packages/svg/src/mixer-card.ts",
+    "lines": 171
+  },
+  {
+    "path": "packages/svg/src/nearest-sheet.ts",
+    "lines": 189
+  },
+  {
+    "path": "packages/svg/src/palette-grid.ts",
+    "lines": 225
+  },
+  {
+    "path": "packages/svg/src/preset-swatch.ts",
+    "lines": 335
+  },
+  {
+    "path": "packages/svg/src/random-dyes-grid.ts",
+    "lines": 161
+  },
+  {
+    "path": "packages/svg/src/swatch-card.ts",
+    "lines": 208
+  },
+  {
+    "path": "packages/svg/vitest.config.ts",
+    "lines": 32
+  },
+  {
+    "path": "packages/test-utils/src/auth/headers.ts",
+    "lines": 43
+  },
+  {
+    "path": "packages/test-utils/src/auth/index.ts",
+    "lines": 14
+  },
+  {
+    "path": "packages/test-utils/src/auth/jwt.ts",
+    "lines": 121
+  },
+  {
+    "path": "packages/test-utils/src/cloudflare/analytics.ts",
+    "lines": 74
+  },
+  {
+    "path": "packages/test-utils/src/cloudflare/d1.ts",
+    "lines": 457
+  },
+  {
+    "path": "packages/test-utils/src/cloudflare/fetcher.ts",
+    "lines": 234
+  },
+  {
+    "path": "packages/test-utils/src/cloudflare/index.ts",
+    "lines": 18
+  },
+  {
+    "path": "packages/test-utils/src/cloudflare/kv.ts",
+    "lines": 291
+  },
+  {
+    "path": "packages/test-utils/src/cloudflare/r2.ts",
+    "lines": 274
+  },
+  {
+    "path": "packages/test-utils/src/constants/index.ts",
+    "lines": 7
+  },
+  {
+    "path": "packages/test-utils/src/constants/pkce.ts",
+    "lines": 42
+  },
+  {
+    "path": "packages/test-utils/src/factories/category.ts",
+    "lines": 45
+  },
+  {
+    "path": "packages/test-utils/src/factories/dye.ts",
+    "lines": 246
+  },
+  {
+    "path": "packages/test-utils/src/factories/index.ts",
+    "lines": 14
+  },
+  {
+    "path": "packages/test-utils/src/factories/preset.ts",
+    "lines": 101
+  },
+  {
+    "path": "packages/test-utils/src/index.ts",
+    "lines": 24
+  },
+  {
+    "path": "packages/test-utils/src/utils/counters.ts",
+    "lines": 54
+  },
+  {
+    "path": "packages/test-utils/src/utils/index.ts",
+    "lines": 5
+  },
+  {
+    "path": "packages/test-utils/vitest.config.ts",
+    "lines": 21
+  },
+  {
+    "path": "packages/types/src/api/index.ts",
+    "lines": 11
+  },
+  {
+    "path": "packages/types/src/api/moderation.ts",
+    "lines": 82
+  },
+  {
+    "path": "packages/types/src/api/price.ts",
+    "lines": 60
+  },
+  {
+    "path": "packages/types/src/api/response.ts",
+    "lines": 30
+  },
+  {
+    "path": "packages/types/src/auth/discord-snowflake.ts",
+    "lines": 51
+  },
+  {
+    "path": "packages/types/src/auth/discord.ts",
+    "lines": 80
+  },
+  {
+    "path": "packages/types/src/auth/index.ts",
+    "lines": 60
+  },
+  {
+    "path": "packages/types/src/auth/jwt.ts",
+    "lines": 81
+  },
+  {
+    "path": "packages/types/src/auth/provider.ts",
+    "lines": 43
+  },
+  {
+    "path": "packages/types/src/auth/response.ts",
+    "lines": 161
+  },
+  {
+    "path": "packages/types/src/auth/xivauth.ts",
+    "lines": 117
+  },
+  {
+    "path": "packages/types/src/character/index.ts",
+    "lines": 144
+  },
+  {
+    "path": "packages/types/src/color/branded.ts",
+    "lines": 161
+  },
+  {
+    "path": "packages/types/src/color/colorblind.ts",
+    "lines": 53
+  },
+  {
+    "path": "packages/types/src/color/index.ts",
+    "lines": 28
+  },
+  {
+    "path": "packages/types/src/color/match-quality.ts",
+    "lines": 46
+  },
+  {
+    "path": "packages/types/src/color/rgb.ts",
+    "lines": 141
+  },
+  {
+    "path": "packages/types/src/dye/dye-filters.ts",
+    "lines": 39
+  },
+  {
+    "path": "packages/types/src/dye/dye.ts",
+    "lines": 148
+  },
+  {
+    "path": "packages/types/src/dye/facewear.ts",
+    "lines": 20
+  },
+  {
+    "path": "packages/types/src/dye/index.ts",
+    "lines": 18
+  },
+  {
+    "path": "packages/types/src/error/app-error.ts",
+    "lines": 73
+  },
+  {
+    "path": "packages/types/src/error/codes.ts",
+    "lines": 49
+  },
+  {
+    "path": "packages/types/src/error/index.ts",
+    "lines": 18
+  },
+  {
+    "path": "packages/types/src/index.ts",
+    "lines": 170
+  },
+  {
+    "path": "packages/types/src/localization/index.ts",
+    "lines": 186
+  },
+  {
+    "path": "packages/types/src/preset/community.ts",
+    "lines": 154
+  },
+  {
+    "path": "packages/types/src/preset/core.ts",
+    "lines": 113
+  },
+  {
+    "path": "packages/types/src/preset/index.ts",
+    "lines": 71
+  },
+  {
+    "path": "packages/types/src/preset/request.ts",
+    "lines": 73
+  },
+  {
+    "path": "packages/types/src/preset/response.ts",
+    "lines": 167
+  },
+  {
+    "path": "packages/types/src/preset/review-custom-id.ts",
+    "lines": 200
+  },
+  {
+    "path": "packages/types/vitest.config.ts",
+    "lines": 24
+  },
+  {
+    "path": "packages/worker-kit/src/body-guards/body-guards.ts",
+    "lines": 162
+  },
+  {
+    "path": "packages/worker-kit/src/body-guards/index.ts",
+    "lines": 58
+  },
+  {
+    "path": "packages/worker-kit/src/body-guards/structure.ts",
+    "lines": 57
+  },
+  {
+    "path": "packages/worker-kit/src/body-guards/types.ts",
+    "lines": 80
+  },
+  {
+    "path": "packages/worker-kit/src/image-sniff/detect.ts",
+    "lines": 129
+  },
+  {
+    "path": "packages/worker-kit/src/image-sniff/index.ts",
+    "lines": 33
+  },
+  {
+    "path": "packages/worker-kit/src/index.ts",
+    "lines": 26
+  },
+  {
+    "path": "packages/worker-kit/src/middleware/index.ts",
+    "lines": 47
+  },
+  {
+    "path": "packages/worker-kit/src/middleware/logger.ts",
+    "lines": 202
+  },
+  {
+    "path": "packages/worker-kit/src/middleware/rate-limit.ts",
+    "lines": 268
+  },
+  {
+    "path": "packages/worker-kit/src/middleware/request-id.ts",
+    "lines": 107
+  },
+  {
+    "path": "packages/worker-kit/src/middleware/types.ts",
+    "lines": 50
+  },
+  {
+    "path": "packages/worker-kit/src/rate-limiter/backends/cloudflare.ts",
+    "lines": 263
+  },
+  {
+    "path": "packages/worker-kit/src/rate-limiter/backends/kv.ts",
+    "lines": 337
+  },
+  {
+    "path": "packages/worker-kit/src/rate-limiter/backends/memory.ts",
+    "lines": 227
+  },
+  {
+    "path": "packages/worker-kit/src/rate-limiter/backends/upstash.ts",
+    "lines": 165
+  },
+  {
+    "path": "packages/worker-kit/src/rate-limiter/headers.ts",
+    "lines": 49
+  },
+  {
+    "path": "packages/worker-kit/src/rate-limiter/index.ts",
+    "lines": 97
+  },
+  {
+    "path": "packages/worker-kit/src/rate-limiter/ip.ts",
+    "lines": 89
+  },
+  {
+    "path": "packages/worker-kit/src/rate-limiter/key-scope.ts",
+    "lines": 81
+  },
+  {
+    "path": "packages/worker-kit/src/rate-limiter/presets/configs.ts",
+    "lines": 168
+  },
+  {
+    "path": "packages/worker-kit/src/rate-limiter/presets/index.ts",
+    "lines": 36
+  },
+  {
+    "path": "packages/worker-kit/src/rate-limiter/types.ts",
+    "lines": 256
+  },
+  {
+    "path": "packages/worker-kit/vitest.config.ts",
+    "lines": 21
+  },
+  {
+    "path": "scripts/check-dead-code.ts",
+    "lines": 1723
+  },
+  {
+    "path": "scripts/check-doc-links.ts",
+    "lines": 212
+  },
+  {
+    "path": "scripts/check-doc-versions.ts",
+    "lines": 262
+  },
+  {
+    "path": "scripts/check-worker-logs.ts",
+    "lines": 198
+  },
+  {
+    "path": "scripts/coverage-report.ts",
+    "lines": 245
+  },
+  {
+    "path": "scripts/markdown-mask.ts",
+    "lines": 64
+  }
+]

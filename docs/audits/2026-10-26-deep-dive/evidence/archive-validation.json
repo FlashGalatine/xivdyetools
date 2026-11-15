@@ -1,0 +1,18 @@
+{
+  "files": 120,
+  "links": 325,
+  "json": 20,
+  "findingFiles": 30,
+  "catalogIds": 133,
+  "scheduled": 108,
+  "keep": 23,
+  "superseded": 2,
+  "sourceCoverage": {
+    "scope": "tracked non-test TS/JS/Python/SQL executable/declaration/config source in apps, packages, scripts; test helpers and fixtures excluded; CSS/HTML/data additionally listed in reviewer ledgers",
+    "files": 650,
+    "original_lines": 169904,
+    "covered": 650,
+    "missing": []
+  },
+  "errors": []
+}

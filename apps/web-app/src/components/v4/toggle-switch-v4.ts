@@ -58,6 +58,12 @@ export class ToggleSwitchV4 extends BaseLitComponent {
   label?: string;
 
   /**
+   * The switch's accessible name, ahead of `label`: for a toggle with no visible text
+   */
+  @property({ type: String })
+  accessibleName?: string;
+
+  /**
    * Form field name (for form integration)
    */
   @property({ type: String })
@@ -99,11 +105,11 @@ export class ToggleSwitchV4 extends BaseLitComponent {
       }
 
       :host([checked]) .toggle-track {
-        background: var(--theme-primary, #d4af37);
+        background: var(--theme-primary);
       }
 
       .toggle-track:focus-visible {
-        outline: 2px solid var(--theme-primary, #d4af37);
+        outline: 2px solid var(--theme-primary);
         outline-offset: 2px;
       }
 
@@ -129,7 +135,7 @@ export class ToggleSwitchV4 extends BaseLitComponent {
       }
 
       :host([checked]) .toggle-wrapper:not(.disabled):hover .toggle-track {
-        background: var(--theme-primary-hover, #c49d2f);
+        background: var(--theme-primary-hover);
       }
 
       /* Active press effect */
@@ -194,7 +200,7 @@ export class ToggleSwitchV4 extends BaseLitComponent {
           role="switch"
           aria-checked=${this.checked}
           aria-disabled=${this.disabled}
-          aria-label=${this.label || LanguageService.t('aria.toggle')}
+          aria-label=${this.accessibleName || this.label || LanguageService.t('aria.toggle')}
           tabindex=${this.disabled ? -1 : 0}
           @keydown=${this.handleKeyDown}
         >

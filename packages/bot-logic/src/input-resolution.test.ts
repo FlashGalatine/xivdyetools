@@ -342,6 +342,15 @@ describe('localized dye-name matching', () => {
       expect(hits.map((d) => d.name)).toContain('Cream Yellow');
     });
   });
+
+  // core 5.16.0 (PR #390, accepted 2026-10-31): only the in-game German name resolves.
+  it('an earlier inflected German name no longer resolves; the in-game name does', async () => {
+    await initializeLocale('de');
+    expect(findDyeByName('Schneeweiß', 'de')?.name).toBe('Snow White');
+    expect(findDyeByName('Schneeweißer', 'de')).toBeNull();
+    expect(searchDyesByName('schneeweisser', 'de').map((d) => d.name)).not.toContain('Snow White');
+    expect(searchDyesByName('schneeweiss', 'de').map((d) => d.name)).toContain('Snow White');
+  });
 });
 
 describe('resolveDyeInput', () => {

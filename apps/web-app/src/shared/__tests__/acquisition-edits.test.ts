@@ -5,7 +5,7 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { StorageService } from '@services/storage-service';
-import { AcquisitionEdits, gearHash } from '../acquisition-edits';
+import { AcquisitionEdits, abridgedEditKey, gearHash } from '../acquisition-edits';
 
 beforeEach(() => localStorage.clear());
 
@@ -17,6 +17,31 @@ describe('gearHash', () => {
     expect(gearHash('Body', 2630, [56, 33])).not.toBe(base);
     expect(gearHash('Body', 2629, [56])).not.toBe(base);
     expect(base).toMatch(/^[0-9a-f]{8}$/);
+  });
+});
+
+describe('abridgedEditKey', () => {
+  it('is stable, per piece, and never the piece’s own key', () => {
+    const hash = gearHash('Body', 2629, [56, 33]);
+    expect(abridgedEditKey(hash)).toBe(abridgedEditKey(hash));
+    expect(abridgedEditKey(hash)).not.toBe(hash);
+    expect(abridgedEditKey(hash)).not.toBe(abridgedEditKey(gearHash('Legs', 2629, [56, 33])));
+  });
+
+  it('keeps the two edits of one piece apart in the same store', () => {
+    const hash = gearHash('Body', 2629, []);
+    AcquisitionEdits.set(hash, { text: 'Full line', baseItemId: 1 });
+    AcquisitionEdits.set(abridgedEditKey(hash), { text: 'Short line', baseItemId: 2 });
+
+    expect(AcquisitionEdits.get(hash)).toEqual({ text: 'Full line', baseItemId: 1 });
+    expect(AcquisitionEdits.get(abridgedEditKey(hash))).toEqual({
+      text: 'Short line',
+      baseItemId: 2,
+    });
+
+    AcquisitionEdits.remove(abridgedEditKey(hash));
+    expect(AcquisitionEdits.get(hash)).toEqual({ text: 'Full line', baseItemId: 1 });
+    expect(AcquisitionEdits.get(abridgedEditKey(hash))).toBeNull();
   });
 });
 

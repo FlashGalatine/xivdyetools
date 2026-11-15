@@ -222,6 +222,22 @@ describe('handleAutocomplete — FINDING-034 follow-ups', () => {
     expect([...json.data.choices[0].name].length).toBeLessThanOrEqual(100);
     expect(json.data.choices[0].value).toBe('555555555555555555');
   });
+
+  it('unban autocomplete logs and returns no choices when the search fails', async () => {
+    vi.mocked(banService.searchBannedUsers).mockRejectedValueOnce(
+      new Error('D1_ERROR: no such table: ban_identity_memberships'),
+    );
+    const interaction = autocompleteInteraction('111111111111111111', 'unban_user');
+
+    const res = await handleAutocomplete(interaction, env, ctx, logger);
+    const json = (await res.json()) as { data: { choices: unknown[] } };
+
+    expect(json.data.choices).toEqual([]);
+    expect((logger as { error: ReturnType<typeof vi.fn> }).error).toHaveBeenCalledWith(
+      'Failed to get unban user autocomplete',
+      expect.any(Error),
+    );
+  });
 });
 
 describe('inactive/optional additional account autocomplete',()=>{

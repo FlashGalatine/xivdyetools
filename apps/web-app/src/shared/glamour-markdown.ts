@@ -32,10 +32,19 @@
  * leaves out, before it gets here, the worn slots a submission has no use for:
  * invisible pieces and an Off Hand the main hand does not take.
  *
+ * Two forms, chosen by the renderers' `format` argument. `full` is the template
+ * above. `abridged` is the shorter social-media post: no header, the whole
+ * `Slot: Name` line in bold, one `Dyes:` line and an `Obtained:` line. It is a
+ * reshape of the same groups, so slots, order, rings and one-line cleaning
+ * cannot drift between the forms. It writes `piece.acquisition` as given; the
+ * export sheet is what shortens a line (`glamour-abridged`), because a line
+ * typed in Abridged stays word for word. `Dyes:`, `Obtained:` and `None` are
+ * English form words too, for the reason above.
+ *
  * The form itself (slots, order, lines, rings, one-line values) is core's
  * `chara-gposers` model, which the `/glamour` bot renders too; this module
- * owns the three renderings. Pure by design — no DOM, no services — so the
- * formats are unit-testable without a browser.
+ * owns the renderings. Pure by design — no DOM, no services — so the formats
+ * are unit-testable without a browser.
  *
  * @module shared/glamour-markdown
  */
@@ -46,7 +55,6 @@ import {
   GPOSERS_SLOTS,
   gposersGroups,
   gposersSlotLabel,
-  type GposersInput,
   type GposersLine,
   type GposersPiece,
   type GposersSlot,
@@ -57,21 +65,32 @@ export const GLAMOUR_MARKDOWN_SLOTS = GPOSERS_SLOTS;
 
 export type GlamourMarkdownSlot = GposersSlot;
 
+/** Which form to write: the GPOSERS template, or the shorter social-media post. */
+export type GlamourListFormat = 'full' | 'abridged';
+
 /**
  * What is known about one worn slot. An entry's presence means the slot is
  * worn; anything absent or empty inside it is written blank or omitted.
+ * `dyeSlots` is the piece's dye channel count (absent or null = unknown); only
+ * Abridged reads it, to tell `A / None` from `A`.
  */
-export type GlamourMarkdownPiece = GposersPiece;
+export type GlamourMarkdownPiece = GposersPiece & { dyeSlots?: number | null };
 
-export type GlamourMarkdownInput = GposersInput;
+export type GlamourMarkdownInput = Partial<Record<GlamourMarkdownSlot, GlamourMarkdownPiece>>;
 
 /** The download's name. Carries no character name by design. */
 export const GLAMOUR_MARKDOWN_FILENAME = 'glamour-equipment.md';
+
+/** The Abridged download's name. */
+export const GLAMOUR_ABRIDGED_FILENAME = 'glamour-equipment-abridged.md';
 
 const HEADER = GPOSERS_HEADER;
 
 /** The template's own field label — shown by the export sheet beside the editable line. */
 export const ACQUISITION_LABEL = GPOSERS_ACQUISITION_LABEL;
+
+/** Abridged's field label, in the same place. */
+export const OBTAINED_LABEL = 'Obtained:';
 
 /** The template's label for one slot ("Main Hand", "Earrings"). */
 export function glamourSlotLabel(slot: GlamourMarkdownSlot): string {
@@ -89,10 +108,43 @@ function lineText(line: Line, bold: (label: string) => string): string {
   return line.value ? `${label} ${line.value}` : label;
 }
 
+/** `A / B`, `None / B`, `A / None` on a piece known to take two, else `A`; '' when undyed. */
+function dyesValue(dye1: string, dye2: string, dyeSlots: number | null | undefined): string {
+  if (dye2) return `${dye1 || 'None'} / ${dye2}`;
+  if (!dye1) return '';
+  return dyeSlots === 2 ? `${dye1} / None` : dye1;
+}
+
+/**
+ * One slot's group, reshaped for Abridged: the first line bold as a whole (all
+ * label, no value), the dye lines folded into one, `Acquisition:` as `Obtained:`.
+ */
+function abridgedGroup(input: GlamourMarkdownInput, [head, ...rest]: Line[]): Line[] {
+  const valueOf = (label: string): string => rest.find((l) => l.label === label)?.value ?? '';
+  const slot = GLAMOUR_MARKDOWN_SLOTS.find((s) => `${gposersSlotLabel(s)}:` === head.label);
+  const dyes = dyesValue(
+    valueOf('Dye 1:'),
+    valueOf('Dye 2:'),
+    slot ? input[slot]?.dyeSlots : undefined
+  );
+  return [
+    { label: lineText(head, (label) => label), value: '', bold: true },
+    ...(dyes ? [{ label: 'Dyes:', value: dyes, bold: false }] : []),
+    { label: OBTAINED_LABEL, value: valueOf(ACQUISITION_LABEL), bold: false },
+  ];
+}
+
+const groupsFor = (input: GlamourMarkdownInput, format: GlamourListFormat): Line[][] =>
+  format === 'abridged' ? groups(input).map((group) => abridgedGroup(input, group)) : groups(input);
+
 /** Markdown / plain text share one shape; only the bold marker differs. */
-function renderLines(input: GlamourMarkdownInput, bold: (label: string) => string): string {
-  const lines: string[] = [bold(HEADER)];
-  for (const group of groups(input)) {
+function renderLines(
+  input: GlamourMarkdownInput,
+  bold: (label: string) => string,
+  format: GlamourListFormat
+): string {
+  const lines: string[] = format === 'abridged' ? [] : [bold(HEADER)];
+  for (const group of groupsFor(input, format)) {
     for (const line of group) lines.push(lineText(line, bold));
     lines.push('');
   }
@@ -100,13 +152,19 @@ function renderLines(input: GlamourMarkdownInput, bold: (label: string) => strin
 }
 
 /** The .md download: `**bold**` labels, a blank line between slots. */
-export function buildGlamourMarkdown(input: GlamourMarkdownInput): string {
-  return renderLines(input, (label) => `**${label}**`);
+export function buildGlamourMarkdown(
+  input: GlamourMarkdownInput,
+  format: GlamourListFormat = 'full'
+): string {
+  return renderLines(input, (label) => `**${label}**`, format);
 }
 
 /** The clipboard's plain flavour: the same lines with no Markdown syntax. */
-export function buildGlamourPlainText(input: GlamourMarkdownInput): string {
-  return renderLines(input, (label) => label);
+export function buildGlamourPlainText(
+  input: GlamourMarkdownInput,
+  format: GlamourListFormat = 'full'
+): string {
+  return renderLines(input, (label) => label, format);
 }
 
 function escapeHtml(value: string): string {
@@ -122,16 +180,21 @@ function escapeHtml(value: string): string {
  * The clipboard's rich flavour: `<strong>` labels, one paragraph per slot
  * with `<br>` line breaks, so Word and Google Docs keep the bold and the
  * spacing between slots. The header shares the first slot's paragraph, as
- * it shares its line block in the text renderings.
+ * it shares its line block in the text renderings; Abridged has no header.
  */
-export function buildGlamourHtml(input: GlamourMarkdownInput): string {
+export function buildGlamourHtml(
+  input: GlamourMarkdownInput,
+  format: GlamourListFormat = 'full'
+): string {
   const strong = (label: string): string => `<strong>${escapeHtml(label)}</strong>`;
   const toHtml = (line: Line): string => {
     const label = line.bold ? strong(line.label) : escapeHtml(line.label);
     return line.value ? `${label} ${escapeHtml(line.value)}` : label;
   };
-  const paragraphs = groups(input).map((group) => group.map(toHtml));
-  if (paragraphs.length === 0) return `<p>${strong(HEADER)}</p>`;
-  paragraphs[0].unshift(strong(HEADER));
+  const paragraphs = groupsFor(input, format).map((group) => group.map(toHtml));
+  if (format === 'full') {
+    if (paragraphs.length === 0) return `<p>${strong(HEADER)}</p>`;
+    paragraphs[0].unshift(strong(HEADER));
+  }
   return paragraphs.map((lines) => `<p>${lines.join('<br>')}</p>`).join('');
 }
