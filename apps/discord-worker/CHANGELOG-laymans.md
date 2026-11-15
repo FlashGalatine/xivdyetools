@@ -35,7 +35,7 @@ Rules:
   path filter.
 -->
 
-## [5.9.11] - 2026-11-10
+## [5.9.11] - 2026-11-15
 ### Changed
 - `/about` now links to @FlashGalatine on X, the account's new name.
 

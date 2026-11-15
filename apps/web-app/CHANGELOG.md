@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [5.18.1] - 2026-11-13
+## [5.18.1] - 2026-11-15
 
 ### Changed
 
@@ -42,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Untagged template strings (the tool components' `innerHTML` templates, about 8 KB of whitespace) are
   not touched; nothing marks them as HTML.
 
-## [5.18.0] - 2026-11-13
+## [5.18.0] - 2026-11-15
 
 ### Added
 
@@ -110,7 +110,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   from the strip, tap a marked dye with no slot selected to remove it) in every Playwright project through explicit
   viewports.
 
-## [5.17.2] - 2026-11-10
+## [5.17.2] - 2026-11-15
 
 ### Changed
 
@@ -119,7 +119,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `SOCIAL_LINKS`, which now points at `https://x.com/FlashGalatine`, and the `twitter:site` and
   `twitter:creator` tags in `src/index.html` name the new handle on share cards. No other source change.
 
-## [5.17.1] - 2026-10-29
+## [5.17.1] - 2026-11-15
 
 ### Changed
 

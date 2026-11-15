@@ -2,12 +2,12 @@
 
 ---
 
-## Web-App Version 5.18.1 — November 13, 2026
+## Web-App Version 5.18.1 — November 15, 2026
 
 ### A smaller download
 - **The app is about 65 KB lighter to load.** Nothing looks or works differently.
 
-## Web-App Version 5.18.0 — November 13, 2026
+## Web-App Version 5.18.0 — November 15, 2026
 
 ### Tap a slot to pick its dye
 - **Empty slots open the Color Palette.** Tap an empty slot or card in a tool, then pick a dye to fill it.
@@ -28,10 +28,15 @@
 - **Dye Mixer no longer takes the same dye twice.** A saved or shared pair with the same dye in both slots now loads with only the first slot filled.
 - **Its slot buttons read 1 and 2,** matching the two slots.
 
-## Web-App Version 5.17.2 — November 10, 2026
+## Web-App Version 5.17.2 — November 15, 2026
 
 ### About
 - **New X/Twitter handle.** The X link in the About window now goes to @FlashGalatine, the account's new name.
+
+## Web-App Version 5.17.1 — November 15, 2026
+
+### Behind the scenes
+- **The app now runs on the newest version of its shared color and dye library.** Nothing looks or works differently.
 
 ## Web-App Version 5.17.0 — November 2, 2026
 
