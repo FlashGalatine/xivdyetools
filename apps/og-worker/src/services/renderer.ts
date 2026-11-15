@@ -9,6 +9,7 @@
  */
 
 import { Resvg, initWasm } from '@resvg/resvg-wasm';
+import type { LocaleCode } from '@xivdyetools/types';
 
 // Static WASM import - wrangler bundles this at build time
 // @ts-expect-error - WASM imports are handled by wrangler bundler
@@ -72,16 +73,18 @@ async function initRenderer(): Promise<void> {
 async function renderSvgToPng(
   svgString: string,
   options: {
+    /** The card's resolved locale selects the regional CJK fallback face. */
+    locale: LocaleCode;
     /** Scale factor (1 = native resolution, 2 = 2x) */
     scale?: number;
     /** Background color (default: transparent) */
     background?: string;
-  } = {}
+  }
 ): Promise<Uint8Array> {
   // Ensure WASM is initialized
   await initRenderer();
 
-  const { scale = 1, background } = options;
+  const { locale, scale = 1, background } = options;
 
   // OPT-006 (2026-10-04 deep-dive): both wasm allocations — the parsed tree
   // and the RGBA pixmap (~5 MB at 1200×1050) — are released in the `finally`,
@@ -109,7 +112,7 @@ async function renderSvgToPng(
       background,
       font: {
         // Load bundled font files for text rendering
-        fontBuffers: getFontBuffers(),
+        fontBuffers: getFontBuffers(locale),
         // Default to Onest (body font) for any unspecified text
         defaultFontFamily: 'Onest',
       },
@@ -134,6 +137,7 @@ async function renderSvgToPng(
  * Renders an OG image SVG to a PNG response
  *
  * @param svgString - SVG content on the 400 design grid (400×350 or 400×210)
+ * @param locale - The card's resolved locale, used for regional CJK fallback
  * @param ttl - Explicit browser/edge cache TTLs in seconds (BUG-068: the old
  *   single seconds param was silently multiplied by 7 for the edge TTL,
  *   turning a "7 days" call site into 49 days at the edge)
@@ -141,10 +145,11 @@ async function renderSvgToPng(
  */
 export async function renderOGImage(
   svgString: string,
+  locale: LocaleCode,
   ttl: { browser: number; edge: number } = { browser: 86400, edge: 604800 }
 ): Promise<Response> {
   try {
-    const pngBuffer = await renderSvgToPng(svgString, BAND_RENDER);
+    const pngBuffer = await renderSvgToPng(svgString, { ...BAND_RENDER, locale });
 
     return new Response(pngBuffer, {
       status: 200,

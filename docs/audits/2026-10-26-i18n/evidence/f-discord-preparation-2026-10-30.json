@@ -1,0 +1,147 @@
+{
+  "checkedAt": "2026-10-30T11:55:21.885Z",
+  "scope": "Conditional F-DISCORD offline verification; deployed terminal acceptance held",
+  "sourceBase": "3ad26ae6666f6a8823e86198cb0873fc03d6cec7",
+  "textPrerequisite": {
+    "pr": 390,
+    "head": "b1f9010568bda4537688556dfa3efedd0642e116",
+    "state": "open; unmerged; selectively reconciled"
+  },
+  "corpusSets": {
+    "discord_SC_KR": {
+      "count": 3283,
+      "sha256": "f481dce973306449c0a6d66ed5433df307d78d236a5ae684b867e3814fef9dfb",
+      "added": 0,
+      "removed": 0
+    },
+    "discord_JP": {
+      "count": 1098,
+      "sha256": "937fc340bfbd5d66fe9417cf0a902925ad773bb61c7d3fe35c2ab24cc1be861a",
+      "added": 0,
+      "removed": 0
+    },
+    "og_all": {
+      "count": 1021,
+      "sha256": "af3cd5227b9d427fc0f303a7f5abb8642599354282df80fc9f20d3d185912586",
+      "added": 0,
+      "removed": 0
+    },
+    "og_ja": {
+      "count": 338,
+      "sha256": "fda43b2860f00adc2786338d6b342894bde21857ffebdab6f7cc5338b513e2ce",
+      "added": 0,
+      "removed": 0
+    }
+  },
+  "sourceHashes": {
+    "packages/core/src/data/locales/de.json": "ccb05c257d1deeb072b6ac0691e502d86b7099cc82be7cc52dd252193851fb1c",
+    "packages/core/src/data/locales/en.json": "8c0fdf7e99bc2c5019ba4d3003505768991b48823ff0481d212c6949992a746c",
+    "packages/core/src/data/locales/fr.json": "712a6392690f3115f5d20312f9478a30161d94b8ddba265b29e695fec7e1e332",
+    "packages/core/src/data/locales/ja.json": "237527671a0ff4d195007a5adde4fde7edad5bf1702a3b7f7b0ba7b6a74b60b6",
+    "packages/core/src/data/locales/ko.json": "2e151b02c48f10bc5437df9b78d21434c95594e050d8e73f998e2d0bca8c841e",
+    "packages/core/src/data/locales/zh.json": "14f734032013ac17e0def3858302ac5432c41bd9cb16bb4e9d5be173108eb4f3",
+    "packages/bot-logic/src/i18n/locales/de.json": "b11088156cbb32aadf2e217a8f3403276beb085ba0a262ff41f9f3ee9ea4e82a",
+    "packages/bot-logic/src/i18n/locales/en.json": "2aa1a5580f08cf55383da6a60409caaffe417866e99d2bf43d505e41af4c841f",
+    "packages/bot-logic/src/i18n/locales/fr.json": "4fbdee6b5e9e9cd29d70ed9d50655c36a581b52a7e05ddf755e043aa48a074ce",
+    "packages/bot-logic/src/i18n/locales/ja.json": "8a33538f0f12841964a059fe8b5731333308a705e148f7d902b492e63473e71e",
+    "packages/bot-logic/src/i18n/locales/ko.json": "9f52eaff23cee31b79979522ee554173d1400214cab58c46bdb805a690dec909",
+    "packages/bot-logic/src/i18n/locales/zh.json": "b89f89749d986a8c9c984e02d840bc0019d65c757cd562cb5f8f02fdbe75c504",
+    "apps/api-worker/src/chara/data/item-names.ja.json": "e2585c7c2216ca44e3cc7ccc5752b1dbe05ae1e55a5cfa655dc8b195b49c1ef4",
+    "apps/api-worker/src/chara/data/item-names.ko.json": "d9afcab8e81f0bd930965299d23adf66169da40d5262ea39cdf2af211b2b72e2",
+    "apps/api-worker/src/chara/data/item-names.meta.json": "bff4291435564d362ba1036aacbc846c66c029a39b95a073b02c2d817c356957",
+    "apps/api-worker/src/chara/data/item-names.zh.json": "2a0f663aed59795673433a8a0fa14d4891f432d5a1b5822c051d8943b13612ac",
+    "apps/og-worker/src/services/og-strings.ts": "e9d942a097a77f66049649f0c3ed7bc78c7d936851e398bf9c282e57c700de02"
+  },
+  "sourceFaces": {
+    "NotoSansSC-Variable.ttf": "a3041811a78c361b1de50f953c805e0244951c21c5bd412f7232ef0d899af0da",
+    "NotoSansJP-Variable.ttf": "c2f3b4d463500a2ddcd3849cded1fceeb9fd6d1c32e6cbecd568453ba50fc68f",
+    "NotoSansKR-Variable.ttf": "194018e6b2b293a7964f037b25c0249ce1418bc9ab3c971060a03aa57861e252"
+  },
+  "subsetHashes": {
+    "discord-worker/SC": "1924323cd15605f24f11d728c6caae16613ede5e27838a8ea56c5bd8b344120e",
+    "discord-worker/JP": "e0288da0455d529ef85724b1db6c4d03d4b9a79ab11d5c113194e192a813d32c",
+    "discord-worker/KR": "cc6a0dcee794f8f74775ea546e6cedb3ce6e7c2a664f23a24bb8f6dfc691b58b",
+    "og-worker/SC": "1342627b9cfce8f674dcfd91441bd9303f98c2d62fd3f91d97d64fe201759bd0",
+    "og-worker/JP": "72bd5d2dc5cf8dff91a3dcb7a8b52b54530893db7b9331bfe6b169c8b821fe3d",
+    "og-worker/KR": "5f33a0295ab09075c271efb84678aa9992045fe0c22651cdb50018d4367e2698"
+  },
+  "regeneratedCmap": {
+    "discord-worker": {
+      "SC": {
+        "generated_sha256": "97c7385c1b5e12d7a61c38c9fe07ee84147201bc34c72e35266e36fe5e7f006f",
+        "generated_bytes": 859312,
+        "generated_cmap_count": 2414,
+        "added_codepoints": [],
+        "removed_codepoints": [
+          21024
+        ],
+        "added_count": 0,
+        "removed_count": 1,
+        "existing_sha256_before": "1924323cd15605f24f11d728c6caae16613ede5e27838a8ea56c5bd8b344120e"
+      },
+      "JP": {
+        "generated_sha256": "2ab37ce736ba6139187a07d3648f100f98a796662f60dffacb633763f84068e6",
+        "generated_bytes": 482000,
+        "generated_cmap_count": 1096,
+        "added_codepoints": [],
+        "removed_codepoints": [
+          20307,
+          25972
+        ],
+        "added_count": 0,
+        "removed_count": 2,
+        "existing_sha256_before": "e0288da0455d529ef85724b1db6c4d03d4b9a79ab11d5c113194e192a813d32c"
+      },
+      "KR": {
+        "generated_sha256": "24663b86cdb9c0e3c0191c3af9079964a06310aad0cccaae5d200b63929394ab",
+        "generated_bytes": 206680,
+        "generated_cmap_count": 961,
+        "added_codepoints": [],
+        "removed_codepoints": [],
+        "added_count": 0,
+        "removed_count": 0,
+        "existing_sha256_before": "cc6a0dcee794f8f74775ea546e6cedb3ce6e7c2a664f23a24bb8f6dfc691b58b"
+      }
+    },
+    "og-worker": {
+      "SC": {
+        "generated_sha256": "4a1a98d1663f913af7406ab4293a887b1e4fd2d162f1020cb7693b3b8bb025fa",
+        "generated_bytes": 345564,
+        "generated_cmap_count": 706,
+        "added_codepoints": [],
+        "removed_codepoints": [],
+        "added_count": 0,
+        "removed_count": 0,
+        "existing_sha256_before": "1342627b9cfce8f674dcfd91441bd9303f98c2d62fd3f91d97d64fe201759bd0"
+      },
+      "JP": {
+        "generated_sha256": "5fd7aafcd3eb1c6121dec47a38385c0ba12f7db4c637b220d0bafe479194ee35",
+        "generated_bytes": 227572,
+        "generated_cmap_count": 337,
+        "added_codepoints": [],
+        "removed_codepoints": [],
+        "added_count": 0,
+        "removed_count": 0,
+        "existing_sha256_before": "72bd5d2dc5cf8dff91a3dcb7a8b52b54530893db7b9331bfe6b169c8b821fe3d"
+      },
+      "KR": {
+        "generated_sha256": "463a1703411ccfee17cbcb5941cad90be5e9261c07772d6812dc69214667240a",
+        "generated_bytes": 114940,
+        "generated_cmap_count": 409,
+        "added_codepoints": [],
+        "removed_codepoints": [],
+        "added_count": 0,
+        "removed_count": 0,
+        "existing_sha256_before": "5f33a0295ab09075c271efb84678aa9992045fe0c22651cdb50018d4367e2698"
+      }
+    }
+  },
+  "focusGate": {
+    "files": 5,
+    "passed": 50,
+    "exit": 0,
+    "coverageEnabled": false
+  },
+  "decision": "Keep existing six subset binaries; required corpus unchanged; retain three pre-existing surplus mappings without empty Discord release",
+  "productionActivation": "HOLD"
+}

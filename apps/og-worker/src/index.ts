@@ -890,8 +890,10 @@ app.get('/og/:tool/default.png', async (c) => {
   if (!SUPPORTED_TOOLS.includes(tool)) {
     return c.json({ error: 'Unknown tool' }, 404);
   }
+  const locale = resolveLocale(new URL(c.req.url).searchParams);
   return renderOGImage(
-    buildDefaultCardSvg(tool, frameFromQuery(c), resolveLocale(new URL(c.req.url).searchParams)),
+    buildDefaultCardSvg(tool, frameFromQuery(c), locale),
+    locale,
     { browser: 86400, edge: 604800 }
   );
 });
@@ -946,7 +948,7 @@ app.get('/og/harmony/:dyeId/:harmonyType', async (c) => {
     frame: frameFromQuery(c),
   });
 
-  return renderOGImage(svg);
+  return renderOGImage(svg, locale);
 });
 
 /**
@@ -1000,7 +1002,7 @@ app.get('/og/gradient/:startId/:endId/:steps', async (c) => {
     frame: frameFromQuery(c),
   });
 
-  return renderOGImage(svg);
+  return renderOGImage(svg, locale);
 });
 
 /**
@@ -1046,7 +1048,7 @@ app.get('/og/mixer/:dyeAId/:dyeBId/:ratio', async (c) => {
     frame: frameFromQuery(c),
   });
 
-  return renderOGImage(svg);
+  return renderOGImage(svg, locale);
 });
 
 /**
@@ -1094,7 +1096,7 @@ app.get('/og/mixer/:dyeAId/:dyeBId/:dyeCId/:ratio', async (c) => {
     frame: frameFromQuery(c),
   });
 
-  return renderOGImage(svg);
+  return renderOGImage(svg, locale);
 });
 
 /**
@@ -1139,7 +1141,7 @@ app.get('/og/swatch/:color/:limit', async (c) => {
     locale,
   });
 
-  return renderOGImage(svg);
+  return renderOGImage(svg, locale);
 });
 
 /**
@@ -1174,7 +1176,7 @@ app.get('/og/comparison/:dyes', async (c) => {
 
   const svg = generateComparisonOG({ dyeIds, locale, frame: frameFromQuery(c) });
 
-  return renderOGImage(svg);
+  return renderOGImage(svg, locale);
 });
 
 /**
@@ -1217,7 +1219,7 @@ app.get('/og/accessibility/:dyes/:visionType', async (c) => {
     frame: frameFromQuery(c),
   });
 
-  return renderOGImage(svg);
+  return renderOGImage(svg, locale);
 });
 
 /**
@@ -1270,7 +1272,7 @@ app.get('/og/extractor/:colors', async (c) => {
     timestamp: Date.now(),
   });
 
-  return renderOGImage(generateExtractorOG({ entries, algorithm, locale, frame: frameFromQuery(c) }));
+  return renderOGImage(generateExtractorOG({ entries, algorithm, locale, frame: frameFromQuery(c) }), locale);
 });
 
 /**
@@ -1313,10 +1315,10 @@ app.get('/og/presets/:presetId', async (c) => {
   // render the identical default card, so the shared key is correct by
   // construction rather than by special-casing the cache layer.
   if (presetId === 'default') {
-    return renderOGImage(buildDefaultCardSvg('presets', frameFromQuery(c), locale));
+    return renderOGImage(buildDefaultCardSvg('presets', frameFromQuery(c), locale), locale);
   }
 
-  return renderOGImage(generatePresetsOG({ presetId, locale, frame: frameFromQuery(c) }));
+  return renderOGImage(generatePresetsOG({ presetId, locale, frame: frameFromQuery(c) }), locale);
 });
 
 /**
@@ -1339,7 +1341,7 @@ app.get('/og/budget/:dyeId', async (c) => {
     timestamp: Date.now(),
   });
 
-  return renderOGImage(generateBudgetOG({ dyeId, locale, frame: frameFromQuery(c) }));
+  return renderOGImage(generateBudgetOG({ dyeId, locale, frame: frameFromQuery(c) }), locale);
 });
 
 /**
@@ -1348,8 +1350,10 @@ app.get('/og/budget/:dyeId', async (c) => {
 app.get('/og/default.png', async (c) => {
   // BUG-068: explicit TTLs — 24h browser / 7d edge (the old param was
   // multiplied by 7 internally, yielding a 49-day edge TTL)
+  const locale = resolveLocale(new URL(c.req.url).searchParams);
   return renderOGImage(
-    buildDefaultCardSvg(null, frameFromQuery(c), resolveLocale(new URL(c.req.url).searchParams)),
+    buildDefaultCardSvg(null, frameFromQuery(c), locale),
+    locale,
     { browser: 86400, edge: 604800 }
   );
 });
