@@ -10,9 +10,9 @@
 export const GROUND = '#0B0B0C';
 
 /**
- * Font stacks with the JP subset ahead of SC (Phase 0.3 bundled
- * NotoSansJP-Subset precisely so JA stops rendering in Chinese letterforms) —
- * mirrors the bot frame system's stacks.
+ * Latin-led stacks, shared with the bot frame system. For glyphs the primary
+ * face lacks, resvg uses the loaded buffer order rather than this CJK list;
+ * fonts.ts selects JP first for ja and SC first for the other locales.
  */
 export const STACKS = {
   mono: 'Fragment Mono, Onest, Noto Sans JP, Noto Sans SC, Noto Sans KR',

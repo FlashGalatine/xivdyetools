@@ -307,5 +307,5 @@ wrangler secret put CACHE_PURGE_API_TOKEN --env production   # Optional, FINDING
 rekey and approval/Revert SQL; they never transfer ownership. Additive migration
 `0016_ban_identity_continuity.sql` must precede either consumer deployment. Session checks
 remain inactive behind `OAUTH_SESSION_CHECK_ENABLED=false`; enable only after provider and
-disclosures are live, then verify all consumers before separate OAuth splitting. See
+disclosures are live, then verify all consumers before separate OAuth splitting. Once enabled, a web bearer token that fails JWT verification, or whose session OAuth reports stale or missing, gets 401 on every route, public reads included (pending or unavailable lookups get 503); requests without a token stay anonymous. See
 [the protocol and rollout](../../architecture/identity-moderation.md).

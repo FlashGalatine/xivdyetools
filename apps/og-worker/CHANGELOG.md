@@ -5,6 +5,14 @@ All notable changes to the XIV Dye Tools OpenGraph Worker will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.12.4] - 2026-10-30
+
+### Fixed
+
+- Select Simplified Chinese glyphs for Chinese link-preview cards and Japanese glyphs for Japanese cards by carrying the resolved locale through every image renderer. Both cached font orders share the same bundled bytes.
+- Guard actual regional glyphs with real bundled-font renders and route coverage. Advance the app-version cache identity so older cards cannot reuse the previous Worker cache namespace; existing browser and social-platform copies are not purged.
+- Conditional source preparation after the pending final text and M candidates. Publication, merging, deployment and production acceptance remain held. No font binary changes are needed for the unchanged required codepoint sets.
+
 ## [2.12.3] - 2026-10-29
 
 ### Changed

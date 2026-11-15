@@ -1,0 +1,1015 @@
+{
+  "checkedAt": "2026-10-30T12:21:38.979Z",
+  "scope": "Conditional F source and offline adoption preparation; not publication, CI artifact provenance or deployed acceptance",
+  "sources": [
+    {
+      "tree": "bb85d1c8231a8a89fba1d348a99a401ea23e66b1",
+      "base": "3ad26ae6666f6a8823e86198cb0873fc03d6cec7",
+      "baseBranch": "codex/release-cut-m-11-readiness-20261029",
+      "productionActivation": "HOLD",
+      "branch": "codex/release-cut-f-01-discord-20261030",
+      "head": "ae7991ac94812900942947addffebdf5056d6682",
+      "phase": "text",
+      "number": 404,
+      "url": "https://github.com/FlashGalatine/xivdyetools/pull/404"
+    },
+    {
+      "base": "ae7991ac94812900942947addffebdf5056d6682",
+      "baseBranch": "codex/release-cut-f-01-discord-20261030",
+      "head": "b9b51f6b0b7dcb8edb5a359d84781276d5666cde",
+      "tree": "a9972b84c7fc88f7ece2848aecdd9398e9ff9858",
+      "branch": "codex/release-cut-f-02-og-20261030",
+      "phase": "og",
+      "productionActivation": "HOLD",
+      "number": 405,
+      "url": "https://github.com/FlashGalatine/xivdyetools/pull/405"
+    }
+  ],
+  "selectedText": {
+    "pr": 390,
+    "head": "b1f9010568bda4537688556dfa3efedd0642e116",
+    "state": "open; unmerged; selected inputs only; Core major retained"
+  },
+  "localGates": [
+    {
+      "phase": "text",
+      "tree": "bb85d1c8231a8a89fba1d348a99a401ea23e66b1",
+      "secretScanExit": 0,
+      "gates": [
+        {
+          "seconds": 633.93,
+          "command": "pnpm turbo run build type-check lint test --cache-dir=.superpowers/sdd/f-sprints-20261030/turbo-cache --summarize --concurrency=1",
+          "gate": "graph",
+          "exit": 0
+        },
+        {
+          "seconds": 21.95,
+          "command": "pnpm --filter @xivdyetools/core run test:coverage",
+          "gate": "coverage",
+          "exit": 0
+        },
+        {
+          "seconds": 2.8,
+          "command": "pnpm docs:check-links",
+          "gate": "docs-check-links",
+          "exit": 0
+        },
+        {
+          "seconds": 1.8,
+          "command": "pnpm docs:check-versions",
+          "gate": "docs-check-versions",
+          "exit": 0
+        },
+        {
+          "seconds": 7.72,
+          "command": "pnpm test:scripts",
+          "gate": "test-scripts",
+          "exit": 0
+        },
+        {
+          "seconds": 2.43,
+          "command": "pnpm type-check:scripts",
+          "gate": "type-check-scripts",
+          "exit": 0
+        },
+        {
+          "seconds": 6.76,
+          "command": "pnpm dead-code:check",
+          "gate": "dead-code-check",
+          "exit": 0
+        },
+        {
+          "seconds": 1.36,
+          "command": "pnpm workers:check-logs",
+          "gate": "workers-check-logs",
+          "exit": 0
+        },
+        {
+          "seconds": 15,
+          "command": "pnpm --filter xivdyetools-web-app run build:check",
+          "gate": "web-bundle",
+          "exit": 0
+        },
+        {
+          "seconds": 3.69,
+          "command": "pnpm --filter xivdyetools-discord-worker exec wrangler deploy --dry-run --env production --outdir <local-output>",
+          "gate": "worker-bundle",
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "phase": "og",
+      "tree": "a9972b84c7fc88f7ece2848aecdd9398e9ff9858",
+      "secretScanExit": 0,
+      "gates": [
+        {
+          "gate": "graph",
+          "seconds": 17.84,
+          "command": "pnpm turbo run build type-check lint test --cache-dir=.superpowers/sdd/f-sprints-20261030/turbo-cache --summarize --concurrency=1",
+          "exit": 0
+        },
+        {
+          "gate": "coverage",
+          "seconds": 7.26,
+          "command": "pnpm --filter xivdyetools-og-worker run test:coverage",
+          "exit": 0
+        },
+        {
+          "gate": "docs-check-links",
+          "seconds": 1.96,
+          "command": "pnpm docs:check-links",
+          "exit": 0
+        },
+        {
+          "gate": "docs-check-versions",
+          "seconds": 1.49,
+          "command": "pnpm docs:check-versions",
+          "exit": 0
+        },
+        {
+          "gate": "test-scripts",
+          "seconds": 7.83,
+          "command": "pnpm test:scripts",
+          "exit": 0
+        },
+        {
+          "gate": "type-check-scripts",
+          "seconds": 2.72,
+          "command": "pnpm type-check:scripts",
+          "exit": 0
+        },
+        {
+          "gate": "dead-code-check",
+          "seconds": 6.66,
+          "command": "pnpm dead-code:check",
+          "exit": 0
+        },
+        {
+          "gate": "workers-check-logs",
+          "seconds": 1.39,
+          "command": "pnpm workers:check-logs",
+          "exit": 0
+        },
+        {
+          "gate": "worker-bundle",
+          "seconds": 3.05,
+          "command": "pnpm --filter xivdyetools-og-worker exec wrangler deploy --dry-run --env production --outdir <local-output>",
+          "exit": 0
+        }
+      ]
+    }
+  ],
+  "native": {
+    "result": "PASS",
+    "node": "22.21.0",
+    "pnpm": "11.17.0",
+    "validatedTree": "bb85d1c8231a8a89fba1d348a99a401ea23e66b1",
+    "phases": [
+      {
+        "phase": "core",
+        "version": "6.0.0",
+        "sourceCommit": "ae7991ac94812900942947addffebdf5056d6682",
+        "validatedTree": "bb85d1c8231a8a89fba1d348a99a401ea23e66b1",
+        "sourceTree": "4a6e7c2c71f5314eae5f9b6627869b92e84a1387",
+        "manifestBlob": "d0eac9e8e6d2b47a71a4be120ffca72a3d4fc3fa",
+        "sha256": "2438a97de7865eda7cdb954e4dff9ee60e961ebbc4b3a77aad62a2fb7d9b160b",
+        "sri": "sha512-cqzgVtdZSO6YJo6ivnCl9+GMWCwiRR/GcUfGchf16KddpUwL49yMo+laR1s6mk+FtEnu+o8p877tfPeKZCW7/Q==",
+        "distFiles": 238,
+        "packedInternalPins": {
+          "spectral.js": "^3.0.0",
+          "xivcharakit": "0.1.0-beta.4",
+          "@xivdyetools/logger": "2.4.0",
+          "@xivdyetools/types": "3.3.0"
+        },
+        "strictSkipLibCheckFalse": true,
+        "consumer": {
+          "result": "PASS",
+          "node": "v22.21.0",
+          "pnpm": "11.17.0",
+          "runtime": {
+            "exit": 0,
+            "label": "runtime-final"
+          },
+          "locale": {
+            "exit": 0,
+            "label": "core-locale-runtime-final"
+          },
+          "adoption": null,
+          "strictDeclarationCompile": {
+            "exit": 0,
+            "label": "type-contracts-strict-final"
+          },
+          "additional": null,
+          "retainedTypeIdentities": 9,
+          "slimEntryIdentities": 2,
+          "retiredRootTypeNegativeGuards": 3,
+          "offlineInstall": "offline-install.log",
+          "offlineLocalArchivesOnly": true,
+          "archiveSha256Verified": "2438a97de7865eda7cdb954e4dff9ee60e961ebbc4b3a77aad62a2fb7d9b160b",
+          "lockSha256": "8467769af5c047d9afee262a4bfefad36e307d2cb064802a003a9a06b3e09f57",
+          "installedDependencyResolution": {
+            "exit": 0,
+            "count": 4,
+            "evidence": "installed-dependency-proof.json"
+          },
+          "offlineInstallExit": 0
+        },
+        "seedHashes": [
+          {
+            "name": "@xivdyetools/logger",
+            "sha256": "13055dc40bad9e4780deacb165bd11b52346f6bf7cd4547752f9b1024ae19265",
+            "originalUnchanged": true,
+            "copyUnchanged": true
+          },
+          {
+            "name": "@xivdyetools/types",
+            "sha256": "7e1831fadf689780205bda4ceda469774381b975da8dcaa003fe9c196689b908",
+            "originalUnchanged": true,
+            "copyUnchanged": true
+          },
+          {
+            "name": "spectral.js",
+            "sha256": "05b7df3f40f143da6c62889cc9062bb76b0d746bc5278e6ef63ea1afb6fdf947",
+            "originalUnchanged": true,
+            "copyUnchanged": true
+          },
+          {
+            "name": "xivcharakit",
+            "sha256": "2621a1947ea31ff0779be23e186a9356c5902b057693b5e0bcb85875a912e77a",
+            "originalUnchanged": true,
+            "copyUnchanged": true
+          }
+        ],
+        "receiptSha256": "230ebdeb2d89a7c81394d349fe56e59b4c03af83c37b63d43d874b6fc3efb8e8"
+      },
+      {
+        "phase": "svg",
+        "version": "4.4.2",
+        "sourceCommit": "ae7991ac94812900942947addffebdf5056d6682",
+        "validatedTree": "bb85d1c8231a8a89fba1d348a99a401ea23e66b1",
+        "sourceTree": "33147646b5cc4803a85a86952d1437e4672ce182",
+        "manifestBlob": "81b7ffffd359fcaf2a60cce196ba45178a10ff53",
+        "sha256": "e7edd114ae179f9ac2b3ac798716b1e39af8e27ac9d845cba969ab79ded95a6c",
+        "sri": "sha512-PPGg4wwApRazn6LKK1BeB/zffcieznuTOZO9EMP/yxRzlGP7byCVJvv5f3njAjEU9wY5jxBMs1k46xZueEgQ4g==",
+        "distFiles": 76,
+        "packedInternalPins": {
+          "@xivdyetools/types": "3.3.0",
+          "@xivdyetools/core": "6.0.0"
+        },
+        "strictSkipLibCheckFalse": true,
+        "consumer": {
+          "result": "PASS",
+          "node": "v22.21.0",
+          "pnpm": "11.17.0",
+          "runtime": {
+            "exit": 0,
+            "label": "runtime-final"
+          },
+          "locale": {
+            "exit": 0,
+            "label": "core-locale-runtime-final"
+          },
+          "adoption": null,
+          "strictDeclarationCompile": {
+            "exit": 0,
+            "label": "type-contracts-strict-final"
+          },
+          "additional": {
+            "exit": 0,
+            "label": "phase-runtime-final"
+          },
+          "retainedTypeIdentities": 9,
+          "slimEntryIdentities": 2,
+          "retiredRootTypeNegativeGuards": 3,
+          "offlineInstall": "offline-install.log",
+          "offlineLocalArchivesOnly": true,
+          "archiveSha256Verified": "e7edd114ae179f9ac2b3ac798716b1e39af8e27ac9d845cba969ab79ded95a6c",
+          "lockSha256": "ad5770dd9e4473fde47f25f35db5afdca5c5624fdd0081a0340ed2b64b0f1a31",
+          "installedDependencyResolution": {
+            "exit": 0,
+            "count": 6,
+            "evidence": "installed-dependency-proof.json"
+          },
+          "offlineInstallExit": 0
+        },
+        "seedHashes": [
+          {
+            "name": "@xivdyetools/logger",
+            "sha256": "13055dc40bad9e4780deacb165bd11b52346f6bf7cd4547752f9b1024ae19265",
+            "originalUnchanged": true,
+            "copyUnchanged": true
+          },
+          {
+            "name": "@xivdyetools/types",
+            "sha256": "7e1831fadf689780205bda4ceda469774381b975da8dcaa003fe9c196689b908",
+            "originalUnchanged": true,
+            "copyUnchanged": true
+          },
+          {
+            "name": "spectral.js",
+            "sha256": "05b7df3f40f143da6c62889cc9062bb76b0d746bc5278e6ef63ea1afb6fdf947",
+            "originalUnchanged": true,
+            "copyUnchanged": true
+          },
+          {
+            "name": "xivcharakit",
+            "sha256": "2621a1947ea31ff0779be23e186a9356c5902b057693b5e0bcb85875a912e77a",
+            "originalUnchanged": true,
+            "copyUnchanged": true
+          }
+        ],
+        "receiptSha256": "0314b357cff47478d580f3abebae33c302b61983f294a1406b4fb13c697a80cf"
+      },
+      {
+        "phase": "bot",
+        "version": "5.0.0",
+        "sourceCommit": "ae7991ac94812900942947addffebdf5056d6682",
+        "validatedTree": "bb85d1c8231a8a89fba1d348a99a401ea23e66b1",
+        "sourceTree": "2c64125b095c357660b3182d09444cb2651c7a91",
+        "manifestBlob": "1695f22586d0f59e1f19331ae3a27100fa19de65",
+        "sha256": "3c77a23f1394e06c362790e0e2b0c60af75658d177fd29eedbd3322e63fb0b06",
+        "sri": "sha512-wbQOCE1rpJiarwRPrJj+LT7trq12WD4yrFsO5r/gfmpL8Gl5a+uFSd9oChzl5FciQn54boEor3Ee8ocKWt6B8A==",
+        "distFiles": 94,
+        "packedInternalPins": {
+          "@xivdyetools/core": "6.0.0",
+          "@xivdyetools/types": "3.3.0",
+          "@xivdyetools/svg": "4.4.2"
+        },
+        "strictSkipLibCheckFalse": true,
+        "consumer": {
+          "result": "PASS",
+          "node": "v22.21.0",
+          "pnpm": "11.17.0",
+          "runtime": {
+            "exit": 0,
+            "label": "runtime-final"
+          },
+          "locale": {
+            "exit": 0,
+            "label": "core-locale-runtime-final"
+          },
+          "adoption": {
+            "exit": 0,
+            "label": "adoption-runtime-final"
+          },
+          "strictDeclarationCompile": {
+            "exit": 0,
+            "label": "type-contracts-strict-final"
+          },
+          "additional": {
+            "exit": 0,
+            "label": "phase-runtime-final"
+          },
+          "retainedTypeIdentities": 9,
+          "slimEntryIdentities": 2,
+          "retiredRootTypeNegativeGuards": 3,
+          "offlineInstall": "offline-install.log",
+          "offlineLocalArchivesOnly": true,
+          "archiveSha256Verified": "3c77a23f1394e06c362790e0e2b0c60af75658d177fd29eedbd3322e63fb0b06",
+          "lockSha256": "af9814639d941d27a54858bfdde3b11e7f701bc4acd583970ea4f788cbea7f43",
+          "installedDependencyResolution": {
+            "exit": 0,
+            "count": 12,
+            "evidence": "installed-dependency-proof.json"
+          },
+          "offlineInstallExit": 0
+        },
+        "seedHashes": [
+          {
+            "name": "@xivdyetools/logger",
+            "sha256": "13055dc40bad9e4780deacb165bd11b52346f6bf7cd4547752f9b1024ae19265",
+            "originalUnchanged": true,
+            "copyUnchanged": true
+          },
+          {
+            "name": "@xivdyetools/auth",
+            "sha256": "e5b67734e419fc036a6db0ee2792f88e1d3c559efa50a8b2e4914b57159e0a4a",
+            "originalUnchanged": true,
+            "copyUnchanged": true
+          },
+          {
+            "name": "@xivdyetools/worker-kit",
+            "sha256": "769284216c94b8057677aef27005b53b44d32fad195e95822b77206f6e8477f4",
+            "originalUnchanged": true,
+            "copyUnchanged": true
+          },
+          {
+            "name": "@xivdyetools/types",
+            "sha256": "7e1831fadf689780205bda4ceda469774381b975da8dcaa003fe9c196689b908",
+            "originalUnchanged": true,
+            "copyUnchanged": true
+          },
+          {
+            "name": "hono",
+            "sha256": "3c656fb527641e841e1c4dae1d2faa238a4e17dde37f1620d5b72172caaddac0",
+            "originalUnchanged": true,
+            "copyUnchanged": true
+          },
+          {
+            "name": "discord-interactions",
+            "sha256": "76c22dfc17774c2eeba7de32cc5e67a78df2e351d495b9f873aa8f26a1bfbc88",
+            "originalUnchanged": true,
+            "copyUnchanged": true
+          },
+          {
+            "name": "@upstash/redis",
+            "sha256": "ad6cb948351a534e6cc1a34df30430a65796a94418ddc0d50872d75e701b8377",
+            "originalUnchanged": true,
+            "copyUnchanged": true
+          },
+          {
+            "name": "uncrypto",
+            "sha256": "c4935f57eaa4cbac82ab58ad5b252a134acb49f6f7c521d2510821e990e40c71",
+            "originalUnchanged": true,
+            "copyUnchanged": true
+          },
+          {
+            "name": "spectral.js",
+            "sha256": "05b7df3f40f143da6c62889cc9062bb76b0d746bc5278e6ef63ea1afb6fdf947",
+            "originalUnchanged": true,
+            "copyUnchanged": true
+          },
+          {
+            "name": "xivcharakit",
+            "sha256": "2621a1947ea31ff0779be23e186a9356c5902b057693b5e0bcb85875a912e77a",
+            "originalUnchanged": true,
+            "copyUnchanged": true
+          }
+        ],
+        "receiptSha256": "2ffa7f920d0b99427e62929ed58c039805145a36536a353301d234a120958547"
+      }
+    ],
+    "importChecks": 40,
+    "distinctPublicImports": 36,
+    "consumerLocalDependencyEdges": 12,
+    "coreLocales": {
+      "result": "PASS",
+      "label": "LOCAL PACKED CORE SIX-LOCALE + PINNED AUTHORITATIVE DE/FR; NO NEW NETWORK LOOKUP",
+      "locales": [
+        {
+          "locale": "en",
+          "dyeNames": 125,
+          "fullPayloadSemanticEqual": true,
+          "runtimeAllDyeNamesEqual": true,
+          "sourceSha256": "8c0fdf7e99bc2c5019ba4d3003505768991b48823ff0481d212c6949992a746c",
+          "packedSha256": "8c0fdf7e99bc2c5019ba4d3003505768991b48823ff0481d212c6949992a746c"
+        },
+        {
+          "locale": "ja",
+          "dyeNames": 125,
+          "fullPayloadSemanticEqual": true,
+          "runtimeAllDyeNamesEqual": true,
+          "sourceSha256": "237527671a0ff4d195007a5adde4fde7edad5bf1702a3b7f7b0ba7b6a74b60b6",
+          "packedSha256": "237527671a0ff4d195007a5adde4fde7edad5bf1702a3b7f7b0ba7b6a74b60b6"
+        },
+        {
+          "locale": "de",
+          "dyeNames": 125,
+          "fullPayloadSemanticEqual": true,
+          "runtimeAllDyeNamesEqual": true,
+          "sourceSha256": "ccb05c257d1deeb072b6ac0691e502d86b7099cc82be7cc52dd252193851fb1c",
+          "packedSha256": "ccb05c257d1deeb072b6ac0691e502d86b7099cc82be7cc52dd252193851fb1c"
+        },
+        {
+          "locale": "fr",
+          "dyeNames": 125,
+          "fullPayloadSemanticEqual": true,
+          "runtimeAllDyeNamesEqual": true,
+          "sourceSha256": "712a6392690f3115f5d20312f9478a30161d94b8ddba265b29e695fec7e1e332",
+          "packedSha256": "712a6392690f3115f5d20312f9478a30161d94b8ddba265b29e695fec7e1e332"
+        },
+        {
+          "locale": "ko",
+          "dyeNames": 125,
+          "fullPayloadSemanticEqual": true,
+          "runtimeAllDyeNamesEqual": true,
+          "sourceSha256": "2e151b02c48f10bc5437df9b78d21434c95594e050d8e73f998e2d0bca8c841e",
+          "packedSha256": "2e151b02c48f10bc5437df9b78d21434c95594e050d8e73f998e2d0bca8c841e"
+        },
+        {
+          "locale": "zh",
+          "dyeNames": 125,
+          "fullPayloadSemanticEqual": true,
+          "runtimeAllDyeNamesEqual": true,
+          "sourceSha256": "14f734032013ac17e0def3858302ac5432c41bd9cb16bb4e9d5be173108eb4f3",
+          "packedSha256": "14f734032013ac17e0def3858302ac5432c41bd9cb16bb4e9d5be173108eb4f3"
+        }
+      ],
+      "authoritative": [
+        {
+          "locale": "de",
+          "checked": 125,
+          "field": "Stain.Name@de",
+          "pinnedVersion": "0874aee069e1e7c4",
+          "pinnedSchema": "exdschema@2:rev:e773c41a90aed788cf4c1c48469fa85618ef01fb"
+        },
+        {
+          "locale": "fr",
+          "checked": 125,
+          "field": "Stain.Name@fr",
+          "pinnedVersion": "0874aee069e1e7c4",
+          "pinnedSchema": "exdschema@2:rev:e773c41a90aed788cf4c1c48469fa85618ef01fb"
+        }
+      ],
+      "sentinels": [
+        {
+          "itemID": 5729,
+          "de": "Schneeweiß",
+          "fr": "Blanc neige"
+        },
+        {
+          "itemID": 48164,
+          "de": "Knallorange",
+          "fr": "Orange brillant"
+        },
+        {
+          "itemID": 48227,
+          "de": "Karmesinrot",
+          "fr": "Rouge carmin"
+        }
+      ]
+    },
+    "botCases": {
+      "result": "PASS",
+      "successCases": [
+        {
+          "route": "card",
+          "transport": "fileText",
+          "keys": [
+            "embed",
+            "ok",
+            "svgString"
+          ],
+          "svgBytes": 13828,
+          "privacyCanariesAbsent": true
+        },
+        {
+          "route": "card",
+          "transport": "fileBytes",
+          "keys": [
+            "embed",
+            "ok",
+            "svgString"
+          ],
+          "svgBytes": 13828,
+          "privacyCanariesAbsent": true
+        },
+        {
+          "route": "slot",
+          "transport": "fileText",
+          "keys": [
+            "embed",
+            "ok",
+            "svgString"
+          ],
+          "svgBytes": 12714,
+          "privacyCanariesAbsent": true
+        },
+        {
+          "route": "slot",
+          "transport": "fileBytes",
+          "keys": [
+            "embed",
+            "ok",
+            "svgString"
+          ],
+          "svgBytes": 12714,
+          "privacyCanariesAbsent": true
+        }
+      ],
+      "errorCases": [
+        {
+          "label": "missing",
+          "error": "PARSE_FAILED"
+        },
+        {
+          "label": "bad-json",
+          "error": "PARSE_FAILED"
+        },
+        {
+          "label": "invalid-utf8",
+          "error": "PARSE_FAILED"
+        },
+        {
+          "label": "over-cap",
+          "error": "PARSE_FAILED"
+        },
+        {
+          "label": "no-live",
+          "error": "NO_LIVE_SLOTS"
+        },
+        {
+          "label": "missing-slot",
+          "error": "SLOT_MISSING"
+        }
+      ],
+      "locales": [
+        {
+          "locale": "en",
+          "manualStrings": 69,
+          "fullPayloadSemanticEqual": true,
+          "sourceSha256": "2aa1a5580f08cf55383da6a60409caaffe417866e99d2bf43d505e41af4c841f",
+          "sha256": "e96f3b09d29c3a876bf00efca278050bbb4f8bfb126f1b94faca87e9cd8c5f98"
+        },
+        {
+          "locale": "ja",
+          "manualStrings": 69,
+          "fullPayloadSemanticEqual": true,
+          "sourceSha256": "8a33538f0f12841964a059fe8b5731333308a705e148f7d902b492e63473e71e",
+          "sha256": "b96a5c296ae57811a67d0b1346aa6ea3eaf2f40cc1d20a53b43d35d2e9ecb609"
+        },
+        {
+          "locale": "de",
+          "manualStrings": 69,
+          "fullPayloadSemanticEqual": true,
+          "sourceSha256": "b11088156cbb32aadf2e217a8f3403276beb085ba0a262ff41f9f3ee9ea4e82a",
+          "sha256": "3641adc7b753c02fa90e5b9559c6322d734fa4685f12ca22d0088373015526fd"
+        },
+        {
+          "locale": "fr",
+          "manualStrings": 69,
+          "fullPayloadSemanticEqual": true,
+          "sourceSha256": "4fbdee6b5e9e9cd29d70ed9d50655c36a581b52a7e05ddf755e043aa48a074ce",
+          "sha256": "4acaa3eb46059c903b9fc793bfcd6d5c52e32e5c4a42d8c6795006f817344266"
+        },
+        {
+          "locale": "ko",
+          "manualStrings": 69,
+          "fullPayloadSemanticEqual": true,
+          "sourceSha256": "9f52eaff23cee31b79979522ee554173d1400214cab58c46bdb805a690dec909",
+          "sha256": "60d815ebcf346fffb41324051b790d8c0b0f2efb89e557c4e09a0675ea5062be"
+        },
+        {
+          "locale": "zh",
+          "manualStrings": 69,
+          "fullPayloadSemanticEqual": true,
+          "sourceSha256": "b89f89749d986a8c9c984e02d840bc0019d65c757cd562cb5f8f02fdbe75c504",
+          "sha256": "ccd0433fd74561b0fda6fa08a97e26dde571badede511ac36ed9b1aa3667c015"
+        }
+      ]
+    },
+    "adoptedArchives": [
+      {
+        "name": "@xivdyetools/logger",
+        "version": "2.4.0"
+      },
+      {
+        "name": "@xivdyetools/auth",
+        "version": "3.0.0"
+      },
+      {
+        "name": "@xivdyetools/worker-kit",
+        "version": "1.6.0"
+      }
+    ],
+    "privateProducer": {
+      "producerSha256": "446eefd1050c4855f4c5b47d4047ffd369b7c0643b5cda1fcfb6080024c0e493",
+      "validAccepted": true,
+      "wrongSecretRejected": true,
+      "expiredRejected": true
+    },
+    "originalMRecipesUnchanged": true
+  },
+  "sourceInvariants": {
+    "baseline": "3ad26ae6666f6a8823e86198cb0873fc03d6cec7",
+    "unchangedSources": [
+      {
+        "unit": "packages/logger",
+        "sourceTree": "3cfb71b657dab8dc99805dd2f4e2249a3f7cc345",
+        "unchanged": true
+      },
+      {
+        "unit": "packages/auth",
+        "sourceTree": "82479db3a10aa7ced4284f5c6ea5639abb652c4d",
+        "unchanged": true
+      },
+      {
+        "unit": "packages/worker-kit",
+        "sourceTree": "709edcb1e1620e7db5ed626941dacadfb87ab46b",
+        "unchanged": true
+      },
+      {
+        "unit": "packages/types",
+        "sourceTree": "b59b4dfbb2d1547e197a30a29f0084a35daf1ef2",
+        "unchanged": true
+      },
+      {
+        "unit": "packages/svg",
+        "sourceTree": "33147646b5cc4803a85a86952d1437e4672ce182",
+        "unchanged": true
+      },
+      {
+        "unit": "packages/test-utils",
+        "sourceTree": "6c0d89da31ab2206d7d6079dd894e01692727061",
+        "unchanged": true
+      },
+      {
+        "unit": "apps/api-worker",
+        "sourceTree": "75e75d65efd2f2eae651ce01387c790d7bf60771",
+        "unchanged": true
+      },
+      {
+        "unit": "apps/web-app",
+        "sourceTree": "990088666bbdf1aba6d4c7e83777dd9190e55ffe",
+        "unchanged": true
+      },
+      {
+        "unit": "apps/discord-worker",
+        "sourceTree": "3862a9486fcf20299b1c41c73c5d4fcb09b82214",
+        "unchanged": true
+      },
+      {
+        "unit": "apps/moderation-worker",
+        "sourceTree": "3a1297e0699bcf880b442c150c7ae973ca5dd33f",
+        "unchanged": true
+      },
+      {
+        "unit": "apps/stoat-worker",
+        "sourceTree": "6b33c7281fcd50082fabfb5adf922e8e63a362f0",
+        "unchanged": true
+      },
+      {
+        "unit": "apps/image-worker",
+        "sourceTree": "cc658bf9a4a7e1e5c3245aad5ea2bd0861508934",
+        "unchanged": true
+      },
+      {
+        "unit": "apps/oauth",
+        "sourceTree": "e888010d6818ebfa64192758e21f35cdc7226aa8",
+        "unchanged": true
+      },
+      {
+        "unit": "apps/presets-api",
+        "sourceTree": "22c4bb6b8f09a12160d96d6fbb155dc9f017d613",
+        "unchanged": true
+      }
+    ],
+    "coreSourceDelta": [
+      "packages/core/src/data/locales/de.json",
+      "packages/core/src/data/locales/fr.json"
+    ],
+    "botSourceDelta": [
+      "packages/bot-logic/src/input-resolution.test.ts"
+    ],
+    "activationFlags": [
+      {
+        "path": "apps/oauth/wrangler.toml",
+        "flag": "IDENTITY_SPLIT_ENABLED",
+        "values": [
+          "false",
+          "false"
+        ],
+        "sha256": "d5abc3e791870bab0a0d749cc73c0ce1a454d753728e9456d7b0635a9ceda263"
+      },
+      {
+        "path": "apps/presets-api/wrangler.toml",
+        "flag": "OAUTH_SESSION_CHECK_ENABLED",
+        "values": [
+          "false",
+          "false"
+        ],
+        "sha256": "cc353f9bc5c77d73c3fc39507c6c3d4460d1073341c4982d5be0b97382d03468"
+      },
+      {
+        "path": "apps/presets-api/wrangler.toml",
+        "flag": "PRESET_METADATA_MODERATION_ENABLED",
+        "values": [
+          "false",
+          "false"
+        ],
+        "sha256": "cc353f9bc5c77d73c3fc39507c6c3d4460d1073341c4982d5be0b97382d03468"
+      },
+      {
+        "path": "apps/moderation-worker/wrangler.toml",
+        "flag": "LINKED_BAN_CONFIRMATION_ENABLED",
+        "values": [
+          "false",
+          "false"
+        ],
+        "sha256": "52494b604fed2a12644e6dd61ce9e59242130ffe0d7803856eec702f2e00e92a"
+      },
+      {
+        "path": "apps/discord-worker/wrangler.toml",
+        "flag": "PRESET_WEBHOOK_BINDING_ONLY",
+        "values": [
+          "false",
+          "false"
+        ],
+        "sha256": "cefceee96322081bebe649bd87c58aa284e054def9464e29e7df4f9bea018505"
+      }
+    ],
+    "oauthOutboundContinuityBindingAbsent": true,
+    "announcementAndWorkflowsUnchanged": true
+  },
+  "fonts": "f-discord-preparation-2026-10-30.json",
+  "ogRegression": {
+    "newRegionalAndRouteTests": 70,
+    "realFontCases": 14,
+    "routeScenarios": 14,
+    "oldOrderCompatibilitySamples": 8,
+    "redFirst": {
+      "failed": 61,
+      "passed": 1
+    },
+    "mutationFailures": {
+      "globalJpFirst": 5,
+      "rendererDropsLocale": 4,
+      "routeForcesEnglish": 3
+    },
+    "sourceReviewSha256": "bf495be6a6c1b8bee298fae375e45ceef780dcc44831fc4c051c8f6f0e79087e"
+  },
+  "versionReservation": {
+    "checkedAt": "2026-10-30T11:58:43.766Z",
+    "ogTarget": "2.12.4",
+    "openPrHeads": 70,
+    "conflicts": [],
+    "unavailable": [],
+    "registry": [
+      {
+        "name": "@xivdyetools/core",
+        "version": "5.15.0",
+        "integrity": "sha512-cCFdvxZbv94vzaUc+rlhSAgOFnaaJIIEt/S95XRi9kAJjKT0K7DubVIoDGIOkJT4qsjxu679DCsW3JLH+fw21g=="
+      },
+      {
+        "name": "@xivdyetools/svg",
+        "version": "4.4.0",
+        "integrity": "sha512-FxYuscJBtmcFdZnEnBivgbLIwHiLlNu4bBCrkiyUl8S2qlsZz0Mu7eHqkJgzDHZRcKJKZOtXLvYxegqgTp+22A=="
+      },
+      {
+        "name": "@xivdyetools/bot-logic",
+        "version": "4.11.0",
+        "integrity": "sha512-9BrfqT0S/dsmAXcFRdRpBNyO83jEZQ3M5mC7jO08S25x01/O008ElB8qT+aDLyLDLdIavlRy4qFROPxAHIc7gQ=="
+      },
+      {
+        "name": "@xivdyetools/logger",
+        "version": "2.3.0",
+        "integrity": "sha512-U7FA4NKcqNpXT8ubMuEnfRYh+7KtYEfiNTLc2ZWHe2E8Cs0ztEL3bNI2sRfx+c0pD4QCaIa2AC1X2e/uFlmwtA=="
+      },
+      {
+        "name": "@xivdyetools/auth",
+        "version": "2.0.2",
+        "integrity": "sha512-MywRNqYcILu0h4hgxuWO5dMge/gApamRvqrx5lxdcb5hel355fqL793DVxnXXdHZ5xGfv97YwkiWdYChbWuuaA=="
+      },
+      {
+        "name": "@xivdyetools/worker-kit",
+        "version": "1.5.0",
+        "integrity": "sha512-7700+LaHXZbQEQ5BUSIdTHiPQd/Vmm+nDPr5gEHWjJYXx329kdFuC1cwj7uE6NtER73VOnJf1BIkUhnMGql44Q=="
+      },
+      {
+        "name": "@xivdyetools/types",
+        "version": "3.3.0",
+        "integrity": "sha512-7/GXcPeZJ53hadTebEsxYp6mO9hrQtTnMWSW4d/4ZmYd3WAlCMjfEBrJQpSBwU24/GF8mQgyqwGU61W+ny3frg=="
+      }
+    ],
+    "exactVersions": [
+      {
+        "name": "@xivdyetools/logger",
+        "requested": "2.4.0",
+        "status": 404
+      },
+      {
+        "name": "@xivdyetools/auth",
+        "requested": "3.0.0",
+        "status": 404
+      },
+      {
+        "name": "@xivdyetools/worker-kit",
+        "requested": "1.6.0",
+        "status": 404
+      },
+      {
+        "name": "@xivdyetools/core",
+        "requested": "5.16.0",
+        "status": 404
+      },
+      {
+        "name": "@xivdyetools/core",
+        "requested": "6.0.0",
+        "status": 404
+      },
+      {
+        "name": "@xivdyetools/svg",
+        "requested": "4.4.1",
+        "status": 404
+      },
+      {
+        "name": "@xivdyetools/svg",
+        "requested": "4.4.2",
+        "status": 404
+      },
+      {
+        "name": "@xivdyetools/bot-logic",
+        "requested": "4.12.0",
+        "status": 404
+      },
+      {
+        "name": "@xivdyetools/bot-logic",
+        "requested": "5.0.0",
+        "status": 404
+      }
+    ]
+  },
+  "sourceCI": [
+    {
+      "phase": "text",
+      "number": 404,
+      "head": "ae7991ac94812900942947addffebdf5056d6682",
+      "base": "codex/release-cut-m-11-readiness-20261029",
+      "runId": 41053391560,
+      "jobs": [
+        {
+          "id": 124054755680,
+          "name": "Secret scan (gitleaks)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 124054755878,
+          "name": "Security audit (production dependencies)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 124054755897,
+          "name": "Lint, Type-check, Test, Build",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 124054756008,
+          "name": "E2E (Playwright, chromium)",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ],
+      "complete": true,
+      "deploymentRunCount": 0
+    },
+    {
+      "phase": "og",
+      "number": 405,
+      "head": "b9b51f6b0b7dcb8edb5a359d84781276d5666cde",
+      "base": "codex/release-cut-f-01-discord-20261030",
+      "runId": 41053660491,
+      "jobs": [
+        {
+          "id": 124055663869,
+          "name": "Lint, Type-check, Test, Build",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 124055664146,
+          "name": "Secret scan (gitleaks)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 124055664180,
+          "name": "Security audit (production dependencies)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 124055664182,
+          "name": "E2E (Playwright, chromium)",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ],
+      "complete": true,
+      "deploymentRunCount": 0
+    }
+  ],
+  "productionGate": {
+    "canAdminsBypass": false,
+    "preventSelfReview": false,
+    "reviewers": [
+      {
+        "login": "FlashGalatine",
+        "id": 234854320
+      }
+    ],
+    "customBranches": true,
+    "policies": [
+      {
+        "name": "main",
+        "type": "branch"
+      }
+    ]
+  },
+  "main": "13c386e5983fe58ff17ac08fb5712239feb2e696",
+  "privateRefsAbsent": true,
+  "held": [
+    "all merges and publication",
+    "registry artifacts, attestations and post-publication native/private-producer acceptance",
+    "deprecation releases, external consumer review and beta/production acceptance before M removal",
+    "deployed provider/disclosure/manual/notification/command acceptance",
+    "remote schema checks, migrations and approved recovery",
+    "Image CPU policy, resource acceptance and further hosted requests",
+    "workflow dispatch/approval and feature activation",
+    "Pages apply, Perspective key deletion and announcements"
+  ],
+  "productionActivation": "HOLD"
+}

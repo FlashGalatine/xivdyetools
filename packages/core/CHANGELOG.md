@@ -5,7 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [6.0.1] - 2026-11-15
+
+### Performance
+
+- **Faster palette extraction, with identical results (OPT-001, 2026-11-06 Rust-opportunities audit).** The k-means assignment step keeps a pixel count and channel sums per cluster instead of building member arrays and a discarded assignment array on every pass. For byte input (every channel an integer 0–255, which is what `pixelDataToRGBFiltered` and every in-repo caller supply), it also ranks centroids by squared distance. For such input that ranking, including which centroid wins a tie, is provably the one the square root gives. K-means++ seeding and the convergence test keep their square roots, so the random draws and iteration counts are unchanged. Fractional or out-of-range `RGB[]` input keeps the square root. In a Node comparison the kernel ran about 1.4–2× faster on byte input and about 1.2× faster on fractional input. `PaletteService.parity.test.ts` pins `extractPalette` to the previous implementation under seeded draws: colors, pixel counts, dominance, order and object shapes on byte, fractional, out-of-range, tie-heavy, flat and sampled input. No API, option, output or supported-input change.
 
 ### Added
 
