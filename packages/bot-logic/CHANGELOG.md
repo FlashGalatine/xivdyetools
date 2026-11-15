@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.0.0] - 2026-10-29
+
+### Removed
+
+- Conditional Bot Logic 5 source: remove the legacy character projection; successes expose only card/embed presentation data.
+- Source preparation only: preserve the earlier release, registry and consumer-acceptance gates.
+  Merging waits until October 30 or later, satisfied prerequisites and new explicit authorization; publication, deployment and activation remain held.
+- Migrate `.character` consumers to the card/embed result or a separately authorized current
+  facade result. `fileText`/`fileBytes`, error unions, `NO_INPUT` and `familySize` remain unchanged.
+
+### Fixed
+
+- Preserve emitted declarations for the existing public harmony, vision, input-options and translator contracts when building with `stripInternal`.
+
 ## [4.12.0] - 2026-10-27
 
 ### Hardening adoption

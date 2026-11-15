@@ -4,8 +4,7 @@
  *
  * `inspectCharaForTools` enforces this cap on byte input and UTF-8-encoded
  * string input. The browser's File.size and the bot's attachment-size and
- * streamed-download guards also enforce it before import. The legacy
- * `parseCharaFile` receives decoded text and does not enforce the byte cap.
+ * streamed-download guards also enforce it before import.
  *
  * Exports without an attached image measured 1,837–2,777 bytes over a
  * 1,093-file corpus. The one larger file carried an attached Base64 image

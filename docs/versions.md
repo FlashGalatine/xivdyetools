@@ -32,7 +32,7 @@
 | **Moderation Bot** | v1.9.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.2.2 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.8.2 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
-| **Public REST API** | v0.21.2 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
+| **Public REST API** | v0.21.3 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
 | **OpenGraph Worker** | v2.12.2 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.3.4 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
@@ -42,13 +42,13 @@
 
 | Package | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Core** (incl. `/blending` + schema-v2 data) | v5.16.0 | `@xivdyetools/core` | npm | Active |
+| **Core** (incl. `/blending` + schema-v2 data) | v6.0.0 | `@xivdyetools/core` | npm | Active |
 | **Types** | v3.3.0 | `@xivdyetools/types` | npm | Active |
 | **Auth** (incl. `/encoding`) | v3.0.0 | `@xivdyetools/auth` | npm | Active |
 | **Logger** | v2.4.0 | `@xivdyetools/logger` | npm | Active |
 | **Worker Kit** (middleware + `/rate-limiter`) | v1.6.0 | `@xivdyetools/worker-kit` | npm | Active |
-| **SVG** | v4.4.1 | `@xivdyetools/svg` | npm | Active |
-| **Bot Logic** (incl. `/i18n`) | v4.12.0 | `@xivdyetools/bot-logic` | npm | Active |
+| **SVG** | v4.4.2 | `@xivdyetools/svg` | npm | Active |
+| **Bot Logic** (incl. `/i18n`) | v5.0.0 | `@xivdyetools/bot-logic` | npm | Active |
 | **Test Utils** | v3.0.0 | `@xivdyetools/test-utils` | workspace-private | Active (never published) |
 
 ### Deprecated
@@ -72,6 +72,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v6.0.0 | Oct 2026 | Conditional Core 6 source: retire the six deprecated legacy character APIs and executable host parity half while preserving live contracts and all 261 library cases; registry/publication/consumer acceptance held |
 | v5.16.0 | Oct 2026 | A-CORE remediation: legacy character APIs deprecated for core 6 after release/acceptance gates; shared limit and nine live types relocated with unchanged exports; imported labels preserve surrogate pairs within 256 UTF-16 units; GPOSERS newline joining made linear with unchanged output; facade docs and xivcharakit attribution refreshed |
 | v5.15.0 | Oct 2026 | `.chara` import on `xivcharakit@0.1.0-beta.4` (exact pin): `inspectCharaForTools` / `resolveCharaForTools` / `resolveCharaWithProvider` / `createCharaPaletteProvider` and the `ImportedCharaCharacter` projection (with `indexGap`; `resolveCharaWithProvider` takes a palette provider and never reaches the palette tables), additive beside the legacy parser and resolver. Adopted by web 5.16.0 and Discord 5.9.0 |
 | v5.14.0 | Oct 2026 | `MAX_CHARA_FILE_BYTES` (8,192): the largest `.chara` file the web app and the bot accept, enforced by them on the original bytes (2026-10-15 import review). Exports without an attached image measured 1,837–2,777 bytes; the corpus's one larger file carried an image attached in Anamnesis (3,128,021 bytes) |
@@ -127,6 +128,11 @@
 | Version | Date | Highlights |
 |---------|------|------------|
 | v5.18.0 | Nov 2026 | Slot-aware dye picking (issue 422, first slice): tapping a slot or an empty-state card in a tool opens the Color Palette for that slot, a pick fills or replaces it, and on a phone the palette closes again after a pick a slot tap started. The palette marks every dye the tool holds, and multi-dye tools get a strip of slot chips, a header line naming the target slot and, with no slot targeted, tap-again-to-remove (with a slot targeted, a marked dye moves into it). Dye Comparison and Accessibility Checker gain an "Add Dye" tile; Dye Mixer no longer holds the same dye twice |
+| v5.17.0 | Nov 2026 | The Glamour Reader's Glamour list sheet gains an Abridged toggle (off by default, remembered on the device) for the shorter social-media form: no header, the whole `Slot: Name` line bold, one `Dyes:` line if the piece wears a dye and an `Obtained:` line cut to the best source — every dungeon, trial or raid at the lowest difficulty (a map dungeon loses to any other source), else the craft, else a Gil vendor with its price, else another vendor without its currency, else the line as written. Preview, fields, Copy list and Save .md follow it (`glamour-equipment-abridged.md`); a line typed in Abridged is kept apart, and a full-list edit carries over until typed over. Each row also gets its own include switch (both forms): a piece switched off is dimmed and left out of the preview, counts, Copy list and Save .md until the page reloads (never stored); Reset all turns the outfit's pieces back on, and with all off Copy list and Save .md disable. The full list, the API and the `/glamour` bot are unchanged. CI's always-run step runs `glamour-abridged.test.ts` |
+| v5.16.15 | Nov 2026 | The Dye Mixer's result slot glows in the theme's accent instead of the gold of the retired themes, and the 33 `var(--theme-primary, #d4af37)` fallbacks that could never paint are gone, so no non-test source names that gold any more. The theme-token contract test now checks every source, not only hover rules. The one-locale payload shrinks by 362 bytes and stays at 99.3% of its budget |
+| v5.16.14 | Nov 2026 | A hovered toggle that is on and the palette drawer's Apply and Random buttons stop turning gold: `--theme-primary-hover` is declared at last, from each palette's own hover accent (`#B01C1C` on Light, `#FF6257` on Dark), the palette's Apply button and active filter chips get a readable label (`--theme-text-on-primary`, white on Light), and a new contract test fails any `--theme-*` token the app reads but nothing declares |
+| v5.16.13 | Nov 2026 | The Dye Mixer and Gradient Builder fit a narrow pane: the Mixer's field stops needing 348 px (its cells narrow, then its row names move above their cells, all 30 from a 769 px window), both tools' side padding gives way and their results headers wrap, and the Gradient's endpoint cards stack. That ends 217 px of sideways scrolling at 769 px and the same bug's 24 px on a 390 px phone. The tools' geometry is unchanged at 1,042 px and wider, apart from one invisible box in each results header |
+| v5.16.12 | Nov 2026 | More narrow-pane fixes: a result card's menu narrows and its submenus overlap it so that all of them stay inside the pane (also on phones), Harmony's pucks follow a small wheel down to 24 px and keep 42 px on phones from 320 px, Comparison's "What actually differs" rows wrap, and the Swatch Matcher's side padding gives way (8 columns from an 884 px window, down from 972 px), a keyboard pick keeps the focused cell on screen, and closing a panel keeps revealed results in view. |
 | v5.16.11 | Nov 2026 | Harmony, Comparison and Accessibility fit a narrow pane: the wheel, result cards, pair chips, empty-state slots and vision tabs shrink instead of hanging off the pane's left, and Accessibility's share row and the header rows wrap, which also ends a phone's 139 px of sideways scrolling. Geometry is unchanged at 1440 px and wider |
 | v5.16.10 | Nov 2026 | The Swatch Matcher fits a narrow pane: the grid panel stays inside the pane and scrolls sideways inside itself if even the grid does not fit, and the matches wrap under it below 190 px of room, following the pane rather than the window. A phone can reach the grid's first column, and a grid pick, or a palette pick in a desktop window, brings its results into view where they sit under the grid. In English, geometry is unchanged at 1536 px and wider, and at 1440 px on the palettes without a Dark/Light toggle; longer languages stack sooner, up to about 1,680 px |
 | v5.16.9 | Nov 2026 | The Color Palette has no sideways scrollbar: a hidden dye tooltip centered on a last-column swatch counted as scrollable overflow. Tooltips in the outer columns now grow inward from their swatch's edge, so they are no longer cut off at the sides on hover either, and near the panel's top edge a tooltip opens below its swatch |
@@ -586,6 +592,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v4.4.2 | Oct 2026 | Conditional SVG compatibility patch for Core 6; retained APIs and rendered output unchanged; registry/publication/consumer acceptance held |
 | v4.4.1 | Oct 2026 | A-SVG security companion: `fitText` scans code-point prefixes in linear time with identical legacy output, numeric behavior, widths and public API; core 5.16.0 publication precedes this publish |
 | v4.4.0 | Oct 2026 | 2026-10-04 remediation, Sprints 14+28 — `formatContrastRatio`, one floored printer for card, embed and `/compare` (BUG-142); whole gradient step ranges (BUG-146); glamour footer wraps at clauses with an 11 px look label (I18N-015, BUG-145); the frame-budget gate covers every card (BUG-144); `scanEmittedGlyphs` fails closed (BUG-143); `LEDGER_GROUP_H` / `LEDGER_ROW_H` back in the barrel (REFACTOR-003) |
 | v4.3.0 | Sep 2026 | `generateGlamourCard` — the /glamour card (2a): pieces in slot order, a second row kind beside measuredRow |
@@ -609,6 +616,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.0.0 | Oct 2026 | Conditional Bot Logic 5 source: remove the legacy character projection; successes expose only card/embed presentation data; registry/publication/consumer acceptance held |
 | v4.12.0 | Oct 2026 | A-BOT-LOGIC: metric-correct harmony distances, effective-color eye pairing, bounded glamour descriptions and shared sanitizer hardening; deprecated but retained legacy swatch result, legacy-oracle/fixture cleanup and five preparatory choice keys in six locales. Includes A-DISCORD favorite-list/neutral-preview locale companion; publish that source after core 5.16.0 and SVG 4.4.1, before the Discord consumer |
 | v4.11.0 | Oct 2026 | `/swatch` and `/glamour` read through core 5.15.0's `xivcharakit` facade: optional `fileBytes` input (wins over `fileText`), matching on `matchHex` alone with the lip on its live blend, `SwatchCharacter` keeps its shape and carries no color for a slot `matchHex` excludes, four fixed lines in six languages (`card.swatchActivityUnknown`, `card.swatchUnusable`, `card.glamourGearSkipped`, `card.glamourDyeInvalid`); intentional differences in `docs/research/2026-10-22-xivcharakit-integration.md` |
 | v4.10.0 | Oct 2026 | `card.charaFileReason.tooLarge` takes `{kb}` (was `{mb}`) and says to re-save an Anamnesis export without its attached image; new `card.charaFileReason.notChara`; the `/manual` Character File topic states the `.chara` name and 8 KB limits, all six languages |
@@ -681,6 +689,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v0.21.3 | Oct 2026 | Conditional Core 6 adoption; preserve public v1 Chara response and family-size contracts; registry/publication/consumer acceptance held |
 | v0.21.2 | Nov 2026 | Maintenance acquisition generation validates fixed game/schema pins, supports exact-request offline replay and completes review requests before output adoption; runtime tables unchanged |
 | v0.21.1 | Oct 2026 | A-API: bounded and sanitized upstream character data, dedicated cache-miss soft budgets, current-version-only icon overrides, IPv6 /64 adoption and numeric-only telemetry versions; pinned/checksummed item-name inputs and controlled ko/zh/ja refresh with 65 additional Korean names, using unchanged fonts |
 | v0.21.0 | Oct 2026 | Snapshot/schema-aware equipment caching, optional versioned icon URLs and conditional PNG refresh, isolate-local Item/Glasses miss coalescing |
@@ -747,6 +756,10 @@ and the [rollout runbook](operations/security-remediation-2026-09-15.md) for the
 
 | Consumer | Minimum Core Version | Notes |
 |----------|---------------------|-------|
+| xivdyetools-api-worker v0.21.3 | @xivdyetools/core v6.0.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Conditional M source; not dependency isolation; publication, acceptance and activation held |
+| @xivdyetools/bot-logic v5.0.0 | @xivdyetools/core v6.0.0; @xivdyetools/svg v4.4.2; @xivdyetools/types v3.3.0 | Conditional M source; not dependency isolation; publication, acceptance and activation held |
+| @xivdyetools/svg v4.4.2 | @xivdyetools/core v6.0.0; @xivdyetools/types v3.3.0 | Conditional M source; not dependency isolation; publication, acceptance and activation held |
+| @xivdyetools/core v6.0.0 | @xivdyetools/logger v2.4.0; @xivdyetools/types v3.3.0 | Conditional M source; not dependency isolation; publication, acceptance and activation held |
 | xivdyetools-stoat-worker v0.3.4 | @xivdyetools/bot-logic v4.12.0; @xivdyetools/logger v2.4.0; @xivdyetools/types v3.3.0 | Prepared source; publication and deployed acceptance remain pending |
 | xivdyetools-image-worker v1.3.5 | @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |
 | xivdyetools-moderation-worker v1.9.0 | @xivdyetools/auth v3.0.0; @xivdyetools/bot-logic v4.12.0; @xivdyetools/logger v2.4.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Prepared source; publication and deployed acceptance remain pending |

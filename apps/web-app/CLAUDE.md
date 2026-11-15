@@ -21,7 +21,7 @@ The main XIV Dye Tools web application — a static SPA that runs entirely in th
 | `presets` | Community Presets | Browse / submit / vote on community dye presets via the presets-api worker |
 | `budget` | Budget Suggestions | Universalis-priced "what dyes can I afford?" picker |
 | `swatch` | Swatch Matcher | Match to character/skin/hair/eye reference swatches (was "character" in v3) |
-| `glamour` | Glamour Reader | Reads a loaded `.chara` file as a glamour: the in-game verdict first, every piece with its dyes, the twin a piece is named from (picker), and the GPOSERS list in an editable export sheet with each piece's Acquisition line. No sidebar; shares the file with the Swatch Matcher (`CharaSessionService`); key `0` |
+| `glamour` | Glamour Reader | Reads a loaded `.chara` file as a glamour: the in-game verdict first, every piece with its dyes, the twin a piece is named from (picker), and the GPOSERS list in an editable export sheet with each piece's Acquisition line, plus an Abridged toggle for the shorter social-media form. No sidebar; shares the file with the Swatch Matcher (`CharaSessionService`); key `0` |
 
 ## Commands
 
@@ -118,7 +118,7 @@ src/
 │   ├── glamour-tool.ts              # Glamour Reader (tenth tool): header + file card + the glamour block
 │   ├── glamour-block.ts             # DYES ON THIS GLAMOUR + IN THE GAME verdict — its own chunk, imported by the reader once a loaded file wears anything
 │   ├── glamour-twin-picker.ts       # SAME LOOK · N ITEMS popover / sheet (twin rules: core chara-twins)
-│   ├── glamour-sheet.ts             # Export sheet (design 2c): editable Acquisition lines, Copy list / Save .md
+│   ├── glamour-sheet.ts             # Export sheet (design 2c): editable Acquisition lines, Copy list / Save .md, the Abridged toggle (form remembered on the device), a per-row include switch (off until reload, never stored)
 │   └── ... image-zoom-controller, dye-grid, dye-search-box, dye-selector, market-board, metric-help, etc.
 ├── services/
 │   ├── index.ts                     # initializeServices(), getServicesStatus(), re-exports
@@ -160,6 +160,7 @@ src/
 │   ├── utils.ts                     # escapeHtml, clearContainer
 │   ├── ui-icons.ts                  # SVG icon constants (innerHTML-safe, all static)
 │   ├── tool-icons.ts / harmony-icons.ts / category-icons.ts / state-icons.ts
+│   ├── glamour-markdown.ts / glamour-abridged.ts # GPOSERS list renderings (full + Abridged); Abridged's one-source rules, pinned by a test CI always runs
 │   ├── i18n-types.ts / tool-config-types.ts / browser-api-types.ts / types.ts
 │   └── subscription-manager.ts      # Pub/sub helpers for service events
 ├── styles/                          # themes.css, globals.css (font contract), tool-content.css (+error-boundary.css; loaded page-side AND into the shell's shadow root), v4-layout.css (host/print only), tailwind.css
