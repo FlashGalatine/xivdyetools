@@ -16,6 +16,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `SOCIAL_LINKS`, which now points at `https://x.com/FlashGalatine`, and the `twitter:site` and
   `twitter:creator` tags in `src/index.html` name the new handle on share cards. No other source change.
 
+## [5.17.1] - 2026-10-29
+
+### Changed
+
+- Conditional Core 6/SVG adoption; preserve inspection-worker protocol, matching and bundle budget.
+- Source preparation only: preserve the earlier release, registry and consumer-acceptance gates.
+  Merging waits until October 30 or later, satisfied prerequisites and new explicit authorization; publication, deployment and activation remain held.
+
 ## [5.17.0] - 2026-11-02
 
 ### Added
