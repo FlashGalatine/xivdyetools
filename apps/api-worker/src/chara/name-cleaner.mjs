@@ -14,5 +14,6 @@ export function cleanName(value) {
     if (count++ === 128) break;
     result += point;
   }
-  return result;
+  // Truncation can end on a collapsed space; keep the normalized (trimmed) contract.
+  return result.trimEnd();
 }

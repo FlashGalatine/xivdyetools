@@ -1573,6 +1573,34 @@ describe('/preset moderate approve|reject — the confirmation (Sprint 17)', () 
     expect(edit.embeds[0].description).not.toContain('**Edit:**');
     expect(edit.embeds[0].description).not.toContain('Revert');
   });
+
+  // An unreviewable link withholds Approve, so the Review notice must not ask for it.
+  it.each([
+    ['approve', 'Approval is unavailable', 'click Approve'],
+    ['reject', 'click Reject to confirm', 'Approval is unavailable'],
+  ] as const)(
+    '%s with an unsafe link offers only Reject and says so',
+    async (action, says, never) => {
+      vi.mocked(presetApi.getModerationPreset).mockResolvedValue({
+        preset: {
+          ...CURRENT_PRESET,
+          category_id: 'jobs',
+          tags: [],
+          example_link: 'ftp://example.com/x',
+        },
+        revision: 3,
+      } as never);
+
+      const edit = await run(action);
+      const buttons = edit.components[0].components;
+      const review = edit.embeds[0].fields.find((f: { name: string }) => f.name === 'Review');
+
+      expect(buttons).toHaveLength(1);
+      expect(buttons[0].custom_id).toMatch(/^preset_reject_/);
+      expect(review.value).toContain(says);
+      expect(review.value).not.toContain(never);
+    },
+  );
 });
 
 describe('explicit private account reviews',()=>{
@@ -1599,11 +1627,45 @@ describe('explicit private account reviews',()=>{
  it('XIVAuth-only author ID remains valid',async()=>{await run(command('ban_user',U));expect(confirmations.createBanReview).toHaveBeenCalledWith(env,MOD,'ban',[U]);});
  it('channel and current moderator guards precede storage',async()=>{const i=command();i.channel_id='other';await run(i);env.MODERATOR_IDS='899999999999999999';await run(command());expect(confirmations.createBanReview).not.toHaveBeenCalled();});
  it('missing target and unavailable identity never fall back to target-only controls',async()=>{const i=command();i.data!.options![0]!.options=[];await run(i);expect(confirmations.createBanReview).not.toHaveBeenCalled();vi.mocked(confirmations.createBanReview).mockRejectedValue(new Error('provider private'));const text=JSON.stringify(await run(command()));expect(text).not.toContain('provider private');expect(text).not.toContain(`ban_confirm_${D}`);});
+
+  it('an unexpected review failure is logged with a fixed message and no identifiers', async () => {
+    const logger = { error: vi.fn(), warn: vi.fn(), info: vi.fn() };
+    const failure = 'D1_ERROR: no such table: ban_identity_memberships';
+    vi.mocked(confirmations.createBanReview).mockRejectedValue(new Error(failure));
+    const response = await handlePresetCommand(
+      command(),
+      env,
+      ctx,
+      new Translator('en'),
+      logger as never,
+    );
+    const body = (await response.json()) as any;
+
+    expect(body.data.content).toBe(confirmations.REVIEW_UNAVAILABLE);
+    expect(logger.error).toHaveBeenCalledTimes(1);
+    const [message, logged] = logger.error.mock.calls[0];
+    expect(message).toBe('Account ban review could not be created');
+    expect(logged).toBeInstanceOf(Error);
+    expect((logged as Error).message).toBe(failure);
+    const logText = `${message} ${(logged as Error).message}`;
+    for (const id of [MOD, D, U]) expect(logText).not.toContain(id);
+  });
+  it.each([confirmations.REVIEW_UNAVAILABLE, confirmations.BAN_SCOPE_OVERFLOW])(
+    'an expected refusal (%s) is not logged as an error',
+    async (refusal) => {
+      const logger = { error: vi.fn(), warn: vi.fn(), info: vi.fn() };
+      vi.mocked(confirmations.createBanReview).mockRejectedValue(new Error(refusal));
+      await handlePresetCommand(command(), env, ctx, new Translator('en'), logger as never);
+      expect(logger.error).not.toHaveBeenCalled();
+    },
+  );
 });
 
 it('overflow remains an explicit private manual-review refusal',async()=>{
  const actor='987654321098765432';const env={LINKED_BAN_CONFIRMATION_ENABLED:'true',MODERATOR_IDS:actor,MODERATION_CHANNEL_ID:'moderation'} as Env;
- vi.mocked(confirmations.createBanReview).mockRejectedValue(new Error('Too many active bans match. Manual review is required.'));
+ vi.mocked(confirmations.createBanReview).mockRejectedValue(
+  new Error(confirmations.BAN_SCOPE_OVERFLOW),
+ );
  const response=await handlePresetCommand({id:'i',token:'t',application_id:'a',channel_id:'moderation',user:{id:actor},data:{options:[{name:'ban_user',options:[{name:'user',value:'123456789012345678'}]}]}},env,{} as ExecutionContext,new Translator('en'));
  const body=await response.json() as any;expect(body.data.flags).toBe(64);expect(body.data.content).toContain('Manual review is required');
 });

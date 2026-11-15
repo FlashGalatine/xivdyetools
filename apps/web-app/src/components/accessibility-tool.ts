@@ -757,6 +757,7 @@ export class AccessibilityTool extends BaseComponent {
           text-align: center;
           min-height: 300px;
           width: 100%;
+          container-type: inline-size;
         `
           .replace(/\s+/g, ' ')
           .trim(),
@@ -782,7 +783,8 @@ export class AccessibilityTool extends BaseComponent {
     const selectedDyesHeader = this.createElement('div', {
       className: 'section-header',
       attributes: {
-        style: 'display: flex; justify-content: space-between; align-items: center;',
+        style:
+          'display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: center;',
       },
     });
     const selectedDyesTitle = this.createElement('span', {
@@ -794,7 +796,7 @@ export class AccessibilityTool extends BaseComponent {
     // Share controls container (vision selector + button)
     const shareControls = this.createElement('div', {
       attributes: {
-        style: 'display: flex; align-items: center; gap: 8px;',
+        style: 'display: flex; flex-wrap: wrap; align-items: center; gap: 8px; max-width: 100%;',
       },
     });
 
@@ -812,6 +814,7 @@ export class AccessibilityTool extends BaseComponent {
     this.shareVisionSelect = this.createElement('select', {
       attributes: {
         style: `
+          max-width: 100%;
           padding: 4px 8px;
           font-size: 12px;
           border-radius: 4px;
@@ -887,7 +890,7 @@ export class AccessibilityTool extends BaseComponent {
     this.lensGridContainer = this.createElement('div', {
       attributes: {
         style:
-          'display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(180px, 220px)); justify-content: center;',
+          'display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 220px)); justify-content: center;',
       },
     });
     this.lensSection.appendChild(this.lensGridContainer);
@@ -900,7 +903,7 @@ export class AccessibilityTool extends BaseComponent {
     const pairHeader = this.createElement('div', {
       attributes: {
         style:
-          'display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--theme-border);',
+          'display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--theme-border);',
       },
     });
     const pairHeaderLeft = this.createElement('div', {
@@ -955,13 +958,19 @@ export class AccessibilityTool extends BaseComponent {
     if (!this.emptyStateContainer) return;
     clearContainer(this.emptyStateContainer);
 
+    // Everything centered in here stays inside the pane, because what hangs off
+    // the left of it can't be scrolled to. The sideways padding only gives way
+    // when the pane is too narrow for it (under about 640px). It's in cqw because
+    // a percentage counts as 0 while a shrink-to-fit box measures itself, which
+    // stacked the slots in a window with room for all four.
     const container = this.createElement('div', {
       attributes: {
         style: `
           display: flex;
           flex-direction: column;
           align-items: center;
-          padding: 2rem;
+          max-width: 100%;
+          padding: 2rem min(2rem, 5cqw);
         `
           .replace(/\s+/g, ' ')
           .trim(),
@@ -975,7 +984,8 @@ export class AccessibilityTool extends BaseComponent {
           display: flex;
           gap: 16px;
           flex-wrap: wrap;
-          padding: 20px;
+          max-width: 100%;
+          padding: 20px min(20px, 5cqw);
           justify-content: center;
           margin-bottom: 2rem;
         `
@@ -1069,7 +1079,8 @@ export class AccessibilityTool extends BaseComponent {
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          padding: 60px 40px;
+          max-width: 100%;
+          padding: 60px min(40px, 8cqw);
           text-align: center;
           background: rgba(0, 0, 0, 0.2);
           border-radius: 12px;
@@ -1085,6 +1096,7 @@ export class AccessibilityTool extends BaseComponent {
       attributes: {
         style: `
           width: 150px;
+          max-width: 100%;
           height: 150px;
           margin-bottom: 20px;
           opacity: 0.4;
@@ -1105,6 +1117,7 @@ export class AccessibilityTool extends BaseComponent {
           color: var(--theme-text-muted);
           max-width: 400px;
           line-height: 1.5;
+          overflow-wrap: anywhere;
         `
           .replace(/\s+/g, ' ')
           .trim(),
@@ -1366,7 +1379,7 @@ export class AccessibilityTool extends BaseComponent {
         this.createElement('span', {
           textContent: LanguageService.getVisionType(vision.localeKey),
           attributes: {
-            style: `font-size: 12px; font-weight: 600; white-space: nowrap; color: ${active ? 'var(--theme-text-header)' : 'var(--theme-text)'};`,
+            style: `font-size: 12px; font-weight: 600; color: ${active ? 'var(--theme-text-header)' : 'var(--theme-text)'};`,
           },
         })
       );

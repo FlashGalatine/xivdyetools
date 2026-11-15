@@ -1,0 +1,76 @@
+[
+  {
+    "candidate_id": "pkg-001",
+    "title": "Harmony hue-only selection prints angular degrees as the chosen matching metric",
+    "kind": "BUG",
+    "severity": "MEDIUM",
+    "type": "Logic",
+    "unit": "packages/bot-logic",
+    "locations": [
+      "packages/core/src/services/dye/HarmonySelector.ts:136",
+      "packages/bot-logic/src/commands/harmony.ts:275",
+      "packages/svg/src/harmony-card.ts:291",
+      "apps/discord-worker/src/handlers/commands/harmony.ts:63"
+    ],
+    "evidence": "When strictMatching=false on an HSV-carrying wheel, selector devianceFor returns angular hue distance (:139-141). executeHarmony assigns that value directly to the main row deltaE (:275), but companions get getDistanceForMethod (:278-280), and the card grades/formats every row under matchingMethod. Thus degrees are labelled and thresholded as DeltaE/OKLAB/RGB, mixing units within one result.",
+    "repro": "Run /harmony with strict_matching=false, companions=2 and matching=oklab on the RGB wheel. Inspect the main and companion row measurements: main is a hue-angle difference, companion is OKLAB distance. The former is graded against 0.041/0.101/0.174 harmony bands despite being degrees.",
+    "test_gap": "harmony.test.ts:365-389 tests only strictMatching:true and asserts result.ok, never the measures passed to generateHarmonyCard. No strictMatching:false case found in command tests. Static trace only; no suite/repro was executed by reviewer.",
+    "fix": "Keep hue deviance for selection, then recompute the selected dye row's displayed distance in matchingMethod just as for companions. Add a false-strictness card-argument regression; publish bot-logic then deploy consumers."
+  },
+  {
+    "candidate_id": "pkg-002",
+    "title": "Swatch merges same-index eyes even when live extended colors differ",
+    "kind": "BUG",
+    "severity": "MEDIUM",
+    "type": "Logic",
+    "unit": "packages/bot-logic",
+    "locations": [
+      "packages/bot-logic/src/commands/swatch.ts:427",
+      "packages/bot-logic/src/commands/swatch.ts:448",
+      "packages/core/src/services/chara/chara-library.ts:273",
+      "packages/core/src/services/chara/__tests__/chara-library-parity.test.ts:5669"
+    ],
+    "evidence": "Swatch drops rightEye whenever eyesShareIndex and a leftEye row exist, and labels leftEye LR. The facade's flag is expressly index equality. Existing EXT-28 parity fixture has both indices 42, left offGrid #87C0A3 and right palette #DCBA6C while eyesShareIndex remains true. Those two distinct active colors therefore collapse into a single LR match; right color and its nearest dye disappear.",
+    "repro": "Pass EXT-28's shared-index/differing-floats document through executeSwatch (see parity fixture around :5669). Expect separate L/R rows because winning colors differ; current :427 skips R. slot:eyes also always selects the first collapsed row.",
+    "test_gap": "swatch-library.test.ts:358 tests shared indices only with left matchHex patched to null; ordinary shared-index tests use identical effective colors. Core parity proves the differing-color state but does not exercise command rendering. Static trace only; no suite/repro was executed by reviewer.",
+    "fix": "Merge only when both active winning hexes (including composites where relevant) are equal; derive the LR label from that effective-color equality. Add EXT-28 at the command boundary. Publish bot-logic, then deploy bot consumers."
+  },
+  {
+    "candidate_id": "pkg-003",
+    "title": "Character label cap can split a surrogate pair",
+    "kind": "BUG",
+    "severity": "LOW",
+    "type": "Edge case",
+    "unit": "packages/core",
+    "locations": [
+      "packages/core/src/services/chara/chara-library.ts:146",
+      "packages/core/src/services/chara/chara-library.ts:265",
+      "packages/core/src/services/chara/chara-library.ts:269"
+    ],
+    "evidence": "boundedLabel truncates raw UTF-16 at 256 code units. A 255-unit prefix followed by an astral character leaves a high surrogate without its low surrogate. producer and nickname projections both call this function; serialized/UTF-8 rendered nickname can show U+FFFD. SVG escapeXml drops illegal surrogates, so that sink does not break XML.",
+    "repro": "Import a .chara with Nickname = 'a'.repeat(255) + a supplementary-plane character. The capped nickname ends with only the first UTF-16 code unit of that character.",
+    "test_gap": "chara-library.test.ts:196-205 bounds only ASCII n.repeat(400) and asserts length 256, so a split supplementary-plane character is untested. Static derivation only; no suite/repro was executed by reviewer.",
+    "fix": "Truncate on code-point boundaries while preserving a documented code-unit cap; coordinate with web file-name truncation. Publish core before consumers.",
+    "overlap": "2026-10-26-security/SECURITY_AUDIT_REPORT.md G67 (informational handoff); coordinator also owns web-app chara-file-loader.ts filename slice. Merge into one cross-unit item if filed."
+  },
+  {
+    "candidate_id": "pkg-004",
+    "title": "Glamour embed truncation leaves oversized notes unbounded",
+    "kind": "BUG",
+    "severity": "LOW",
+    "type": "Edge case",
+    "unit": "packages/bot-logic",
+    "locations": [
+      "packages/bot-logic/src/commands/glamour.ts:193",
+      "packages/bot-logic/src/commands/glamour.ts:581",
+      "packages/bot-logic/src/commands/glamour.ts:604",
+      "packages/bot-logic/src/commands/glamour.ts:607",
+      "packages/bot-logic/src/commands/glamour.test.ts:624"
+    ],
+    "evidence": "The 4000-character budget truncates only body. Names in fixed/blocked/company notes can make tail itself exceed that budget. The computed lastIndexOf position then becomes negative; with no newline at index zero, lastIndexOf returns -1 and body.slice(0,-1) retains almost the whole body. Description at :613 still includes the entire tail and can exceed Discord 4096 characters. The injectable resolver accepts long names and the live upstream cleanName has no cap, though abnormal game data is needed for the production scenario.",
+    "repro": "Use a resolver answer with a fixed/blocked/company name long enough that notes.join(newline) exceeds 4000 characters. executeGlamour returns ok:true with embed.description longer than 4096; ordinary body truncation cannot make an already oversized tail fit. Static derivation; reviewer did not execute this repro.",
+    "test_gap": "glamour.test.ts:624-660 covers long acquisition/body lines (BUG-127), keeping all closing notes short. It asserts the aggregate length only for that case; no oversized-note or negative remaining-budget case exists in the reviewed tests.",
+    "fix": "Allocate a nonnegative tail budget first and bound/compact note names or lines, then truncate body within remaining space and assert the final description cap. Add oversized-tail and no-complete-body-line cases. Keep the worker failed-edit handling as its separate finding.",
+    "overlap": "2026-10-26-security SECURITY_AUDIT_REPORT.md G37 informational handoff; uncapped upstream names also intersect security FINDING-002. This candidate concerns library embed budgeting, separate from worker safeEditOriginalResponse outcome handling."
+  }
+]

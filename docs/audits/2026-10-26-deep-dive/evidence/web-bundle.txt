@@ -1,0 +1,148 @@
+$ npm run build && npm run check-bundle-size
+npm warn Unknown env config "manage-package-manager-versions". This will stop working in the next major version of npm.
+
+> xivdyetools-web-app@5.16.0 build
+> node scripts/copy-chara-notices.mjs && tsc --noEmit && vite build
+
+copy-chara-notices: wrote C:\dev\XIVProjects\xivdyetools\.claude\worktrees\deep-i18n-audits-20261026\apps\web-app\public\licenses\xivcharakit.txt
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - `__dirname` (vite.config.ts:70:20). Use `import.meta.dirname` instead
+  - import "./vite-plugin-async-css" without a file extension (vite.config.ts:3:26). Add the file extension
+  - import "./vite-plugin-changelog-parser" without a file extension (vite.config.ts:4:33). Add the file extension
+  - import "./vite-plugin-beta-branding" without a file extension (vite.config.ts:5:30). Add the file extension
+  - JSON import "./package.json" without import attributes (vite.config.ts:6:17). Add `with { type: 'json' }`
+  - import "./src/shared/beta-branding" without a file extension (vite-plugin-beta-branding.ts:16:8). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+vite v8.3.5 building client environment for production...
+transforming...
+[changelog-parser] Parsed 58 changelog entries, shipping the newest 33
+✓ 283 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                     6.71 kB │ gzip:   2.34 kB
+dist/assets/chara-inspection.worker-z9w9-s6y.js    30.48 kB
+dist/assets/index-DZ98H7Ti.css                     56.95 kB │ gzip:  11.76 kB
+dist/assets/state-icons-FUxcLoPU.js                 0.26 kB │ gzip:   0.22 kB │ map:     2.10 kB
+dist/assets/example-link--gVg2mac.js                0.76 kB │ gzip:   0.46 kB │ map:     4.20 kB
+dist/assets/rolldown-runtime-A9ZmIH2T.js            0.81 kB │ gzip:   0.47 kB
+dist/assets/download-file-D49cCtCT.js               1.49 kB │ gzip:   0.76 kB │ map:     8.11 kB
+dist/assets/preset-i18n-BuM6H7-a.js                 2.08 kB │ gzip:   0.88 kB │ map:    11.54 kB
+dist/assets/preset-category-selector-BUjDxR6T.js    2.81 kB │ gzip:   1.13 kB │ map:     9.83 kB
+dist/assets/export-sheet-B7bYmudR.js                2.98 kB │ gzip:   1.28 kB │ map:     9.45 kB
+dist/assets/hybrid-preset-service-BFsUv46A.js       3.44 kB │ gzip:   1.36 kB │ map:    17.04 kB
+dist/assets/signin-modal-BD8X0I5D.js                4.00 kB │ gzip:   1.18 kB │ map:     6.40 kB
+dist/assets/glamour-tool-CrqJGPdQ.js                4.23 kB │ gzip:   1.65 kB │ map:    10.30 kB
+dist/assets/share-button-DMQiFg3A.js                5.51 kB │ gzip:   1.94 kB │ map:    12.85 kB
+dist/assets/my-submissions-modal-DxyYX7mY.js        6.19 kB │ gzip:   2.51 kB │ map:    18.69 kB
+dist/assets/base-component-CdxGO5bt.js              7.08 kB │ gzip:   2.41 kB │ map:    33.23 kB
+dist/assets/metric-help-Be1nOzJe.js                 7.44 kB │ gzip:   2.22 kB │ map:    22.18 kB
+dist/assets/item-links-menu-C7mtsXFJ.js             7.72 kB │ gzip:   2.94 kB │ map:    32.64 kB
+dist/assets/pricing-mixin-DPnSJKfn.js               8.82 kB │ gzip:   2.77 kB │ map:    28.21 kB
+dist/assets/tutorial-spotlight-SULL1YRz.js          9.96 kB │ gzip:   2.99 kB │ map:    33.08 kB
+dist/assets/glamour-sheet-BHi1YcdS.js              12.62 kB │ gzip:   4.65 kB │ map:    51.00 kB
+dist/assets/preset-submission-form-DX8RKTtd.js     14.09 kB │ gzip:   3.79 kB │ map:    42.02 kB
+dist/assets/auth-service-JLwzX7Wc.js               14.71 kB │ gzip:   4.82 kB │ map:    68.56 kB
+dist/assets/preset-edit-form-CLphQ24X.js           14.75 kB │ gzip:   3.94 kB │ map:    48.58 kB
+dist/assets/vendor-lit-IqwEurJp.js                 17.25 kB │ gzip:   6.64 kB │ map:    42.93 kB
+dist/assets/chara-file-card-pVaTXQQE.js            26.56 kB │ gzip:   9.23 kB │ map:   118.57 kB
+dist/assets/gradient-tool-C7n2S9S4.js              31.36 kB │ gzip:   8.53 kB │ map:   108.03 kB
+dist/assets/accessibility-tool-DzpTIX18.js         32.76 kB │ gzip:   7.43 kB │ map:    99.06 kB
+dist/assets/budget-tool-iZkQgg9R.js                35.12 kB │ gzip:   9.58 kB │ map:   111.85 kB
+dist/assets/mixer-tool-C0La8yzd.js                 35.37 kB │ gzip:   8.64 kB │ map:   114.15 kB
+dist/assets/_virtual_changelog-BBOTUHNR.js         36.08 kB │ gzip:  12.83 kB
+dist/assets/harmony-tool-IxI230dj.js               39.12 kB │ gzip:  10.43 kB │ map:   134.58 kB
+dist/assets/glamour-block-CsPvTkA7.js              39.29 kB │ gzip:  11.33 kB │ map:   135.44 kB
+dist/assets/result-card-BmdsETIK.js                41.97 kB │ gzip:   8.72 kB │ map:   101.80 kB
+dist/assets/comparison-tool-DDddHXQ5.js            45.66 kB │ gzip:   9.88 kB │ map:   130.70 kB
+dist/assets/swatch-tool-CD59_rNH.js                52.29 kB │ gzip:  13.29 kB │ map:   174.83 kB
+dist/assets/collapsible-panel-CN428pBP.js          53.06 kB │ gzip:  12.23 kB │ map:   151.13 kB
+dist/assets/zh-DuO0yrAf.js                         53.46 kB │ gzip:  23.14 kB │ map:    71.16 kB
+dist/assets/extractor-tool-BZ7SmvGt.js             53.82 kB │ gzip:  13.60 kB │ map:   176.13 kB
+dist/assets/en-DQy89r6i.js                         55.86 kB │ gzip:  21.68 kB │ map:    73.15 kB
+dist/assets/preset-tool-E6L9UAJL.js                57.04 kB │ gzip:  13.98 kB │ map:   148.23 kB
+dist/assets/de-BA2fHotd.js                         61.98 kB │ gzip:  23.70 kB │ map:    79.27 kB
+dist/assets/ko-DfwwHvxL.js                         63.83 kB │ gzip:  23.78 kB │ map:    81.12 kB
+dist/assets/fr-fc94qft5.js                         64.75 kB │ gzip:  23.91 kB │ map:    82.03 kB
+dist/assets/ja-CCToKI6M.js                         68.64 kB │ gzip:  24.29 kB │ map:    85.92 kB
+dist/assets/index-DPgtlPkt.js                      72.84 kB │ gzip:  22.60 kB │ map:   333.62 kB
+dist/assets/v4-layout-5voNhbMN.js                 221.26 kB │ gzip:  46.88 kB │ map:   489.49 kB
+dist/assets/modals-BCb7i0Cn.js                    284.75 kB │ gzip:  83.36 kB │ map:   901.92 kB
+dist/assets/vendor-core-CIKThnaB.js               872.54 kB │ gzip: 107.45 kB │ map: 3,416.61 kB
+
+✓ built in 3.31s
+[PLUGIN_TIMINGS] JavaScript callbacks ran for 3.0s of this 3.3s build (92%).
+The slowest callbacks, timed inside each callback (the wait before a callback starts is excluded, the time it awaits is included):
+  - plugin vite:build-html transform (37%, 1.2s, 1 call)
+Additional callback time came from the callbacks below and from callbacks under 1s.
+2 callbacks are listed without a time. Their calls overlapped, so the time inside one call includes work from other calls. To find their cost, profile the build with `node --cpu-prof`:
+  - plugin vite:esbuild-transpile renderChunk (46 calls)
+  - plugin vite:css transform (4 calls)
+See https://rolldown.rs/reference/InputOptions.checks#bundlertimings for more details.
+
+npm warn Unknown env config "manage-package-manager-versions". This will stop working in the next major version of npm.
+
+> xivdyetools-web-app@5.16.0 check-bundle-size
+> node scripts/check-bundle-size.js
+
+
+📦 Bundle Size Check
+
+============================================================
+🟠 v4-layout-5voNhbMN.js               216.08 KB    / 218.00 KB    (99.1%   ) layout shell
+🟠 modals-BCb7i0Cn.js                  278.08 KB    / 287.00 KB    (96.9%   ) core runtime (named "modals")
+⚠️ vendor-core-CIKThnaB.js             852.10 KB    / 950.00 KB    (89.7%   ) swatch reference data
+⚠️ _virtual_changelog-BBOTUHNR.js      35.24 KB     / 40.00 KB     (88.1%   ) release notes (on open)
+⚠️ collapsible-panel-CN428pBP.js       51.82 KB     / 60.00 KB     (86.4%   ) unlisted
+⚠️ preset-tool-E6L9UAJL.js             55.71 KB     / 65.00 KB     (85.7%   ) tool: preset
+⚠️ glamour-block-CsPvTkA7.js           38.37 KB     / 45.00 KB     (85.3%   ) glamour: block
+⚠️ chara-inspection.worker-z9w9-s6y.js 29.77 KB     / 35.00 KB     (85.1%   ) chara inspection worker
+⚠️ vendor-lit-IqwEurJp.js              16.85 KB     / 20.00 KB     (84.2%   ) lit framework
+⚠️ result-card-BmdsETIK.js             40.99 KB     / 50.00 KB     (82%     ) result card
+⚠️ glamour-sheet-BHi1YcdS.js           12.33 KB     / 16.00 KB     (77.1%   ) glamour: export sheet
+⚠️ budget-tool-iZkQgg9R.js             34.30 KB     / 45.00 KB     (76.2%   ) tool: budget
+⚠️ comparison-tool-DDddHXQ5.js         44.60 KB     / 60.00 KB     (74.3%   ) tool: comparison
+⚠️ accessibility-tool-DzpTIX18.js      32.00 KB     / 45.00 KB     (71.1%   ) tool: accessibility
+⚠️ ja-CCToKI6M.js                      67.03 KB     / 95.00 KB     (70.6%   ) locale
+✅ harmony-tool-IxI230dj.js            38.21 KB     / 55.00 KB     (69.5%   ) tool: harmony
+✅ mixer-tool-C0La8yzd.js              34.55 KB     / 50.00 KB     (69.1%   ) tool: mixer
+✅ fr-fc94qft5.js                      63.24 KB     / 95.00 KB     (66.6%   ) locale
+✅ ko-DfwwHvxL.js                      62.33 KB     / 95.00 KB     (65.6%   ) locale
+✅ de-BA2fHotd.js                      60.53 KB     / 95.00 KB     (63.7%   ) locale
+✅ en-DQy89r6i.js                      54.56 KB     / 95.00 KB     (57.4%   ) locale
+✅ zh-DuO0yrAf.js                      52.21 KB     / 95.00 KB     (55%     ) locale
+✅ swatch-tool-CD59_rNH.js             51.07 KB     / 95.00 KB     (53.8%   ) tool: swatch
+✅ index-DZ98H7Ti.css                  55.62 KB     / 105.00 KB    (53%     ) css
+✅ extractor-tool-BZ7SmvGt.js          52.57 KB     / 100.00 KB    (52.6%   ) tool: extractor
+✅ index-DPgtlPkt.js                   71.14 KB     / 150.00 KB    (47.4%   ) main entry
+✅ gradient-tool-C7n2S9S4.js           30.63 KB     / 65.00 KB     (47.1%   ) tool: gradient
+✅ chara-file-card-pVaTXQQE.js         25.94 KB     / 60.00 KB     (43.2%   ) unlisted
+✅ glamour-tool-CrqJGPdQ.js            4.13 KB      / 10.00 KB     (41.3%   ) tool: glamour
+✅ auth-service-JLwzX7Wc.js            14.37 KB     / 60.00 KB     (24%     ) unlisted
+✅ preset-edit-form-CLphQ24X.js        14.41 KB     / 60.00 KB     (24%     ) unlisted
+✅ preset-submission-form-DX8RKTtd.js  13.76 KB     / 60.00 KB     (22.9%   ) unlisted
+✅ tutorial-spotlight-SULL1YRz.js      9.73 KB      / 60.00 KB     (16.2%   ) unlisted
+✅ pricing-mixin-DPnSJKfn.js           8.62 KB      / 60.00 KB     (14.4%   ) unlisted
+✅ item-links-menu-C7mtsXFJ.js         7.54 KB      / 60.00 KB     (12.6%   ) unlisted
+✅ metric-help-Be1nOzJe.js             7.27 KB      / 60.00 KB     (12.1%   ) unlisted
+✅ base-component-CdxGO5bt.js          6.92 KB      / 60.00 KB     (11.5%   ) unlisted
+✅ my-submissions-modal-DxyYX7mY.js    6.05 KB      / 60.00 KB     (10.1%   ) unlisted
+✅ share-button-DMQiFg3A.js            5.39 KB      / 60.00 KB     (9%      ) unlisted
+✅ signin-modal-BD8X0I5D.js            3.91 KB      / 60.00 KB     (6.5%    ) unlisted
+✅ hybrid-preset-service-BFsUv46A.js   3.36 KB      / 60.00 KB     (5.6%    ) unlisted
+✅ export-sheet-B7bYmudR.js            2.91 KB      / 60.00 KB     (4.9%    ) unlisted
+✅ preset-category-selector-BUjDxR6T.js 2.75 KB      / 60.00 KB     (4.6%    ) unlisted
+✅ preset-i18n-BuM6H7-a.js             2.04 KB      / 60.00 KB     (3.4%    ) unlisted
+✅ download-file-D49cCtCT.js           1.46 KB      / 60.00 KB     (2.4%    ) unlisted
+✅ rolldown-runtime-A9ZmIH2T.js        818 B        / 60.00 KB     (1.3%    ) unlisted
+✅ example-link--gVg2mac.js            766 B        / 60.00 KB     (1.2%    ) unlisted
+✅ load-css-async-b77543ec.js          383 B        / 60.00 KB     (0.6%    ) unlisted
+✅ state-icons-FUxcLoPU.js             263 B        / 60.00 KB     (0.4%    ) unlisted
+============================================================
+🟠 JS payload (one locale)             2.17 MB      / 2.20 MB      (98.9%   ) what one visitor can download
+🟠 JS emitted (all locales)            2.46 MB      / 2.73 MB      (90%     ) deploy size
+============================================================
+
+ℹ️  22 chunk(s) had no named limit and used the 60.00 KB default.
+   Name them in BUNDLE_LIMITS if they deserve their own budget.
+
+✅ Bundle size check PASSED - all bundles within limits

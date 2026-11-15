@@ -2266,6 +2266,301 @@ describe('SwatchTool', () => {
         setWidth(width);
       }
     });
+
+    it('caps the grid panel at the pane again when a resize leaves phone width', () => {
+      const width = window.innerWidth;
+      try {
+        setWidth(500);
+        tool = mount();
+        const { mainLayout, gridPanel } = tool as unknown as {
+          mainLayout: HTMLElement;
+          gridPanel: HTMLElement;
+        };
+        expect(mainLayout.style.flexWrap).toBe('nowrap');
+
+        setWidth(1024);
+        window.dispatchEvent(new Event('resize'));
+
+        expect(mainLayout.style.flexWrap).toBe('wrap');
+        expect(gridPanel.style.maxWidth).toBe('100%');
+      } finally {
+        setWidth(width);
+      }
+    });
+  });
+
+  // ==========================================================================
+  // A grid pick scrolls to the verdict only where the verdict sits under the
+  // grid. The window width can't tell: a desktop window with both side panels
+  // open stacks them too, and the grid panel is taller than the window.
+  // ==========================================================================
+
+  describe('scrolling to the verdict after a grid pick', () => {
+    const pickWithCardAt = async (cardTop: number, cardLeft = 100): Promise<void> => {
+      tool = mount();
+      await flush();
+      const { gridPanel, selectionCardContainer } = tool as unknown as {
+        gridPanel: HTMLElement;
+        selectionCardContainer: HTMLElement;
+      };
+      vi.spyOn(gridPanel, 'getBoundingClientRect').mockReturnValue({
+        bottom: 1000,
+        right: 500,
+      } as DOMRect);
+      vi.spyOn(selectionCardContainer, 'getBoundingClientRect').mockReturnValue({
+        top: cardTop,
+        left: cardLeft,
+      } as DOMRect);
+      vi.useFakeTimers();
+      try {
+        rightPanel.querySelector<HTMLButtonElement>('button[data-index]')!.click();
+        vi.advanceTimersByTime(100);
+      } finally {
+        vi.useRealTimers();
+      }
+    };
+
+    it('brings the card just into view when it is under the grid', async () => {
+      await pickWithCardAt(1024);
+
+      expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith({
+        behavior: 'smooth',
+        block: 'nearest',
+      });
+    });
+
+    it('gives the card the top of the screen on a phone', async () => {
+      const width = window.innerWidth;
+      try {
+        Object.defineProperty(window, 'innerWidth', {
+          configurable: true,
+          writable: true,
+          value: 500,
+        });
+        await pickWithCardAt(1024);
+
+        expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith({
+          behavior: 'smooth',
+          block: 'start',
+        });
+      } finally {
+        Object.defineProperty(window, 'innerWidth', {
+          configurable: true,
+          writable: true,
+          value: width,
+        });
+      }
+    });
+
+    it('jumps instead of animating when the player prefers reduced motion', async () => {
+      const reduce = vi.mocked(window.matchMedia);
+      const original = reduce.getMockImplementation();
+      reduce.mockImplementation(
+        (query: string) =>
+          ({
+            matches: query === '(prefers-reduced-motion: reduce)',
+            media: query,
+          }) as MediaQueryList
+      );
+      try {
+        await pickWithCardAt(1024);
+
+        expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith({
+          behavior: 'auto',
+          block: 'nearest',
+        });
+      } finally {
+        reduce.mockImplementation(original!);
+      }
+    });
+
+    it('stays put when the card is beside the grid', async () => {
+      await pickWithCardAt(100, 600);
+
+      expect(Element.prototype.scrollIntoView).not.toHaveBeenCalled();
+    });
+
+    it("stays put when a long column beside the grid reaches past the grid's bottom", async () => {
+      await pickWithCardAt(1024, 600);
+
+      expect(Element.prototype.scrollIntoView).not.toHaveBeenCalled();
+    });
+
+    it("ignores a double-click's second click, which the moving grid can put on another cell", async () => {
+      const picker = mount();
+      tool = picker;
+      await flush();
+      const [first, second] = rightPanel.querySelectorAll<HTMLButtonElement>('button[data-index]');
+
+      first.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
+      second.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 2 }));
+
+      const { selectedColor } = picker as unknown as { selectedColor: { index: number } };
+      expect(String(selectedColor.index)).toBe(first.getAttribute('data-index'));
+    });
+  });
+
+  // ==========================================================================
+  // A palette pick's results can stack under the grid too, but only the pick
+  // itself may scroll: the match re-runs on config changes and palette loads.
+  // ==========================================================================
+
+  describe('scrolling to the closest swatches after a palette pick', () => {
+    const mountWithResultsAt = async (resultsTop: number, left = 100): Promise<SwatchTool> => {
+      const mounted = mount();
+      tool = mounted;
+      await flush();
+      const { gridPanel, reverseSection } = mounted as unknown as {
+        gridPanel: HTMLElement;
+        reverseSection: HTMLElement;
+      };
+      vi.spyOn(gridPanel, 'getBoundingClientRect').mockReturnValue({
+        bottom: 1000,
+        right: 500,
+      } as DOMRect);
+      vi.spyOn(reverseSection, 'getBoundingClientRect').mockReturnValue({
+        top: resultsTop,
+        left,
+      } as DOMRect);
+      return mounted;
+    };
+
+    const afterTheDelay = (act: () => void): void => {
+      vi.useFakeTimers();
+      try {
+        act();
+        vi.advanceTimersByTime(100);
+      } finally {
+        vi.useRealTimers();
+      }
+    };
+
+    it("brings a dye pick's results into view when they are under the grid", async () => {
+      const picker = await mountWithResultsAt(1024);
+
+      afterTheDelay(() => picker.selectDye(mockDyes[0]));
+
+      expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith({
+        behavior: 'smooth',
+        block: 'nearest',
+      });
+    });
+
+    it('does the same for a custom color', async () => {
+      const picker = await mountWithResultsAt(1024);
+
+      afterTheDelay(() => picker.selectCustomColor('#AABBCC'));
+
+      expect(Element.prototype.scrollIntoView).toHaveBeenCalledTimes(1);
+    });
+
+    it('stays put when the results are beside the grid', async () => {
+      const picker = await mountWithResultsAt(100, 600);
+
+      afterTheDelay(() => picker.selectDye(mockDyes[0]));
+
+      expect(Element.prototype.scrollIntoView).not.toHaveBeenCalled();
+    });
+
+    it("stays put when the results reach past the grid's bottom beside it", async () => {
+      const picker = await mountWithResultsAt(1024, 600);
+
+      afterTheDelay(() => picker.selectDye(mockDyes[0]));
+
+      expect(Element.prototype.scrollIntoView).not.toHaveBeenCalled();
+    });
+
+    it('stays put at 768px, the widest window where the palette overlays the tool', async () => {
+      const width = window.innerWidth;
+      try {
+        Object.defineProperty(window, 'innerWidth', {
+          configurable: true,
+          writable: true,
+          value: 768,
+        });
+        const picker = await mountWithResultsAt(1024);
+
+        afterTheDelay(() => picker.selectDye(mockDyes[0]));
+
+        expect(Element.prototype.scrollIntoView).not.toHaveBeenCalled();
+      } finally {
+        Object.defineProperty(window, 'innerWidth', {
+          configurable: true,
+          writable: true,
+          value: width,
+        });
+      }
+    });
+
+    it('scrolls at 769px, the narrowest window with the palette beside the tool', async () => {
+      const width = window.innerWidth;
+      try {
+        Object.defineProperty(window, 'innerWidth', {
+          configurable: true,
+          writable: true,
+          value: 769,
+        });
+        const picker = await mountWithResultsAt(1024);
+
+        afterTheDelay(() => picker.selectDye(mockDyes[0]));
+
+        expect(Element.prototype.scrollIntoView).toHaveBeenCalledTimes(1);
+      } finally {
+        Object.defineProperty(window, 'innerWidth', {
+          configurable: true,
+          writable: true,
+          value: width,
+        });
+      }
+    });
+
+    it('stays put on a phone, where the open palette covers the tool', async () => {
+      const width = window.innerWidth;
+      try {
+        Object.defineProperty(window, 'innerWidth', {
+          configurable: true,
+          writable: true,
+          value: 500,
+        });
+        const picker = await mountWithResultsAt(1024);
+
+        afterTheDelay(() => picker.selectDye(mockDyes[0]));
+
+        expect(Element.prototype.scrollIntoView).not.toHaveBeenCalled();
+      } finally {
+        Object.defineProperty(window, 'innerWidth', {
+          configurable: true,
+          writable: true,
+          value: width,
+        });
+      }
+    });
+
+    it('does not scroll when the match re-runs on its own', async () => {
+      const picker = await mountWithResultsAt(1024);
+      afterTheDelay(() => picker.selectDye(mockDyes[0]));
+      vi.mocked(Element.prototype.scrollIntoView).mockClear();
+
+      afterTheDelay(() =>
+        (picker as unknown as { performReverseMatch(): void }).performReverseMatch()
+      );
+
+      expect(Element.prototype.scrollIntoView).not.toHaveBeenCalled();
+    });
+
+    it('does not scroll for a character slot, whose own card shows the answer', async () => {
+      const picker = await mountWithResultsAt(1024);
+
+      afterTheDelay(() =>
+        (
+          picker as unknown as {
+            pickCharaSlot(hex: string, gridRef: null, slot: string): void;
+          }
+        ).pickCharaSlot('#AABBCC', null, 'rightEye')
+      );
+
+      expect(Element.prototype.scrollIntoView).not.toHaveBeenCalled();
+    });
   });
 
   // ==========================================================================
