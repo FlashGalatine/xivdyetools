@@ -21,6 +21,8 @@ payloads, dye identity/order/color/acquisition data and all Facewear inputs rema
 Core generation must reproduce only the selected German/French changes. This is conditional
 source integration, not a merge or deployed adoption of #390.
 
+**Earlier-minor decision (2026-10-30).** The maintainer decided that #390's corrections also enter the earlier minors. [#409](https://github.com/FlashGalatine/xivdyetools/pull/409) carries the same file selection on the Core 5.16.0 line without a version bump, and Core 6 then ships no text change. Where the baseline is identical, its blobs are #404's blobs, so the two lines converge; the whole M and F wave merges onto it without conflict. Merge approval is not given. Since 2026-10-31 this has two qualifiers. e-02's low-finding commit (`4c0bd11f8955`) also changes four files that #404 carries (one bot-logic comment, one og comment and two tests) and adds a core test; the M and F line still merges onto it cleanly (`git merge-tree`, 2026-10-31). #404's low-finding commit (`aad41c3feebd`) deletes the Core 6.0.0 changelog bullet for the #390 text; the Core 6.0.0 archive is unchanged, because `CHANGELOG.md` is not in core's `files`. That deletion assumes #409 merges; if it is dropped, restore the bullet under Changed. #405, #406, #411 and #414 still carry the bullet as descendants of #404's earlier head, so it stays off `main` only if #404 merges on its own before #405 and they then update with `main`, or if f-01 is merged forward into them.
+
 ## F-DISCORD — verification-only source boundary
 
 The post-reconciliation required codepoint sets are identical to the prior candidate. Both
@@ -44,7 +46,8 @@ Prepared in [PR #405](https://github.com/FlashGalatine/xivdyetools/pull/405), af
 Every image route passes its resolved locale through the renderer. Japanese uses JP-first;
 Chinese and the other/default locales use SC-first, matching Discord's intended fallback.
 The two cached arrays share the existing font bytes. The app-version bump selects a fresh
-Worker cache namespace; old social-platform/browser copies are not purged.
+Worker cache namespace; old social-platform/browser copies are not purged. The reserved app version is
+**2.12.4** (`apps/og-worker/package.json`; `versionReservation.ogTarget` in the F adoption receipt), separate from M-OG 2.12.3.
 
 The 14 route scenarios and actual bundled-font renders cover regional normalization, invalid
 locale fallback and the real Japanese/Chinese accessibility routes. Eight representative
@@ -91,7 +94,7 @@ provider cycle, migrations/recovery, disclosures/manual/delivery, command regist
 resource gate and approval of each selected workflow run also remain open. Keep all activation
 flags false, OAuth's outbound continuity binding absent, Pages retention dry-run and Stoat parked.
 No new hosted Image request, remote database probe, package publication, registration, secret
-deletion, workflow dispatch/approval or announcement is part of this preparation.
+deletion, workflow dispatch/approval or announcement is part of this preparation. **Ruling (2026-10-31, R1):** beta acceptance is retired for this wave. Production acceptance of the deployed A/R/H consumers (discord 5.9.7, API 0.21.1, web 5.16.4, OG 2.12.2 and moderation 1.9.0 with `LINKED_BAN_CONFIRMATION_ENABLED=false`; units 9 and 11-14 of the [unit acceptance checklist](REMEDIATION_UNIT_ACCEPTANCE_2026_10.md)) stands in for the deployed beta acceptance named above (the beta acceptance of the current facade and deprecated result contract that [M](REMEDIATION_M_RELEASE_2026_10.md) requires), before Core 6.0.0. Manual beta dispatch remains unauthorized, and the ruling authorizes no merge, publication, deployment or activation.
 
 Release order remains logger/auth, corrected Core minor/worker-kit, SVG minor, Bot Logic minor,
 accepted consumers/deprecations, then Core major, SVG compatibility, Bot Logic major, separately
