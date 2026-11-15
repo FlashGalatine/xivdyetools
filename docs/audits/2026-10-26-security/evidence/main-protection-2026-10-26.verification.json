@@ -1,0 +1,7 @@
+{
+  "enforce_admins": true,
+  "strict": true,
+  "only_authorized_fields_changed": true,
+  "required_checks_unchanged": 4,
+  "required_linear_history": false
+}

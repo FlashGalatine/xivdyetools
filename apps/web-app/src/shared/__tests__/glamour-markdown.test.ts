@@ -10,7 +10,9 @@
 
 import { describe, it, expect } from 'vitest';
 import {
+  GLAMOUR_ABRIDGED_FILENAME,
   GLAMOUR_MARKDOWN_FILENAME,
+  OBTAINED_LABEL,
   buildGlamourHtml,
   buildGlamourMarkdown,
   buildGlamourPlainText,
@@ -192,5 +194,226 @@ describe('buildGlamourHtml', () => {
 
   it('writes only the bold header when nothing is worn', () => {
     expect(buildGlamourHtml({})).toBe('<p><strong>Glamour Items:</strong></p>');
+  });
+});
+
+describe("the Abridged form (the maintainer's post)", () => {
+  const POST: GlamourMarkdownInput = {
+    MainHand: {
+      name: 'Figment of the Journey',
+      dye1: 'Rust Red',
+      dye2: 'Ash Grey',
+      acquisition: 'Cenote Ja Ja Gural / Vault Oneiron',
+    },
+    HeadGear: {
+      name: 'Cauldronrise Beret',
+      dye1: 'Metallic Brass',
+      dye2: 'Kobold Brown',
+      acquisition: 'Scrip Exchange - Old Gridania',
+    },
+    Body: {
+      name: "Ex-arch's Jacket",
+      dye1: 'Raisin Brown',
+      dye2: 'Snow White',
+      acquisition: 'FFXIV Online Store',
+    },
+    Hands: {
+      name: "Spaekona's Wrist Torques",
+      dye1: 'Soot Black',
+      dye2: 'Cork Brown',
+      acquisition: 'Varsarudh - Old Sharlayan',
+    },
+    Legs: {
+      name: 'Augmented Bygone Brass Brais of Scouting',
+      dye1: 'Dark Brown',
+      dye2: 'Jet Black',
+      acquisition: 'Theone - Solution Nine',
+    },
+    Feet: {
+      name: "Boltfiend's Costume Boots",
+      dye1: 'Kobold Brown',
+      dye2: 'Metallic Gold',
+      acquisition: 'Enie - Ishgard - The Firmament',
+    },
+    Ears: { name: 'Ironwood Earrings of Crafting', acquisition: 'Crafted (CRP Lvl. 86)' },
+    RightRing: { name: 'Rinascita Ring of Fending', acquisition: 'Crafted (CRP Lvl. 90)' },
+    LeftRing: { name: 'Rinascita Ring of Fending', acquisition: 'Crafted (CRP Lvl. 90)' },
+    Facewear: {
+      name: 'Brass Simple Oval Spectacles',
+      acquisition: 'Expedition Antiquarian - The Occult Crescent: North Horn',
+    },
+  };
+
+  it('writes the whole post exactly, in plain text', () => {
+    expect(buildGlamourPlainText(POST, 'abridged')).toBe(
+      [
+        'Main Hand: Figment of the Journey',
+        'Dyes: Rust Red / Ash Grey',
+        'Obtained: Cenote Ja Ja Gural / Vault Oneiron',
+        '',
+        'Head: Cauldronrise Beret',
+        'Dyes: Metallic Brass / Kobold Brown',
+        'Obtained: Scrip Exchange - Old Gridania',
+        '',
+        "Body: Ex-arch's Jacket",
+        'Dyes: Raisin Brown / Snow White',
+        'Obtained: FFXIV Online Store',
+        '',
+        "Hands: Spaekona's Wrist Torques",
+        'Dyes: Soot Black / Cork Brown',
+        'Obtained: Varsarudh - Old Sharlayan',
+        '',
+        'Legs: Augmented Bygone Brass Brais of Scouting',
+        'Dyes: Dark Brown / Jet Black',
+        'Obtained: Theone - Solution Nine',
+        '',
+        "Feet: Boltfiend's Costume Boots",
+        'Dyes: Kobold Brown / Metallic Gold',
+        'Obtained: Enie - Ishgard - The Firmament',
+        '',
+        'Earrings: Ironwood Earrings of Crafting',
+        'Obtained: Crafted (CRP Lvl. 86)',
+        '',
+        'Rings: Rinascita Ring of Fending',
+        'Obtained: Crafted (CRP Lvl. 90)',
+        '',
+        'Facewear: Brass Simple Oval Spectacles',
+        'Obtained: Expedition Antiquarian - The Occult Crescent: North Horn',
+        '',
+      ].join('\n')
+    );
+  });
+
+  it('bolds the whole first line in Markdown, and writes no header', () => {
+    const text = buildGlamourMarkdown(
+      { MainHand: { name: 'Figment', dye1: 'Rust Red', dye2: 'Ash Grey', acquisition: 'Here' } },
+      'abridged'
+    );
+    expect(text).toBe('**Main Hand: Figment**\nDyes: Rust Red / Ash Grey\nObtained: Here\n');
+  });
+
+  it('bolds the whole first line in the clipboard HTML, one paragraph per slot, escaped', () => {
+    expect(
+      buildGlamourHtml(
+        {
+          MainHand: { name: 'Figment <b>', dye1: 'Rust Red', acquisition: 'A & B' },
+          Ears: { name: "Menphina's Earring" },
+        },
+        'abridged'
+      )
+    ).toBe(
+      '<p><strong>Main Hand: Figment &lt;b&gt;</strong><br>Dyes: Rust Red<br>Obtained: A &amp; B</p>' +
+        '<p><strong>Earrings: Menphina&#39;s Earring</strong><br>Obtained:</p>'
+    );
+  });
+
+  it('keeps a bold bare label for a slot with no name, and a bare Obtained: with no source', () => {
+    expect(buildGlamourMarkdown({ Body: {} }, 'abridged')).toBe('**Body:**\nObtained:\n');
+    expect(buildGlamourPlainText({ Body: {} }, 'abridged')).toBe('Body:\nObtained:\n');
+    expect(buildGlamourHtml({ Body: {} }, 'abridged')).toBe(
+      '<p><strong>Body:</strong><br>Obtained:</p>'
+    );
+    expect(buildGlamourPlainText({ Body: {}, Ears: {} }, 'abridged')).not.toMatch(/ $/m);
+  });
+
+  describe('the Dyes line', () => {
+    const dyesOf = (piece: GlamourMarkdownInput['Body']): string | undefined =>
+      buildGlamourPlainText({ Body: piece }, 'abridged')
+        .split('\n')
+        .find((line) => line.startsWith('Dyes:'));
+
+    it('both channels dyed: A / B', () => {
+      expect(dyesOf({ dye1: 'A', dye2: 'B' })).toBe('Dyes: A / B');
+      expect(dyesOf({ dye1: 'A', dye2: 'B', dyeSlots: 2 })).toBe('Dyes: A / B');
+    });
+
+    it('only channel 2 dyed: None / B, whatever the slot count', () => {
+      expect(dyesOf({ dye2: 'B' })).toBe('Dyes: None / B');
+      expect(dyesOf({ dye2: 'B', dyeSlots: 2 })).toBe('Dyes: None / B');
+    });
+
+    it('only channel 1 dyed on a piece known to have two slots: A / None', () => {
+      expect(dyesOf({ dye1: 'A', dyeSlots: 2 })).toBe('Dyes: A / None');
+    });
+
+    it('only channel 1 dyed on one slot, or an unknown count: A', () => {
+      expect(dyesOf({ dye1: 'A', dyeSlots: 1 })).toBe('Dyes: A');
+      expect(dyesOf({ dye1: 'A', dyeSlots: null })).toBe('Dyes: A');
+      expect(dyesOf({ dye1: 'A' })).toBe('Dyes: A');
+    });
+
+    it('nothing dyed: no line, even on a piece with two slots', () => {
+      expect(dyesOf({ name: 'Coat' })).toBeUndefined();
+      expect(dyesOf({ name: 'Coat', dyeSlots: 2 })).toBeUndefined();
+    });
+
+    it('never on an accessory or facewear, even when a file claims a dye', () => {
+      const text = buildGlamourPlainText(
+        {
+          Ears: { name: 'Earring', dye1: 'A', dye2: 'B', dyeSlots: 2 },
+          Facewear: { name: 'Glasses', dye1: 'A' },
+        },
+        'abridged'
+      );
+      expect(text).toBe('Earrings: Earring\nObtained:\n\nFacewear: Glasses\nObtained:\n');
+    });
+
+    it('takes the slot count from the piece on that line, not a neighbour', () => {
+      const text = buildGlamourPlainText(
+        { HeadGear: { dye1: 'A', dyeSlots: 1 }, Body: { dye1: 'B', dyeSlots: 2 } },
+        'abridged'
+      );
+      expect(text).toBe('Head:\nDyes: A\nObtained:\n\nBody:\nDyes: B / None\nObtained:\n');
+    });
+
+    it('is not fooled by a piece named like a dye label', () => {
+      expect(buildGlamourPlainText({ Body: { name: 'Dye 1:' } }, 'abridged')).toBe(
+        'Body: Dye 1:\nObtained:\n'
+      );
+    });
+  });
+
+  it('writes the acquisition line as given: the sheet is what shortens it', () => {
+    const text = buildGlamourPlainText(
+      { Body: { acquisition: 'Crafted (WVR Lvl. 3) / Vendor - Town (10 Gil)' } },
+      'abridged'
+    );
+    expect(text).toBe('Body:\nObtained: Crafted (WVR Lvl. 3) / Vendor - Town (10 Gil)\n');
+  });
+
+  it("shares the full form's one-line cleaning, rings and worn-only rules", () => {
+    expect(
+      buildGlamourPlainText(
+        {
+          LeftRing: { name: 'Ring A' },
+          RightRing: { name: 'Ring B', acquisition: 'Vendor\nTown' },
+        },
+        'abridged'
+      )
+    ).toBe('Right Ring: Ring B\nObtained: Vendor Town\n\nLeft Ring: Ring A\nObtained:\n');
+  });
+
+  it('gives an empty string for empty input in all three renderings', () => {
+    expect(buildGlamourMarkdown({}, 'abridged')).toBe('');
+    expect(buildGlamourPlainText({}, 'abridged')).toBe('');
+    expect(buildGlamourHtml({}, 'abridged')).toBe('');
+  });
+
+  it('leaves the full form byte-identical, by default and when asked by name', () => {
+    const withSlots: GlamourMarkdownInput = {
+      ...FULL,
+      MainHand: { ...FULL.MainHand, dyeSlots: 2 },
+      Legs: { ...FULL.Legs, dyeSlots: 1 },
+    };
+    expect(buildGlamourMarkdown(withSlots)).toBe(buildGlamourMarkdown(FULL));
+    expect(buildGlamourMarkdown(FULL, 'full')).toBe(buildGlamourMarkdown(FULL));
+    expect(buildGlamourPlainText(withSlots, 'full')).toBe(buildGlamourPlainText(FULL));
+    expect(buildGlamourHtml(withSlots, 'full')).toBe(buildGlamourHtml(FULL));
+    expect(buildGlamourPlainText(FULL)).toContain('Glamour Items:');
+  });
+
+  it('names its own download and its own field label', () => {
+    expect(GLAMOUR_ABRIDGED_FILENAME).toBe('glamour-equipment-abridged.md');
+    expect(OBTAINED_LABEL).toBe('Obtained:');
   });
 });

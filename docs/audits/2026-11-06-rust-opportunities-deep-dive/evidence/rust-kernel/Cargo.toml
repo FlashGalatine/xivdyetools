@@ -1,0 +1,17 @@
+# Audit evidence only: a private comparison kernel, not a workspace package or shipped artifact.
+# Build: cargo build --release --target wasm32-unknown-unknown --target-dir <outside the repo>
+[package]
+name = "palette-kmeans-comparison"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+path = "src/lib.rs"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"

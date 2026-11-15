@@ -1,0 +1,36 @@
+{
+  "window": {
+    "mode": "replay",
+    "start": "2026-10-12T16:02:42.725Z",
+    "minutes": 60,
+    "coveredMinutes": 60,
+    "reconnects": 0
+  },
+  "allPosts": 139973,
+  "duplicatesSkipped": 7163,
+  "ffxivPosts": 113,
+  "ffxivPerHour": 113,
+  "allPerHour": 139975,
+  "ffxivSharePct": 0.0807,
+  "byLang": {
+    "en": 83,
+    "ja": 15,
+    "es": 2,
+    "fi": 2,
+    "?": 5,
+    "it": 1,
+    "ko": 1,
+    "fr": 2,
+    "nl": 1,
+    "de": 1
+  },
+  "byTerm": {
+    "ff14": 30,
+    "ffxiv": 61,
+    "gpose": 42,
+    "파판14": 1,
+    "final fantasy xiv": 3,
+    "eorzea": 7
+  },
+  "publicationNote": "Historical aggregate-only publication. Account, profile, creator and post records are not retained. Contributor thresholds introduced for later collection cannot be verified from these retained aggregates."
+}

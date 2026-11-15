@@ -1,0 +1,18 @@
+connected; sampling for 60 min
+socket closed at 2026-10-12T03:56:47.577Z; reconnecting
+reconnected from cursor 1791777407332685
+{"checkpoint":"2026-10-12T03:59:03.777Z","coveredMinutes":5,"reconnects":1,"allPosts":13370,"ffxivPosts":15,"byLang":{"en":12,"ja":3},"byTerm":{"ffxiv":3,"gpose":9,"eorzea":1,"ff14":3}}
+{"checkpoint":"2026-10-12T04:04:03.795Z","coveredMinutes":10,"reconnects":1,"allPosts":26439,"ffxivPosts":22,"byLang":{"en":16,"ja":6},"byTerm":{"ffxiv":6,"gpose":12,"eorzea":1,"ff14":6}}
+{"checkpoint":"2026-10-12T04:09:03.819Z","coveredMinutes":15,"reconnects":1,"allPosts":38620,"ffxivPosts":30,"byLang":{"en":24,"ja":6},"byTerm":{"ffxiv":8,"gpose":17,"eorzea":2,"ff14":7}}
+{"checkpoint":"2026-10-12T04:14:03.836Z","coveredMinutes":20,"reconnects":1,"allPosts":50100,"ffxivPosts":38,"byLang":{"en":30,"ja":8},"byTerm":{"ffxiv":12,"gpose":18,"eorzea":2,"ff14":9,"final fantasy xiv":1}}
+{"checkpoint":"2026-10-12T04:19:03.854Z","coveredMinutes":25,"reconnects":1,"allPosts":63418,"ffxivPosts":46,"byLang":{"en":34,"ja":12},"byTerm":{"ffxiv":15,"gpose":19,"eorzea":2,"ff14":13,"final fantasy xiv":1}}
+socket closed at 2026-10-12T04:23:01.674Z; reconnecting
+reconnected from cursor 1791778981436998
+{"checkpoint":"2026-10-12T04:24:03.866Z","coveredMinutes":30,"reconnects":2,"allPosts":76366,"ffxivPosts":61,"byLang":{"en":40,"ja":20,"?":1},"byTerm":{"ffxiv":19,"gpose":23,"eorzea":2,"ff14":22,"final fantasy xiv":1}}
+{"checkpoint":"2026-10-12T04:29:03.883Z","coveredMinutes":35,"reconnects":2,"allPosts":89548,"ffxivPosts":78,"byLang":{"en":47,"ja":29,"?":2},"byTerm":{"ffxiv":22,"gpose":29,"eorzea":2,"ff14":32,"final fantasy xiv":1}}
+{"checkpoint":"2026-10-12T04:34:03.899Z","coveredMinutes":40,"reconnects":2,"allPosts":103541,"ffxivPosts":90,"byLang":{"en":52,"ja":33,"?":5},"byTerm":{"ffxiv":27,"gpose":34,"eorzea":4,"ff14":39,"final fantasy xiv":1}}
+{"checkpoint":"2026-10-12T04:39:03.917Z","coveredMinutes":45,"reconnects":2,"allPosts":116494,"ffxivPosts":100,"byLang":{"en":60,"ja":35,"?":5},"byTerm":{"ffxiv":34,"gpose":40,"eorzea":4,"ff14":41,"final fantasy xiv":1}}
+{"checkpoint":"2026-10-12T04:44:03.944Z","coveredMinutes":50,"reconnects":2,"allPosts":129194,"ffxivPosts":119,"byLang":{"en":73,"ja":39,"?":6,"pt":1},"byTerm":{"ffxiv":43,"gpose":45,"eorzea":4,"ff14":49,"final fantasy xiv":1,"エオルゼア":2}}
+socket closed at 2026-10-12T04:45:47.857Z; reconnecting
+reconnected from cursor 1791780347640340
+{"checkpoint":"2026-10-12T04:49:03.968Z","coveredMinutes":55,"reconnects":3,"allPosts":142745,"ffxivPosts":127,"byLang":{"en":79,"ja":40,"?":6,"pt":2},"byTerm":{"ffxiv":47,"gpose":50,"eorzea":5,"ff14":53,"final fantasy xiv":1,"エオルゼア":2}}

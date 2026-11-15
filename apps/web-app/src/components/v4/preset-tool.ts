@@ -232,8 +232,7 @@ export class PresetTool extends BaseLitComponent {
       :host {
         display: block;
         width: 100%;
-        height: 100%;
-        overflow-y: auto;
+        min-height: 100%;
       }
 
       .preset-tool {
