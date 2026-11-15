@@ -239,9 +239,12 @@ existing [same-day policy checklist](../../DEPRECATIONS.md) for both privacy and
 and translated variants; do not claim deletion in advance. GitHub scanner eligibility and
 default-branch Dependabot closure remain their own open operational gates.
 
-M-CORE/M-SVG/M-BOT-LOGIC still wait for shipped/adopted deprecations, oracle migration and explicit
-acceptance; this pass starts no M removal or oracle rewrite. F-DISCORD/F-OG remain terminal
-after major/text adoption. Current unchanged-font acceptance is not terminal-sprint completion.
+Conditional M source and draft PRs are now prepared in the [M release runbook](REMEDIATION_M_RELEASE_2026_10.md).
+Shipping still waits for corrected prerequisite artifacts, external-consumer review and deployed
+acceptance. The Core and Bot declaration companions must precede P3 and P6 publication; historical
+receipts remain unchanged. No merge before October 30 or later and new explicit approval with
+satisfied prerequisites. F-DISCORD/F-OG remain terminal after major/text adoption; unchanged-font
+acceptance is not terminal-sprint completion.
 
 ## 8. Required receipt for every authorized release
 
