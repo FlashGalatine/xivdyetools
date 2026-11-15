@@ -117,6 +117,16 @@ describe('lifecycle', () => {
     expect(trackMock.mock.calls[0][1]).toMatchObject({ success: true, outcome: 'ok', latencyMs: 250 });
   });
 
+  it('forwards mapVirtualHost to the real ctx', () => {
+    const ctx = realCtx();
+    const mapVirtualHost = vi.fn(() => 'virtual-host');
+    (ctx as unknown as { mapVirtualHost: typeof mapVirtualHost }).mapVirtualHost = mapVirtualHost;
+    const traced = tracedExecutionContext(ctx, startCommandTrace(interaction(), fields));
+    const fetcher = {} as Fetcher;
+    expect(traced.mapVirtualHost(fetcher, 8080)).toBe('virtual-host');
+    expect(mapVirtualHost).toHaveBeenCalledWith(fetcher, 8080);
+  });
+
   it('also awaits promises added while draining', async () => {
     const env = createMockEnv();
     const ix = interaction();

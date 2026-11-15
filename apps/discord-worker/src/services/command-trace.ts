@@ -92,7 +92,7 @@ export function startCommandTrace(
  * An ExecutionContext for handlers: every `waitUntil` is recorded on the trace
  * AND forwarded to the real context, so the runtime still keeps the isolate
  * alive for it. Every other member of the installed `@cloudflare/workers-types`
- * `ExecutionContext` (exports, props, cache, access, tracing, abort) is
+ * `ExecutionContext` (exports, props, cache, access, mapVirtualHost, tracing, abort) is
  * forwarded to `real` explicitly rather than widening the cast, so a native
  * method that reads internal state off `this` still sees the real context.
  */
@@ -124,6 +124,9 @@ export function tracedExecutionContext(real: ExecutionContext, trace: CommandTra
     },
     get access(): ExecutionContext['access'] {
       return real.access;
+    },
+    mapVirtualHost(fetcher: Fetcher, port: number): string {
+      return real.mapVirtualHost(fetcher, port);
     },
     get tracing(): ExecutionContext['tracing'] {
       return real.tracing;
