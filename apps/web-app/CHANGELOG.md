@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.16.15] - 2026-11-02
+
+### Fixed
+
+- **The Dye Mixer's result slot no longer glows gold.** Its border took the theme's accent, but the glow
+  around it was written out as `rgba(212, 175, 55, 0.3)`, the gold of the retired themes, so Light and Dark
+  both showed a red border in a gold halo. The glow is now `color-mix(in srgb, var(--theme-primary) 30%,
+  transparent)`, the idiom the app already uses for its other accent tints.
+
+### Changed
+
+- **33 fallbacks that could never paint are gone.** `var(--theme-primary, #d4af37)` is now
+  `var(--theme-primary)` in the Mixer, the config sidebar, the palette drawer, the preset detail, the range
+  slider, the result card, the share button, the toggle switch and the layout shell. `themes.css` declares
+  `--theme-primary` and ThemeService sets it on the document for both palettes, so the fallback was never
+  read. With the glow, no non-test source names the gold of the retired themes any more. The status ambers
+  and the logo are untouched.
+- **Size.** The code shrinks by 263 bytes: each fallback was 9 bytes, 297 in all, and the glow's new color
+  costs 34. The one-locale payload goes from 2,289,023 to 2,288,661 bytes, 362 fewer, and stays at 99.3% of
+  its budget; the other 99 bytes are What's New, whose bounded window slides by one release when this entry
+  is added. The layout shell is 189 bytes smaller and goes from 99.7% to 99.6% of its budget. No limit moved.
+
+### Tests
+
+- **`theme-token-contract.test.ts` now fails on the retired gold in any non-test source**, not only in a hover
+  rule. Run against the code before this change it listed all 34 lines: the 33 fallbacks and the glow.
+
 ## [5.16.14] - 2026-11-02
 
 ### Fixed

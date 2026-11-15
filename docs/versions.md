@@ -26,7 +26,7 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.16.14 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Web Application** | v5.16.15 | `xivdyetools-web-app` | Cloudflare Pages | Active |
 | **Discord Bot** | v5.9.9 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.5 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.9.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
@@ -126,6 +126,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.16.15 | Nov 2026 | The Dye Mixer's result slot glows in the theme's accent instead of the gold of the retired themes, and the 33 `var(--theme-primary, #d4af37)` fallbacks that could never paint are gone, so no non-test source names that gold any more. The theme-token contract test now checks every source, not only hover rules. The one-locale payload shrinks by 362 bytes and stays at 99.3% of its budget |
 | v5.16.14 | Nov 2026 | A hovered toggle that is on and the palette drawer's Apply and Random buttons stop turning gold: `--theme-primary-hover` is declared at last, from each palette's own hover accent (`#B01C1C` on Light, `#FF6257` on Dark), the palette's Apply button and active filter chips get a readable label (`--theme-text-on-primary`, white on Light), and a new contract test fails any `--theme-*` token the app reads but nothing declares |
 | v5.16.13 | Nov 2026 | The Dye Mixer and Gradient Builder fit a narrow pane: the Mixer's field stops needing 348 px (its cells narrow, then its row names move above their cells, all 30 from a 769 px window), both tools' side padding gives way and their results headers wrap, and the Gradient's endpoint cards stack. That ends 217 px of sideways scrolling at 769 px and the same bug's 24 px on a 390 px phone. The tools' geometry is unchanged at 1,042 px and wider, apart from one invisible box in each results header |
 | v5.16.12 | Nov 2026 | More narrow-pane fixes: a result card's menu narrows and its submenus overlap it so that all of them stay inside the pane (also on phones), Harmony's pucks follow a small wheel down to 24 px and keep 42 px on phones from 320 px, Comparison's "What actually differs" rows wrap, and the Swatch Matcher's side padding gives way (8 columns from an 884 px window, down from 972 px), a keyboard pick keeps the focused cell on screen, and closing a panel keeps revealed results in view. |

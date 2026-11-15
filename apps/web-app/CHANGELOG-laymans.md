@@ -2,6 +2,11 @@
 
 ---
 
+## Web-App Version 5.16.15 — November 2, 2026
+
+### Dye Mixer
+- **The Dye Mixer's result no longer glows gold.** The glow around it now matches your theme's red, in both Light and Dark.
+
 ## Web-App Version 5.16.14 — November 2, 2026
 
 ### Light and Dark themes

@@ -99,11 +99,11 @@ export class ToggleSwitchV4 extends BaseLitComponent {
       }
 
       :host([checked]) .toggle-track {
-        background: var(--theme-primary, #d4af37);
+        background: var(--theme-primary);
       }
 
       .toggle-track:focus-visible {
-        outline: 2px solid var(--theme-primary, #d4af37);
+        outline: 2px solid var(--theme-primary);
         outline-offset: 2px;
       }
 
