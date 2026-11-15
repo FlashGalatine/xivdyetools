@@ -1,7 +1,8 @@
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import type { TestHarness } from 'wrangler';
-import { mkdirSync, readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 import { fileURLToPath, URL } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
 import { continuityHash } from '../../src/services/ban-continuity-contract.js';
@@ -12,12 +13,11 @@ const U = '10000000-0000-4000-8000-000000000001',
   N = '10000000-0000-4000-8000-000000000002';
 const saved = new Map<string, string | undefined>();
 let harness: TestHarness, db: D1Database;
+let scratch: string | undefined;
 beforeAll(async () => {
-  const root = resolve(
-    source('../../../../.superpowers/sdd/REMEDIATION_PLAN'),
-    `stream-1-runtime-${process.pid}`,
-  );
-  mkdirSync(root, { recursive: true });
+  // Fresh OS temp root: Wrangler's profile, cache, logs and .wrangler stay out of the checkout.
+  const root = mkdtempSync(join(tmpdir(), 'xivdyetools-presets-continuity-'));
+  scratch = root;
   for (const [key, value] of Object.entries({
     USERPROFILE: root,
     APPDATA: resolve(root, 'roaming'),
@@ -142,6 +142,7 @@ afterAll(async () => {
       if (value === undefined) delete process.env[key];
       else process.env[key] = value;
     }
+    if (scratch) rmSync(scratch, { recursive: true, force: true, maxRetries: 5 });
   }
 }, 30000);
 const rpc = async (path: string, input: unknown) =>

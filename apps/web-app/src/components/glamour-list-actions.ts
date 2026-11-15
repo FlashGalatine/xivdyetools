@@ -45,10 +45,14 @@ export interface GlamourListSource {
   equipment: CharaResolveResult | null;
   /**
    * The twin the Glamour Reader names per slot (it may differ from the lowest
-   * row), with its own acquisition line. Absent = the resolved item.
+   * row), with its own acquisition line and, when the answer has rules, its
+   * dye channel count. Absent = the resolved item.
    */
   picked?: Partial<
-    Record<CharaGearSlotId, { itemId: number; names: CharaItemNames; acquisition?: string }>
+    Record<
+      CharaGearSlotId,
+      { itemId: number; names: CharaItemNames; acquisition?: string; dyeCount?: number }
+    >
   >;
 }
 
@@ -64,6 +68,22 @@ export interface GlamourSheetPiece {
   generated: string | null;
   /** The gear's key for a device-kept edit (the model's, when the piece has no item) */
   hash: string;
+  /**
+   * The edit keys this row answers for: its own `hash`, and on a merged Rings row
+   * the other ring's too. A twin pick can merge or split the pair, and the row
+   * has to answer for both rings either way. The model's key is here as well, for
+   * a line typed while the names lookup was down: with the names landed it no
+   * longer shows, but it is still stored. The reverse cannot be done: with the
+   * lookup down, nothing says which family's key to delete.
+   */
+  editKeys: string[];
+  /**
+   * The keys this row's switch covers, one per ring as `editKeys` is. Each is the
+   * outfit's signature and the piece's model key, both from the file alone: a
+   * switch belongs to this outfit, and the names lookup landing or failing moves
+   * `hash` and must not turn a piece back on.
+   */
+  offKeys: string[];
   /** The twin the list names now */
   pickedItemId: number | null;
   pickedName: string | null;
@@ -110,6 +130,7 @@ export function glamourMarkdownInput({
     const pick = picked?.[model.slot];
     if (pick && !piece.name) piece.name = itemNameFor(pick.names, lang);
     else if (item && !piece.name) piece.name = itemNameFor(item.names, lang);
+    if (pick?.dyeCount !== undefined) piece.dyeSlots = pick.dyeCount;
   }
   for (const gear of resolved.gearDyes) {
     const piece = pieceFor(gear.slot);
@@ -146,16 +167,52 @@ export function glamourMarkdownInput({
   return input;
 }
 
+/** The dyes on a worn slot, in channel order. */
+function slotDyes(source: GlamourListSource, slot: GlamourMarkdownSlot) {
+  return source.resolved.gearDyes
+    .filter((gear) => gear.slot === slot)
+    .sort((a, b) => a.channel - b.channel);
+}
+
+/** The stains on a worn slot, in channel order. */
+function slotStains(source: GlamourListSource, slot: GlamourMarkdownSlot): number[] {
+  return slotDyes(source, slot).map((gear) => gear.stainId);
+}
+
 /**
- * The key for a piece with no item behind it (the resolve failed, or the
- * model has no Item row): its model instead of the family's row, so what the
- * player types there is kept like any other edit.
+ * The key for a piece by what the file says alone: its model instead of the
+ * family's row. It files what the player types on a piece with no item behind it
+ * (the resolve failed, or the model has no Item row), like any other edit, and it
+ * makes up the off switches' keys (`outfitSignature`), since it reads the same
+ * before and after the resolve. Twins share a model, so a twin pick keeps it.
  */
-function modelHash(source: GlamourListSource, slot: GlamourMarkdownSlot, stains: number[]): string {
+function modelHash(source: GlamourListSource, slot: GlamourMarkdownSlot): string {
+  const stains = slotStains(source, slot);
   if (slot === 'Facewear')
     return gearHash('Facewear@glasses', source.resolved.glassesId ?? 0, stains);
   const model = source.resolved.gearModels.find((m) => m.slot === slot);
   return gearHash(`${slot}@${model ? charaModelKey(model) : ''}`, 0, stains);
+}
+
+/**
+ * What makes this outfit this outfit: every worn slot's model key and dyed channels,
+ * in the fixed slot order, so one piece or dye changed anywhere makes another outfit,
+ * a dye moved to the piece's other channel included. The channels are here and not in
+ * `modelHash` because that is also the stored key of an edit on a piece with no item.
+ * It reads the file and not `glamourMarkdownInput`'s keys, which lose a slot when the
+ * lookup lands and omits it. It stays in memory, so it needs no hashing, and it holds
+ * no colon, so `${signature}:` finds this outfit's `offKeys` and no other's.
+ */
+export function outfitSignature(source: GlamourListSource): string {
+  const { gearModels, gearDyes, glassesId } = source.resolved;
+  const worn = new Set<GlamourMarkdownSlot>([...gearModels, ...gearDyes].map((g) => g.slot));
+  if (glassesId !== null && glassesId > 0) worn.add('Facewear');
+  return GLAMOUR_MARKDOWN_SLOTS.filter((slot) => worn.has(slot))
+    .map((slot) => {
+      const channels = slotDyes(source, slot).map((gear) => gear.channel);
+      return `${modelHash(source, slot)}/${channels.join('')}`;
+    })
+    .join(',');
 }
 
 /**
@@ -172,6 +229,17 @@ function familyRow(item: {
   return Math.min(item.itemId, ...item.alternates.map((a) => a.itemId));
 }
 
+/** A worn slot's gear key: slot, the family's row and the stains (spec G8). */
+function pieceHash(source: GlamourListSource, slot: GlamourMarkdownSlot): string {
+  const { equipment } = source;
+  const item = slot === 'Facewear' ? null : (equipment?.items[slot as CharaGearSlotId] ?? null);
+  const family =
+    slot === 'Facewear' ? (equipment?.glasses?.id ?? null) : item ? familyRow(item) : null;
+  return family !== null
+    ? gearHash(slot, family, slotStains(source, slot))
+    : modelHash(source, slot);
+}
+
 /**
  * The export sheet's rows (design 2c), in the template's order: what the
  * list says for each worn piece, the generated Acquisition line of the twin
@@ -179,33 +247,27 @@ function familyRow(item: {
  * family's row and the stains, so a twin pick keeps the key (spec G8).
  */
 export function glamourSheetPieces(source: GlamourListSource): GlamourSheetPiece[] {
-  const { resolved, equipment, picked } = source;
+  const { equipment, picked } = source;
   const lang = LanguageService.getCurrentLocale();
   const input = glamourMarkdownInput(source);
   // Two identical rings are written once, as Rings — so they are one row too
   const sameRings = gposersSameRings(input);
+  const outfit = outfitSignature(source);
   const pieces: GlamourSheetPiece[] = [];
   for (const slot of GLAMOUR_MARKDOWN_SLOTS) {
     const piece = input[slot];
     if (!piece) continue;
     if (sameRings && slot === 'LeftRing') continue;
-    const stains = resolved.gearDyes
-      .filter((gear) => gear.slot === slot)
-      .sort((a, b) => a.channel - b.channel)
-      .map((gear) => gear.stainId);
-    let family: number | null;
     let pickedItemId: number | null;
     let pickedName: string | null = null;
     let generated: string | null;
     if (slot === 'Facewear') {
       const glasses = equipment?.glasses ?? null;
-      family = glasses?.id ?? null;
-      pickedItemId = family;
+      pickedItemId = glasses?.id ?? null;
       generated = glasses?.acquisition ?? null;
     } else {
       const item = equipment?.items[slot as CharaGearSlotId] ?? null;
       const pick = picked?.[slot as CharaGearSlotId];
-      family = item ? familyRow(item) : null;
       pickedItemId = pick?.itemId ?? item?.itemId ?? null;
       pickedName = pick
         ? itemNameFor(pick.names, lang)
@@ -214,13 +276,17 @@ export function glamourSheetPieces(source: GlamourListSource): GlamourSheetPiece
           : null;
       generated = (pick ? pick.acquisition : item?.acquisition) ?? null;
     }
+    const merged = sameRings && slot === 'RightRing';
+    const covered: GlamourMarkdownSlot[] = merged ? [slot, 'LeftRing'] : [slot];
     pieces.push({
       slot,
-      label: sameRings && slot === 'RightRing' ? 'Rings' : glamourSlotLabel(slot),
+      label: merged ? 'Rings' : glamourSlotLabel(slot),
       name: piece.name ?? null,
       dyes: [piece.dye1, piece.dye2].filter((d): d is string => Boolean(d)),
       generated,
-      hash: family !== null ? gearHash(slot, family, stains) : modelHash(source, slot, stains),
+      hash: pieceHash(source, slot),
+      editKeys: covered.flatMap((s) => [pieceHash(source, s), modelHash(source, s)]),
+      offKeys: covered.map((s) => `${outfit}:${modelHash(source, s)}`),
       pickedItemId,
       pickedName,
     });
@@ -228,15 +294,25 @@ export function glamourSheetPieces(source: GlamourListSource): GlamourSheetPiece
   return pieces;
 }
 
-/** The list with each piece's Acquisition line filled in (the sheet's text). */
+/**
+ * The list with each piece's Acquisition line filled in (the sheet's text),
+ * without the slots the player switched off. Two identical rings are one row,
+ * filed under RightRing, so leaving it out takes LeftRing too. That is decided
+ * before anything goes: with RightRing gone they no longer read as the same
+ * rings, and the list would write a stray Left Ring.
+ */
 export function glamourInputWithAcquisition(
   source: GlamourListSource,
-  acquisition: Partial<Record<GlamourMarkdownSlot, string>>
+  acquisition: Partial<Record<GlamourMarkdownSlot, string>>,
+  leftOut: ReadonlySet<GlamourMarkdownSlot>
 ): GlamourMarkdownInput {
   const input = glamourMarkdownInput(source);
   for (const [slot, line] of Object.entries(acquisition) as Array<[GlamourMarkdownSlot, string]>) {
     const piece = input[slot];
     if (piece) piece.acquisition = line;
   }
+  const sameRings = gposersSameRings(input);
+  for (const slot of leftOut) delete input[slot];
+  if (sameRings && leftOut.has('RightRing')) delete input.LeftRing;
   return input;
 }

@@ -1,0 +1,159 @@
+{
+  "fetched_at": "2026-10-27T04:00:34Z",
+  "dist_tags": {
+    "latest": "0.1.0-beta.1",
+    "next": "0.1.0-beta.4"
+  },
+  "versions": [
+    {
+      "version": "0.0.0-stage",
+      "gitHead": null,
+      "repository": null,
+      "dist": {
+        "shasum": "4d033eb291548c2aac75eab771911fd23524b357",
+        "tarball": "https://registry.npmjs.org/xivcharakit/-/xivcharakit-0.0.0-stage.tgz",
+        "fileCount": 2,
+        "integrity": "sha512-E+Ia68Lw1ElZ3LGxRQv5Ob1RW5vfaXfJMOwNc+C+JxHyzLOZJkOKUBPNYfqipXWO63CLC0kw80Jg9VPRfbDjrA==",
+        "signatures": [
+          {
+            "sig": "MEUCIQDs4TF2GrcxBG1Xhu77v5e9YlDfoxol0M3blSHI5gZhUQIgcbc8m5XC94pbke50s1DMmDdv1Kny7tJXsZGiJE29fJk=",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          }
+        ],
+        "unpackedSize": 333
+      },
+      "deprecated": null,
+      "published_at": "2026-10-21T14:03:17.162Z"
+    },
+    {
+      "version": "0.1.0-beta.1",
+      "gitHead": null,
+      "repository": {
+        "url": "git+https://github.com/FlashGalatine/XIVCharaKit.git",
+        "type": "git",
+        "directory": "packages/chara"
+      },
+      "dist": {
+        "shasum": "03572a78cd8082660617af7d73cb394c26b5cb51",
+        "tarball": "https://registry.npmjs.org/xivcharakit/-/xivcharakit-0.1.0-beta.1.tgz",
+        "fileCount": 42,
+        "integrity": "sha512-gA5U4qvE/sYtwOn7Lo9X9B3Q0P6ZZK0gHy4nShR/wE62Eqcfo3FHQKfdI/ZRw2wKAM3Tmee4pgwD9KL8U1JTjw==",
+        "signatures": [
+          {
+            "sig": "MEUCIGF76bvYDr50ET6aPjKv/Mw81Cz6T+PjoP2gu7klbngoAiEAsGqx+Pt0SNjlg4YchaiSZ0jYYasCBwVToV2FyeGEJuY=",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          },
+          {
+            "sig": "MEQCIHk6berOZY5fP4N/jp5U8kaWz2pCk10VAHXj84n4Z6lNAiBnRlesG2lC3tRIXheidEevvrxT0qXjv0w/kA5rhZh3Ng==",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          }
+        ],
+        "unpackedSize": 405190
+      },
+      "deprecated": null,
+      "published_at": "2026-10-21T14:04:35.734Z"
+    },
+    {
+      "version": "0.1.0-beta.2",
+      "gitHead": null,
+      "repository": {
+        "url": "git+https://github.com/FlashGalatine/XIVCharaKit.git",
+        "type": "git",
+        "directory": "packages/chara"
+      },
+      "dist": {
+        "shasum": "3dbe08387cbc34d799beb2c71af39b2bc02f0c6f",
+        "tarball": "https://registry.npmjs.org/xivcharakit/-/xivcharakit-0.1.0-beta.2.tgz",
+        "fileCount": 42,
+        "integrity": "sha512-i0Kno7HGUeBs9h9pPVCVxanofG2tXb/O125/bB7tCjqj4qrYmXhmoF0sRhcRbBrg60veMCoUL7Tg0iUpUsOauw==",
+        "signatures": [
+          {
+            "sig": "MEQCICffqk6+oRqRqETRnY/2+DYZFCEmsjVZkFtraB6cTqdNAiA55s9mdfe1DZaosFe5n2EWtWFRDfFEifLFzJrwN2hG+w==",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          },
+          {
+            "sig": "MEYCIQDbf/qS6OWvXTjwOx4O9M0gON/PdbrJwNO+EG7JdxiC8AIhAN+ot60jTmYlh9H7Y3iPecUvKqhWRtIASFPj2n/xCR/k",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          }
+        ],
+        "attestations": {
+          "url": "https://registry.npmjs.org/-/npm/v1/attestations/xivcharakit@0.1.0-beta.2",
+          "provenance": {
+            "predicateType": "https://slsa.dev/provenance/v1"
+          }
+        },
+        "unpackedSize": 405189
+      },
+      "deprecated": null,
+      "published_at": "2026-10-22T03:36:19.588Z"
+    },
+    {
+      "version": "0.1.0-beta.3",
+      "gitHead": null,
+      "repository": {
+        "url": "git+https://github.com/FlashGalatine/XIVCharaKit.git",
+        "type": "git",
+        "directory": "packages/chara"
+      },
+      "dist": {
+        "shasum": "ee2a25e97438d84c1c68e70d8de2f1642a2cb4b9",
+        "tarball": "https://registry.npmjs.org/xivcharakit/-/xivcharakit-0.1.0-beta.3.tgz",
+        "fileCount": 42,
+        "integrity": "sha512-dTd+VUw68vaBGCcm8FIOpgCmh2rJwBmIjsfLMs5CcUI1bgPab+UxbFfbnj9JYx5q5+dDvZTFAY+f8k9NAaGp/A==",
+        "signatures": [
+          {
+            "sig": "MEUCIDBAWU8R7B5wnLT01NwgdAihF/FgunEi5Z0TjHETbUfKAiEAvQqXnN4ju1NbEVPHB+74k918Ac6TywFRKZoLuqvibZQ=",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          },
+          {
+            "sig": "MEYCIQDaQcH/ENwxG3RFxRrHj0MzELReg0J4wSdLZl1HGwaJjAIhAM392VNdTft97zilFoiPmuX0jqrqJYl/dCwLf6D+6ngc",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          }
+        ],
+        "attestations": {
+          "url": "https://registry.npmjs.org/-/npm/v1/attestations/xivcharakit@0.1.0-beta.3",
+          "provenance": {
+            "predicateType": "https://slsa.dev/provenance/v1"
+          }
+        },
+        "unpackedSize": 405492
+      },
+      "deprecated": null,
+      "published_at": "2026-10-22T12:55:17.12Z"
+    },
+    {
+      "version": "0.1.0-beta.4",
+      "gitHead": null,
+      "repository": {
+        "url": "git+https://github.com/FlashGalatine/XIVCharaKit.git",
+        "type": "git",
+        "directory": "packages/chara"
+      },
+      "dist": {
+        "shasum": "da2a70e66f2443dcc9453bf5edfc0ef43c644c26",
+        "tarball": "https://registry.npmjs.org/xivcharakit/-/xivcharakit-0.1.0-beta.4.tgz",
+        "fileCount": 43,
+        "integrity": "sha512-fIW3xEd3fHaP+C6tKbwmBOHFHb59ymoUdW+FpEAvwbR1LcQy+ZMVi2mdhtmRxP/hOJYD9cpzuhiYmpLplRg0Mw==",
+        "signatures": [
+          {
+            "sig": "MEUCICuPk9CxuFlh81l4oW5bqSisBzXjJt/GPB2mqaGzn603AiEAuGjSYA3iEfJgSJt4YEuGjhb12zHOaur8yPhtf1TbPtU=",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          },
+          {
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U",
+            "sig": "MEYCIQDtSl4onlTn9wvzQ8XhdLqdHWolqHc0mfzO6SRrpT3ZcgIhAPzIYv4hGd2eCiRcxl/6divEVW4TUgOjAJpIaC31MJIC"
+          }
+        ],
+        "attestations": {
+          "url": "https://registry.npmjs.org/-/npm/v1/attestations/xivcharakit@0.1.0-beta.4",
+          "provenance": {
+            "predicateType": "https://slsa.dev/provenance/v1"
+          }
+        },
+        "unpackedSize": 414848
+      },
+      "deprecated": null,
+      "published_at": "2026-10-25T11:31:59.411Z"
+    }
+  ]
+}

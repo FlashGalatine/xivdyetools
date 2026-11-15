@@ -1,0 +1,1083 @@
+commit bbec9321f083a2effb3686e4a2077840e4567662
+Merge: 1fd01192 74138a01
+Author: Flash Galatine <AsheJunius@gmail.com>
+Date:   Mon Oct 26 16:20:15 2026 -0400
+
+    Merge main into feat/chara-bot-import (after #330); add the discord-worker 5.9.0 compatibility row
+
+    Resolved README.md and docs/versions.md by keeping the higher version per workspace
+    (web-app 5.16.0, discord-worker 5.9.0). The matrix row and the npm-parity sentence
+    (bot-logic 4.11.0) come from the PR review of 2026-10-26.
+
+    Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+
+commit 012e0508b9aa75c699b067e2c89c365dae46afd4
+Author: Flash Galatine <AsheJunius@gmail.com>
+Date:   Mon Oct 26 14:47:35 2026 -0400
+
+    feat(web-app): ship the xivcharakit license notice and link it from About (Task 7)
+
+    scripts/copy-chara-notices.mjs finds xivcharakit through @xivdyetools/core, requires the version core
+    pins and writes its LICENSE and THIRD_PARTY_NOTICES.md verbatim to public/licenses/xivcharakit.txt
+    (committed; the build regenerates it first and a test fails on drift). The About modal links it in
+    six languages. An e2e spec and the post-deploy smoke test assert the served body and a UTF-8 text
+    type, because _redirects turns a missing file into a 200 carrying index.html; a /licenses/* rule in
+    _headers sets the charset Pages does not send for .txt.
+
+    Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+
+ apps/web-app/src/locales/de.json | 3 ++-
+ apps/web-app/src/locales/en.json | 3 ++-
+ apps/web-app/src/locales/fr.json | 3 ++-
+ apps/web-app/src/locales/ja.json | 3 ++-
+ apps/web-app/src/locales/ko.json | 3 ++-
+ apps/web-app/src/locales/zh.json | 3 ++-
+ 6 files changed, 12 insertions(+), 6 deletions(-)
+
+commit 7b07ed662b24a271a198d1c1c6d19c48a8580bc4
+Author: Flash Galatine <AsheJunius@gmail.com>
+Date:   Mon Oct 26 13:02:36 2026 -0400
+
+    fix(web-app): the .chara worker leaves core's barrel; prefetch palettes; close the verifier's gaps (Task 5)
+
+    build:check passed only after this: the inspection worker bundled core's whole barrel (179 KB; the JS
+    payload ended 124 KB over a budget the plan forbids raising). It now imports
+    '@xivdyetools/core/chara' (24 KB through the subpath, the barrel 106 KB in a probe) and its bundle is
+    minified (Vite passes no minify to worker bundles under build.minify 'esbuild'): 30 KB raw, 11 KB
+    gzip, no color, localization, dye or palette tables. The JS payload is 2,225.5 of 2,250 KB. The
+    only budget change is a NEW named row for the worker chunk (35 KB); no existing limit moved.
+
+    A cold import must finish inside the 5,000 ms deadline, and the page's 872 KB palette chunk loads
+    inside it, so the file card now warms the shared page-side palette service in idle time when the drop
+    zone is shown (skipped under saveData, idempotent, retries after a failure, never rejects, never
+    touches the deadline). Verifiers measured 2.5-2.9 s cold on Slow 4G plus 4x CPU with a gzip server.
+
+    Closes the independent verifiers' findings, each pinned by a test shown red by mutating its line:
+    destroy() must not cancel an import in flight; an unreadable dye channel keeps its row and does not
+    make a lens empty; an inactive slot never previews a stray lip blend; the unconfirmed card shows no
+    dye. Raw error objects no longer reach the logger in glamour-tool, glamour-sheet and swatch-tool.
+    The French slot grid no longer widens past 375 px (minmax(0, 1fr)); the Korean palette-unavailable
+    line reads naturally. 23 of 23 mutants killed by the verifier; 4,380 unit tests, e2e 30/30 on
+    chromium and mobile-chrome, build:check, lint and type-check green.
+
+    Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+
+ apps/web-app/src/locales/ko.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+commit f7decf1ee9a983b4cf993fd01a23bc9ba4869f95
+Author: Flash Galatine <AsheJunius@gmail.com>
+Date:   Mon Oct 26 12:17:49 2026 -0400
+
+    feat(web-app): read .chara files through the inspection worker; render the new evidence states (Task 5)
+
+    The Swatch Matcher and Glamour Reader now load a dropped file through core's xivcharakit adapter:
+    extension and size refused before any read, a capped arrayBuffer read, the cancellable inspection
+    worker, and a validated ImportedCharaCharacter in the shared session. The loader checks its
+    generation before and after the worker (a stale load never cancels or overwrites a newer one),
+    cancelCharaLoad() runs before the SWAP clear, the last valid session survives every failure, and
+    failures are fixed codes (notChara, tooLarge, unreadable, workerFailed, timedOut) shown as localized
+    toasts instead of core's raw parse reason. File names are capped at 256 units.
+
+    Views key on the projection: matchHex is the only match, save and pick input; an unconfirmed
+    highlight, face-paint or lip color (activation unknown) shows its preview with an UNCONFIRMED tag
+    and is never matched, saved, picked or exported; inactive and unresolved slots say why (including
+    the 96-127 gap through indexGap, and a lip with no clan); the lip matches on its live blend; a
+    corrected eye pair shows the corrected colors; gear-only files load; incomplete gear models are
+    not looked up and show a CHECK row in the Glamour Reader; an unreadable dye channel reads "Dye
+    unreadable". Routine producer diagnostics (omitted image, unknown keys) stay silent.
+
+    Nineteen new locale keys in all six languages; swatch.parseFailed is gone. E2E specs cover the
+    unconfirmed card, the size and unreadable toasts and the incomplete-model request body.
+
+    Known and still open in this commit, fixed by the next ones: build:check is red (the worker chunk
+    bundles core's whole barrel), the cold-import deadline has little headroom on a slow link, and four
+    small test gaps and three raw-error logs a verifier listed.
+
+    Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+
+ apps/web-app/src/locales/de.json | 22 +++++++++++++++++++++-
+ apps/web-app/src/locales/en.json | 22 +++++++++++++++++++++-
+ apps/web-app/src/locales/fr.json | 22 +++++++++++++++++++++-
+ apps/web-app/src/locales/ja.json | 22 +++++++++++++++++++++-
+ apps/web-app/src/locales/ko.json | 22 +++++++++++++++++++++-
+ apps/web-app/src/locales/zh.json | 22 +++++++++++++++++++++-
+ 6 files changed, 126 insertions(+), 6 deletions(-)
+
+commit af2cec9637b62fe32aff934a7235ca97e687e074
+Author: Flash Galatine <AsheJunius@gmail.com>
+Date:   Mon Oct 26 14:18:22 2026 -0400
+
+    feat(bot-logic): read .chara files for /swatch and /glamour through core's xivcharakit facade (Task 6)
+
+    Both commands inspect and resolve through inspectCharaForTools and resolveCharaForTools, accept the
+    capped attachment bytes (fileBytes, preferred over fileText) and match on matchHex alone, with the
+    lip matched on its live blend. SwatchCharacter keeps its shape through a documented mapping that
+    carries no colour for a slot matchHex excludes. An unknown-activation colour is previewed with a
+    fixed localized line and never matched; unusable colours and dropped or invalid gear and dye values
+    get fixed localized lines too (card.swatchActivityUnknown, card.swatchUnusable, card.glamourGearSkipped,
+    card.glamourDyeInvalid, all six locales). Nickname, author, file name and library text reach no output
+    or log.
+
+    Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+
+ packages/bot-logic/src/i18n/locales/de.json | 4 ++++
+ packages/bot-logic/src/i18n/locales/en.json | 4 ++++
+ packages/bot-logic/src/i18n/locales/fr.json | 4 ++++
+ packages/bot-logic/src/i18n/locales/ja.json | 4 ++++
+ packages/bot-logic/src/i18n/locales/ko.json | 4 ++++
+ packages/bot-logic/src/i18n/locales/zh.json | 4 ++++
+ 6 files changed, 24 insertions(+)
+
+commit e7919b2fdb60c293326fa0fd51fecce5e9d318cc
+Author: Claude <noreply@anthropic.com>
+Date:   Fri Oct 16 13:21:55 2026 +0000
+
+    fix(chara): accept only *.chara files and cap them at 8 KiB
+
+    FINDING-001 and FINDING-003 of the 2026-10-15 .chara import review, and
+    its 8 KiB cap.
+
+    - core: export MAX_CHARA_FILE_BYTES (8,192). Exports without an attached
+      image measured 1,837-2,777 bytes over a 1,093-file corpus; the one
+      larger file carried an image the user attached in Anamnesis (3 MB).
+      The parser does not enforce it (it sees decoded text, not bytes).
+    - web-app: loadCharaFile refuses a file not named *.chara (case-
+      insensitive, on the name: browsers report no MIME type for .chara),
+      then one over the cap, both before file.text() and telemetry, and
+      before the load takes a generation, so a refused drop never cancels a
+      .chara still loading. New swatch.charaNotChara / swatch.charaTooLarge
+      toasts in six locales; errors.fileTooLarge (20 MB, .chara only) goes.
+      The Palette Extractor keeps its 20 MiB image cap.
+    - discord-worker: checkCharaAttachment refuses a non-.chara filename
+      before the size and host checks, before deferring; the reported-size
+      and streamed caps are 8 KiB, down from 1 MiB.
+    - bot-logic: card.charaFileReason.tooLarge takes {kb} (lowering the byte
+      constant alone would have printed "0.0078125 MB") and says to re-save
+      an Anamnesis export without its image; new notChara; the /manual
+      Character File topic states the limits. Six locales; the CJK subsets
+      already cover every new glyph.
+
+    Tests cover both entry points through real DOM events, the 8,192/8,193
+    boundary, bytes vs characters, uppercase and double extensions, empty
+    MIME types, renamed poses, and no fetch for a refused Discord filename.
+
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+    Claude-Session: https://claude.ai/code/session_019azQGgpaHbA1e8HM6EVKK8
+
+ apps/web-app/src/locales/de.json            | 3 ++-
+ apps/web-app/src/locales/en.json            | 3 ++-
+ apps/web-app/src/locales/fr.json            | 3 ++-
+ apps/web-app/src/locales/ja.json            | 3 ++-
+ apps/web-app/src/locales/ko.json            | 3 ++-
+ apps/web-app/src/locales/zh.json            | 3 ++-
+ packages/bot-logic/src/i18n/locales/de.json | 5 +++--
+ packages/bot-logic/src/i18n/locales/en.json | 5 +++--
+ packages/bot-logic/src/i18n/locales/fr.json | 5 +++--
+ packages/bot-logic/src/i18n/locales/ja.json | 5 +++--
+ packages/bot-logic/src/i18n/locales/ko.json | 5 +++--
+ packages/bot-logic/src/i18n/locales/zh.json | 5 +++--
+ 12 files changed, 30 insertions(+), 18 deletions(-)
+
+commit ee30b092e5550d8f6c4e02af069e6cf11153f5bf
+Author: Flash Galatine <AsheJunius@gmail.com>
+Date:   Mon Oct 12 13:35:13 2026 -0400
+
+    fix(glamour): review follow-ups — the web list skips an Off Hand that is the main hand's own model; /manual says what the list leaves out
+
+    - web-app glamourMarkdownInput: an Off Hand the resolve answers `viaMainHand` (a crafting tool's
+      second model, a quiver, a focus) is the same weapon twice, and the bot already skipped it
+      (bot-logic glamour.ts:434). Under a tool main hand (ItemUICategory 12–32) the category rule
+      kept it, so the web list wrote, e.g., Indagator's Saw as the Off Hand too. It is now left out
+      under any main hand. New glamour-sheet test (fails without the fix); glamour-block's Copy list
+      fixtures, whose bow Off Hand is the bow's own quiver, no longer expect it twice.
+    - Corpus recount (1,093 files, the real resolver over live XIVAPI, original figures reproduced
+      first): 3 kept Off Hands were a tool's own model (Carpenter 1, Alchemist 2), so the lists keep
+      37 of 524 worn Off Hands, not 40, and 913 files get a shorter list, not 911. core 5.12.0 and
+      web-app 5.15.4 changelogs updated.
+    - bot-logic 4.9.0: the /manual Character File topic said the embed lists every piece, and the
+      /glamour topic description called it "the full list"; both now say what the list leaves out,
+      in all six languages (terms from each locale's glamourSlot labels; CJK font coverage passes).
+    - discord-worker 5.8.14: the production deploy re-runs register-commands on an unchanged roster
+      (the entry said nothing is re-registered).
+    - Glamour Reader guide: the intro says the list writes the visible pieces, not the whole outfit.
+    - web-app bundle budget: the core runtime chunk (`modals`) goes 286 → 287 KB for measured growth.
+      It is 285.71 KB on this branch, and the pending vite 8.3.3 / 8.3.4 bump adds 170–310 B, 11 B
+      over 286 KB in the worst case.
+    - The root CHANGELOG-laymans.md 5.11.2 entry was dropped by the merge of #285's follow-ups: the
+      batch announces once, from a wrap-up PR merged last.
+
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+ packages/bot-logic/src/i18n/locales/de.json | 4 ++--
+ packages/bot-logic/src/i18n/locales/en.json | 4 ++--
+ packages/bot-logic/src/i18n/locales/fr.json | 4 ++--
+ packages/bot-logic/src/i18n/locales/ja.json | 4 ++--
+ packages/bot-logic/src/i18n/locales/ko.json | 4 ++--
+ packages/bot-logic/src/i18n/locales/zh.json | 4 ++--
+ 6 files changed, 12 insertions(+), 12 deletions(-)
+
+commit d99e5e10f4c4e7077b6a8961cac4b770ba5edd85
+Merge: 757cf140 3c35e230
+Author: Flash Galatine <AsheJunius@gmail.com>
+Date:   Fri Oct 9 09:52:09 2026 -0400
+
+    merge: #278 stacks on the merge-day chain (main + every PR before it)
+
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+commit 64224b497cc3081fca91b9ad5e2df5e2f267a418
+Merge: d9a57b5a 7da4e03b
+Author: Flash Galatine <AsheJunius@gmail.com>
+Date:   Fri Oct 9 09:46:37 2026 -0400
+
+    merge: main into #251 — root notes 5.10.20 above #268's 5.10.19
+
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+commit 7da4e03b7f9b86a932800b02e3ab4d8901728518
+Merge: 25bc5585 88a91fcf
+Author: Ashe Ramos <ashejunius@gmail.com>
+Date:   Fri Oct 9 09:45:40 2026 -0400
+
+    Merge pull request #266 from FlashGalatine/fix/web-app-glamour-drop-zone
+
+    fix(web-app): 5.14.11 — the Glamour Reader's drop zone describes the reader
+
+commit 8f57c1e8f7755b685cdd22b7b4948b49ed6acfc9
+Author: Flash Galatine <AsheJunius@gmail.com>
+Date:   Fri Oct 9 08:21:43 2026 -0400
+
+    fix(api-worker,web-app): name a retired-only family instead of answering null
+
+    #278 filters Aetherial, Deepmist and Dated (level 50 or below) rows before
+    naming a model family. When every row of a family is one of those, pickItem
+    returned null, and the Glamour Reader told the player "A model with no item
+    behind it" while they were wearing a real item (main named it).
+
+    - api-worker: namingRows() falls back to the whole family when no eligible
+      row exists, and pickItem marks that result retired: true (absent
+      otherwise; an empty family is still null). Off-hand pairing reads the same
+      rows, so a retired bow still pairs its quiver. The row cache stores raw
+      rows, so no shape bump.
+    - web-app: a retired item is named like any other and its note ends with
+      glamour.row.retired (six languages). It never counts as "no item"; its
+      verdict follows its own rules.
+    - Docs: the chara reference and endpoints.md describe retired.
+
+    The bot reads the same response and needs no change: it names the item, as
+    on main. Found by the 2026-10-09 review of every open PR; tests were red
+    first.
+
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+ apps/web-app/src/locales/de.json | 1 +
+ apps/web-app/src/locales/en.json | 1 +
+ apps/web-app/src/locales/fr.json | 1 +
+ apps/web-app/src/locales/ja.json | 1 +
+ apps/web-app/src/locales/ko.json | 1 +
+ apps/web-app/src/locales/zh.json | 1 +
+ 6 files changed, 6 insertions(+)
+
+commit 78f9852780678b79b4910d280158d9090df7e3ab
+Merge: 50f466e1 d5ac5362
+Author: Flash Galatine <AsheJunius@gmail.com>
+Date:   Tue Oct 6 22:22:24 2026 -0400
+
+    merge: restack on the remediation chain tip (#266); versions follow it
+
+    PR #251 sat on #246 alone, while the remediation chain (#256 → … → #266)
+    grew around it. #257 took discord-worker 5.8.4, and the chain ends at
+    bot-logic 4.8.2 / discord-worker 5.8.10. Merged without rewriting
+    history, so no force-push.
+
+    The tip's side wins every conflict. This PR's entries are renumbered to
+    the next versions no remote branch holds:
+    - bot-logic 4.6.1 → 4.8.3;
+    - discord-worker 5.8.4 → 5.8.11, in CHANGELOG, CHANGELOG-laymans,
+      README and docs/versions.md.
+    The root CHANGELOG-laymans entry follows as its own commit.
+
+    The CJK subsets were re-cut on the merged tree, which now also covers
+    api-worker's item names (Sprint 30). Against the tip they gain SC 让,
+    JP 先 末 身 and KR 넣 뜻, and drop nothing. Bundle: 2,719.3 KiB
+    gzipped, 88.5 % of the 3,072 KiB cap. The translations and
+    manual.test.ts merged without conflicts.
+
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+commit 50f466e133305704a802d662b60aeeac29727a4e
+Author: Flash Galatine <AsheJunius@gmail.com>
+Date:   Tue Oct 6 22:06:49 2026 -0400
+
+    fix(bot-logic,discord-worker): the character-file topic names the OK verdict too
+
+    Review follow-up (Codex, PR #251). readPiece() prints OK for any piece
+    with nothing to fix, but the 👤 topic listed only TWIN, DYES, NO GLAM,
+    LOCKED / a race and the dash. So "explains every /glamour verdict" was
+    not yet true, and the guard that claimed to check every label left OK
+    out as well.
+
+    - Each of the six languages gets one sentence after the TWIN sentence,
+      quoting its own card.glamourStatusOk: OK, 問題なし, 문제 없음, 正常.
+      The ja/de/fr/ko/zh sentences were drafted by a translator agent and
+      approved by a verifier.
+    - manual.test.ts checks card.glamourStatusOk too. Each label must
+      appear as a word, with no Latin letter on either side: en "OK" also
+      sits inside "+N LOOKS", so a plain includes() passed on the old text.
+      Checked against the committed en body: the old word check fails, and
+      the new body passes it.
+
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+ packages/bot-logic/src/i18n/locales/de.json | 2 +-
+ packages/bot-logic/src/i18n/locales/en.json | 2 +-
+ packages/bot-logic/src/i18n/locales/fr.json | 2 +-
+ packages/bot-logic/src/i18n/locales/ja.json | 2 +-
+ packages/bot-logic/src/i18n/locales/ko.json | 2 +-
+ packages/bot-logic/src/i18n/locales/zh.json | 2 +-
+ 6 files changed, 6 insertions(+), 6 deletions(-)
+
+commit 261f1a13f3c7f46f2db3e509f1f46f89dd4f5c7b
+Author: Flash Galatine <AsheJunius@gmail.com>
+Date:   Tue Oct 6 15:07:54 2026 -0400
+
+    fix(og-worker): 2.12.0 — gradient, extractor and harmony previews follow the page (Sprint 11)
+
+    Sprint 11 of the 2026-10-04 remediation plan: deep-dive BUG-008, BUG-009,
+    BUG-058, BUG-059, BUG-060, BUG-061, BUG-062, OPT-006; dead-code DEAD-039,
+    DEAD-040; i18n TERM-011, I18N-014.
+
+    - Gradient (BUG-008, BUG-009): the card ramps in the share's
+      `interpolation` (hsv default) and ranks by the requested method. The
+      crawler forwards `interpolation`, the route reads it, the guard 400s
+      other values, and the cache key splits on it only on the gradient
+      param route. Above five steps the card resolves the page's whole ramp
+      with its dedupe chain and draws the endpoints plus page steps
+      round(k(n-1)/4), labeled with the page's step numbers. The crawler
+      reads `steps` as the page does (3-12, else 8).
+    - Harmony (BUG-062): legacy ?algo= spellings normalize before ranking.
+    - Extractor (BUG-060): ?algo= reaches the card, which picks with core's
+      findClosestDye (exact rgb ties as the page breaks them).
+    - Crawler (BUG-059): custom-color gradient / mixer / harmony shares
+      unfurl named with a reopening og:url over the default card.
+    - Cache key (BUG-058): algo and mode key only the routes that read them.
+    - Guard: a repeated allowlisted query key gets a 400 (closes a
+      cache-poisoning path through a percent-encoded duplicate key).
+    - fr presets deck name (TERM-011); de Glamour Reader crawler sentence
+      (I18N-014).
+    - resvg (OPT-006): Resvg and RenderedImage freed in a finally. At this
+      worker's compatibility date FinalizationRegistry does not exist, so
+      both leaked before.
+    - Removed CrawlerInfo.userAgent (DEAD-039) and the '@' alias (DEAD-040).
+    - Tests: gradient-share-parity.test.ts (share link -> crawler -> image ->
+      card), 126 PAGE_GOLDEN rows, a core-derived Δ oracle, extractor and
+      renderer suites (BUG-061).
+    - Known card/page divergences that remain are listed in og-worker's
+      CLAUDE.md for a follow-up.
+
+    Measured end to end against the mounted web page: 6,682 / 6,682
+    gradient share links match.
+
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+ apps/og-worker/src/services/og-strings.ts | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
+
+commit 031458ae022f05bcacc01a2d74c2a3f3f652a71a
+Author: Flash Galatine <AsheJunius@gmail.com>
+Date:   Tue Oct 6 14:18:46 2026 -0400
+
+    fix(web-app): the Glamour Reader's drop zone describes the reader, not the Swatch Matcher
+
+    With no file loaded, the file card the Glamour Reader shares with the
+    Swatch Matcher always printed two Swatch Matcher lines: every color on the
+    character with the clan and gender to look hair and skin up, and "or pick a
+    swatch from the grid below". The reader has no swatch grid and matches no
+    hair or skin.
+
+    CharaFileCard takes a dropBody option, a host's own body line; a host that
+    passes one has no swatch grid, so the grid line goes too. The Glamour
+    Reader passes the new glamour.dropBody in all six languages. The Swatch
+    Matcher passes nothing and is unchanged.
+
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+ apps/web-app/src/locales/de.json | 3 ++-
+ apps/web-app/src/locales/en.json | 3 ++-
+ apps/web-app/src/locales/fr.json | 3 ++-
+ apps/web-app/src/locales/ja.json | 3 ++-
+ apps/web-app/src/locales/ko.json | 3 ++-
+ apps/web-app/src/locales/zh.json | 3 ++-
+ 6 files changed, 12 insertions(+), 6 deletions(-)
+
+commit 49e6f31a37180edc78df2453d56c69a115384105
+Author: Flash Galatine <AsheJunius@gmail.com>
+Date:   Tue Oct 6 07:29:00 2026 -0400
+
+    fix(bot-logic, web-app): a grey gradient endpoint keeps the other end's hue (2026-10-04 remediation, Sprint 13)
+
+    This is the BUG-035 sibling on the default path. bot-logic's /gradient and
+    the web Gradient Builder brought a grey endpoint's hue (0, or noise near
+    158 in LCH) into hsv, oklch and lch interpolation. Slate Grey → Royal Blue
+    passed through purple, and white → blue through pink.
+
+    Both now apply core blendHSL's powerless-hue rule: a grey endpoint takes
+    the other end's hue. Greys are keyed on HSV s === 0, OKLCH C < 1e-4 and LCH
+    C < 0.01. Chromatic pairs and grey-to-grey ramps are byte-identical.
+
+    Also in web-app:
+    - the ja/ko/zh tools.character.tattooColors use ' / ', as swatch.palTattoo
+      does;
+    - the harmony-tool and extractor-tool comments match core's new pin and
+      palette behaviour.
+
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+ apps/web-app/src/locales/ja.json | 2 +-
+ apps/web-app/src/locales/ko.json | 2 +-
+ apps/web-app/src/locales/zh.json | 2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
+
+commit e48dd7aba6237febe8c05ce61f4bc9e37a906db4
+Author: Flash Galatine <AsheJunius@gmail.com>
+Date:   Tue Oct 6 07:28:57 2026 -0400
+
+    fix(core): grey mixes, real palettes, a checked locale build, client sheet names (2026-10-04 remediation, Sprint 13)
+
+    - BUG-035: blendHSL applies CSS Color 4's powerless-hue rule. An exact grey
+      takes the other colour's hue (white + blue is #9f9fdf, not pink).
+    - BUG-036: PaletteService.extractPalette caps k at the image's distinct
+      colours and drops empty clusters. A non-finite count, sample or
+      iteration option uses the default, and a fractional count or sample
+      size is floored (a fractional maxSamples read past the array).
+    - BUG-128 / BUG-130: build-locales.ts checks dyes.json and
+      facewear_colors.json against their CSVs before writing anything.
+      dyes.json says 'Opo-opo Brown', as the client does.
+    - TERM-021: buildSheets follows the terminology dictionary's character-
+      creation table. ja 刺青 / 瞳の輪郭, ko 문신 / 눈동자 테두리,
+      zh 刺青 / 瞳孔轮廓, de Tattoo / Äußere Iris,
+      fr Tatouage / Contour de l'iris. English is unchanged.
+    - BUG-129: a non-number blend ratio gives the 0.5 default.
+    - BUG-131: findClosestDyes copes with any count.
+    - BUG-132: searchByLocalizedName returns [] for an empty or non-string
+      query.
+    - BUG-133: the .chara parser refuses empty, non-finite and JS-only
+      channels, and accepts one trailing separator on a 3-channel colour.
+    - BUG-134: isLightColor picks the text colour with more contrast
+      (crossover L ≈ 0.179).
+    - BUG-135: hsvToRgb's cache keys on the exact inputs.
+    - BUG-136: DyeDatabase.initialize throws DATABASE_LOAD_FAILED on an empty
+      or colliding payload.
+    - BUG-137: a pinned harmony dye is kept out of every other slot. With two
+      pins of one dye, only the first is honoured.
+    - BUG-138 / BUG-139: tests that could not fail now pin real results.
+
+    Living docs (core algorithms/services, the terminology reference, core
+    CLAUDE.md) and the i18n-fonts audit trap follow the generator.
+
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+ packages/core/src/data/locales/de.json | 14 +++++++-------
+ packages/core/src/data/locales/fr.json | 14 +++++++-------
+ packages/core/src/data/locales/ja.json | 16 ++++++++--------
+ packages/core/src/data/locales/ko.json | 16 ++++++++--------
+ packages/core/src/data/locales/zh.json | 14 +++++++-------
+ 5 files changed, 37 insertions(+), 37 deletions(-)
+
+commit b43e757a9e950842c4ce049a3ab094a0b94d2e96
+Author: Flash Galatine <AsheJunius@gmail.com>
+Date:   Tue Oct 6 04:03:50 2026 -0400
+
+    fix(bot-logic): six-digit hex, filters before the search, GPOSERS placeholders, failure logging (2026-10-04 remediation, Sprint 15)
+
+    - BUG-034: six bare digits are always a hex colour; 1-5 are a dye id.
+      It used to read '000000' as an id (null) and '013114' as Pure White.
+      The resolvers trim their input.
+    - BUG-033: gradient and mixer search only the dyes the filters allow,
+      instead of filtering a capped nearest-10/20 list that could come back
+      empty.
+    - BUG-124: the GPOSERS list never writes the 'Model <key>' placeholder as
+      an item. It keeps Facewear for worn but unresolved glasses. The No-fix
+      note names the slot.
+    - BUG-125:
+      - every execute* catch logs '[cmd] generation failed: <class[ code]>'
+        through input.logger, via one internal failureKind helper. It never
+        logs the message: core quotes the user's hex, the parser quotes the
+        file.
+      - swatch and glamour also log a parse failure, and glamour a failed
+        lookup.
+      - comparison, contrast and accessibility refuse too few dyes (or a
+        non-array) as NOT_ENOUGH_DYES before rendering.
+    - BUG-126: resolveUserLocale takes an optional logger. The legacy reader
+      now gets it too.
+    - BUG-127: coverage is enforced (coverage.enabled), at 96.0% branches.
+
+    README and CLAUDE.md document the resolution order, the error codes and the
+    logging rules.
+
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+ .../bot-logic/src/i18n/locale-resolution.test.ts   | 129 +++++++++++++++++++++
+ packages/bot-logic/src/i18n/locale-resolution.ts   |  58 ++++++---
+ packages/bot-logic/src/i18n/translator.test.ts     |   9 ++
+ 3 files changed, 183 insertions(+), 13 deletions(-)
+
+commit 2d35369958d2847a3b11cb335a06a3bbd6dd8b01
+Author: Flash Galatine <AsheJunius@gmail.com>
+Date:   Tue Oct 6 02:22:20 2026 -0400
+
+    fix(bot-logic): /swatch names a missing slot in the reader's language (2026-10-04 remediation, Sprint 9)
+
+    executeSwatch's SLOT_MISSING reply put the option's raw English value
+    ("highlights", "limbal") into every language's sentence. It now names the
+    slot through card.swatchSlotName.* x6. The non-English names are the web
+    app's swatch.pal* terms, which match the game client and the terminology
+    reference.
+
+    de and fr quote the name, as those files quote their other placeholders,
+    so a plural name (Strähnen, Lèvres) does not meet a singular verb.
+
+    From the Sprints 2+3 notes for Sprint 9.
+
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+ packages/bot-logic/src/i18n/locales/de.json | 11 ++++++++++-
+ packages/bot-logic/src/i18n/locales/en.json |  9 +++++++++
+ packages/bot-logic/src/i18n/locales/fr.json | 11 ++++++++++-
+ packages/bot-logic/src/i18n/locales/ja.json |  9 +++++++++
+ packages/bot-logic/src/i18n/locales/ko.json |  9 +++++++++
+ packages/bot-logic/src/i18n/locales/zh.json |  9 +++++++++
+ 6 files changed, 56 insertions(+), 2 deletions(-)
+
+commit a9dac980188ec5447f83e994c19aac32df99939a
+Author: Flash Galatine <AsheJunius@gmail.com>
+Date:   Tue Oct 6 02:14:57 2026 -0400
+
+    fix(discord-worker): one moderation path, edit diffs, KV failure handling (2026-10-04 remediation, Sprint 9)
+
+    Presets:
+    - BUG-004: /preset submit and /preset edit no longer post to the
+      moderation channel or the submission log. presets-api's webhook is the
+      only poster.
+    - BUG-003: the webhook posts an owner edit as kind 'edit'.
+      - The diff base is `edited_from`, falling back to previous_values from
+        an older presets-api.
+      - Revert is offered only when is_edit, a well-formed previous_values and
+        edited_from_status 'approved' all hold.
+      - The embed says which text Revert restores.
+    - A repeated dye is refused by name (preset.repeatedDye), not with
+      presets-api's generic 400.
+    - Favourites:
+      - BUG-006: a failed read never overwrites the list.
+      - A v2 blob that won't parse falls back to v1.
+      - BUG-047: name back-fill has a 1.5 s deadline, keeps a 404 as `gone`
+        instead of saving the id as the name, and heals names saved as ids.
+    - BUG-046: autocomplete router tests.
+    - REFACTOR-002: approved-preset autocomplete logs failures.
+    - Moderation and submission-log embeds print the category display name.
+
+    Preferences and /budget:
+    - BUG-002: world lookups run after the defer, not inside the 3 s ack.
+    - A /budget world refusal is deleted from the public message and sent
+      ephemerally.
+    - BUG-048: a failed read aborts preferences writes, filters included. An
+      unparseable blob is replaced on the next write. These failures are
+      recorded as failed commands.
+    - BUG-049: the "affects" lists and the clan/gender descriptions name only
+      real readers.
+    - OPT-005: legacy-key misses are memoised per isolate.
+
+    Handlers:
+    - BUG-042: /extractor color logs a render failure and says so.
+    - BUG-043: /gradient's Start and End lines are localized.
+    - BUG-044: echoed colour/dye input is sanitised and capped. Registered
+      free-text options declare max_length: 100, and 400 for tags.
+
+    Analytics and moderation buttons:
+    - BUG-005: a Universalis 408 is upstream, not 'rejected'.
+    - BUG-045: /stats overview drops the lifetime/today average.
+    - OPT-004: /stats summary reads two counters.
+    - BUG-041: preview-image edits keep the preset ID in the footer and never
+      mention the moderator.
+
+    bot-logic locales: preset.repeatedDye x6. The clan/gender option
+    descriptions are reworded x6. zh says 出现了多次, so no glyph is added to
+    the CJK subset.
+
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+ packages/bot-logic/src/i18n/locales/de.json | 5 +++--
+ packages/bot-logic/src/i18n/locales/en.json | 5 +++--
+ packages/bot-logic/src/i18n/locales/fr.json | 5 +++--
+ packages/bot-logic/src/i18n/locales/ja.json | 5 +++--
+ packages/bot-logic/src/i18n/locales/ko.json | 5 +++--
+ packages/bot-logic/src/i18n/locales/zh.json | 5 +++--
+ 6 files changed, 18 insertions(+), 12 deletions(-)
+
+commit 54e40458d6d3a31adefa89736c23828b192013ee
+Merge: 26c8ee06 bea0314e
+Author: Flash Galatine <AsheJunius@gmail.com>
+Date:   Tue Oct 6 00:03:34 2026 -0400
+
+    Merge Sprints 2+3 (#246) into the web stack tip (#255) — join branch for the discord-worker sprints
+
+    Not for merging: this branch is the base of the discord-worker stack, which
+    needs both lines (bot-logic 4.6.0 / discord-worker 5.8.2 / the CJK re-cut
+    from #246, core 5.9.0 / discord-worker 5.8.3 from the web stack). Retarget
+    the discord PRs to main once #246 and #255 have merged.
+
+    The same conflicts come up on merge day when #246 and #249 meet in main.
+    Resolution (text only; no font conflict — the subsets changed only on #246;
+    lockfile unchanged):
+    - apps/discord-worker/package.json, README.md and docs/versions.md current
+      rows: the higher version (discord-worker 5.8.3, web-app 5.14.9).
+    - apps/discord-worker/CHANGELOG.md: both entries, 5.8.3 above 5.8.2;
+      docs/versions.md discord-worker history: both rows, 5.8.3 above 5.8.2.
+    - root CHANGELOG-laymans.md: #246's 5.10.8 goes between 5.10.9 and 5.10.7.
+    - docs/audits/2026-10-04-i18n/I18N_AUDIT_2026-10-04.md status table: per
+      finding ID, the row with a status wins over OPEN (I18N-016..020, TERM-004,
+      TERM-012, TERM-013, HC-001, HC-002 from #246); 45 rows, one per ID.
+    - docs/audits/2026-10-04-i18n/evidence/reverify-2026-10-05.md: both sprint
+      sections (Sprints 2+3 after Sprint 29).
+
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+commit 7c18708446ae7c1eab9e7b4906f733939a20b835
+Author: Flash Galatine <AsheJunius@gmail.com>
+Date:   Mon Oct 5 23:57:48 2026 -0400
+
+    refactor(web-app): remove what the two refactors left without readers (2026-10-04 remediation, Sprint 29)
+
+    - MarketBoard: setSelectedServer, setShowPrices, getShowPrices,
+      fetchPricesForDyes, shouldFetchPrice and static formatPrice (only Gradient
+      and Swatch called them; Comparison, Harmony and Mixer still build a board
+      and use its render/relay; getSelectedServer stays — Harmony reads it).
+      Confirmed by hand: the raw-text dead-code gate sees most of them as live
+      because MarketBoardService has same-named methods. market-board-service's
+      formatPrice export went with MarketBoard.formatPrice.
+    - services/tool-panel-builders.ts (buildMarketPanel) and its test, its barrel
+      re-export and its vi.mock stubs in twelve test files; ICON_STAIRS.
+    - Seven locale keys × 6 (mixer.selectTwoDyes, mixer.interpolationSettings,
+      mixer.colorSpace, mixer.steps, tools.character.selectSubrace /
+      selectGender / colorCategory) — no translation changed.
+    - Docs: components.md, tools.md and overview.md no longer list the removed
+      helper or Gradient's DyeSelector; components.md's resolveCharaGear row
+      names the Glamour Reader.
+
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+ apps/web-app/src/locales/de.json | 7 -------
+ apps/web-app/src/locales/en.json | 7 -------
+ apps/web-app/src/locales/fr.json | 7 -------
+ apps/web-app/src/locales/ja.json | 7 -------
+ apps/web-app/src/locales/ko.json | 7 -------
+ apps/web-app/src/locales/zh.json | 7 -------
+ 6 files changed, 42 deletions(-)
+
+commit fcc0b76faf5a2ba4fbbc9694c1c12cb9a65dc9b8
+Author: Flash Galatine <AsheJunius@gmail.com>
+Date:   Mon Oct 5 21:40:43 2026 -0400
+
+    refactor(web-app): remove 21 orphaned locale keys from all six locales (2026-10-04 remediation, Sprint 23: DEAD-007, DEAD-010)
+
+    Removed from en, ja, de, fr, ko and zh (no translation changed):
+    - DEAD-007: accessibility.hardForDeuteranopia / hardForProtanopia /
+      hardForTritanopia / verySimular / somewhatSimilar — hidden from the
+      unused-key analyzer by its accessibility.${…} prefix rule;
+    - DEAD-010: emptyStates.noSearchResults.{title,description,action},
+      emptyStates.filteredOut.*, emptyStates.noPrice.{description,action},
+      marketBoard.priceUnavailable, emptyStates.noImage.*,
+      emptyStates.loading.{title,description} (their emptied parent objects too);
+    - common.copied and mixer.dye3, orphaned by DEAD-003.
+    Each was grepped as a literal and as every dynamic shape that could build
+    it. validate-i18n, reorder-locales --check, the parity gate and the orphan
+    gate all pass; no allow-list entry referenced them.
+
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+ apps/web-app/src/locales/de.json | 31 -------------------------------
+ apps/web-app/src/locales/en.json | 31 -------------------------------
+ apps/web-app/src/locales/fr.json | 31 -------------------------------
+ apps/web-app/src/locales/ja.json | 31 -------------------------------
+ apps/web-app/src/locales/ko.json | 31 -------------------------------
+ apps/web-app/src/locales/zh.json | 31 -------------------------------
+ 6 files changed, 186 deletions(-)
+
+commit 641257c5c118599b3ef3e81a964a534f2ba3ac7d
+Author: Flash Galatine <AsheJunius@gmail.com>
+Date:   Mon Oct 5 20:44:00 2026 -0400
+
+    fix(bot-logic,discord-worker): /manual explains every /glamour verdict and names Brio
+
+    Follow-up to PR #246, stacked on it. The /glamour reply points at
+    `/manual topic:👤`, and #246 rewrote that topic to cover /glamour. A
+    documentation review against the code found four things still missing:
+
+    - Brio. The parser reads Brio files and the card labels them BRIO, but
+      every .chara help string and the /swatch and /glamour `file` option
+      text named only Anamnesis and Ktisis. Brio is now named in all of
+      them, x6, and in schemas.ts. The deploy re-registers commands.
+    - The verdict list read "DYES, NO GLAM, LOCKED or a race". It now says
+      the race name replaces LOCKED only when exactly one race can wear the
+      piece, and that a model with no item behind it shows a dash (—).
+    - The bot picks the twin itself, preferring one that takes dyes. The
+      web app's Glamour Reader, linked at the end of the reply, lets you
+      choose another.
+    - The GPOSERS list's labels and Acquisition lines are English in every
+      language, and a blank Acquisition line means no source is known.
+
+    The translations were drafted per locale, then checked by verifiers for
+    meaning, terms and the card's own labels. The CJK subsets were re-cut:
+    SC +6, JP +4, KR +3, none dropped.
+
+    manual.test.ts adds three guards over the real locale files:
+    - the pointer's emoji lands on a topic that names /glamour;
+    - every producer in PRODUCER_TOKENS, read from source, is named;
+    - the topic quotes each locale's card labels, the dash and
+      "Acquisition".
+    Before the translations landed, exactly the ten tests covering the
+    untranslated locales failed.
+
+    Docs: the /glamour section of command-reference.md now explains the
+    card's look chips and verdicts, the twin rule and the GPOSERS list.
+    Its /swatch pointer no longer promises export steps. Brio is named
+    there and in commands.md and core's overview.
+
+    bot-logic 4.6.1, discord-worker 5.8.4 (5.8.3 is PR #249).
+
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+ packages/bot-logic/src/i18n/locales/de.json | 10 +++++-----
+ packages/bot-logic/src/i18n/locales/en.json | 10 +++++-----
+ packages/bot-logic/src/i18n/locales/fr.json | 10 +++++-----
+ packages/bot-logic/src/i18n/locales/ja.json | 10 +++++-----
+ packages/bot-logic/src/i18n/locales/ko.json | 10 +++++-----
+ packages/bot-logic/src/i18n/locales/zh.json | 10 +++++-----
+ 6 files changed, 30 insertions(+), 30 deletions(-)
+
+commit c88d51c6ba3c26bcb1dbdaa62c8bc998fbffb29e
+Author: Flash Galatine <AsheJunius@gmail.com>
+Date:   Mon Oct 5 18:28:16 2026 -0400
+
+    fix(web-app): Sprint 6 review follow-ups — wording, docs, plural keys in the i18n gate
+
+    Adversarial review of Sprint 6 (2026-10-04 remediation).
+
+    Translations changed (en unchanged):
+    - ja glamour.sheet.privacy: この装備ごとに → 装備1点ごとに (per piece of gear;
+      "this piece" could be read as one piece).
+    - de glamour.sheet.warn: "Du hast {name} gewählt, das eine eigene Quelle hat."
+      → "Du hast {name} gewählt – dafür gibt es eine eigene Quelle." — no neuter
+      "das" after an item name of any gender (the I18N-008 rule).
+    - ko glamour.verdict.explain: 염색 칸 → 염색 채널, and zh: 染色栏 → 染色通道, the
+      noun the gear hint already uses.
+
+    i18n gate: scripts/validate-i18n.js reads both keys of a '…_one', '…_other'
+    pair (the shape every tCount call and the verdict's phrase() helper pass), so
+    a plural key the code asks for and en.json lacks fails the gate. Neither key
+    was seen before. The patterns and the extractor move to
+    scripts/i18n-key-patterns.mjs, which the parity gate tests directly: importing
+    the validator would count its whole body as uncovered, because the gate runs it
+    as a child process (-1 point of web-app coverage when tried). Mutation check:
+    renaming swatch.footEmpty_one in en.json now fails the validator at
+    glamour-block.ts:1497.
+
+    Docs:
+    - tools.md, components.md, swatch-matcher.md: Copy list / Save .md sit in the
+      Glamour Reader's header and open the export sheet (5.13.0); glamour-block is
+      imported by the Glamour Reader since 5.13.0; "clan", not "tribe".
+    - ffxiv-terminology.md: zh Brass item names are prefixed 铜框 (34 rows) or 铜色
+      (27); Fur Color (1014) is the Hrothgar row of the palette table; the
+      dye-channel bullet names the ko / zh nouns.
+    - glossary.md: a Preset entry (de Vorlage, feminine; TERM-006).
+    - swatch-tool.ts comment: CLAN & GENDER.
+
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+ apps/web-app/src/locales/de.json | 2 +-
+ apps/web-app/src/locales/ja.json | 2 +-
+ apps/web-app/src/locales/ko.json | 2 +-
+ apps/web-app/src/locales/zh.json | 2 +-
+ 4 files changed, 4 insertions(+), 4 deletions(-)
+
+commit 31c8914f3084ee4f3022d28a6dafad485f5f6586
+Author: Flash Galatine <AsheJunius@gmail.com>
+Date:   Mon Oct 5 18:05:37 2026 -0400
+
+    fix(web-app,core): translations and terminology (2026-10-04 remediation, Sprint 6)
+
+    English and code:
+    - TERM-002: the Glamour list privacy note says edits are kept per piece of
+      gear. TERM-009: "clan" for the clan (CLAN & GENDER), ANY RACE for the
+      race lock. TERM-018: "Glamour list" in every toast, and the download is
+      "Save .md" as in the export sheet.
+    - I18N-007: singular forms through tCount (Intl.PluralRules per locale) and
+      new *_one / *_other keys. HC-003: the facewear chip tooltip names the
+      colour in the reader's language. I18N-012: ja / zh sentences join with no
+      ASCII space.
+
+    Translations (one translator and one verifier per language), from the
+    dictionary: TERM-003 / I18N-011 sheet names, TERM-005..008, TERM-016 (ja
+    names the channels 染色1 / 染色2 and counts them with ヵ所: the client has no
+    dye-channel noun, チャンネル is a chat channel there and 染色枠 is no client
+    word), TERM-017, I18N-003, I18N-008..010, the Hrothgar fur-pattern note.
+    TERM-007: the facewear colour tag uses the client's slot and colour words
+    (Addon 16050 / 16054) in five locales.
+
+    Core 5.8.2: the Brass facewear colour is Bronze / 구리색 / 铜色 in fr / ko /
+    zh (the client Glasses sheet); no font re-cut needed.
+
+    Dictionary (docs/reference/ffxiv-terminology.md): the facewear words with
+    their official sources, the facewear colour tag, the Brass row, lobby rows
+    1013 / 1014, and the dye channels. The e2e and living docs follow the
+    renamed labels.
+
+    web-app 5.14.4, core 5.8.2.
+
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+ apps/web-app/src/locales/de.json       | 128 +++++++++++++++++----------------
+ apps/web-app/src/locales/en.json       |  38 +++++-----
+ apps/web-app/src/locales/fr.json       |  70 +++++++++---------
+ apps/web-app/src/locales/ja.json       |  62 ++++++++--------
+ apps/web-app/src/locales/ko.json       |  76 +++++++++++---------
+ apps/web-app/src/locales/zh.json       |  62 ++++++++--------
+ packages/core/src/data/locales/fr.json |   4 +-
+ packages/core/src/data/locales/ko.json |   4 +-
+ packages/core/src/data/locales/zh.json |   4 +-
+ 9 files changed, 242 insertions(+), 206 deletions(-)
+
+commit ad87be42cf9b97b0497a46b4f1ce5bbe2fda64c4
+Author: Flash Galatine <AsheJunius@gmail.com>
+Date:   Mon Oct 5 17:20:50 2026 -0400
+
+    fix(web-app): Sprint 5 review follow-ups
+
+    From the adversarial review of the Sprint 5 commits:
+    - BUG-013: Harmony and Budget consume ?dye= once their deep link has stored
+      the dye, so a hand-off to Budget no longer follows the user into Harmony
+      (RouterService preserves dye) and replaces its saved base. Harmony also
+      drops ?hex= on a user's base change (not on arrival), so a reload keeps the
+      pick.
+    - Gradient no longer repeats any action the result card performs itself
+      before it emits (inspect-harmony/-accessibility/-comparison, transform-
+      gradient/-mixer, as inspect-budget already did): double navigation,
+      contradictory toasts, a navigation under Comparison's slot modal.
+      gradient.slotsFull lost its last reader and is removed from all six
+      locales.
+    - BUG-015: Clear All during a price fetch reruns a targetless search, so the
+      quick picks are priced instead of left offline.
+    - BUG-025: a dye-filter change after a slot pick redraws the selection card
+      and SEND TO.
+    - main.ts is tagged @entrypoint: index.html loads it, and Sprint 5's boot
+      test is its only importer.
+
+    Every code item has a test that failed before its fix.
+
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+ apps/web-app/src/locales/de.json | 1 -
+ apps/web-app/src/locales/en.json | 1 -
+ apps/web-app/src/locales/fr.json | 1 -
+ apps/web-app/src/locales/ja.json | 1 -
+ apps/web-app/src/locales/ko.json | 1 -
+ apps/web-app/src/locales/zh.json | 1 -
+ 6 files changed, 6 deletions(-)
+
+commit 159a1dd53f0a1bb6d6055fc2468b761922504b0a
+Author: Flash Galatine <AsheJunius@gmail.com>
+Date:   Mon Oct 5 16:28:41 2026 -0400
+
+    fix(bot-logic,discord-worker): Sprint 2+3 review follow-ups
+
+    - /glamour's header puts clan and gender first, as /swatch does, so a long
+      localized clan (ja, fr) pushes the producer into the ellipsis instead of
+      the gender symbol, the card's only one. Found by the review.
+    - The character-file manual topic says /swatch matches the color slots to
+      dyes and lists the gear dyes (it said it matched the gear dyes) in en, de,
+      ja and zh.
+    - Changelogs: the look count takes a plural (the entry described I18N-016
+      backwards), three Korean option descriptions re-register (not two), and
+      the player note scopes the dictionary names to /manual and the cards;
+      bot-logic CLAUDE.md says a refused file is a reply, not a card.
+
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+ packages/bot-logic/src/i18n/locales/de.json | 2 +-
+ packages/bot-logic/src/i18n/locales/en.json | 2 +-
+ packages/bot-logic/src/i18n/locales/ja.json | 2 +-
+ packages/bot-logic/src/i18n/locales/zh.json | 2 +-
+ 4 files changed, 4 insertions(+), 4 deletions(-)
+
+commit f538b4f53bdb8af19707e1816f9a8db3cc87f64f
+Author: Flash Galatine <AsheJunius@gmail.com>
+Date:   Mon Oct 5 16:10:05 2026 -0400
+
+    fix(bot-logic,discord-worker): the bot speaks the user's language (2026-10-04 remediation, Sprints 2+3)
+
+    - HC-001: getLocalizedClan beside getLocalizedRace (core getClan); the
+      /glamour and /swatch cards upper-case the localized clan with
+      toLocaleUpperCase(locale). English output is unchanged; the fallback
+      spells the key out, never the raw key.
+    - HC-002: card.charaFileReason.{tooLarge,notOnDiscord,downloadFailed,
+      unreadable} x6; discord-worker's chara-attachment pre-checks and the
+      /glamour and /swatch parser and api-worker refusals fill the translated
+      file error with them instead of an English reason.
+    - I18N-016: card.glamourLooks_one/_other through tc().
+    - I18N-019: the character-file manual topic covers /glamour.
+    - TERM-012, TERM-013, TERM-004, I18N-017, I18N-018, I18N-020 and the ko
+      /preferences clan tooltip, per the dictionary. TERM-013 uses the client's
+      面部配饰 (official sources), not the finding's 脸部配饰, and the facewear
+      tip uses the client's word in ja, de and ko as well.
+    - CJK subsets re-cut (cmap: JP +6, SC +7, KR +2/-1); all font tests pass.
+
+    One translator and one verifier per language. bot-logic 4.6.0,
+    discord-worker 5.8.2.
+
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+ packages/bot-logic/src/i18n/locales/de.json | 33 +++++++++++++++++------------
+ packages/bot-logic/src/i18n/locales/en.json | 11 ++++++++--
+ packages/bot-logic/src/i18n/locales/fr.json | 19 +++++++++++------
+ packages/bot-logic/src/i18n/locales/ja.json | 17 ++++++++++-----
+ packages/bot-logic/src/i18n/locales/ko.json | 31 ++++++++++++++++-----------
+ packages/bot-logic/src/i18n/locales/zh.json | 21 ++++++++++++------
+ 6 files changed, 87 insertions(+), 45 deletions(-)
+
+commit ce5d71cf683e675f016d86f17884440f02d9c5f6
+Author: Flash Galatine <AsheJunius@gmail.com>
+Date:   Mon Oct 5 14:15:48 2026 -0400
+
+    fix(web-app): presets and collections (2026-10-04 remediation, Sprint 4)
+
+    - BUG-029: saved community presets are no longer tombstoned by a failed
+      community request, a saved local palette, or a stale filtered response.
+      HybridPresetService.getPresets reports { presets, apiOk, apiIds } (ids
+      counted before the merged list is cut); preset-tool reconciles only on a
+      complete, unfiltered, successful answer, heals false marks, never marks a
+      local palette, and drops superseded loads. A failed feed shows the
+      existing "Community feed unavailable" strip.
+    - BUG-030: a failed card vote or un-vote says it failed instead of "already
+      voted"; only a real already_voted marks the card.
+    - BUG-031: the presets list cache is invalidated after a vote, delete, edit
+      or submit (CommunityPresetService.invalidatePresets).
+    - BUG-032 / BUG-101: a failed delete is reported as a failure by both
+      callers; My Submissions refreshes after a successful delete.
+    - BUG-108: a failed hasVoted check no longer zeroes the vote count.
+    - BUG-109 / BUG-110: tab counts follow the filters and search; a vote made
+      in the detail view reaches the card.
+    - OPT-008: search and sort on the Saved and Mine tabs work on their local
+      pools, with no refetch or spinner.
+    - BUG-017: the collection manager refreshes its list, count and limit after
+      a create. BUG-084: single-collection export keeps non-Latin names.
+    - BUG-016 / BUG-082: Save character colors numbers a taken name, says when
+      the collection limit is reached (new collections.collectionsLimitReached,
+      six locales), and a blank Nickname falls back to the file name (also on
+      the file card's title).
+    - BUG-102: the submission form closes only itself after an await, and a
+      blocked sessionStorage no longer turns a found duplicate into a failure.
+    - BUG-026: preset-tool's tests cover reconcile, votes, tab pools and
+      counts; preset-tool.ts now counts toward coverage.
+
+    web-app 5.14.2.
+
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+ apps/web-app/src/locales/de.json | 1 +
+ apps/web-app/src/locales/en.json | 1 +
+ apps/web-app/src/locales/fr.json | 1 +
+ apps/web-app/src/locales/ja.json | 1 +
+ apps/web-app/src/locales/ko.json | 1 +
+ apps/web-app/src/locales/zh.json | 1 +
+ 6 files changed, 6 insertions(+)
+
+commit 009283bad934231910c41b6ed2d923dc70601e63
+Merge: 901b144d fef7f306
+Author: Flash Galatine <AsheJunius@gmail.com>
+Date:   Mon Oct 5 05:37:58 2026 -0400
+
+    merge: main into fix/core-race-clan-names (batch merged; versions follow it)
+
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+    # Conflicts:
+    #       CHANGELOG-laymans.md
+    #       README.md
+    #       apps/discord-worker/CHANGELOG-laymans.md
+    #       apps/discord-worker/CHANGELOG.md
+    #       apps/discord-worker/package.json
+    #       apps/og-worker/CHANGELOG.md
+    #       apps/og-worker/package.json
+    #       docs/versions.md
+
+commit 62ebed1ee71e6edc85c1fa3e9ac0f7a7afc7f118
+Merge: 44776eb8 0241867e
+Author: Flash Galatine <AsheJunius@gmail.com>
+Date:   Mon Oct 5 05:13:14 2026 -0400
+
+    merge: main into fix/security-2026-10-03-sprint5 (version rows, player notes)
+
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+    # Conflicts:
+    #       CHANGELOG-laymans.md
+    #       README.md
+    #       docs/versions.md
+
+commit 91de5f8dc5f37eb876de5a7627e951eb3df7a01f
+Author: Flash Galatine <AsheJunius@gmail.com>
+Date:   Mon Oct 5 02:55:57 2026 -0400
+
+    fix(web-app): name the XIVAuth User fallback in the sign-in note and Terms (C02, TERM-014/015)
+
+    The sign-in note (six locales) and Terms named the verified character but
+    not the "XIVAuth User" + first-8-characters fallback the oauth worker
+    stores (Codex review). The fallback is also used when the character list
+    cannot be read at sign-in, so the note, the Terms and Privacy Guide item 3
+    now say "if no verified character is available when you sign in" rather
+    than "if you have none".
+
+    One translator and one verifier per language. The parity test now
+    requires the label in every locale's note and in the Terms. Last updated
+    is 2026-10-05 on all twelve variants. Three translation words are aligned
+    with the rest of each file: ko 복장 -> 의상 (TERM-014), ko 운영자 -> 조정자,
+    zh 版主 -> 审核员 (TERM-015).
+
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+ apps/web-app/src/locales/de.json | 2 +-
+ apps/web-app/src/locales/en.json | 2 +-
+ apps/web-app/src/locales/fr.json | 2 +-
+ apps/web-app/src/locales/ja.json | 2 +-
+ apps/web-app/src/locales/ko.json | 2 +-
+ apps/web-app/src/locales/zh.json | 2 +-
+ 6 files changed, 6 insertions(+), 6 deletions(-)
+
+commit a4a769f57a7ce8527a90ea6626cd357bbad0621a
+Author: Flash Galatine <AsheJunius@gmail.com>
+Date:   Mon Oct 5 01:33:25 2026 -0400
+
+    fix(core): 5.8.1 — Korean race names and Korean / Chinese clan names from the game clients
+
+    The 2026-10-05 character-sheet research read the KR and CN clients' Race and Tribe sheets and
+    found 19 of core's names were not the clients' own: Korean Hyur 휴란 → 휴런 and Hrothgar 로스갈 →
+    로스가르; 13 of 16 Korean clans (미드랜더 → 중원 부족, 렌 → 아우라 렌, 헬리온 → 맴도는 별, ...);
+    four Chinese clans (日光之民 → 掠日之民, 迷失之民 → 迷踪之民, 拉瓦族 → 密林之民, 维纳族 → 山林之民).
+    The i18n audit's HC-001 is about to print core's clan names on the bot cards, so they are fixed
+    first (option 1 of #238's plan).
+
+    - core 5.8.1: corrected in the generator (build-locales.ts buildRaces / buildClans); ko.json and
+      zh.json rebuilt from it — only those 19 values and meta.generated change.
+    - discord-worker 5.8.1 / og-worker 2.11.2: CJK subsets re-cut, because both font gates read core's
+      locales. Compared by cmap: KR +4 / +6 glyphs, SC +3 / +3, minus only glyphs the old names used;
+      the JP subsets' cmaps are unchanged, so those files are not rewritten.
+    - Versions follow the batch: discord-worker 5.8.0 (#227) and og-worker 2.11.1 (#231) come first.
+    - docs: version tables, the dictionary's race row and a KO / ZH clan table (its two warnings go),
+      the traps note and the research index.
+
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+ packages/core/src/data/locales/ko.json | 32 ++++++++++++++++----------------
+ packages/core/src/data/locales/zh.json | 10 +++++-----
+ 2 files changed, 21 insertions(+), 21 deletions(-)

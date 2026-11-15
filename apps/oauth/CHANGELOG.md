@@ -5,6 +5,51 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.2] - 2026-11-01
+
+### Fixed
+
+- **XIVAuth roster failure no longer renames the account:** a `GET /api/v1/characters` that failed
+  (a non-OK status, a thrown error or timeout, or a body that is not a JSON array) left the roster
+  empty, so the sign-in looked like one with no verified character. The stored `username` was
+  overwritten with `XIVAuth User <id8>`, and the web app's author refresh then wrote that label onto
+  all of the account's presets until the next good sign-in. Since 3.2.1 made verified names real, this
+  was the likeliest way to lose one. An existing user now keeps the stored name, in `users.username`
+  and in the token's `username`. `global_name` stays `null` because nothing was verified at that
+  sign-in, so presets-api's `global_name || username` refreshes the author to the stored name.
+- **Unchanged:** a roster that arrived with no usable verified character (empty, unverified only, blank
+  or non-string names, only non-object elements) still gives the fallback, even over a stored name, and
+  a brand-new user with a failed fetch still gets it. Only a verified character from a delivered roster
+  can set a name (FINDING-013), and nothing is read from an answer that is not one. No route, token
+  claim, D1 column or scope changed.
+- `findOrCreateUser` keeps the name with `COALESCE(?,username)` rather than writing back what it read,
+  so a slower failed sign-in cannot undo a newer good one.
+- The policy text that described the old behavior is corrected alongside this in web-app 5.16.8 and
+  discord-worker 5.9.9.
+- Two tests in `identity-timeouts.sqlite.test.ts` advanced fake time while `crypto.subtle` hashes were
+  still running on the real clock, which failed CI on a loaded runner. They now wait until every
+  acknowledgement has started. Test-only.
+
+## [3.2.1] - 2026-11-01
+
+### Fixed
+
+- **XIVAuth display name:** a verified character's name now becomes the sign-in's `username` and
+  `global_name`. The handler read the boolean `verified` field, which XIVAuth emits on
+  `GET /api/v1/characters` only for `character:manage` tokens; the `character` scope this worker
+  requests never receives it, so every XIVAuth user got the `XIVAuth User <id8>` fallback. The handler
+  now treats a registration as verified only when `verified_at` is an ISO 8601 timestamp that parses,
+  and an explicit `verified: false`, a null, blank, non-string or unparseable `verified_at`, or a bare
+  `verified: true` without `verified_at` all fail closed to the fallback. The same check feeds the
+  debug count of verified characters. No route, token claim, D1 column or scope changed.
+- **What players see:** an existing XIVAuth user's stored name changes from the fallback to their
+  verified character's name at their next sign-in. The web app's author refresh then writes that name
+  onto all of their published presets, including, on an account linked to Discord, presets submitted
+  through the bot. A failed roster fetch still gives the fallback for that sign-in.
+- Test fixtures now send the character roster in the shape XIVAuth sends for the `character` scope
+  (`verified_at`, no `verified`) instead of a field the real API never sent here. They are still
+  hand-written, so they would not notice a future upstream rename.
+
 ## [3.2.0] - 2026-10-27
 
 ### Hardening adoption
@@ -38,8 +83,9 @@ identity splitting is disabled, and this release declares no outbound continuity
   changing the association or minting its stale Discord identity. Matching sign-ins and new
   accounts continue. Safe automatic splitting remains pending consumer rollout and activation.
 - Sign OAuth state over `oauth-state-v1:` plus its encoded payload, separate from JWT input.
-  The two-part wire shape is unchanged. Legacy issuance ends 2026-10-28 00:00:00 UTC and legacy
-  acceptance ends at 00:10:00 UTC; a deployment afterward requires old in-flight sign-ins to retry.
+  The two-part wire shape is unchanged. States signed by 3.1.x are no longer accepted: the
+  one-time raw-HMAC window closed 2026-10-28 00:10 UTC before this release shipped, so its
+  compatibility path was removed, and a sign-in started before the deployment must be restarted once.
 - Explicitly remove development routes and disable development workers.dev, preserving the
   top-level production auth domain.
 - Opt into IPv6 /64 rate-limit keys while preserving IPv4, mapped-address and header behavior.
@@ -56,6 +102,12 @@ identity splitting is disabled, and this release declares no outbound continuity
   deployment or activation is performed by preparing this release.
 - Document the [identity and moderation contract](../../docs/architecture/identity-moderation.md)
   and test the private entrypoint with the actual local Workers runtime and transactional SQLite.
+- Identity refusals on both provider callbacks log their refusal code through the request logger
+  (no message, internal, Discord or XIVAuth IDs) before the unchanged generic 503. Workers Logs
+  stay off, so the line is visible only in a live `wrangler tail`.
+- Local test runs need Node.js 22.16+ (`node:sqlite` `StatementSync.columns()` in the SQLite test
+  double); the oauth `engines` floor now says so. The workerd runtime tests keep Wrangler's
+  profile, cache and logs in a fresh OS temp directory removed after the run, not in the checkout.
 
 ## [3.1.3] - 2026-10-06
 

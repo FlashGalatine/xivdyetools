@@ -31,6 +31,12 @@ concurrency:
 jobs:
   deploy:
     name: Deploy Image Worker
+    # Image hold (2026-10-31): while the repository variable IMAGE_WORKER_DEPLOY_HOLD is
+    # 'true', a push to main skips this job, so a merge that matches the paths above
+    # (a lockfile bump included) asks for no production approval. A manual dispatch
+    # still deploys, behind the same reviewer gate. Unset the variable to resume.
+    # See docs/operations/DEPLOY_ENVIRONMENTS.md, "Update 2026-10-31".
+    if: github.event_name == 'workflow_dispatch' || vars.IMAGE_WORKER_DEPLOY_HOLD != 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     # FINDING-009: bind production deploys/publishes to the `production` GitHub
