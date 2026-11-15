@@ -12,6 +12,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `/about`: the X/Twitter link now points at `https://x.com/FlashGalatine`. The account was renamed from
   @AsheJunius, and the link comes from core's `SOCIAL_LINKS`. No discord-worker source change.
 
+## [5.9.10] - 2026-10-29
+
+### Changed
+
+- Conditional Core 6/SVG/Bot Logic 5 adoption; preserve original-byte guards and card/embed adapters.
+- Source preparation only: preserve the earlier release, registry and consumer-acceptance gates.
+  Merging waits until October 30 or later, satisfied prerequisites and new explicit authorization; publication, deployment and activation remain held.
+
 ## [5.9.9] - 2026-11-01
 
 ### Changed
