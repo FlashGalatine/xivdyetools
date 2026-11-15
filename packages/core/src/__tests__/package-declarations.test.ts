@@ -24,8 +24,18 @@ it('emits declarations for the existing public utility reexports', () => {
     ], { cwd: coreRoot, stdio: 'pipe', windowsHide: true });
     const rootDeclarations = readFileSync(join(output, 'index.d.ts'), 'utf8');
     const utilities = readFileSync(join(output, 'utils/index.d.ts'), 'utf8');
+    // The root barrel must re-export each helper by name; a bare substring check is
+    // satisfied by unrelated root exports such as roundToBandDisplay.
+    const rootUtilityBlock =
+      /export\s*\{([^}]*)\}\s*from\s*['"]\.\/utils\/index\.js['"]/.exec(rootDeclarations)?.[1] ?? '';
+    expect(rootUtilityBlock, 'index.d.ts re-exports ./utils/index.js').not.toBe('');
+    const rootUtilityNames = rootUtilityBlock
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .split(',')
+      .map((specifier) => specifier.trim())
+      .filter(Boolean);
     for (const name of ['clamp', 'round', 'isValidRGB', 'isValidHSV', 'isAbortError']) {
-      expect(rootDeclarations, `${name} is an existing package-root export`).toContain(name);
+      expect(rootUtilityNames, `${name} is an existing package-root export`).toContain(name);
       expect(utilities, `${name} must survive declaration emission`).toMatch(
         new RegExp(`export declare function ${name}\\(`),
       );

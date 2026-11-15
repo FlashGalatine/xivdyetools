@@ -9,9 +9,11 @@ import {
   selectBanParent,
   applyBanReview,
   reviewMessage,
+  REVIEW_UNAVAILABLE,
 } from './ban-confirmation-service.js';
 import { handlePresetApproveButton } from '../handlers/buttons/preset-moderation.js';
 import { handlePresetRevertModal } from '../handlers/modals/preset-rejection.js';
+import { handleBanCancelButton } from '../handlers/buttons/ban-confirmation.js';
 import { isPresetAuthorBanned } from './ban-service.js';
 
 const D = '123456789012345678',
@@ -96,6 +98,20 @@ describe('immutable moderation confirmation transactions on shipped SQLite schem
     raw.prepare('SELECT action,preset_id FROM moderation_log ORDER BY rowid').all();
   const apply = async (nonce: string, action: 'ban' | 'unban' = 'ban', actor = MOD) =>
     applyBanReview(env, nonce, actor, action, 'Repeated abuse reason', 'Target');
+  const cancel = async (actor: string, nonce: string) =>
+    (await (
+      await handleBanCancelButton(
+        {
+          id: 'i',
+          token: 't',
+          application_id: 'a',
+          user: { id: actor },
+          data: { custom_id: `ban_cancel_${nonce}` },
+        },
+        env,
+        {} as ExecutionContext,
+      )
+    ).json()) as { type: number; data: { flags?: number } };
   beforeEach(() => {
     raw = new DatabaseSync(':memory:');
     raw.exec(readFileSync(resolve(import.meta.dirname, '../../../presets-api/schema.sql'), 'utf8'));
@@ -723,6 +739,68 @@ describe('immutable moderation confirmation transactions on shipped SQLite schem
       presetsStillHidden: 1,
     });
     expect(status('old')).toBe('hidden');
+  });
+  it("cancel removes only the actor's live review so it can never be applied", async () => {
+    const review = await createBanReview(env, MOD, 'ban', [D]);
+    expect(review.phase).toBe('review');
+    expect((await cancel(MOD2, review.nonce)).data.flags).toBe(64);
+    expect(count('moderation_ban_confirmations')).toBe(1);
+    expect((await cancel(MOD, review.nonce)).type).toBe(7);
+    expect(count('moderation_ban_confirmations')).toBe(0);
+    expect((await cancel(MOD, review.nonce)).data.flags).toBe(64);
+    expect((await apply(review.nonce)).success).toBe(false);
+    expect(count('banned_users')).toBe(0);
+    expect(count('moderation_log')).toBe(0);
+  });
+  it('cancel refuses a selection nonce and leaves it usable', async () => {
+    ban();
+    member(P, U);
+    ban(P2, D2);
+    member(P2, D);
+    const chooser = await createBanReview(env, MOD, 'unban', [D]);
+    expect(chooser.phase).toBe('select');
+    expect((await cancel(MOD, chooser.nonce)).data.flags).toBe(64);
+    expect(
+      row(
+        'SELECT consumed_at,outcome FROM moderation_ban_confirmations WHERE nonce=?',
+        chooser.nonce,
+      ),
+    ).toEqual({ consumed_at: null, outcome: null });
+    await expect(selectBanParent(env, MOD, chooser.nonce, P)).resolves.toBeTruthy();
+  });
+  it('an unexpected apply failure is logged once; an unknown nonce is not', async () => {
+    const review = await createBanReview(env, MOD, 'ban', [D]);
+    const logger = { error: vi.fn() };
+    const failure = 'D1_ERROR: batch failed';
+    env.DB = adapter(raw, () => {
+      throw new Error(failure);
+    });
+    const result = await applyBanReview(
+      env,
+      review.nonce,
+      MOD,
+      'ban',
+      'Repeated abuse reason',
+      'Target',
+      logger as never,
+    );
+    expect(result).toMatchObject({ success: false, error: REVIEW_UNAVAILABLE });
+    expect(logger.error).toHaveBeenCalledTimes(1);
+    expect(logger.error.mock.calls[0][0]).toBe('Account ban review could not be applied');
+    expect((logger.error.mock.calls[0][1] as Error).message).toBe(failure);
+    logger.error.mockClear();
+    env.DB = adapter(raw);
+    const unknown = await applyBanReview(
+      env,
+      U2,
+      MOD,
+      'ban',
+      'Repeated abuse reason',
+      'Target',
+      logger as never,
+    );
+    expect(unknown.success).toBe(false);
+    expect(logger.error).not.toHaveBeenCalled();
   });
   it('inactive creation/load/execution/selection do no OAuth or storage access', async () => {
     env.LINKED_BAN_CONFIRMATION_ENABLED = 'false';

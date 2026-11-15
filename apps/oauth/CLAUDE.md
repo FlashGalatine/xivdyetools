@@ -90,7 +90,7 @@ Frontend                       OAuth Worker                       Discord
    │ ◄─ { jwt, user, expires_at } ──│                                │
 ```
 
-XIVAuth follows the same shape under `/auth/xivauth` and `/auth/xivauth/callback`, plus pulls `/api/v1/characters` to pick the first **verified** character with a non-blank name (trimmed) — that name becomes `username` / `global_name`. Non-object roster elements are dropped; with no usable character the user gets `XIVAuth User <id8>` and `global_name: null` (BUG-057). The roster is read in memory and discarded — none of it is stored (FINDING-001, 2026-08-29 audit).
+XIVAuth follows the same shape under `/auth/xivauth` and `/auth/xivauth/callback`, plus pulls `/api/v1/characters` to pick the first **verified** character with a non-blank name (trimmed) — that name becomes `username` / `global_name`. Non-object roster elements are dropped; with no usable character the user gets `XIVAuth User <id8>` and `global_name: null` (BUG-057). A fetch that fails (non-OK status, thrown error or timeout, a body that is not a JSON array) delivers no roster: `global_name` is still `null`, but an existing user keeps the stored `username` (`keep_stored_username`) and only a new user gets the label. The roster is read in memory and discarded — none of it is stored (FINDING-001, 2026-08-29 audit).
 
 ### Key Directories
 
@@ -194,10 +194,10 @@ Partial unique indexes on `discord_id` and `xivauth_id` enforce per-provider uni
 
 `signState(payload, env.JWT_SECRET)` produces `<base64url-json>.<base64url-hmac>`; `verifyState` verifies the signature over `oauth-state-v1:` plus the base64url-encoded portion (`crypto.subtle.verify`, timing-safe), then rejects a state with no `exp` or an `exp` in the past (`exp` is minted as `iat + STATE_EXPIRY_SECONDS (600)`). Without a valid signature the callback returns 400. The state carries the `redirect_uri`, `return_path`, and original `state` value supplied by the SPA.
 
-Legacy signed states have a fixed issuance cutoff of 2026-10-28 00:00:00 UTC and maximum
-600-second lifetime; final acceptance ends at 00:10:00 UTC. This deadline never resets with an
-isolate. Deployment afterward makes an old in-flight sign-in retry once. Development unsigned
-GET compatibility stays separate; POST requires signed state.
+States signed without the `oauth-state-v1:` prefix (3.1.x and earlier) are rejected; the
+one-time raw-HMAC window closed 2026-10-28 00:10 UTC, before 3.2.0 shipped, so its code was
+removed. Never reintroduce a raw-HMAC fallback. A sign-in in flight across the 3.2.0 deployment
+restarts once. Development unsigned GET compatibility stays separate; POST requires signed state.
 
 ### JWT Service
 

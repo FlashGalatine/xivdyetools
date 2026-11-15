@@ -1,0 +1,88 @@
+{
+  "formatVersion": 1,
+  "status": "complete",
+  "pins": {
+    "version": "0874aee069e1e7c4",
+    "schema": "exdschema@2:rev:e773c41a90aed788cf4c1c48469fa85618ef01fb"
+  },
+  "provenance": {
+    "mode": "latest",
+    "capturedAt": "2026-10-30T01:24:02.802Z",
+    "generatedAt": "2026-10-30T01:24:04.823Z",
+    "sourceRevision": "13c386e5983fe58ff17ac08fb5712239feb2e696",
+    "sourceDirty": false,
+    "sourceFiles": [
+      {
+        "path": "packages/core/src/data/dyes.json",
+        "sha256": "2d321ca1f5cf4818379bfff70b710f00ce615d002a1ab43d12f3c6fbdfbe073a"
+      },
+      {
+        "path": "packages/core/dyenames.csv",
+        "sha256": "76b65383b2ed47a66ce182a6f815e348588ebc191375315457c2c240ab17edce"
+      },
+      {
+        "path": "packages/core/src/config/dye-vocabulary.ts",
+        "sha256": "ff5ac02ddf8dbc4c0f8d7902c6ddd9ba7e1df746e7a05ce2be96e8faa7a547d6"
+      },
+      {
+        "path": "packages/core/src/config/consolidated-ids.ts",
+        "sha256": "b2f3026a4362fead8e20cc0586014af835ebfdfe457c43957f882a8e36b1e0e1"
+      }
+    ]
+  },
+  "pages": [
+    {
+      "file": "raw/stain-page-0001.json",
+      "bytes": 37272,
+      "sha256": "ae8825c7132edcbdbd8f1e82c870acd6c46a88a3e26c5b83e35f9b3ceb9bab22",
+      "url": "https://v2.xivapi.com/api/sheet/Stain?language=en&fields=Name%2CName%40ja%2CName%40de%2CName%40fr%2CColor%2CShade%2CSubOrder%2CIsMetallic%2CIsHousingApplicable%2CItem%5B%5D.Name&limit=100",
+      "status": 200,
+      "attempts": 1
+    },
+    {
+      "file": "raw/stain-page-0002.json",
+      "bytes": 11604,
+      "sha256": "91581479bc801c7c3bd03610e75152ba0ea634dfc682f54f40ad31a50aa2bda0",
+      "url": "https://v2.xivapi.com/api/sheet/Stain?language=en&fields=Name%2CName%40ja%2CName%40de%2CName%40fr%2CColor%2CShade%2CSubOrder%2CIsMetallic%2CIsHousingApplicable%2CItem%5B%5D.Name&limit=100&after=99&version=0874aee069e1e7c4&schema=exdschema%402%3Arev%3Ae773c41a90aed788cf4c1c48469fa85618ef01fb",
+      "status": 200,
+      "attempts": 1
+    },
+    {
+      "file": "raw/stain-page-0003.json",
+      "bytes": 108,
+      "sha256": "c26d079374dcd0244cd42fe0c4a4528cffa07b7fb46b6632aa69c35ddf3df833",
+      "url": "https://v2.xivapi.com/api/sheet/Stain?language=en&fields=Name%2CName%40ja%2CName%40de%2CName%40fr%2CColor%2CShade%2CSubOrder%2CIsMetallic%2CIsHousingApplicable%2CItem%5B%5D.Name&limit=100&after=128&version=0874aee069e1e7c4&schema=exdschema%402%3Arev%3Ae773c41a90aed788cf4c1c48469fa85618ef01fb",
+      "status": 200,
+      "attempts": 1
+    }
+  ],
+  "inputs": {
+    "dyesJson": {
+      "file": "inputs/dyes.json",
+      "bytes": 24280,
+      "sha256": "2d321ca1f5cf4818379bfff70b710f00ce615d002a1ab43d12f3c6fbdfbe073a"
+    },
+    "namesCsv": {
+      "file": "inputs/dyenames.csv",
+      "bytes": 12130,
+      "sha256": "76b65383b2ed47a66ce182a6f815e348588ebc191375315457c2c240ab17edce"
+    },
+    "rulesJson": {
+      "file": "inputs/rules.json",
+      "bytes": 247,
+      "sha256": "f8668a688671daaea14967dc5bf7149b8be7ecc68005b20bbcf827dad71e72ea"
+    }
+  },
+  "reports": {
+    "json": {
+      "file": "report.json",
+      "bytes": 73787,
+      "sha256": "9c8a979cc1f79ed3627c95d32ca88e1f814d51652c73bf39643290f0b8abc632"
+    },
+    "markdown": {
+      "file": "REPORT.md",
+      "bytes": 23174,
+      "sha256": "caffdf680758631d841ccc767225db0d81c7e0fd67c5a07b32f294a949d69f8d"
+    }
+  }
+}

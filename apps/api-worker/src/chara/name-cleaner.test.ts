@@ -16,6 +16,10 @@ describe('bounded shared name cleaning', () => {
     expect(cleanName(char.repeat(128))).toBe(char.repeat(128));
     expect(cleanName(char.repeat(129))).toBe(char.repeat(128));
   });
+  it('does not end in whitespace when the cap falls on a word boundary', () => {
+    expect(cleanName(`${'a'.repeat(127)} b`)).toBe('a'.repeat(127));
+    expect(cleanName(`${'a'.repeat(127)}\t\u200e b`)).toBe('a'.repeat(127));
+  });
   it('preserves ordinary multilingual, combining, and joiner text', () => {
     expect(cleanName('한국 中文 日本語 e\u0301 👩‍💻')).toBe('한국 中文 日本語 e\u0301 👩‍💻');
   });

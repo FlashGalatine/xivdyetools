@@ -388,8 +388,10 @@ enforcement verified before activation. See [the staged contract](identity-moder
 
 ## Prepared identity consumers
 
-Presets and moderation declare `OAUTH_IDENTITY` targeting OAuth's named `IdentityLookup`, with
-environment-specific service names. Presets uses `validateSession`; moderation uses
+Presets and moderation declare `OAUTH_IDENTITY` targeting OAuth's named `IdentityLookup`.
+Presets binds each environment's own OAuth worker; moderation's routeless dev worker shares
+production D1, KV and `PRESETS_API` and binds the production `xivdyetools-oauth`. Presets
+uses `validateSession`; moderation uses
 `lookupStoredIdentity`. Their `OAUTH_SESSION_CHECK_ENABLED` and
 `LINKED_BAN_CONFIRMATION_ENABLED` flags remain false. The named provider must exist before
 consumer deployment, and schema/disclosures must be live before a separate activation.

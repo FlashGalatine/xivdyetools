@@ -216,7 +216,7 @@ export class V4LayoutShell extends BaseLitComponent {
         background: var(--v4-glass-bg, rgba(30, 30, 30, 0.9));
         backdrop-filter: var(--v4-glass-blur, blur(12px));
         -webkit-backdrop-filter: var(--v4-glass-blur, blur(12px));
-        color: var(--theme-primary, #d4af37);
+        color: var(--theme-primary);
         cursor: pointer;
         box-shadow: var(--v4-shadow-soft, 0 4px 6px rgba(0, 0, 0, 0.3));
         z-index: 100;
@@ -259,7 +259,7 @@ export class V4LayoutShell extends BaseLitComponent {
         background: var(--v4-glass-bg, rgba(30, 30, 30, 0.9));
         backdrop-filter: var(--v4-glass-blur, blur(12px));
         -webkit-backdrop-filter: var(--v4-glass-blur, blur(12px));
-        color: var(--theme-primary, #d4af37);
+        color: var(--theme-primary);
         cursor: pointer;
         box-shadow: var(--v4-shadow-soft, 0 4px 6px rgba(0, 0, 0, 0.3));
         z-index: 100;
@@ -300,7 +300,7 @@ export class V4LayoutShell extends BaseLitComponent {
         position: absolute;
         inset: -4px;
         border-radius: 50%;
-        border: 2px solid var(--theme-primary, #d4af37);
+        border: 2px solid var(--theme-primary);
         opacity: 0;
         animation: v4-palette-hint-pulse 1.8s ease-out infinite;
         pointer-events: none;
@@ -449,9 +449,9 @@ export class V4LayoutShell extends BaseLitComponent {
     // to one sheet, with the app bar, FABs and Options column printed on it
     // (styles/v4-layout.css reaches only the host, not this shadow root).
     // Last in the list so it beats the max-width: 768px block, which a narrow
-    // print page also matches; overflow is !important because v4-layout.ts
-    // gives .v4-tool-main an inline overflow-y: auto. The rationale lives out
-    // here because comments inside a css`` literal ship verbatim.
+    // print page also matches. Reset every content wrapper so the whole tool
+    // can flow across pages. The rationale lives out here because comments
+    // inside a css`` literal ship verbatim.
     css`
       @media print {
         :host,
