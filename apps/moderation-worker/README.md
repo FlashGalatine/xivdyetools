@@ -45,9 +45,10 @@ A decision applies to the exact version the moderator looked at (FINDING-017, 20
 
 ## Bans
 
-`LINKED_BAN_CONFIRMATION_ENABLED` is **false in both environments**. Ban/unban commands,
-selectors, buttons and modals refuse privately while inactive. Enable only in a separate
-consumer activation after the schema, OAuth provider and disclosures are live and verified.
+`LINKED_BAN_CONFIRMATION_ENABLED` is **true in production** since 1.9.2 and false on the
+routeless dev worker. While it is false, ban/unban commands, selectors, buttons and modals refuse
+privately. Production was activated only after the schema, OAuth provider and disclosures were
+live and verified.
 
 - OAuth's private `IdentityLookup` returns stored internal/Discord IDs and revisions. A lookup
   is not fresh upstream verification. `additional_user` supplies a separately reviewed target;
