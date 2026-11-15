@@ -26,7 +26,7 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.16.15 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Web Application** | v5.17.0 | `xivdyetools-web-app` | Cloudflare Pages | Active |
 | **Discord Bot** | v5.9.9 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.5 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.9.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
@@ -126,6 +126,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.17.0 | Nov 2026 | The Glamour Reader's Glamour list sheet gains an Abridged toggle (off by default, remembered on the device) for the shorter social-media form: no header, the whole `Slot: Name` line bold, one `Dyes:` line if the piece wears a dye and an `Obtained:` line cut to the best source — every dungeon, trial or raid at the lowest difficulty (a map dungeon loses to any other source), else the craft, else a Gil vendor with its price, else another vendor without its currency, else the line as written. Preview, fields, Copy list and Save .md follow it (`glamour-equipment-abridged.md`); a line typed in Abridged is kept apart, and a full-list edit carries over until typed over. Each row also gets its own include switch (both forms): a piece switched off is dimmed and left out of the preview, counts, Copy list and Save .md until the page reloads (never stored); Reset all turns the outfit's pieces back on, and with all off Copy list and Save .md disable. The full list, the API and the `/glamour` bot are unchanged. CI's always-run step runs `glamour-abridged.test.ts` |
 | v5.16.15 | Nov 2026 | The Dye Mixer's result slot glows in the theme's accent instead of the gold of the retired themes, and the 33 `var(--theme-primary, #d4af37)` fallbacks that could never paint are gone, so no non-test source names that gold any more. The theme-token contract test now checks every source, not only hover rules. The one-locale payload shrinks by 362 bytes and stays at 99.3% of its budget |
 | v5.16.14 | Nov 2026 | A hovered toggle that is on and the palette drawer's Apply and Random buttons stop turning gold: `--theme-primary-hover` is declared at last, from each palette's own hover accent (`#B01C1C` on Light, `#FF6257` on Dark), the palette's Apply button and active filter chips get a readable label (`--theme-text-on-primary`, white on Light), and a new contract test fails any `--theme-*` token the app reads but nothing declares |
 | v5.16.13 | Nov 2026 | The Dye Mixer and Gradient Builder fit a narrow pane: the Mixer's field stops needing 348 px (its cells narrow, then its row names move above their cells, all 30 from a 769 px window), both tools' side padding gives way and their results headers wrap, and the Gradient's endpoint cards stack. That ends 217 px of sideways scrolling at 769 px and the same bug's 24 px on a 390 px phone. The tools' geometry is unchanged at 1,042 px and wider, apart from one invisible box in each results header |

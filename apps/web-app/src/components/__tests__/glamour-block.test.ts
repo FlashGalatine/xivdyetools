@@ -1519,6 +1519,45 @@ describe('GlamourBlock — IN THE GAME (the reader verdict) and twins', () => {
     ).listSource();
     expect(glamourMarkdownInput(source).HeadGear?.name).toBe('Hempen Coif');
   });
+
+  it('hands the named twin its dye channel count, when the answer has rules', async () => {
+    const resolved: CharaResolveResult = {
+      items: { HeadGear: COIF },
+      glasses: null,
+    };
+    const { block: b, container, glamour } = await mount(Promise.resolve(resolved), MIDLANDER);
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(verdict(glamour)).not.toBeNull());
+
+    const source = (
+      b as unknown as { listSource(): import('../glamour-list-actions').GlamourListSource }
+    ).listSource();
+    // The list names Hempen Coif, the twin that takes the dye: two channels
+    expect(source.picked?.HeadGear?.dyeCount).toBe(2);
+  });
+
+  it('hands no dye channel count when the answer has no rules', async () => {
+    const resolved: CharaResolveResult = {
+      items: {
+        HeadGear: item(372, 'Dated Hempen Coif', {
+          familySize: 2,
+          alternates: [{ itemId: 2629, names: names('Hempen Coif') }],
+        }),
+      },
+      glasses: null,
+    };
+    const { block: b, container, glamour } = await mount(Promise.resolve(resolved), MIDLANDER);
+    hosts = [container, glamour];
+    await vi.waitFor(() =>
+      expect(glamour.querySelector('[data-slot="HeadGear"] [data-role="item-name"]')).not.toBeNull()
+    );
+
+    const source = (
+      b as unknown as { listSource(): import('../glamour-list-actions').GlamourListSource }
+    ).listSource();
+    expect(source.picked?.HeadGear).toBeDefined();
+    expect(source.picked?.HeadGear).not.toHaveProperty('dyeCount');
+  });
 });
 
 /**
