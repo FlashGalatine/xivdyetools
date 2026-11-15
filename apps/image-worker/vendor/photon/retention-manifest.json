@@ -1933,18 +1933,43 @@
       "metadataNormalized": false
     },
     {
-      "path": "ownership.patch",
-      "bytes": 1556,
-      "originalSHA256": "a14839f8fa3033cb05b015a579b8ebf0b69d9a817a33faa2f6553462e9ca59ba",
-      "retainedSHA256": "a14839f8fa3033cb05b015a579b8ebf0b69d9a817a33faa2f6553462e9ca59ba",
+      "path": "notice-rebuild-2026-10-31.json",
+      "bytes": 9057,
+      "originalSHA256": "c7e7d5a1fb093dcb6899b6e4df6ce918201c2dd696ac4c9f3a9edf7e8719631f",
+      "retainedSHA256": "c7e7d5a1fb093dcb6899b6e4df6ce918201c2dd696ac4c9f3a9edf7e8719631f",
       "metadataNormalized": false
+    },
+    {
+      "path": "ownership.patch",
+      "bytes": 2538,
+      "originalSHA256": "bcccccc5af272069b9c988d1a831ae0f89570ae24667204b6c37fde6697c1d4c",
+      "retainedSHA256": "bcccccc5af272069b9c988d1a831ae0f89570ae24667204b6c37fde6697c1d4c",
+      "metadataNormalized": false,
+      "replaced": {
+        "date": "2026-10-31",
+        "evidence": "notice-rebuild-2026-10-31.json",
+        "previous": {
+          "bytes": 1556,
+          "originalSHA256": "a14839f8fa3033cb05b015a579b8ebf0b69d9a817a33faa2f6553462e9ca59ba",
+          "retainedSHA256": "a14839f8fa3033cb05b015a579b8ebf0b69d9a817a33faa2f6553462e9ca59ba"
+        }
+      }
     },
     {
       "path": "photon-owned.wasm",
       "bytes": 1571497,
-      "originalSHA256": "f848bcd2a2794ef7dcea077ecdd3e4eaf06a2ace874a390d33800577968d2461",
-      "retainedSHA256": "f848bcd2a2794ef7dcea077ecdd3e4eaf06a2ace874a390d33800577968d2461",
-      "metadataNormalized": false
+      "originalSHA256": "dd3badf24c0231a0b9b63272829d714c7d5feccccd9f2ebdd76c61b5fc6f1bd1",
+      "retainedSHA256": "dd3badf24c0231a0b9b63272829d714c7d5feccccd9f2ebdd76c61b5fc6f1bd1",
+      "metadataNormalized": false,
+      "replaced": {
+        "date": "2026-10-31",
+        "evidence": "notice-rebuild-2026-10-31.json",
+        "previous": {
+          "bytes": 1571497,
+          "originalSHA256": "f848bcd2a2794ef7dcea077ecdd3e4eaf06a2ace874a390d33800577968d2461",
+          "retainedSHA256": "f848bcd2a2794ef7dcea077ecdd3e4eaf06a2ace874a390d33800577968d2461"
+        }
+      }
     },
     {
       "path": "provenance.json",
@@ -1962,10 +1987,19 @@
     },
     {
       "path": "source-patched.tar.gz",
-      "bytes": 1480760,
-      "originalSHA256": "8ba8510955a5e6bae10eed0b37500c51de9d72327bec305d285c7b9df6eac640",
-      "retainedSHA256": "8ba8510955a5e6bae10eed0b37500c51de9d72327bec305d285c7b9df6eac640",
-      "metadataNormalized": false
+      "bytes": 1485351,
+      "originalSHA256": "cf726ec5df4ef7b15304eae5627eb9766ce0c9b39868e73b0d906c29d502fe85",
+      "retainedSHA256": "cf726ec5df4ef7b15304eae5627eb9766ce0c9b39868e73b0d906c29d502fe85",
+      "metadataNormalized": false,
+      "replaced": {
+        "date": "2026-10-31",
+        "evidence": "notice-rebuild-2026-10-31.json",
+        "previous": {
+          "bytes": 1480760,
+          "originalSHA256": "8ba8510955a5e6bae10eed0b37500c51de9d72327bec305d285c7b9df6eac640",
+          "retainedSHA256": "8ba8510955a5e6bae10eed0b37500c51de9d72327bec305d285c7b9df6eac640"
+        }
+      }
     },
     {
       "path": "source-unmodified.tar.gz",
@@ -1975,5 +2009,11 @@
       "metadataNormalized": false
     }
   ],
-  "totalBytes": 6435728
+  "revisions": [
+    {
+      "date": "2026-10-31",
+      "change": "Apache-2.0 section 4(b) notice rebuild: source-patched.tar.gz, ownership.patch and photon-owned.wasm were regenerated and notice-rebuild-2026-10-31.json was added. Each replaced entry keeps its 2026-10-28 bytes and hashes under replaced.previous; compact-exact-result.json and provenance.json stay the unedited 2026-10-28 proof of the previous artifact."
+    }
+  ],
+  "totalBytes": 6450358
 }

@@ -1,0 +1,145 @@
+[
+  {
+    "candidate_id": "workers-01",
+    "title": "Concurrent last-slot submissions can both be rolled back while consuming daily quota",
+    "kind": "BUG",
+    "severity": "LOW",
+    "type": "Race",
+    "unit": "apps/presets-api",
+    "locations": [
+      "apps/presets-api/src/handlers/presets.ts:1075",
+      "apps/presets-api/src/handlers/presets.ts:1095",
+      "apps/presets-api/src/services/rate-limit-service.ts:379"
+    ],
+    "evidence": "After both calls pass a cap-1 precheck, both INSERT presets and append-only events. Each postcheck counts every event, observes cap+1, and deletes its own preset/votes, but not its event. No insertion-order tie-break on submissions although reserveDailyEvent uses one.",
+    "repro": "At 9/10 events, synchronize two different valid palette requests so both recordSubmissionEvent calls complete before either postcheck. Both return 429; neither palette survives; effective count is 11 until midnight.",
+    "test_gap": "tests/handlers/presets.test.ts:688 mocks one overshooting request and asserts preset/vote DELETE statements; no second request or surviving append-only event assertion.",
+    "fix": "Reserve submission quota atomically or use the event's monotonic id as the final-slot tie-break and release reservations for rolled-back creates.",
+    "overlap": "Related to 2026-10-26-security/FINDING-018 (pre-reservation Perspective work), but this candidate concerns false rejection and consumed quota."
+  },
+  {
+    "candidate_id": "workers-02",
+    "title": "Changing only the primary category can retain that category in secondary_categories",
+    "kind": "BUG",
+    "severity": "LOW",
+    "type": "Logic",
+    "unit": "apps/presets-api",
+    "locations": [
+      "apps/presets-api/src/handlers/presets.ts:611",
+      "apps/presets-api/src/handlers/presets.ts:1519",
+      "apps/presets-api/src/services/validation-service.ts:331",
+      "apps/presets-api/src/services/preset-service.ts:687"
+    ],
+    "evidence": "validateEditRequest receives only current primary; if PATCH has category_id but omits secondary_categories, undefined is passed to validator and accepted. updatePreset retains old secondary_categories.",
+    "repro": "Existing primary=jobs, secondary=[zones]. PATCH only category_id=zones. Stored primary and secondary both contain zones.",
+    "test_gap": "tests/handlers/presets.test.ts:2975 sends both lists; :3001 tests an explicitly repeated primary; :3059 tests supplied secondary against unchanged primary. No promotion with omitted secondary list.",
+    "fix": "Validate effective primary plus effective secondary list after merging edits with the stored preset; optionally normalize away the promoted secondary."
+  },
+  {
+    "candidate_id": "workers-03",
+    "title": "New-preset response reports vote_count 0 after the author's auto-vote is committed",
+    "kind": "BUG",
+    "severity": "LOW",
+    "type": "State",
+    "unit": "apps/presets-api",
+    "locations": [
+      "apps/presets-api/src/services/preset-service.ts:430",
+      "apps/presets-api/src/handlers/presets.ts:1081",
+      "apps/presets-api/src/handlers/presets.ts:1163"
+    ],
+    "evidence": "createPreset returns vote_count:0. The handler awaits addVote, which recomputes stored vote_count, then returns the original preset object rather than submittedRow or refreshed count.",
+    "repro": "Submit a new approved preset; POST response preset.vote_count=0 while immediately reading that preset yields 1.",
+    "test_gap": "tests/handlers/presets.test.ts:552 success case checks status, success, name and moderation_status at :606-610; no returned vote_count or DB-state comparison.",
+    "fix": "Build the response from the post-vote row already read for notification or copy the successful vote result's count."
+  },
+  {
+    "candidate_id": "workers-04",
+    "title": "Concurrent preview replacements and preset deletion leave uploaded R2 objects orphaned",
+    "kind": "BUG",
+    "severity": "LOW",
+    "type": "Race",
+    "unit": "apps/presets-api",
+    "locations": [
+      "apps/presets-api/src/handlers/presets.ts:1191",
+      "apps/presets-api/src/handlers/presets.ts:1313",
+      "apps/presets-api/src/handlers/presets.ts:1330",
+      "apps/presets-api/src/handlers/presets.ts:1412"
+    ],
+    "evidence": "Upload reads previousKey before image work and overwrites the row unconditionally, deleting only that stale key. Two uploads starting from A store B/C and both delete A; whichever loses its row reference is never removed. UPDATE changes=0 after concurrent preset deletion is also treated as success.",
+    "repro": "Synchronize two uploads after both read A; complete B then C. Row points at C, A deleted, B remains indefinitely with no DB reference. Or delete preset between read and UPDATE: upload returns success and stores an unreferenced image.",
+    "test_gap": "tests/handlers/presets.test.ts:1865 uploads sequentially (:1895), missing overlapping old-key reads. presets-quotas.test.ts:1160 covers thrown UPDATE, not successful zero-change UPDATE. preview-revision.test.ts covers moderator key binding, not author upload/delete CAS.",
+    "fix": "Compare-and-set against captured image state, inspect changes, remove newly stored object on lost/deleted row, and clean only the replaced key for the winning update."
+  },
+  {
+    "candidate_id": "workers-05",
+    "title": "Favorite list can exceed Discord's embed description limit for legal preset names",
+    "kind": "BUG",
+    "severity": "LOW",
+    "type": "Boundary",
+    "unit": "apps/discord-worker",
+    "locations": [
+      "apps/discord-worker/src/handlers/commands/preset.ts:1324",
+      "apps/discord-worker/src/handlers/commands/preset.ts:1334",
+      "apps/discord-worker/src/services/preset-favorites.ts:34",
+      "apps/discord-worker/src/utils/sanitize.ts:23"
+    ],
+    "evidence": "All 50 favorites are joined into one description with no total budget. Legal 50-character names can expand to 100 characters after markdown escaping; sanitizePresetName permits 100. HTTP rejection returns false and this adapter ignores it.",
+    "repro": "Favorite 50 distinct legal presets whose 50-character names contain underscores. Sanitized names alone can exceed 4096 characters before numbering/categories; edit fails.",
+    "test_gap": "preset.test.ts has no favorite-list cases. Add a 50-entry escaped-name case asserting <=4096 description and handling failed edit.",
+    "fix": "Paginate or budget complete lines within 4096 including escaped names and truncation notice; check edit success."
+  },
+  {
+    "candidate_id": "workers-06",
+    "title": "Favorite listing still fans out up to 50 individual preset API reads",
+    "kind": "OPT",
+    "severity": "LOW",
+    "type": "I/O",
+    "unit": "apps/discord-worker",
+    "locations": [
+      "apps/discord-worker/src/handlers/commands/preset.ts:1310",
+      "apps/discord-worker/src/services/preset-api.ts:237",
+      "apps/discord-worker/src/services/preset-favorites.ts:34"
+    ],
+    "evidence": "Promise.all calls getPreset once per favorite, each a separate signed service-binding request and row query. Oct4 OPT-003 remains OPEN and current implementation is unchanged.",
+    "repro": "50 favorites produce 50 getPreset/PRESETS_API.fetch calls; capped batch can reduce to one request/set query.",
+    "test_gap": "Add 50-entry call-count benchmark after batch endpoint exists. No runtime benchmark performed.",
+    "fix": "Deploy capped approved-only batch-by-id API first, then switch caller preserving order/missing IDs. Up to 49 fewer service-binding calls and row lookups.",
+    "overlap": "Supersedes 2026-10-04-deep-dive/OPT-003 (OPEN). Same fan-out is security FINDING-024 because userless reads bypass limiters; schedule one fix."
+  },
+  {
+    "candidate_id": "workers-07",
+    "title": "Favorite list presents transient API failures as permanently removed presets",
+    "kind": "BUG",
+    "severity": "LOW",
+    "type": "Error handling",
+    "unit": "apps/discord-worker",
+    "locations": [
+      "apps/discord-worker/src/handlers/commands/preset.ts:1311",
+      "apps/discord-worker/src/handlers/commands/preset.ts:1318",
+      "apps/discord-worker/src/services/preset-api.ts:240"
+    ],
+    "evidence": "getPreset returns null for 404 and throws for 429/5xx/network errors; list catches all as null. All transient failures produce allRemoved; partial failures silently omit existing favorites and reduce displayed count.",
+    "repro": "Nonempty favorites and PRESETS_API returns503 for everyGET. List sends allRemoved and no upstream outcome mark.",
+    "test_gap": "preset.test.ts has no favorite-list cases. Add all503 and mixed found/404/503 outcomes.",
+    "fix": "Preserve found/missing/failed outcomes; show and trace upstream failures; identify partial results.",
+    "overlap": "Oct4 BUG-047 fixed autocomplete persistence; this separate list-response path still swallows transient errors, without writing KV."
+  },
+  {
+    "candidate_id": "workers-08",
+    "title": "Glamour adapter records failed Discord edits as successful commands",
+    "kind": "BUG",
+    "severity": "LOW",
+    "type": "Error handling",
+    "unit": "apps/discord-worker",
+    "locations": [
+      "apps/discord-worker/src/handlers/commands/glamour.ts:185",
+      "apps/discord-worker/src/utils/discord-api.ts:259",
+      "apps/discord-worker/src/services/command-trace.ts:235"
+    ],
+    "evidence": "safeEditOriginalResponse catches HTTP/network errors, logs and returnsfalse. Glamour adapter awaits but ignores boolean, so no throw reaches catch/outcome handling. Trace with no mark defaultsok although deferred result was never delivered.",
+    "repro": "Have editOriginalResponse return HTTP400/429/500 after successful generation. Adapter resolves; failed edit logged but trace outcome staysok and user has no result.",
+    "test_gap": "Add glamour adapter test with safeEdit resolvingfalse and assert failure telemetry and usable fallback/retry policy. glamour.test.ts:16 mocks safeEdit=true; :147 asserts generated payload, without a false delivery case.",
+    "fix": "Check safeEdit boolean and mark delivery failure; select bounded retry or short fallback. Consider a shared delivery helper to prevent repetition across adapters.",
+    "overlap": "Security G37 explicit non-security handoff. Separate from package-owned oversize embed tail: distinct fix/deploy unit."
+  }
+]

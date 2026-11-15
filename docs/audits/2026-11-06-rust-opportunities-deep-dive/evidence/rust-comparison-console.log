@@ -1,0 +1,19 @@
+node v22.23.4 | linux x64 | Intel(R) Xeon(R) Processor @ 2.10GHz | rustc 1.97.0 (2d8144b78 2026-07-07)
+kernel 25013 bytes, compile+instantiate median 0.24 ms
+parity: built core == current copy == every variant (centroids and sizes, exact) on all cases
+
+upper median ms            iters       coreBuilt         current        packedTS packedTSFromRGB packedTSSquared            wasm     wasmFromRGB     wasmSquared        wasmSimd
+uniform 10k, 4 colors         25           17.05           16.72           12.12           12.42           10.67            9.74           10.23            6.75            9.61
+uniform 10k, 10 colors        25           24.48           25.19           20.98           21.53           18.38           16.58           18.80           12.10           16.33
+blobs 10k, 4 colors            5            3.91            3.99            2.95            3.06            2.60            2.37            2.38            1.72            2.27
+blobs 10k, 10 colors          16           14.23           14.81           12.23           12.33           10.99            8.85            9.45            7.46            9.02
+fractional 10k, 10 colors     25           26.51           27.47           22.00           25.06           19.28           17.72           17.76           12.81           17.93
+uniform 100k, 10 colors       23          265.05          277.25          198.37          199.24          172.37          152.22          156.24          119.63          155.22
+
+p95 ms                                 coreBuilt         current        packedTS packedTSFromRGB packedTSSquared            wasm     wasmFromRGB     wasmSquared        wasmSimd
+uniform 10k, 4 colors                      25.15           17.35           14.08           12.93           11.43           12.29           12.44            9.19           10.82
+uniform 10k, 10 colors                     28.89           26.49           24.51           23.50           18.69           20.54           20.50           15.02           16.67
+blobs 10k, 4 colors                         4.32            4.33            3.05            3.17            2.71            3.19            2.61            2.45            2.38
+blobs 10k, 10 colors                       18.69           18.86           17.84           14.23           11.44           10.41           11.43           10.82           11.39
+fractional 10k, 10 colors                  29.16           30.93           25.56           29.65           26.98           20.21           18.77           14.10           20.54
+uniform 100k, 10 colors                   287.07          298.02          234.61          203.21          175.57          162.17          182.21          133.42          178.39

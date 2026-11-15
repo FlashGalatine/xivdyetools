@@ -2,6 +2,90 @@
 
 ---
 
+## Web-App Version 5.17.0 — November 2, 2026
+
+### Glamour Reader: a shorter list for social media
+- **The Glamour list sheet has a new Abridged switch.** It's off until you turn it on, and the app remembers your choice on this device.
+- **Abridged is the short version for a post.** There's no header, each "Slot: Name" line is bold, and each piece gets one Obtained line, plus one Dyes line if it's wearing a dye. Accessories and facewear never have a Dyes line.
+- **Dyes show both slots when a piece has two.** One dye on a two-dye piece reads "Dye / None" (or "None / Dye"); a piece with one slot just lists its dye. So does a piece the app couldn't look up, when its dye is in the first slot.
+- **Obtained is cut down to the best source.** It picks the easiest dungeon, trial or raid (all of them, if several tie), or else the craft with its job and level, or else a Gil vendor with the price, or else the first vendor, without prices or upgrade items. A treasure map dungeon such as The Aquapolis loses to any other source. If none of those apply, you get the line as it was.
+- **Copy list and Save .md follow the switch.** The preview, the fields and the download all show the short form, and the file is saved as glamour-equipment-abridged.md.
+- **Leave out any piece.** Each row in the list sheet has a switch, in both lists. An off piece stays in the sheet, dimmed, but isn't in the preview, Copy list or Save .md. Matching rings share one switch.
+- **Off lasts until you reload.** Reopening the sheet or flipping Abridged keeps it, and a different outfit starts with every piece on. Reset all turns this outfit's pieces back on. What you typed in an off piece is still there when you switch it on.
+- **Your edits stay where you made them.** A line you type in Abridged is kept word for word and never changes the full list. A change you make in the full list carries over, shortened the same way, until you type over it. Reset all clears both.
+- **With every piece off, there's nothing to copy.** Copy list and Save .md gray out, and the counts only include pieces that are on.
+- **The full list is the same as before.** "Dyes:", "Obtained:" and "None" stay in English in every language. Item and dye names follow your language.
+
+## Web-App Version 5.16.15 — November 2, 2026
+
+### Dye Mixer
+- **The Dye Mixer's result no longer glows gold.** The glow around it now matches your theme's red, in both Light and Dark.
+
+## Web-App Version 5.16.14 — November 2, 2026
+
+### Light and Dark themes
+- **No more stray gold on hover.** Toggles that are on and the Color Palette's Apply and random dye buttons now show your theme's red when you point at them, in both Light and Dark.
+- **Easier to read in Light.** The Apply button and the selected filters in the Color Palette now have white text on red instead of black.
+
+## Web-App Version 5.16.13 — November 2, 2026
+
+### Dye Mixer and Gradient Builder
+- **No more sideways scrolling in smaller windows.** With Options and the Color Palette both open, both tools now fit the space between them.
+- **The Dye Mixer's Model × ratio grid stays whole.** All 30 cells stay on screen. When space is tight, the cells narrow and each model's name moves above its row.
+- **The Gradient Builder's From and To cards stack when space is tight.** The swap button sits between them, and long dye names can still shorten.
+- **Long headings move to a new line.** Export and Share stay in reach in every language, and a very long word can break across two lines.
+- **Smaller phones too.** The Model × ratio grid no longer pushes the Dye Mixer sideways.
+
+## Web-App Version 5.16.12 — November 2, 2026
+
+### Dye card menus
+- **Menus stay on screen.** In smaller windows and on phones, a dye card's three-dot menu and its submenus no longer run off the left side, so every option can be clicked.
+
+### Harmony Explorer
+- **Dye markers fit small color wheels.** With Options and the Color Palette both open, markers shrink with the wheel, so Monochromatic and Shades numbers stay readable and clickable.
+
+### Dye Comparison
+- **"What actually differs" stays readable in smaller windows.** Values now move under their label instead of being squeezed down to nothing.
+
+### Swatch Matcher
+- **More room for the grid in smaller windows.** With both side panels open, the grid starts much higher up and shows all eight columns in narrower windows. Below about 880 px it still scrolls sideways.
+- **Keyboard picks stay in view.** Choosing a swatch with the keyboard keeps that swatch on screen. On the top rows of the Eye and other long palettes, you may need to scroll a little to see the match.
+- **Closing a side panel keeps your result in view.** It no longer ends up above the window when it moves beside the grid.
+
+## Web-App Version 5.16.11 — November 2, 2026
+
+### Harmony Explorer, Dye Comparison and Accessibility Checker
+- **These tools no longer lose their left side in smaller windows.** With Options and the Color Palette both open, the color wheel, dye cards, "Add Dye" slots and vision buttons all fit.
+- **The color wheel shrinks to fit.** It stays round and returns to full size when there's room. At its smallest, some dye markers and labels overlap.
+- **Text can still get cut short when space is tight.** Some names, values and menus shorten or hide, and a few rows may need a little sideways scrolling. Closing a side panel makes more room.
+- **Less sideways scrolling.** Long headings and the Accessibility Checker's share controls move to a new line when they need to, on phones too.
+
+## Web-App Version 5.16.10 — November 2, 2026
+
+### Swatch Matcher
+- **The Swatch grid no longer loses its left side in smaller windows.** With Options and the Color Palette both open, every column, the heading and all the category tabs can be reached.
+- **Tight windows can still need sideways scrolling.** The grid scrolls inside its panel, and some details below it can run past the edge. Closing a side panel makes more room.
+- **Matches move under the grid when there's no room beside it.** In a desktop window, picking a swatch or a dye scrolls to its results. Small windows and long results can scroll the grid off screen.
+- **Phones can reach the first column.** The grid now scrolls sideways all the way to its left edge.
+
+## Web-App Version 5.16.9 — November 2, 2026
+
+### Color Palette
+- **The sideways scrollbar is gone.** The small stray scrollbar along the bottom of the Color Palette no longer appears.
+- **Full dye names on hover.** Names are no longer cut off at the sides of the panel or at its top edge. Near the top, a name now opens below its dye.
+
+## Web-App Version 5.16.8 — November 1, 2026
+
+### Privacy Guide and Terms
+- **If XIVAuth can't return your characters when you sign in, your name stays.** All six languages of the Privacy Guide, the Terms and the sign-in note now say so.
+- **A new account in that case gets the "XIVAuth User" name** until a later sign-in finds a verified character.
+
+## Web-App Version 5.16.5 — November 1, 2026
+
+### Easier scrolling
+- **The main scrollbar sits at the edge.** The empty gap beside it is gone, and long tool pages still scroll all the way to the bottom on desktop and mobile.
+- **The Dye Mixer's extra scrollbar is gone.** Matching dyes scroll with the page, while Options and the Color Palette keep their own scrolling.
+
 ## Web-App Version 5.16.4 — October 28, 2026
 
 ### Color tools

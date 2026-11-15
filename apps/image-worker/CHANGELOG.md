@@ -24,6 +24,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Reject 16-bit PNGs and invalid IHDR metadata before Photon decoding (FINDING-020).
   Legal lower-depth PNGs and the other supported image formats retain their paths.
+- User-visible tightening: GIFs must end exactly at their trailer and keep every frame inside the
+  logical screen, and a WebP's RIFF size must equal the file length minus 8. Files with trailing
+  data, a missing trailer, out-of-screen frames or a mismatched RIFF size, which 1.3.4 passed to
+  Photon, now receive "Unsupported image format or unreadable image dimensions" (FINDING-020).
 - Bound encoded input to **5 MiB**, total input pixels to **8,388,608** and extraction's
   requested output side to **16–512**. Input sides may still reach **4096**, so ordinary
   3840×2160 and 3440×1440 screenshots fit the pixel allowance. Default extraction remains
@@ -33,13 +37,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   before allocating later stages. Each distinct Photon object is freed once, including
   failure paths; successful pixel/WebP output semantics stay unchanged.
 - Use a pinned Photon ownership patch that transfers decoded RGBA storage and borrows crop/
-  resize inputs instead of cloning them. Retain source, lock, licenses, artifact hashes and
-  a verified rebuild recipe; the installed wrapper initializes only this WASM artifact.
+  resize inputs instead of cloning them. Retain source, lock, licenses and artifact hashes; the
+  installed wrapper initializes only this WASM artifact. The WASM is a reconstruction
+  (reconstructed Cargo.lock, Rust 1.96.1, Binaryen 123; the upstream lock and Binaryen version
+  were never published), not a byte-identical copy of the stock `@cf-wasm/photon` binary. Its
+  rebuild recipe is reproduced on one Windows host only, outside CI, and the hash pin proves
+  identity, not upstream equivalence.
+- Mark the two modified Photon files with Apache-2.0 section 4(b) change notices (2026-10-31):
+  `src/lib.rs` and `src/transform.rs` inside the retained patched source now start with a
+  comment stating the change, and `ownership.patch` was regenerated. The WASM was rebuilt from
+  freshly downloaded, hash-checked tools and locked crates (a control build of the unchanged
+  source first reproduced the previous artifact). The new artifact
+  (`dd3badf24c0231a0b9b63272829d714c7d5feccccd9f2ebdd76c61b5fc6f1bd1`, same 1,571,497 bytes)
+  differs only in embedded panic-location line numbers, and its ABI matches the stock wrapper.
+  The memory measurements in this entry and in the 2026-10-28 evidence describe the earlier
+  artifact (`f848bcd2…`) and must be re-measured on this one at image acceptance.
 - Admit one image acquisition/processing operation per isolate with no waiting queue. Busy
   requests receive a generic 503 before body/CDN work. Cancel abandoned I/O without waiting
   on stalled cancellation, and preserve the complete dispatch lifetime for admission cleanup
   after caller disconnects. Runtime termination and outstanding response bodies remain separate
-  limits; this does not establish a total-memory bound.
+  limits; this does not establish a total-memory bound. A request whose aborted body read never
+  settles (the caller's request body, or the CDN response body after the 10 s fetch timeout)
+  keeps the slot, and that isolate answers 503 until it is recycled; this is an accepted limit,
+  not a watchdog.
 
 The six-language bot-manual limit companion must be included in the complete reviewed
 bot-logic publication and the corrected manual deployed before this lower cap activates.

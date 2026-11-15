@@ -580,13 +580,14 @@ async function loadToolContent(toolId: ToolId): Promise<void> {
   // V4 tools need left/right panel containers, even though ConfigSidebar is separate
   const toolContainer = document.createElement('div');
   toolContainer.className = 'v4-tool-container';
-  toolContainer.style.cssText = 'display: flex; flex-direction: column; height: 100%;';
+  toolContainer.style.cssText = 'display: flex; flex-direction: column; min-height: 100%;';
 
   // For V4, the left panel content goes into ConfigSidebar (handled separately)
   // Tools render their main content directly
   const mainPanel = document.createElement('div');
   mainPanel.className = 'v4-tool-main';
-  mainPanel.style.cssText = 'flex: 1; overflow-y: auto;';
+  // The shell owns scrolling at the content edge, outside its padding.
+  mainPanel.style.cssText = 'flex: 1;';
   toolContainer.appendChild(mainPanel);
 
   // Load tool-specific content

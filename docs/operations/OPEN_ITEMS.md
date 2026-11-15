@@ -1,6 +1,6 @@
 # Open operational items
 
-**Status:** living list, last walked 2026-09-05; individual items updated through 2026-10-11.
+**Status:** living list, last walked 2026-09-05; individual items updated through 2026-11-09.
 **Owner:** the maintainer — every item needs credentials CI does not have (GitHub settings,
 the Cloudflare dashboard, `wrangler` against production, a browser session).
 **Where it came from:** the 5.0 post-merge checklist
@@ -20,6 +20,17 @@ api-worker, image-worker; the **routed beta** worker on og-worker; and **product
 
 Verified with `gh api` on 2026-09-05; the state noted is the state found.
 
+- [x] **Published XIVCharaKit release tags backfilled 2026-10-27** (security FINDING-052):
+      `chara-v0.1.0-beta.1` through `.4` are annotated tags at their verified npm source commits.
+      The `0.0.0-stage` registry stub contains no library code and has no source tag. GitHub,
+      peeled Git refs and tagged package versions agree; npm artifacts/dist-tags and main are
+      unchanged. [Mapping and verification evidence](../audits/2026-10-26-security/evidence/remediation-finding-052-2026-10-27.md).
+- [ ] **Secret-scanning generic/non-provider patterns and validity checks** (2026-10-26
+      FINDING-050): the authorized 2026-10-26 enable attempt left both disabled. The repository
+      is user-owned; GitHub documents these options for eligible organization-owned repositories
+      with Secret Protection, and exposes neither control here. Revisit eligibility before retrying.
+      Existing scanning and push protection remain on; no deferral was accepted.
+      [Attempt and eligibility evidence](../audits/2026-10-26-security/evidence/remediation-finding-050-2026-10-26.md).
 - [x] **Code security → Private vulnerability reporting: ON.** Done 2026-10-04 (verified with
       `gh api`: `repos/…/private-vulnerability-reporting` → `enabled: true`), matching what
       `SECURITY.md` tells reporters. Defaults kept: no CWE requirement, a daily limit of 10, no
@@ -29,24 +40,33 @@ Verified with `gh api` on 2026-09-05; the state noted is the state found.
       `enabled: true`). The nightly `pnpm audit --prod` job is the in-repo half; this is the
       GitHub half. Actions now also require full-length SHA pins (`sha_pinning_required: true`,
       same date).
-- [ ] **Branch protection on `main`:** turn on **linear history**. *Secret scan (gitleaks)* was
-      added to the required checks on 2026-10-04 (2026-10-03 audit FINDING-024, verified with
-      `gh api`), next to *Lint, Type-check, Test, Build*, *Security audit (production
-      dependencies)* and *E2E (Playwright, chromium)*; force-push already blocked; no rulesets.
-      `strict` and `enforce_admins` stay off until the 2026-10-03 remediation PRs are merged.
-- [ ] **`CLOUDFLARE_API_TOKEN` scoped to Workers Scripts: Edit + Pages: Edit on the account, and
-      Workers Routes: Edit on the `xivdyetools.app` zone — no KV / D1 / R2 Edit** (2026-08-29
-      FINDING-030, [SECRET_ROTATION.md](SECRET_ROTATION.md) §7). Inspect the live token's grants
-      first; re-issue only if it carries storage grants, then update the secret, re-run one
-      deploy via *workflow_dispatch*, revoke the old token, log the date. The token's *homing* is
-      done: it is an environment secret on `production`, `CLOUDFLARE_API_TOKEN_BETA` is one on
-      `beta`, and no repository-level copy of either exists (verified 2026-09-05).
-- [ ] 2026-10-03 audit FINDING-023: the Discord bot tokens were created as environment secrets on
-      2026-10-04 (`DISCORD_TOKEN`, `MODERATION_DISCORD_TOKEN` on `production`; `BETA_DISCORD_TOKEN`,
-      `BETA_DISCORD_GUILD_ID` on `beta`; verified with `gh api`). Still to do: delete the four
-      repository copies once a production deploy of discord-worker and of moderation-worker has
-      registered commands with them ([SECRET_ROTATION.md](SECRET_ROTATION.md) GitHub Actions
-      secrets section).
+- [x] **Branch protection on `main`: `strict` and `enforce_admins` enabled 2026-10-26**
+      (security FINDING-051; closes the 2026-10-03 FINDING-024 deferral). Fresh API readback
+      and full before/after comparison confirm only these two values changed. All four required
+      checks, their GitHub App bindings and the other protection rules are preserved.
+      [Verification evidence](../audits/2026-10-26-security/evidence/remediation-finding-051-2026-10-26.md).
+- [ ] **Branch protection on `main`: turn on linear history.** Still disabled after the
+      narrowly scoped 2026-10-26 change; this separate item was not selected.
+- [x] **`CLOUDFLARE_API_TOKEN` scoped to Workers Scripts: Edit + Pages: Edit on the account, and
+      Workers Routes: Edit on the `xivdyetools.app` zone — no KV / D1 / R2 Edit** (2026-08-29 audit
+      FINDING-030). Done 2026-11-09 during the quarterly rotation. A new token was issued at exactly
+      those grants with an expiry of 2027-03-01, and the *Deploy API Worker*, *Deploy Presets API*
+      and *Deploy OG Worker* dispatches from `main` passed with it. Between them those runs
+      showed that the token can upload Worker scripts, attach custom domains and zone routes,
+      publish static assets, and deploy Workers that carry KV, D1 and R2 bindings. None of the
+      three deploys Pages, so the production token's Pages grant has not been exercised yet; the
+      next *Deploy Web App* run will be its first use. The old token was then revoked.
+      `CLOUDFLARE_API_TOKEN_BETA` was re-issued the same way and verified on beta.
+      [Rotation log](SECRET_ROTATION.md#rotation-log). The tokens' *homing* was already done: each
+      is an environment secret (`production` and `beta`), with no repository-level copy (verified
+      2026-09-05).
+- [x] 2026-10-03 audit FINDING-023 / 2026-10-26 FINDING-028: deleted the four repository-scope
+      Discord secret copies on 2026-10-26 after verifying successful production command registration.
+      `DISCORD_TOKEN` and `MODERATION_DISCORD_TOKEN` remain on `production`;
+      `BETA_DISCORD_TOKEN` and `BETA_DISCORD_GUILD_ID` remain on `beta`. Both environment inventories
+      and their secret metadata are unchanged; `CLOUDFLARE_ACCOUNT_ID` remains at repository scope.
+      [Verification evidence](../audits/2026-10-26-security/evidence/remediation-finding-028-2026-10-26.md);
+      [secret inventory](SECRET_ROTATION.md).
 
 Closed on the same walk, recorded here so the archived checklist's open boxes read correctly:
 the `beta` environment exists with `CLOUDFLARE_API_TOKEN_BETA` and the three beta deploy
@@ -56,10 +76,25 @@ protection are on.
 
 ## 2. Cloudflare
 
-- [ ] **Delete the old `xivdyetools-universalis-proxy` worker** — still present on 2026-09-05
-      (last modified 2026-07-29); both proxy hostnames have answered api-worker since 2026-08-21
-      ([DEPRECATIONS.md](../../DEPRECATIONS.md)). Also delete the old `xivdyetools-api-docs`
-      Pages project (its custom domain moved to api-worker the same day).
+- [x] **One-off Pages history cleanup completed 2026-10-26** (security FINDING-009):
+      deleted 521 superseded deployments from `xivdyetools` and 239 from `xivdyetools-beta`,
+      including the `v4-ui-migration` alias. Each project retains exactly its original current
+      deployment; six live URL HTML hashes and CSPs are unchanged, and sampled retired URLs
+      return 404. [Verification evidence](../audits/2026-10-26-security/evidence/remediation-finding-009-2026-10-26.md).
+- [ ] **Automate Pages retention in R-CI** (remaining FINDING-009 work): prune superseded
+      deployments after web deploys while protecting the current production/beta deployments;
+      include branch-alias and hash-host probes in live-origin checks.
+- [x] `xivdyetools.app` Always Use HTTPS enabled and minimum TLS raised to 1.2 on
+      2026-10-26 (security FINDING-055). Fresh settings reads confirm both values;
+      HTTP redirects on the five main hosts reach HTTPS 200 responses, and an
+      explicit TLS probe accepts 1.2 while rejecting 1.0/1.1. See
+      [verification evidence](../audits/2026-10-26-security/evidence/remediation-finding-055-2026-10-26.md).
+      Include both setting readbacks and HTTP redirect probes in future live-origin checks.
+- [x] **Deleted the retired `xivdyetools-universalis-proxy` worker and `xivdyetools-api-docs`
+      Pages project** on 2026-10-26 (security FINDING-056). Fresh inventory and 404 responses
+      confirm removal; the live docs and both current proxy URLs still return expected content.
+      [Verification evidence](../audits/2026-10-26-security/evidence/remediation-finding-056-2026-10-26.md);
+      both removal checklists in [DEPRECATIONS.md](../../DEPRECATIONS.md) are complete.
 - [ ] **Confirm the `[[ratelimits]]` bindings on every production worker** (Worker → Settings →
       Bindings) and that the KV rate-limit namespaces are idle — the gate for the KV-fallback
       removal in §5. (Bindings were confirmed via the API on 2026-08-29 for all seven workers;
@@ -71,7 +106,11 @@ protection are on.
       carries `keyScope` (e.g. `public:ip`) and no raw IP or Discord snowflake, and only then
       decide whether to enable log retention at all.
 - [ ] `presets-api` R2 preview bucket: lifecycle / cache behavior as set by FINDING-018.
-- [ ] api-worker's and og-worker's dev workers are not reachable over `*.workers.dev`
+- [x] api-worker's stale dev worker `xivdyetools-api-worker-dev` deleted on 2026-10-26
+      (2026-10-26 security FINDING-054): absent from the live inventory, settings GET returns
+      404 / 10007, and its `workers.dev` HEAD probe returns 404. See
+      [verification evidence](../audits/2026-10-26-security/evidence/remediation-finding-054-2026-10-26.md).
+- [ ] og-worker's dev worker is not reachable over `*.workers.dev`
       (`workers_dev = false`, FINDING-025) — confirm once in the dashboard.
 - [ ] `xivdyetools-oauth-preview` / `auth-preview.xivdyetools.app` — no such worker exists in the
       account (2026-09-05); confirm the DNS record is absent too, then close.
@@ -99,13 +138,34 @@ checklist §2.
 
 ## 3. Secrets
 
+- [ ] **Rotate the Discord credentials after the M-line release → prod.** These are the main,
+      moderation and beta bot tokens, plus `DISCORD_CLIENT_SECRET`. The schedule only calls for
+      rotating them after a compromise. FINDING-023's condition for resetting the bot tokens was
+      never met: every run of the workflows that read the production bot tokens has been on
+      `main` (checked 2026-11-09). So this is hygiene, and the main bot token has no logged
+      rotation. It was deferred from the 2026-11-09 rotation to 2026-11-15:
+  - Start only **after the M-line merges' deploys have finished green**. Both bot deploys run
+    *Register Discord commands* with the GitHub copy, so resetting a token while one of them is
+    pending would turn that step red.
+  - Per [SECRET_ROTATION.md](SECRET_ROTATION.md) §4–§5, update every holder of a token in one
+    sitting, pasting the value at wrangler's prompt.
+  - Then dispatch *Deploy Discord Worker* and *Deploy Moderation Worker* from `main` to prove
+    the new GitHub copies.
+  - Log it. Resetting the moderation bot token also settles the next item.
 - [ ] Confirm production `moderation-worker` `DISCORD_TOKEN` and `discord-worker`
       `MODERATION_BOT_TOKEN` carry the token that was reset on 2026-08-29 (moderation embeds and
       channel posts 401 otherwise) — [SECRET_ROTATION.md](SECRET_ROTATION.md) rotation log.
 - [ ] Any secret set with a bare `wrangler secret put` before 2026-08-21 landed on the **dev**
       worker — re-set it on production (`--env production`) per SECRET_ROTATION.md.
-- [ ] Optional but recommended: rotate `BOT_SIGNING_SECRET` (all three consumers, one window)
-      now that the v2 scheme is live; log it.
+      2026-11-09: `wrangler secret list` on all four production workers showed every secret the
+      code reads, and the four quarterly secrets were re-set there that day. The Discord
+      credentials will be re-set by the item above. What remains unproven is whether the older
+      configuration values (`PERSPECTIVE_API_KEY`, `MODERATOR_IDS`, the channel IDs,
+      `STATS_AUTHORIZED_USERS`) are current on production. Close this item after the Discord
+      rotation, once those have been checked.
+- [x] Rotate `BOT_SIGNING_SECRET` (all three consumers, one window) now that the v2 scheme is
+      live. Done 2026-11-09 with the quarterly rotation, together with `BOT_API_SECRET`,
+      `JWT_SECRET` and `INTERNAL_WEBHOOK_SECRET` ([rotation log](SECRET_ROTATION.md#rotation-log)).
 
 ## 4. Manual verification still to run
 
