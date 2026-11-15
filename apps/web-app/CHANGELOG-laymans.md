@@ -27,6 +27,12 @@
 ### Dye Mixer
 - **Dye Mixer no longer takes the same dye twice.** A saved or shared pair with the same dye in both slots now loads with only the first slot filled.
 - **Its slot buttons read 1 and 2,** matching the two slots.
+
+## Web-App Version 5.17.2 — November 10, 2026
+
+### About
+- **New X/Twitter handle.** The X link in the About window now goes to @FlashGalatine, the account's new name.
+
 ## Web-App Version 5.17.0 — November 2, 2026
 
 ### Glamour Reader: a shorter list for social media

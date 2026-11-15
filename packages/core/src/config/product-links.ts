@@ -29,7 +29,7 @@ export interface ProductLink {
  */
 export const SOCIAL_LINKS: readonly ProductLink[] = [
   { label: 'GitHub', url: 'https://github.com/FlashGalatine' },
-  { label: 'X/Twitter', url: 'https://x.com/AsheJunius' },
+  { label: 'X/Twitter', url: 'https://x.com/FlashGalatine' },
   { label: 'Twitch', url: 'https://www.twitch.tv/flashgalatine' },
   { label: 'Bluesky', url: 'https://bsky.app/profile/projectgalatine.com' },
   { label: 'Discord', url: 'https://discord.gg/5VUSKTZCe5' },

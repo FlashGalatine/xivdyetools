@@ -121,29 +121,22 @@ function rgbDistance(a: RGB, b: RGB): number {
   return Math.sqrt(dr * dr + dg * dg + db * db);
 }
 
+/** An integer in 0-255: what every channel of `pixelDataToRGBFiltered`'s output is. */
+function isByteChannel(value: number): boolean {
+  return Number.isInteger(value) && value >= 0 && value <= 255;
+}
+
 /**
- * Calculate the mean of an array of RGB colors
+ * True when every channel of every pixel is a byte. Such input may use
+ * {@link accumulateClustersSquared}; anything else (fractional, negative,
+ * out-of-range or non-finite channels in a public `RGB[]`) keeps
+ * {@link accumulateClusters}.
  */
-function rgbMean(colors: RGB[]): RGB {
-  if (colors.length === 0) {
-    return { r: 0, g: 0, b: 0 };
+function hasByteChannels(pixels: RGB[]): boolean {
+  for (const p of pixels) {
+    if (!isByteChannel(p.r) || !isByteChannel(p.g) || !isByteChannel(p.b)) return false;
   }
-
-  let sumR = 0;
-  let sumG = 0;
-  let sumB = 0;
-
-  for (const c of colors) {
-    sumR += c.r;
-    sumG += c.g;
-    sumB += c.b;
-  }
-
-  return {
-    r: Math.round(sumR / colors.length),
-    g: Math.round(sumG / colors.length),
-    b: Math.round(sumB / colors.length),
-  };
+  return true;
 }
 
 /**
@@ -211,55 +204,114 @@ function kMeansPlusPlusInit(pixels: RGB[], k: number): RGB[] {
 }
 
 /**
- * Assign each pixel to its nearest centroid
- * Returns array of cluster indices and the clusters themselves
+ * Assignment step: give each pixel to its nearest centroid (strict `<`, so the
+ * lowest-index centroid wins a tie) and accumulate each cluster's pixel count
+ * and channel sums.
+ *
+ * The sums are added in input order, the order the per-cluster member arrays
+ * this replaced were filled and then summed in, so every mean is bit-identical
+ * to theirs. Dropping those arrays (and the discarded per-pixel assignment
+ * array) removed every per-pass allocation (2026-11-06 Rust-opportunities
+ * audit, OPT-001).
  */
-function assignToClusters(
+function accumulateClusters(
   pixels: RGB[],
   centroids: RGB[],
-): { assignments: number[]; clusters: RGB[][] } {
-  const assignments: number[] = new Array<number>(pixels.length);
-  const clusters: RGB[][] = centroids.map(() => []);
-
+  counts: Uint32Array,
+  sums: Float64Array,
+): void {
+  counts.fill(0);
+  sums.fill(0);
   for (let i = 0; i < pixels.length; i++) {
-    const pixel = pixels[i];
+    const p = pixels[i];
     let minDist = Infinity;
-    let nearestCluster = 0;
-
+    let nearest = 0;
     for (let j = 0; j < centroids.length; j++) {
-      const dist = rgbDistance(pixel, centroids[j]);
+      const c = centroids[j];
+      const dr = p.r - c.r;
+      const dg = p.g - c.g;
+      const db = p.b - c.b;
+      const dist = Math.sqrt(dr * dr + dg * dg + db * db);
       if (dist < minDist) {
         minDist = dist;
-        nearestCluster = j;
+        nearest = j;
       }
     }
-
-    assignments[i] = nearestCluster;
-    clusters[nearestCluster].push(pixel);
+    counts[nearest]++;
+    sums[nearest * 3] += p.r;
+    sums[nearest * 3 + 1] += p.g;
+    sums[nearest * 3 + 2] += p.b;
   }
-
-  return { assignments, clusters };
 }
 
 /**
- * Update centroids to be the mean of their clusters
+ * {@link accumulateClusters} ranking centroids by squared distance, for byte
+ * input only ({@link hasByteChannels}). Every centroid is then an input pixel
+ * or a `Math.round` mean of bytes, so every squared distance is an integer no
+ * larger than 3 × 255² = 195,075. The square roots of distinct integers in that
+ * range differ by more than 10⁻³, far above double-precision spacing, so the
+ * nearest centroid, and which centroid wins a tie, is exactly what the square
+ * root would pick. K-means++ weights and centroid movement keep their square
+ * roots, so the random draws and the convergence test are unchanged.
+ *
+ * A separate function rather than a flag: a branch in this inner loop cost
+ * more than the square root it saved.
+ */
+function accumulateClustersSquared(
+  pixels: RGB[],
+  centroids: RGB[],
+  counts: Uint32Array,
+  sums: Float64Array,
+): void {
+  counts.fill(0);
+  sums.fill(0);
+  for (let i = 0; i < pixels.length; i++) {
+    const p = pixels[i];
+    let minDist = Infinity;
+    let nearest = 0;
+    for (let j = 0; j < centroids.length; j++) {
+      const c = centroids[j];
+      const dr = p.r - c.r;
+      const dg = p.g - c.g;
+      const db = p.b - c.b;
+      const dist = dr * dr + dg * dg + db * db;
+      if (dist < minDist) {
+        minDist = dist;
+        nearest = j;
+      }
+    }
+    counts[nearest]++;
+    sums[nearest * 3] += p.r;
+    sums[nearest * 3 + 1] += p.g;
+    sums[nearest * 3 + 2] += p.b;
+  }
+}
+
+/**
+ * Update centroids to the rounded mean of their clusters, from the counts and
+ * sums of the last assignment step.
  * Returns new centroids and the maximum movement distance
  */
 function updateCentroids(
   centroids: RGB[],
-  clusters: RGB[][],
+  counts: Uint32Array,
+  sums: Float64Array,
 ): { newCentroids: RGB[]; maxMovement: number } {
   const newCentroids: RGB[] = [];
   let maxMovement = 0;
 
   for (let i = 0; i < centroids.length; i++) {
-    const cluster = clusters[i];
+    const count = counts[i];
 
-    if (cluster.length === 0) {
+    if (count === 0) {
       // Empty cluster: keep old centroid
       newCentroids.push({ ...centroids[i] });
     } else {
-      const newCentroid = rgbMean(cluster);
+      const newCentroid = {
+        r: Math.round(sums[i * 3] / count),
+        g: Math.round(sums[i * 3 + 1] / count),
+        b: Math.round(sums[i * 3 + 2] / count),
+      };
       const movement = rgbDistance(centroids[i], newCentroid);
       if (movement > maxMovement) {
         maxMovement = movement;
@@ -284,7 +336,8 @@ function updateCentroids(
  * late: `size >= 2.5` first holds at 3), so this is defence in depth: such a
  * limit counts as 1, the single cluster a NaN k produced before the cap
  * existed. It must not be 0 — with
- * pixels but no centroids, assignToClusters indexes a cluster that is not there.
+ * pixels but no centroids, the assignment step counts into a cluster that is
+ * not there.
  */
 function countDistinctColors(pixels: RGB[], limit: number): number {
   if (!Number.isFinite(limit)) return Math.min(1, pixels.length);
@@ -312,20 +365,25 @@ function kMeansClustering(
   // BUG-036 (2026-10-04 deep dive): limit k to the number of DISTINCT colours,
   // not the number of pixels. Once every distinct colour is a centroid,
   // k-means++ has nothing left to pick but a duplicate, and the strict `<` in
-  // assignToClusters gives every clone 0 pixels — a flat two-colour icon asked
-  // for five colours came back with three fabricated empty clusters.
+  // the assignment step gives every clone 0 pixels — a flat two-colour icon
+  // asked for five colours came back with three fabricated empty clusters.
   const effectiveK = countDistinctColors(pixels, k);
 
   // Initialize centroids using K-means++
   let centroids = kMeansPlusPlusInit(pixels, effectiveK);
 
+  // Chosen once per run; both give the same assignments (see accumulateClustersSquared)
+  const accumulate = hasByteChannels(pixels) ? accumulateClustersSquared : accumulateClusters;
+  const counts = new Uint32Array(centroids.length);
+  const sums = new Float64Array(centroids.length * 3);
+
   // Iterate until convergence or max iterations
   for (let iter = 0; iter < maxIterations; iter++) {
     // Assign pixels to clusters
-    const { clusters } = assignToClusters(pixels, centroids);
+    accumulate(pixels, centroids, counts, sums);
 
     // Update centroids
-    const { newCentroids, maxMovement } = updateCentroids(centroids, clusters);
+    const { newCentroids, maxMovement } = updateCentroids(centroids, counts, sums);
     centroids = newCentroids;
 
     // Check for convergence
@@ -335,10 +393,9 @@ function kMeansClustering(
   }
 
   // Final assignment to get cluster sizes
-  const { clusters } = assignToClusters(pixels, centroids);
-  const clusterSizes = clusters.map((c) => c.length);
+  accumulate(pixels, centroids, counts, sums);
 
-  return { centroids, clusterSizes };
+  return { centroids, clusterSizes: Array.from(counts) };
 }
 
 // ============================================================================

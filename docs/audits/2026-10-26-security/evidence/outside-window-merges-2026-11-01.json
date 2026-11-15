@@ -1,0 +1,565 @@
+{
+  "schemaVersion": 1,
+  "preparedLocalDate": "2026-11-01",
+  "timezone": "America/New_York",
+  "scope": "Second merge-day stretch: the open pull requests that do not depend on the AP-43 window, plus #420 and #419, merged ahead of the M line, and their deploys; then #421 later the same night (see pr421). The agent's list of what does not depend on the window also named the seroval floor bump, which it left until after the queue because a lockfile change starts all eight deploy workflows, and the image 1.3.5 deploy, which stays on its own hold. Then, on 2026-11-02, #423, #424, #425 and #426, overnight on the maintainer's instruction (see overnight20261102).",
+  "authorization": {
+    "request": "Maintainer, in chat, 2026-11-01: \"Let's merge what we can that doesn't depend on the window.\"",
+    "merging": "The agent ran each merge with the maintainer's login, so GitHub names the maintainer as the merger.",
+    "gate": "The approvals API shows each approval under the maintainer's login, which the agent also uses, so it cannot separate the two. That the maintainer gave them in the Actions UI rests on the maintainer's messages in chat ('I have approved both web and API', 'Discord run has been approved and deploying', 'Approved') and on the agent's own account that it approved no run."
+  },
+  "decisions": [
+    {
+      "item": "Bot privacy policy before the XIVAuth name fix",
+      "by": "maintainer",
+      "answer": "Fix policy first (the agent's recommended option)",
+      "effect": "#420 was written after that answer and after #419 was opened. It merged before #419, and its deploy finished before #419 merged and the OAuth run was created. #420 did not exist before this answer, so this answer, and not the general request, is its basis."
+    },
+    {
+      "item": "Announcement webhook",
+      "by": "maintainer",
+      "answer": "You switch it off (the agent's recommended option)",
+      "effect": "The agent set hook 671693119 inactive with the maintainer's login and read it back as inactive. Hook 596896553, the plain commit feed, is untouched. The agent said it would ask again before turning it back on."
+    },
+    {
+      "item": "New version numbers",
+      "by": "agent",
+      "answer": "Web 5.16.5 to 5.16.7 and M-WEB 5.16.8 were given in chat as an example, and the maintainer did not object. Oauth 3.2.1 was named in the same message. Discord 5.9.8 and M-DISCORD 5.9.9 were named in the 'Fix policy first' option the maintainer picked. Api 0.21.2 and M-API 0.21.3 follow the same rule; the agent stated them only as it went, and M-API 0.21.3 only after the merges."
+    },
+    {
+      "item": "#389 and #366 included",
+      "by": "agent, on the request",
+      "answer": "The agent had recommended leaving these two where they were, and the maintainer then asked to merge what can go. The agent took that to include them. For #366 the agent's own table had listed 'you confirm it's ready' as a condition of going early; the agent did not ask, and the maintainer did not confirm. #366 was merged on the agent's reading of the request and of the 2026-11-01 ruling that kept it in the batch, a ruling that placed it after the whole queue. Its description says the research remains in progress.",
+      "laterRuling": "Asked afterward whether to keep #366's research on main, the maintainer answered 'Keep it'. That ruling came after the merge."
+    },
+    {
+      "item": "One web deploy for three pull requests",
+      "by": "agent",
+      "answer": "The agent chose #418's run to carry all three and cancelled the web runs of #372 and #417. That is outside AP-06's grant as given, which named cut 00 through e-02 and was extended to the app cuts, and it was not separately ruled. Both runs were cancelled before any chat mention. The maintainer was told before approving that the run carried all three, and the agent said explicitly that it had cancelled them only after everything had merged."
+    }
+  ],
+  "main": {
+    "before": "d04d15402361156a7978036cd096d0a318ef5399",
+    "after": "6df8366d2757d8dcb6a9e9217ec0c453870492aa",
+    "afterPr421": "bac2f382182e3d185f75c439b1bac55c4c06e674"
+  },
+  "merges": [
+    {
+      "pr": 372,
+      "version": "web 5.16.5",
+      "mergeCommit": "e66803f277d59c61f24477041ef52ba16ab34572",
+      "mainTree": "aa259a618c58d9966b1bc5936fc6274a02e66248",
+      "mergedHead": "2c1db53809622b0d6803e23d839758c0bc60c26d",
+      "originalHead": "78f7ed33f4ba859ab169c42d57416deba8bc5e3b",
+      "predictedTree": "aa259a618c58d9966b1bc5936fc6274a02e66248",
+      "treeMatchesPrediction": true,
+      "mergedAt": "2026-11-02T00:11:53Z",
+      "mainCi": "success",
+      "deployRuns": [
+        {
+          "id": 41365843092,
+          "name": "Deploy Web App",
+          "conclusion": "cancelled"
+        }
+      ]
+    },
+    {
+      "pr": 417,
+      "version": "web 5.16.6",
+      "mergeCommit": "00510b017022576e9c7870807b26043529f1dce8",
+      "mainTree": "2130988ba2bddcc0604fffb5927701d9212aee0a",
+      "mergedHead": "fffd8b0cff3b5a0228e58e7c694aaab35c137fc7",
+      "originalHead": "2d18b18a9bbb70824236b5b8ad944fe3d93510f8",
+      "predictedTree": "2130988ba2bddcc0604fffb5927701d9212aee0a",
+      "treeMatchesPrediction": true,
+      "mergedAt": "2026-11-02T00:20:35Z",
+      "mainCi": "success",
+      "deployRuns": [
+        {
+          "id": 41366634825,
+          "name": "Deploy Web App",
+          "conclusion": "cancelled"
+        }
+      ]
+    },
+    {
+      "pr": 418,
+      "version": "web 5.16.7",
+      "mergeCommit": "2f98f7e18311ca7b65ef4970a7b94191deede619",
+      "mainTree": "c266148219a21e17152f6749696299e17f4481e0",
+      "mergedHead": "8c85264581651d6caa2a8ed2bea3a4ddb6f47856",
+      "originalHead": "e43d8866e4872498baf24192b5d757e2ca0fec86",
+      "predictedTree": "c266148219a21e17152f6749696299e17f4481e0",
+      "treeMatchesPrediction": true,
+      "mergedAt": "2026-11-02T00:30:24Z",
+      "mainCi": "success",
+      "deployRuns": [
+        {
+          "id": 41367514820,
+          "name": "Deploy Web App",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "pr": 389,
+      "version": "api 0.21.2",
+      "mergeCommit": "8ca1d96e25bdfae436ddf05492a22436164569a4",
+      "mainTree": "80fae5bf194921e915b29899f0f7763102fdceae",
+      "mergedHead": "fc1c37c6fe1d2e0c45e54381a7c00eb1d5b5593d",
+      "originalHead": "f75f77f4de1a05ceca34c9455d09e6208ba5f461",
+      "predictedTree": "80fae5bf194921e915b29899f0f7763102fdceae",
+      "treeMatchesPrediction": true,
+      "mergedAt": "2026-11-02T00:38:28Z",
+      "mainCi": "success",
+      "deployRuns": [
+        {
+          "id": 41368238637,
+          "name": "Deploy API Worker",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "pr": 366,
+      "version": "none (docs and a root test script)",
+      "mergeCommit": "d228148e2fa06621f39b83fbb62f61622506b050",
+      "mainTree": "fcc18f14f4ea90a2e1804880892e64bda71b4844",
+      "mergedHead": "44cb6890ed8fcf10444a4918f39ee2615fbddaf3",
+      "originalHead": "87aad80375eb4b87267d7db0b245e70e5470fce2",
+      "predictedTree": "fcc18f14f4ea90a2e1804880892e64bda71b4844",
+      "treeMatchesPrediction": true,
+      "mergedAt": "2026-11-02T00:47:09Z",
+      "mainCi": "success",
+      "deployRuns": []
+    },
+    {
+      "pr": 420,
+      "version": "discord 5.9.8",
+      "mergeCommit": "885525f2efbb2ad6e63fcd1f217cce23507a07c0",
+      "mainTree": "a644d0a20e5c6d8966abdb49b14550218951c3c0",
+      "mergedHead": "6b8a6533ae67188706d500693e67729033504f68",
+      "originalHead": "49014785138a936fe60f897226dee8de9046a1d5",
+      "predictedTree": "a644d0a20e5c6d8966abdb49b14550218951c3c0",
+      "treeMatchesPrediction": true,
+      "mergedAt": "2026-11-02T00:55:07Z",
+      "mainCi": "success",
+      "deployRuns": [
+        {
+          "id": 41369716760,
+          "name": "Deploy Discord Worker",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "pr": 419,
+      "version": "oauth 3.2.1",
+      "mergeCommit": "6df8366d2757d8dcb6a9e9217ec0c453870492aa",
+      "mainTree": "cd76a26aafbda8d31ed1e34f0f2023476d528b5a",
+      "mergedHead": "e862103a73b6a7479d5811b26c2de62042b46309",
+      "originalHead": "b9e4453d7a7a45dfcc1259a4b2abbfe9ca99bfab",
+      "predictedTree": "cd76a26aafbda8d31ed1e34f0f2023476d528b5a",
+      "treeMatchesPrediction": true,
+      "mergedAt": "2026-11-02T01:03:38Z",
+      "mainCi": "success",
+      "deployRuns": [
+        {
+          "id": 41370443703,
+          "name": "Deploy OAuth Worker",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ],
+  "cancelledRuns": [
+    {
+      "run": 41365843092,
+      "workflow": "Deploy Web App",
+      "startedBy": "#372"
+    },
+    {
+      "run": 41366634825,
+      "workflow": "Deploy Web App",
+      "startedBy": "#417"
+    }
+  ],
+  "deploys": [
+    {
+      "run": 41367514820,
+      "worker": "web 5.16.7",
+      "carries": "#372, #417 and #418",
+      "source": "2f98f7e18311ca7b65ef4970a7b94191deede619",
+      "gate": "approved by the maintainer in the production environment",
+      "finishedAt": "2026-11-02T00:56:50Z",
+      "accepted": false,
+      "pagesDeployment": "1b1b8438.xiv-colorexplorer.pages.dev"
+    },
+    {
+      "run": 41368238637,
+      "worker": "api 0.21.2",
+      "carries": "#389",
+      "source": "8ca1d96e25bdfae436ddf05492a22436164569a4",
+      "gate": "approved by the maintainer in the production environment",
+      "finishedAt": "2026-11-02T00:54:49Z",
+      "cloudflareVersion": "a4580be9-063f-4628-b3af-010aefe7e098",
+      "accepted": true,
+      "acceptedNote": "Accepted after this was first recorded: see overnight20261102.priorAcceptance."
+    },
+    {
+      "run": 41369716760,
+      "worker": "discord 5.9.8",
+      "carries": "#420",
+      "source": "885525f2efbb2ad6e63fcd1f217cce23507a07c0",
+      "gate": "approved by the maintainer in the production environment",
+      "finishedAt": "2026-11-02T00:58:07Z",
+      "cloudflareVersion": "9437ae77-a69d-485d-8238-dbcfc08ac457",
+      "accepted": false,
+      "commandRegistration": "The run's 'Register Discord commands' step succeeded. This is outside AP-15's list. The maintainer was told before approving that the deploy re-registers commands; no command diff was put to the maintainer. #420 changes only documents and version files."
+    },
+    {
+      "run": 41370443703,
+      "worker": "oauth 3.2.1",
+      "carries": "#419",
+      "source": "6df8366d2757d8dcb6a9e9217ec0c453870492aa",
+      "gate": "approved by the maintainer in the production environment",
+      "finishedAt": "2026-11-02T01:10:57Z",
+      "cloudflareVersion": "1e7f7e32-3911-40a5-9fad-0a533631e48c",
+      "accepted": false
+    }
+  ],
+  "issuesClosedByMerge": {
+    "368": "2026-11-02T00:11:54Z",
+    "322": "2026-11-02T00:11:56Z",
+    "note": "#372's merge closed both, about 45 minutes before web 5.16.7 went live."
+  },
+  "previewGate": {
+    "tree": "fcc18f14f4ea90a2e1804880892e64bda71b4844",
+    "covers": "#372, #417, #418, #389 and #366 on main. #420 and #419 each passed their own checks and the four required checks on the merged head, and were not in this preview.",
+    "turbo": "62 of 62 tasks",
+    "testScripts": "225 and 103 tests",
+    "playwrightChromium": "179 of 179",
+    "buildCheck": "CSS 53.16 KB of 105 KB in the local build (53.15 KB in deploy run 41367514820), JS payload 2.18 MB of 2.20 MB (99.2%)",
+    "otherGates": "type-check:scripts, dead-code:check, docs:check-versions, docs:check-links, workers:check-logs and prettier passed"
+  },
+  "reviews": {
+    "#372, #417, #418, #389, #366": "One independent read-only review of each update against its original head: no blocker or should-fix.",
+    "#419": "Three independent read-only lenses reading upstream XIVAuth at 8ea6a781: correctness and release passed; security and privacy found no way to make an unverified or attacker-chosen name win, and raised the disclosure gap that #420 closes.",
+    "#420": "Three rounds. The first two each found a real inaccuracy in the English row, and the second also found a reversed sentence in the Japanese; all are fixed. The final facts review and all five translation reviews passed. One Japanese wording nit from that round was applied before the commit, so the committed Japanese differs from the reviewed text in that one phrase."
+  },
+  "liveChecks": {
+    "scrollbarGap": "Live web 5.16.7, a 1600px spacer in each of the ten tools, Chromium at 1100x800, 1440x900 and 1920x1080, Firefox at 1440x900: 40 rows, every gap 0 px, no nested scrollers, no errors. Headless only.",
+    "webBuild": "The version constant in the live modals chunk is 5.16.7. 5.16.4 appears only as a history entry in the What's New chunk, whose newest entry is 5.16.5. The live index CSS is 54,430 bytes and no longer holds bg-pink-600. This shows the build is live; it does not check how pages look.",
+    "api": "/health returned ok and GET /v1/dyes?limit=1 returned 200.",
+    "bot": "/health returned healthy.",
+    "oauth": "/health returned healthy."
+  },
+  "notYetDone": [
+    "Superseded: at 10:26 PM Eastern on 2026-11-01 the maintainer accepted web 5.16.8, api 0.21.2, discord 5.9.9 and oauth 3.2.2 ('Let's Approve all four'), after the checks asked for here ran in the app's Chromium pane on Windows 11 and at an emulated phone size. No real-phone or Firefox result was reported. What's still open is under overnight20261102.notYetDone."
+  ],
+  "mLineRenumber": {
+    "targets": {
+      "M-API": "0.21.3",
+      "M-WEB": "5.16.12",
+      "M-DISCORD": "5.9.10"
+    },
+    "simulatedOn": "ee4dd0b65375ed994d8ab0dafc3a695b614c1a3d",
+    "headsUsed": {
+      "#411": "4ffefc33",
+      "#414": "17c23411"
+    },
+    "finalTree": "0aa0bd905f1e2f51968c0c9c85058958178636a2",
+    "limits": "Merge level only, with no install, build or tests, using the branch heads above. This record changes #411's documents, and so that tree id, and no M or F rule depends on those documents. Rerun after any new commit on the line or on main. packages/bot-logic/src/commands/swatch.test.ts auto-merged with changes from both sides and was read, not run. Each simulated step merged the branch onto the previous step; the real flow updates each PR with main first, which gives the same trees only if the same resolutions are made. The tree keeps #402's Hair/Skin clause; dropping it leaves #402 with no net change and a different tree id, with no web run either way.",
+    "selectedRuns": "From the simulated trees and each workflow's path filter, not observed live, so read the run list at merge time. Last web run: #396 (not #402). Last discord run: #398. Last api run: #395. Moderation: #399 for M-MODERATION, and #414 for the activation.",
+    "silentAtTakenNumber": "M-API only: its package.json, README row, current row and Conditional M row merge cleanly at 0.21.2. At #398 only the Conditional M row is silent, because main's 5.9.9 makes the rest conflict visibly.",
+    "steps": [
+      {
+        "pullRequests": "#391, #392, #394",
+        "conflicts": "none",
+        "setByHand": "none",
+        "rule": "None. #391 merges first at its real tip: `3cd1b6df` aligns core's `package-declarations.test.ts` with `main`, and a later branch merged without it conflicts on that test."
+      },
+      {
+        "pullRequests": "#395",
+        "conflicts": "`README.md`, api `CHANGELOG.md`, `docs/versions.md`",
+        "setByHand": "api `package.json`, the README api row, the current `docs/versions.md` row and its Conditional M row: all to 0.21.3",
+        "rule": "Changelog: #395's section as `[0.21.3]` above `main`'s `[0.21.2]`; keep `main`'s `[0.21.1]` dated 2026-10-29, not the branch's 2026-10-27. History: v0.21.3 above v0.21.2. README: keep oauth 3.2.2."
+      },
+      {
+        "pullRequests": "#396",
+        "conflicts": "`README.md`, web `CHANGELOG.md`, web `package.json`, `docs/versions.md`",
+        "setByHand": "none",
+        "rule": "Web 5.16.12 in `package.json`, the README row and the current row, taking neither side's number (`main` 5.16.11, branch 5.16.5); keep discord 5.9.9 from `main`. Changelog: `[5.16.12]` above `main`'s seven sections, `[5.16.11]` down to `[5.16.5]`. History: v5.16.12 above those seven. Conditional M hunk: web v5.16.12, api v0.21.3, in the branch's row order. This is M-WEB's selected run."
+      },
+      {
+        "pullRequests": "#397",
+        "conflicts": "`README.md`, `docs/versions.md`",
+        "setByHand": "none",
+        "rule": "Per row take the higher version: oauth 3.2.2, api 0.21.3, og 2.12.3. Conditional M hunk: the branch's row order, og v2.12.3, web v5.16.12, api v0.21.3."
+      },
+      {
+        "pullRequests": "#398",
+        "conflicts": "`README.md`, discord `CHANGELOG.md`, discord `package.json`, `docs/versions.md`",
+        "setByHand": "the Conditional M discord row in `docs/versions.md`: to v5.9.10",
+        "rule": "Discord 5.9.10 in `package.json`, the README row and the current row, taking neither side's number (`main` 5.9.9, branch 5.9.8). Changelog: `[5.9.10]` above `[5.9.9]` and `[5.9.8]`. History: v5.9.10 above v5.9.9 and v5.9.8. Keep web 5.16.12. Do not replace 5.9.8 globally, because that corrupts `main`'s `[5.9.8]` changelog heading and v5.9.8 history row. The Prepared source row is v5.9.9 and stays."
+      },
+      {
+        "pullRequests": "#399",
+        "conflicts": "`docs/versions.md`",
+        "setByHand": "none",
+        "rule": "Current rows: moderation 1.9.1, keep oauth 3.2.2. Conditional M hunk: the branch's row order, moderation v1.9.1, discord v5.9.10. Never take the branch's oauth 3.2.0."
+      },
+      {
+        "pullRequests": "#400",
+        "conflicts": "none",
+        "setByHand": "none",
+        "rule": "None, provided the earlier Conditional M hunks kept the branch's row order."
+      },
+      {
+        "pullRequests": "#402",
+        "conflicts": "`docs/versions.md`",
+        "setByHand": "none",
+        "rule": "Replace the v5.16.12 history row with #402's wording at v5.16.12, and keep `main`'s rows from v5.16.11 down to v5.16.5. That row is #402's whole net delta, because its code files match `main` and its changelog and `CLAUDE.md` additions resolve to `main`'s blobs. The row claims a Hair/Skin restore that `main` records under 5.16.4, so decide then whether to keep that clause; the first simulation recommended dropping it. This merge should start no web run: M-WEB's selected run is #396's, so do not reject that one as stale."
+      },
+      {
+        "pullRequests": "#403, #404",
+        "conflicts": "none",
+        "setByHand": "none",
+        "rule": "None. #404's net change is two documents, with nothing under `apps/discord-worker`."
+      },
+      {
+        "pullRequests": "#405",
+        "conflicts": "`README.md`, `docs/versions.md`",
+        "setByHand": "none",
+        "rule": "Per row take the higher version: oauth 3.2.2, api 0.21.3, og 2.12.4. Conditional M hunk: the branch's row order, discord v5.9.10, og v2.12.4, web v5.16.12, api v0.21.3."
+      },
+      {
+        "pullRequests": "#406",
+        "conflicts": "none",
+        "setByHand": "none",
+        "rule": "None."
+      },
+      {
+        "pullRequests": "#411",
+        "conflicts": "`docs/research/index.md`, `docs/versions.md`",
+        "setByHand": "none",
+        "rule": "Keep every research row. Prepared source hunk: keep `main`'s discord v5.9.9 and #411's presets-api v2.8.2. Do not bump that row to 5.9.10, because it lists bot-logic 4.12.0."
+      },
+      {
+        "pullRequests": "#414",
+        "conflicts": "`docs/versions.md`",
+        "setByHand": "none",
+        "rule": "Current rows: moderation 1.9.2, keep oauth 3.2.2. The Conditional M moderation row stays v1.9.1. This step has two merge bases, and only this file conflicted."
+      }
+    ],
+    "overlap": "Net across the line, the only files it shares with #421 or with #423 to #425 are README.md, docs/versions.md, and the web and discord CHANGELOG.md and package.json, whose resolutions are in the steps."
+  },
+  "deviations": [
+    "The first preview gate was launched before the predicted chain was complete, so the preview was at the wrong commit. It was stopped at once and no result from it is used.",
+    "Auto-fix events on merge conflicts led the agent to merge main into #420 three times (fc083f3b, 52112a3d, cd3ef088) and into #419 once (56cd199e) before their turns. Each conflict was a version row, and the merged trees equal the predictions.",
+    "#418's original session started its own merge of main into that branch. The agent told it not to push, and it pushed nothing."
+  ],
+  "followUps": [
+    "@xivdyetools/types XIVAuthCharacterRegistration still declares a required verified boolean and no verified_at. oauth narrows it locally.",
+    "The one batch announcement should cover #421: the maintainer answered 'Yes, include it' in its session, and no deadline was set. Covering #420 is the agent's reading of the bot policy's section 11 and the Terms, which promise a Discord announcement for significant changes; it was not separately ruled. The candidate line in #421's description needs rewording before use. Done 2026-11-02 in #426, which reworded that line and also covered #420 (overnight20261102.announcement).",
+    "Six older rows in docs/versions.md say 'no register-commands' (v5.8.10, v5.8.3, v5.7.1, v5.6.5, v5.6.4, v5.6.2). Their deploy runs have not been checked.",
+    "identity-timeouts.sqlite.test.ts 'get and apply share one deadline' timed out once when every hash was made slow in a throwaway copy. CI has not failed on it, and the cause is not confirmed.",
+    "Before IDENTITY_SPLIT_ENABLED is activated, decide whether a detach should carry the old row's name when the roster fetch fails. It is unreachable while the flag is false.",
+    "PRIVACY.md's sentence that linking Discord later moves presets at the next sign-in describes behavior that answers 503 while IDENTITY_SPLIT_ENABLED is false. It predates this work and is not changed here.",
+    "The parity gate does not pin #421's new policy sentence, so it would still pass if the keep behavior were removed."
+  ],
+  "pr421": {
+    "request": "Maintainer, in chat: 'let's monitor PR 421 and related session for it -- and see if this is something we can merge today or wait until after the window.'",
+    "what": "A failed XIVAuth roster fetch now keeps an existing account's stored name instead of overwriting it with the fallback. It also changes the policy text on four surfaces in six languages, so it takes oauth 3.2.2, web 5.16.8 and discord 5.9.9.",
+    "origin": "A session the maintainer started from the agent's proposal, after the first review named this as a finding. The agent asked that session to remove a false 'no register-commands' clause from the v5.9.8 row, and it did.",
+    "redCheckBeforeReview": "CI run 41374737229 failed on identity-timeouts.sqlite.test.ts. The session traced it to a timing race in two tests, written 2026-10-29 and on main since #378 merged on 2026-11-01 (fa563a9a), and fixed the tests in 41be052f with no production change.",
+    "review": "At 41be052f: full gate 62 of 62 turbo tasks, test:scripts, Playwright chromium 179 of 179, build:check, and the timing test file five runs in a row, all passing. Eight independent read-only reviews (the fix, the policy facts, the release, and one per translation) passed with no blocker or should-fix.",
+    "rulings": [
+      {
+        "question": "When should it merge?",
+        "answer": "Tonight (the agent's recommended option)"
+      },
+      {
+        "question": "PR decision 1: a name kept after a failed lookup isn't re-checked",
+        "answer": "Accept (the agent's recommended option)"
+      },
+      {
+        "question": "PR decision 2: [null] counts as a delivered roster",
+        "answer": "Keep as is (the agent's recommended option)"
+      },
+      {
+        "question": "Final six-language policy text; the maintainer's earlier 'Yes, update wording' came before the translations existed",
+        "answer": "Accept (the agent's recommended option). The option stated that no lawyer has read the text."
+      }
+    ],
+    "merge": {
+      "mergeCommit": "bac2f382182e3d185f75c439b1bac55c4c06e674",
+      "mainTree": "7e3f1bcfd06ba54229dce09987733508a9af73be",
+      "mergedHead": "41be052fd853c914d3993ff90cd50ee5c1d126c4",
+      "mergedAt": "2026-11-02T02:22:40Z",
+      "localDate": "2026-11-01, 9:22 PM Eastern",
+      "mainCi": "success",
+      "note": "The head already contained main, so no update was needed. The agent ran the merge with the maintainer's login."
+    },
+    "deploys": [
+      {
+        "run": 41377398213,
+        "worker": "oauth 3.2.2",
+        "cloudflareVersion": "4a964f05-019e-4fea-aade-c813d344e48e",
+        "finishedAt": "2026-11-02T02:25:47Z",
+        "accepted": true,
+        "acceptedNote": "Accepted after this was first recorded: see overnight20261102.priorAcceptance."
+      },
+      {
+        "run": 41377398249,
+        "worker": "discord 5.9.9",
+        "cloudflareVersion": "983095c1-dc40-4528-b26e-ef2726d71bfa",
+        "finishedAt": "2026-11-02T02:26:44Z",
+        "accepted": true,
+        "commandRegistration": "The deploy re-registers commands; the maintainer was told first. No file under apps/discord-worker other than policy documents, changelogs and package.json changed since 885525f2, so the command list is unchanged. No command diff was put to the maintainer.",
+        "acceptedNote": "Accepted after this was first recorded: see overnight20261102.priorAcceptance."
+      },
+      {
+        "run": 41377398224,
+        "worker": "web 5.16.8",
+        "pagesDeployment": "a3a6ad0b.xiv-colorexplorer.pages.dev",
+        "finishedAt": "2026-11-02T02:28:07Z",
+        "accepted": true,
+        "acceptedNote": "Accepted after this was first recorded: see overnight20261102.priorAcceptance."
+      }
+    ],
+    "gate": "The agent asked the maintainer to sign in first, while 3.2.1 was still live, and to approve OAuth right after, because the documents went live at merge. The merge did not wait for the sign-in, although the agent's merge-tonight option had asked for the sign-in first. The maintainer reported 'I have performed all four steps' and that the three components were deploying. The approvals API shows each approval under the maintainer's login, which the agent also uses, so it cannot separate the two.",
+    "liveChecks": "The version constant in the live modals chunk is 5.16.8. PRIVACY.md on main carries the new sentence. The oauth, bot and api /health endpoints returned healthy or ok. Web 5.16.8, oauth 3.2.2 and discord 5.9.9 replace web 5.16.7, oauth 3.2.1 and discord 5.9.8, whose acceptance was still open, so acceptance moves to the new versions; the agent said so in chat, and the maintainer was not asked.",
+    "liveSignIn": "The agent asked the maintainer to sign in on oauth 3.2.1 and then approve OAuth. The maintainer reported 'I have performed all four steps. I see my character's name instead of \"XIVAuth User\".' The order is the one the agent asked for; the maintainer did not state it, and no sign-in time was captured. OAuth's job started at 02:24:43Z and its Cloudflare deploy ended at 02:25:39Z, 10 seconds before the report, so the sign-in was very likely on 3.2.1; 3.2.2 also contains #419. The agent treated this as the live proof of #419. The report does not say whether the name was seen on presets as well, and no response was captured.",
+    "notExercisedLive": "The failed-lookup path of 3.2.2 has only been tested with mocks, because it needs a real XIVAuth failure.",
+    "bodyCorrections": "The agent added the rulings and three corrections to #421's description before merging. It said that the candidate announcement line is too broad, that M-DISCORD's package.json conflicts visibly once #421 is on main, and that a kept unverified name can be published for the first time on an old row with no presets."
+  },
+  "overnight20261102": {
+    "request": "After the pre-merge review of #423, #424 and #425 had started, the maintainer wrote in chat: 'After the review, please fix any findings where necessary, then merge to main if possible. Auto-approve any units for publication, and push a consolidated release announcement on Discord.' and then 'I'm going to bed. See you tomorrow.'",
+    "howTheAgentReadIt": "As authority for these three merges, the web deploy runs they started, and one announcement of what was live. It was not read as reaching the M or F lines, the image hold or any later run. The register names the maintainer as the only approver of gate runs (AP-05), and that was kept for everything else. The maintainer asked for this record afterward ('Yes, record it'), and that answer accepts nothing.",
+    "priorAcceptance": "Before going to bed, the maintainer accepted web 5.16.8, api 0.21.2, discord 5.9.9 and oauth 3.2.2 ('Let's Approve all four'). The checks behind that ran in the app's Chromium pane on Windows 11 and at an emulated phone size. No real-phone or Firefox result was reported. The same message asked for issue #422, a TODO to improve the mobile version, which is open.",
+    "review": {
+      "firstRound": "18 independent reviewers over the three PRs (75 raw findings), then three real-browser probes comparing main with a preview merge, then independent verifiers on 14 concerns. Required: V1 (palette picks left results off screen on laptop widths), V6 (player notes said nothing is cut off), V7 (next-row stars painted over a flipped tooltip) and V13 (technical notes overstated where geometry is unchanged). Split: V2, V12 and V14, below.",
+      "secondRound": "8 verifiers on the fixed build found more: a grid pick still scrolled when the results sat beside a short grid, a double-click could land on another cell, a shared link opened with no verdict on screen, an off-by-one at 768 px, and false lines in the announcement draft.",
+      "thirdRound": "3 verifiers on the last changes. The Swatch behavior and the announcement text passed. Note text was corrected once more.",
+      "advisorAndFable": "No agent called the advisor and none used Fable (transcripts checked), because ultracode is on.",
+      "previewGateCaught": "The full gate on the preview merge found the layout chunk 55 bytes over its 218 KB budget, with the review's first fixes on #423 and before they were pushed. The chunk's growth is all #423's: CI read 216.31 KB on main and on #424's and #425's pre-review heads, 217.89 KB on #423's, and 217.39 KB on #423's final head and after all three. Comments inside a Lit css template ship, so #423's moved to a TypeScript comment. The limit was not raised.",
+      "correction": "Commit a9e70abe's message, and the agent's first report to the maintainer, wrongly said the overage needed #424 and #425. It didn't, as the readings above show."
+    },
+    "splitCalls": {
+      "where": "A disputes file kept locally for the maintainer, because they were asleep. Rulings are still open.",
+      "V2": "What a desktop grid pick does when results sit under the grid. Two verifiers blocked on block 'start', which moved the whole grid off screen on each pick. One did not block, and called block 'nearest' a design trade: the dye cards start below the fold.",
+      "V14": "RESULTS_MIN_WIDTH. One verifier blocked on 200, because a 1536 px window on Lips and Face paint missed by 2 px and stacked. One did not block, and did not oppose lowering it.",
+      "V12": "Older browsers and the safe keyword and cqw unit. No verifier blocked. One refuted the concern and one rated it partly true. No code changed.",
+      "whatShipped": "For V2 and V14 the agent shipped the variant the blocking verifiers asked for and no verifier objected to: 'nearest' on desktop and 190. That is the agent's call so that #424 could merge, and the long-term choice stays the maintainer's."
+    },
+    "fixes": {
+      "#423": "Hovered swatch z-index 21, above the stars' 20. The spec compares the two layers and its locale tests assert the language applied. New CSS comments moved out of the template. Dates set to the merge day.",
+      "#424": "Palette picks, custom colors, dyes sent from another tool and shared links reveal their results in a desktop window (not at 768 px and under, not for a THIS CHARACTER slot, and not on a config re-match). Desktop grid picks use block 'nearest'. Results beside the grid never scroll. On the main grid's cells, a double-click's second click is ignored. RESULTS_MIN_WIDTH is 190. Reduced motion is honored. Notes corrected with thresholds measured on the fixed build. The spec runs with real scrollbars.",
+      "#425": "Player and technical notes corrected, three tests pinned to what they name, and a race in the spec's expectWithinPane fixed. #425's own session reported that race (7 and 1, then 4 and 1 failures in runs of 42). It did not reproduce in the agent's one run of 42, and the code has it. The fixed spec passed 135 of 135 repeats under load."
+    },
+    "gate": {
+      "preview": "Final preview be5d6913, tree 13117b8d: build, type-check, lint and unit tests through turbo with web-app as the filter, build:check (layout chunk 99.7%, JS payload 99.3%), type-check:scripts, test:scripts, dead-code:check, docs:check-versions, docs:check-links, workers:check-logs, gitleaks, Playwright chromium 252/252, and the three new specs 80/80 on mobile-chrome and on Firefox.",
+      "afterIt": "Text-only edits and #425's spec fix came after that run. Each pull request's four required checks then passed on its final head, and all four passed on main after each merge.",
+      "mutations": "Removing block 'nearest', the beside-the-grid check or the shared-link reveal each failed the new spec."
+    },
+    "merges": [
+      {
+        "pr": 423,
+        "title": "fix(web): remove the Color Palette's sideways scrollbar (5.16.9)",
+        "mergedAt": "2026-11-02T08:45:52Z",
+        "mergedBy": "FlashGalatine",
+        "mergeCommit": "534912eef8d02c7cc79969acc6daeefa634be0ed",
+        "mainTree": "1c9ad6393554fbe7bf7f5ce0b3dac2664383e6d5",
+        "mergedHead": "a9e70abee54dff06affc5af2036565f122f5c68c"
+      },
+      {
+        "pr": 424,
+        "title": "fix(web-app): the Swatch Matcher fits a narrow pane (5.16.10)",
+        "mergedAt": "2026-11-02T09:11:35Z",
+        "mergedBy": "FlashGalatine",
+        "mergeCommit": "75d9988e54e5b76f6e3f1371eb0e5db9b17b0a0b",
+        "mainTree": "a4e9bd7465558bdbede980ace84eac379d8b689b",
+        "mergedHead": "c0a229444e1b5ff0e2e81fdfb6e88316eca86b20"
+      },
+      {
+        "pr": 425,
+        "title": "fix(web-app): Harmony, Comparison and Accessibility fit a narrow pane (5.16.11)",
+        "mergedAt": "2026-11-02T09:25:52Z",
+        "mergedBy": "FlashGalatine",
+        "mergeCommit": "149ab8835681431eafe497e8089e7b491da5a771",
+        "mainTree": "9738d46bdc181696dd93a3ff5b5be04d47bae72f",
+        "mergedHead": "c5fbe44a666a99e2e6eaf5fa4ee3bc788ce2f8ef"
+      },
+      {
+        "pr": 426,
+        "title": "docs(changelog): player notes for 5.13.0",
+        "mergedAt": "2026-11-02T09:46:30Z",
+        "mergedBy": "FlashGalatine",
+        "mergeCommit": "ee4dd0b65375ed994d8ab0dafc3a695b614c1a3d",
+        "mainTree": "286c318007a6db598fa7e0ddd8a19c9824743730",
+        "mergedHead": "db0f039fdd013d79a4cd6090ab9f460b64dd5573"
+      }
+    ],
+    "mergedByNote": "mergedBy is the maintainer's login, which the agent also uses. The agent performed these merges on the instruction above.",
+    "branchNote": "#424's own session woke on the conflict #423's merge caused and pushed its own merge of main (53b8d741) less than a minute before the agent's, whose push was rejected. Nothing was forced: the agent built c0a22944 on that commit with the prepared tree, and it asked #424's and #425's sessions to stay off their branches, which they did.",
+    "predictedTrees": "For each of #423, #424 and #425 the main tree after merging equals the tree the agent prepared before pushing.",
+    "deploys": [
+      {
+        "pr": 423,
+        "web": "5.16.9",
+        "run": 41415435944,
+        "conclusion": "success",
+        "finished": "2026-11-02T08:49:16Z"
+      },
+      {
+        "pr": 424,
+        "web": "5.16.10",
+        "run": 41418647554,
+        "conclusion": "success",
+        "finished": "2026-11-02T09:14:34Z"
+      },
+      {
+        "pr": 425,
+        "web": "5.16.11",
+        "run": 41420580293,
+        "conclusion": "success",
+        "finished": "2026-11-02T09:30:11Z"
+      }
+    ],
+    "approvals": "The agent approved all three runs through the API, on the maintainer's 'Auto-approve any units for publication'. Each approval's comment says so and names its pull request. They show under the maintainer's login, which the agent also uses. No production deploy run was cancelled; two runs on #424's branch at 53b8d741 were cancelled when c0a22944 replaced it. #426 is docs only and started no deploy. Nothing was waiting at the gate afterward.",
+    "liveChecks": {
+      "versions": "After #423's run the live modals chunk's version constant read 5.16.9, and after #425's it read 5.16.11. It was not read after #424's run.",
+      "browsers": "After #425's run only, on the live site with no sign-in, Chromium with real scrollbars and Firefox: palette drawer client and scroll width 309/309 and 319/319, a palette pick at 1366x768 moves the pane 0 to 1014 with the closest swatches on screen, a grid pick at 1920x1080 stays at 0, Swatch at 1024x768 has its panel at x=308 inside a pane starting at 252, the Harmony wheel at 800x600 is round and inside the pane (170 and 180 px), and there were no page errors or sideways overflow.",
+      "notChecked": "Real phones and Safari. Firefox here has overlay scrollbars, so classic Firefox scrollbars were not measured."
+    },
+    "announcement": {
+      "pullRequest": 426,
+      "version": "5.13.0",
+      "covers": "What was live after #425: web 5.16.1 to 5.16.11, discord through 5.9.9, oauth 3.2.2, api 0.21.2 and og 2.12.2.",
+      "leavesOut": "The M and F lines and image 1.3.5, which are not live; flag-gated moderation and identity behavior; and the XIVAuth notice, per AP-37.",
+      "decidedByAgent": "That the request meant now and covered what was live, that it counted as the word needed to turn the webhook on, the version number, the wording, and including #420 alongside #421. Two verifiers corrected the text against the changelogs and code, and a third passed the final text. It rendered at 3,947 of 4,000 characters. No person read it before it posted.",
+      "r4": "R4 had chosen one post after the last player-facing unit, and had not chosen a post before M. The agent took the maintainer's later word to override that. The maintainer did not mention R4 and has not ruled on it. The M line's changes now need their own entry with a later number.",
+      "hook": "The maintainer's messages don't mention the hook. The agent took 'push a consolidated release announcement on Discord' as the word to turn it on, without asking again as it had said it would (decisions). It turned hook 671693119 on at 09:41:26 UTC, after #426's checks passed, waited five minutes, merged at 09:46:30 UTC, and turned it off again at 09:46:38 UTC. The maintainer did not ask for it to go back off. The agent did that because the queue isn't finished and it had been set off until this post. Turning it on again is the maintainer's word. A first run of the script stopped before the hook changed, because its check wait failed.",
+      "delivery": {
+        "id": "3851754144383631360",
+        "status": 200,
+        "reply": "{\"success\":true,\"version\":\"5.13.0\"}",
+        "deliveredAt": "2026-11-02T09:46:33.254Z",
+        "forCommit": "ee4dd0b65375ed994d8ab0dafc3a695b614c1a3d"
+      },
+      "notRead": "The agent can't read the Discord channel, so the post rests on the bot's reply."
+    },
+    "deviations": [
+      "AP-05's advice row asks that units 7 to 14 and the M line be accepted one at a time. The agent did not apply that here: these three went in sequence with no maintainer acceptance between them, on its reading of the instruction above. The agent's live-site browser checks came after the last one."
+    ],
+    "notYetDone": [
+      "Acceptance of web 5.16.9, 5.16.10 and 5.16.11, and of the announcement as posted: the agent approved the runs, and the maintainer has not accepted them.",
+      "Rulings on V2, V14 and V12.",
+      "Whether the hook stays off until the M line has its own entry."
+    ],
+    "followUps": [
+      "Open issues the review left, none blocking: dye card submenus out of a mouse's reach at 769 to 814 px with both panels open; some Monochromatic and Shades markers overlapping on the smallest wheel; Comparison's What differs values unreadable at about 769 to 860 px, the same as before #425; a keyboard pick leaving focus above the pane; closing a panel after a reveal leaving the verdict above the pane; a very narrow Swatch panel at 769 to 960 px; and, already on main before these PRs, the phone palette drawer running 54 px past the viewport. The maintainer started the session the agent proposed for all of these except the phone drawer, and nothing from it has merged."
+    ]
+  }
+}

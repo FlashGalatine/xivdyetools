@@ -297,7 +297,7 @@ of the free tier's KV write limits — so there is nothing to create with
 | `SERVICE_RATE_LIMITER` | Rate limit | 1300 / 60 s on one key for our own workers on `/v1/*` (service binding, no client IP) |
 | `UNIVERSALIS_RATE_LIMITER` | Rate limit | 30 / 60 s production (60 development), cache misses on the absorbed market proxy |
 | `UNIVERSALIS_SERVICE_RATE_LIMITER` | Rate limit | 600 / 60 s production (1200 development), separate shared proxy service key |
-| `CHARA_RATE_LIMITER` | Rate limit | 30 / 60 s production (60 development) per public client for actual Chara upstream operations; cached data and existing row/Glasses waiters consume no additional unit |
+| `CHARA_RATE_LIMITER` | Rate limit | 30 / 60 s production (60 development) per public client for actual Chara upstream operations; cached data and existing row/Glasses waiters consume no additional unit; a waiter whose owner is denied joins a live owner, which costs nothing, or owns the handed-off keys under its own admission (one unit) |
 | `CHARA_SERVICE_RATE_LIMITER` | Rate limit | Separate 20× service budget: 600 / 60 s production, 1200 development |
 | `ANALYTICS` | Analytics Engine | `xivdyetools_web_analytics` (`_dev` on the dev worker); absent → telemetry is accepted and discarded |
 | `ASSETS` | Static assets | **Production only** — the VitePress developer docs on `developers.xivdyetools.app`; run `pnpm build:docs` before deploying |
@@ -517,7 +517,7 @@ dataset = "xivdyetools_bot_analytics"   # og-worker: xivdyetools_og_analytics,
 | Unit | Variable | Prepared value and behavior |
 |---|---|---|
 | presets-api | `OAUTH_SESSION_CHECK_ENABLED` | `false` in both environments; exact `true` requires valid `OAUTH_IDENTITY.validateSession` and checks web sessions before authority |
-| moderation-worker | `LINKED_BAN_CONFIRMATION_ENABLED` | `false` in both environments; all new ban/unban/selection/button/modal paths refuse privately while inactive |
+| moderation-worker | `LINKED_BAN_CONFIRMATION_ENABLED` | `true` in production since 1.9.2, `false` on the dev worker; while `false`, all ban/unban/selection/button/modal paths refuse privately |
 
 Unset stays inactive; malformed values are configuration errors. `OAUTH_IDENTITY` is a private
 named service binding, not a secret or public endpoint. Enable consumers only after additive
