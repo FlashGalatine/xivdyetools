@@ -428,6 +428,12 @@ diagnostics and color eligibility are intentionally different from the legacy re
 
 ### Legacy swatch result projection (`@xivdyetools/bot-logic`)
 
+**Conditional M source prepared 2026-10-29:** Bot Logic 5 removes `SwatchCharacter` and
+`SwatchResult.character` plus its legacy back-mapping. Both successful routes expose only
+`ok`, `svgString`, `embed`; producer/document canaries remain absent. `fileText`, `NO_INPUT`
+and `familySize` stay. The unchecked prerequisite-publication, external-consumer and acceptance
+gates below still block shipping.
+
 | Field | Value |
 |---|---|
 | Deprecation prepared | 2026-10-27, bot-logic 4.12.0 MINOR; publication pending |
