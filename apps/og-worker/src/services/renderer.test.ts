@@ -76,7 +76,7 @@ describe('renderOGImage — wasm memory hygiene (OPT-006)', () => {
   });
 
   it('frees the RenderedImage and the Resvg after reading the PNG bytes', async () => {
-    const response = await renderOGImage(SVG);
+    const response = await renderOGImage(SVG, 'en');
 
     expect(response.status).toBe(200);
     expect(new Uint8Array(await response.arrayBuffer())).toEqual(resvgState.png);
@@ -97,7 +97,7 @@ describe('renderOGImage — wasm memory hygiene (OPT-006)', () => {
   it('frees the Resvg when render() throws', async () => {
     resvgState.failIn = 'render';
 
-    const response = await renderOGImage(SVG);
+    const response = await renderOGImage(SVG, 'en');
 
     expect(response.status).toBe(500);
     expect(resvgState.instances).toHaveLength(1);
@@ -108,7 +108,7 @@ describe('renderOGImage — wasm memory hygiene (OPT-006)', () => {
   it('frees both when asPng() throws', async () => {
     resvgState.failIn = 'asPng';
 
-    const response = await renderOGImage(SVG);
+    const response = await renderOGImage(SVG, 'en');
 
     expect(response.status).toBe(500);
     expect(resvgState.images).toHaveLength(1);
@@ -119,7 +119,7 @@ describe('renderOGImage — wasm memory hygiene (OPT-006)', () => {
   it('still answers 500 when the SVG never parses — nothing was allocated to free', async () => {
     resvgState.failIn = 'constructor';
 
-    const response = await renderOGImage(SVG);
+    const response = await renderOGImage(SVG, 'en');
 
     expect(response.status).toBe(500);
     expect(resvgState.instances).toHaveLength(0);

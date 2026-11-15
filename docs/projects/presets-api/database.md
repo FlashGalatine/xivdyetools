@@ -147,7 +147,7 @@ An unban closes one selected row (`unbanned_at`, and blanks `username` and `reas
 | `moderation_ban_confirmations` | Actor-bound nonce, action/mode/phase, immutable proposal/hash and selected parent; review always has a parent ID but no parent FK, allowing a reviewed new ban. Integer expiry is within 900 seconds; consume/mutate/audit/finalize share one batch |
 
 Acknowledged terminal receipts become eligible after `max(expires_at, acknowledged_at)+86400`;
-unknown/applying or unacknowledged rows remain. Expired unconsumed/applied confirmations become
+unacknowledged terminal rows remain with no age limit, on purpose: they are OAuth's recovery authority, and deleting one would make a later lookup report `missing` and let OAuth abort an operation presets already applied. `applying` never persists past its own transaction; reconcile leftovers through OAuth's pending-operation review, not by deletion. Expired unconsumed/applied confirmations become
 eligible for bounded request/scheduled cleanup. A sweep handles up to 128 rows per category.
 Membership retention follows the parent ban. These associations enforce bans, never ownership.
 See [the full protocol](../../architecture/identity-moderation.md).
