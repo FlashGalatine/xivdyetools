@@ -1086,4 +1086,300 @@ describe('AccessibilityTool', () => {
       expect(shareButton().shareParams).toHaveProperty('vision');
     });
   });
+
+  // ==========================================================================
+  // Palette slots: the tool is a dense list of four slots for the dye palette.
+  // The empty-state placeholders and the one "Add dye" tile are slot taps that
+  // open the palette, and every change tells the layout.
+  // ==========================================================================
+
+  describe('palette slots', () => {
+    useStorageFake();
+
+    const [A, B, C, D, E] = mockDyes;
+
+    /** Mounted as the v4 shell mounts it: one element as both panels. */
+    const mountV4 = (dyes: (typeof mockDyes)[number][] = []): HTMLElement => {
+      const panel = document.createElement('div');
+      container.appendChild(panel);
+      tool = new AccessibilityTool(container, {
+        leftPanel: panel,
+        rightPanel: panel,
+        drawerContent: null,
+      });
+      tool.init();
+      for (const d of dyes) tool.selectDye(d);
+      return panel;
+    };
+
+    const heldIds = (): (number | null)[] => tool!.getPaletteSlots().map((s) => s.dye?.id ?? null);
+
+    /** Visible slot-tap buttons, in DOM order. */
+    const visibleSlotButtons = (panel: HTMLElement): HTMLElement[] =>
+      [...panel.querySelectorAll<HTMLElement>('[data-palette-slot]')].filter(
+        (el) => !isHiddenWithin(el, panel)
+      );
+
+    const openRequests = (): Array<{ slot?: number }> => {
+      const details: Array<{ slot?: number }> = [];
+      container.addEventListener('open-palette-drawer', (e) =>
+        details.push((e as CustomEvent<{ slot?: number }>).detail)
+      );
+      return details;
+    };
+
+    it('getPaletteSlots always returns four slots, filled first', () => {
+      mountV4([A, B]);
+
+      const slots = tool!.getPaletteSlots();
+
+      expect(tool!.paletteSlotMode).toBe('multi');
+      expect(tool!.paletteSlotsDense).toBe(true);
+      expect(slots.map((s) => s.label)).toEqual(['1', '2', '3', '4']);
+      expect(slots.map((s) => s.targetLabel)).toEqual([
+        'colorPalette.choosingDyeOf: 1/4',
+        'colorPalette.choosingDyeOf: 2/4',
+        'colorPalette.choosingDyeOf: 3/4',
+        'colorPalette.choosingDyeOf: 4/4',
+      ]);
+      expect(heldIds()).toEqual([A.id, B.id, null, null]);
+    });
+
+    it('each empty-state placeholder is a button that dispatches open-palette-drawer with slot 0', () => {
+      const panel = mountV4();
+      const details = openRequests();
+      let composedBubbling = 0;
+      container.addEventListener('open-palette-drawer', (e) => {
+        if (e.bubbles && e.composed) composedBubbling++;
+      });
+
+      const placeholders = visibleSlotButtons(panel);
+      expect(placeholders).toHaveLength(4);
+      for (const el of placeholders) {
+        expect(el.tagName).toBe('BUTTON');
+        expect(el.getAttribute('type')).toBe('button');
+        expect(el.getAttribute('data-palette-slot')).toBe('0');
+        expect(el.textContent?.trim()).toBe('accessibility.addDye');
+        el.click();
+      }
+
+      expect(details).toEqual([{ slot: 0 }, { slot: 0 }, { slot: 0 }, { slot: 0 }]);
+      expect(composedBubbling).toBe(4);
+    });
+
+    it('shows one Add dye tile after the cards when holding 1, 2 or 3 dyes', () => {
+      const panel = mountV4();
+
+      for (const [d, count] of [
+        [A, 1],
+        [B, 2],
+        [C, 3],
+      ] as const) {
+        tool!.selectDye(d);
+        const buttons = visibleSlotButtons(panel);
+        expect(buttons).toHaveLength(1);
+        const tile = buttons[0];
+        expect(tile.tagName).toBe('BUTTON');
+        expect(tile.getAttribute('type')).toBe('button');
+        expect(tile.getAttribute('data-palette-slot')).toBe(String(count));
+        expect(tile.textContent?.trim()).toBe('accessibility.addDye');
+        const cards = [...panel.querySelectorAll('v4-result-card')].filter(
+          (el) => !isHiddenWithin(el, panel)
+        );
+        expect(cards).toHaveLength(count);
+        for (const card of cards) {
+          expect(
+            card.compareDocumentPosition(tile) & Node.DOCUMENT_POSITION_FOLLOWING
+          ).toBeTruthy();
+        }
+      }
+    });
+
+    it('shows no Add dye tile when holding 0 or 4 dyes', () => {
+      const panel = mountV4();
+      expect(visibleSlotButtons(panel).map((b) => b.getAttribute('data-palette-slot'))).toEqual([
+        '0',
+        '0',
+        '0',
+        '0',
+      ]);
+      // Not even a hidden tile: the narrow-pane e2e counts four "Add Dye" texts
+      const addDyeTexts = () =>
+        [...panel.querySelectorAll('span')].filter((s) => s.textContent === 'accessibility.addDye');
+      expect(addDyeTexts()).toHaveLength(4);
+
+      for (const d of [A, B, C, D]) tool!.selectDye(d);
+      expect(addDyeTexts()).toHaveLength(0);
+      expect(panel.querySelectorAll('[data-palette-slot]')).toHaveLength(0);
+    });
+
+    it('drops the placeholders once a dye is held, so focus never returns to a hidden one', () => {
+      const panel = mountV4([A]);
+
+      expect(panel.querySelectorAll('[data-palette-slot="0"]')).toHaveLength(0);
+      expect(
+        [...panel.querySelectorAll<HTMLElement>('[data-palette-slot]')].every(
+          (el) => !isHiddenWithin(el, panel)
+        )
+      ).toBe(true);
+    });
+
+    it('brings the placeholders back when the last dye goes', () => {
+      const panel = mountV4([A]);
+
+      tool!.removeDyeAt(0);
+
+      expect(visibleSlotButtons(panel)).toHaveLength(4);
+      expect(panel.querySelectorAll('[data-palette-slot]')).toHaveLength(4);
+    });
+
+    it('the Add dye tile dispatches open-palette-drawer with the next free slot', () => {
+      const panel = mountV4([A, B]);
+      const details = openRequests();
+
+      visibleSlotButtons(panel)[0].click();
+
+      expect(details).toEqual([{ slot: 2 }]);
+    });
+
+    it('placeDyeAt(1, newDye) replaces the second dye and keeps order', () => {
+      mountV4([A, B, C]);
+
+      tool!.placeDyeAt(1, E);
+
+      expect(heldIds()).toEqual([A.id, E.id, C.id, null]);
+      expect(stored.get(SELECTED_KEY)).toEqual([A.id, E.id, C.id]);
+    });
+
+    it('placeDyeAt(0, thirdDye) swaps the first and third dyes', () => {
+      mountV4([A, B, C]);
+
+      tool!.placeDyeAt(0, C);
+
+      expect(heldIds()).toEqual([C.id, B.id, A.id, null]);
+    });
+
+    it('placeDyeAt(index >= count, newDye) appends', () => {
+      mountV4([A, B]);
+
+      tool!.placeDyeAt(3, C);
+
+      expect(heldIds()).toEqual([A.id, B.id, C.id, null]);
+    });
+
+    it('placeDyeAt(index >= count, heldDye) moves that dye to the end', () => {
+      mountV4([A, B, C]);
+
+      tool!.placeDyeAt(3, A);
+
+      expect(heldIds()).toEqual([B.id, C.id, A.id, null]);
+    });
+
+    it("placeDyeAt with the slot's own dye, or an index out of range, changes nothing", () => {
+      mountV4([A, B]);
+      let changes = 0;
+      container.addEventListener('palette-slots-changed', () => changes++);
+
+      tool!.placeDyeAt(1, B);
+      tool!.placeDyeAt(4, C);
+      tool!.placeDyeAt(-1, C);
+      tool!.placeDyeAt(1.5, C);
+
+      expect(heldIds()).toEqual([A.id, B.id, null, null]);
+      expect(changes).toBe(0);
+    });
+
+    it('placeDyeAt on a full tool replaces the target and drops nothing else', () => {
+      mountV4([A, B, C, D]);
+
+      tool!.placeDyeAt(1, E);
+      expect(heldIds()).toEqual([A.id, E.id, C.id, D.id]);
+
+      // The untargeted fifth pick still drops the oldest dye (unchanged rule)
+      tool!.selectDye(B);
+      expect(heldIds()).toEqual([E.id, C.id, D.id, B.id]);
+    });
+
+    it('removeDyeAt(1) removes the second dye and closes the gap', () => {
+      mountV4([A, B, C]);
+
+      tool!.removeDyeAt(1);
+
+      expect(heldIds()).toEqual([A.id, C.id, null, null]);
+      expect(stored.get(SELECTED_KEY)).toEqual([A.id, C.id]);
+    });
+
+    it('setPaletteTarget on the next free slot highlights the Add dye tile', () => {
+      const panel = mountV4([A, B]);
+      const tile = () => visibleSlotButtons(panel)[0];
+
+      tool!.setPaletteTarget(2);
+      expect(tile().style.borderColor).toContain('--theme-primary');
+
+      tool!.setPaletteTarget(0);
+      expect(tile().style.borderColor).not.toContain('--theme-primary');
+
+      tool!.setPaletteTarget(2);
+      tool!.setPaletteTarget(null);
+      expect(tile().style.borderColor).not.toContain('--theme-primary');
+    });
+
+    it('setPaletteTarget(0) with no dyes highlights all four placeholders', () => {
+      const panel = mountV4();
+      const borders = () => visibleSlotButtons(panel).map((b) => b.style.borderColor);
+
+      tool!.setPaletteTarget(0);
+      expect(borders()).toHaveLength(4);
+      for (const border of borders()) expect(border).toContain('--theme-primary');
+
+      tool!.setPaletteTarget(null);
+      for (const border of borders()) expect(border).not.toContain('--theme-primary');
+    });
+
+    it('keeps the target highlight across a language switch rebuild', async () => {
+      const panel = mountV4([A]);
+      tool!.setPaletteTarget(1);
+
+      const { LanguageService } = await import('@services/index');
+      for (const [cb] of [...vi.mocked(LanguageService.subscribe).mock.calls]) {
+        (cb as () => void)();
+      }
+      await flush();
+
+      const tile = visibleSlotButtons(panel)[0];
+      expect(tile.getAttribute('data-palette-slot')).toBe('1');
+      expect(tile.style.borderColor).toContain('--theme-primary');
+    });
+
+    it('dispatches palette-slots-changed after add, place, remove and clear', () => {
+      mountV4();
+      let changes = 0;
+      let composedBubbling = 0;
+      container.addEventListener('palette-slots-changed', (e) => {
+        if (e.bubbles && e.composed) composedBubbling++;
+      });
+      container.addEventListener('palette-slots-changed', () => changes++);
+
+      tool!.selectDye(A);
+      expect(changes).toBe(1);
+      tool!.placeDyeAt(1, B);
+      expect(changes).toBe(2);
+      tool!.removeDyeAt(0);
+      expect(changes).toBe(3);
+      tool!.clearDyes();
+      expect(changes).toBe(4);
+      expect(composedBubbling).toBe(4);
+    });
+
+    it('selectDye still ignores a duplicate', () => {
+      mountV4([A, B]);
+      let changes = 0;
+      container.addEventListener('palette-slots-changed', () => changes++);
+
+      tool!.selectDye(A);
+
+      expect(heldIds()).toEqual([A.id, B.id, null, null]);
+      expect(changes).toBe(0);
+    });
+  });
 });

@@ -269,7 +269,15 @@
     "noDyesAvailable": "利用可能な染料がありません",
     "randomDyeSelected": "{name}を選択しました",
     "mobileHint": "初めてですか？パレットボタンをタップしてカララントを選択できます。",
-    "favoritesWithCount": "お気に入り（{count}）"
+    "favoritesWithCount": "お気に入り（{count}）",
+    "slotStripLabel": "染料スロット",
+    "slotChipEmpty": "スロット {slot}：空き",
+    "slotChipFilled": "スロット {slot}：{name}",
+    "swatchInSlot": "{name}（スロット {slot}）",
+    "swatchInUse": "{name}（使用中）",
+    "choosingDyeOf": "染料 {current}/{total} を選択中",
+    "choosingDyeNamed": "染料 {slot} を選択中",
+    "choosingEndpoint": "{slot}の色を選択中"
   },
   "harmony": {
     "companionDyes": "ハーモニーカラーごとの追加カララント",
@@ -1403,6 +1411,8 @@
       "privacy": "編集内容はこの端末に、装備1点ごとに保存されます。キャラクター名がリストに入ることはなく、ファイル自体も保存されません。",
       "reset": "すべてリセット",
       "save": ".md を保存",
+      "abridged": "簡略版",
+      "includePiece": "{name}をリストに含める",
       "cardNote": "編集した入手方法はこの端末に保存されます。"
     },
     "empty": "このファイルには装備がありません。",

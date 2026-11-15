@@ -269,7 +269,15 @@
     "noDyesAvailable": "Keine Farbstoffe verfügbar",
     "randomDyeSelected": "{name} ausgewählt",
     "mobileHint": "Neu hier? Tippe auf die Palettentaste, um Farbstoffe auszuwählen.",
-    "favoritesWithCount": "Favoriten ({count})"
+    "favoritesWithCount": "Favoriten ({count})",
+    "slotStripLabel": "Farbstoffplätze",
+    "slotChipEmpty": "Platz {slot}, leer",
+    "slotChipFilled": "Platz {slot}: {name}",
+    "swatchInSlot": "{name}, auf Platz {slot}",
+    "swatchInUse": "{name}, in Verwendung",
+    "choosingDyeOf": "Farbstoff {current} von {total} wählen",
+    "choosingDyeNamed": "Farbstoff {slot} wählen",
+    "choosingEndpoint": "{slot}: Farbe wählen"
   },
   "harmony": {
     "companionDyes": "Zusätzliche Farbstoffe pro Harmoniefarbe",
@@ -1403,6 +1411,8 @@
       "privacy": "Bearbeitungen werden auf diesem Gerät für jedes Ausrüstungsteil gespeichert. Der Name des Charakters steht nie in der Liste, und die Datei selbst wird nie gespeichert.",
       "reset": "Alles zurücksetzen",
       "save": ".md speichern",
+      "abridged": "Kurzfassung",
+      "includePiece": "{name} in die Liste aufnehmen",
       "cardNote": "Deine bearbeiteten Bezugsquellen werden auf diesem Gerät gespeichert."
     },
     "empty": "Diese Datei trägt keine Ausrüstung.",

@@ -1,6 +1,6 @@
 /**
- * The application-facing shapes of the xivcharakit-backed `.chara` import. Additive: the legacy
- * `ParsedCharaFile` / `ResolvedCharaCharacter` contracts are unchanged.
+ * The application-facing shapes of the xivcharakit-backed `.chara` import, built on the shared
+ * live `ResolvedCharaCharacter` contract.
  */
 
 import type { AppearanceSlotInspection } from 'xivcharakit/appearance';

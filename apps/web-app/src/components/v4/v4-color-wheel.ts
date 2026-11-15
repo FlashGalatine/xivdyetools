@@ -58,6 +58,14 @@ export type HarmonyType =
 @customElement('v4-color-wheel')
 export class V4ColorWheel extends BaseLitComponent {
   /**
+   * The hub is the slot tap, so focus goes there. `delegatesFocus` would pick
+   * the first harmony node instead.
+   */
+  override focus(options?: FocusOptions): void {
+    this.renderRoot.querySelector<HTMLElement>('.main-swatch-display')?.focus(options);
+  }
+
+  /**
    * Base color (hex with #)
    */
   @property({ type: String, attribute: 'base-color' })
@@ -116,6 +124,10 @@ export class V4ColorWheel extends BaseLitComponent {
   @property({ type: Boolean })
   empty: boolean = false;
 
+  // A puck is 42px on any wheel of 263px and up, which is every phone from 320px, so
+  // a touch target doesn't shrink there. On the wheel of a narrow pane it's 16% of the
+  // wheel, down to 24px, or the base puck would cover the digits on Shades' neighbors
+  // and Monochromatic's inner puck. This is here because a comment in the css would ship.
   static override styles: CSSResultGroup = [
     BaseLitComponent.baseStyles,
     css`
@@ -151,8 +163,8 @@ export class V4ColorWheel extends BaseLitComponent {
       /* 1A: node pucks — 42px tap targets, not 14px dots */
       .harmony-node {
         position: absolute;
-        width: 42px;
-        height: 42px;
+        width: clamp(24px, 16%, 42px);
+        aspect-ratio: 1;
         padding: 0;
         background: var(--theme-card-background, #1e1e1e);
         border: 3px solid var(--theme-background, #0b0b0c);

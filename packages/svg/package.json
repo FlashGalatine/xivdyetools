@@ -1,6 +1,6 @@
 {
   "name": "@xivdyetools/svg",
-  "version": "4.4.1",
+  "version": "4.4.2",
   "description": "Platform-agnostic SVG card generators for the XIV Dye Tools ecosystem (pure functions: data in → SVG string out)",
   "author": "XIV Dye Tools",
   "license": "MIT",
@@ -34,9 +34,9 @@
     "@xivdyetools/types": "workspace:*"
   },
   "devDependencies": {
-    "@vitest/coverage-v8": "^5.0.5",
+    "@vitest/coverage-v8": "^5.1.0",
     "@xivdyetools/test-utils": "workspace:*",
-    "vitest": "^5.0.5"
+    "vitest": "^5.1.0"
   },
   "engines": {
     "node": ">=18.0.0"

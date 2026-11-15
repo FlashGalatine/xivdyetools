@@ -269,7 +269,15 @@
     "noDyesAvailable": "Aucune teinture disponible",
     "randomDyeSelected": "{name} sélectionné",
     "mobileHint": "Nouveau ici ? Appuyez sur le bouton palette pour choisir des teintures.",
-    "favoritesWithCount": "Favoris ({count})"
+    "favoritesWithCount": "Favoris ({count})",
+    "slotStripLabel": "Emplacements de teinture",
+    "slotChipEmpty": "Emplacement {slot}, vide",
+    "slotChipFilled": "Emplacement {slot} : {name}",
+    "swatchInSlot": "{name}, dans l'emplacement {slot}",
+    "swatchInUse": "{name}, utilisée",
+    "choosingDyeOf": "Choix de la teinture {current} sur {total}",
+    "choosingDyeNamed": "Choix de la teinture {slot}",
+    "choosingEndpoint": "{slot} : choix de la couleur"
   },
   "harmony": {
     "companionDyes": "Teintures Supplémentaires par Couleur d'Harmonie",
@@ -1403,6 +1411,8 @@
       "privacy": "Les modifications sont conservées sur cet appareil pour chaque pièce d'équipement. Le nom du personnage n'apparaît jamais dans la liste, et le fichier lui-même n'est jamais enregistré.",
       "reset": "Tout réinitialiser",
       "save": "Enregistrer le .md",
+      "abridged": "Version abrégée",
+      "includePiece": "Inclure {name} dans la liste",
       "cardNote": "Vos notes d'obtention modifiées sont conservées sur cet appareil."
     },
     "empty": "Ce fichier ne porte aucun équipement.",

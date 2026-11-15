@@ -1,0 +1,1088 @@
+{
+  "schemaVersion": 1,
+  "preparedLocalDate": "2026-11-01",
+  "timezone": "UTC unless stated",
+  "scope": "First merge-day stretch of the October 2026 A/R/H release: audit docs through cut 17 with companions, P1 to P6, migrations 0002 and 0016, deploys of units 7 to 14.",
+  "authorization": "Maintainer, in chat, 2026-11-01. Gate approvals were given by the maintainer in the Actions UI and read back from the run approvals API. The agent approved no run.",
+  "omitted": "Time Travel bookmarks, the Cloudflare account ID, usernames and Discord IDs are not in this public file; they stay with the maintainer.",
+  "main": "d04d15402361156a7978036cd096d0a318ef5399",
+  "merges": [
+    {
+      "pr": 333,
+      "mergeCommit": "76f01138113001835410f1fbad7b48bec98db129",
+      "mainTree": "2d087a520e97b98b67a2e3c25490e1273022dfcd",
+      "mergedHead": "88189ee8eeed180a6a946b10dffba8a8c3b797fa",
+      "reviewHead": null,
+      "predictedTree": null,
+      "treeMatchesPrediction": null,
+      "mainCi": "success",
+      "deployRuns": []
+    },
+    {
+      "pr": 334,
+      "mergeCommit": "4f813c388e9ec7ab1df8f40a8981a1c93331d549",
+      "mainTree": "45e475a42df35ae06a484b7009b8499977a32c03",
+      "mergedHead": "6c9712cd7dc33f81220e85d8873bdead1e29b27c",
+      "reviewHead": null,
+      "predictedTree": null,
+      "treeMatchesPrediction": null,
+      "mainCi": "success",
+      "deployRuns": []
+    },
+    {
+      "pr": 335,
+      "mergeCommit": "8722359c68406293fb9c80c4935c13820d4332e3",
+      "mainTree": "405104508c0e6bd29cae2747adca8042d524cded",
+      "mergedHead": "7ee4cb60a4bb13e4014709f7ce23ec4a031d8440",
+      "reviewHead": null,
+      "predictedTree": null,
+      "treeMatchesPrediction": null,
+      "mainCi": "success",
+      "deployRuns": []
+    },
+    {
+      "pr": 336,
+      "mergeCommit": "9db2fe7834235c782a15bb5a37d72e804181eccc",
+      "mainTree": "2ec70dd957455123b46d4ce2f4db5b3982c2582e",
+      "mergedHead": "6c2316d59aa80783da35bd112f30e98419aa7d04",
+      "reviewHead": "282dfdfe",
+      "predictedTree": "2ec70dd957455123b46d4ce2f4db5b3982c2582e",
+      "treeMatchesPrediction": true,
+      "mainCi": "success",
+      "deployRuns": []
+    },
+    {
+      "pr": 412,
+      "mergeCommit": "1877fd5cd1f6708902031d78a0c02f5fa777b89f",
+      "mainTree": "af351371b96cb520a851cfddacd25faa4b0145e8",
+      "mergedHead": "09577924785cc0815a40756e80307d1f85678e15",
+      "reviewHead": "51b88feb",
+      "predictedTree": "af351371b96cb520a851cfddacd25faa4b0145e8",
+      "treeMatchesPrediction": true,
+      "mainCi": "success",
+      "deployRuns": []
+    },
+    {
+      "pr": 369,
+      "mergeCommit": "ec89ca297ea0bea8511ae704a650ea1232b43a36",
+      "mainTree": "b2d05b6d3183fba58757e27419cf932b0f78af7a",
+      "mergedHead": "9cd452aecca595db67673554612d35ce13ba9c40",
+      "reviewHead": "2ed5020c",
+      "predictedTree": "b2d05b6d3183fba58757e27419cf932b0f78af7a",
+      "treeMatchesPrediction": true,
+      "mainCi": "success",
+      "deployRuns": [
+        {
+          "workflow": "Deploy API Worker",
+          "run": 41308425737,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy Discord Worker",
+          "run": 41308425761,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy Image Worker",
+          "run": 41308425768,
+          "conclusion": "skipped"
+        },
+        {
+          "workflow": "Deploy Moderation Worker",
+          "run": 41308425731,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy OAuth Worker",
+          "run": 41308425769,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy OG Worker",
+          "run": 41308425734,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy Presets API",
+          "run": 41308425788,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy Web App",
+          "run": 41308425779,
+          "conclusion": "cancelled"
+        }
+      ]
+    },
+    {
+      "pr": 370,
+      "mergeCommit": "512a92baae2714f9f2019261da3def9e94ad2ec9",
+      "mainTree": "805d2e647c2a4d11d8e73e273c75314910c5b491",
+      "mergedHead": "f4140b651c034c0fddaf390d4f27f594ce572435",
+      "reviewHead": "50157b99",
+      "predictedTree": "805d2e647c2a4d11d8e73e273c75314910c5b491",
+      "treeMatchesPrediction": true,
+      "mainCi": "success",
+      "deployRuns": [
+        {
+          "workflow": "Deploy API Worker",
+          "run": 41309229575,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy Discord Worker",
+          "run": 41309229639,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy Image Worker",
+          "run": 41309229818,
+          "conclusion": "skipped"
+        },
+        {
+          "workflow": "Deploy Moderation Worker",
+          "run": 41309229694,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy OAuth Worker",
+          "run": 41309229623,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy OG Worker",
+          "run": 41309229587,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy Presets API",
+          "run": 41309229681,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy Web App",
+          "run": 41309229790,
+          "conclusion": "cancelled"
+        }
+      ]
+    },
+    {
+      "pr": 407,
+      "mergeCommit": "e1b07fc3fcd6413ce9b961cd15e0d2fc5d9b727f",
+      "mainTree": "b2c39c4d56a0dd12f2c01577ed82d10037113240",
+      "mergedHead": "8d12881d7bf80ffa00dbf373f0b8ef50010288fa",
+      "reviewHead": "f461b945",
+      "predictedTree": "b2c39c4d56a0dd12f2c01577ed82d10037113240",
+      "treeMatchesPrediction": true,
+      "mainCi": "success",
+      "deployRuns": [
+        {
+          "workflow": "Deploy API Worker",
+          "run": 41309999571,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy Discord Worker",
+          "run": 41309999621,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy Image Worker",
+          "run": 41309999467,
+          "conclusion": "skipped"
+        },
+        {
+          "workflow": "Deploy Moderation Worker",
+          "run": 41309999702,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy OAuth Worker",
+          "run": 41309999572,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy OG Worker",
+          "run": 41309999458,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy Presets API",
+          "run": 41309999446,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy Web App",
+          "run": 41309999497,
+          "conclusion": "cancelled"
+        }
+      ]
+    },
+    {
+      "pr": 371,
+      "mergeCommit": "b7b687257ec8b9e96853f62da84b66abd9c11e39",
+      "mainTree": "a05aaeea10224e469eb18c5b1fa0f9d9f033599a",
+      "mergedHead": "0e7760508b0bfd8b0eddae1639792fef6dd9485d",
+      "reviewHead": "9958553e",
+      "predictedTree": "a05aaeea10224e469eb18c5b1fa0f9d9f033599a",
+      "treeMatchesPrediction": true,
+      "mainCi": "success",
+      "deployRuns": [
+        {
+          "workflow": "Deploy Discord Worker",
+          "run": 41310715235,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy Moderation Worker",
+          "run": 41310715249,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy OAuth Worker",
+          "run": 41310715260,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy Presets API",
+          "run": 41310715259,
+          "conclusion": "cancelled"
+        }
+      ]
+    },
+    {
+      "pr": 373,
+      "mergeCommit": "622afb56d639d4d3aed1fb1792e4b50dfdc2a3d5",
+      "mainTree": "4d14cee475b6b02a6e693f018f88482e0101b7cc",
+      "mergedHead": "cd951e2a73229714d4285a3a8c39635672706c2d",
+      "reviewHead": "0fed2b37",
+      "predictedTree": "4d14cee475b6b02a6e693f018f88482e0101b7cc",
+      "treeMatchesPrediction": true,
+      "mainCi": "success",
+      "deployRuns": [
+        {
+          "workflow": "Deploy API Worker",
+          "run": 41311392452,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy Discord Worker",
+          "run": 41311392483,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy Moderation Worker",
+          "run": 41311392445,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy OG Worker",
+          "run": 41311392450,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy Web App",
+          "run": 41311392432,
+          "conclusion": "cancelled"
+        }
+      ]
+    },
+    {
+      "pr": 393,
+      "mergeCommit": "e11852f977ce505cc366e358acefb5063de86583",
+      "mainTree": "25362b8ad6d70734741921e25b42c20a73d11ff1",
+      "mergedHead": "ed5a00824a00865652e86ba4d4c46561b97f8905",
+      "reviewHead": "d1e0c467",
+      "predictedTree": "25362b8ad6d70734741921e25b42c20a73d11ff1",
+      "treeMatchesPrediction": true,
+      "mainCi": "success",
+      "deployRuns": [
+        {
+          "workflow": "Deploy API Worker",
+          "run": 41312127748,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy Discord Worker",
+          "run": 41312127875,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy Moderation Worker",
+          "run": 41312127864,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy OG Worker",
+          "run": 41312127750,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy Web App",
+          "run": 41312127911,
+          "conclusion": "cancelled"
+        }
+      ]
+    },
+    {
+      "pr": 374,
+      "mergeCommit": "0ff3b3435c09a59ba1817b31b23b3dec8567bab0",
+      "mainTree": "ccb348f2639425843b7db49c4cf3b5edcde481a0",
+      "mergedHead": "c214722249f6d28d839881b90161c801d695d7f3",
+      "reviewHead": "e09f3cc6",
+      "predictedTree": "ccb348f2639425843b7db49c4cf3b5edcde481a0",
+      "treeMatchesPrediction": true,
+      "mainCi": "success",
+      "deployRuns": [
+        {
+          "workflow": "Deploy API Worker",
+          "run": 41312750823,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy Discord Worker",
+          "run": 41312750916,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy Image Worker",
+          "run": 41312750838,
+          "conclusion": "skipped"
+        },
+        {
+          "workflow": "Deploy Moderation Worker",
+          "run": 41312750809,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy OAuth Worker",
+          "run": 41312750772,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy OG Worker",
+          "run": 41312750786,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy Presets API",
+          "run": 41312750960,
+          "conclusion": "cancelled"
+        }
+      ]
+    },
+    {
+      "pr": 375,
+      "mergeCommit": "12459145ac3efa83d9d6f6cca133222720359064",
+      "mainTree": "b7ce6ca04bc5607ad11ac05f42821582269c1fa9",
+      "mergedHead": "9bfbd6fa7dcd3fc9f80802fa02a834207d9ee25b",
+      "reviewHead": "f4278659",
+      "predictedTree": "b7ce6ca04bc5607ad11ac05f42821582269c1fa9",
+      "treeMatchesPrediction": true,
+      "mainCi": "success",
+      "deployRuns": [
+        {
+          "workflow": "Deploy API Worker",
+          "run": 41313400907,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy Discord Worker",
+          "run": 41313400921,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy Moderation Worker",
+          "run": 41313400953,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy OG Worker",
+          "run": 41313400916,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy Web App",
+          "run": 41313400931,
+          "conclusion": "cancelled"
+        }
+      ]
+    },
+    {
+      "pr": 376,
+      "mergeCommit": "9e477fcaf3e0734beb4ebe51857052222728dc54",
+      "mainTree": "25821d7f8eb07eb645ba1000a3d7d2b6757c42b3",
+      "mergedHead": "5d9807770e82f4ce697680f972783e3720e14c8d",
+      "reviewHead": "c2d62311",
+      "predictedTree": "25821d7f8eb07eb645ba1000a3d7d2b6757c42b3",
+      "treeMatchesPrediction": true,
+      "mainCi": "success",
+      "deployRuns": [
+        {
+          "workflow": "Deploy Discord Worker",
+          "run": 41314092340,
+          "conclusion": "cancelled"
+        }
+      ]
+    },
+    {
+      "pr": 377,
+      "mergeCommit": "772b15c0465684f7262796c72dfd09b0039231ef",
+      "mainTree": "fdc3702a027ddabcf7a4a76d2654344955d0127e",
+      "mergedHead": "c0ec48fec4d7b830b0eaf92dd26808bc1a381ba4",
+      "reviewHead": "ebba1baa",
+      "predictedTree": "fdc3702a027ddabcf7a4a76d2654344955d0127e",
+      "treeMatchesPrediction": true,
+      "mainCi": "success",
+      "deployRuns": [
+        {
+          "workflow": "Deploy Discord Worker",
+          "run": 41314833563,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy Moderation Worker",
+          "run": 41314833531,
+          "conclusion": "cancelled"
+        }
+      ]
+    },
+    {
+      "pr": 401,
+      "mergeCommit": "02d9bb751ae3bc618c4f10173d435f9030b10e1c",
+      "mainTree": "1697792c79c3355a0bb8b64a51c1a814e0f26dcb",
+      "mergedHead": "db871dc2baa484f1f76718ac20a593b7ded4f1a2",
+      "reviewHead": "698b7cef",
+      "predictedTree": "1697792c79c3355a0bb8b64a51c1a814e0f26dcb",
+      "treeMatchesPrediction": true,
+      "mainCi": "success",
+      "deployRuns": [
+        {
+          "workflow": "Deploy Discord Worker",
+          "run": 41315568410,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy Moderation Worker",
+          "run": 41315568363,
+          "conclusion": "cancelled"
+        }
+      ]
+    },
+    {
+      "pr": 415,
+      "mergeCommit": "69df20dfc25251432104776493e6ebfe6c821769",
+      "mainTree": "ff135e3269d1a7965ffde702fc170cc55371fbb2",
+      "mergedHead": "ccaf319a7c8952786f2adb7bada7466479b59372",
+      "reviewHead": "cc9bac5a",
+      "predictedTree": "ff135e3269d1a7965ffde702fc170cc55371fbb2",
+      "treeMatchesPrediction": true,
+      "mainCi": "success",
+      "deployRuns": [
+        {
+          "workflow": "Deploy Discord Worker",
+          "run": 41316336484,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy Moderation Worker",
+          "run": 41316336513,
+          "conclusion": "cancelled"
+        }
+      ]
+    },
+    {
+      "pr": 409,
+      "mergeCommit": "8bae6e9dac31d21937bb7eecba9c54c55439f486",
+      "mainTree": "1edd0d7bc70f772141bd31157c654cb99d82eaba",
+      "mergedHead": "223e0d6e1cf291d92f8909a5555f6683b36498ec",
+      "reviewHead": "4c0bd11f",
+      "predictedTree": "1edd0d7bc70f772141bd31157c654cb99d82eaba",
+      "treeMatchesPrediction": true,
+      "mainCi": "success",
+      "deployRuns": [
+        {
+          "workflow": "Deploy API Worker",
+          "run": 41317064125,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy Discord Worker",
+          "run": 41317064203,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy Moderation Worker",
+          "run": 41317064138,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy OG Worker",
+          "run": 41317064384,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy Web App",
+          "run": 41317064324,
+          "conclusion": "cancelled"
+        }
+      ]
+    },
+    {
+      "pr": 378,
+      "mergeCommit": "fa563a9a45b50f704195d4b2d398819bba10cd26",
+      "mainTree": "c30826493ccbd493d067d683bf8d3f0569847c9d",
+      "mergedHead": "2a0627da53f6e7b567f5587efd6e4bf193b14706",
+      "reviewHead": "4969440c",
+      "predictedTree": "c30826493ccbd493d067d683bf8d3f0569847c9d",
+      "treeMatchesPrediction": true,
+      "mainCi": "success",
+      "deployRuns": [
+        {
+          "workflow": "Deploy OAuth Worker",
+          "run": 41326061353,
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "pr": 379,
+      "mergeCommit": "28ad17808b3ed1d4da1b24fb66238a99b067cfaa",
+      "mainTree": "baedf283232f3cf0f873bc1825c2bbb17e263ee1",
+      "mergedHead": "55fe3b6c261e112c54797599e4c64b8215448825",
+      "reviewHead": "6b0f638a",
+      "predictedTree": "baedf283232f3cf0f873bc1825c2bbb17e263ee1",
+      "treeMatchesPrediction": true,
+      "mainCi": "success",
+      "deployRuns": [
+        {
+          "workflow": "Deploy Presets API",
+          "run": 41329372447,
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "pr": 380,
+      "mergeCommit": "ab4a9906363644a543d013cac066572f488b1e1a",
+      "mainTree": "d9dc74b32af38b78078ad8ad5c29f03f0aac6ab1",
+      "mergedHead": "273fd0d43468db99f03c22d7f13ca4a7773a8c2c",
+      "reviewHead": "8bab49bc",
+      "predictedTree": "d9dc74b32af38b78078ad8ad5c29f03f0aac6ab1",
+      "treeMatchesPrediction": true,
+      "mainCi": "success",
+      "deployRuns": [
+        {
+          "workflow": "Deploy Discord Worker",
+          "run": 41330829249,
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Deploy Moderation Worker",
+          "run": 41330829280,
+          "conclusion": "cancelled"
+        }
+      ]
+    },
+    {
+      "pr": 381,
+      "mergeCommit": "b267a5f735098c6e3301195ddc4ceaff7c058468",
+      "mainTree": "3f6d1010b191ad74c64e55e6429421868bdc6aa2",
+      "mergedHead": "d7bb491df6f79fe0d1f6c03163ef8095a59f1913",
+      "reviewHead": "f54c8d83",
+      "predictedTree": "3f6d1010b191ad74c64e55e6429421868bdc6aa2",
+      "treeMatchesPrediction": true,
+      "mainCi": "success",
+      "deployRuns": [
+        {
+          "workflow": "Deploy Presets API",
+          "run": 41333088716,
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "pr": 382,
+      "mergeCommit": "9e90b2e3c038489aaf2b46e8247d92520b05e94a",
+      "mainTree": "6e07c886d552fba34f1b2a85ad687a12daf29165",
+      "mergedHead": "2b76d43d969b30106e37412539cf34779b131569",
+      "reviewHead": "e34824da",
+      "predictedTree": "6e07c886d552fba34f1b2a85ad687a12daf29165",
+      "treeMatchesPrediction": true,
+      "mainCi": "success",
+      "deployRuns": [
+        {
+          "workflow": "Deploy API Worker",
+          "run": 41334505306,
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Deploy Discord Worker",
+          "run": 41334505322,
+          "conclusion": "cancelled"
+        }
+      ]
+    },
+    {
+      "pr": 383,
+      "mergeCommit": "45b30e338b43ac7705d27a99d54c2fc032a611bc",
+      "mainTree": "a996f920827170483ff6552bdc146e4f5612a766",
+      "mergedHead": "bef323f37fb5b089572585e9c7e7c3ff99264cf8",
+      "reviewHead": "9ddc3394",
+      "predictedTree": "a996f920827170483ff6552bdc146e4f5612a766",
+      "treeMatchesPrediction": true,
+      "mainCi": "success",
+      "deployRuns": [
+        {
+          "workflow": "Deploy Web App",
+          "run": 41335736616,
+          "conclusion": "cancelled"
+        }
+      ]
+    },
+    {
+      "pr": 410,
+      "mergeCommit": "1f7efae1c6decc1bdf4e58c02900b489cba41229",
+      "mainTree": "85dc29be4b90df78a5d7b459eb89f9da3f0b541d",
+      "mergedHead": "5430f774de2bd130e072764e641e83dac7aff7c0",
+      "reviewHead": "e1293ba5",
+      "predictedTree": "85dc29be4b90df78a5d7b459eb89f9da3f0b541d",
+      "treeMatchesPrediction": true,
+      "mainCi": "success",
+      "deployRuns": [
+        {
+          "workflow": "Deploy Web App",
+          "run": 41336540657,
+          "conclusion": "cancelled"
+        }
+      ]
+    },
+    {
+      "pr": 416,
+      "mergeCommit": "cc6db48b1823bb47bbdebcb09d225ac7544c5663",
+      "mainTree": "fd46bc8fbdb0baa94e9a2306b8fff645ebe8419c",
+      "mergedHead": "cac9bd6a44d90f1511bda21b664ca78e69f210ce",
+      "reviewHead": "56d08828",
+      "predictedTree": "fd46bc8fbdb0baa94e9a2306b8fff645ebe8419c",
+      "treeMatchesPrediction": true,
+      "mainCi": "success",
+      "deployRuns": [
+        {
+          "workflow": "Deploy Web App",
+          "run": 41337296373,
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "pr": 384,
+      "mergeCommit": "8853dcc4bbf5ab0ac8dcce87d109c74b2fcf475c",
+      "mainTree": "1286be9e665dd40af21cbe8015f0eec50b1a0208",
+      "mergedHead": "f7a492d9eeea9fda214caee0254b6efc3d28a378",
+      "reviewHead": "6ae454f0",
+      "predictedTree": "1286be9e665dd40af21cbe8015f0eec50b1a0208",
+      "treeMatchesPrediction": true,
+      "mainCi": "success",
+      "deployRuns": [
+        {
+          "workflow": "Deploy OG Worker",
+          "run": 41340393772,
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "pr": 385,
+      "mergeCommit": "057978e0797a5d1b6cbd159a1867d88ee382b681",
+      "mainTree": "0e15c2a3a69ddad9c643f5779597d455e3a099b2",
+      "mergedHead": "830276f6ebaf84f299847d95319526f97572f7c3",
+      "reviewHead": "a6e73d06",
+      "predictedTree": "0e15c2a3a69ddad9c643f5779597d455e3a099b2",
+      "treeMatchesPrediction": true,
+      "mainCi": "success",
+      "deployRuns": [
+        {
+          "workflow": "Deploy Moderation Worker",
+          "run": 41342980722,
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "pr": 413,
+      "mergeCommit": "3f4384d37f7d5c980d1e375284b51374d2b15f20",
+      "mainTree": "bfa9bc3094d31c4b51b03cfdd902a23b71633a6e",
+      "mergedHead": "9abf01bb6fbf33ea15439873e57f0e3763cd8e10",
+      "reviewHead": "df502a1c",
+      "predictedTree": "bfa9bc3094d31c4b51b03cfdd902a23b71633a6e",
+      "treeMatchesPrediction": true,
+      "mainCi": "success",
+      "deployRuns": []
+    },
+    {
+      "pr": 386,
+      "mergeCommit": "7bada3311f1861bd1a3f57400c0d5f61042d8f1d",
+      "mainTree": "613be43a39cf9238650157bdb13b43acd5dc13e0",
+      "mergedHead": "8a942e2e035218ac684f8334f976072a564ddbef",
+      "reviewHead": "97e89ae4",
+      "predictedTree": "613be43a39cf9238650157bdb13b43acd5dc13e0",
+      "treeMatchesPrediction": true,
+      "mainCi": "success",
+      "deployRuns": [
+        {
+          "workflow": "Deploy API Worker",
+          "run": 41346427416,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy Discord Worker",
+          "run": 41346427397,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy Image Worker",
+          "run": 41346427390,
+          "conclusion": "skipped"
+        },
+        {
+          "workflow": "Deploy Moderation Worker",
+          "run": 41346427380,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy OAuth Worker",
+          "run": 41346427440,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy OG Worker",
+          "run": 41346427379,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy Presets API",
+          "run": 41346427420,
+          "conclusion": "cancelled"
+        },
+        {
+          "workflow": "Deploy Web App",
+          "run": 41346427382,
+          "conclusion": "cancelled"
+        }
+      ]
+    },
+    {
+      "pr": 387,
+      "mergeCommit": "51df5286281189fa599f987178343ae670e37626",
+      "mainTree": "3aaa8234d341eb8bf63c19d3a3cab98ef1c6c9ca",
+      "mergedHead": "18659f9cc1ada824b15717f82a6c43cbe18bcbb8",
+      "reviewHead": "315f4007",
+      "predictedTree": "3aaa8234d341eb8bf63c19d3a3cab98ef1c6c9ca",
+      "treeMatchesPrediction": true,
+      "mainCi": "success",
+      "deployRuns": []
+    },
+    {
+      "pr": 388,
+      "mergeCommit": "d04d15402361156a7978036cd096d0a318ef5399",
+      "mainTree": "f5dab83f9381a9ceec4d4a2024f7009d913233aa",
+      "mergedHead": "169bd58827498f94df651ab596f81e7e7f882b97",
+      "reviewHead": "2b95c0df",
+      "predictedTree": "f5dab83f9381a9ceec4d4a2024f7009d913233aa",
+      "treeMatchesPrediction": true,
+      "mainCi": "success",
+      "deployRuns": []
+    }
+  ],
+  "mergeSummary": {
+    "count": 32,
+    "deployRunsSucceeded": 8,
+    "deployRunsCanceled": 69,
+    "deployRunsSkipped": 5
+  },
+  "recordedConflicts": [
+    {
+      "pr": 369,
+      "files": [
+        "CHANGELOG.md",
+        "docs/audits/2026-10-26-security/findings/FINDING-009.md"
+      ],
+      "result": "[Unreleased] above [2.3.4]; FINDING-009 blob a7de77ee0dee"
+    },
+    {
+      "pr": 388,
+      "files": [
+        "docs/audits/2026-10-26-security/findings/FINDING-046.md"
+      ],
+      "result": "blob bcb435935134"
+    }
+  ],
+  "publishes": [
+    {
+      "package": "logger",
+      "version": "2.4.0",
+      "run": 41318800448,
+      "publishedAt": "2026-11-01T15:12:36.516Z",
+      "shasum": "4306bafaab0a4a38013aaa6a160c773a1057a6a8",
+      "npmPublishAttestation": true,
+      "internalPins": {},
+      "slsaProvenance": true
+    },
+    {
+      "package": "auth",
+      "version": "3.0.0",
+      "run": 41320332718,
+      "publishedAt": "2026-11-01T15:25:01.907Z",
+      "shasum": "741d172dd70ff5962ac47a414e3ef65fe6e9aa7f",
+      "npmPublishAttestation": true,
+      "internalPins": {},
+      "slsaProvenance": true
+    },
+    {
+      "package": "core",
+      "version": "5.16.0",
+      "run": 41322463407,
+      "publishedAt": "2026-11-01T15:44:34.412Z",
+      "shasum": "7c3848d52c6087bc6dfee38ba01a83af37a90222",
+      "npmPublishAttestation": true,
+      "internalPins": {
+        "@xivdyetools/types": "3.3.0",
+        "@xivdyetools/logger": "2.4.0"
+      },
+      "slsaProvenance": true
+    },
+    {
+      "package": "worker-kit",
+      "version": "1.6.0",
+      "run": 41322951488,
+      "publishedAt": "2026-11-01T15:49:13.045Z",
+      "shasum": "e71513110b5eca835b495512a2f72123b425a190",
+      "npmPublishAttestation": true,
+      "internalPins": {
+        "@xivdyetools/logger": "2.4.0"
+      },
+      "slsaProvenance": true
+    },
+    {
+      "package": "svg",
+      "version": "4.4.1",
+      "run": 41323247121,
+      "publishedAt": "2026-11-01T15:53:42.584Z",
+      "shasum": "64ac7805724b2d851d6abfe5c0b06c5bae440d27",
+      "npmPublishAttestation": false,
+      "internalPins": {
+        "@xivdyetools/core": "5.16.0",
+        "@xivdyetools/types": "3.3.0"
+      },
+      "slsaProvenance": true
+    },
+    {
+      "package": "bot-logic",
+      "version": "4.12.0",
+      "run": 41324437207,
+      "publishedAt": "2026-11-01T16:08:53.344Z",
+      "shasum": "e8f9253e348cfb414e6d62e0eaeab113e7ca5caa",
+      "npmPublishAttestation": true,
+      "internalPins": {
+        "@xivdyetools/svg": "4.4.1",
+        "@xivdyetools/core": "5.16.0",
+        "@xivdyetools/types": "3.3.0"
+      },
+      "slsaProvenance": true
+    }
+  ],
+  "publishChecks": "Before each approval: source SHA 8bae6e9d, package subtree equal to PMR, CI-packed files byte-identical to the recorded archive (55, 58, 250, 95, 79 and 97 files), and the manifest bound to the run. After each: registry shasum and sha512 equal to the CI tarball, SLSA provenance naming the workflow, refs/heads/main and the SHA. The P2 test-utils producer rerun against the registry package passed its three JWT cases. Deprecated tags on all listed symbols were confirmed in the packed declarations of core and bot-logic.",
+  "deprecationWindow": {
+    "days": 14,
+    "startsAt": "2026-11-01T16:08:53.344Z",
+    "earliestRecheck": "2026-11-15T16:08:53Z"
+  },
+  "migrations": [
+    {
+      "file": "apps/oauth/migrations/0002_identity_transitions.sql",
+      "sha256": "86aaf4c19ab98d86383621d54749e5c2429b435eb4aded7392119377fbe49882",
+      "appliedBy": "maintainer",
+      "queries": 4,
+      "preApplyRead": false,
+      "verdict": "FULLY_APPLIED",
+      "verifiedBy": "independent Opus verifier, workflow wf_b47ac42e-4cc",
+      "deviation": "Go/no-go row 5: the apply ran before any read. Rows 2, 3 and 6 rest on reads taken afterward; the account was confirmed after the apply.",
+      "onceOnly": "Rests on the maintainer's terminal output and word."
+    },
+    {
+      "file": "apps/presets-api/migrations/0016_ban_identity_continuity.sql",
+      "sha256": "c1928eb57427a7c231ac74bfb1265e9eb69730089c42b0baf1ea828dfeda9be0",
+      "appliedBy": "maintainer",
+      "queries": 9,
+      "preApplyRead": true,
+      "verdict": "FULLY_APPLIED",
+      "verifiedBy": "independent Opus verifier, workflow wf_ff5dd00e-e31",
+      "onceOnly": "Rests on the maintainer's terminal output and word."
+    }
+  ],
+  "deploys": [
+    {
+      "unit": "7",
+      "worker": "oauth 3.2.0",
+      "run": 41326061353,
+      "source": "fa563a9a",
+      "cloudflareVersion": "e9e3f501-0f40-4c62-8faf-47fe4cdb05fa",
+      "deployedAt": "2026-11-01T16:28:45Z",
+      "accepted": true
+    },
+    {
+      "unit": "8",
+      "worker": "presets 2.8.1",
+      "run": 41329372447,
+      "source": "28ad1780",
+      "cloudflareVersion": "d61e7404-9422-4bf1-a196-f9b905c2f16c",
+      "deployedAt": "2026-11-01T17:04:42Z",
+      "accepted": true
+    },
+    {
+      "unit": "9",
+      "worker": "discord 5.9.7",
+      "run": 41330829249,
+      "source": "ab4a9906",
+      "cloudflareVersion": "d642c418-464d-4c10-874f-2a94240a007d",
+      "deployedAt": "2026-11-01T17:21:20Z",
+      "accepted": true,
+      "commands": "No command or option added, removed or renamed; translated labels on /swatch order and slot and /preset sort. 18 registered."
+    },
+    {
+      "unit": "10",
+      "worker": "presets 2.8.2",
+      "run": 41333088716,
+      "source": "b267a5f7",
+      "cloudflareVersion": "a5a55434-d6cc-4315-b9bd-ed9675a7c3c1",
+      "deployedAt": "2026-11-01T17:48:09Z",
+      "accepted": true
+    },
+    {
+      "unit": "11",
+      "worker": "api 0.21.1",
+      "run": 41334505306,
+      "source": "9e90b2e3",
+      "cloudflareVersion": "de350a6e-81fa-4cff-a869-1d581a713f9a",
+      "deployedAt": "2026-11-01T18:04:54Z",
+      "accepted": true,
+      "notExercised": "the new Chara budgets"
+    },
+    {
+      "unit": "12",
+      "worker": "web 5.16.4",
+      "run": 41337296373,
+      "source": "cc6db48b",
+      "accepted": true,
+      "note": "Smoke matched the commit; retention dry-run deleted nothing."
+    },
+    {
+      "unit": "13",
+      "worker": "og 2.12.2",
+      "run": 41340393772,
+      "source": "8853dcc4",
+      "cloudflareVersion": "22a97d17-218c-4d82-a0a1-e3cb28757f2f",
+      "deployedAt": "2026-11-01T19:12:22Z",
+      "accepted": true
+    },
+    {
+      "unit": "14",
+      "worker": "moderation 1.9.0",
+      "run": 41342980722,
+      "source": "057978e0",
+      "cloudflareVersion": "04fa0635-baf3-4826-b1b4-f2cc876018e8",
+      "deployedAt": "2026-11-01T19:55:29Z",
+      "accepted": false,
+      "commands": "One new optional additional_user option; nothing removed."
+    }
+  ],
+  "beforeDeploys": {
+    "presets": "2.6.1",
+    "moderation": "1.8.2",
+    "discord": "5.9.0",
+    "api": "0.21.0",
+    "web": "5.16.0",
+    "og": "2.12.0",
+    "image": "1.3.4",
+    "oauth": "3.1.3"
+  },
+  "aggregates": {
+    "unit7Users": {
+      "total": 19,
+      "bothIds": 4,
+      "discordOnly": 14,
+      "xivauthOnly": 1
+    },
+    "unit14Moderation": {
+      "activeBans": 0,
+      "allBans": 0,
+      "bansLast90Days": 0,
+      "unbansLast90Days": 0,
+      "bansEver": 0
+    },
+    "afterDeploys": "identity_operations, identity_operation_locks, revised rows, ban_identity_memberships, moderation_ban_confirmations and ban_continuity_operations all read zero."
+  },
+  "issue368Measurement": {
+    "method": "Headless Chromium at 1100x800, 1440x900 and 1920x1080 and headless Firefox at 1440x900, with a 1600 px spacer in each tool, palette open and closed. Geometry only; not checked on a real Windows 11 client.",
+    "liveWeb5164": {
+      "gap24px": [
+        "harmony",
+        "extractor",
+        "accessibility",
+        "comparison",
+        "budget",
+        "swatch",
+        "presets"
+      ],
+      "flush": [
+        "glamour"
+      ],
+      "noReading": [
+        "gradient",
+        "mixer"
+      ]
+    },
+    "localPreviewWith372": {
+      "gap0px": [
+        "harmony",
+        "extractor",
+        "accessibility",
+        "comparison",
+        "gradient",
+        "mixer",
+        "presets",
+        "budget",
+        "swatch",
+        "glamour"
+      ],
+      "build": "aebae591",
+      "nestedScrollers": 0,
+      "note": "A preview of the whole queue including #372, #417 and #418, not #372 alone."
+    }
+  },
+  "stillOwed": [
+    "unit 14 acceptance, after the retry",
+    "the maintainer's confirmation that the XIVAuth notice was posted",
+    "the maintainer's answer on whether the IdentityLookup correction changes unit 7's acceptance",
+    "the bookmarks and once-only results in the maintainer's private receipt",
+    "AP-26 recheck, no earlier than 2026-11-15T16:08:53Z",
+    "the DEAD-027 to DEAD-030 keep-or-remove decision before #391",
+    "the M and F lines, #411, #414, #366, #372, #389, #417 and #418",
+    "the image 1.3.5 release gates (AP-14, AP-24(iii), AP-35, AP-40, AP-13a), and deleting the hold variable afterward",
+    "XIVAuth name fix (oauth 3.2.1)",
+    "seroval floor bump",
+    "audit-docs companion"
+  ],
+  "predictedTreeSource": "The local, never-pushed mpoint/2026-11-01 first-parent chain. premerge-refreeze-2026-11-01.json holds only its named points, so most per-merge predicted trees cannot be reproduced from this repository.",
+  "dispatch": "The agent dispatched each publish run on the maintainer's word, using the maintainer's login, so triggering_actor reads as the maintainer.",
+  "deviations": [
+    "Migration 0002 ran before its reads (see migrations).",
+    "Unit 7's run was approved before AP-37 and AP-41 were answered: the job started at 16:27:50Z, and the answers came at 16:28:09Z and 16:28:32Z."
+  ],
+  "otherChecks": {
+    "dependabot": "Vite alerts 13 to 17 closed at 12:51Z after cut 00. Medium alerts opened at 12:41Z on the rescan: seroval 18 and 19 (runtime), minimatch 21 (development). The required audit runs at high.",
+    "pagesTokenEvidence": "Accepted evidence for AP-24(i): production run 40397285598 and beta run 41275139734 both ran pages deploy. Unit 12's run then passed the production smoke and retention dry-run; the beta token's Pages read was not separately confirmed.",
+    "notificationCallers": "The maintainer believes presets is the only poster to /webhooks/preset-submission and is not certain; unverified. The deployed presets bound the default entrypoint until unit 10.",
+    "commandRegistrationNote": "\"This command is outdated\" at unit 14 did not reach the worker (filtered log watch with a control request). \"Loading options failed\" is likely the same cause, unproven until the retry."
+  }
+}

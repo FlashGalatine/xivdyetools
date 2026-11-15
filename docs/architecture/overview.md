@@ -169,6 +169,9 @@ Layer 0: Shared Foundation
 - Universalis API integration with LRU cache and metrics
 - 6-language localization (en, ja, de, fr, ko, zh)
 - Color blending — six algorithms incl. Kubelka-Munk spectral — via the `/blending` subpath
+- `.chara` inspection and resolution through `xivcharakit`, with a palette-free `/chara` entry for
+  workers. The deprecated legacy parser and resolver are removed from the conditional Core 6
+  source; publication and consumer acceptance stay gated in [DEPRECATIONS.md](../../DEPRECATIONS.md).
 - Pre-computed lowercase names for fast search; LRU cache for `rgbToOklab()`
 
 **v3.0.0 Breaking Change (schema v2)**: `colors_xiv.json` (136 entries × 16 fields) became `dyes.json` (125 entries × 7 fields, keyed by `stainID`). `rgb`/`hsv`/`lab`, `cost`/`currency`, and the five `is*` flags are derived at `DyeDatabase.initialize()`, so the runtime `Dye` object keeps its full 16-field shape and consumers of dye objects were unaffected. The 11 Facewear colors left the dye table for `facewearColors`; the synthetic negative-ID mechanism is retired, surviving only as the frozen `LEGACY_FACEWEAR_ITEM_IDS` map. `isMetallic` is now the Stain sheet's 16-dye gloss set (was a 14-dye name-prefix guess) and `isCosmic ≡ consolidationType === 'C'` (11 dyes, no longer polluted by the 9 Firmament dyes).

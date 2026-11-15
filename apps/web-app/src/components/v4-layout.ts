@@ -19,7 +19,16 @@ import { ShareService } from '@services/share-service';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
 import { STORAGE_PREFIX } from '@shared/constants';
+import { makeCustomDye } from '@shared/custom-dye';
+import type { Dye } from '@xivdyetools/types';
 import type { BaseComponent } from './base-component';
+import {
+  PALETTE_SLOTS_CHANGED,
+  isPaletteSlotHost,
+  isPaletteSlotSource,
+  normalizeTarget,
+  resolvePick,
+} from './palette-slots';
 import type { V4LayoutShell } from './v4/v4-layout-shell';
 import { ModalContainer } from './modal-container';
 import { ToastContainer } from './toast-container';
@@ -61,6 +70,58 @@ let bootEntry: ToolEntry | null = null;
 // The tool whose view is currently being timed (set once its load completed).
 // Re-navigating to it is a remount, not a new view.
 let mountedToolId: ToolId | null = null;
+
+// True while the layout itself is changing the tool's slots for a palette
+// pick. The tool's palette-slots-changed from that change must not clear the
+// target: the shell drops it once the pick is routed.
+let routingPick = false;
+
+// ============================================================================
+// Palette Slot Routing
+// ============================================================================
+
+/** Hand the active tool's slots, mode and density to the shell's palette. */
+function syncPaletteSlots(): void {
+  if (!layoutElement) return;
+  const tool = activeTool;
+  if (isPaletteSlotSource(tool)) {
+    layoutElement.paletteSlotMode = tool.paletteSlotMode;
+    layoutElement.paletteSlots = tool.getPaletteSlots();
+  } else {
+    layoutElement.paletteSlotMode = null;
+    layoutElement.paletteSlots = [];
+  }
+  layoutElement.paletteSlotsDense = isPaletteSlotHost(tool) && tool.paletteSlotsDense === true;
+}
+
+/** Run a tool call made on the palette's behalf (see routingPick). */
+function routed<T>(call: () => T): T {
+  routingPick = true;
+  try {
+    return call();
+  } finally {
+    routingPick = false;
+  }
+}
+
+/** The pre-contract path: selectDye, else addDye. Returns whether the tool took the dye. */
+function addDyeToTool(dye: Dye): boolean {
+  if (activeTool && 'selectDye' in activeTool) {
+    const tool = activeTool as BaseComponent & { selectDye: (dye: unknown) => void };
+    routed(() => tool.selectDye(dye));
+    return true;
+  }
+  if (activeTool && 'addDye' in activeTool) {
+    // Fallback for tools that use addDye instead of selectDye
+    const tool = activeTool as BaseComponent & { addDye: (dye: unknown) => void };
+    routed(() => tool.addDye(dye));
+    return true;
+  }
+  logger.debug(
+    `[V4 Layout] Tool ${RouterService.getCurrentToolId()} does not support dye selection`
+  );
+  return false;
+}
 
 // ============================================================================
 // Tutorial Integration
@@ -193,32 +254,50 @@ export async function initializeV4Layout(container: HTMLElement): Promise<void> 
     }
   }) as EventListener);
 
-  // Listen for dye selections from the Color Palette drawer
+  // Listen for dye selections from the Color Palette drawer. Route by the
+  // detail's target: the shell clears its own target only after this runs.
   layoutElement.addEventListener('dye-selected', ((
-    e: CustomEvent<{
-      dye: { id: number; name: string; hex: string; stainID?: number };
-      random?: boolean;
-    }>
+    e: CustomEvent<{ dye: Dye; random?: boolean; target?: number | null }>
   ) => {
-    const { dye, random } = e.detail;
+    const { dye, random, target } = e.detail;
     logger.debug(`[V4 Layout] Dye selected from palette: ${dye.name}`);
 
-    // Route dye selection to active tool if it has selectDye method
-    let consumed = true;
-    if (activeTool && 'selectDye' in activeTool) {
-      (activeTool as BaseComponent & { selectDye: (dye: unknown) => void }).selectDye(dye);
-    } else if (activeTool && 'addDye' in activeTool) {
-      // Fallback for tools that use addDye instead of selectDye
-      (activeTool as BaseComponent & { addDye: (dye: unknown) => void }).addDye(dye);
+    let consumed: boolean;
+    const tool = activeTool;
+    if (isPaletteSlotHost(tool)) {
+      const slots = tool.getPaletteSlots();
+      const action = resolvePick({
+        mode: tool.paletteSlotMode,
+        slots,
+        // The shell normalized the target against slots it read earlier: check it again
+        target: normalizeTarget(slots, target ?? null, false),
+        dye,
+        random,
+      });
+      switch (action.kind) {
+        case 'place':
+          routed(() => tool.placeDyeAt(action.index, dye));
+          consumed = true;
+          break;
+        case 'remove':
+          routed(() => tool.removeDyeAt(action.index));
+          consumed = false;
+          break;
+        case 'add':
+          consumed = addDyeToTool(dye);
+          break;
+        case 'none':
+          consumed = false;
+          break;
+      }
     } else {
-      consumed = false;
-      logger.debug(
-        `[V4 Layout] Tool ${RouterService.getCurrentToolId()} does not support dye selection`
-      );
+      consumed = addDyeToTool(dye);
     }
+    syncPaletteSlots();
 
     // Telemetry: a swatch click a tool took is a deliberate pick; the random
-    // button, and a click while no tool (or one without dye input) is mounted, are not
+    // button, a click that removed a held dye, and a click while no tool (or
+    // one without dye input) is mounted, are not
     if (consumed && !random && typeof dye.stainID === 'number') {
       TelemetryService.trackDyePick(dye.stainID, 'drawer');
     }
@@ -230,33 +309,63 @@ export async function initializeV4Layout(container: HTMLElement): Promise<void> 
 
     // Route clear request to active tool if it has clearDyes or clearSelection method
     if (activeTool && 'clearDyes' in activeTool) {
-      (activeTool as BaseComponent & { clearDyes: () => void }).clearDyes();
+      const tool = activeTool as BaseComponent & { clearDyes: () => void };
+      routed(() => tool.clearDyes());
     } else if (activeTool && 'clearSelection' in activeTool) {
       // Fallback for tools that use clearSelection instead of clearDyes
-      (activeTool as BaseComponent & { clearSelection: () => void }).clearSelection();
+      const tool = activeTool as BaseComponent & { clearSelection: () => void };
+      routed(() => tool.clearSelection());
     } else {
       logger.debug(
         `[V4 Layout] Tool ${RouterService.getCurrentToolId()} does not support clearing dyes`
       );
     }
+    syncPaletteSlots();
   }) as EventListener);
 
   // Listen for custom color selections from the Color Palette drawer
-  layoutElement.addEventListener('custom-color-selected', ((e: CustomEvent<{ hex: string }>) => {
-    const { hex } = e.detail;
+  layoutElement.addEventListener('custom-color-selected', ((
+    e: CustomEvent<{ hex: string; target?: number | null }>
+  ) => {
+    const { hex, target } = e.detail;
     logger.debug(`[V4 Layout] Custom color selected: ${hex}`);
 
-    // Route custom color to active tool if it has selectCustomColor method
-    if (activeTool && 'selectCustomColor' in activeTool) {
-      (
-        activeTool as BaseComponent & { selectCustomColor: (hex: string) => void }
-      ).selectCustomColor(hex);
+    const tool = activeTool;
+    const slotIndex = isPaletteSlotHost(tool)
+      ? normalizeTarget(tool.getPaletteSlots(), target ?? null, false)
+      : null;
+    if (isPaletteSlotHost(tool) && slotIndex !== null) {
+      routed(() => tool.placeDyeAt(slotIndex, makeCustomDye(hex)));
+    } else if (activeTool && 'selectCustomColor' in activeTool) {
+      // Route custom color to active tool if it has selectCustomColor method
+      const custom = activeTool as BaseComponent & { selectCustomColor: (hex: string) => void };
+      routed(() => custom.selectCustomColor(hex));
     } else {
       logger.debug(
         `[V4 Layout] Tool ${RouterService.getCurrentToolId()} does not support custom color selection`
       );
     }
+    syncPaletteSlots();
   }) as EventListener);
+
+  // The shell's target moved (a slot tap, the strip, or a pick used it up):
+  // the tool draws the accent border on that slot
+  layoutElement.addEventListener('palette-target-change', ((
+    e: CustomEvent<{ index: number | null }>
+  ) => {
+    if (isPaletteSlotHost(activeTool)) {
+      activeTool.setPaletteTarget(e.detail.index);
+    }
+  }) as EventListener);
+
+  // The tool's slots changed. Outside a routed pick (its own Remove button, a
+  // share-link load) the target may point at the wrong slot now, so drop it.
+  layoutElement.addEventListener(PALETTE_SLOTS_CHANGED, () => {
+    if (!routingPick) {
+      layoutElement?.clearPaletteTarget();
+    }
+    syncPaletteSlots();
+  });
 
   // Listen for "What's New" (changelog) button click from header
   layoutElement.addEventListener('changelog-click', (() => {
@@ -339,6 +448,10 @@ export async function initializeV4Layout(container: HTMLElement): Promise<void> 
     logger.info('[V4 Layout] Language changed, tool may need refresh');
     // Route titles are locale keys, so the tab title is stale until re-read.
     RouterService.refreshDocumentTitle();
+    // Slot labels are locale strings too. Every getPaletteSlots() reads
+    // LanguageService at call time, and listeners run only after the new
+    // locale is committed, so this needs no wait for the tool's own re-render.
+    syncPaletteSlots();
   });
 
   // Wait for V4LayoutShell to complete its initial Lit render
@@ -559,6 +672,8 @@ async function loadToolContent(toolId: ToolId): Promise<void> {
     activeTool.destroy();
     activeTool = null;
   }
+  // No tool, no slots: covers the paths below that mount nothing on the contract
+  syncPaletteSlots();
 
   // Clear existing content
   clearContainer(contentContainer);
@@ -718,6 +833,7 @@ async function loadToolContent(toolId: ToolId): Promise<void> {
     // Clear loading and append tool container
     clearContainer(contentContainer);
     contentContainer.appendChild(toolContainer);
+    syncPaletteSlots();
     completeToolLoad(toolId, entry, remount);
 
     // Check if we should prompt for tutorial on first visit to this tool

@@ -1829,4 +1829,91 @@ describe('BudgetTool', () => {
       expect(() => tool!.destroy()).not.toThrow();
     });
   });
+
+  describe('palette slots', () => {
+    const mountTool = (): BudgetTool => {
+      const t = new BudgetTool(container, { leftPanel, rightPanel });
+      t.init();
+      return t;
+    };
+
+    it('getPaletteSlots returns one slot holding the current dye, or null', () => {
+      tool = mountTool();
+      expect(tool.paletteSlotMode).toBe('single');
+      expect(tool.getPaletteSlots()).toEqual([{ label: '', targetLabel: '', dye: null }]);
+
+      tool.selectDye(mockDyes[0]);
+      expect(tool.getPaletteSlots()).toEqual([{ label: '', targetLabel: '', dye: mockDyes[0] }]);
+    });
+
+    it('dispatches palette-slots-changed when the dye changes or is cleared', () => {
+      tool = mountTool();
+      const heard = vi.fn();
+      container.addEventListener('palette-slots-changed', heard);
+
+      tool.selectDye(mockDyes[0]);
+      expect(heard).toHaveBeenCalledTimes(1);
+
+      tool.clearDyes();
+      expect(heard).toHaveBeenCalledTimes(2);
+    });
+
+    it('the empty-state card is a button that dispatches open-palette-drawer', () => {
+      tool = mountTool();
+      const heard = vi.fn();
+      container.addEventListener('open-palette-drawer', heard);
+
+      const card = container.querySelector<HTMLButtonElement>('button.v5-empty-state');
+      expect(card).not.toBeNull();
+      expect(card!.type).toBe('button');
+      expect(card!.dataset.paletteSlot).toBe('0');
+      card!.click();
+
+      expect(heard).toHaveBeenCalledTimes(1);
+      expect((heard.mock.calls[0][0] as CustomEvent).detail).toBeNull();
+    });
+
+    it('the target dye card is a button that dispatches open-palette-drawer', () => {
+      tool = mountTool();
+      tool.selectDye(mockDyes[0]);
+      const heard = vi.fn();
+      container.addEventListener('open-palette-drawer', heard);
+
+      const cards = Array.from(
+        container.querySelectorAll<HTMLButtonElement>('button[data-palette-slot="0"]')
+      ).filter((b) => !b.classList.contains('v5-empty-state'));
+      expect(cards.length).toBeGreaterThan(0);
+      for (const card of cards) expect(card.type).toBe('button');
+      cards[0].click();
+
+      expect(heard).toHaveBeenCalledTimes(1);
+    });
+
+    it('picking the dye already held fires no second event and no second price fetch', async () => {
+      tool = mountTool();
+      tool.selectDye(mockDyes[0]);
+      await new Promise((r) => setTimeout(r, 0));
+      const heard = vi.fn();
+      container.addEventListener('palette-slots-changed', heard);
+      const fetchPrices = vi.mocked(MarketBoardService.getInstance().fetchPricesForDyes);
+      fetchPrices.mockClear();
+
+      tool.selectDye(mockDyes[0]);
+      await new Promise((r) => setTimeout(r, 0));
+
+      expect(heard).not.toHaveBeenCalled();
+      expect(fetchPrices).not.toHaveBeenCalled();
+    });
+
+    it('the target card is named by its content and holds no paragraph', () => {
+      tool = mountTool();
+      tool.selectDye(mockDyes[0]);
+
+      const card = Array.from(
+        container.querySelectorAll<HTMLButtonElement>('button[data-palette-slot="0"]')
+      ).find((b) => !b.classList.contains('v5-empty-state'))!;
+      expect(card.hasAttribute('aria-label')).toBe(false);
+      expect(card.querySelector('p')).toBeNull();
+    });
+  });
 });

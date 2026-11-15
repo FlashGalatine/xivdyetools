@@ -73,12 +73,12 @@ Each command logs under its own tag (`[dye info]` and `[dye random]` for the two
 
 ### Swatch result compatibility
 
-Use `svgString` and `embed` for presentation. `SwatchResult.character` and the exported
-`SwatchCharacter` projection are deprecated in 4.12.0, with removal reserved for bot-logic
-5.0.0 after the published-minor and consumer-acceptance gates in
-[DEPRECATIONS.md](../../DEPRECATIONS.md). The required field, legacy type shape and both
-success routes remain available in this minor. The legacy projection is not sanitized
-display text; the card/embed remain the supported presentation boundary.
+Conditional Bot Logic 5 removes `SwatchResult.character`, `SwatchCharacter` and the legacy
+back-mapping. Both successful routes expose exactly `ok`, `svgString` and `embed`; use the
+card/embed for presentation. `fileText`/`fileBytes`, error unions, `NO_INPUT` and `familySize`
+remain. The earlier 4.12.0 deprecation release, external-consumer review and acceptance gates
+in [DEPRECATIONS.md](../../DEPRECATIONS.md) remain open; source preparation does not authorize
+publication or deployment.
 
 ## Usage
 
