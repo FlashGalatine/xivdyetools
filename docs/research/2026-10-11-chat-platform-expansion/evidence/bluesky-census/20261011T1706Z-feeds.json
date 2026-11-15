@@ -1,0 +1,34 @@
+{
+  "asOf": "2026-10-11T17:06:03.939Z",
+  "searchMatched": 835,
+  "relevant": 748,
+  "perQuery": {
+    "ffxiv": {
+      "hits": 353,
+      "pages": 4,
+      "capped": false
+    },
+    "ff14": {
+      "hits": 357,
+      "pages": 4,
+      "capped": false
+    },
+    "gpose": {
+      "hits": 91,
+      "pages": 1,
+      "capped": false
+    },
+    "eorzea": {
+      "hits": 5,
+      "pages": 1,
+      "capped": false
+    },
+    "final fantasy": {
+      "hits": 139,
+      "pages": 2,
+      "capped": false
+    }
+  },
+  "likesRelevant": 5282,
+  "publicationNote": "Historical aggregate-only publication. Account, profile, creator and post records are not retained. Contributor thresholds introduced for later collection cannot be verified from these retained aggregates."
+}

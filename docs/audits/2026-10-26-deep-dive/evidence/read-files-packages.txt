@@ -1,0 +1,271 @@
+# Package audit read ledger; 6da3ff5b; 2026-10-26
+# FULL_CODE = all executable/declaration lines viewed in line-numbered batches; comment-only/blank lines elided. Count records original full file lines.
+# All tracked non-test src/scripts TypeScript/JavaScript/Python implementation and declaration files are covered.
+FULL_CODE	packages/auth/src/discord.ts	187
+FULL_CODE	packages/auth/src/encoding/base64.ts	104
+FULL_CODE	packages/auth/src/encoding/hex.ts	49
+FULL_CODE	packages/auth/src/encoding/index.ts	30
+FULL_CODE	packages/auth/src/hmac.ts	335
+FULL_CODE	packages/auth/src/index.ts	116
+FULL_CODE	packages/auth/src/jwt.ts	335
+FULL_CODE	packages/auth/src/revocation.ts	97
+FULL_CODE	packages/auth/src/timing.ts	55
+FULL_CODE	packages/bot-logic/src/commands/accessibility.ts	280
+FULL_CODE	packages/bot-logic/src/commands/chara-identity.ts	90
+FULL_CODE	packages/bot-logic/src/commands/comparison.ts	171
+FULL_CODE	packages/bot-logic/src/commands/contrast.ts	153
+FULL_CODE	packages/bot-logic/src/commands/dye-info.ts	313
+FULL_CODE	packages/bot-logic/src/commands/failure-kind.ts	18
+FULL_CODE	packages/bot-logic/src/commands/glamour.ts	622
+FULL_CODE	packages/bot-logic/src/commands/gradient.ts	415
+FULL_CODE	packages/bot-logic/src/commands/harmony.ts	383
+FULL_CODE	packages/bot-logic/src/commands/mixer.ts	182
+FULL_CODE	packages/bot-logic/src/commands/swatch.ts	642
+FULL_CODE	packages/bot-logic/src/commands/types.ts	27
+FULL_CODE	packages/bot-logic/src/css-colors.ts	176
+FULL_CODE	packages/bot-logic/src/discord-markdown.ts	77
+FULL_CODE	packages/bot-logic/src/i18n/index.ts	24
+FULL_CODE	packages/bot-logic/src/i18n/locale-resolution.ts	204
+FULL_CODE	packages/bot-logic/src/i18n/translator.ts	147
+FULL_CODE	packages/bot-logic/src/i18n/types.ts	34
+FULL_CODE	packages/bot-logic/src/index.ts	153
+FULL_CODE	packages/bot-logic/src/input-resolution.ts	358
+FULL_CODE	packages/bot-logic/src/localization.ts	251
+FULL_CODE	packages/bot-logic/src/moderators.ts	48
+FULL_CODE	packages/core/scripts/audit-dyes.ts	193
+FULL_CODE	packages/core/scripts/build-character-colors.ts	164
+FULL_CODE	packages/core/scripts/build-locales.ts	1348
+FULL_CODE	packages/core/scripts/build-munsell-hues.ts	173
+FULL_CODE	packages/core/scripts/build-oklch-hue-table.ts	35
+FULL_CODE	packages/core/scripts/calibrate-bands.ts	21
+FULL_CODE	packages/core/scripts/copy-locales.ts	55
+FULL_CODE	packages/core/scripts/fetch_dye_names.py	313
+FULL_CODE	packages/core/scripts/lib/oklch-hue-table.ts	37
+FULL_CODE	packages/core/scripts/stain-audit/compare.ts	270
+FULL_CODE	packages/core/scripts/stain-audit/fetch.ts	180
+FULL_CODE	packages/core/scripts/stain-audit/model.ts	194
+FULL_CODE	packages/core/scripts/stain-audit/output.ts	352
+FULL_CODE	packages/core/src/blending/blending.ts	269
+FULL_CODE	packages/core/src/blending/conversions.ts	336
+FULL_CODE	packages/core/src/blending/index.ts	12
+FULL_CODE	packages/core/src/blending/types.ts	95
+FULL_CODE	packages/core/src/chara.ts	23
+FULL_CODE	packages/core/src/config/band-calibration.ts	261
+FULL_CODE	packages/core/src/config/band-vocabulary.ts	165
+FULL_CODE	packages/core/src/config/consolidated-ids.ts	127
+FULL_CODE	packages/core/src/config/dye-vocabulary.ts	72
+FULL_CODE	packages/core/src/config/facewear.ts	45
+FULL_CODE	packages/core/src/config/learn-links.ts	210
+FULL_CODE	packages/core/src/config/product-links.ts	51
+FULL_CODE	packages/core/src/constants/index.ts	177
+FULL_CODE	packages/core/src/index.ts	383
+FULL_CODE	packages/core/src/services/APIService.ts	1195
+FULL_CODE	packages/core/src/services/chara/chara-game-rules.ts	153
+FULL_CODE	packages/core/src/services/chara/chara-gposers.ts	219
+FULL_CODE	packages/core/src/services/chara/chara-library-resolve.ts	40
+FULL_CODE	packages/core/src/services/chara/chara-library-types.ts	46
+FULL_CODE	packages/core/src/services/chara/chara-library.ts	279
+FULL_CODE	packages/core/src/services/chara/chara-models.ts	112
+FULL_CODE	packages/core/src/services/chara/chara-palette-provider.ts	142
+FULL_CODE	packages/core/src/services/chara/chara-parser.ts	615
+FULL_CODE	packages/core/src/services/chara/chara-resolver.ts	453
+FULL_CODE	packages/core/src/services/chara/chara-shader-colors.ts	72
+FULL_CODE	packages/core/src/services/chara/chara-twins.ts	183
+FULL_CODE	packages/core/src/services/CharacterColorService.ts	443
+FULL_CODE	packages/core/src/services/color/ColorAccessibility.ts	95
+FULL_CODE	packages/core/src/services/color/ColorblindnessSimulator.ts	166
+FULL_CODE	packages/core/src/services/color/ColorConverter.ts	1790
+FULL_CODE	packages/core/src/services/color/ColorManipulator.ts	78
+FULL_CODE	packages/core/src/services/ColorService.ts	786
+FULL_CODE	packages/core/src/services/dye/DyeDatabase.ts	594
+FULL_CODE	packages/core/src/services/dye/DyeFilter.ts	80
+FULL_CODE	packages/core/src/services/dye/DyeSearch.ts	325
+FULL_CODE	packages/core/src/services/dye/HarmonyGenerator.ts	577
+FULL_CODE	packages/core/src/services/dye/HarmonySelector.ts	320
+FULL_CODE	packages/core/src/services/dye/wheels/ColorWheel.ts	74
+FULL_CODE	packages/core/src/services/dye/wheels/hue-warp.ts	166
+FULL_CODE	packages/core/src/services/dye/wheels/munsell.ts	21
+FULL_CODE	packages/core/src/services/dye/wheels/oklch-hue.ts	26
+FULL_CODE	packages/core/src/services/dye/wheels/oklch-lightness.ts	74
+FULL_CODE	packages/core/src/services/dye/wheels/rgb-ryb.ts	51
+FULL_CODE	packages/core/src/services/dye/wheels/types.ts	40
+FULL_CODE	packages/core/src/services/DyeService.ts	381
+FULL_CODE	packages/core/src/services/localization/LocaleLoader.ts	105
+FULL_CODE	packages/core/src/services/localization/LocaleRegistry.ts	98
+FULL_CODE	packages/core/src/services/localization/TranslationProvider.ts	523
+FULL_CODE	packages/core/src/services/LocalizationService.ts	654
+FULL_CODE	packages/core/src/services/PaletteService.ts	624
+FULL_CODE	packages/core/src/services/PresetService.ts	268
+FULL_CODE	packages/core/src/types/index.ts	109
+FULL_CODE	packages/core/src/types/spectral-js.d.ts	18
+FULL_CODE	packages/core/src/utils/index.ts	587
+FULL_CODE	packages/core/src/utils/kd-tree.ts	253
+FULL_CODE	packages/logger/src/adapters/console-adapter.ts	131
+FULL_CODE	packages/logger/src/adapters/index.ts	23
+FULL_CODE	packages/logger/src/adapters/json-adapter.ts	47
+FULL_CODE	packages/logger/src/adapters/noop-adapter.ts	55
+FULL_CODE	packages/logger/src/constants.ts	58
+FULL_CODE	packages/logger/src/core/base-logger.ts	1128
+FULL_CODE	packages/logger/src/core/index.ts	20
+FULL_CODE	packages/logger/src/index.ts	133
+FULL_CODE	packages/logger/src/presets/browser.ts	150
+FULL_CODE	packages/logger/src/presets/index.ts	39
+FULL_CODE	packages/logger/src/presets/library.ts	95
+FULL_CODE	packages/logger/src/presets/worker.ts	128
+FULL_CODE	packages/logger/src/types.ts	230
+FULL_CODE	packages/svg/src/a11y-card.ts	465
+FULL_CODE	packages/svg/src/base.ts	330
+FULL_CODE	packages/svg/src/budget-ledger.ts	314
+FULL_CODE	packages/svg/src/comparison-card.ts	329
+FULL_CODE	packages/svg/src/contrast-card.ts	493
+FULL_CODE	packages/svg/src/dye-info-card.ts	250
+FULL_CODE	packages/svg/src/emitted-glyphs.ts	610
+FULL_CODE	packages/svg/src/frame.ts	657
+FULL_CODE	packages/svg/src/glamour-card.ts	398
+FULL_CODE	packages/svg/src/gradient.ts	268
+FULL_CODE	packages/svg/src/harmony-card.ts	413
+FULL_CODE	packages/svg/src/icons/tool-icons.ts	361
+FULL_CODE	packages/svg/src/index.ts	251
+FULL_CODE	packages/svg/src/mixer-card.ts	171
+FULL_CODE	packages/svg/src/nearest-sheet.ts	189
+FULL_CODE	packages/svg/src/palette-grid.ts	225
+FULL_CODE	packages/svg/src/preset-swatch.ts	335
+FULL_CODE	packages/svg/src/random-dyes-grid.ts	161
+FULL_CODE	packages/svg/src/swatch-card.ts	208
+FULL_CODE	packages/test-utils/src/auth/headers.ts	43
+FULL_CODE	packages/test-utils/src/auth/index.ts	14
+FULL_CODE	packages/test-utils/src/auth/jwt.ts	121
+FULL_CODE	packages/test-utils/src/cloudflare/analytics.ts	74
+FULL_CODE	packages/test-utils/src/cloudflare/d1.ts	457
+FULL_CODE	packages/test-utils/src/cloudflare/fetcher.ts	234
+FULL_CODE	packages/test-utils/src/cloudflare/index.ts	18
+FULL_CODE	packages/test-utils/src/cloudflare/kv.ts	291
+FULL_CODE	packages/test-utils/src/cloudflare/r2.ts	274
+FULL_CODE	packages/test-utils/src/constants/index.ts	7
+FULL_CODE	packages/test-utils/src/constants/pkce.ts	42
+FULL_CODE	packages/test-utils/src/factories/category.ts	45
+FULL_CODE	packages/test-utils/src/factories/dye.ts	246
+FULL_CODE	packages/test-utils/src/factories/index.ts	14
+FULL_CODE	packages/test-utils/src/factories/preset.ts	101
+FULL_CODE	packages/test-utils/src/index.ts	24
+FULL_CODE	packages/test-utils/src/utils/counters.ts	54
+FULL_CODE	packages/test-utils/src/utils/index.ts	5
+FULL_CODE	packages/types/src/api/index.ts	11
+FULL_CODE	packages/types/src/api/moderation.ts	82
+FULL_CODE	packages/types/src/api/price.ts	60
+FULL_CODE	packages/types/src/api/response.ts	30
+FULL_CODE	packages/types/src/auth/discord-snowflake.ts	51
+FULL_CODE	packages/types/src/auth/discord.ts	80
+FULL_CODE	packages/types/src/auth/index.ts	60
+FULL_CODE	packages/types/src/auth/jwt.ts	81
+FULL_CODE	packages/types/src/auth/provider.ts	43
+FULL_CODE	packages/types/src/auth/response.ts	161
+FULL_CODE	packages/types/src/auth/xivauth.ts	117
+FULL_CODE	packages/types/src/character/index.ts	144
+FULL_CODE	packages/types/src/color/branded.ts	161
+FULL_CODE	packages/types/src/color/colorblind.ts	53
+FULL_CODE	packages/types/src/color/index.ts	28
+FULL_CODE	packages/types/src/color/match-quality.ts	46
+FULL_CODE	packages/types/src/color/rgb.ts	141
+FULL_CODE	packages/types/src/dye/dye-filters.ts	39
+FULL_CODE	packages/types/src/dye/dye.ts	148
+FULL_CODE	packages/types/src/dye/facewear.ts	20
+FULL_CODE	packages/types/src/dye/index.ts	18
+FULL_CODE	packages/types/src/error/app-error.ts	73
+FULL_CODE	packages/types/src/error/codes.ts	49
+FULL_CODE	packages/types/src/error/index.ts	18
+FULL_CODE	packages/types/src/index.ts	170
+FULL_CODE	packages/types/src/localization/index.ts	186
+FULL_CODE	packages/types/src/preset/community.ts	154
+FULL_CODE	packages/types/src/preset/core.ts	113
+FULL_CODE	packages/types/src/preset/index.ts	71
+FULL_CODE	packages/types/src/preset/request.ts	73
+FULL_CODE	packages/types/src/preset/response.ts	167
+FULL_CODE	packages/types/src/preset/review-custom-id.ts	200
+FULL_CODE	packages/worker-kit/src/body-guards/body-guards.ts	162
+FULL_CODE	packages/worker-kit/src/body-guards/index.ts	58
+FULL_CODE	packages/worker-kit/src/body-guards/structure.ts	57
+FULL_CODE	packages/worker-kit/src/body-guards/types.ts	80
+FULL_CODE	packages/worker-kit/src/image-sniff/detect.ts	129
+FULL_CODE	packages/worker-kit/src/image-sniff/index.ts	33
+FULL_CODE	packages/worker-kit/src/index.ts	26
+FULL_CODE	packages/worker-kit/src/middleware/index.ts	47
+FULL_CODE	packages/worker-kit/src/middleware/logger.ts	202
+FULL_CODE	packages/worker-kit/src/middleware/rate-limit.ts	268
+FULL_CODE	packages/worker-kit/src/middleware/request-id.ts	107
+FULL_CODE	packages/worker-kit/src/middleware/types.ts	50
+FULL_CODE	packages/worker-kit/src/rate-limiter/backends/cloudflare.ts	263
+FULL_CODE	packages/worker-kit/src/rate-limiter/backends/kv.ts	337
+FULL_CODE	packages/worker-kit/src/rate-limiter/backends/memory.ts	227
+FULL_CODE	packages/worker-kit/src/rate-limiter/backends/upstash.ts	165
+FULL_CODE	packages/worker-kit/src/rate-limiter/headers.ts	49
+FULL_CODE	packages/worker-kit/src/rate-limiter/index.ts	97
+FULL_CODE	packages/worker-kit/src/rate-limiter/ip.ts	89
+FULL_CODE	packages/worker-kit/src/rate-limiter/key-scope.ts	81
+FULL_CODE	packages/worker-kit/src/rate-limiter/presets/configs.ts	168
+FULL_CODE	packages/worker-kit/src/rate-limiter/presets/index.ts	36
+FULL_CODE	packages/worker-kit/src/rate-limiter/types.ts	256
+CONTEXT_CONFIG	packages/auth/CLAUDE.md
+CONTEXT_CONFIG	packages/auth/package.json
+CONTEXT_CONFIG	packages/auth/vitest.config.ts
+CONTEXT_CONFIG	packages/bot-logic/CLAUDE.md
+CONTEXT_CONFIG	packages/bot-logic/package.json
+CONTEXT_CONFIG	packages/bot-logic/vitest.config.ts
+CONTEXT_CONFIG	packages/core/CLAUDE.md
+CONTEXT_CONFIG	packages/core/eslint.audit-dyes.config.mjs
+CONTEXT_CONFIG	packages/core/localize.yaml
+CONTEXT_CONFIG	packages/core/package.json
+CONTEXT_CONFIG	packages/core/vitest.config.ts
+CONTEXT_CONFIG	packages/logger/CLAUDE.md
+CONTEXT_CONFIG	packages/logger/package.json
+CONTEXT_CONFIG	packages/logger/vitest.config.ts
+CONTEXT_CONFIG	packages/svg/CLAUDE.md
+CONTEXT_CONFIG	packages/svg/package.json
+CONTEXT_CONFIG	packages/svg/vitest.config.ts
+CONTEXT_CONFIG	packages/test-utils/CLAUDE.md
+CONTEXT_CONFIG	packages/test-utils/package.json
+CONTEXT_CONFIG	packages/test-utils/vitest.config.ts
+CONTEXT_CONFIG	packages/types/CLAUDE.md
+CONTEXT_CONFIG	packages/types/package.json
+CONTEXT_CONFIG	packages/types/vitest.config.ts
+CONTEXT_CONFIG	packages/worker-kit/CLAUDE.md
+CONTEXT_CONFIG	packages/worker-kit/package.json
+CONTEXT_CONFIG	packages/worker-kit/vitest.config.ts
+STRUCTURAL_JSON	packages/bot-logic/src/i18n/locales/de.json
+STRUCTURAL_JSON	packages/bot-logic/src/i18n/locales/en.json
+STRUCTURAL_JSON	packages/bot-logic/src/i18n/locales/fr.json
+STRUCTURAL_JSON	packages/bot-logic/src/i18n/locales/ja.json
+STRUCTURAL_JSON	packages/bot-logic/src/i18n/locales/ko.json
+STRUCTURAL_JSON	packages/bot-logic/src/i18n/locales/zh.json
+STRUCTURAL_JSON	packages/core/src/data/character_colors/index.json
+STRUCTURAL_JSON	packages/core/src/data/character_colors/race_specific/hair_colors.json
+STRUCTURAL_JSON	packages/core/src/data/character_colors/race_specific/skin_colors.json
+STRUCTURAL_JSON	packages/core/src/data/character_colors/shader/race_specific.json
+STRUCTURAL_JSON	packages/core/src/data/character_colors/shader/shared.json
+STRUCTURAL_JSON	packages/core/src/data/character_colors/shared/eye_colors.json
+STRUCTURAL_JSON	packages/core/src/data/character_colors/shared/face_paint_dark.json
+STRUCTURAL_JSON	packages/core/src/data/character_colors/shared/face_paint_light.json
+STRUCTURAL_JSON	packages/core/src/data/character_colors/shared/highlight_colors.json
+STRUCTURAL_JSON	packages/core/src/data/character_colors/shared/lip_colors_dark.json
+STRUCTURAL_JSON	packages/core/src/data/character_colors/shared/lip_colors_light.json
+STRUCTURAL_JSON	packages/core/src/data/character_colors/shared/tattoo_colors.json
+STRUCTURAL_JSON	packages/core/src/data/dyes.json
+STRUCTURAL_JSON	packages/core/src/data/facewear_colors.json
+STRUCTURAL_JSON	packages/core/src/data/locales/de.json
+STRUCTURAL_JSON	packages/core/src/data/locales/en.json
+STRUCTURAL_JSON	packages/core/src/data/locales/fr.json
+STRUCTURAL_JSON	packages/core/src/data/locales/ja.json
+STRUCTURAL_JSON	packages/core/src/data/locales/ko.json
+STRUCTURAL_JSON	packages/core/src/data/locales/zh.json
+STRUCTURAL_JSON	packages/core/src/data/munsell-anchors.json
+STRUCTURAL_JSON	packages/core/src/data/munsell-hues.json
+STRUCTURAL_JSON	packages/core/src/data/oklch-hue-table.json
+STRUCTURAL_JSON	packages/core/src/data/presets.json
+TARGETED_TEST_SUPPORT	packages/core/src/services/chara/__tests__/import-graph.ts
+TARGETED_TEST_SUPPORT	packages/core/src/services/chara/__tests__/chara-library.test.ts
+TARGETED_TEST_SUPPORT	packages/core/src/services/chara/__tests__/chara-library-parity.test.ts
+TARGETED_TEST_SUPPORT	packages/bot-logic/src/commands/harmony.test.ts
+TARGETED_TEST_SUPPORT	packages/bot-logic/src/commands/swatch-library.test.ts
+TARGETED_TEST_SUPPORT	packages/bot-logic/src/commands/glamour.test.ts
+# Targeted support means relevant test sections reviewed, not every test file in full (except import-graph.ts).
+# STRUCTURAL_JSON means JSON parsing/top-level structure inspected, not row-by-row semantic validation of generated palettes or locale prose.

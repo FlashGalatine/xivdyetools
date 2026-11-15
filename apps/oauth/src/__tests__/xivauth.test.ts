@@ -83,10 +83,31 @@ function decodeJwtPayload(token: string): Record<string, unknown> {
     return JSON.parse(atob(base64));
 }
 
+/**
+ * What GET /api/v1/characters really sends under the `character` scope this
+ * worker requests ('user user:social character refresh'): the boolean
+ * `verified` is emitted ONLY for `character:manage` tokens
+ * (app/views/api/v1/characters/_character_registration.json.jbuilder:10-13 in
+ * XIVAuth), while `verified_at` is always emitted (same file, line 15) — an ISO
+ * 8601 timestamp, or null for an unverified registration. The helper keeps the
+ * readable `verified: boolean` fixture input and translates it to that shape.
+ */
+const UPSTREAM_VERIFIED_AT = '2026-10-01T12:34:56.789Z';
+function upstreamCharacter<T extends { verified: boolean }>(
+    c: T
+): Omit<T, 'verified'> & { verified_at: string | null } {
+    const { verified, ...rest } = c;
+    return { ...rest, verified_at: verified ? UPSTREAM_VERIFIED_AT : null };
+}
+
 interface XIVAuthFixture {
     userId?: string;
     socialIdentities?: Array<{ provider: string; external_id: string }>;
     characters?: Array<{ lodestone_id: number; name: string; home_world: string; verified: boolean }>;
+    /** Raw /characters roster, sent as-is: mostly shapes this scope never gets, to test failing closed. */
+    rawCharacters?: unknown[];
+    /** Replaces the /characters answer: a failed status, a rejection, or a body that is not a roster. */
+    rosterResponse?: () => Promise<Response>;
     tokenStatus?: number;
     tokenErrorBody?: string;
     userStatus?: number;
@@ -126,7 +147,8 @@ function mockXIVAuth(fixture: XIVAuthFixture = {}): ReturnType<typeof vi.fn> {
             }), { status: 200 }));
         }
         if (url.includes('xivauth.net/api/v1/characters')) {
-            return Promise.resolve(new Response(JSON.stringify(fixture.characters ?? []), { status: 200 }));
+            if (fixture.rosterResponse) return fixture.rosterResponse();
+            return Promise.resolve(new Response(JSON.stringify(fixture.rawCharacters ?? (fixture.characters ?? []).map(upstreamCharacter)), { status: 200 }));
         }
         return originalFetch(url);
     });
@@ -145,6 +167,20 @@ function postXIVAuthCallback(body: Record<string, unknown>, customEnv?: Env): Pr
         : SELF.fetch('http://localhost/auth/xivauth/callback', init);
 }
 
+/**
+ * Structured request-logger entries: the worker-kit JSON adapter writes every level,
+ * warn included, through console.log (packages/logger/src/adapters/json-adapter.ts).
+ */
+function loggedEntries(calls: unknown[][]): { line: string; message?: string; context?: Record<string, unknown> }[] {
+    return calls.flatMap(([line]) => {
+        try {
+            return [{ line: String(line), ...(JSON.parse(String(line)) as { message?: string; context?: Record<string, unknown> }) }];
+        } catch {
+            return [];
+        }
+    });
+}
+
 describe('XIVAuth Handler', () => {
     beforeEach(() => {
         resetMockDB();
@@ -157,14 +193,23 @@ describe('XIVAuth Handler', () => {
         const upstream='20000000-0000-4000-8000-000000000001';
         await env.DB.prepare('INSERT INTO users (id,discord_id,xivauth_id,auth_provider,username) VALUES (?,?,?,?,?)').bind(id,'123456789012345678',upstream,'xivauth','Stored').run();
         mockXIVAuth({userId:upstream,socialIdentities});
-        const response=await postXIVAuthCallback({code:'fresh-code',code_verifier:VALID_CODE_VERIFIER,state:await boundState()});
+        const logSpy=vi.spyOn(console,'log').mockImplementation(()=>{});
+        let response:Response;
+        try {
+            response=await postXIVAuthCallback({code:'fresh-code',code_verifier:VALID_CODE_VERIFIER,state:await boundState()});
+            const refusals=loggedEntries(logSpy.mock.calls).filter((entry)=>entry.message==='XIVAuth identity refusal');
+            expect(refusals).toHaveLength(1);expect(refusals[0]!.context).toMatchObject({code:'unavailable'});
+            expect(refusals[0]!.line).not.toContain(id);expect(refusals[0]!.line).not.toContain(upstream);
+        } finally {
+            logSpy.mockRestore();
+        }
         const body=await response.json() as Record<string,unknown>;
         expect(response.status).toBe(503);expect(body).not.toHaveProperty('token');
         expect(JSON.stringify(body)).not.toContain(id);expect(JSON.stringify(body)).not.toContain(upstream);
         expect((await env.DB.prepare('SELECT COUNT(*) AS count FROM identity_operations').first<{count:number}>())!.count).toBe(0);
     });
 
-    describe('signed state migration across GET and POST', () => {
+    describe('signed state across GET and POST', () => {
         const cutoff = Date.parse('2026-10-28T00:00:00Z') / 1000;
 
         async function migrationState(legacy: boolean, iat: number, exp = iat + 600): Promise<string> {
@@ -182,16 +227,11 @@ describe('XIVAuth Handler', () => {
             return `${encoded}.${await signJwtData(encoded, env.JWT_SECRET)}`;
         }
 
-        it.each([
-            { legacy: true, now: cutoff - 1, iat: cutoff - 1 },
-            { legacy: true, now: cutoff, iat: cutoff },
-            { legacy: true, now: cutoff + 600, iat: cutoff },
-            { legacy: false, now: cutoff + 601, iat: cutoff + 601 },
-        ])('completes the production GET bounce and POST exchange: %o', async ({ legacy, now, iat }) => {
+        it.each([cutoff - 1, cutoff + 601])('completes the production GET bounce and POST exchange at %i', async (now) => {
             vi.setSystemTime(now * 1000);
             const fetchMock = mockXIVAuth();
             const production = createProductionEnv();
-            const state = await migrationState(legacy, iat);
+            const state = await migrationState(false, now);
             const get = await fetchWithEnv(production,
                 `http://localhost/auth/xivauth/callback?${new URLSearchParams({ code: 'migration-code', state })}`,
                 { redirect: 'manual' });
@@ -220,10 +260,10 @@ describe('XIVAuth Handler', () => {
         });
 
         it.each([
-            { now: cutoff + 1, iat: cutoff + 1, exp: cutoff + 600 },
-            { now: cutoff + 601, iat: cutoff, exp: cutoff + 600 },
+            { now: cutoff - 1, iat: cutoff - 1, exp: cutoff + 599 },
+            { now: cutoff, iat: cutoff, exp: cutoff + 600 },
             { now: cutoff + 601, iat: cutoff + 1, exp: cutoff + 601 },
-        ])('rejects disallowed legacy state on both legs without upstream calls: %o', async ({ now, iat, exp }) => {
+        ])('rejects raw-HMAC (unprefixed) state on both legs without upstream calls: %o', async ({ now, iat, exp }) => {
             vi.setSystemTime(now * 1000);
             const fetchMock = mockXIVAuth();
             const production = createProductionEnv();
@@ -246,7 +286,7 @@ describe('XIVAuth Handler', () => {
             expect(fetchMock).not.toHaveBeenCalled();
         });
 
-        it.each(['development', 'production'])('keeps unsigned compatibility GET-only in %s after the deadline', async (environment) => {
+        it.each(['development', 'production'])('keeps unsigned compatibility GET-only in %s', async (environment) => {
             vi.setSystemTime((cutoff + 601) * 1000);
             const fetchMock = mockXIVAuth();
             const targetEnv = environment === 'production' ? createProductionEnv() : env;
@@ -799,7 +839,7 @@ describe('XIVAuth Handler', () => {
                             lodestone_id: 12345678,
                             name: "Test Character",
                             home_world: "Excalibur",
-                            verified: true,
+                            verified_at: UPSTREAM_VERIFIED_AT,
                         },
                     ]), { status: 200 }));
                 }
@@ -1012,7 +1052,7 @@ describe('XIVAuth Handler', () => {
             lodestone_id: 1,
             name,
             home_world: 'X',
-            verified: true,
+            verified_at: UPSTREAM_VERIFIED_AT,
             ...extra,
         });
 
@@ -1169,13 +1209,13 @@ describe('XIVAuth Handler', () => {
                             lodestone_id: 11111111,
                             name: "Unverified Character",
                             home_world: "Balmung",
-                            verified: false,
+                            verified_at: null,
                         },
                         {
                             lodestone_id: 22222222,
                             name: "Verified Character",
                             home_world: "Excalibur",
-                            verified: true,
+                            verified_at: UPSTREAM_VERIFIED_AT,
                         },
                     ]), { status: 200 }));
                 }
@@ -1456,6 +1496,231 @@ describe('XIVAuth Handler', () => {
             expect(json.user.username).toBe('Verified Character');
             expect(json.user.global_name).toBe('Verified Character');
             expect(decodeJwtPayload(json.token).username).toBe('Verified Character');
+        });
+    });
+
+    /**
+     * A roster XIVAuth failed to deliver says nothing about the account's
+     * characters, so only a delivered one may change the stored name. A failed
+     * fetch used to overwrite it with the opaque label, and the web app's author
+     * refresh (presets-api: `global_name || username`) then copied that label onto
+     * every preset under the account until the next good sign-in.
+     */
+    describe('POST /auth/xivauth/callback — a failed roster fetch keeps the stored name', () => {
+        const USER_ID = 'xivauth-roster-outage-user';
+        const STORED_NAME = 'Stored Hero';
+        const FALLBACK_NAME = `XIVAuth User ${USER_ID.slice(0, 8)}`;
+        const signIn = async (fixture: XIVAuthFixture) => {
+            mockXIVAuth({ userId: USER_ID, ...fixture });
+            const response = await postXIVAuthCallback({ code: 'valid_code', code_verifier: VALID_CODE_VERIFIER, state: await boundState() });
+            return { response, json: (await response.json()) as Record<string, any> };
+        };
+        const verifiedRoster = (name: string) => [{ lodestone_id: 1, name, home_world: 'Excalibur', verified: true }];
+        const signInWithStoredName = () => signIn({ characters: verifiedRoster(STORED_NAME) });
+        const storedRow = () =>
+            env.DB.prepare('SELECT username,auth_provider FROM users WHERE xivauth_id=?').bind(USER_ID).first<{ username: string; auth_provider: string }>();
+        const body200 = (body: string) => () => Promise.resolve(new Response(body, { status: 200 }));
+        const expectIdentity = (json: Record<string, any>, name: string) => {
+            expect(json.user.username).toBe(name);
+            expect(json.user.global_name).toBeNull();
+            const payload = decodeJwtPayload(json.token);
+            expect(payload.username).toBe(name);
+            expect(payload.global_name).toBeNull();
+            // What presets-api's auth middleware hands the author refresh
+            expect(payload.global_name || payload.username).toBe(name);
+        };
+
+        const FAILED_FETCHES: Array<[string, () => Promise<Response>]> = [
+            ['a 500 status', () => Promise.resolve(new Response('Server Error', { status: 500 }))],
+            ['a 401 status', () => Promise.resolve(new Response('Unauthorized', { status: 401 }))],
+            ['a network error', () => Promise.reject(new TypeError('fetch failed'))],
+            ['a timeout', () => Promise.reject(new DOMException('The operation timed out.', 'TimeoutError'))],
+            ['a 200 whose body is not JSON', body200('<html>Bad Gateway</html>')],
+            ['a 200 whose body is an object', body200(JSON.stringify({ data: [] }))],
+            ['a 200 whose body is null', body200('null')],
+            ['a 200 whose body is a bare string', body200(JSON.stringify('nope'))],
+        ];
+
+        it.each(FAILED_FETCHES)('keeps an existing user\'s name after %s', async (_label, rosterResponse) => {
+            await signInWithStoredName();
+
+            const { response, json } = await signIn({ rosterResponse });
+
+            expect(response.status).toBe(200);
+            expect(json.success).toBe(true);
+            expectIdentity(json, STORED_NAME);
+            expect(await storedRow()).toMatchObject({ username: STORED_NAME, auth_provider: 'xivauth' });
+        });
+
+        it.each(FAILED_FETCHES)('gives a brand-new user the opaque label after %s', async (_label, rosterResponse) => {
+            const { response, json } = await signIn({ rosterResponse });
+
+            expect(response.status).toBe(200);
+            expectIdentity(json, FALLBACK_NAME);
+            expect((await storedRow())?.username).toBe(FALLBACK_NAME);
+        });
+
+        // FINDING-013: a name from an answer that is not a delivered roster is never read.
+        it.each<[string, () => Promise<Response>]>([
+            ['a failed status', () => Promise.resolve(new Response(JSON.stringify(verifiedRoster('Smuggled').map(upstreamCharacter)), { status: 500 }))],
+            ['a wrapped roster', body200(JSON.stringify({ data: verifiedRoster('Smuggled').map(upstreamCharacter) }))],
+        ])('does not read a character name out of %s', async (_label, rosterResponse) => {
+            await signInWithStoredName();
+
+            const { json } = await signIn({ rosterResponse });
+
+            expectIdentity(json, STORED_NAME);
+            expect(JSON.stringify(json.user)).not.toContain('Smuggled');
+        });
+
+        it.each<[string, XIVAuthFixture]>([
+            ['an empty roster', { rawCharacters: [] }],
+            ['only unverified characters', { characters: [{ lodestone_id: 2, name: 'Unverified', home_world: 'Excalibur', verified: false }] }],
+            ['a verified character with a blank name', { rawCharacters: [{ lodestone_id: 3, name: '   ', home_world: 'Excalibur', verified_at: UPSTREAM_VERIFIED_AT }] }],
+            ['only non-object elements', { rawCharacters: [null] }],
+        ])('still replaces an existing user\'s name with the opaque label for %s', async (_label, fixture) => {
+            await signInWithStoredName();
+
+            const { response, json } = await signIn(fixture);
+
+            expect(response.status).toBe(200);
+            expectIdentity(json, FALLBACK_NAME);
+            expect((await storedRow())?.username).toBe(FALLBACK_NAME);
+        });
+
+        it('takes the new verified name at the next good sign-in', async () => {
+            await signInWithStoredName();
+            await signIn({ rosterResponse: FAILED_FETCHES[0]![1] });
+
+            const { json } = await signIn({ characters: verifiedRoster('Renamed Hero') });
+
+            expect(json.user.username).toBe('Renamed Hero');
+            expect(json.user.global_name).toBe('Renamed Hero');
+            expect((await storedRow())?.username).toBe('Renamed Hero');
+        });
+
+        it('keeps the stored name of an account linked to Discord and records the XIVAuth sign-in', async () => {
+            const discordId = '123456789012345678';
+            await env.DB.prepare('INSERT INTO users (id,discord_id,xivauth_id,auth_provider,username) VALUES (?,?,?,?,?)')
+                .bind('10000000-0000-4000-8000-000000000002', discordId, USER_ID, 'discord', 'Discord Display Name')
+                .run();
+
+            const { json } = await signIn({
+                socialIdentities: [{ provider: 'discord', external_id: discordId }],
+                rosterResponse: FAILED_FETCHES[0]![1],
+            });
+
+            expectIdentity(json, 'Discord Display Name');
+            expect(decodeJwtPayload(json.token).discord_id).toBe(discordId);
+            expect(await storedRow()).toMatchObject({ username: 'Discord Display Name', auth_provider: 'xivauth' });
+        });
+    });
+
+    /**
+     * The `character` scope this worker requests never gets the boolean
+     * `verified` field (XIVAuth emits it for `character:manage` only,
+     * _character_registration.json.jbuilder:10-13) but always gets
+     * `verified_at` (line 15; ISO 8601, or null). It also lists only verified
+     * registrations (filters_authorized_characters.rb:21-22). Identity is read
+     * from `verified_at`, and anything unexpected fails closed.
+     */
+    describe('POST /auth/xivauth/callback — verified_at, the field the character scope really sends', () => {
+        let seq = 0;
+        const signIn = async (rawCharacters: unknown[]) => {
+            mockXIVAuth({ userId: `xivauth-verified-at-user-${++seq}`, rawCharacters });
+            const response = await postXIVAuthCallback({ code: 'valid_code', code_verifier: VALID_CODE_VERIFIER, state: await boundState() });
+            return { response, json: (await response.json()) as Record<string, any> };
+        };
+        const entry = (name: string, extra: Record<string, unknown>) => ({
+            persistent_key: 'pk',
+            lodestone_id: 1,
+            name,
+            home_world: 'Excalibur',
+            data_center: 'Aether',
+            created_at: '2026-09-01T00:00:00.000Z',
+            updated_at: '2026-10-01T00:00:00.000Z',
+            ...extra,
+        });
+        const FALLBACK = 'XIVAuth User';
+
+        it('uses the character name when only verified_at is sent (no verified field)', async () => {
+            const row = entry('Real Shape Hero', { verified_at: '2026-10-01T12:34:56.789Z' });
+            expect(row).not.toHaveProperty('verified');
+            const { response, json } = await signIn([row]);
+
+            expect(response.status).toBe(200);
+            expect(json.user.username).toBe('Real Shape Hero');
+            expect(json.user.global_name).toBe('Real Shape Hero');
+            expect(decodeJwtPayload(json.token).global_name).toBe('Real Shape Hero');
+        });
+
+        it('falls back when verified_at is null', async () => {
+            const { json } = await signIn([entry('Null Stamp', { verified_at: null })]);
+
+            expect(json.user.username).toContain(FALLBACK);
+            expect(json.user.global_name).toBeNull();
+            expect(JSON.stringify(json.user)).not.toContain('Null Stamp');
+        });
+
+        it('falls back when neither verified nor verified_at is present', async () => {
+            const { json } = await signIn([entry('No Fields', {})]);
+
+            expect(json.user.username).toContain(FALLBACK);
+            expect(json.user.global_name).toBeNull();
+        });
+
+        it('fails closed when verified is false even though verified_at is set', async () => {
+            const { json } = await signIn([
+                entry('Contradiction', { verified: false, verified_at: '2026-10-01T12:34:56.789Z' }),
+            ]);
+
+            expect(json.user.username).toContain(FALLBACK);
+            expect(json.user.global_name).toBeNull();
+        });
+
+        it.each([
+            ['an empty string', ''],
+            ['a blank string', '   '],
+            ['an unparseable string', 'not-a-date'],
+            ['a number', 1790000000],
+            ['true', true],
+            ['an object', {}],
+        ])('falls back when verified_at is %s', async (_label, verifiedAt) => {
+            const { response, json } = await signIn([entry('Odd Stamp', { verified_at: verifiedAt })]);
+
+            expect(response.status).toBe(200);
+            expect(json.user.username).toContain(FALLBACK);
+            expect(json.user.global_name).toBeNull();
+        });
+
+        // XIVAuth sends `verified` only for character:manage, and then always
+        // with verified_at (jbuilder:10-15) — the boolean alone is never a
+        // shape upstream produces, so it is not enough on its own.
+        it('does not trust a bare verified: true without verified_at', async () => {
+            const { json } = await signIn([entry('Bare Boolean', { verified: true })]);
+
+            expect(json.user.username).toContain(FALLBACK);
+            expect(json.user.global_name).toBeNull();
+        });
+
+        it('accepts a character:manage-shaped entry (verified: true plus verified_at)', async () => {
+            const { json } = await signIn([
+                entry('Manage Shape', { verified: true, verified_at: '2026-10-01T12:34:56.789Z' }),
+            ]);
+
+            expect(json.user.username).toBe('Manage Shape');
+            expect(json.user.global_name).toBe('Manage Shape');
+        });
+
+        it('does not let an unverified entry listed first win over a verified one', async () => {
+            const { json } = await signIn([
+                entry('Unverified First', { verified_at: null }),
+                entry('Verified Second', { verified_at: '2026-10-01T12:34:56.789Z' }),
+            ]);
+
+            expect(json.user.username).toBe('Verified Second');
+            expect(json.user.global_name).toBe('Verified Second');
+            expect(JSON.stringify(json.user)).not.toContain('Unverified First');
         });
     });
 

@@ -219,6 +219,15 @@ jobs:
           # so it needs no build either.
           pnpm --filter xivdyetools-discord-worker exec vitest run src/services/item-name-coverage.test.ts --coverage.enabled=false
           status=$((status + $?))
+          # glamour-abridged.test.ts pins web-app's Abridged lines against
+          # api-worker's acquisition.en.json. A push that regenerates only that
+          # table selects api-worker, never web-app, so the failure would land on
+          # the next unrelated web-app PR. web-app's vitest setup imports app
+          # services, which need core's dist/; this test imports only a pure
+          # module, so --root here leaves that config behind (no setup, no
+          # coverage) and it needs no build either.
+          pnpm --filter xivdyetools-web-app exec vitest run --root src/shared/__tests__ glamour-abridged.test.ts
+          status=$((status + $?))
           exit $status
 
       - name: Lint (affected)
