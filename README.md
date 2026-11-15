@@ -25,13 +25,13 @@ Published to npm under the `@xivdyetools` scope (except `test-utils`, which is w
 
 | App | Version | Description |
 |-----|---------|-------------|
-| [`web-app`](apps/web-app/) | 5.16.5 | Main web app at [xivdyetools.app](https://xivdyetools.app) (Vite + Lit + Tailwind) |
-| [`discord-worker`](apps/discord-worker/) | 5.9.8 | Primary Discord bot — 18 slash commands (CF Worker + Hono, HTTP Interactions) |
+| [`web-app`](apps/web-app/) | 5.17.1 | Main web app at [xivdyetools.app](https://xivdyetools.app) (Vite + Lit + Tailwind) |
+| [`discord-worker`](apps/discord-worker/) | 5.9.10 | Primary Discord bot — 18 slash commands (CF Worker + Hono, HTTP Interactions) |
 | [`image-worker`](apps/image-worker/) | 1.3.5 | Photon host — `POST /extract` (raw pixels for the bot) and `POST /thumbnail` (WebP previews for presets-api), service-binding-only (CF Worker) |
 | [`moderation-worker`](apps/moderation-worker/) | 1.9.1 | Moderation bot for community presets (CF Worker) |
 | [`presets-api`](apps/presets-api/) | 2.8.2 | Community presets REST API + preview-image storage (CF Worker + D1 + R2) |
-| [`oauth`](apps/oauth/) | 3.2.0 | Discord OAuth + JWT issuance (CF Worker + D1) |
-| [`api-worker`](apps/api-worker/) | 0.21.2 | Public REST API at [data.xivdyetools.app](https://data.xivdyetools.app) + Universalis proxy routes + docs site at [developers.xivdyetools.app](https://developers.xivdyetools.app) (CF Worker + KV) |
+| [`oauth`](apps/oauth/) | 3.2.2 | Discord OAuth + JWT issuance (CF Worker + D1) |
+| [`api-worker`](apps/api-worker/) | 0.21.3 | Public REST API at [data.xivdyetools.app](https://data.xivdyetools.app) + Universalis proxy routes + docs site at [developers.xivdyetools.app](https://developers.xivdyetools.app) (CF Worker + KV) |
 | [`og-worker`](apps/og-worker/) | 2.12.3 | Dynamic OpenGraph image generation (CF Worker + WASM) |
 | [`stoat-worker`](apps/stoat-worker/) | 0.3.4 | Stoat (Revolt) bot (Node.js + revolt.js, WebSocket, prefix commands) — parked |
 
@@ -42,7 +42,7 @@ Start at [`docs/index.md`](docs/index.md): architecture overviews, per-project d
 ## Quick Start
 
 ```bash
-# Prerequisites: Node.js 22.13+, pnpm 11+
+# Prerequisites: Node.js 22.16+, pnpm 11+
 pnpm install           # Install all workspace dependencies
 pnpm turbo run build   # Build all packages
 pnpm turbo run test    # Run all tests (Vitest, ~480 test files across 17 workspaces)

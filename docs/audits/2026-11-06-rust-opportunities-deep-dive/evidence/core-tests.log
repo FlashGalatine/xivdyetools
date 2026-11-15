@@ -1,0 +1,8 @@
+
+ RUN  v5.0.5 C:/dev/XIVProjects/xivdyetools/.claude/worktrees/rust-opportunities-20261106/packages/core
+
+
+ Test Files  4 passed (4)
+      Tests  334 passed (334)
+   Start at  00:34:47
+   Duration  1.42s (transform 63%, import 19%, tests 14%, worker 3%)

@@ -45,7 +45,7 @@ when a failure smells like old code rebuild first: `pnpm turbo run build --filte
 | full `<v4-config-sidebar>` won't mount | ConfigController mock → range sliders throw | render panels with lit `render()` instead |
 | Discord handler tests | 25-choice autocomplete cap, embed length limits, `Translator.t()` returns the key (never falsy) | assert on the real limits; don't add `\|\| 'fallback'` |
 | og-worker card tests | `new CharacterColorService()` at module load, renderer WASM | `vi.mock('./services/renderer')`, `vi.spyOn(globalThis,'fetch')`; core stays real (`server.deps.inline`) |
-| Playwright (web-app `pnpm --filter xivdyetools-web-app run test:e2e`) | mobile-chrome project has ~28 pre-existing reds | triage against the known list before "fixing" |
+| Playwright (web-app `pnpm --filter xivdyetools-web-app run test:e2e`) | CI runs `--project=chromium` only; `mobile-chrome` was green (252/252) on 2026-11-13, so a red there is new | a control in the Options column or the palette is closed at ≤ 768px: open it with `openOptionsPanel` / `openPaletteDrawer` (`e2e/fixtures/navigation.ts`); a desktop-only assertion pins `test.use({ viewport })` |
 | CI-only red | CI is ~5× slower; `ci.yml` runs affected units only (`--filter='...[HEAD^]'`) | check which path a perf budget times (core "k-d tree" benchmarks time the linear scan) |
 
 Generic classes (assertion · runtime · timeout · mock · env · snapshot · flaky · config) follow

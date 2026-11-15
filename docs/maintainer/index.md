@@ -11,6 +11,7 @@
 | Document | Description |
 |----------|-------------|
 | [Adding New Dyes (Manual)](adding-dyes.md) | Manual process and data format reference |
+| [Regenerating Acquisition Data](acquisition-generation.md) | Fixed game/schema pins, capture, offline replay and output adoption |
 | [Dye Maintainer Tool](dye-maintainer-tool.md) | Retired GUI — tombstone; points at the procedure that replaced it |
 | [Moderation Guide](../operations/MODERATION.md) | Managing bans and community presets |
 | [Current Versions](../versions.md) | The single source of truth for every package and app version |

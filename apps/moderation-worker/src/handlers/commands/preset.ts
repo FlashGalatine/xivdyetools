@@ -27,7 +27,14 @@ import { sanitizeName, sanitizeUserName } from '../../utils/embed-text.js';
 import { safeEditOriginalResponse } from '../../utils/discord-api.js';
 import * as presetApi from '../../services/preset-api.js';
 import * as banService from '../../services/ban-service.js';
-import { createBanReview, reviewMessage, INACTIVE_BANS, REVIEW_UNAVAILABLE } from '../../services/ban-confirmation-service.js';
+import {
+  createBanReview,
+  reviewMessage,
+  isExpectedBanRefusal,
+  BAN_SCOPE_OVERFLOW,
+  INACTIVE_BANS,
+  REVIEW_UNAVAILABLE,
+} from '../../services/ban-confirmation-service.js';
 import { linkedBansEnabled } from '../../services/identity-lookup.js';
 import { buildReviewButtons, buildReviewEmbed, safeReviewActions } from '../review-message.js';
 
@@ -248,17 +255,17 @@ async function sendConfirmation(
   }
 
   const { preset, revision } = current;
+  // An unreviewable link withholds Approve, so the notice must not ask for a missing button.
+  const offered = safeReviewActions(preset, revision, [action]).length ? action : 'reject';
+  const notice =
+    offered === action
+      ? `Review this text, then click ${action === 'approve' ? 'Approve' : 'Reject'} to confirm. ` +
+        'The decision applies to this exact version.'
+      : 'Approval is unavailable until the author shortens or fixes the link. ' +
+        'Review this text, then click Reject to reject this exact version.';
   await sendModerationResponse(ctx, {
-    embeds: [
-      buildReviewEmbed(
-        preset,
-        revision,
-        `Review this text, then click ${action === 'approve' ? 'Approve' : 'Reject'} to confirm. ` +
-          'The decision applies to this exact version.'
-      ),
-    ],
-    components: buildReviewButtons(presetId, { revision, status: preset.status },
-      safeReviewActions(preset, revision, [action]).length ? [action] : ['reject']),
+    embeds: [buildReviewEmbed(preset, revision, notice)],
+    components: buildReviewButtons(presetId, { revision, status: preset.status }, [offered]),
   });
 }
 
@@ -467,22 +474,23 @@ const INVALID_USER_ID_MESSAGE = 'Invalid user ID. Pick a user from the suggestio
 async function handleBanUserSubcommand(
   interaction: DiscordInteraction, env: Env, _ctx: ExecutionContext, t: Translator,
   userId: string, options?: Array<{name:string;value?:string|number|boolean}>,
-  _logger?: ExtendedLogger
+  logger?: ExtendedLogger
 ): Promise<Response> {
-  return accountReview(interaction,env,t,userId,'ban',options);
+  return accountReview(interaction,env,t,userId,'ban',options,logger);
 }
 
 async function handleUnbanUserSubcommand(
   interaction: DiscordInteraction, env: Env, _ctx: ExecutionContext, t: Translator,
   userId: string, options?: Array<{name:string;value?:string|number|boolean}>,
-  _logger?: ExtendedLogger
+  logger?: ExtendedLogger
 ): Promise<Response> {
-  return accountReview(interaction,env,t,userId,'unban',options);
+  return accountReview(interaction,env,t,userId,'unban',options,logger);
 }
 
 async function accountReview(
   interaction: DiscordInteraction, env: Env, t: Translator, actorId: string,
-  action: 'ban'|'unban', options?: Array<{name:string;value?:string|number|boolean}>
+  action: 'ban'|'unban', options?: Array<{name:string;value?:string|number|boolean}>,
+  logger?: ExtendedLogger
 ): Promise<Response> {
   if (!linkedBansEnabled(env)) return ephemeralResponse(INACTIVE_BANS);
   if (!isInModerationChannel(interaction,env)) return ephemeralResponse(t.t('ban.channelRestricted'));
@@ -497,7 +505,15 @@ async function accountReview(
     const review = await createBanReview(env,actorId,action,[target,...(typeof additional === 'string'?[additional]:[])]);
     return Response.json({type:4,data:reviewMessage(review)});
   } catch (error) {
-    const overflow = 'Too many active bans match. Manual review is required.';
-    return ephemeralResponse(error instanceof Error && error.message === overflow ? overflow : REVIEW_UNAVAILABLE);
+    if (error instanceof Error && error.message === BAN_SCOPE_OVERFLOW) {
+      return ephemeralResponse(BAN_SCOPE_OVERFLOW);
+    }
+    if (!isExpectedBanRefusal(error)) {
+      logger?.error(
+        'Account ban review could not be created',
+        error instanceof Error ? error : undefined,
+      );
+    }
+    return ephemeralResponse(REVIEW_UNAVAILABLE);
   }
 }
