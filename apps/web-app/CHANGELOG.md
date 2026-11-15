@@ -109,6 +109,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   palette close, pick twice from the round button, add from the "Add Dye" tile, replace a filled slot
   from the strip, tap a marked dye with no slot selected to remove it) in every Playwright project through explicit
   viewports.
+## [5.17.1] - 2026-10-29
+
+### Changed
+
+- Conditional Core 6/SVG adoption; preserve inspection-worker protocol, matching and bundle budget.
+- Source preparation only: preserve the earlier release, registry and consumer-acceptance gates.
+  Merging waits until October 30 or later, satisfied prerequisites and new explicit authorization; publication, deployment and activation remain held.
+
 ## [5.17.0] - 2026-11-02
 
 ### Added
