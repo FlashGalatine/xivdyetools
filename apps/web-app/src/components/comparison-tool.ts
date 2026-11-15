@@ -1857,10 +1857,19 @@ export class ComparisonTool extends BaseComponent {
       attributes: { style: 'display: flex; flex-direction: column; gap: 4px;' },
     });
     for (const [label, va, vb, diff] of rows) {
+      // The readings go under the label when they'd have under 138px beside it: room
+      // for two 44px values and the longest English delta. On one line, it's the same
+      // as if the row held them directly.
       const row = this.createElement('div', {
         attributes: {
           style:
-            'display: flex; align-items: center; gap: 8px; min-height: 34px; padding: 4px 10px; border-radius: 8px; background: var(--theme-card-background);',
+            'display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; min-height: 34px; padding: 4px 10px; border-radius: 8px; background: var(--theme-card-background);',
+        },
+      });
+      const readings = this.createElement('div', {
+        attributes: {
+          style:
+            'flex: 1 1 138px; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px;',
         },
       });
       row.appendChild(
@@ -1873,25 +1882,26 @@ export class ComparisonTool extends BaseComponent {
         })
       );
       for (const v of [va, vb]) {
-        row.appendChild(
+        readings.appendChild(
           this.createElement('span', {
             textContent: v,
             attributes: {
               style:
-                'flex: 1; min-width: 0; font-size: 12px; font-weight: 600; color: var(--theme-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;',
+                'flex: 1 1 44px; min-width: 0; font-size: 12px; font-weight: 600; color: var(--theme-text); overflow-wrap: anywhere;',
             },
           })
         );
       }
-      row.appendChild(
+      readings.appendChild(
         this.createElement('span', {
           textContent: diff,
           attributes: {
             style:
-              'flex-shrink: 0; font-family: var(--font-mono); font-size: 11px; color: var(--theme-text-muted);',
+              'flex-shrink: 0; margin-left: auto; font-family: var(--font-mono); font-size: 11px; color: var(--theme-text-muted);',
           },
         })
       );
+      row.appendChild(readings);
       table.appendChild(row);
     }
     wrap.appendChild(table);

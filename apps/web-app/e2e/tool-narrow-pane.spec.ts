@@ -148,6 +148,66 @@ async function expectFitsThePane(page: Page): Promise<void> {
   expect(owners).toEqual([]);
 }
 
+/** Side to side, inside the part of the pane that isn't its scrollbar. */
+async function expectInsidePane(page: Page, target: Locator): Promise<void> {
+  const pane = await scroller(page).evaluate((el) => {
+    const { left } = el.getBoundingClientRect();
+    return { left, right: left + el.clientWidth };
+  });
+  const inner = await box(target);
+  expect(inner.x).toBeGreaterThanOrEqual(pane.left);
+  expect(inner.x + inner.width).toBeLessThanOrEqual(pane.right);
+}
+
+/**
+ * Where a pointer lands on a wheel's puck: its center, where the digit is, and how
+ * many of nine points spread across it. The base puck and the hub sit above it.
+ */
+function puckReach(puck: Locator): Promise<{ center: boolean; points: number }> {
+  return puck.evaluate((el) => {
+    const landsOn = (x: number, y: number): boolean => {
+      let hit = document.elementFromPoint(x, y);
+      while (hit?.shadowRoot) {
+        const inner = hit.shadowRoot.elementFromPoint(x, y);
+        if (!inner || inner === hit) break;
+        hit = inner;
+      }
+      return hit === el;
+    };
+    const { left, top, width, height } = el.getBoundingClientRect();
+    const cx = left + width / 2;
+    const cy = top + height / 2;
+    let points = 0;
+    for (const dx of [-0.3, 0, 0.3]) {
+      for (const dy of [-0.3, 0, 0.3]) {
+        if (landsOn(cx + dx * width, cy + dy * height)) points++;
+      }
+    }
+    return { center: landsOn(cx, cy), points };
+  });
+}
+
+/** A "What actually differs" row, found by its label, and the two dyes' values in it. */
+function differsRow(page: Page, label: string): Locator {
+  return page
+    .locator('span[style*="font-size: 9px"]')
+    .filter({ hasText: new RegExp(`^${label}$`) })
+    .locator('..');
+}
+
+async function differsValues(row: Locator) {
+  return row.evaluate((el) =>
+    [...el.querySelectorAll<HTMLElement>('span')]
+      .filter((span) => span.style.fontSize === '12px')
+      .map((value) => ({
+        width: value.getBoundingClientRect().width,
+        clipped: value.scrollWidth > value.clientWidth,
+      }))
+  );
+}
+
+const DIFFERS_ROWS = ['LIGHTNESS', 'SATURATION', 'HUE', 'VENDOR', 'SOURCE'];
+
 test.describe('Tools in a narrow pane', () => {
   // 769px is the narrowest window that keeps both panels inline.
   for (const viewport of [
@@ -244,6 +304,203 @@ test.describe('Tools in a narrow pane', () => {
       await expectWithinPane(page, page.locator('select').filter({ visible: true }));
       await expectWithinPane(page, page.locator('v4-share-button').filter({ visible: true }));
       await expectFitsThePane(page);
+    });
+  }
+
+  // A card's menu opens from its right corner and each submenu opens left of that,
+  // so a card in a narrow pane put them over the side panel, where the pane clips
+  // them and no pointer reaches them. A phone has no panel, just the screen's edge.
+  for (const [tool, stored] of [
+    ['comparison', { v3_comparison_selected_dyes: DYES }],
+    ['harmony', { v3_harmony_selected_dye: DYES[1] }],
+    ['accessibility', { v3_accessibility_selected_dyes: DYES.slice(0, 2) }],
+  ] as Array<[ToolId, Record<string, unknown>]>) {
+    for (const viewport of [
+      { width: 769, height: 900 },
+      { width: 814, height: 900 },
+      { width: 860, height: 900 },
+      { width: 1024, height: 900 },
+      { width: 390, height: 844 },
+    ]) {
+      const size = `${viewport.width}x${viewport.height}`;
+
+      test(`${tool}'s card menu and submenus stay inside the pane at ${size}`, async ({ page }) => {
+        // No first-run hint in the way on a phone, and no hover lift to wait out.
+        await openTool(page, tool, viewport, { ...stored, xivdyetools_palette_hint_seen: true });
+        await page.emulateMedia({ reducedMotion: 'reduce' });
+        const card = page.locator('v4-result-card').filter({ visible: true }).first();
+        await card.locator('.menu-btn').click();
+
+        const menu = card.locator('.context-menu.open');
+        await expect(menu).toBeVisible();
+        await expectInsidePane(page, menu);
+
+        // Up from the button and back down, by each row's right end: going down, that's
+        // the only part of the next row that the open submenu above it leaves uncovered.
+        const rows = menu.locator('.menu-item.has-submenu');
+        await expect(rows).toHaveCount(3);
+        for (const index of [2, 1, 0, 1, 2, 1, 0]) {
+          const row = rows.nth(index);
+          const { width, height } = await box(row);
+          await row.hover({ position: { x: width - 12, y: height / 2 } });
+          const submenu = row.locator('.submenu');
+          await expect(submenu).toBeVisible();
+          await expect(() => expectInsidePane(page, submenu)).toPass();
+        }
+        const overflow = await scroller(page).evaluate((el) => el.scrollWidth - el.clientWidth);
+        expect(overflow).toBeLessThanOrEqual(1);
+
+        // Inspect Dye in… Budget. A click only gets there if a pointer can reach it.
+        await rows.nth(0).locator('.submenu .menu-item').nth(1).click();
+        await expect(page).toHaveURL(/\/budget/);
+      });
+    }
+  }
+
+  // Its longest single word, Barrierefreiheitsprüfung, has to break to stay inside.
+  test('breaks a long German word in a submenu at 769x900', async ({ page }) => {
+    await openTool(
+      page,
+      'harmony',
+      { width: 769, height: 900 },
+      { xivdyetools_locale: 'de', v3_harmony_selected_dye: DYES[1] }
+    );
+    const card = page.locator('v4-result-card').filter({ visible: true }).first();
+    await card.locator('.menu-btn').click();
+    const row = card.locator('.context-menu.open .menu-item.has-submenu').first();
+    const { width, height } = await box(row);
+    await row.hover({ position: { x: width - 12, y: height / 2 } });
+
+    const items = row.locator('.submenu .menu-item');
+    await expect(items.first()).toBeVisible();
+    const submenu = await box(row.locator('.submenu'));
+    const spilling = await items.evaluateAll(
+      (all) => all.filter((item) => item.scrollWidth > item.clientWidth).length
+    );
+    expect(spilling).toBe(0);
+    expect(submenu.width).toBeGreaterThanOrEqual(100);
+  });
+
+  test('keeps the card menu where it was designed at 1440x900', async ({ page }) => {
+    await openTool(
+      page,
+      'harmony',
+      { width: 1440, height: 900 },
+      { v3_harmony_selected_dye: DYES[1] }
+    );
+    const card = page.locator('v4-result-card').filter({ visible: true }).first();
+    await card.locator('.menu-btn').click();
+
+    const menu = await box(card.locator('.context-menu.open'));
+    const button = await box(card.locator('.menu-btn'));
+    expect(menu.width).toBe(200);
+    expect(menu.x + menu.width).toBeCloseTo(button.x + button.width, 0);
+
+    const row = card.locator('.menu-item.has-submenu').first();
+    await row.hover();
+    const submenu = row.locator('.submenu');
+    await expect(submenu).toBeVisible();
+    await expect(async () => {
+      const found = await box(submenu);
+      expect(found.width).toBe(200);
+      expect(found.x + found.width).toBeCloseTo(menu.x - 7, 0);
+    }).toPass();
+  });
+
+  // Monochromatic's two dyes share a spoke and Shades' three sit 15° apart, so a
+  // wheel this small needs smaller pucks: a 42px base puck covered their digits.
+  for (const harmonyType of ['monochromatic', 'shades']) {
+    for (const viewport of [
+      { width: 769, height: 800 },
+      { width: 785, height: 800 },
+      { width: 800, height: 800 },
+    ]) {
+      const size = `${viewport.width}x${viewport.height}`;
+
+      test(`Harmony leaves ${harmonyType}'s numbered pucks reachable at ${size}`, async ({
+        page,
+      }) => {
+        await openTool(page, 'harmony', viewport, {
+          v3_harmony_selected_dye: DYES[1],
+          xivdyetools_v4_config_harmony: { harmonyType },
+        });
+
+        const pucks = page.locator('v4-color-wheel .harmony-node:not(.main)');
+        await expect(pucks.first()).toBeVisible();
+        for (let i = 0; i < (await pucks.count()); i++) {
+          const reach = await puckReach(pucks.nth(i));
+          expect(reach.center).toBe(true);
+          expect(reach.points).toBeGreaterThanOrEqual(5);
+        }
+
+        const puck = await box(pucks.first());
+        expect(puck.height).toBeCloseTo(puck.width, 1);
+        expect(puck.width).toBeGreaterThanOrEqual(24);
+        await expectFitsThePane(page);
+      });
+    }
+  }
+
+  // A phone is held to the designed touch target, and 320px is the smallest in use.
+  for (const viewport of [
+    { width: 320, height: 700 },
+    { width: 390, height: 844 },
+    { width: 1440, height: 900 },
+  ]) {
+    test(`keeps 42px pucks at ${viewport.width}x${viewport.height}`, async ({ page }) => {
+      await openTool(page, 'harmony', viewport, { v3_harmony_selected_dye: DYES[1] });
+      const puck = await box(page.locator('v4-color-wheel .harmony-node').first());
+      // Under 0.1px short at 320px: only this test's real scrollbar makes that wheel
+      // 262px rather than a phone's 272px.
+      expect(puck.width).toBeCloseTo(42, 0);
+      expect(puck.height).toBeCloseTo(42, 0);
+    });
+  }
+
+  // 92px of label and two values on one line left the values 0 to 7px at 769 to
+  // 860px, and an ellipsis was all they could show.
+  for (const width of [769, 800, 830, 860]) {
+    test(`Comparison wraps "What actually differs" so its values read at ${width}px`, async ({
+      page,
+    }) => {
+      await openTool(
+        page,
+        'comparison',
+        { width, height: 900 },
+        { v3_comparison_selected_dyes: DYES.slice(0, 2) }
+      );
+
+      for (const label of DIFFERS_ROWS) {
+        const row = differsRow(page, label);
+        await expect(row).toBeVisible();
+        const values = await differsValues(row);
+        expect(values).toHaveLength(2);
+        for (const value of values) {
+          expect(value.width).toBeGreaterThanOrEqual(30);
+          expect(value.clipped).toBe(false);
+        }
+      }
+      await expectWithinPane(page, differsRow(page, 'SOURCE'));
+      await expectFitsThePane(page);
+    });
+  }
+
+  for (const width of [1024, 1440]) {
+    test(`keeps each "What actually differs" row on one line at ${width}px`, async ({ page }) => {
+      await openTool(
+        page,
+        'comparison',
+        { width, height: 900 },
+        { v3_comparison_selected_dyes: DYES.slice(0, 2) }
+      );
+
+      for (const label of DIFFERS_ROWS) {
+        const row = differsRow(page, label);
+        await expect(row).toBeVisible();
+        expect((await box(row)).height).toBe(34);
+      }
+      const [first, second] = await differsValues(differsRow(page, 'LIGHTNESS'));
+      expect(first.width).toBeCloseTo(second.width, 1);
     });
   }
 
