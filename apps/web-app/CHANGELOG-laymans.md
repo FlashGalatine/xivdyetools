@@ -16,6 +16,42 @@
 - **With every piece off, there's nothing to copy.** Copy list and Save .md gray out, and the counts only include pieces that are on.
 - **The full list is the same as before.** "Dyes:", "Obtained:" and "None" stay in English in every language. Item and dye names follow your language.
 
+## Web-App Version 5.16.15 — November 2, 2026
+
+### Dye Mixer
+- **The Dye Mixer's result no longer glows gold.** The glow around it now matches your theme's red, in both Light and Dark.
+
+## Web-App Version 5.16.14 — November 2, 2026
+
+### Light and Dark themes
+- **No more stray gold on hover.** Toggles that are on and the Color Palette's Apply and random dye buttons now show your theme's red when you point at them, in both Light and Dark.
+- **Easier to read in Light.** The Apply button and the selected filters in the Color Palette now have white text on red instead of black.
+
+## Web-App Version 5.16.13 — November 2, 2026
+
+### Dye Mixer and Gradient Builder
+- **No more sideways scrolling in smaller windows.** With Options and the Color Palette both open, both tools now fit the space between them.
+- **The Dye Mixer's Model × ratio grid stays whole.** All 30 cells stay on screen. When space is tight, the cells narrow and each model's name moves above its row.
+- **The Gradient Builder's From and To cards stack when space is tight.** The swap button sits between them, and long dye names can still shorten.
+- **Long headings move to a new line.** Export and Share stay in reach in every language, and a very long word can break across two lines.
+- **Smaller phones too.** The Model × ratio grid no longer pushes the Dye Mixer sideways.
+
+## Web-App Version 5.16.12 — November 2, 2026
+
+### Dye card menus
+- **Menus stay on screen.** In smaller windows and on phones, a dye card's three-dot menu and its submenus no longer run off the left side, so every option can be clicked.
+
+### Harmony Explorer
+- **Dye markers fit small color wheels.** With Options and the Color Palette both open, markers shrink with the wheel, so Monochromatic and Shades numbers stay readable and clickable.
+
+### Dye Comparison
+- **"What actually differs" stays readable in smaller windows.** Values now move under their label instead of being squeezed down to nothing.
+
+### Swatch Matcher
+- **More room for the grid in smaller windows.** With both side panels open, the grid starts much higher up and shows all eight columns in narrower windows. Below about 880 px it still scrolls sideways.
+- **Keyboard picks stay in view.** Choosing a swatch with the keyboard keeps that swatch on screen. On the top rows of the Eye and other long palettes, you may need to scroll a little to see the match.
+- **Closing a side panel keeps your result in view.** It no longer ends up above the window when it moves beside the grid.
+
 ## Web-App Version 5.16.11 — November 2, 2026
 
 ### Harmony Explorer, Dye Comparison and Accessibility Checker
