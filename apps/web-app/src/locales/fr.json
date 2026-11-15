@@ -269,7 +269,15 @@
     "noDyesAvailable": "Aucune teinture disponible",
     "randomDyeSelected": "{name} sélectionné",
     "mobileHint": "Nouveau ici ? Appuyez sur le bouton palette pour choisir des teintures.",
-    "favoritesWithCount": "Favoris ({count})"
+    "favoritesWithCount": "Favoris ({count})",
+    "slotStripLabel": "Emplacements de teinture",
+    "slotChipEmpty": "Emplacement {slot}, vide",
+    "slotChipFilled": "Emplacement {slot} : {name}",
+    "swatchInSlot": "{name}, dans l'emplacement {slot}",
+    "swatchInUse": "{name}, utilisée",
+    "choosingDyeOf": "Choix de la teinture {current} sur {total}",
+    "choosingDyeNamed": "Choix de la teinture {slot}",
+    "choosingEndpoint": "{slot} : choix de la couleur"
   },
   "harmony": {
     "companionDyes": "Teintures Supplémentaires par Couleur d'Harmonie",

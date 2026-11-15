@@ -1964,4 +1964,67 @@ describe('HarmonyTool', () => {
       expect(fetches).toBe(passes);
     });
   });
+
+  describe('palette slots', () => {
+    const mountTool = (): HarmonyTool => {
+      const t = new HarmonyTool(container, { leftPanel, rightPanel, drawerContent });
+      t.init();
+      return t;
+    };
+
+    it('getPaletteSlots returns one slot holding the current dye, or null', () => {
+      tool = mountTool();
+      expect(tool.paletteSlotMode).toBe('single');
+      expect(tool.getPaletteSlots()).toEqual([{ label: '', targetLabel: '', dye: null }]);
+
+      tool.selectDye(mockDyes[0]);
+      expect(tool.getPaletteSlots()).toEqual([{ label: '', targetLabel: '', dye: mockDyes[0] }]);
+    });
+
+    it('returns a custom base dye as-is', () => {
+      tool = mountTool();
+      tool.selectCustomColor('#123456');
+
+      const [slot] = tool.getPaletteSlots();
+      expect(slot.dye?.hex.toLowerCase()).toBe('#123456');
+    });
+
+    it('dispatches palette-slots-changed when the dye changes or is cleared', () => {
+      tool = mountTool();
+      const heard = vi.fn();
+      container.addEventListener('palette-slots-changed', heard);
+
+      tool.selectDye(mockDyes[0]);
+      expect(heard).toHaveBeenCalled();
+
+      heard.mockClear();
+      tool.clearDyes();
+      expect(heard).toHaveBeenCalledTimes(1);
+    });
+
+    it('picking the dye already held fires no second palette-slots-changed', () => {
+      tool = mountTool();
+      tool.selectDye(mockDyes[0]);
+      const heard = vi.fn();
+      container.addEventListener('palette-slots-changed', heard);
+
+      tool.selectDye(mockDyes[0]);
+
+      expect(heard).not.toHaveBeenCalled();
+    });
+
+    it('never leaves a hidden slot marker ahead of the wheel', () => {
+      tool = mountTool();
+      const markers = () => Array.from(container.querySelectorAll('[data-palette-slot]'));
+      expect(markers().some((m) => m.tagName === 'BUTTON')).toBe(true);
+
+      tool.selectDye(mockDyes[0]);
+
+      expect(markers().filter((m) => m.tagName === 'BUTTON')).toHaveLength(0);
+      expect(markers()[0].tagName.toLowerCase()).toBe('v4-color-wheel');
+
+      tool.clearDyes();
+      expect(markers().some((m) => m.tagName === 'BUTTON')).toBe(true);
+    });
+  });
 });

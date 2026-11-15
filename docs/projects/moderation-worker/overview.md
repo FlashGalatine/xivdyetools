@@ -194,8 +194,8 @@ only the lowest-ID eligible row is restored. The parent name/reason is scrubbed 
 and memberships follow its existing 90-day retention.
 
 Both flows, including old buttons and modals, refuse privately while
-`LINKED_BAN_CONFIRMATION_ENABLED` is false (the prepared value in both environments). Activate
-separately only after migration, provider and all privacy disclosures are live and verified.
+`LINKED_BAN_CONFIRMATION_ENABLED` is false. Production turned it on in 1.9.2, after the migration,
+provider and all privacy disclosures were live and verified; the dev worker keeps it false.
 
 ---
 

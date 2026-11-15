@@ -30,8 +30,6 @@ import {
   type CharaSlotId,
   type ImportedCharaCharacter,
   type ImportedCharaSlot,
-  type ResolvedCharaCharacter,
-  type ResolvedCharaSlot,
 } from '@xivdyetools/core';
 import type { Dye } from '@xivdyetools/types';
 import { createTranslator, type LocaleCode, type TranslatorLogger } from '../i18n/index.js';
@@ -87,32 +85,11 @@ export interface SwatchInput {
   theme?: 'dark' | 'light';
 }
 
-/**
- * A resolved character as this module lets it leave: the Ktisis nickname is
- * gone from the TYPE, not just the runtime object, so no branch of
- * `executeSwatch` can read it into a card or an embed (PRIVACY_POLICY §3 —
- * players use their real name there).
- *
- * Each slot's `verdict` describes the colour; it is not a matching gate. The
- * card matches only confirmed-active, resolved colours, and a slot outside
- * that rule (unknown activation included, which reads `inert` with no
- * `inertReason`) carries no `indexHex`, `floatHex`, `gridAddress` or
- * `blendHex`, so no colour the card excludes can be matched from here.
- *
- * @deprecated Since 4.12.0. Use svgString/embed for presentation. Planned removal in bot-logic 5.0.0 after the published minor and consumer-acceptance gates in DEPRECATIONS.md.
- */
-export type SwatchCharacter = Omit<ResolvedCharaCharacter, 'nickname'>;
-
 export type SwatchResult =
   | {
       ok: true;
       svgString: string;
       embed: EmbedData;
-      /**
-       * Never carries the character's name — see PRIVACY_POLICY §3.
-       * @deprecated Since 4.12.0. Use svgString/embed for presentation. Planned removal in bot-logic 5.0.0 after the published minor and consumer-acceptance gates in DEPRECATIONS.md.
-       */
-      character: SwatchCharacter;
     }
   | {
       ok: false;
@@ -263,118 +240,12 @@ type NamelessCharacter = Omit<ImportedCharaCharacter, 'nickname'>;
 
 /**
  * Strips the Ktisis nickname the moment the file is projected — nothing in
- * this module reads a record that still has one, and `SwatchResult.character`
- * must never carry the character's name (PRIVACY_POLICY §3).
+ * this module reads a record that still has one (PRIVACY_POLICY §3).
  */
 function withoutNickname(character: ImportedCharaCharacter): NamelessCharacter {
   const { nickname, ...safeCharacter } = character;
   void nickname;
   return safeCharacter;
-}
-
-type LegacyVerdict = ResolvedCharaSlot['verdict'];
-type LegacyInertReason = NonNullable<ResolvedCharaSlot['inertReason']>;
-type LegacyError = NonNullable<ResolvedCharaSlot['error']>;
-
-const LEGACY_VERDICTS: Record<ImportedCharaSlot['interpretation'], LegacyVerdict> = {
-  palette: 'index',
-  offGrid: 'offGrid',
-  extendedOnly: 'floatOnly',
-  inactive: 'inert',
-  unresolved: 'error',
-};
-
-/** The library's inactive reasons the legacy union can name (`lipDisabled` is a lip turned off: `noLip`). */
-const LEGACY_INERT_REASONS: Partial<Record<ImportedCharaSlot['reason'], LegacyInertReason>> = {
-  highlightsDisabled: 'highlightsDisabled',
-  facePaintNone: 'facePaintNone',
-  furPattern: 'furPattern',
-  noLip: 'noLip',
-  lipDisabled: 'noLip',
-};
-
-/**
- * The legacy error of an unresolved slot. Fixed text, never a stored value:
- * the 96-127 gap keys on the adapter's `indexGap` (which covers a fraction
- * such as 96.5), never on the index itself.
- */
-function legacyError(slot: ImportedCharaSlot): LegacyError | undefined {
-  if (slot.indexGap) {
-    return {
-      code: 'midRangeIndex',
-      message: 'index falls in the 96-127 gap between the dark (0-95) and light (128-223) ranges',
-    };
-  }
-  switch (slot.reason) {
-    case 'invalidIndex':
-    case 'indexOutOfRange':
-    case 'missingPaletteEntry':
-      return { code: 'indexOutOfRange', message: 'index has no entry in its colour sheet' };
-    case 'missingTribeGender':
-    case 'missingRace':
-      return { code: 'noTribe', message: 'needs Tribe and Gender to resolve its race-specific sheet' };
-    default:
-      return undefined;
-  }
-}
-
-/**
- * One projected slot in the legacy `ResolvedCharaSlot` shape, as the old
- * resolver's readers read it:
- * - `verdict` from the interpretation (palette → index, offGrid, extendedOnly
- *   → floatOnly, inactive → inert, unresolved → error), except that a slot
- *   with no usable colour (`missingColor`: no palette index and no live
- *   float) stays `inert`, as the legacy resolver answered an absent key — it
- *   is not a failure — and a slot of unknown activation (`active === null`)
- *   is `inert` with no `inertReason`, since nothing says it is switched off;
- * - with a `matchHex`: `indexHex` = the creator swatch, `floatHex` = the
- *   effective (eye-pair corrected) extended colour, `blendHex` = the live lip
- *   composite. Without one, those three and `gridAddress` are null, as the
- *   old resolver's inert slots were: the legacy shape carries no colour the
- *   matching rule excludes;
- * - `kind` `limbalOrTattoo` (race unknown) → `tattoo`, the legacy non-Au Ra kind.
- * This module never matches by verdict, only by `matchHex`.
- */
-function toLegacySlot(slot: ImportedCharaSlot): ResolvedCharaSlot {
-  const verdict: LegacyVerdict =
-    slot.active === null || (slot.interpretation === 'unresolved' && slot.reason === 'missingColor')
-      ? 'inert'
-      : LEGACY_VERDICTS[slot.interpretation];
-  const matched = slot.matchHex !== null;
-  const legacy: ResolvedCharaSlot = {
-    slot: slot.slot,
-    kind: slot.kind === 'limbalOrTattoo' ? 'tattoo' : slot.kind,
-    verdict,
-    index: slot.index,
-    sheetIndex: slot.sheetIndex,
-    sheetVariant: slot.variant,
-    gridAddress: matched ? slot.gridAddress : null,
-    indexHex: matched ? slot.creatorHex : null,
-    floatHex: matched ? (slot.effectiveExtendedHex ?? slot.extendedHex) : null,
-    deltaE: slot.deltaE,
-    alpha: slot.alpha,
-    blendHex: matched ? (slot.lipComposite?.hex ?? null) : null,
-  };
-  const inertReason = verdict === 'inert' && slot.active !== null ? LEGACY_INERT_REASONS[slot.reason] : undefined;
-  if (inertReason) legacy.inertReason = inertReason;
-  const error = verdict === 'error' ? legacyError(slot) : undefined;
-  if (error) legacy.error = error;
-  // A float the file stores that is not live: the index wins, and says so
-  if (verdict === 'index' && slot.extendedHex !== null && !slot.extendedActive) {
-    legacy.indexWinNote = 'extendedMissing';
-  }
-  return legacy;
-}
-
-/**
- * `SwatchResult.character` keeps its published shape
- * (`Omit<ResolvedCharaCharacter, 'nickname'>`): the projection mapped back
- * slot by slot, its diagnostics (`issues`) left behind.
- */
-function toSwatchCharacter(character: NamelessCharacter): SwatchCharacter {
-  const { issues, slots, ...rest } = character;
-  void issues;
-  return { ...rest, slots: slots.map(toLegacySlot) };
 }
 
 interface LiveRow {
@@ -401,17 +272,14 @@ export async function executeSwatch(input: SwatchInput): Promise<SwatchResult> {
   // character's name or the attachment filename (PRIVACY_POLICY §3).
   const title = t.t('card.swatchTitle');
 
-  // The nickname is stripped the moment the file is projected: neither
-  // `projected` nor `character` has a `nickname` member, so nothing below can
-  // print one.
+  // The nickname is stripped the moment the file is projected:
+  // `projected` has no `nickname` member, so nothing below can print one.
   let projected: NamelessCharacter;
-  let character: SwatchCharacter;
   try {
     projected = withoutNickname(await readCharaForTools(input));
-    character = toSwatchCharacter(projected);
   } catch (error) {
-    // The try runs the projection, the nickname strip and the legacy mapping
-    // too, so a bot-side bug lands here as well: log the class and code (a
+    // The try runs the projection and the nickname strip, so a bot-side bug
+    // lands here as well: log the class and code (a
     // reader refusal's fixed code, e.g. DUPLICATE_KEY or INVALID_UTF8), never
     // the message.
     input.logger?.warn(`[swatch] parse failed: ${failureKind(error)}`);
@@ -546,7 +414,7 @@ export async function executeSwatch(input: SwatchInput): Promise<SwatchResult> {
         description: `${target.label} \`${target.sourceHex.toUpperCase()}\`\n${shareUrl}`,
         color: parseInt(target.sourceHex.replace('#', ''), 16),
       };
-      return { ok: true, svgString, embed, character };
+      return { ok: true, svgString, embed };
     }
 
     // Tail rule: past five live slots the SAFEST match drops — both orders
@@ -639,7 +507,7 @@ export async function executeSwatch(input: SwatchInput): Promise<SwatchResult> {
       color: parseInt(kept[0].sourceHex.replace('#', ''), 16),
     };
 
-    return { ok: true, svgString, embed, character };
+    return { ok: true, svgString, embed };
   } catch (error) {
     // Like the read's catch above, this names the error's class only.
     input.logger?.warn(`[swatch] generation failed: ${failureKind(error)}`);

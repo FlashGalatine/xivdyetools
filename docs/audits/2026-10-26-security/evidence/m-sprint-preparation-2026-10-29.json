@@ -1,0 +1,1824 @@
+{
+  "schemaVersion": 1,
+  "preparedLocalDate": "2026-10-29",
+  "timezone": "America/New_York",
+  "sourceBase": "2b95c0df20b0585d405f2684b10b982d61a48bf6",
+  "lastSourceHead": "179b2ebbb31b43e044eae88467e92368c950ccd3",
+  "checkedAt": "2026-10-30T03:20:25.898Z",
+  "authorization": "Conditional implementation, commits, candidate pushes and draft PRs only; merges postponed",
+  "mergeNotBefore": "2026-10-30 America/New_York",
+  "laterExplicitMergeAuthorizationRequired": true,
+  "prerequisitesStillRequired": true,
+  "productionActivation": "HOLD",
+  "published": false,
+  "deployed": false,
+  "main": "13c386e5983fe58ff17ac08fb5712239feb2e696",
+  "productionGate": {
+    "canAdminsBypass": false,
+    "preventSelfReview": false,
+    "reviewers": [
+      {
+        "login": "FlashGalatine",
+        "id": 234854320
+      }
+    ],
+    "customBranches": true,
+    "policies": [
+      {
+        "name": "main",
+        "type": "branch"
+      }
+    ]
+  },
+  "privateRefsAbsent": true,
+  "cuts": [
+    {
+      "sprint": "M-CORE",
+      "phase": "core",
+      "unit": "packages/core",
+      "version": "6.0.0",
+      "head": "cf54ecfd6670bc3a30dbe7d74d49e2969b9abf69",
+      "tree": "21d0c41e5f3a6b2d30d05b88f1a01427919b0219",
+      "base": "2b95c0df20b0585d405f2684b10b982d61a48bf6",
+      "branch": "codex/release-cut-m-01-core-20261029",
+      "baseBranch": "codex/release-cut-17-readiness-20261029",
+      "pr": "https://github.com/FlashGalatine/xivdyetools/pull/391",
+      "draft": true,
+      "owned": [
+        "DEPRECATIONS.md",
+        "README.md",
+        "docs/operations/REMEDIATION_M_RELEASE_2026_10.md",
+        "docs/operations/index.md",
+        "docs/projects/core/services.md",
+        "docs/research/2026-10-22-xivcharakit-integration.md",
+        "docs/versions.md",
+        "packages/core/CHANGELOG.md",
+        "packages/core/CLAUDE.md",
+        "packages/core/README.md",
+        "packages/core/package.json",
+        "packages/core/src/__tests__/chara-entry.test.ts",
+        "packages/core/src/__tests__/package-declarations.test.ts",
+        "packages/core/src/index.ts",
+        "packages/core/src/services/chara/__tests__/chara-library-parity.test.ts",
+        "packages/core/src/services/chara/__tests__/chara-library.test.ts",
+        "packages/core/src/services/chara/__tests__/chara-parser-proto.test.ts",
+        "packages/core/src/services/chara/__tests__/chara-parser.test.ts",
+        "packages/core/src/services/chara/__tests__/chara-resolver.test.ts",
+        "packages/core/src/services/chara/chara-library-types.ts",
+        "packages/core/src/services/chara/chara-limits.ts",
+        "packages/core/src/services/chara/chara-parser.ts",
+        "packages/core/src/services/chara/chara-resolver.ts",
+        "packages/core/src/utils/index.ts"
+      ],
+      "validationOwned": [
+        "DEPRECATIONS.md",
+        "README.md",
+        "docs/operations/REMEDIATION_M_RELEASE_2026_10.md",
+        "docs/operations/index.md",
+        "docs/projects/core/services.md",
+        "docs/research/2026-10-22-xivcharakit-integration.md",
+        "docs/versions.md",
+        "packages/core/CHANGELOG.md",
+        "packages/core/CLAUDE.md",
+        "packages/core/README.md",
+        "packages/core/package.json",
+        "packages/core/src/__tests__/chara-entry.test.ts",
+        "packages/core/src/__tests__/package-declarations.test.ts",
+        "packages/core/src/index.ts",
+        "packages/core/src/services/chara/__tests__/chara-library-parity.test.ts",
+        "packages/core/src/services/chara/__tests__/chara-library.test.ts",
+        "packages/core/src/services/chara/__tests__/chara-parser-proto.test.ts",
+        "packages/core/src/services/chara/__tests__/chara-parser.test.ts",
+        "packages/core/src/services/chara/__tests__/chara-resolver.test.ts",
+        "packages/core/src/services/chara/chara-library-types.ts",
+        "packages/core/src/services/chara/chara-limits.ts",
+        "packages/core/src/services/chara/chara-parser.ts",
+        "packages/core/src/services/chara/chara-resolver.ts",
+        "packages/core/src/utils/index.ts"
+      ],
+      "validationBase": "2b95c0df20b0585d405f2684b10b982d61a48bf6",
+      "graph": {
+        "attempted": 62,
+        "executed": 4,
+        "cached": 58,
+        "failed": 0
+      },
+      "coverage": {
+        "statements": 96.36,
+        "branches": 93.24,
+        "functions": 99.22,
+        "lines": 96.68
+      },
+      "unitTests": 3013,
+      "unitTestFiles": 74,
+      "gates": [
+        {
+          "gate": "graph",
+          "seconds": 135.6,
+          "exit": 0,
+          "command": "pnpm turbo run build type-check lint test --cache-dir=.superpowers/sdd/m-sprints-20261029/turbo-cache --summarize --concurrency=1"
+        },
+        {
+          "gate": "coverage",
+          "seconds": 21.87,
+          "exit": 0,
+          "command": "pnpm --filter @xivdyetools/core run test:coverage"
+        },
+        {
+          "gate": "docs-check-links",
+          "seconds": 2.07,
+          "exit": 0,
+          "command": "pnpm docs:check-links"
+        },
+        {
+          "gate": "docs-check-versions",
+          "seconds": 1.54,
+          "exit": 0,
+          "command": "pnpm docs:check-versions"
+        },
+        {
+          "gate": "test-scripts",
+          "seconds": 7.51,
+          "exit": 0,
+          "command": "pnpm test:scripts"
+        },
+        {
+          "gate": "type-check-scripts",
+          "seconds": 2.48,
+          "exit": 0,
+          "command": "pnpm type-check:scripts"
+        },
+        {
+          "gate": "dead-code-check",
+          "seconds": 6.29,
+          "exit": 0,
+          "command": "pnpm dead-code:check"
+        },
+        {
+          "gate": "workers-check-logs",
+          "seconds": 1.41,
+          "exit": 0,
+          "command": "pnpm workers:check-logs"
+        },
+        {
+          "gate": "web-bundle",
+          "seconds": 13.07,
+          "exit": 0,
+          "command": "pnpm --filter xivdyetools-web-app run build:check"
+        }
+      ],
+      "secretScanExit": 0,
+      "outgoingSecretScanExit": 0,
+      "ci": {
+        "runId": 40988990426,
+        "jobs": [
+          {
+            "id": 123846850607,
+            "name": "Secret scan (gitleaks)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 123846850898,
+            "name": "Lint, Type-check, Test, Build",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 123846850977,
+            "name": "E2E (Playwright, chromium)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 123846851038,
+            "name": "Security audit (production dependencies)",
+            "status": "completed",
+            "conclusion": "success"
+          }
+        ]
+      },
+      "deploymentRunCount": 0,
+      "nativeArtifact": {
+        "package": "@xivdyetools/core",
+        "version": "6.0.0",
+        "archiveSha256": "a4d9b9e7923559d69d19201e5cccea7ee238bcb7dd2d187ee8e54091c715c7aa",
+        "sourceTree": "21d0c41e5f3a6b2d30d05b88f1a01427919b0219",
+        "distFiles": 238,
+        "packedDependencies": {
+          "spectral.js": "^3.0.0",
+          "xivcharakit": "0.1.0-beta.4",
+          "@xivdyetools/logger": "2.4.0",
+          "@xivdyetools/types": "3.3.0"
+        },
+        "offlineLocalArchivesOnly": true,
+        "strictDeclarationCompileExit": 0,
+        "runtimeExit": 0,
+        "additionalRuntimeExit": null,
+        "scope": "Local native archive proof only; no CI provenance, registry or deployed acceptance claim"
+      }
+    },
+    {
+      "sprint": "M-SVG",
+      "phase": "svg",
+      "unit": "packages/svg",
+      "version": "4.4.2",
+      "head": "ebeb016e8437e714ddf706aacbabdce4636cf406",
+      "tree": "a948aa519c90fb1fe64a17c33434d07852d781e3",
+      "base": "cf54ecfd6670bc3a30dbe7d74d49e2969b9abf69",
+      "branch": "codex/release-cut-m-02-svg-20261029",
+      "baseBranch": "codex/release-cut-m-01-core-20261029",
+      "pr": "https://github.com/FlashGalatine/xivdyetools/pull/392",
+      "draft": true,
+      "owned": [
+        "README.md",
+        "docs/versions.md",
+        "packages/svg/CHANGELOG.md",
+        "packages/svg/package.json"
+      ],
+      "validationOwned": [
+        "README.md",
+        "docs/versions.md",
+        "packages/svg/CHANGELOG.md",
+        "packages/svg/package.json"
+      ],
+      "validationBase": "cf54ecfd6670bc3a30dbe7d74d49e2969b9abf69",
+      "graph": {
+        "attempted": 62,
+        "executed": 29,
+        "cached": 33,
+        "failed": 0
+      },
+      "coverage": {
+        "statements": 98.83,
+        "branches": 94.45,
+        "functions": 100,
+        "lines": 98.92
+      },
+      "unitTests": 562,
+      "unitTestFiles": 23,
+      "gates": [
+        {
+          "exit": 0,
+          "command": "pnpm turbo run build type-check lint test --cache-dir=.superpowers/sdd/m-sprints-20261029/turbo-cache --summarize --concurrency=1",
+          "gate": "graph",
+          "seconds": 349.2
+        },
+        {
+          "exit": 0,
+          "command": "pnpm --filter @xivdyetools/svg run test:coverage",
+          "gate": "coverage",
+          "seconds": 5.25
+        },
+        {
+          "exit": 0,
+          "command": "pnpm docs:check-links",
+          "gate": "docs-check-links",
+          "seconds": 1.96
+        },
+        {
+          "exit": 0,
+          "command": "pnpm docs:check-versions",
+          "gate": "docs-check-versions",
+          "seconds": 1.46
+        },
+        {
+          "exit": 0,
+          "command": "pnpm test:scripts",
+          "gate": "test-scripts",
+          "seconds": 7.4
+        },
+        {
+          "exit": 0,
+          "command": "pnpm type-check:scripts",
+          "gate": "type-check-scripts",
+          "seconds": 2.81
+        },
+        {
+          "exit": 0,
+          "command": "pnpm dead-code:check",
+          "gate": "dead-code-check",
+          "seconds": 7.13
+        },
+        {
+          "exit": 0,
+          "command": "pnpm workers:check-logs",
+          "gate": "workers-check-logs",
+          "seconds": 1.49
+        },
+        {
+          "exit": 0,
+          "command": "pnpm --filter xivdyetools-web-app run build:check",
+          "gate": "web-bundle",
+          "seconds": 17.13
+        }
+      ],
+      "secretScanExit": 0,
+      "outgoingSecretScanExit": 0,
+      "ci": {
+        "runId": 40989282185,
+        "jobs": [
+          {
+            "id": 123847498709,
+            "name": "E2E (Playwright, chromium)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 123847498934,
+            "name": "Security audit (production dependencies)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 123847498952,
+            "name": "Lint, Type-check, Test, Build",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 123847498962,
+            "name": "Secret scan (gitleaks)",
+            "status": "completed",
+            "conclusion": "success"
+          }
+        ]
+      },
+      "deploymentRunCount": 0,
+      "nativeArtifact": {
+        "package": "@xivdyetools/svg",
+        "version": "4.4.2",
+        "archiveSha256": "e7edd114ae179f9ac2b3ac798716b1e39af8e27ac9d845cba969ab79ded95a6c",
+        "sourceTree": "a948aa519c90fb1fe64a17c33434d07852d781e3",
+        "distFiles": 76,
+        "packedDependencies": {
+          "@xivdyetools/types": "3.3.0",
+          "@xivdyetools/core": "6.0.0"
+        },
+        "offlineLocalArchivesOnly": true,
+        "strictDeclarationCompileExit": 0,
+        "runtimeExit": 0,
+        "additionalRuntimeExit": 0,
+        "scope": "Local native archive proof only; no CI provenance, registry or deployed acceptance claim"
+      }
+    },
+    {
+      "sprint": "M-BOT-LOGIC",
+      "phase": "bot",
+      "unit": "packages/bot-logic",
+      "version": "5.0.0",
+      "head": "7215c3660ade7b2adb1a0c53f6129034390a50c0",
+      "tree": "072a0bac9e9e4d7d9d782e738fee70c2456ad36d",
+      "base": "ebeb016e8437e714ddf706aacbabdce4636cf406",
+      "branch": "codex/release-cut-m-03-bot-20261029",
+      "baseBranch": "codex/release-cut-m-02-svg-20261029",
+      "pr": "https://github.com/FlashGalatine/xivdyetools/pull/394",
+      "draft": true,
+      "owned": [
+        "DEPRECATIONS.md",
+        "README.md",
+        "docs/versions.md",
+        "packages/bot-logic/CHANGELOG.md",
+        "packages/bot-logic/CLAUDE.md",
+        "packages/bot-logic/README.md",
+        "packages/bot-logic/package.json",
+        "packages/bot-logic/src/__tests__/package-declarations.test.ts",
+        "packages/bot-logic/src/commands/accessibility.ts",
+        "packages/bot-logic/src/commands/harmony.ts",
+        "packages/bot-logic/src/commands/swatch-library.test.ts",
+        "packages/bot-logic/src/commands/swatch.test.ts",
+        "packages/bot-logic/src/commands/swatch.ts",
+        "packages/bot-logic/src/i18n/types.ts",
+        "packages/bot-logic/src/index.ts",
+        "packages/bot-logic/src/input-resolution.ts"
+      ],
+      "validationOwned": [
+        "DEPRECATIONS.md",
+        "README.md",
+        "docs/versions.md",
+        "packages/bot-logic/CHANGELOG.md",
+        "packages/bot-logic/CLAUDE.md",
+        "packages/bot-logic/README.md",
+        "packages/bot-logic/package.json",
+        "packages/bot-logic/src/__tests__/package-declarations.test.ts",
+        "packages/bot-logic/src/commands/accessibility.ts",
+        "packages/bot-logic/src/commands/harmony.ts",
+        "packages/bot-logic/src/commands/swatch-library.test.ts",
+        "packages/bot-logic/src/commands/swatch.test.ts",
+        "packages/bot-logic/src/commands/swatch.ts",
+        "packages/bot-logic/src/i18n/types.ts",
+        "packages/bot-logic/src/index.ts",
+        "packages/bot-logic/src/input-resolution.ts"
+      ],
+      "validationBase": "ebeb016e8437e714ddf706aacbabdce4636cf406",
+      "graph": {
+        "attempted": 62,
+        "executed": 14,
+        "cached": 48,
+        "failed": 0
+      },
+      "coverage": {
+        "statements": 99.57,
+        "branches": 96.33,
+        "functions": 100,
+        "lines": 99.75
+      },
+      "unitTests": 892,
+      "unitTestFiles": 27,
+      "gates": [
+        {
+          "seconds": 106.51,
+          "exit": 0,
+          "command": "pnpm turbo run build type-check lint test --cache-dir=.superpowers/sdd/m-sprints-20261029/turbo-cache --summarize --concurrency=1",
+          "gate": "graph"
+        },
+        {
+          "seconds": 7.35,
+          "exit": 0,
+          "command": "pnpm --filter @xivdyetools/bot-logic run test:coverage",
+          "gate": "coverage"
+        },
+        {
+          "seconds": 2.14,
+          "exit": 0,
+          "command": "pnpm docs:check-links",
+          "gate": "docs-check-links"
+        },
+        {
+          "seconds": 1.56,
+          "exit": 0,
+          "command": "pnpm docs:check-versions",
+          "gate": "docs-check-versions"
+        },
+        {
+          "seconds": 7.35,
+          "exit": 0,
+          "command": "pnpm test:scripts",
+          "gate": "test-scripts"
+        },
+        {
+          "seconds": 2.56,
+          "exit": 0,
+          "command": "pnpm type-check:scripts",
+          "gate": "type-check-scripts"
+        },
+        {
+          "seconds": 7.03,
+          "exit": 0,
+          "command": "pnpm dead-code:check",
+          "gate": "dead-code-check"
+        },
+        {
+          "seconds": 1.46,
+          "exit": 0,
+          "command": "pnpm workers:check-logs",
+          "gate": "workers-check-logs"
+        },
+        {
+          "seconds": 18.46,
+          "exit": 0,
+          "command": "pnpm --filter xivdyetools-web-app run build:check",
+          "gate": "web-bundle"
+        }
+      ],
+      "secretScanExit": 0,
+      "outgoingSecretScanExit": 0,
+      "ci": {
+        "runId": 40990890108,
+        "jobs": [
+          {
+            "id": 123852749932,
+            "name": "E2E (Playwright, chromium)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 123852750170,
+            "name": "Security audit (production dependencies)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 123852750250,
+            "name": "Lint, Type-check, Test, Build",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 123852750265,
+            "name": "Secret scan (gitleaks)",
+            "status": "completed",
+            "conclusion": "success"
+          }
+        ]
+      },
+      "deploymentRunCount": 0,
+      "nativeArtifact": {
+        "package": "@xivdyetools/bot-logic",
+        "version": "5.0.0",
+        "archiveSha256": "e1efc04acee060428be4cc9055149eb30b933fe93f76f3b1ac51c393f60800bb",
+        "sourceTree": "072a0bac9e9e4d7d9d782e738fee70c2456ad36d",
+        "distFiles": 94,
+        "packedDependencies": {
+          "@xivdyetools/svg": "4.4.2",
+          "@xivdyetools/types": "3.3.0",
+          "@xivdyetools/core": "6.0.0"
+        },
+        "offlineLocalArchivesOnly": true,
+        "strictDeclarationCompileExit": 0,
+        "runtimeExit": 0,
+        "additionalRuntimeExit": 0,
+        "scope": "Local native archive proof only; no CI provenance, registry or deployed acceptance claim"
+      }
+    },
+    {
+      "sprint": "M-API",
+      "phase": "api",
+      "unit": "apps/api-worker",
+      "version": "0.21.2",
+      "head": "ac6fd77d79e8d0e5af98845f06a72772fbb95102",
+      "tree": "99be45a4614a7023cc3aec41b941d695e43c28bb",
+      "base": "7215c3660ade7b2adb1a0c53f6129034390a50c0",
+      "branch": "codex/release-cut-m-04-api-20261029",
+      "baseBranch": "codex/release-cut-m-03-bot-20261029",
+      "pr": "https://github.com/FlashGalatine/xivdyetools/pull/395",
+      "draft": true,
+      "owned": [
+        "README.md",
+        "apps/api-worker/CHANGELOG.md",
+        "apps/api-worker/package.json",
+        "docs/versions.md"
+      ],
+      "validationOwned": [
+        "README.md",
+        "apps/api-worker/CHANGELOG.md",
+        "apps/api-worker/package.json",
+        "docs/versions.md"
+      ],
+      "validationBase": "7215c3660ade7b2adb1a0c53f6129034390a50c0",
+      "graph": {
+        "attempted": 62,
+        "executed": 4,
+        "cached": 58,
+        "failed": 0
+      },
+      "coverage": {
+        "statements": 96.15,
+        "branches": 92.85,
+        "functions": 95.45,
+        "lines": 96.77
+      },
+      "unitTests": 990,
+      "unitTestFiles": 46,
+      "gates": [
+        {
+          "gate": "graph",
+          "command": "pnpm turbo run build type-check lint test --cache-dir=.superpowers/sdd/m-sprints-20261029/turbo-cache --summarize --concurrency=1",
+          "seconds": 41.17,
+          "exit": 0
+        },
+        {
+          "gate": "coverage",
+          "command": "pnpm --filter xivdyetools-api-worker run test:coverage",
+          "seconds": 10.72,
+          "exit": 0
+        },
+        {
+          "gate": "docs-check-links",
+          "command": "pnpm docs:check-links",
+          "seconds": 2,
+          "exit": 0
+        },
+        {
+          "gate": "docs-check-versions",
+          "command": "pnpm docs:check-versions",
+          "seconds": 1.76,
+          "exit": 0
+        },
+        {
+          "gate": "test-scripts",
+          "command": "pnpm test:scripts",
+          "seconds": 7.57,
+          "exit": 0
+        },
+        {
+          "gate": "type-check-scripts",
+          "command": "pnpm type-check:scripts",
+          "seconds": 2.61,
+          "exit": 0
+        },
+        {
+          "gate": "dead-code-check",
+          "command": "pnpm dead-code:check",
+          "seconds": 6.66,
+          "exit": 0
+        },
+        {
+          "gate": "workers-check-logs",
+          "command": "pnpm workers:check-logs",
+          "seconds": 1.55,
+          "exit": 0
+        },
+        {
+          "gate": "chara-runtime",
+          "command": "pnpm --filter xivdyetools-api-worker run test:chara-runtime",
+          "seconds": 14.1,
+          "exit": 0
+        },
+        {
+          "gate": "worker-bundle",
+          "command": "pnpm --filter xivdyetools-api-worker exec wrangler deploy --dry-run --env production --outdir <workspace>/.superpowers/sdd/m-sprints-20261029/api-gates/worker-bundle",
+          "seconds": 3.94,
+          "exit": 0
+        }
+      ],
+      "secretScanExit": 0,
+      "outgoingSecretScanExit": 0,
+      "ci": {
+        "runId": 40991179241,
+        "jobs": [
+          {
+            "id": 123853695685,
+            "name": "E2E (Playwright, chromium)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 123853695797,
+            "name": "Secret scan (gitleaks)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 123853695857,
+            "name": "Security audit (production dependencies)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 123853695887,
+            "name": "Lint, Type-check, Test, Build",
+            "status": "completed",
+            "conclusion": "success"
+          }
+        ]
+      },
+      "deploymentRunCount": 0,
+      "workerGzipKiB": 717.85
+    },
+    {
+      "sprint": "M-WEB",
+      "phase": "web",
+      "unit": "apps/web-app",
+      "version": "5.16.5",
+      "head": "4ed3ad35a28b3c618aad664deba17512771711f6",
+      "tree": "13794456de29ba0ae1d00d15830e296fb615de79",
+      "base": "ac6fd77d79e8d0e5af98845f06a72772fbb95102",
+      "branch": "codex/release-cut-m-05-web-20261029",
+      "baseBranch": "codex/release-cut-m-04-api-20261029",
+      "pr": "https://github.com/FlashGalatine/xivdyetools/pull/396",
+      "draft": true,
+      "owned": [
+        "README.md",
+        "apps/web-app/CHANGELOG.md",
+        "apps/web-app/package.json",
+        "docs/versions.md"
+      ],
+      "validationOwned": [
+        "README.md",
+        "apps/web-app/CHANGELOG.md",
+        "apps/web-app/package.json",
+        "docs/versions.md"
+      ],
+      "validationBase": "ac6fd77d79e8d0e5af98845f06a72772fbb95102",
+      "graph": {
+        "attempted": 62,
+        "executed": 4,
+        "cached": 58,
+        "failed": 0
+      },
+      "coverage": {
+        "statements": 88.42,
+        "branches": 79.39,
+        "functions": 86.31,
+        "lines": 89.84
+      },
+      "unitTests": 4609,
+      "unitTestFiles": 146,
+      "gates": [
+        {
+          "gate": "graph",
+          "command": "pnpm turbo run build type-check lint test --cache-dir=.superpowers/sdd/m-sprints-20261029/turbo-cache --summarize --concurrency=1",
+          "seconds": 171.37,
+          "exit": 0
+        },
+        {
+          "gate": "coverage",
+          "command": "pnpm --filter xivdyetools-web-app run test:coverage",
+          "seconds": 117.15,
+          "exit": 0
+        },
+        {
+          "gate": "docs-check-links",
+          "command": "pnpm docs:check-links",
+          "seconds": 1.87,
+          "exit": 0
+        },
+        {
+          "gate": "docs-check-versions",
+          "command": "pnpm docs:check-versions",
+          "seconds": 1.53,
+          "exit": 0
+        },
+        {
+          "gate": "test-scripts",
+          "command": "pnpm test:scripts",
+          "seconds": 8.26,
+          "exit": 0
+        },
+        {
+          "gate": "type-check-scripts",
+          "command": "pnpm type-check:scripts",
+          "seconds": 2.83,
+          "exit": 0
+        },
+        {
+          "gate": "dead-code-check",
+          "command": "pnpm dead-code:check",
+          "seconds": 7.06,
+          "exit": 0
+        },
+        {
+          "gate": "workers-check-logs",
+          "command": "pnpm workers:check-logs",
+          "seconds": 1.41,
+          "exit": 0
+        },
+        {
+          "gate": "web-bundle",
+          "command": "pnpm --filter xivdyetools-web-app run build:check",
+          "seconds": 13.9,
+          "exit": 0
+        },
+        {
+          "gate": "chara-browser",
+          "command": "pnpm --filter xivdyetools-web-app exec playwright test --config <workspace>/.superpowers/sdd/m-sprints-20261029/playwright.config.ts --project=chromium --workers=2 swatch-chara-session.spec.ts glamour-reader.spec.ts",
+          "seconds": 21.97,
+          "exit": 0
+        }
+      ],
+      "secretScanExit": 0,
+      "outgoingSecretScanExit": 0,
+      "ci": {
+        "runId": 40991771994,
+        "jobs": [
+          {
+            "id": 123855616406,
+            "name": "Secret scan (gitleaks)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 123855616505,
+            "name": "Lint, Type-check, Test, Build",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 123855616524,
+            "name": "Security audit (production dependencies)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 123855616646,
+            "name": "E2E (Playwright, chromium)",
+            "status": "completed",
+            "conclusion": "success"
+          }
+        ]
+      },
+      "deploymentRunCount": 0
+    },
+    {
+      "sprint": "M-OG",
+      "phase": "og",
+      "unit": "apps/og-worker",
+      "version": "2.12.3",
+      "head": "f95dd83798a37aa943223b6c0b31d707054a2211",
+      "tree": "7f59c118a8be02c0b37a3168792cdef95c16755f",
+      "base": "4ed3ad35a28b3c618aad664deba17512771711f6",
+      "branch": "codex/release-cut-m-06-og-20261029",
+      "baseBranch": "codex/release-cut-m-05-web-20261029",
+      "pr": "https://github.com/FlashGalatine/xivdyetools/pull/397",
+      "draft": true,
+      "owned": [
+        "README.md",
+        "apps/og-worker/CHANGELOG.md",
+        "apps/og-worker/package.json",
+        "docs/versions.md"
+      ],
+      "validationOwned": [
+        "README.md",
+        "apps/og-worker/CHANGELOG.md",
+        "apps/og-worker/package.json",
+        "docs/versions.md"
+      ],
+      "validationBase": "4ed3ad35a28b3c618aad664deba17512771711f6",
+      "graph": {
+        "attempted": 62,
+        "executed": 3,
+        "cached": 59,
+        "failed": 0
+      },
+      "coverage": {
+        "statements": 97.91,
+        "branches": 94.19,
+        "functions": 100,
+        "lines": 98.23
+      },
+      "unitTests": 819,
+      "unitTestFiles": 25,
+      "gates": [
+        {
+          "gate": "graph",
+          "command": "pnpm turbo run build type-check lint test --cache-dir=.superpowers/sdd/m-sprints-20261029/turbo-cache --summarize --concurrency=1",
+          "seconds": 20.08,
+          "exit": 0
+        },
+        {
+          "gate": "coverage",
+          "command": "pnpm --filter xivdyetools-og-worker run test:coverage",
+          "seconds": 6.16,
+          "exit": 0
+        },
+        {
+          "gate": "docs-check-links",
+          "command": "pnpm docs:check-links",
+          "seconds": 1.94,
+          "exit": 0
+        },
+        {
+          "gate": "docs-check-versions",
+          "command": "pnpm docs:check-versions",
+          "seconds": 1.45,
+          "exit": 0
+        },
+        {
+          "gate": "test-scripts",
+          "command": "pnpm test:scripts",
+          "seconds": 7.66,
+          "exit": 0
+        },
+        {
+          "gate": "type-check-scripts",
+          "command": "pnpm type-check:scripts",
+          "seconds": 2.52,
+          "exit": 0
+        },
+        {
+          "gate": "dead-code-check",
+          "command": "pnpm dead-code:check",
+          "seconds": 7.3,
+          "exit": 0
+        },
+        {
+          "gate": "workers-check-logs",
+          "command": "pnpm workers:check-logs",
+          "seconds": 1.47,
+          "exit": 0
+        },
+        {
+          "gate": "worker-bundle",
+          "command": "pnpm --filter xivdyetools-og-worker exec wrangler deploy --dry-run --env production --outdir <workspace>/.superpowers/sdd/m-sprints-20261029/og-gates/worker-bundle",
+          "seconds": 3.4,
+          "exit": 0
+        }
+      ],
+      "secretScanExit": 0,
+      "outgoingSecretScanExit": 0,
+      "ci": {
+        "runId": 40991926431,
+        "jobs": [
+          {
+            "id": 123856138382,
+            "name": "Lint, Type-check, Test, Build",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 123856138594,
+            "name": "Security audit (production dependencies)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 123856138693,
+            "name": "Secret scan (gitleaks)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 123856138713,
+            "name": "E2E (Playwright, chromium)",
+            "status": "completed",
+            "conclusion": "success"
+          }
+        ]
+      },
+      "deploymentRunCount": 0,
+      "workerGzipKiB": 1953.92
+    },
+    {
+      "sprint": "M-DISCORD",
+      "phase": "discord",
+      "unit": "apps/discord-worker",
+      "version": "5.9.8",
+      "head": "929f8f6c1cf98bdfe1ae2b8c9525c51e82af6db6",
+      "tree": "3f21b71cf1c623c34cbf7e012ad960188d37d634",
+      "base": "f95dd83798a37aa943223b6c0b31d707054a2211",
+      "branch": "codex/release-cut-m-07-discord-20261029",
+      "baseBranch": "codex/release-cut-m-06-og-20261029",
+      "pr": "https://github.com/FlashGalatine/xivdyetools/pull/398",
+      "draft": true,
+      "owned": [
+        "README.md",
+        "apps/discord-worker/CHANGELOG.md",
+        "apps/discord-worker/package.json",
+        "docs/versions.md"
+      ],
+      "validationOwned": [
+        "README.md",
+        "apps/discord-worker/CHANGELOG.md",
+        "apps/discord-worker/package.json",
+        "docs/versions.md"
+      ],
+      "validationBase": "f95dd83798a37aa943223b6c0b31d707054a2211",
+      "graph": {
+        "attempted": 62,
+        "executed": 3,
+        "cached": 59,
+        "failed": 0
+      },
+      "coverage": {
+        "statements": 93.76,
+        "branches": 86.11,
+        "functions": 94.2,
+        "lines": 94.56
+      },
+      "unitTests": 1836,
+      "unitTestFiles": 75,
+      "gates": [
+        {
+          "gate": "graph",
+          "command": "pnpm turbo run build type-check lint test --cache-dir=.superpowers/sdd/m-sprints-20261029/turbo-cache --summarize --concurrency=1",
+          "seconds": 38.94,
+          "exit": 0
+        },
+        {
+          "gate": "coverage",
+          "command": "pnpm --filter xivdyetools-discord-worker run test:coverage",
+          "seconds": 14.73,
+          "exit": 0
+        },
+        {
+          "gate": "docs-check-links",
+          "command": "pnpm docs:check-links",
+          "seconds": 1.84,
+          "exit": 0
+        },
+        {
+          "gate": "docs-check-versions",
+          "command": "pnpm docs:check-versions",
+          "seconds": 1.46,
+          "exit": 0
+        },
+        {
+          "gate": "test-scripts",
+          "command": "pnpm test:scripts",
+          "seconds": 7.48,
+          "exit": 0
+        },
+        {
+          "gate": "type-check-scripts",
+          "command": "pnpm type-check:scripts",
+          "seconds": 2.78,
+          "exit": 0
+        },
+        {
+          "gate": "dead-code-check",
+          "command": "pnpm dead-code:check",
+          "seconds": 6.49,
+          "exit": 0
+        },
+        {
+          "gate": "workers-check-logs",
+          "command": "pnpm workers:check-logs",
+          "seconds": 1.53,
+          "exit": 0
+        },
+        {
+          "gate": "integration",
+          "command": "pnpm --filter xivdyetools-discord-worker run test:integration",
+          "seconds": 4.07,
+          "exit": 0
+        },
+        {
+          "gate": "worker-bundle",
+          "command": "pnpm --filter xivdyetools-discord-worker exec wrangler deploy --dry-run --env production --outdir <workspace>/.superpowers/sdd/m-sprints-20261029/discord-gates/worker-bundle",
+          "seconds": 3.65,
+          "exit": 0
+        }
+      ],
+      "secretScanExit": 0,
+      "outgoingSecretScanExit": 0,
+      "ci": {
+        "runId": 40992156810,
+        "jobs": [
+          {
+            "id": 123856868484,
+            "name": "Security audit (production dependencies)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 123856868700,
+            "name": "Lint, Type-check, Test, Build",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 123856868704,
+            "name": "E2E (Playwright, chromium)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 123856868832,
+            "name": "Secret scan (gitleaks)",
+            "status": "completed",
+            "conclusion": "success"
+          }
+        ]
+      },
+      "deploymentRunCount": 0,
+      "workerGzipKiB": 2737.95
+    },
+    {
+      "sprint": "M-MODERATION",
+      "phase": "moderation",
+      "unit": "apps/moderation-worker",
+      "version": "1.9.1",
+      "head": "c79d2b24180d84865950e9b8ea2030cc4e9789c9",
+      "tree": "66067ce652b06c7eea75b9ef849ba1c3631818a6",
+      "base": "929f8f6c1cf98bdfe1ae2b8c9525c51e82af6db6",
+      "branch": "codex/release-cut-m-08-moderation-20261029",
+      "baseBranch": "codex/release-cut-m-07-discord-20261029",
+      "pr": "https://github.com/FlashGalatine/xivdyetools/pull/399",
+      "draft": true,
+      "owned": [
+        "README.md",
+        "apps/moderation-worker/CHANGELOG.md",
+        "apps/moderation-worker/package.json",
+        "docs/versions.md"
+      ],
+      "validationOwned": [
+        "README.md",
+        "apps/moderation-worker/CHANGELOG.md",
+        "apps/moderation-worker/package.json",
+        "docs/versions.md"
+      ],
+      "validationBase": "929f8f6c1cf98bdfe1ae2b8c9525c51e82af6db6",
+      "graph": {
+        "attempted": 62,
+        "executed": 3,
+        "cached": 59,
+        "failed": 0
+      },
+      "coverage": {
+        "statements": 93.28,
+        "branches": 89.71,
+        "functions": 95.77,
+        "lines": 94.3
+      },
+      "unitTests": 862,
+      "unitTestFiles": 36,
+      "gates": [
+        {
+          "gate": "graph",
+          "command": "pnpm turbo run build type-check lint test --cache-dir=.superpowers/sdd/m-sprints-20261029/turbo-cache --summarize --concurrency=1",
+          "seconds": 46.29,
+          "exit": 0
+        },
+        {
+          "gate": "coverage",
+          "command": "pnpm --filter xivdyetools-moderation-worker run test:coverage",
+          "seconds": 22.24,
+          "exit": 0
+        },
+        {
+          "gate": "docs-check-links",
+          "command": "pnpm docs:check-links",
+          "seconds": 4.29,
+          "exit": 0
+        },
+        {
+          "gate": "docs-check-versions",
+          "command": "pnpm docs:check-versions",
+          "seconds": 4.18,
+          "exit": 0
+        },
+        {
+          "gate": "test-scripts",
+          "command": "pnpm test:scripts",
+          "seconds": 20.86,
+          "exit": 0
+        },
+        {
+          "gate": "type-check-scripts",
+          "command": "pnpm type-check:scripts",
+          "seconds": 5.64,
+          "exit": 0
+        },
+        {
+          "gate": "dead-code-check",
+          "command": "pnpm dead-code:check",
+          "seconds": 12.01,
+          "exit": 0
+        },
+        {
+          "gate": "workers-check-logs",
+          "command": "pnpm workers:check-logs",
+          "seconds": 2.56,
+          "exit": 0
+        },
+        {
+          "gate": "worker-bundle",
+          "command": "pnpm --filter xivdyetools-moderation-worker exec wrangler deploy --dry-run --env production --outdir <workspace>/.superpowers/sdd/m-sprints-20261029/moderation-gates/worker-bundle",
+          "seconds": 4.95,
+          "exit": 0
+        }
+      ],
+      "secretScanExit": 0,
+      "outgoingSecretScanExit": 0,
+      "ci": {
+        "runId": 40992182240,
+        "jobs": [
+          {
+            "id": 123856953685,
+            "name": "Lint, Type-check, Test, Build",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 123856953907,
+            "name": "E2E (Playwright, chromium)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 123856953997,
+            "name": "Security audit (production dependencies)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 123856954055,
+            "name": "Secret scan (gitleaks)",
+            "status": "completed",
+            "conclusion": "success"
+          }
+        ]
+      },
+      "deploymentRunCount": 0,
+      "workerGzipKiB": 166.86
+    },
+    {
+      "sprint": "M-STOAT",
+      "phase": "stoat",
+      "unit": "apps/stoat-worker",
+      "version": "0.3.5",
+      "head": "876dadb33bbefdaa0dc12d982e539eddd13cf1d0",
+      "tree": "77d43ca9ece6bff426b74b4747c49b188e9ee069",
+      "base": "c79d2b24180d84865950e9b8ea2030cc4e9789c9",
+      "branch": "codex/release-cut-m-09-stoat-20261029",
+      "baseBranch": "codex/release-cut-m-08-moderation-20261029",
+      "pr": "https://github.com/FlashGalatine/xivdyetools/pull/400",
+      "draft": true,
+      "owned": [
+        "README.md",
+        "apps/stoat-worker/CHANGELOG.md",
+        "apps/stoat-worker/package.json",
+        "docs/versions.md"
+      ],
+      "validationOwned": [
+        "README.md",
+        "apps/stoat-worker/CHANGELOG.md",
+        "apps/stoat-worker/package.json",
+        "docs/versions.md"
+      ],
+      "validationBase": "c79d2b24180d84865950e9b8ea2030cc4e9789c9",
+      "graph": {
+        "attempted": 62,
+        "executed": 4,
+        "cached": 58,
+        "failed": 0
+      },
+      "coverage": {
+        "statements": 99.33,
+        "branches": 90.36,
+        "functions": 97.91,
+        "lines": 99.63
+      },
+      "unitTests": 236,
+      "unitTestFiles": 17,
+      "gates": [
+        {
+          "gate": "graph",
+          "command": "pnpm turbo run build type-check lint test --cache-dir=.superpowers/sdd/m-sprints-20261029/turbo-cache --summarize --concurrency=1",
+          "seconds": 23.23,
+          "exit": 0
+        },
+        {
+          "gate": "coverage",
+          "command": "pnpm --filter xivdyetools-stoat-worker run test:coverage",
+          "seconds": 5.57,
+          "exit": 0
+        },
+        {
+          "gate": "docs-check-links",
+          "command": "pnpm docs:check-links",
+          "seconds": 2.08,
+          "exit": 0
+        },
+        {
+          "gate": "docs-check-versions",
+          "command": "pnpm docs:check-versions",
+          "seconds": 1.73,
+          "exit": 0
+        },
+        {
+          "gate": "test-scripts",
+          "command": "pnpm test:scripts",
+          "seconds": 8.27,
+          "exit": 0
+        },
+        {
+          "gate": "type-check-scripts",
+          "command": "pnpm type-check:scripts",
+          "seconds": 3.11,
+          "exit": 0
+        },
+        {
+          "gate": "dead-code-check",
+          "command": "pnpm dead-code:check",
+          "seconds": 7.16,
+          "exit": 0
+        },
+        {
+          "gate": "workers-check-logs",
+          "command": "pnpm workers:check-logs",
+          "seconds": 1.52,
+          "exit": 0
+        }
+      ],
+      "secretScanExit": 0,
+      "outgoingSecretScanExit": 0,
+      "ci": {
+        "runId": 40992400675,
+        "jobs": [
+          {
+            "id": 123857659012,
+            "name": "Security audit (production dependencies)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 123857659035,
+            "name": "Lint, Type-check, Test, Build",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 123857659038,
+            "name": "E2E (Playwright, chromium)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 123857659287,
+            "name": "Secret scan (gitleaks)",
+            "status": "completed",
+            "conclusion": "success"
+          }
+        ]
+      },
+      "deploymentRunCount": 0
+    },
+    {
+      "sprint": "Web development compatibility companion",
+      "phase": "webjson",
+      "unit": "apps/web-app",
+      "version": "5.16.5",
+      "head": "179b2ebbb31b43e044eae88467e92368c950ccd3",
+      "tree": "dd124a3d61d0f9ef90a860e0b6a3ecfdeeb04130",
+      "base": "876dadb33bbefdaa0dc12d982e539eddd13cf1d0",
+      "branch": "codex/release-cut-m-10-webjson-20261029",
+      "baseBranch": "codex/release-cut-m-09-stoat-20261029",
+      "pr": "https://github.com/FlashGalatine/xivdyetools/pull/402",
+      "draft": true,
+      "owned": [
+        "apps/web-app/CHANGELOG.md",
+        "apps/web-app/CLAUDE.md",
+        "apps/web-app/e2e/swatch-json-palettes.spec.ts",
+        "apps/web-app/src/__tests__/vite-plugin-core-json.test.ts",
+        "apps/web-app/vite-plugin-core-json.ts",
+        "apps/web-app/vite.config.ts",
+        "docs/versions.md"
+      ],
+      "validationOwned": [
+        "apps/web-app/src/__tests__/vite-plugin-core-json.test.ts",
+        "apps/web-app/vite-plugin-core-json.ts"
+      ],
+      "validationBase": "6089513dc4b81a6b229f9d39b0dafc7379d54cf6",
+      "graph": {
+        "attempted": 62,
+        "executed": 4,
+        "cached": 58,
+        "failed": 0
+      },
+      "coverage": {
+        "statements": 88.43,
+        "branches": 79.4,
+        "functions": 86.33,
+        "lines": 89.85
+      },
+      "unitTests": 4625,
+      "unitTestFiles": 147,
+      "gates": [
+        {
+          "gate": "graph",
+          "seconds": 165.51,
+          "exit": 0,
+          "command": "pnpm turbo run build type-check lint test --cache-dir=.superpowers/sdd/m-sprints-20261029/turbo-cache --summarize --concurrency=1"
+        },
+        {
+          "gate": "coverage",
+          "seconds": 105.86,
+          "exit": 0,
+          "command": "pnpm --filter xivdyetools-web-app run test:coverage"
+        },
+        {
+          "gate": "docs-check-links",
+          "seconds": 1.79,
+          "exit": 0,
+          "command": "pnpm docs:check-links"
+        },
+        {
+          "gate": "docs-check-versions",
+          "seconds": 1.5,
+          "exit": 0,
+          "command": "pnpm docs:check-versions"
+        },
+        {
+          "gate": "test-scripts",
+          "seconds": 6.7,
+          "exit": 0,
+          "command": "pnpm test:scripts"
+        },
+        {
+          "gate": "type-check-scripts",
+          "seconds": 2.42,
+          "exit": 0,
+          "command": "pnpm type-check:scripts"
+        },
+        {
+          "gate": "dead-code-check",
+          "seconds": 6.72,
+          "exit": 0,
+          "command": "pnpm dead-code:check"
+        },
+        {
+          "gate": "workers-check-logs",
+          "seconds": 1.37,
+          "exit": 0,
+          "command": "pnpm workers:check-logs"
+        },
+        {
+          "gate": "web-bundle",
+          "seconds": 13.96,
+          "exit": 0,
+          "command": "pnpm --filter xivdyetools-web-app run build:check"
+        },
+        {
+          "gate": "chara-browser",
+          "seconds": 21.19,
+          "exit": 0,
+          "command": "pnpm --filter xivdyetools-web-app exec playwright test --config <workspace>/.superpowers/sdd/m-sprints-20261029/playwright-webjsonfix.config.ts --project=chromium --workers=2 swatch-chara-session.spec.ts glamour-reader.spec.ts swatch-json-palettes.spec.ts"
+        }
+      ],
+      "secretScanExit": 0,
+      "outgoingSecretScanExit": 0,
+      "ci": {
+        "runId": 40995967640,
+        "jobs": [
+          {
+            "id": 123869046298,
+            "name": "Lint, Type-check, Test, Build",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 123869046584,
+            "name": "E2E (Playwright, chromium)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 123869046732,
+            "name": "Security audit (production dependencies)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 123869046761,
+            "name": "Secret scan (gitleaks)",
+            "status": "completed",
+            "conclusion": "success"
+          }
+        ]
+      },
+      "deploymentRunCount": 0
+    }
+  ],
+  "backports": [
+    {
+      "phase": "core",
+      "package": "@xivdyetools/core",
+      "version": "5.16.0",
+      "head": "e0e8c3eccf44f66ca054fa21e17b1ddb3b5502da",
+      "tree": "d22d8941c5b96c7e09c031873a7456b5773080da",
+      "base": "0fed2b3744c2a52ac944d038c5e0a4eded183dbd",
+      "branch": "codex/release-cut-core-declarations-20261029",
+      "baseBranch": "codex/release-cut-03-core-20261029",
+      "pr": "https://github.com/FlashGalatine/xivdyetools/pull/393",
+      "archiveSha256": "d9b71b31c719bf3c2ecdff026c7a950fc85d86ca025a596e89b6d73c8f380b95",
+      "sourceHash": "d36ec116b26de5c1c9789bfcfdb1dd349c1841f94b8afc8bb079b6d2c0d53cef",
+      "ownedFileSetHash": "fb1473de97dbdfd04a9a33f989075bbd254218e8dd3031cf492d8b63e82f2237",
+      "owned": [
+        "packages/core/src/utils/index.ts",
+        "packages/core/src/__tests__/package-declarations.test.ts",
+        "packages/core/CHANGELOG.md"
+      ],
+      "graph": {
+        "command": "turbo run build type-check lint test",
+        "repoPath": "",
+        "success": 60,
+        "failed": 0,
+        "cached": 2,
+        "attempted": 62,
+        "startTime": 1793325866666,
+        "endTime": 1793326386577,
+        "exitCode": 0
+      },
+      "focusedGates": [
+        {
+          "label": "core-build",
+          "command": "pnpm --filter @xivdyetools/core run build",
+          "exit": 0,
+          "seconds": 11.579
+        },
+        {
+          "label": "core-types",
+          "command": "pnpm --filter @xivdyetools/core run type-check",
+          "exit": 0,
+          "seconds": 11.89
+        },
+        {
+          "label": "core-lint",
+          "command": "pnpm --filter @xivdyetools/core run lint",
+          "exit": 0,
+          "seconds": 36.407
+        },
+        {
+          "label": "core-coverage",
+          "command": "pnpm --filter @xivdyetools/core run test:coverage",
+          "exit": 0,
+          "seconds": 27.273,
+          "hostRetry": "core-coverage-host.log",
+          "initialSandboxExit": 1,
+          "initialSandboxReason": "EPERM fs.rename in existing stain-audit junction test"
+        },
+        {
+          "label": "type-check-scripts",
+          "command": "pnpm type-check:scripts",
+          "exit": 0,
+          "seconds": 3.952
+        },
+        {
+          "label": "test-scripts",
+          "command": "pnpm test:scripts",
+          "exit": 0,
+          "seconds": 12.646
+        },
+        {
+          "label": "dead-code-check",
+          "command": "pnpm dead-code:check",
+          "exit": 0,
+          "seconds": 7.948
+        },
+        {
+          "label": "docs-check-versions",
+          "command": "pnpm docs:check-versions",
+          "exit": 0,
+          "seconds": 1.884
+        },
+        {
+          "label": "docs-check-links",
+          "command": "pnpm docs:check-links",
+          "exit": 0,
+          "seconds": 2.488
+        },
+        {
+          "label": "workers-check-logs",
+          "command": "pnpm workers:check-logs",
+          "exit": 0,
+          "seconds": 2.682
+        }
+      ],
+      "coverage": {
+        "lines": {
+          "total": 2878,
+          "covered": 2789,
+          "skipped": 0,
+          "pct": 96.9
+        },
+        "statements": {
+          "total": 3109,
+          "covered": 3003,
+          "skipped": 0,
+          "pct": 96.59
+        },
+        "functions": {
+          "total": 682,
+          "covered": 677,
+          "skipped": 0,
+          "pct": 99.26
+        },
+        "branches": {
+          "total": 2094,
+          "covered": 1966,
+          "skipped": 0,
+          "pct": 93.88
+        },
+        "branchesTrue": {
+          "total": 0,
+          "covered": 0,
+          "skipped": 0,
+          "pct": 100
+        }
+      },
+      "strictCompileExit": 0,
+      "skipLibCheck": false,
+      "legacyContractsRetained": true,
+      "distFiles": 246,
+      "ci": {
+        "runId": 40990710698,
+        "jobs": [
+          {
+            "id": 123852150552,
+            "name": "E2E (Playwright, chromium)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 123852150703,
+            "name": "Security audit (production dependencies)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 123852150740,
+            "name": "Secret scan (gitleaks)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 123852150934,
+            "name": "Lint, Type-check, Test, Build",
+            "status": "completed",
+            "conclusion": "success"
+          }
+        ]
+      },
+      "scope": "Prerequisite repair; pending minor version retained; old refs and receipts unchanged"
+    },
+    {
+      "phase": "bot",
+      "package": "@xivdyetools/bot-logic",
+      "version": "4.12.0",
+      "head": "698b7cefa2fb6a829a84425012e2ce584f14f25d",
+      "tree": "b9f1e1eb600f5f8e0ac56625060f2bb9f15d7561",
+      "base": "ebba1baaa08a4d78b3c55baf7261273cd1fe12af",
+      "branch": "codex/release-cut-bot-declarations-20261029",
+      "baseBranch": "codex/release-cut-06-bot-logic-20261029",
+      "pr": "https://github.com/FlashGalatine/xivdyetools/pull/401",
+      "archiveSha256": "b305994cbe5c1f74ebca4569b1ece5c8c534ab250d1dfddd8ebaaa97e3fc6f76",
+      "sourceHash": "63fe229261d7fa854ac6a188e35ff96a3a689092916f50d3f9f4761b9bca977a",
+      "ownedFileSetHash": "e14f9ba9ac36f585431cf1c716489e6b0495d24e836fa6c0f4a62839ad8aef7c",
+      "owned": [
+        "packages/bot-logic/src/commands/harmony.ts",
+        "packages/bot-logic/src/commands/accessibility.ts",
+        "packages/bot-logic/src/input-resolution.ts",
+        "packages/bot-logic/src/i18n/types.ts",
+        "packages/bot-logic/src/__tests__/package-declarations.test.ts",
+        "packages/bot-logic/CHANGELOG.md"
+      ],
+      "graph": {
+        "command": "turbo run build type-check lint test",
+        "repoPath": "",
+        "success": 4,
+        "failed": 0,
+        "cached": 58,
+        "attempted": 62,
+        "startTime": 1793327283458,
+        "endTime": 1793327450743,
+        "exitCode": 0
+      },
+      "focusedGates": [
+        {
+          "label": "bot-build",
+          "command": "pnpm --filter @xivdyetools/bot-logic run build",
+          "exit": 0,
+          "seconds": 3.034
+        },
+        {
+          "label": "bot-types",
+          "command": "pnpm --filter @xivdyetools/bot-logic run type-check",
+          "exit": 0,
+          "seconds": 4.011
+        },
+        {
+          "label": "bot-lint",
+          "command": "pnpm --filter @xivdyetools/bot-logic run lint",
+          "exit": 0,
+          "seconds": 16.348
+        },
+        {
+          "label": "bot-coverage",
+          "command": "pnpm --filter @xivdyetools/bot-logic run test:coverage",
+          "exit": 0,
+          "seconds": 7.399
+        },
+        {
+          "label": "type-check-scripts",
+          "command": "pnpm type-check:scripts",
+          "exit": 0,
+          "seconds": 3.254
+        },
+        {
+          "label": "test-scripts",
+          "command": "pnpm test:scripts",
+          "exit": 0,
+          "seconds": 8.955
+        },
+        {
+          "label": "dead-code-check",
+          "command": "pnpm dead-code:check",
+          "exit": 0,
+          "seconds": 7.207
+        },
+        {
+          "label": "docs-check-versions",
+          "command": "pnpm docs:check-versions",
+          "exit": 0,
+          "seconds": 1.493
+        },
+        {
+          "label": "docs-check-links",
+          "command": "pnpm docs:check-links",
+          "exit": 0,
+          "seconds": 2.051
+        },
+        {
+          "label": "workers-check-logs",
+          "command": "pnpm workers:check-logs",
+          "exit": 0,
+          "seconds": 1.55
+        }
+      ],
+      "coverage": {
+        "exit": 0,
+        "files": 27,
+        "tests": 913,
+        "coverage": {
+          "lines": {
+            "total": 843,
+            "covered": 841,
+            "skipped": 0,
+            "pct": 99.76
+          },
+          "statements": {
+            "total": 960,
+            "covered": 956,
+            "skipped": 0,
+            "pct": 99.58
+          },
+          "functions": {
+            "total": 182,
+            "covered": 182,
+            "skipped": 0,
+            "pct": 100
+          },
+          "branches": {
+            "total": 670,
+            "covered": 648,
+            "skipped": 0,
+            "pct": 96.71
+          },
+          "branchesTrue": {
+            "total": 0,
+            "covered": 0,
+            "skipped": 0,
+            "pct": 100
+          }
+        }
+      },
+      "strictCompileExit": 0,
+      "skipLibCheck": false,
+      "legacyContractsRetained": true,
+      "distFiles": 94,
+      "ci": {
+        "runId": 40992858538,
+        "jobs": [
+          {
+            "id": 123859115882,
+            "name": "Secret scan (gitleaks)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 123859116264,
+            "name": "Lint, Type-check, Test, Build",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 123859116447,
+            "name": "Security audit (production dependencies)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 123859116813,
+            "name": "E2E (Playwright, chromium)",
+            "status": "completed",
+            "conclusion": "success"
+          }
+        ]
+      },
+      "scope": "Prerequisite repair; pending minor version retained; old refs and receipts unchanged"
+    }
+  ],
+  "retainedContracts": {
+    "coreLegacyExportsRemoved": 6,
+    "coreLiveTypesRetained": 9,
+    "libraryParityCases": 261,
+    "libraryParityPreservedSha256": "474a8f550f4000cc6356e218009255eb49b6dacd08ae538facf6229d98130511",
+    "maxCharaFileBytes": 8192,
+    "botSuccessKeys": [
+      "ok",
+      "svgString",
+      "embed"
+    ],
+    "fileText": true,
+    "fileBytes": true,
+    "NO_INPUT": true,
+    "familySize": true,
+    "optionalKEEP": "unchanged",
+    "terminalFSprints": "unstarted"
+  },
+  "localBrowserCompatibility": {
+    "originalAssertions": 15,
+    "newIndependentPaletteAssertions": 2,
+    "hairFirstHex": "#FEFEFE",
+    "skinFirstHex": "#F6D0BB",
+    "expectedCellsPerPalette": 192,
+    "livePageErrors": 0,
+    "devOnly": true,
+    "nativeCoreAttributesRetained": true,
+    "productionPluginAbsent": true,
+    "maintenanceLimit": "Deprecated Vite transformWithEsbuild bridge; revisit when dynamic JSON attributes are handled upstream"
+  },
+  "openGates": [
+    "Refresh registry/version reservations before publication",
+    "Publish and accept corrected prerequisite Core 5.16/SVG 4.4.1/Bot 4.12 artifacts",
+    "External npm consumer review",
+    "Beta and production acceptance",
+    "Fresh source/run selection and reviewer approval",
+    "Image CPU/resource/manual gate",
+    "All existing schema/provider/disclosure/identity/notification gates",
+    "All activation flags remain false; Stoat remains parked"
+  ],
+  "ciScope": "Twelve source heads have four successful jobs each; this overview commit is intentionally excluded to avoid a self-referential receipt"
+}
