@@ -276,6 +276,15 @@ const GRID_GAP = 4;
  */
 const GRID_WIDTH_DESKTOP = GRID_CELL_DESKTOP * 8 + GRID_GAP * 7;
 /**
+ * Side padding that gives way before the grid has to scroll sideways. The tool's goes
+ * first, from 32px to 0, once its column can't fit the grid panel with all of it. Then
+ * the panel's own goes from 20px to 8px, with 2px of border beside the grid. These are
+ * percentages because a side panel changes the column's width with no window resize.
+ * With both panels open that's 8 columns from an 884px window, down from 972px.
+ */
+const TOOL_PADDING_DESKTOP = `clamp(0px, calc((100% - ${GRID_WIDTH_DESKTOP + 42}px) / 2), 32px)`;
+const PANEL_PADDING_DESKTOP = `clamp(8px, calc((100% - ${GRID_WIDTH_DESKTOP + 2}px) / 2), 20px)`;
+/**
  * Narrowest the results column gets beside the grid panel before it wraps under
  * it. The selection card's excerpt reaches 230px into the column. In a narrower
  * column it crosses the card's border, which is only cosmetic, and the pane clips
@@ -382,6 +391,10 @@ export class SwatchTool extends BaseComponent {
   // Layout containers for responsive behavior
   private mainLayout: HTMLElement | null = null;
   private gridPanel: HTMLElement | null = null;
+  /** Watches the row, because a side panel moves the results with no window resize. */
+  private layoutObserver: ResizeObserver | null = null;
+  /** The results last revealed under the grid, until they move beside it. */
+  private stackedReveal: HTMLElement | null = null;
   private paletteRailContainer: HTMLElement | null = null;
   private gridTitleEl: HTMLElement | null = null;
   /** What the selection card describes — the last slot pick or grid click */
@@ -450,6 +463,11 @@ export class SwatchTool extends BaseComponent {
     // in onMount. update() unbinds every this.on listener and then calls only
     // this, so one added at mount was gone after the first language switch.
     this.on(window, 'resize', this.updateSwatchLayout);
+
+    // Here for the same reason: update() rebuilds the row this watches.
+    this.layoutObserver?.disconnect();
+    this.layoutObserver = new ResizeObserver(() => this.keepRevealInView());
+    if (this.mainLayout) this.layoutObserver.observe(this.mainLayout);
   }
 
   onMount(): void {
@@ -526,6 +544,9 @@ export class SwatchTool extends BaseComponent {
     // Only the views go: the loaded file stays in CharaSessionService.
     this.destroyChara();
 
+    this.layoutObserver?.disconnect();
+    this.layoutObserver = null;
+    this.stackedReveal = null;
     this.selectedColor = null;
     this.matchedDyes = [];
     this.colors = [];
@@ -1561,6 +1582,8 @@ export class SwatchTool extends BaseComponent {
       // Update grid panel width
       this.gridPanel.style.width = '100%';
       this.gridPanel.style.maxWidth = `${availableWidth}px`;
+      this.gridPanel.style.paddingInline = '20px';
+      this.options.rightPanel.style.paddingInline = '32px';
 
       // Update grid template
       this.colorGridContainer.style.gridTemplateColumns = `repeat(8, ${clampedSwatchSize}px)`;
@@ -1580,6 +1603,8 @@ export class SwatchTool extends BaseComponent {
       // Size to the content, but never past the pane
       this.gridPanel.style.width = '';
       this.gridPanel.style.maxWidth = '100%';
+      this.gridPanel.style.paddingInline = PANEL_PADDING_DESKTOP;
+      this.options.rightPanel.style.paddingInline = TOOL_PADDING_DESKTOP;
 
       // Restore the register's desktop cell size
       this.colorGridContainer.style.gridTemplateColumns = `repeat(8, ${GRID_CELL_DESKTOP}px)`;
@@ -1831,6 +1856,7 @@ export class SwatchTool extends BaseComponent {
             background-color: ${color.hex};
             border: 1px solid var(--theme-border);
             border-radius: 4px;
+            scroll-margin: 8px;
           `,
           title: `${address} · ${color.hex}`,
           'data-index': String(color.index),
@@ -2454,23 +2480,47 @@ export class SwatchTool extends BaseComponent {
    * window brings them just into view, which moves nothing if they already are and
    * keeps rows of the grid on screen for the next pick. Results beside the grid stay
    * put, even where a long column reaches past a short grid's bottom.
+   *
+   * A pick by keyboard leaves focus on the cell, so that stays on screen, with as much
+   * of the results as fits below it. Those two scrolls are instant, as a second smooth
+   * one would start from where the first hadn't got to yet.
    */
   private revealStackedResults(results: HTMLElement | null): void {
     if (!results) return;
     // Small delay to allow DOM updates before scrolling
     this.safeTimeout(() => {
-      if (!this.gridPanel) return;
-      const box = results.getBoundingClientRect();
-      const grid = this.gridPanel.getBoundingClientRect();
-      if (box.top > grid.bottom && box.left < grid.right) {
-        results.scrollIntoView({
-          behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
-            ? 'auto'
-            : 'smooth',
-          block: window.innerWidth < 768 ? 'start' : 'nearest',
-        });
+      if (!this.isUnderGrid(results)) {
+        this.stackedReveal = null;
+        return;
       }
+      this.stackedReveal = results;
+      const focused = this.colorGridContainer?.querySelector('button:focus-visible');
+      const smooth = !focused && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      results.scrollIntoView({
+        behavior: smooth ? 'smooth' : 'auto',
+        block: window.innerWidth < 768 ? 'start' : 'nearest',
+      });
+      focused?.scrollIntoView({ block: 'nearest' });
     }, 100);
+  }
+
+  private isUnderGrid(results: HTMLElement): boolean {
+    if (!this.gridPanel) return false;
+    const box = results.getBoundingClientRect();
+    const grid = this.gridPanel.getBoundingClientRect();
+    return box.top > grid.bottom && box.left < grid.right;
+  }
+
+  /**
+   * Closing a side panel can move results that were just revealed under the grid up
+   * beside it. The scroll position doesn't follow them, which leaves them above the
+   * pane with nothing to say where they went.
+   */
+  private keepRevealInView(): void {
+    const results = this.stackedReveal;
+    if (!results || this.isUnderGrid(results)) return;
+    this.stackedReveal = null;
+    results.scrollIntoView({ block: 'nearest' });
   }
 
   /**
