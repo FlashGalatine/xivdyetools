@@ -1403,6 +1403,8 @@
       "privacy": "Bearbeitungen werden auf diesem Gerät für jedes Ausrüstungsteil gespeichert. Der Name des Charakters steht nie in der Liste, und die Datei selbst wird nie gespeichert.",
       "reset": "Alles zurücksetzen",
       "save": ".md speichern",
+      "abridged": "Kurzfassung",
+      "includePiece": "{name} in die Liste aufnehmen",
       "cardNote": "Deine bearbeiteten Bezugsquellen werden auf diesem Gerät gespeichert."
     },
     "empty": "Diese Datei trägt keine Ausrüstung.",
