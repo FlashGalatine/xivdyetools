@@ -167,7 +167,7 @@ never shadow API paths on data.*). The docs now deploy atomically with the API t
 - [x] Content moved to `apps/api-worker/docs/`; vitepress build wired into the api-worker deploy (2026-07-31)
 - [x] `deploy-api-docs.yml` deleted (2026-07-31)
 - [x] Pages-project domain cutover (steps 1–3) — verified live 2026-08-21: `developers.xivdyetools.app` is no longer attached to the `xivdyetools-api-docs` Pages project (only its `pages.dev` alias remains) and serves api-worker's Workers-Static-Assets build
-- [ ] Delete the `xivdyetools-api-docs` Pages project after the cutover window (step 4; tracked in `docs/operations/OPEN_ITEMS.md` §2)
+- [x] Deleted the `xivdyetools-api-docs` Pages project and its 22 deployments on 2026-10-26 after rechecking the cutover; project and deployment-list GETs return 404, while developers.xivdyetools.app still serves the production API worker's docs ([verification](docs/audits/2026-10-26-security/evidence/remediation-finding-056-2026-10-26.md)).
 
 ---
 
@@ -205,7 +205,7 @@ global `cors({ origin: '*' })` replaces the proxy's allowlist CORS (strictly mor
 - [x] discord-worker binding + web-app fallback URL + preconnect hints flipped (2026-07-31)
 - [x] deploy-universalis-proxy.yml deleted (api-worker's workflow covers the moved code)
 - [x] Production domain cutover, steps 1–3 — verified live 2026-08-21: both proxy hosts answer api-worker (`/v1/dyes` 200, `/api/v2/data-centers` 200). Steps 4–5 (web-app + discord-worker production deploys) *are* the 5.0 merge
-- [ ] Delete the old `xivdyetools-universalis-proxy` worker after the cutover window (still exists, last deploy 2026-07-13 — tracked in `docs/operations/OPEN_ITEMS.md` §2)
+- [x] Deleted the old `xivdyetools-universalis-proxy` worker on 2026-10-26 after rechecking routes and all worker bindings; settings GET returns 404 / 10007, while both current proxy URLs still serve the expected data-centers JSON ([verification](docs/audits/2026-10-26-security/evidence/remediation-finding-056-2026-10-26.md)).
 
 ---
 

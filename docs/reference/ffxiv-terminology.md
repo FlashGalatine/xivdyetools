@@ -2,6 +2,8 @@
 
 **Official Square Enix terminology used throughout XIV Dye Tools**
 
+**Source priority (maintainer decision, 2026-10-29):** XIVAPI is authoritative for game-data translations it supplies. When a maintained translation differs from the matching XIVAPI sheet/field, use XIVAPI's localized wording. Dye color names use `Stain.Name`; do not substitute a consumable Item name with a different grammatical context. Record the game/schema pins when adopting updates, change source CSV/generator inputs rather than generated locale JSON, and retain regional sources for Korean/Chinese data unavailable in global XIVAPI. Authored application text continues through the UI localization workflow.
+
 All game terms are sourced from official FFXIV game data and localized across 6 languages. These terms are stored in `@xivdyetools/core/src/data/locales/{locale}.json` and served through the `LocalizationService` API. The one exception is tabled under [Market and Server Terms](#market-and-server-terms-3): three nouns core does not carry, which the apps write by hand.
 
 ---

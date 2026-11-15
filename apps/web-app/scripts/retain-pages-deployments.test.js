@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
@@ -135,17 +135,32 @@ describe('Pages retention interface and inactive workflow wiring', () => {
   ]) {
     it(`${file} binds smoke and dry-run retention to this deploy without activating deletion`, () => {
       const yaml = readFileSync(resolve(`../../.github/workflows/${file}`), 'utf8');
-      const smoke = yaml.slice(yaml.indexOf('      - name: Smoke test'));
+      // Slice each step on its own, so every assertion is tied to the step it names.
+      const step = (stepName) => {
+        const start = yaml.indexOf(`      - name: ${stepName}\n`);
+        expect(start).toBeGreaterThan(-1);
+        const next = yaml.indexOf('\n      - name: ', start + 1);
+        return yaml.slice(start, next === -1 ? undefined : next);
+      };
+      const smoke = step('Smoke test');
+      const retain = step('Pages retention (dry-run; activation deferred)');
+      for (const s of [smoke, retain]) {
+        // The closing ' }}' keeps CLOUDFLARE_API_TOKEN from matching CLOUDFLARE_API_TOKEN_BETA.
+        expect(s).toContain(`CLOUDFLARE_API_TOKEN: \${{ secrets.${token} }}`);
+        expect(s).toContain('EXPECTED_COMMIT: ${{ github.sha }}');
+        expect(s).toContain('DEPLOYMENT_URL: ${{ steps.deploy.outputs.deployment-url }}');
+      }
+      expect(smoke).toContain('node scripts/smoke-test-pages.js');
       expect(smoke).toContain(`--project ${name}`);
       expect(smoke).toContain('--commit "$EXPECTED_COMMIT"');
       expect(smoke).toContain('--headers-file dist/_headers');
-      expect(smoke).toContain(`secrets.${token}`);
-      expect(smoke).toContain('name: Pages retention (dry-run; activation deferred)');
-      expect(smoke).toContain('node scripts/retain-pages-deployments.mjs');
-      expect(smoke).toContain('PAGES_RETENTION_APPLY: ${{ vars.PAGES_RETENTION_APPLY }}');
-      expect(smoke).not.toMatch(/^\s+--apply(?:\s|$)/m);
-      expect(smoke).toContain('EXPECTED_COMMIT: ${{ github.sha }}');
-      expect(smoke).toContain('DEPLOYMENT_URL: ${{ steps.deploy.outputs.deployment-url }}');
+      expect(retain).toContain('node scripts/retain-pages-deployments.mjs');
+      expect(retain).toContain(`--project ${name}`);
+      expect(retain).toContain('PAGES_RETENTION_APPLY: ${{ vars.PAGES_RETENTION_APPLY }}');
+      // No step from the smoke test to the end of the file may activate deletion.
+      expect(yaml.slice(yaml.indexOf('      - name: Smoke test'))).not.toMatch(
+        /^\s+--apply(?:\s|$)/m
+      );
     });
   }
 });
@@ -163,6 +178,8 @@ describe('complete inventory and guarded deletion', () => {
         await load()
       ).retainPagesDeployments({ ...options, ...service, apply: true, activation: 'true' });
       expect(result.deleted).toEqual([older, OLD]);
+      // The CLI prints this result as JSON, so it must never carry the API token.
+      expect(JSON.stringify(result)).not.toContain(options.token);
       const first = service.calls.findIndex((c) => c.method === 'DELETE');
       expect(service.calls[first + 1].method).toBe('GET');
       expect(service.calls[first + 1].url.pathname).toMatch(/\/projects\/xivdyetools$/);
@@ -481,9 +498,28 @@ describe('complete inventory and guarded deletion', () => {
         return reply(envelope(null), 503);
       },
     });
-    await expect(
-      (await load()).retainPagesDeployments({ ...options, ...service, sleep: async () => {} })
-    ).rejects.toThrow(/GET.*503/);
+    const logged = [];
+    const spies = ['log', 'info', 'warn', 'error'].map((method) =>
+      vi.spyOn(console, method).mockImplementation((...parts) => {
+        logged.push(parts.map(String).join(' '));
+      })
+    );
+    try {
+      const error = await (
+        await load()
+      )
+        .retainPagesDeployments({ ...options, ...service, sleep: async () => {} })
+        .then(
+          () => null,
+          (e) => e
+        );
+      expect(error?.message).toMatch(/GET.*503/);
+      // The CLI logs error.message on failure, so the error must not carry the token either.
+      expect(`${error.message}\n${error.stack}`).not.toContain(options.token);
+      expect(logged.join('\n')).not.toContain(options.token);
+    } finally {
+      spies.forEach((spy) => spy.mockRestore());
+    }
     expect(attempts).toBe(3);
   });
   it('does not retry a denied or malformed successful GET envelope', async () => {

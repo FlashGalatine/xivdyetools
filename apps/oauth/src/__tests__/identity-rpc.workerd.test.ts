@@ -1,8 +1,9 @@
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import type { TestHarness } from 'wrangler';
-import { mkdirSync, readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { fileURLToPath, URL } from 'node:url';
-import { resolve } from 'node:path';
+import { join, resolve } from 'node:path';
 import { continuityHash } from '../services/identity-contract.js';
 import type * as CallerModule from './mocks/identity-rpc-caller.js';
 import type * as ContinuityModule from './mocks/ban-continuity-worker.js';
@@ -13,12 +14,11 @@ const X = '20000000-0000-4000-8000-000000000001';
 const D = '123456789012345678';
 const source = (relative: string) => fileURLToPath(new URL(relative, import.meta.url));
 const saved = new Map<string, string | undefined>();
+let scratch: string | undefined;
 beforeAll(async () => {
-  const root = resolve(
-    source('../../../../.superpowers/sdd/REMEDIATION_PLAN'),
-    `task-3-runtime-${process.pid}`,
-  );
-  mkdirSync(root, { recursive: true });
+  // Fresh OS temp root: Wrangler's profile, cache, logs and .wrangler stay out of the checkout.
+  const root = mkdtempSync(join(tmpdir(), 'xivdyetools-oauth-rpc-'));
+  scratch = root;
   // Scoped scratch configuration prevents loading a user's Wrangler config or credentials.
   for (const [key, value] of Object.entries({
     USERPROFILE: root,
@@ -114,6 +114,7 @@ afterAll(async () => {
       if (value === undefined) delete process.env[key];
       else process.env[key] = value;
     }
+    if (scratch) rmSync(scratch, { recursive: true, force: true, maxRetries: 5 });
   }
 }, 30000);
 const rpc = async (path: string, input: unknown) =>

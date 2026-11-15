@@ -1,0 +1,8 @@
+
+ RUN  v5.0.5 C:/dev/XIVProjects/xivdyetools/.claude/worktrees/deep-i18n-audits-20261026/apps/discord-worker
+
+
+ Test Files  5 passed (5)
+      Tests  76 passed (76)
+   Start at  20:13:02
+   Duration  2.20s (transform 72%, import 20%, tests 6%, worker 2%)
