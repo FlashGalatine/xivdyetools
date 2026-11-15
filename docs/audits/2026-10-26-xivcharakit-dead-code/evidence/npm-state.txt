@@ -1,0 +1,5 @@
+== @xivdyetools/core: local 5.15.0 | npm latest: 5.15.0
+published versions (last 8): 5.2.0, 5.3.0, 5.5.0, 5.8.0, 5.8.1, 5.10.0, 5.12.0, 5.15.0
+== @xivdyetools/bot-logic: local 4.11.0 | npm latest: 4.11.0
+published versions (last 8): 4.2.0, 4.3.0, 4.4.0, 4.4.1, 4.5.0, 4.8.3, 4.9.0, 4.11.0
+== xivcharakit: 0.1.0-beta.1 (pinned 0.1.0-beta.4); dist-tags: {"latest":"0.1.0-beta.1","next":"0.1.0-beta.4"}

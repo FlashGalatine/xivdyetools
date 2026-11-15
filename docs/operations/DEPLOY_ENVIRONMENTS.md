@@ -142,6 +142,35 @@ branch stacked on another inherits its base's changes; a push that reverts the b
 changes does not redeploy) are in
 [`deployment.md`](../developer-guides/deployment.md#beta-deploys-follow-the-branchs-own-changes).
 
+### Update 2026-10-31 — production image-worker deploys can be held
+
+The `production` environment's required reviewer holds every production deploy job until it
+is approved. A held release still queues an approval on every merge whose paths match,
+though. For image-worker that includes each lockfile, workspace, logger or worker-kit change,
+and one wrong approval would ship the held code. `deploy-image-worker.yml` therefore reads a
+repository variable:
+
+- While **`IMAGE_WORKER_DEPLOY_HOLD`** is `true`, a push to `main` skips the deploy job, so
+  the merge queues no approval and deploys nothing.
+- A manual **Run workflow** dispatch still deploys, behind the same reviewer gate. Use it
+  for the accepted release.
+- Unset the variable (or set anything other than `true`) to resume automatic deploys. The
+  next matching push to `main` queues an approval as before.
+
+```bash
+gh variable set IMAGE_WORKER_DEPLOY_HOLD --body true --repo FlashGalatine/xivdyetools
+gh variable delete IMAGE_WORKER_DEPLOY_HOLD --repo FlashGalatine/xivdyetools
+```
+
+**Set it only once the deploys that should still run have finished.** A logger or
+worker-kit merge also redeploys image-worker with the source already on `main`. While the
+variable is set, those redeploys skip too, so image-worker keeps its last deployed build
+until the hold ends. A skipped run says only that the job was skipped. Read the variable
+(`gh variable list`) before assuming the workflow is broken.
+
+`scripts/check-workflows.test.ts` pins the guard, the `production` environment on the job
+and the `workflow_dispatch` trigger. No other production workflow carries a hold variable.
+
 ---
 
 ## Problem
