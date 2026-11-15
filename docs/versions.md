@@ -27,7 +27,7 @@
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
 | **Web Application** | v5.18.1 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v5.9.9 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
+| **Discord Bot** | v5.9.10 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.5 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.9.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.2.2 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
@@ -229,6 +229,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.9.10 | Oct 2026 | Conditional Core 6/SVG/Bot Logic 5 adoption; preserve original-byte guards and card/embed adapters; registry/publication/consumer acceptance held |
 | v5.9.9 | Nov 2026 | Documents only — the Privacy Policy's Author name row in all six languages now says that when XIVAuth cannot return the characters, the name already on the account stays and a new account gets the `XIVAuth User` name, matching oauth 3.2.2. No discord-worker source changed; the production deploy's `register-commands` step re-registers an unchanged roster |
 | v5.9.8 | Nov 2026 | Documents only — the Privacy Policy in all six languages now covers every web sign-in, not only XIVAuth: each sign-in replaces the author name on the presets under that account with the name from that sign-in (not while a ban is active), bot-submitted ones included for a Discord or linked XIVAuth sign-in. No discord-worker source changed |
 | v5.9.7 | Oct 2026 | A-DISCORD: one-request favorite lists, bounded/checkable delivery, localized choices/clan labels, byte-only attachments, preview attribution removal and native request guards; bot-logic 4.12.0 locale companion must publish first |
@@ -759,6 +760,7 @@ and the [rollout runbook](operations/security-remediation-2026-09-15.md) for the
 
 | Consumer | Minimum Core Version | Notes |
 |----------|---------------------|-------|
+| xivdyetools-discord-worker v5.9.10 | @xivdyetools/auth v3.0.0; @xivdyetools/bot-logic v5.0.0; @xivdyetools/svg v4.4.2; @xivdyetools/core v6.0.0; @xivdyetools/logger v2.4.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Conditional M source; not dependency isolation; publication, acceptance and activation held |
 | xivdyetools-og-worker v2.12.3 | @xivdyetools/core v6.0.0; @xivdyetools/svg v4.4.2; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Conditional M source; not dependency isolation; publication, acceptance and activation held |
 | xivdyetools-web-app v5.17.1 | @xivdyetools/core v6.0.0; @xivdyetools/logger v2.4.0; @xivdyetools/svg v4.4.2; @xivdyetools/types v3.3.0 | Conditional M source; not dependency isolation; publication, acceptance and activation held |
 | xivdyetools-api-worker v0.21.3 | @xivdyetools/core v6.0.0; @xivdyetools/types v3.3.0; @xivdyetools/worker-kit v1.6.0 | Conditional M source; not dependency isolation; publication, acceptance and activation held |
