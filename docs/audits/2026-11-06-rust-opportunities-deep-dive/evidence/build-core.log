@@ -1,0 +1,49 @@
+
+   • turbo 2.11.10
+   • Packages in scope: @xivdyetools/core, @xivdyetools/logger, @xivdyetools/types
+   • Running build in 3 packages
+   • Remote caching disabled, using shared worktree cache
+
+@xivdyetools/logger:build: cache hit, replaying logs 6c58c66f0b8bbf9d
+@xivdyetools/logger:build: $ tsc -p tsconfig.build.json
+@xivdyetools/types:build: cache hit, replaying logs daf0b8fbece0a6a1
+@xivdyetools/types:build: $ tsc -p tsconfig.build.json
+@xivdyetools/core:build: cache hit, replaying logs eda779400f42a516
+@xivdyetools/core:build: $ npm run build:locales && tsc -p tsconfig.build.json && npm run copy:locales
+@xivdyetools/core:build:
+@xivdyetools/core:build: > @xivdyetools/core@5.16.0 build:locales
+@xivdyetools/core:build: > tsx scripts/build-locales.ts
+@xivdyetools/core:build:
+@xivdyetools/core:build: 🌐 Building locale files...
+@xivdyetools/core:build:
+@xivdyetools/core:build: Building English (en)...
+@xivdyetools/core:build: Building Japanese (ja)...
+@xivdyetools/core:build: Building German (de)...
+@xivdyetools/core:build: Building French (fr)...
+@xivdyetools/core:build: Building Korean (ko)...
+@xivdyetools/core:build: Building Chinese (zh)...
+@xivdyetools/core:build:
+@xivdyetools/core:build:   = Unchanged, kept C:\dev\XIVProjects\xivdyetools\.claude\worktrees\review-open-draft-prs-49e016\.turbo\bt\pol\packages\core\src\data\locales\en.json (125 dyes)
+@xivdyetools/core:build:   = Unchanged, kept C:\dev\XIVProjects\xivdyetools\.claude\worktrees\review-open-draft-prs-49e016\.turbo\bt\pol\packages\core\src\data\locales\ja.json (125 dyes)
+@xivdyetools/core:build:   = Unchanged, kept C:\dev\XIVProjects\xivdyetools\.claude\worktrees\review-open-draft-prs-49e016\.turbo\bt\pol\packages\core\src\data\locales\de.json (125 dyes)
+@xivdyetools/core:build:   = Unchanged, kept C:\dev\XIVProjects\xivdyetools\.claude\worktrees\review-open-draft-prs-49e016\.turbo\bt\pol\packages\core\src\data\locales\fr.json (125 dyes)
+@xivdyetools/core:build:   = Unchanged, kept C:\dev\XIVProjects\xivdyetools\.claude\worktrees\review-open-draft-prs-49e016\.turbo\bt\pol\packages\core\src\data\locales\ko.json (125 dyes)
+@xivdyetools/core:build:   = Unchanged, kept C:\dev\XIVProjects\xivdyetools\.claude\worktrees\review-open-draft-prs-49e016\.turbo\bt\pol\packages\core\src\data\locales\zh.json (125 dyes)
+@xivdyetools/core:build:
+@xivdyetools/core:build: ✅ Locale files already up to date (nothing written).
+@xivdyetools/core:build:
+@xivdyetools/core:build: > @xivdyetools/core@5.16.0 copy:locales
+@xivdyetools/core:build: > tsx scripts/copy-locales.ts
+@xivdyetools/core:build:
+@xivdyetools/core:build: 📦 Copying 6 locale files to dist...
+@xivdyetools/core:build:    ✓ de.json
+@xivdyetools/core:build:    ✓ en.json
+@xivdyetools/core:build:    ✓ fr.json
+@xivdyetools/core:build:    ✓ ja.json
+@xivdyetools/core:build:    ✓ ko.json
+@xivdyetools/core:build:    ✓ zh.json
+@xivdyetools/core:build: ✅ Locale files copied to C:\dev\XIVProjects\xivdyetools\.claude\worktrees\review-open-draft-prs-49e016\.turbo\bt\pol\packages\core\dist\data\locales
+
+ Tasks:    3 successful, 3 total
+Cached:    3 cached, 3 total
+  Time:    1.076s >>> FULL TURBO

@@ -124,6 +124,13 @@ const SLOT_SIZE = {
   result: 120, // 120x120px for result slot
 } as const;
 
+/**
+ * The least the mixing field fits in with its row names beside the cells: 52px holds
+ * "Spectral", 32px holds a ΔE or a ratio heading, and there are five 4px gaps. Its
+ * designed 348px goes first, and the tool's side padding only gives way after this.
+ */
+const FIELD_MIN_WIDTH = 232;
+
 /** The six blend models, in the mixing field's row order. */
 const MIXING_MODES: readonly MixingMode[] = ['ryb', 'spectral', 'oklab', 'lab', 'hsl', 'rgb'];
 
@@ -1411,20 +1418,21 @@ export class MixerTool extends BaseComponent implements PaletteSlotHost {
     );
 
     const grid = this.createElement('div', {
+      className: 'mixer-field-grid',
       attributes: {
-        style:
-          'display: grid; grid-template-columns: 68px repeat(5, minmax(52px, 1fr)); gap: 4px; max-width: 560px; margin-inline: auto;',
+        style: 'display: grid; max-width: 560px; margin-inline: auto;',
       },
     });
 
     // Column headers: A/B split per ratio.
-    grid.appendChild(this.createElement('span'));
+    grid.appendChild(this.createElement('span', { className: 'mixer-field-corner' }));
     for (const r of RATIOS) {
       grid.appendChild(
         this.createElement('span', {
+          className: 'mixer-field-ratio',
           textContent: `${r}/${100 - r}`,
           attributes: {
-            style: `font-family: ${MONO}; font-size: 9px; letter-spacing: 0.5px; text-align: center; color: var(--theme-text-muted);`,
+            style: `font-family: ${MONO}; text-align: center; color: var(--theme-text-muted);`,
           },
         })
       );
@@ -1436,6 +1444,7 @@ export class MixerTool extends BaseComponent implements PaletteSlotHost {
       .map((dye) => dye.id);
     for (const model of MODELS) {
       const rowHeader = this.createElement('span', {
+        className: 'mixer-field-model',
         textContent: MODEL_SHORT[model],
         attributes: {
           title: LanguageService.t(`mixer.model${model.charAt(0).toUpperCase()}${model.slice(1)}`),
@@ -1468,12 +1477,13 @@ export class MixerTool extends BaseComponent implements PaletteSlotHost {
         const ink = luminance > 0.45 ? 'rgba(10,10,10,0.75)' : 'rgba(255,255,255,0.8)';
 
         const cell = this.createElement('button', {
+          className: 'mixer-field-cell',
           attributes: {
             type: 'button',
             title: `${MODEL_SHORT[model]} · ${r}/${100 - r} · ${blend.toUpperCase()}`,
             style: `height: 40px; border-radius: 7px; cursor: pointer; background: ${blend}; border: 2px solid ${
               selected ? 'var(--theme-primary)' : 'transparent'
-            }; display: flex; align-items: flex-end; justify-content: flex-end; padding: 2px 4px;`,
+            }; display: flex; align-items: flex-end;`,
           },
         }) as HTMLButtonElement;
         cell.appendChild(
@@ -1569,6 +1579,8 @@ export class MixerTool extends BaseComponent implements PaletteSlotHost {
     clearContainer(right);
 
     // The shell owns scrolling; let this panel grow with the full mixer content.
+    // The side padding gives way before the field has to change form. It's a percentage
+    // because a side panel changes the pane's width with no window resize.
     right.setAttribute(
       'style',
       `
@@ -1576,11 +1588,33 @@ export class MixerTool extends BaseComponent implements PaletteSlotHost {
       flex-direction: column;
       width: 100%;
       flex: 1;
-      padding: 32px;
+      padding: 32px clamp(0px, calc((100% - ${FIELD_MIN_WIDTH}px) / 2), 32px);
       gap: 32px;
       box-sizing: border-box;
     `
     );
+
+    // The field's sizes, for what inline styles can't express. Under FIELD_MIN_WIDTH each
+    // row name takes a line of its own and the cells take the whole width. The tool
+    // renders inside the shell's shadow root, so this <style> scopes there.
+    const styles = document.createElement('style');
+    styles.textContent = `
+      .mixer-field { container-type: inline-size; }
+      .mixer-field-grid {
+        grid-template-columns: minmax(52px, 68px) repeat(5, minmax(32px, 1fr));
+        gap: 4px;
+      }
+      .mixer-field-ratio { font-size: 9px; letter-spacing: 0.5px; }
+      .mixer-field-cell { justify-content: flex-end; padding: 2px 4px; }
+      @container (width < ${FIELD_MIN_WIDTH}px) {
+        .mixer-field-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; }
+        .mixer-field-corner { display: none; }
+        .mixer-field-model { grid-column: 1 / -1; margin-top: 4px; }
+        .mixer-field-ratio { font-size: 8px; letter-spacing: 0; }
+        .mixer-field-cell { justify-content: center; padding: 2px 0; }
+      }
+    `;
+    right.appendChild(styles);
 
     // Content wrapper with max-width to prevent over-expansion on ultrawide monitors
     const contentWrapper = this.createElement('div', {
@@ -1607,6 +1641,7 @@ export class MixerTool extends BaseComponent implements PaletteSlotHost {
 
     // 5C: the mixing field — model × ratio, the whole space at one glance.
     this.fieldContainer = this.createElement('div', {
+      className: 'mixer-field',
       attributes: { style: 'width: 100%;' },
     });
     this.renderMixingField();
@@ -1617,21 +1652,27 @@ export class MixerTool extends BaseComponent implements PaletteSlotHost {
       attributes: { style: 'display: none; width: 100%;' },
     });
     // Results header (using consistent section-header/section-title pattern from other tools)
+    // Only wraps once the title's longest word and the actions can't share a line. Until
+    // then the title takes what's left, over two lines on a phone.
     const resultsHeader = this.createElement('div', {
       className: 'section-header',
       attributes: {
-        style: 'display: flex; justify-content: space-between; align-items: center;',
+        style:
+          'display: flex; flex-wrap: wrap; gap: 8px 0; justify-content: space-between; align-items: center;',
       },
     });
     const resultsTitle = this.createElement('span', {
       className: 'section-title',
       textContent: LanguageService.t('mixer.matchingDyes'),
+      attributes: {
+        style: 'flex: 1 1 min-content; min-width: 0; overflow-wrap: break-word;',
+      },
     });
 
     // Right cluster: Export beside Share, keeping the header's two-child
     // space-between intact.
     const headerActions = this.createElement('div', {
-      attributes: { style: 'display: flex; align-items: center; gap: 12px;' },
+      attributes: { style: 'display: flex; flex-wrap: wrap; align-items: center; gap: 12px;' },
     });
     const exportBtn = this.createElement('button', {
       textContent: LanguageService.t('common.export'),
@@ -1766,6 +1807,7 @@ export class MixerTool extends BaseComponent implements PaletteSlotHost {
       attributes: {
         style: `
           width: 150px;
+          max-width: 100%;
           height: 150px;
           margin-top: 24px;
           opacity: 0.25;
@@ -1937,12 +1979,12 @@ export class MixerTool extends BaseComponent implements PaletteSlotHost {
           background: ${this.blendedColor || 'var(--v4-glass-bg, rgba(30, 30, 30, 0.5))'};
           backdrop-filter: blur(16px);
           -webkit-backdrop-filter: blur(16px);
-          border: 3px solid var(--theme-primary, #d4af37);
+          border: 3px solid var(--theme-primary);
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+          box-shadow: 0 0 20px color-mix(in srgb, var(--theme-primary) 30%, transparent);
           position: relative;
           flex-shrink: 0;
         `,
