@@ -26,12 +26,39 @@ export interface ExtractedImage {
 export const IMAGE_WORKER_TIMEOUT_MS = 10_000;
 
 /**
+ * image-worker's admission refusal (`IMAGE_UNAVAILABLE_ERROR` in its
+ * `admission.ts`): one processing slot per isolate, no queue (image 1.3.5).
+ */
+const IMAGE_BUSY_ERROR = 'Image processing unavailable';
+
+/** Pause before the single retry of a busy refusal. */
+export const IMAGE_WORKER_BUSY_RETRY_DELAY_MS = 500;
+
+/** The image worker's `{ error }` message, or a status-based fallback. */
+async function errorMessage(response: Response): Promise<string> {
+  try {
+    const body = await response.json<{ error?: string }>();
+    if (body.error) {
+      return body.error;
+    }
+  } catch {
+    // Keep the status-based fallback.
+  }
+  return `Image processing failed: HTTP ${response.status}`;
+}
+
+/**
  * Validate, fetch and decode an image, returning raw RGBA pixels.
  *
  * Server-side failures are rethrown with their message preserved verbatim,
  * because two callers substring-match it — the extractor to choose the
  * localized user-facing message, the command trace to classify the failure as
  * `image_input`. The one table of markers is `services/image-input-errors.ts`.
+ *
+ * A busy refusal (503 `Image processing unavailable`) is retried exactly once,
+ * after {@link IMAGE_WORKER_BUSY_RETRY_DELAY_MS}, inside the same
+ * {@link IMAGE_WORKER_TIMEOUT_MS} budget; a second busy reply is rethrown
+ * verbatim like any other failure. No other failure is retried.
  *
  * @throws Error if the binding is absent, the image worker rejects the image,
  *   or the call exceeds {@link IMAGE_WORKER_TIMEOUT_MS} (a `TimeoutError`)
@@ -50,26 +77,33 @@ export async function extractImagePixels(
     payload.maxDimension = options.maxDimension;
   }
 
-  const response = await env.IMAGE_WORKER.fetch(
-    new Request('https://image-worker/extract', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(IMAGE_WORKER_TIMEOUT_MS),
-    })
-  );
+  const binding = env.IMAGE_WORKER;
+  // One budget for both attempts: the retry never extends the round-trip bound.
+  const signal = AbortSignal.timeout(IMAGE_WORKER_TIMEOUT_MS);
+  const send = (): Promise<Response> =>
+    binding.fetch(
+      new Request('https://image-worker/extract', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal,
+      })
+    );
+
+  let response = await send();
+
+  if (response.status === 503) {
+    const message = await errorMessage(response);
+    if (message !== IMAGE_BUSY_ERROR) {
+      throw new Error(message);
+    }
+    await new Promise((resolve) => setTimeout(resolve, IMAGE_WORKER_BUSY_RETRY_DELAY_MS));
+    signal.throwIfAborted();
+    response = await send();
+  }
 
   if (!response.ok) {
-    let message = `Image processing failed: HTTP ${response.status}`;
-    try {
-      const body = await response.json<{ error?: string }>();
-      if (body.error) {
-        message = body.error;
-      }
-    } catch {
-      // Keep the status-based fallback.
-    }
-    throw new Error(message);
+    throw new Error(await errorMessage(response));
   }
 
   return {

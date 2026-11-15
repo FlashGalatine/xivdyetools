@@ -132,11 +132,10 @@ not reach the provider: a missing one is `400 Missing state`.
 The state parameter prevents CSRF and tampering attacks.
 
 The wire format remains `encodedState.signature`; the prefix separates state signing input
-from JWT signing input. Legacy signed states have a fixed issuance cutoff of
-2026-10-28 00:00:00 UTC and a maximum lifetime of 600 seconds; final legacy acceptance ends
-at 00:10:00 UTC that day. New signatures continue afterward. If deployment occurs after this
-one-time window, an in-flight old sign-in must be restarted. Unsigned development GET
-compatibility is separate; POST exchanges require a signature.
+from JWT signing input. States signed by 3.1.x and earlier (no prefix) are rejected; the
+one-time compatibility window closed on 2026-10-28 before 3.2.0 shipped, so a sign-in in flight
+across that deployment must be restarted. Unsigned development GET compatibility is separate;
+POST exchanges require a signature.
 
 **Format:** `base64url(json).hmac_signature`
 

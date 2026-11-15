@@ -1,5 +1,39 @@
 # A-IMAGE — reviewed mitigation preparation, 2026-10-28
 
+> **Status note, 2026-10-31.** This page is the dated record of source commit `a35034bce228`;
+> its body below is not rewritten. Release cut 15 ([#386](https://github.com/FlashGalatine/xivdyetools/pull/386))
+> also ships later image-worker 1.3.5 work that this page predates: the retained Photon ownership
+> patch and one-operation admission (source `1815fe82a934`), the nested GIF/WebP metadata checks
+> (source `46708a1a5bf2`), and the 2026-10-31 Apache-2.0 notice rebuild of the WASM. Read the page
+> with these corrections:
+>
+> - **WASM size.** "Photon WASM 1,566,855 bytes" under *Gates and activation hold* is the size of the
+>   unpatched `@cf-wasm/photon` 0.4.0 `photon_rs_bg.wasm`. Cut 15 bundles
+>   `apps/image-worker/vendor/photon/photon-owned.wasm`: 1,571,497 bytes. Since the 2026-10-31
+>   rebuild its SHA-256 is `dd3badf2…6f1bd1` (it was `f848bcd2…8d2461`); the two differ only in
+>   embedded panic-location line numbers (`vendor/photon/notice-rebuild-2026-10-31.json`). The
+>   1,669.25 KiB upload and 647.08 KiB gzip figures were not re-measured for that tree.
+> - **Memory figures.** The 103.375 MiB plateau and the 142.330 MiB checkpoint describe the source before
+>   the ownership patch. Image-worker 1.3.5's CHANGELOG (*Release-readiness follow-up*) records the later
+>   110.4375 MiB WASM plateau and a diagnostic sequence above the 128 MiB reference, measured on the
+>   `f848bcd2…` artifact. All of these describe earlier artifacts and must be re-measured on the rebuilt
+>   artifact at image acceptance. FINDING-020 stays PARTIAL / OPEN and image activation stays on hard
+>   hold. The current gates are in `docs/operations/REMEDIATION_RELEASE_2026_10.md` section 6 and
+>   unit 15 of `docs/operations/REMEDIATION_UNIT_ACCEPTANCE_2026_10.md`.
+> - **Manual companion.** PR #349 is where the six-language 5 MB manual correction was written. In the
+>   release queue it ships in bot-logic 4.12.0, cut 06 ([#377](https://github.com/FlashGalatine/xivdyetools/pull/377)).
+> - **"No production approval hold is assumed or changed"** means the GitHub `production` environment's
+>   reviewer rule was left as it was. It does not say a hold is in force: image-worker deploy runs stay
+>   unapproved only under AP-14, and the `IMAGE_WORKER_DEPLOY_HOLD` guard from
+>   [#412](https://github.com/FlashGalatine/xivdyetools/pull/412) skips push-triggered runs only while
+>   that repository variable is `true` (AP-32). Neither approval was given on 2026-10-31.
+> - **Links.** The three receipts and two probe scripts below were restored on 2026-10-31,
+>   byte-identical from source commit `a35034bce228`, so those links resolve in cut 15. The probe's
+>   default output folder, `.superpowers/sdd/`, is not ignored by any tracked `.gitignore`. The merged
+>   plan link resolves only once the audit-docs PRs ([#335](https://github.com/FlashGalatine/xivdyetools/pull/335)
+>   / #336) are on main. The later image evidence (readiness, hosted preview, CPU profile, owned
+>   buffers) is left for the audit-docs companion described in #411's source-stack closure record.
+
 **FINDING-020 remains PARTIAL / OPEN.** The 16-bit PNG vector is closed in source and
 reviewed mitigations are prepared in image-worker **1.3.5 PATCH**. Aggregate memory
 headroom and Cloudflare production acceptance remain unresolved. Do not activate this

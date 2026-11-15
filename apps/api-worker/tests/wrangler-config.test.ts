@@ -154,19 +154,18 @@ describe('wrangler.toml', () => {
     expect(toml).not.toMatch(/tail_consumers/);
     expect(toml).not.toMatch(/head_sampling_rate|invocation_logs/);
   });
-});
 
-
-it('pins dedicated chara native namespaces and limits to runtime configuration', () => {
-  for (const [text, header, publicLimit, publicId, serviceId] of [
-    [topLevel, 'ratelimits', CHARA_PUBLIC_DEVELOPMENT_LIMIT, '1062', '1064'],
-    [production, 'env.production.ratelimits', CHARA_PUBLIC_PRODUCTION_LIMIT, '1061', '1063'],
-  ] as const) {
-    for (const [name, id, limit] of [
-      ['CHARA_RATE_LIMITER', publicId, publicLimit],
-      ['CHARA_SERVICE_RATE_LIMITER', serviceId, publicLimit * SERVICE_BINDING_BUDGET_MULTIPLIER],
-    ]) {
-      expect(text).toContain(`[[${header}]]\nname = "${name}"\nnamespace_id = "${id}"\nsimple = { limit = ${limit}, period = ${CHARA_WINDOW_SECONDS} }`);
+  it('pins dedicated chara native namespaces and limits to runtime configuration', () => {
+    for (const [text, header, publicLimit, publicId, serviceId] of [
+      [topLevel, 'ratelimits', CHARA_PUBLIC_DEVELOPMENT_LIMIT, '1062', '1064'],
+      [production, 'env.production.ratelimits', CHARA_PUBLIC_PRODUCTION_LIMIT, '1061', '1063'],
+    ] as const) {
+      for (const [name, id, limit] of [
+        ['CHARA_RATE_LIMITER', publicId, publicLimit],
+        ['CHARA_SERVICE_RATE_LIMITER', serviceId, publicLimit * SERVICE_BINDING_BUDGET_MULTIPLIER],
+      ]) {
+        expect(text).toContain(`[[${header}]]\nname = "${name}"\nnamespace_id = "${id}"\nsimple = { limit = ${limit}, period = ${CHARA_WINDOW_SECONDS} }`);
+      }
     }
-  }
+  });
 });

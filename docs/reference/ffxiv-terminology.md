@@ -2,6 +2,8 @@
 
 **Official Square Enix terminology used throughout XIV Dye Tools**
 
+**Source priority (maintainer decision, 2026-10-29):** XIVAPI is authoritative for game-data translations it supplies. When a maintained translation differs from the matching XIVAPI sheet/field, use XIVAPI's localized wording. Dye color names use `Stain.Name`; do not substitute a consumable Item name with a different grammatical context. Record the game/schema pins when adopting updates, change source CSV/generator inputs rather than generated locale JSON, and retain regional sources for Korean/Chinese data unavailable in global XIVAPI. Authored application text continues through the UI localization workflow.
+
 All game terms are sourced from official FFXIV game data and localized across 6 languages. These terms are stored in `@xivdyetools/core/src/data/locales/{locale}.json` and served through the `LocalizationService` API. The one exception is tabled under [Market and Server Terms](#market-and-server-terms-3): three nouns core does not carry, which the apps write by hand.
 
 ---
@@ -30,13 +32,13 @@ LanguageService (web-app proxy) / Bot commands (Discord worker)
 
 | Sample ID | EN | JA | DE | FR | KO | ZH |
 |-----------|----|----|----|----|----|----|
-| 5729 | Snow White | スノウホワイト | Schneeweißer | blanc neige | 하얀 눈색 | 素雪白 |
-| 5742 | Blood Red | ブラッドレッド | Blutroter | rouge sang | 선홍색 | 鲜血红 |
-| 13116 | Metallic Silver | シャインシルバー | Metallic silberner | argent brillant | 반짝이는 은색 | 闪耀银 |
-| 30116 | Ruby Red | ルビーレッド | Rubinroter | rouge rubis | 홍옥색 | 宝石红 |
-| 48163 | Neon Pink | ネオンピンク | Neonpinker | rose néon | 형광 분홍색 | 霓虹粉 |
+| 5729 | Snow White | スノウホワイト | Schneeweiß | Blanc neige | 하얀 눈색 | 素雪白 |
+| 5742 | Blood Red | ブラッドレッド | Blutrot | Rouge sang | 선홍색 | 鲜血红 |
+| 13116 | Metallic Silver | シャインシルバー | Metallic Silber | Argent brillant | 반짝이는 은색 | 闪耀银 |
+| 30116 | Ruby Red | ルビーレッド | Rubinrot | Rouge rubis | 홍옥색 | 宝石红 |
+| 48163 | Neon Pink | ネオンピンク | Neonpink | Rose néon | 형광 분홍색 | 霓虹粉 |
 
-Names match official FFXIV Lodestone and in-game item names. The core library stores color names without the "Dye" suffix (EN) or "カララント:" prefix (JA).
+For en/ja/de/fr dye colors, XIVAPI's matching `Stain.Name` field is authoritative over existing translations. Use the color name, rather than the grammatical form on a consumable `Item.Name`; preserve spelling and capitalization, with surrounding whitespace trimmed by the locale generator. The [2026-10-29 capture and adoption receipt](../research/2026-10-29-dye-name-translations/README.md) records the applied names. Korean and Chinese retain their regional sources because XIVAPI does not supply those locales. Update `dyenames.csv`, then regenerate the locale JSON.
 
 ---
 

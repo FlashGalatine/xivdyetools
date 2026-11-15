@@ -275,6 +275,24 @@ const GRID_GAP = 4;
  * line and blows the panel out (the Evercold notice did exactly that).
  */
 const GRID_WIDTH_DESKTOP = GRID_CELL_DESKTOP * 8 + GRID_GAP * 7;
+/**
+ * Side padding that gives way before the grid has to scroll sideways. The tool's goes
+ * first, from 32px to 0, once its column can't fit the grid panel with all of it. Then
+ * the panel's own goes from 20px to 8px, with 2px of border beside the grid. These are
+ * percentages because a side panel changes the column's width with no window resize.
+ * With both panels open that's 8 columns from an 884px window, down from 972px.
+ */
+const TOOL_PADDING_DESKTOP = `clamp(0px, calc((100% - ${GRID_WIDTH_DESKTOP + 42}px) / 2), 32px)`;
+const PANEL_PADDING_DESKTOP = `clamp(8px, calc((100% - ${GRID_WIDTH_DESKTOP + 2}px) / 2), 20px)`;
+/**
+ * Narrowest the results column gets beside the grid panel before it wraps under
+ * it. The selection card's excerpt reaches 230px into the column. In a narrower
+ * column it crosses the card's border, which is only cosmetic, and the pane clips
+ * it below 174px (230 minus the 56px between the column and the pane's edge). This
+ * stays above that, and low enough that a 1536px window (1920x1080 at 125%) keeps
+ * the 96-cell palettes' results beside the grid in English.
+ */
+const RESULTS_MIN_WIDTH = 190;
 /** The selected thing the verdict card describes (sheet slot or grid cell). */
 interface SwatchSelectionContext {
   source: 'slot' | 'grid';
@@ -373,6 +391,10 @@ export class SwatchTool extends BaseComponent {
   // Layout containers for responsive behavior
   private mainLayout: HTMLElement | null = null;
   private gridPanel: HTMLElement | null = null;
+  /** Watches the row, because a side panel moves the results with no window resize. */
+  private layoutObserver: ResizeObserver | null = null;
+  /** The results last revealed under the grid, until they move beside it. */
+  private stackedReveal: HTMLElement | null = null;
   private paletteRailContainer: HTMLElement | null = null;
   private gridTitleEl: HTMLElement | null = null;
   /** What the selection card describes — the last slot pick or grid click */
@@ -441,6 +463,11 @@ export class SwatchTool extends BaseComponent {
     // in onMount. update() unbinds every this.on listener and then calls only
     // this, so one added at mount was gone after the first language switch.
     this.on(window, 'resize', this.updateSwatchLayout);
+
+    // Here for the same reason: update() rebuilds the row this watches.
+    this.layoutObserver?.disconnect();
+    this.layoutObserver = new ResizeObserver(() => this.keepRevealInView());
+    if (this.mainLayout) this.layoutObserver.observe(this.mainLayout);
   }
 
   onMount(): void {
@@ -517,6 +544,9 @@ export class SwatchTool extends BaseComponent {
     // Only the views go: the loaded file stays in CharaSessionService.
     this.destroyChara();
 
+    this.layoutObserver?.disconnect();
+    this.layoutObserver = null;
+    this.stackedReveal = null;
     this.selectedColor = null;
     this.matchedDyes = [];
     this.colors = [];
@@ -733,6 +763,7 @@ export class SwatchTool extends BaseComponent {
     this.reverseDyeName = LanguageService.getDyeName(dye.itemID) || dye.name;
     logger.info(`[SwatchTool] Reverse match: dye "${this.reverseDyeName}" (${dye.hex})`);
     this.performReverseMatch();
+    this.revealOutsideGridPick(this.reverseSection);
   }
 
   /**
@@ -740,12 +771,29 @@ export class SwatchTool extends BaseComponent {
    */
   public selectCustomColor(hex: string): void {
     if (!hex) return;
+    this.applyCustomColor(hex);
+    this.revealOutsideGridPick(this.reverseSection);
+  }
+
+  /** The match itself. A THIS CHARACTER slot uses this: its own card already shows the answer. */
+  private applyCustomColor(hex: string): void {
     this.reverseDyeHex = hex.startsWith('#') ? hex : `#${hex}`;
     this.reverseDyeName = LanguageService.tInterpolate('common.customColorName', {
       hex: this.reverseDyeHex.toUpperCase(),
     });
     logger.info(`[SwatchTool] Reverse match: custom color ${this.reverseDyeHex}`);
     this.performReverseMatch();
+  }
+
+  /**
+   * A pick made outside the grid can leave its results under the grid in a desktop
+   * window, where nothing else on screen would change: a dye from the palette or
+   * another tool, or a shared link's cell. Not at 768px and under, where the palette
+   * overlays the tool. Called from the picks only: performReverseMatch also re-runs
+   * on config changes and palette loads, which must not move the page.
+   */
+  private revealOutsideGridPick(results: HTMLElement | null): void {
+    if (window.innerWidth > 768) this.revealStackedResults(results);
   }
 
   /**
@@ -1079,6 +1127,7 @@ export class SwatchTool extends BaseComponent {
 
     // Apply V4-style layout to the panel
     // Use min-height instead of height to allow container to grow with content
+    // The shell owns scrolling, so this panel doesn't declare any overflow.
     right.setAttribute(
       'style',
       `
@@ -1091,7 +1140,6 @@ export class SwatchTool extends BaseComponent {
       padding: 32px;
       gap: 24px;
       box-sizing: border-box;
-      overflow-y: auto;
     `
     );
 
@@ -1106,11 +1154,13 @@ export class SwatchTool extends BaseComponent {
     // Use align-items: flex-start so children size to their content, not stretch to fill
     // On mobile, switches to column layout via updateSwatchLayout()
     // flex: 0 0 auto prevents flexbox from constraining height, allowing natural content sizing
+    // flex-wrap follows the pane, not the window: the side panels open and close without a resize
     this.mainLayout = this.createElement('div', {
       attributes: {
         style: `
           display: flex;
           flex: 0 0 auto;
+          flex-wrap: wrap;
           gap: 24px;
           min-height: 500px;
           justify-content: center;
@@ -1124,13 +1174,21 @@ export class SwatchTool extends BaseComponent {
     // LEFT: Color Grid Panel (glassmorphism container)
     // height: fit-content ensures panel sizes to contain all swatches (96 or 192)
     // Width and swatch sizes adjusted via updateSwatchLayout() for mobile
+    // max-width: the one-line palette rail must never push the panel past the
+    // pane, because the row is centered and the excess would hang off the left,
+    // where nothing can scroll to it. A pane too narrow for the grid itself
+    // scrolls it sideways in here (safe center keeps the start reachable).
     this.gridPanel = this.createElement('div', {
       className: 'glass',
       attributes: {
         style: `
           flex: 0 0 auto;
+          box-sizing: border-box;
           width: fit-content;
+          max-width: 100%;
           height: fit-content;
+          overflow-x: auto;
+          overflow-y: hidden;
           background: var(--v4-glass-bg, rgba(30, 30, 30, 0.7));
           backdrop-filter: blur(12px);
           -webkit-backdrop-filter: blur(12px);
@@ -1141,6 +1199,7 @@ export class SwatchTool extends BaseComponent {
           display: flex;
           flex-direction: column;
           align-items: center;
+          align-items: safe center;
         `,
       },
     });
@@ -1208,7 +1267,7 @@ export class SwatchTool extends BaseComponent {
           flex-direction: column;
           gap: 24px;
           flex: 1;
-          min-width: 0;
+          min-width: min(100%, ${RESULTS_MIN_WIDTH}px);
         `,
       },
     });
@@ -1427,7 +1486,7 @@ export class SwatchTool extends BaseComponent {
     } else {
       this.updateColorGrid();
     }
-    this.selectCustomColor(hex);
+    this.applyCustomColor(hex);
   }
 
   /**
@@ -1497,7 +1556,8 @@ export class SwatchTool extends BaseComponent {
   /**
    * Update layout based on viewport width.
    * Mobile: vertical stack, 44px touch cells (scrolls sideways if needed).
-   * Desktop: horizontal layout, 26px reference cells.
+   * Desktop: horizontal layout, 26px reference cells; the results wrap under
+   * the grid where the pane has no room for them beside it.
    */
   private updateSwatchLayout(): void {
     if (!this.mainLayout || !this.gridPanel || !this.colorGridContainer) return;
@@ -1507,6 +1567,7 @@ export class SwatchTool extends BaseComponent {
     if (isMobile) {
       // Mobile: Stack vertically, responsive swatch sizes
       this.mainLayout.style.flexDirection = 'column';
+      this.mainLayout.style.flexWrap = 'nowrap';
       this.mainLayout.style.alignItems = 'center';
 
       // Register sizing: cells are touch targets on mobile, so 44px is a
@@ -1521,7 +1582,8 @@ export class SwatchTool extends BaseComponent {
       // Update grid panel width
       this.gridPanel.style.width = '100%';
       this.gridPanel.style.maxWidth = `${availableWidth}px`;
-      this.gridPanel.style.overflowX = 'auto';
+      this.gridPanel.style.paddingInline = '20px';
+      this.options.rightPanel.style.paddingInline = '32px';
 
       // Update grid template
       this.colorGridContainer.style.gridTemplateColumns = `repeat(8, ${clampedSwatchSize}px)`;
@@ -1535,12 +1597,14 @@ export class SwatchTool extends BaseComponent {
     } else {
       // Desktop: Horizontal layout, fixed swatch sizes
       this.mainLayout.style.flexDirection = 'row';
+      this.mainLayout.style.flexWrap = 'wrap';
       this.mainLayout.style.alignItems = 'flex-start';
 
-      // Restore fixed width
+      // Size to the content, but never past the pane
       this.gridPanel.style.width = '';
-      this.gridPanel.style.maxWidth = '';
-      this.gridPanel.style.overflowX = '';
+      this.gridPanel.style.maxWidth = '100%';
+      this.gridPanel.style.paddingInline = PANEL_PADDING_DESKTOP;
+      this.options.rightPanel.style.paddingInline = TOOL_PADDING_DESKTOP;
 
       // Restore the register's desktop cell size
       this.colorGridContainer.style.gridTemplateColumns = `repeat(8, ${GRID_CELL_DESKTOP}px)`;
@@ -1792,6 +1856,7 @@ export class SwatchTool extends BaseComponent {
             background-color: ${color.hex};
             border: 1px solid var(--theme-border);
             border-radius: 4px;
+            scroll-margin: 8px;
           `,
           title: `${address} · ${color.hex}`,
           'data-index': String(color.index),
@@ -1812,7 +1877,10 @@ export class SwatchTool extends BaseComponent {
         );
       }
 
-      swatch.addEventListener('click', () => {
+      swatch.addEventListener('click', (event) => {
+        // A pick can start the grid moving, so a double-click's second click could
+        // land on a different cell.
+        if (event.detail > 1) return;
         this.selectColor(color);
       });
 
@@ -2403,13 +2471,56 @@ export class SwatchTool extends BaseComponent {
     this.updateSelectionCard();
     this.updateShareButton();
 
-    // On mobile, scroll to results section so user can see the matches
-    if (window.innerWidth < 768 && this.selectionCardContainer) {
-      // Small delay to allow DOM updates before scrolling
-      this.safeTimeout(() => {
-        this.selectionCardContainer?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 100);
-    }
+    this.revealStackedResults(this.selectionCardContainer);
+  }
+
+  /**
+   * Where results sit under the grid (on mobile, or in a narrow pane), scroll to
+   * them so user can see them. A phone gives them the whole screen. A desktop
+   * window brings them just into view, which moves nothing if they already are and
+   * keeps rows of the grid on screen for the next pick. Results beside the grid stay
+   * put, even where a long column reaches past a short grid's bottom.
+   *
+   * A pick by keyboard leaves focus on the cell, so that stays on screen, with as much
+   * of the results as fits below it. Those two scrolls are instant, as a second smooth
+   * one would start from where the first hadn't got to yet.
+   */
+  private revealStackedResults(results: HTMLElement | null): void {
+    if (!results) return;
+    // Small delay to allow DOM updates before scrolling
+    this.safeTimeout(() => {
+      if (!this.isUnderGrid(results)) {
+        this.stackedReveal = null;
+        return;
+      }
+      this.stackedReveal = results;
+      const focused = this.colorGridContainer?.querySelector('button:focus-visible');
+      const smooth = !focused && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      results.scrollIntoView({
+        behavior: smooth ? 'smooth' : 'auto',
+        block: window.innerWidth < 768 ? 'start' : 'nearest',
+      });
+      focused?.scrollIntoView({ block: 'nearest' });
+    }, 100);
+  }
+
+  private isUnderGrid(results: HTMLElement): boolean {
+    if (!this.gridPanel) return false;
+    const box = results.getBoundingClientRect();
+    const grid = this.gridPanel.getBoundingClientRect();
+    return box.top > grid.bottom && box.left < grid.right;
+  }
+
+  /**
+   * Closing a side panel can move results that were just revealed under the grid up
+   * beside it. The scroll position doesn't follow them, which leaves them above the
+   * pane with nothing to say where they went.
+   */
+  private keepRevealInView(): void {
+    const results = this.stackedReveal;
+    if (!results || this.isUnderGrid(results)) return;
+    this.stackedReveal = null;
+    results.scrollIntoView({ block: 'nearest' });
   }
 
   /**
@@ -2719,6 +2830,7 @@ export class SwatchTool extends BaseComponent {
       this.updateColorGrid();
       this.updateSwatchSelection();
       this.updateShareButton();
+      if (this.selectedColor) this.revealOutsideGridPick(this.selectionCardContainer);
 
       // Find matching dyes if a color was selected
       if (this.selectedColor) {

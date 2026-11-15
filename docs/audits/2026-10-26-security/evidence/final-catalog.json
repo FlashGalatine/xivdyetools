@@ -1,0 +1,1006 @@
+{
+ "findings": [
+  {
+   "id": "FINDING-001",
+   "gid": "G02",
+   "merged": [],
+   "candidates": [
+    "pii-bot-01"
+   ],
+   "severity": "MEDIUM",
+   "exposure": "INTERNET-AUTH",
+   "unit": "moderation-worker + discord-worker (policy text: discord-worker + web-app)",
+   "title": "Acting moderator's Discord username is written into persistent moderation-channel and submission-log posts, and neither privacy policy's list of post contents mentions it",
+   "policy": "AMEND apps/discord-worker/PRIVACY_POLICY.md section 5 \"Where Your Data is Stored\", Discord row (line 116), and apps/web-app/PRIVACY.md \"Posts in our Discord server\" bullet (lines 147-157). Alternative: NONE, if the name is dropped from the code.",
+   "rotation": "NONE",
+   "decision": "Choose whether to drop the moderator username from moderation-channel and submission-log posts (code fix, no policy change) or to amend both privacy policies' post-content lists to name it.",
+   "live": "Who can read the two channels (Discord server permissions) and whether SUBMISSION_LOG_CHANNEL_ID is set in production cannot be read from the repo."
+  },
+  {
+   "id": "FINDING-002",
+   "gid": "G01",
+   "merged": [
+    "G49",
+    "G65"
+   ],
+   "candidates": [
+    "api-worker-chara-02",
+    "injection-sweep-02",
+    "gap-upstream-game-data-trust-01",
+    "pkg-core-chara-01",
+    "gap-upstream-game-data-trust-04"
+   ],
+   "severity": "LOW",
+   "exposure": "INTERNET-UNAUTH",
+   "unit": "api-worker (primary); packages/core chara-gposers, packages/svg frame.ts, bot-logic/discord-worker and web-app as downstream sinks",
+   "title": "api-worker reads XIVAPI search/Glasses bodies unbounded and caches item names with no length cap, control or bidi filtering (7-day cache; quadratic downstream sinks)",
+   "policy": "NONE",
+   "rotation": "NONE",
+   "decision": "",
+   "live": "The production value of XIVAPI_BASE in wrangler.toml / deployed vars (the default is https://v2.xivapi.com). Whether XIVAPI itself enforces name lengths cannot be checked from the repo."
+  },
+  {
+   "id": "FINDING-003",
+   "gid": "G04",
+   "merged": [
+    "G25"
+   ],
+   "candidates": [
+    "web-app-chara-01",
+    "policy-web-en-01",
+    "policy-web-en-02"
+   ],
+   "severity": "LOW",
+   "exposure": "INTERNET-UNAUTH",
+   "unit": "web-app (code + PRIVACY.md and its 5 locale siblings)",
+   "title": "Swatch 'Save character colors' names its local record after the .chara nickname or file name, and PRIVACY.md tells users to rename or delete that record with controls the v4 UI does not expose",
+   "policy": "NONE for the nickname, which serves no purpose here (fix the code; a default name works). CORRECT apps/web-app/PRIVACY.md 'What is stored on your device' (lines 61-62, Swatch character colors do have a delete/rename control via Manage Collections). If the code is not changed instead, AMEND apps/web-app/PRIVACY.md 'Character files' (lines 36-40) to cover the Swatch character save.",
+   "rotation": "NONE",
+   "decision": "Choose whether to restore an in-app per-record rename/delete control in v4 (Collection Manager reachable again) or to correct PRIVACY.md:36-40 (and its 5 locale siblings) to say only bulk clear and site-data clearing exist. Also decide whether the Swatch character save keeps the nickname as its default name or uses a fixed default.",
+   "live": ""
+  },
+  {
+   "id": "FINDING-004",
+   "gid": "G14",
+   "merged": [],
+   "candidates": [
+    "oauth-01"
+   ],
+   "severity": "LOW",
+   "exposure": "INTERNET-UNAUTH",
+   "unit": "oauth (root cause in packages/worker-kit getClientIp; same property in api-worker and presets-api IP-keyed limiters)",
+   "title": "Per-IP /auth/* limiter keys on the full IPv6 address, so one /64 gets an unlimited number of independent buckets",
+   "policy": "NONE",
+   "rotation": "NONE",
+   "decision": "Live-state check only the maintainer can do: whether the zones serve IPv6 and whether Pseudo IPv4 overwrite is on. Then choose dashboard-side mitigation or /64 keying in worker-kit getClientIp-based limiters.",
+   "live": "Whether IPv6 is enabled on the auth.xivdyetools.app zone, the Pseudo IPv4 setting, and any dashboard WAF or rate-limiting rules in front of the worker. The repo cannot show any of them."
+  },
+  {
+   "id": "FINDING-005",
+   "gid": "G15",
+   "merged": [],
+   "candidates": [
+    "api-worker-chara-01"
+   ],
+   "severity": "LOW",
+   "exposure": "INTERNET-UNAUTH",
+   "unit": "api-worker",
+   "title": "No cache-miss upstream budget on /v1/chara/*; arbitrary canonical icon ?version= (and any unknown key) forces an XIVAPI call per request",
+   "policy": "NONE",
+   "rotation": "NONE",
+   "decision": "",
+   "live": "How XIVAPI rate-limits or blocks the project's User-Agent, and how it answers an unknown asset version key. Whether API_RATE_LIMITER is bound in production (the repo's wrangler.toml declares it)."
+  },
+  {
+   "id": "FINDING-006",
+   "gid": "G26",
+   "merged": [],
+   "candidates": [
+    "policy-web-en-03"
+   ],
+   "severity": "LOW",
+   "exposure": "INTERNET-UNAUTH",
+   "unit": "web-app (policy copy); limiter lives in presets-api",
+   "title": "Sign-in modal says browsing has \"no rate limit\", but presets-api rate-limits every /api/* request to 100/min per IP",
+   "policy": "CORRECT apps/web-app/src/locales/en.json key preset.gateBrowseNote (in-product account-gate copy)",
+   "rotation": "NONE",
+   "decision": "",
+   "live": "Whether production uses the native RL_PUBLIC binding or the memory fallback changes only how the limit is enforced, not whether one exists. Both paths enforce 100/min."
+  },
+  {
+   "id": "FINDING-007",
+   "gid": "G30",
+   "merged": [],
+   "candidates": [
+    "policy-fr-01"
+   ],
+   "severity": "LOW",
+   "exposure": "INTERNET-UNAUTH",
+   "unit": "web-app (PRIVACY.fr.md policy translation)",
+   "title": "fr policy says 'Effacer les palettes sauvegardées' deletes all 'palettes enregistrées', which the fr UI uses as its name for saved presets; the control leaves v5_saved_presets intact",
+   "policy": "CORRECT apps/web-app/PRIVACY.fr.md § Ce qui est stocké sur votre appareil (and add saved presets to PRIVACY.md § What is stored on your device for parity)",
+   "rotation": "NONE",
+   "decision": "",
+   "live": ""
+  },
+  {
+   "id": "FINDING-008",
+   "gid": "G31",
+   "merged": [],
+   "candidates": [
+    "gap-xivauth-identity-claim-01"
+   ],
+   "severity": "LOW",
+   "exposure": "INTERNET-UNAUTH",
+   "unit": "gap (upstream XIVAuth a4e6693; impact lands in apps/oauth + apps/presets-api)",
+   "title": "Upstream XIVAuth email auto-merge attaches a new provider identity to the email-matched account and signs in without MFA, so oauth mints a JWT with the victim's discord_id",
+   "policy": "NONE",
+   "rotation": "NONE",
+   "decision": "Upstream XIVAuth issue: the maintainer decides whether to report or fix it upstream (MFA on the social auto-merge path, or confirm before linking by email).",
+   "live": "Which omniauth providers are enabled in XIVAuth's production credentials (User.omniauth_providers = Devise configs intersected with credentials[:oauth] keys). The verified-email gating in the GitHub and Twitch gems is not vendored in the clone."
+  },
+  {
+   "id": "FINDING-009",
+   "gid": "G33",
+   "merged": [],
+   "candidates": [
+    "gap-hosting-dns-inventory-01"
+   ],
+   "severity": "LOW",
+   "exposure": "INTERNET-UNAUTH",
+   "unit": "web-app (Cloudflare Pages projects xiv-colorexplorer / xivdyetools-beta; live config, not repo)",
+   "title": "Superseded Cloudflare Pages deployments and the v4-ui-migration branch alias still serve old web-app builds with weaker or no CSP",
+   "policy": "NONE",
+   "rotation": "NONE",
+   "decision": "Only the maintainer can delete the superseded Pages deployments and the v4-ui-migration branch alias, and set a retention policy, in the Cloudflare dashboard.",
+   "live": "Cloudflare Pages deployment list and branch aliases for the xiv-colorexplorer and xivdyetools-beta projects. Today's GET probes confirm they are live, but deletion and retention can only be checked in the dashboard/API."
+  },
+  {
+   "id": "FINDING-010",
+   "gid": "G59",
+   "merged": [],
+   "candidates": [
+    "policy-web-en-05"
+   ],
+   "severity": "LOW",
+   "exposure": "INTERNET-UNAUTH",
+   "unit": "web-app (policy text only)",
+   "title": "Privacy policy says the .chara resolve request carries \"a dozen small integers\"; it carries up to 27 plus 12 slot labels",
+   "policy": "CORRECT apps/web-app/PRIVACY.md section \"What leaves your device\" (.chara / Glamour Reader bullet), with the same bullet in every locale sibling",
+   "rotation": "NONE",
+   "decision": "",
+   "live": ""
+  },
+  {
+   "id": "FINDING-011",
+   "gid": "G60",
+   "merged": [],
+   "candidates": [
+    "policy-web-en-06"
+   ],
+   "severity": "LOW",
+   "exposure": "INTERNET-UNAUTH",
+   "unit": "web-app (policy)",
+   "title": "Privacy policy says the CSP allows nothing beyond the listed first-party hosts, but connect-src allows every *.xivdyetools.app subdomain",
+   "policy": "CORRECT apps/web-app/PRIVACY.md § Network access (or make it true by narrowing connect-src)",
+   "rotation": "NONE",
+   "decision": "Choose whether to narrow connect-src to the listed hosts (make the policy true) or reword the policy parenthetical.",
+   "live": "The claim that no *.xivdyetools.app subdomain serves third-party or user-controlled content rests on DNS and the Cloudflare zone, which cannot be checked from the repo."
+  },
+  {
+   "id": "FINDING-012",
+   "gid": "G61",
+   "merged": [],
+   "candidates": [
+    "policy-web-en-07"
+   ],
+   "severity": "LOW",
+   "exposure": "INTERNET-UNAUTH",
+   "unit": "web-app (policy docs served as static TERMS_OF_SERVICE*.md)",
+   "title": "ToS appeal steps demand a Discord user ID that XIVAuth-only accounts do not have; PRIVACY's request route accepts the author name",
+   "policy": "CORRECT TERMS_OF_SERVICE.md \"Appeals and removal\" step 3 (align with PRIVACY.md \"Deleting your data\")",
+   "rotation": "NONE",
+   "decision": "",
+   "live": ""
+  },
+  {
+   "id": "FINDING-013",
+   "gid": "G62",
+   "merged": [],
+   "candidates": [
+    "policy-web-en-08"
+   ],
+   "severity": "LOW",
+   "exposure": "INTERNET-UNAUTH",
+   "unit": "web-app (policy docs)",
+   "title": "The ToS says the stored Discord name is always the display name, but oauth stores the username when there is no display name",
+   "policy": "CORRECT apps/web-app/TERMS_OF_SERVICE.md section \"Accounts\" (and every locale sibling)",
+   "rotation": "NONE",
+   "decision": "",
+   "live": ""
+  },
+  {
+   "id": "FINDING-014",
+   "gid": "G03",
+   "merged": [],
+   "candidates": [
+    "gap-upstream-game-data-trust-02",
+    "r2-bot-chara-second-look-02"
+   ],
+   "severity": "LOW",
+   "exposure": "INTERNET-AUTH",
+   "unit": "bot-logic + discord-worker",
+   "title": "/glamour embed's plain() leaves masked-link syntax in upstream item names and acquisition lines unescaped",
+   "policy": "NONE",
+   "rotation": "NONE",
+   "decision": "",
+   "live": "Live XIVAPI response content (third party); the repo cannot show whether current upstream names contain markup."
+  },
+  {
+   "id": "FINDING-015",
+   "gid": "G08",
+   "merged": [],
+   "candidates": [
+    "moderation-worker-01",
+    "r2-presets-api-moderation-auth-01"
+   ],
+   "severity": "LOW",
+   "exposure": "INTERNET-AUTH",
+   "unit": "moderation-worker + presets-api",
+   "title": "Author-ban guard on approve/revert is a separate, non-atomic pre-read in moderation-worker; presets-api /status and /revert write approved with no author-ban check",
+   "policy": "NONE",
+   "rotation": "NONE",
+   "decision": "",
+   "live": "Membership of the MODERATOR_IDS secret, which decides who can take the direct-API path."
+  },
+  {
+   "id": "FINDING-016",
+   "gid": "G09",
+   "merged": [],
+   "candidates": [
+    "presets-api-routes-01",
+    "r2-presets-api-moderation-auth-02"
+   ],
+   "severity": "LOW",
+   "exposure": "INTERNET-AUTH",
+   "unit": "presets-api",
+   "title": "Tags and example_link are never content-moderated, so an approved preset can carry or gain arbitrary tag text without review or a daily cap; looping such edits also keeps moderator reject/revert returning STALE_REVIEW",
+   "policy": "NONE",
+   "rotation": "NONE",
+   "decision": "Product call: whether tags (and example_link edits) on approved presets go through text moderation and the daily text_edit slot, or the unmoderated-tags design is recorded in security-trade-offs.md.",
+   "live": ""
+  },
+  {
+   "id": "FINDING-017",
+   "gid": "G11",
+   "merged": [],
+   "candidates": [
+    "discord-worker-commands-01"
+   ],
+   "severity": "LOW",
+   "exposure": "INTERNET-AUTH",
+   "unit": "discord-worker + worker-kit (preset) + api-worker",
+   "title": "/glamour has no tier of its own and spends one shared api-worker service key",
+   "policy": "NONE",
+   "rotation": "NONE",
+   "decision": "",
+   "live": "How many colos Discord interaction traffic lands in decides whether the 1300/60 s bucket is effectively global. The deployed SERVICE_RATE_LIMITER namespace 1005 (limit 1300) is assumed to match wrangler.toml."
+  },
+  {
+   "id": "FINDING-018",
+   "gid": "G12",
+   "merged": [],
+   "candidates": [
+    "presets-api-services-01"
+   ],
+   "severity": "LOW",
+   "exposure": "INTERNET-AUTH",
+   "unit": "presets-api",
+   "title": "POST /presets spends a Perspective call before reserving quota; a same-dye concurrent burst is charged one submission",
+   "policy": "NONE",
+   "rotation": "NONE",
+   "decision": "Choose whether to fix the reserve-before-Perspective ordering now or let it lapse when PERSPECTIVE_API_KEY is removed for the 2026-12-31 sunset (and correct security-trade-offs.md:309 either way).",
+   "live": "Whether PERSPECTIVE_API_KEY is still set on production, and the Perspective project's real QPS quota. Both are in the Cloudflare/Google dashboards. The issue lapses when the key is removed for the 2026-12-31 Perspective sunset."
+  },
+  {
+   "id": "FINDING-019",
+   "gid": "G13",
+   "merged": [],
+   "candidates": [
+    "presets-api-services-02"
+   ],
+   "severity": "LOW",
+   "exposure": "INTERNET-AUTH",
+   "unit": "presets-api",
+   "title": "Preview-upload daily slot is refunded when the image-worker decode fails, so decode work is uncapped per day",
+   "policy": "NONE",
+   "rotation": "NONE",
+   "decision": "The BUG-015 refund is deliberate. Choose whether a failed decode keeps its daily slot, or record the refund as an accepted trade-off in security-trade-offs.md.",
+   "live": "How strictly the RL_PUBLIC native rate-limit binding (100/60 s) is enforced in production, and image-worker's per-invocation CPU limit, which are set in the Cloudflare dashboard and plan."
+  },
+  {
+   "id": "FINDING-020",
+   "gid": "G17",
+   "merged": [],
+   "candidates": [
+    "image-worker-01"
+   ],
+   "severity": "LOW",
+   "exposure": "INTERNET-AUTH",
+   "unit": "image-worker",
+   "title": "16-bit PNG within the pixel cap overruns the isolate memory limit (pixel budget assumes 4 B/px)",
+   "policy": "NONE",
+   "rotation": "NONE",
+   "decision": "",
+   "live": "This depends on how workerd and Cloudflare production actually enforce the 128 MiB per-isolate limit against wasm memory: whether the isolate is killed mid-request or after it completes. It could not be run under workerd here."
+  },
+  {
+   "id": "FINDING-021",
+   "gid": "G20",
+   "merged": [
+    "G19"
+   ],
+   "candidates": [
+    "pkg-botlogic-svg-types-02",
+    "pkg-botlogic-svg-types-01"
+   ],
+   "severity": "LOW",
+   "exposure": "INTERNET-AUTH",
+   "unit": "bot-logic (consumed by discord-worker, moderation-worker, stoat-worker)",
+   "title": "bot-logic sanitizeEmbedText leaves Discord <...> syntax live (channel, slash-command, emoji, timestamp) and omits bidi isolates, Arabic letter mark and tag characters",
+   "policy": "NONE",
+   "rotation": "NONE",
+   "decision": "",
+   "live": "Discord client rendering of <#id>, </cmd:id> and <t:...> inside embed descriptions and field values (they do not render in embed titles)."
+  },
+  {
+   "id": "FINDING-022",
+   "gid": "G27",
+   "merged": [],
+   "candidates": [
+    "policy-bot-en-01"
+   ],
+   "severity": "LOW",
+   "exposure": "INTERNET-AUTH",
+   "unit": "discord-worker (policy)",
+   "title": "Bot privacy policy §3 says a .chara file is read only for colors, dyes and equipment, but /swatch and /glamour also read the clan, gender and producing tool and show them on the public card",
+   "policy": "CORRECT apps/discord-worker/PRIVACY_POLICY.md §3 \"Character Files\" item 2",
+   "rotation": "NONE",
+   "decision": "",
+   "live": ""
+  },
+  {
+   "id": "FINDING-023",
+   "gid": "G32",
+   "merged": [],
+   "candidates": [
+    "gap-xivauth-identity-claim-02"
+   ],
+   "severity": "LOW",
+   "exposure": "INTERNET-AUTH",
+   "unit": "oauth",
+   "title": "oauth never clears or re-checks a row's Discord link, so a Discord id once attached stays the presets-api identity after XIVAuth stops asserting it",
+   "policy": "NONE",
+   "rotation": "NONE",
+   "decision": "Product trade-off: whether oauth clears or replaces discord_id when XIVAuth stops asserting it (affects legitimately linked users), plus a prod D1 check for stale rows.",
+   "live": "Whether any production users row is currently in this stale state requires reading prod D1 xivdyetools-users and comparing it against XIVAuth links, which the repo does not show."
+  },
+  {
+   "id": "FINDING-024",
+   "gid": "G35",
+   "merged": [],
+   "candidates": [
+    "r2-discord-handlers-01"
+   ],
+   "severity": "LOW",
+   "exposure": "INTERNET-AUTH",
+   "unit": "discord-worker",
+   "title": "/preset favorite list fans out up to 50 userless presets-api reads that skip both presets-api limiters",
+   "policy": "NONE",
+   "rotation": "NONE",
+   "decision": "",
+   "live": "This assumes the production RL_* bindings enforce the 10/min preset tier. If they are unbound, the KV fallback applies the same nominal limit, but it is eventually consistent."
+  },
+  {
+   "id": "FINDING-025",
+   "gid": "G36",
+   "merged": [],
+   "candidates": [
+    "r2-moderation-worker-deep-01"
+   ],
+   "severity": "LOW",
+   "exposure": "INTERNET-AUTH",
+   "unit": "moderation-worker",
+   "title": "Ban keyed on one identity leaves the author's other-identity presets public and approvable",
+   "policy": "NONE: discord-worker/PRIVACY_POLICY.md section 'Moderation Records' and web-app PRIVACY.md describe only what a ban record stores. They do not promise that every preset of a banned person is hidden, so no policy text is false.",
+   "rotation": "NONE",
+   "decision": "Live-state check only the maintainer can do: query prod D1 xivdyetools-presets for authors holding presets under both a UUID and a snowflake.",
+   "live": "Whether any production author currently holds presets under both a UUID and a snowflake (prod D1 xivdyetools-presets), which cannot be read from the repo."
+  },
+  {
+   "id": "FINDING-026",
+   "gid": "G58",
+   "merged": [],
+   "candidates": [
+    "policy-web-en-04"
+   ],
+   "severity": "LOW",
+   "exposure": "INTERNET-AUTH",
+   "unit": "web-app (policy)",
+   "title": "PRIVACY.md 'browsing sends nothing about you' is false for signed-in viewers: opening a preset detail sends the user's JWT to GET /api/v1/votes/:id/check",
+   "policy": "AMEND apps/web-app/PRIVACY.md section 'Network access' item 3 (Community presets) — qualify 'browsing sends nothing about you' as 'browsing while signed out'",
+   "rotation": "NONE",
+   "decision": "",
+   "live": "Persisting nothing assumes the deployed presets-api keeps observability disabled with no Logpush or tail consumer, as the repo's wrangler.toml and the CI workers:check-logs gate require."
+  },
+  {
+   "id": "FINDING-027",
+   "gid": "G71",
+   "merged": [],
+   "candidates": [
+    "r2-policy-claims-second-pass-02"
+   ],
+   "severity": "LOW",
+   "exposure": "INTERNET-AUTH",
+   "unit": "web-app + discord-worker (policy text only; presets-api code is correct)",
+   "title": "Pre-edit snapshot disclosure is broader than the code: a snapshot is taken only when the edited preset is approved",
+   "policy": "CORRECT apps/web-app/PRIVACY.md section 3 \"Community presets\" (line 95-98); CORRECT apps/discord-worker/PRIVACY_POLICY.md section 2 \"Information You Provide\", Preset Submissions row (line 31)",
+   "rotation": "NONE",
+   "decision": "",
+   "live": "Whether production D1 still holds snapshots taken before the rule from non-approved states (SELECT id, status FROM presets WHERE previous_values IS NOT NULL). This does not change the verdict."
+  },
+  {
+   "id": "FINDING-028",
+   "gid": "G06",
+   "merged": [],
+   "candidates": [
+    "ci-supply-chain-01",
+    "regression-b-01"
+   ],
+   "severity": "LOW",
+   "exposure": "LOCAL",
+   "unit": "CI + repo settings",
+   "title": "FINDING-023 still open: production and beta Discord bot tokens remain repository-scope Actions secrets 21 days after the deletion precondition was met",
+   "policy": "NONE",
+   "rotation": "NONE (optionally reset the bot tokens if the repository-scope copies are not trusted)",
+   "decision": "Only the maintainer can act on the live state: delete the repository-scope DISCORD_TOKEN, MODERATION_DISCORD_TOKEN, BETA_DISCORD_TOKEN and BETA_DISCORD_GUILD_ID now that every consuming job declares environment:.",
+   "live": "Whether the repository-scope DISCORD_TOKEN (2026-05-26) and MODERATION_DISCORD_TOKEN (2026-08-29) values are still valid Discord bot tokens cannot be read; GitHub secret values are write-only."
+  },
+  {
+   "id": "FINDING-029",
+   "gid": "G10",
+   "merged": [],
+   "candidates": [
+    "gap-upstream-game-data-trust-03",
+    "r2-build-time-and-docs-sinks-01"
+   ],
+   "severity": "LOW",
+   "exposure": "LOCAL",
+   "unit": "api-worker build-time data (item-names.{ko,zh}.json bundled into api-worker; also read by discord-worker's CJK font cut)",
+   "title": "ko/zh item-name tables built from unpinned Teamcraft staging head with no recorded commit, checksum or content gate",
+   "policy": "NONE",
+   "rotation": "NONE",
+   "decision": "",
+   "live": "None. The committed JSON is what ships, and whether the current tables are clean depends only on what the 2026-08-21 staging head contained."
+  },
+  {
+   "id": "FINDING-030",
+   "gid": "G21",
+   "merged": [],
+   "candidates": [
+    "trust-boundaries-01"
+   ],
+   "severity": "INFO",
+   "exposure": "LOCAL",
+   "unit": "cross-unit (discord-worker beta config + docs/operations/DEPLOY_ENVIRONMENTS.md)",
+   "title": "Beta bot's presets-api access rests on an unenforced \"omit the bot secrets\" convention, and DEPLOY_ENVIRONMENTS.md:284 contradicts it",
+   "policy": "NONE",
+   "rotation": "NONE",
+   "decision": "Live-state check only the maintainer can do: run wrangler secret list on xivdyetools-discord-worker-dev to see whether BOT_API_SECRET and BOT_SIGNING_SECRET are present. Then correct DEPLOY_ENVIRONMENTS.md:284 to match.",
+   "live": "Cloudflare secrets on xivdyetools-discord-worker-dev (wrangler secret list): whether BOT_API_SECRET/BOT_SIGNING_SECRET are present. If they are, severity is still LOW, because the beta CF token's account-wide Workers Scripts Edit already gives push-access holders a more direct route to production."
+  },
+  {
+   "id": "FINDING-031",
+   "gid": "G22",
+   "merged": [],
+   "candidates": [
+    "ci-supply-chain-02"
+   ],
+   "severity": "LOW",
+   "exposure": "LOCAL",
+   "unit": "CI + repo settings (api-worker docs dev tree: vitepress devDependency)",
+   "title": "vitepress>vite override floor '>=6.4.3 <7' leaves vite locked at 6.4.3; 5 open Dependabot alerts (1 high), dev-server only",
+   "policy": "NONE",
+   "rotation": "NONE",
+   "decision": "",
+   "live": "Dependabot alert state on GitHub, read via a GET-only gh api call on 2026-10-26."
+  },
+  {
+   "id": "FINDING-032",
+   "gid": "G23",
+   "merged": [],
+   "candidates": [
+    "wrangler-secrets-config-01"
+   ],
+   "severity": "LOW",
+   "exposure": "LOCAL",
+   "unit": "oauth (only oauth; every other wrangler.toml keeps routes solely under [env.production], or overrides them there in og-worker's case)",
+   "title": "oauth [env.development] inherits the production auth.xivdyetools.app custom-domain route",
+   "policy": "NONE (config fix). docs/operations/DEPLOY_ENVIRONMENTS.md (oauth row :163) needs no change beyond optionally noting the routes override.",
+   "rotation": "NONE",
+   "decision": "",
+   "live": "Whether the xivdyetools-users-dev D1 database and a xivdyetools-oauth-dev worker exist in the Cloudflare account, and how wrangler resolves a conflict over a custom domain already attached to the production worker."
+  },
+  {
+   "id": "FINDING-033",
+   "gid": "G07",
+   "merged": [],
+   "candidates": [
+    "policy-de-02",
+    "policy-fr-02"
+   ],
+   "severity": "INFO",
+   "exposure": "INTERNET-UNAUTH",
+   "unit": "web-app (policy translations de, fr)",
+   "title": "de/fr web-app privacy policies narrow the .chara character-name never-clause from 'other people' to 'other players'",
+   "policy": "CORRECT apps/web-app/PRIVACY.de.md § Charakterdateien (.chara) bullet 1; CORRECT apps/web-app/PRIVACY.fr.md § Fichiers de personnage (.chara) bullet 1",
+   "rotation": "NONE",
+   "decision": "",
+   "live": ""
+  },
+  {
+   "id": "FINDING-034",
+   "gid": "G29",
+   "merged": [],
+   "candidates": [
+    "policy-de-01"
+   ],
+   "severity": "INFO",
+   "exposure": "INTERNET-UNAUTH",
+   "unit": "web-app (locale de)",
+   "title": "de preset.shotSlot caption omits the \"not uploaded\" assurance the other five locales carry",
+   "policy": "CORRECT apps/web-app/src/locales/de.json preset.shotSlot (translation parity with en.json preset.shotSlot; the PRIVACY.md example-link paragraph, lines 129-133, needs no change)",
+   "rotation": "NONE",
+   "decision": "",
+   "live": ""
+  },
+  {
+   "id": "FINDING-035",
+   "gid": "G40",
+   "merged": [],
+   "candidates": [
+    "policy-web-en-09",
+    "r2-policy-claims-second-pass-04"
+   ],
+   "severity": "INFO",
+   "exposure": "INTERNET-UNAUTH",
+   "unit": "repo docs (DEPRECATIONS.md) now; web-app + discord-worker policy documents on key-deletion day",
+   "title": "Perspective sunset checklist omits both Terms of Service auto-publish sentences (web and bot), which go stale when the key is deleted (by 2026-12-31)",
+   "policy": "CORRECT on key-deletion day: apps/web-app/TERMS_OF_SERVICE.md 'Moderation' section and apps/discord-worker/TERMS_OF_SERVICE.md '5. Content Moderation > Community Presets' first bullet. No code change is needed; the immediate fix is a DEPRECATIONS.md checklist addition.",
+   "rotation": "NONE",
+   "decision": "",
+   "live": "Whether PERSPECTIVE_API_KEY is still set on the production presets-api worker. The repo says it is (DEPRECATIONS.md:20, moderation-service.ts comment at :377); while it is set, both ToS sentences are accurate."
+  },
+  {
+   "id": "FINDING-036",
+   "gid": "G43",
+   "merged": [],
+   "candidates": [
+    "oauth-02"
+   ],
+   "severity": "INFO",
+   "exposure": "INTERNET-UNAUTH",
+   "unit": "oauth",
+   "title": "OAuth state is HMAC'd with JWT_SECRET (the JWT signing key) with no domain separation: latent cross-protocol risk, not exploitable today",
+   "policy": "NONE",
+   "rotation": "NONE",
+   "decision": "",
+   "live": ""
+  },
+  {
+   "id": "FINDING-037",
+   "gid": "G53",
+   "merged": [],
+   "candidates": [
+    "injection-sweep-01"
+   ],
+   "severity": "INFO",
+   "exposure": "INTERNET-UNAUTH",
+   "unit": "presets-api",
+   "title": "presets-api GET /api/v1/presets `page` has no upper bound: Infinity / >int64 OFFSET reaches the D1 bind",
+   "policy": "NONE",
+   "rotation": "NONE",
+   "decision": "",
+   "live": "How production D1 handles an Infinity or out-of-int64 REAL bind in LIMIT/OFFSET (an error or a coercion)."
+  },
+  {
+   "id": "FINDING-038",
+   "gid": "G56",
+   "merged": [],
+   "candidates": [
+    "pii-web-02"
+   ],
+   "severity": "INFO",
+   "exposure": "INTERNET-UNAUTH",
+   "unit": "api-worker",
+   "title": "Telemetry blob8 'ver' is regex-validated, not allowlisted, so a sender can write about 10 free alphanumeric characters",
+   "policy": "NONE (fix code)",
+   "rotation": "NONE",
+   "decision": "",
+   "live": ""
+  },
+  {
+   "id": "FINDING-039",
+   "gid": "G64",
+   "merged": [],
+   "candidates": [
+    "regression-b-03"
+   ],
+   "severity": "INFO",
+   "exposure": "INTERNET-UNAUTH",
+   "unit": "discord-worker",
+   "title": "Public /webhooks/preset-submission has no failed-auth throttle or binding-only check (FINDING-027 optional hardening not done)",
+   "policy": "NONE",
+   "rotation": "NONE",
+   "decision": "",
+   "live": "The production INTERNAL_WEBHOOK_SECRET is documented as 64 characters (rotated 2026-10-03), but it cannot be read back. The beta worker's secret length is unknown. Any Cloudflare zone-level WAF or rate-limiting rule on bot.xivdyetools.app is not visible from the repo."
+  },
+  {
+   "id": "FINDING-040",
+   "gid": "G42",
+   "merged": [],
+   "candidates": [
+    "discord-worker-core-02"
+   ],
+   "severity": "INFO",
+   "exposure": "INTERNET-AUTH",
+   "unit": "discord-worker",
+   "title": "Message-component (button) interactions bypass the per-user rate limiter",
+   "policy": "NONE",
+   "rotation": "NONE",
+   "decision": "",
+   "live": "This depends on whether the Analytics Engine write volume and KV read quota on the deployed account matter, and the repo cannot show that."
+  },
+  {
+   "id": "FINDING-041",
+   "gid": "G45",
+   "merged": [],
+   "candidates": [
+    "web-app-sinks-01"
+   ],
+   "severity": "INFO",
+   "exposure": "INTERNET-AUTH",
+   "unit": "web-app",
+   "title": "Preset edit form renders preview_image_url without the https read-path guard (consistency hardening only)",
+   "policy": "NONE",
+   "rotation": "NONE",
+   "decision": "",
+   "live": "The CSP img-src applies only if the deployed _headers matches the repo. The reviewer reports confirming that live in evidence/live-headers.txt."
+  },
+  {
+   "id": "FINDING-042",
+   "gid": "G47",
+   "merged": [],
+   "candidates": [
+    "pkg-security-03"
+   ],
+   "severity": "INFO",
+   "exposure": "INTERNET-AUTH",
+   "unit": "auth",
+   "title": "JWT and V2 bot signatures accept non-canonical encodings (signature malleability, no exploitable consumer)",
+   "policy": "NONE",
+   "rotation": "NONE",
+   "decision": "",
+   "live": ""
+  },
+  {
+   "id": "FINDING-043",
+   "gid": "G70",
+   "merged": [],
+   "candidates": [
+    "r2-bot-chara-second-look-03"
+   ],
+   "severity": "INFO",
+   "exposure": "INTERNET-AUTH",
+   "unit": "bot-logic",
+   "title": "Published SwatchResult.character still carries the raw, uploader-controlled TypeName as `producer`",
+   "policy": "NONE",
+   "rotation": "NONE",
+   "decision": "",
+   "live": ""
+  },
+  {
+   "id": "FINDING-044",
+   "gid": "G18",
+   "merged": [],
+   "candidates": [
+    "pkg-security-01"
+   ],
+   "severity": "INFO",
+   "exposure": "INTERNAL",
+   "unit": "logger (published @xivdyetools/logger; consumed by every worker via worker-kit, plus discord/moderation/stoat directly)",
+   "title": "Logger: a non-Error `error` argument skips key-name redaction (cookie, session_id, webhook_url, set_cookie, auth_header, nested keys)",
+   "policy": "NONE",
+   "rotation": "NONE",
+   "decision": "",
+   "live": "Whether Workers Logs / Logpush are truly off in the Cloudflare dashboard. The repo pins [observability] enabled=false and the workers:check-logs gate enforces it."
+  },
+  {
+   "id": "FINDING-045",
+   "gid": "G39",
+   "merged": [],
+   "candidates": [
+    "web-app-chara-02",
+    "r2-web-chara-second-look-02"
+   ],
+   "severity": "INFO",
+   "exposure": "INTERNAL",
+   "unit": "web-app",
+   "title": "Page-side worker-answer validator accepts any 256-unit string as tribe, then casts it to SubRace for the swatch config and clan lookup (defense in depth only)",
+   "policy": "NONE",
+   "rotation": "NONE",
+   "decision": "",
+   "live": ""
+  },
+  {
+   "id": "FINDING-046",
+   "gid": "G41",
+   "merged": [],
+   "candidates": [
+    "discord-worker-core-01"
+   ],
+   "severity": "INFO",
+   "exposure": "INTERNAL",
+   "unit": "discord-worker",
+   "title": "v2 bot signature binds URL pathname only; GET query string (status/search/sort/page/limit) is unsigned",
+   "policy": "NONE",
+   "rotation": "NONE",
+   "decision": "",
+   "live": "This assumes the deployed production worker has the PRESETS_API service binding attached, as wrangler.toml:154 declares, so the URL fallback is never used."
+  },
+  {
+   "id": "FINDING-047",
+   "gid": "G46",
+   "merged": [],
+   "candidates": [
+    "pkg-security-02"
+   ],
+   "severity": "INFO",
+   "exposure": "INTERNAL",
+   "unit": "logger",
+   "title": "Logger value-shape redaction misses Discord webhook / interaction-token URLs (hardening gap, no live leak path)",
+   "policy": "NONE",
+   "rotation": "NONE",
+   "decision": "",
+   "live": "Whether anyone reads raw worker console output through wrangler tail. Workers Logs and Logpush are pinned off by the workers:check-logs gate."
+  },
+  {
+   "id": "FINDING-048",
+   "gid": "G69",
+   "merged": [],
+   "candidates": [
+    "r2-web-chara-second-look-01"
+   ],
+   "severity": "INFO",
+   "exposure": "INTERNAL",
+   "unit": "web-app",
+   "title": "Resolve-API response adopted without per-field shape validation (hardening only)",
+   "policy": "NONE",
+   "rotation": "NONE",
+   "decision": "",
+   "live": "None for the verdict; would only escalate if the deployed api-worker or its KV cache were compromised."
+  },
+  {
+   "id": "FINDING-049",
+   "gid": "G54",
+   "merged": [],
+   "candidates": [
+    "ci-supply-chain-03"
+   ],
+   "severity": "INFO",
+   "exposure": "LOCAL",
+   "unit": "CI + repo settings (publish-packages.yml, npm trusted publisher for @xivdyetools/*)",
+   "title": "publish job grants id-token: write to every step, including pnpm install, turbo build and vitest runs of dev-tree code",
+   "policy": "NONE",
+   "rotation": "NONE",
+   "decision": "",
+   "live": "The npm trusted-publisher config (workflow publish-packages.yml plus environment `production`) and the `production` environment's branch policy and reviewers live on npmjs.com and in GitHub settings. The repo says main-only (2026-10-03 report :118), but that was not re-read here."
+  },
+  {
+   "id": "FINDING-050",
+   "gid": "G55",
+   "merged": [],
+   "candidates": [
+    "ci-supply-chain-04"
+   ],
+   "severity": "INFO",
+   "exposure": "LOCAL",
+   "unit": "CI + repo settings",
+   "title": "GitHub secret scanning non-provider patterns and validity checks are disabled (settings real, benefit narrower than claimed)",
+   "policy": "NONE",
+   "rotation": "NONE",
+   "decision": "Repo settings choice only the maintainer can make: enable non-provider patterns and validity checks in Code security.",
+   "live": "GitHub repo Code security settings (read via GET gh api on 2026-10-26). Not verified: whether both toggles are free for this public, user-owned repo on its plan."
+  },
+  {
+   "id": "FINDING-051",
+   "gid": "G63",
+   "merged": [],
+   "candidates": [
+    "regression-b-02"
+   ],
+   "severity": "INFO",
+   "exposure": "LOCAL",
+   "unit": "CI (GitHub repo settings)",
+   "title": "main branch protection still has enforce_admins and strict off after the 2026-10-03 remediation PRs it waited on merged",
+   "policy": "NONE",
+   "rotation": "NONE",
+   "decision": "Repo settings choice: turn on enforce_admins and strict now that the 2026-10-03 remediation PRs have merged, or record the deferral as accepted.",
+   "live": "GitHub branch protection on main, which I read live via a GET to gh api on 2026-10-26. A ruleset or a later settings change would supersede it."
+  },
+  {
+   "id": "FINDING-052",
+   "gid": "G68",
+   "merged": [],
+   "candidates": [
+    "r2-xivcharakit-source-02"
+   ],
+   "severity": "INFO",
+   "exposure": "LOCAL",
+   "unit": "core (xivcharakit dependency)",
+   "title": "xivcharakit releases have no git tags; source traceability relies only on npm provenance",
+   "policy": "NONE",
+   "rotation": "NONE",
+   "decision": "",
+   "live": "The upstream GitHub tag and release state and the npm provenance attestation are live registry and GitHub state, read on 2026-10-26."
+  },
+  {
+   "id": "FINDING-053",
+   "gid": "G72",
+   "merged": [],
+   "candidates": [
+    "r2-policy-claims-second-pass-03"
+   ],
+   "severity": "INFO",
+   "exposure": "LOCAL",
+   "unit": "web-app + discord-worker (policy) / docs/operations",
+   "title": "30-day deletion and 'full data export' promises have no runbook enumerating the stores to purge",
+   "policy": "NONE (process fix: the policy text is accurate, so add an operations runbook rather than changing the policy)",
+   "rotation": "NONE",
+   "decision": "Only the maintainer knows whether a private deletion/export procedure exists. If not, approve adding a tracked operations runbook that lists every per-user store.",
+   "live": "Whether the maintainer keeps an untracked private procedure cannot be seen from the repo."
+  },
+  {
+   "id": "FINDING-054",
+   "gid": "LIVE-1",
+   "merged": [],
+   "candidates": [],
+   "severity": "LOW",
+   "exposure": "INTERNET-UNAUTH",
+   "unit": "api-worker (live script xivdyetools-api-worker-dev)",
+   "title": "A stale api-worker dev script (deployed 2026-08-10) is still public on workers.dev; the repo's workers_dev = false pin never reached the live script",
+   "policy": "NONE",
+   "rotation": "NONE",
+   "decision": "",
+   "live": ""
+  },
+  {
+   "id": "FINDING-055",
+   "gid": "LIVE-2",
+   "merged": [],
+   "candidates": [],
+   "severity": "INFO",
+   "exposure": "INTERNET-UNAUTH",
+   "unit": "Cloudflare zone settings (dashboard)",
+   "title": "Zone xivdyetools.app has Always Use HTTPS off and minimum TLS 1.0: api., auth. and data. answer 200 over plaintext HTTP",
+   "policy": "NONE",
+   "rotation": "NONE",
+   "decision": "",
+   "live": ""
+  },
+  {
+   "id": "FINDING-056",
+   "gid": "LIVE-3",
+   "merged": [],
+   "candidates": [],
+   "severity": "INFO",
+   "exposure": "INTERNET-UNAUTH",
+   "unit": "Cloudflare account (api-worker docs, retired proxy)",
+   "title": "Two retired deploy units are still deployed: the xivdyetools-api-docs Pages project (public, 22 deployments) and the xivdyetools-universalis-proxy worker (unreachable)",
+   "policy": "NONE",
+   "rotation": "NONE",
+   "decision": "",
+   "live": ""
+  }
+ ],
+ "notPromoted": {
+  "G37": "BUG handoff (deep-dive-analysis): /glamour embed truncation math + unrecorded failed edit; not attacker-reachable",
+  "G44": "DEAD/DOC handoff: stoat-worker (parked) loads unused Upstash credentials and admin roster; environment-variables.md describes a fallback that does not exist",
+  "G48": "DOC handoff: worker-kit getClientIp JSDoc says X-Forwarded-For is trusted by default; the code defaults to false",
+  "G51": "BUILD handoff: bot-logic dist ships the chara test-fixture module (tsconfig.build.json exclude list)",
+  "G52": "DOC handoff (documentation-audit): docs/architecture/service-bindings.md shows an unsigned presets-api call and overstates binding scope",
+  "G66": "DOC handoff: stale Perspective-sunset comment in presets-api moderation-service.ts:212 (code queues every local pass as unscored)",
+  "G67": "BUG handoff: .chara label truncation can leave ill-formed UTF-16 (cosmetic U+FFFD in the web card only)"
+ },
+ "rejected": [
+  {
+   "gid": "G05",
+   "candidates": [
+    "presets-api-routes-02",
+    "wrangler-secrets-config-02"
+   ],
+   "title": "Dev worker (ENVIRONMENT=development, production D1/R2) does not pin preview_urls = false, unlike api-worker/image-worker",
+   "reason": "The config facts are accurate. presets-api wrangler.toml:16 and moderation-worker :17 set workers_dev = false with no preview_urls line, both bind the production D1 (and R2 / KV), and the tests pin only workers_dev (presets-api tests/wrangler-config.test.ts:43, moderation-worker :81). The exposure does not follow, though. In the installed wrangler 4.152.0, cli.js:165613-165614 sends preview_urls as undefined when th… Covered by: The 2026-10-03 security audit rejected this suspicion in docs/audits/2026-10-03-security/evidence/review-trust-boundaries.md:19: \"presets-api, oauth, moderation-worker, og-worker and discord-worker do not pin preview_ur…"
+  },
+  {
+   "gid": "G16",
+   "candidates": [
+    "api-worker-public-01"
+   ],
+   "title": "Invalid world/DC names cause uncharged upstream list fetches",
+   "reason": "The code matches the claim: there is no onMiss at :197-208, failures are not cached, and coalescing is per isolate only (cached-fetch.ts:91-115, request-coalescer.ts). It adds no new capability, because the public GET /data-centers and /worlds routes (router.ts:344-399) call the same cachedFetch with the same cache keys and no limiter at all. Upstream is spent only when the caches are cold or Universalis is already… Covered by: Rejected in the 2026-10-03 security audit: docs/audits/2026-10-03-security/evidence/review-api-worker-chara-universalis-telemetry.md:56 (\"Not filed\") and evidence/workflow-result.json:4373 (rejected[]). Also rejected by…"
+  },
+  {
+   "gid": "G24",
+   "candidates": [
+    "pii-web-01"
+   ],
+   "title": "PRIVACY.md says single saved palettes and Swatch character colors cannot be deleted in-app, but the Collection Manager deletes any single collection",
+   "reason": "Coordinator rejected, agreeing with the calibration pass over two CONFIRMED votes: the Collection Manager delete control is not reachable in the live v4 UI (production Harmony tool probed 2026-10-26: the Favorites panel has no Manage button, the dye-selector component that carried it is not rendered), so PRIVACY.md:59-62 is accurate. The false sentence is :36-40, filed under the Swatch character-save finding."
+  },
+  {
+   "gid": "G28",
+   "candidates": [
+    "policy-ko-01"
+   ],
+   "title": "ko swatch.charaHint promises 'nothing is transmitted' where English says only 'Nothing is uploaded'",
+   "reason": "The quoted strings are accurate (ko/ja/de/fr :1166 say \"transmit/send\", en/zh say \"upload\"), but the opt-in chara_parse beacon conflicts with the English \"Nothing is uploaded\" exactly as much, so the Korean does not widen the promise or differ in effect. The beacon carries no file content, name or identifier, and it is disclosed both on the opt-in toggle (ko.json:235 analyticsDesc names \".chara 불러오기\") and in PRIVACY… Covered by: docs/audits/2026-10-03-security/SECURITY_AUDIT_REPORT.md Rejected suspicions, under translation drifts refuted on challenge. The entry is de-1 in docs/audits/2026-10-03-security/evidence/policy-translation-reread.json:5…"
+  },
+  {
+   "gid": "G34",
+   "candidates": [
+    "gap-hosting-dns-inventory-02"
+   ],
+   "title": "presets-api production CORS still trusts the legacy pages.dev origin",
+   "reason": "The entry is real (wrangler.toml:76, exact-match reflection at src/index.ts:120, credentials: true at :150), but it is not a dangling legacy origin. It is the subdomain of the live production Pages project (deploy-web-app.yml:76 `--project-name=xivdyetools`, comment at :84-88), so the takeover precondition is not met. Even after a takeover there is nothing to gain: auth is Bearer-only from the Authorization header (… Covered by: Prior audit evidence, not a report section. docs/audits/2026-10-03-security/evidence/review-trust-boundaries.md:110 rejects it as a hygiene note, review-presets-api.md:56 covers the same ground, and workflow-result.json…"
+  },
+  {
+   "gid": "G38",
+   "candidates": [
+    "r2-policy-claims-second-pass-01"
+   ],
+   "title": "v5_saved_presets store (other authors' names, survives author deletion) missing from the web privacy policy's device-storage inventory and deletion section",
+   "reason": "The inventory half re-files a rejected suspicion from the 2026-10-03 audit: PRIVACY.md:50-54 covers the store as \"your own saved work\", and \"Your browser's site-data controls clear all of it\" is true. Per-preset unsave exists (saved-presets-service.ts:147-153). The deletion-section half describes how public publication works by design: viewers keep local copies of fields the author already made public, and PRIVACY.m… Covered by: docs/audits/2026-10-03-security/SECURITY_AUDIT_REPORT.md:131 (Rejected suspicions): \"Saved community-preset snapshots / tribe-gender lock missing from the storage list — covered by 'your own saved work'\". Bot favorites'…"
+  },
+  {
+   "gid": "G50",
+   "candidates": [
+    "pkg-core-chara-02"
+   ],
+   "title": "Legacy parseCharaFile is still a published export without the facade's bounds and echoes input in errors",
+   "reason": "The facts are accurate, but each one is a deliberate, documented result of the 2026-10-15 review. The byte cap belongs to the caller by design (chara-parser.ts:75-79, core CHANGELOG 5.14.0); that audit ruled no depth ceiling is needed (V8 JSON.parse handles 1M levels, and no code recurses over parsed values); and the 64-character quote limit (chara-parser.ts:259, describeValue :272) is the FINDING-002 fix itself. La… Covered by: docs/audits/2026-10-15-web-app-security/SECURITY_AUDIT_REPORT.md FINDING-002 remediation (lines 97-99: bounded error descriptions; 8 KiB caps at the callers; \"No parse-depth ceiling is needed\"), shipped as core 5.13.0/5…"
+  },
+  {
+   "gid": "G57",
+   "candidates": [
+    "pii-web-03"
+   ],
+   "title": "Extractor logs the uploaded image's file name to the browser console",
+   "reason": "The web-app wrapper's warn() at apps/web-app/src/shared/logger.ts:159-164 only runs when isDev() is true, which is import.meta.env.DEV (lines 40-50). A production build therefore never prints the file name. The reviewer relied on the package preset's 'warn' production level (packages/logger/src/presets/browser.ts:92), which this wrapper deliberately skips for warn. No errorTracker or console forwarding exists in app… Covered by: Not covered by a prior audit entry. It is rejected on the dev-only guard at apps/web-app/src/shared/logger.ts:159-164."
+  },
+  {
+   "gid": "G73",
+   "candidates": [
+    "r2-build-time-and-docs-sinks-02"
+   ],
+   "title": "Third-party Teamcraft/XIVAPI strings enter acquisition.en.json without markup stripping",
+   "reason": "The underlying fact is true: the builder writes `JSON.stringify(table)` at build-acquisition.ts:533/553 with no markup stripping. But every consumer escapes. The web-app renders the line only through textContent/input.value (chara-ui.ts:214 `el()`, glamour-sheet.ts:196 `preview.textContent`, :268 `field.value`), the Discord list escapes formatting via `plain()` (packages/bot-logic/src/commands/glamour.ts:384), the a… Covered by: 2026-10-03 security audit positive controls (SVG/embed sanitization); the sinks are guarded at chara-ui.ts:214, glamour-sheet.ts:196/268, and bot-logic glamour.ts:384"
+  }
+ ],
+ "mergedInto": {
+  "G19": "G20",
+  "G25": "G04",
+  "G49": "G01",
+  "G65": "G01"
+ }
+}
