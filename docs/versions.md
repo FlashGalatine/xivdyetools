@@ -32,8 +32,8 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.17.1 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v5.9.10 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
+| **Web Application** | v5.17.2 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Discord Bot** | v5.9.11 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.5 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.9.2 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.2.2 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
@@ -134,6 +134,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.17.2 | Nov 2026 | The X/Twitter account was renamed from @AsheJunius to @FlashGalatine: the About modal's X link (core's `SOCIAL_LINKS`) and the `twitter:site` / `twitter:creator` share-card tags now name the new handle. No other source changed |
 | v5.17.1 | Oct 2026 | Conditional Core 6/SVG adoption; preserve inspection-worker protocol, matching and bundle budget; restore development Hair/Skin loading while retaining native Node JSON attributes; registry/publication/consumer acceptance held |
 | v5.17.0 | Nov 2026 | The Glamour Reader's Glamour list sheet gains an Abridged toggle (off by default, remembered on the device) for the shorter social-media form: no header, the whole `Slot: Name` line bold, one `Dyes:` line if the piece wears a dye and an `Obtained:` line cut to the best source — every dungeon, trial or raid at the lowest difficulty (a map dungeon loses to any other source), else the craft, else a Gil vendor with its price, else another vendor without its currency, else the line as written. Preview, fields, Copy list and Save .md follow it (`glamour-equipment-abridged.md`); a line typed in Abridged is kept apart, and a full-list edit carries over until typed over. Each row also gets its own include switch (both forms): a piece switched off is dimmed and left out of the preview, counts, Copy list and Save .md until the page reloads (never stored); Reset all turns the outfit's pieces back on, and with all off Copy list and Save .md disable. The full list, the API and the `/glamour` bot are unchanged. CI's always-run step runs `glamour-abridged.test.ts` |
 | v5.16.15 | Nov 2026 | The Dye Mixer's result slot glows in the theme's accent instead of the gold of the retired themes, and the 33 `var(--theme-primary, #d4af37)` fallbacks that could never paint are gone, so no non-test source names that gold any more. The theme-token contract test now checks every source, not only hover rules. The one-locale payload shrinks by 362 bytes and stays at 99.3% of its budget |
@@ -234,6 +235,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.9.11 | Nov 2026 | The X/Twitter account was renamed from @AsheJunius to @FlashGalatine: `/about` prints the new X link from core's `SOCIAL_LINKS`. No discord-worker source changed; the production deploy's `register-commands` step re-registers an unchanged roster |
 | v5.9.10 | Oct 2026 | Conditional Core 6/SVG/Bot Logic 5 adoption; preserve original-byte guards and card/embed adapters; registry/publication/consumer acceptance held |
 | v5.9.9 | Nov 2026 | Documents only — the Privacy Policy's Author name row in all six languages now says that when XIVAuth cannot return the characters, the name already on the account stays and a new account gets the `XIVAuth User` name, matching oauth 3.2.2. No discord-worker source changed; the production deploy's `register-commands` step re-registers an unchanged roster |
 | v5.9.8 | Nov 2026 | Documents only — the Privacy Policy in all six languages now covers every web sign-in, not only XIVAuth: each sign-in replaces the author name on the presets under that account with the name from that sign-in (not while a ban is active), bot-submitted ones included for a Discord or linked XIVAuth sign-in. No discord-worker source changed |

@@ -2,6 +2,11 @@
 
 ---
 
+## Web-App Version 5.17.2 — November 10, 2026
+
+### About
+- **New X/Twitter handle.** The X link in the About window now goes to @FlashGalatine, the account's new name.
+
 ## Web-App Version 5.17.0 — November 2, 2026
 
 ### Glamour Reader: a shorter list for social media
