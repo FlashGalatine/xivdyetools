@@ -1,0 +1,3006 @@
+{
+  "formatVersion": 1,
+  "pins": {
+    "version": "0874aee069e1e7c4",
+    "schema": "exdschema@2:rev:e773c41a90aed788cf4c1c48469fa85618ef01fb"
+  },
+  "sourceManifestSha256": "39dee7bcdcfa96517a1aa41c4bc895d47103bbf71fdcc11960bcdff19f57da11",
+  "field": "Stain.Name",
+  "normalization": "trim surrounding whitespace, as the locale generator does",
+  "csvBeforeSha256": "76b65383b2ed47a66ce182a6f815e348588ebc191375315457c2c240ab17edce",
+  "csvAfterSha256": "f3fed1f331307a86d0aa2e4da4387a47b06b0161602aff986f3e40562344427d",
+  "changes": [
+    {
+      "stainID": 1,
+      "itemID": 5729,
+      "locale": "en",
+      "before": "Snow White ",
+      "after": "Snow White",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 1,
+      "itemID": 5729,
+      "locale": "de",
+      "before": "Schneeweißer ",
+      "after": "Schneeweiß",
+      "kind": "value"
+    },
+    {
+      "stainID": 1,
+      "itemID": 5729,
+      "locale": "fr",
+      "before": "blanc neige",
+      "after": "Blanc neige",
+      "kind": "case"
+    },
+    {
+      "stainID": 2,
+      "itemID": 5730,
+      "locale": "en",
+      "before": "Ash Grey ",
+      "after": "Ash Grey",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 2,
+      "itemID": 5730,
+      "locale": "de",
+      "before": "Aschgrauer ",
+      "after": "Aschgrau",
+      "kind": "value"
+    },
+    {
+      "stainID": 2,
+      "itemID": 5730,
+      "locale": "fr",
+      "before": "gris cendre",
+      "after": "Gris cendre",
+      "kind": "case"
+    },
+    {
+      "stainID": 3,
+      "itemID": 5731,
+      "locale": "en",
+      "before": "Goobbue Grey ",
+      "after": "Goobbue Grey",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 3,
+      "itemID": 5731,
+      "locale": "de",
+      "before": "Goobbuegrauer ",
+      "after": "Goobbuegrau",
+      "kind": "value"
+    },
+    {
+      "stainID": 3,
+      "itemID": 5731,
+      "locale": "fr",
+      "before": "gris goobbue",
+      "after": "Gris goobbue",
+      "kind": "case"
+    },
+    {
+      "stainID": 4,
+      "itemID": 5732,
+      "locale": "en",
+      "before": "Slate Grey ",
+      "after": "Slate Grey",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 4,
+      "itemID": 5732,
+      "locale": "de",
+      "before": "Schiefergrauer ",
+      "after": "Schiefergrau",
+      "kind": "value"
+    },
+    {
+      "stainID": 4,
+      "itemID": 5732,
+      "locale": "fr",
+      "before": "gris ardoise",
+      "after": "Gris ardoise",
+      "kind": "case"
+    },
+    {
+      "stainID": 5,
+      "itemID": 5733,
+      "locale": "en",
+      "before": "Charcoal Grey ",
+      "after": "Charcoal Grey",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 5,
+      "itemID": 5733,
+      "locale": "de",
+      "before": "Anthraziter ",
+      "after": "Anthrazit",
+      "kind": "value"
+    },
+    {
+      "stainID": 5,
+      "itemID": 5733,
+      "locale": "fr",
+      "before": "gris charbon",
+      "after": "Gris charbon",
+      "kind": "case"
+    },
+    {
+      "stainID": 6,
+      "itemID": 5734,
+      "locale": "en",
+      "before": "Soot Black ",
+      "after": "Soot Black",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 6,
+      "itemID": 5734,
+      "locale": "de",
+      "before": "Rußschwarzer ",
+      "after": "Rußschwarz",
+      "kind": "value"
+    },
+    {
+      "stainID": 6,
+      "itemID": 5734,
+      "locale": "fr",
+      "before": "noir suie",
+      "after": "Noir suie",
+      "kind": "case"
+    },
+    {
+      "stainID": 7,
+      "itemID": 5735,
+      "locale": "en",
+      "before": "Rose Pink ",
+      "after": "Rose Pink",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 7,
+      "itemID": 5735,
+      "locale": "de",
+      "before": "Rosaroter ",
+      "after": "Rosarot",
+      "kind": "value"
+    },
+    {
+      "stainID": 7,
+      "itemID": 5735,
+      "locale": "fr",
+      "before": "rose floral",
+      "after": "Rose floral",
+      "kind": "case"
+    },
+    {
+      "stainID": 8,
+      "itemID": 5736,
+      "locale": "en",
+      "before": "Lilac Purple ",
+      "after": "Lilac Purple",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 8,
+      "itemID": 5736,
+      "locale": "de",
+      "before": "Altrosa ",
+      "after": "Altrosa",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 8,
+      "itemID": 5736,
+      "locale": "fr",
+      "before": "lilas",
+      "after": "Lilas",
+      "kind": "case"
+    },
+    {
+      "stainID": 9,
+      "itemID": 5737,
+      "locale": "en",
+      "before": "Rolanberry Red ",
+      "after": "Rolanberry Red",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 9,
+      "itemID": 5737,
+      "locale": "de",
+      "before": "Rolanbeerenroter ",
+      "after": "Rolanbeerenrot",
+      "kind": "value"
+    },
+    {
+      "stainID": 9,
+      "itemID": 5737,
+      "locale": "fr",
+      "before": "rouge rolanbaie",
+      "after": "Rouge rolanbaie",
+      "kind": "case"
+    },
+    {
+      "stainID": 10,
+      "itemID": 5738,
+      "locale": "en",
+      "before": "Dalamud Red ",
+      "after": "Dalamud Red",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 10,
+      "itemID": 5738,
+      "locale": "de",
+      "before": "Dalamudroter ",
+      "after": "Dalamudrot",
+      "kind": "value"
+    },
+    {
+      "stainID": 10,
+      "itemID": 5738,
+      "locale": "fr",
+      "before": "rouge Dalamud",
+      "after": "Rouge Dalamud",
+      "kind": "case"
+    },
+    {
+      "stainID": 11,
+      "itemID": 5739,
+      "locale": "en",
+      "before": "Rust Red ",
+      "after": "Rust Red",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 11,
+      "itemID": 5739,
+      "locale": "de",
+      "before": "Rostroter ",
+      "after": "Rostrot",
+      "kind": "value"
+    },
+    {
+      "stainID": 11,
+      "itemID": 5739,
+      "locale": "fr",
+      "before": "rouille",
+      "after": "Rouille",
+      "kind": "case"
+    },
+    {
+      "stainID": 12,
+      "itemID": 5740,
+      "locale": "en",
+      "before": "Wine Red ",
+      "after": "Wine Red",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 12,
+      "itemID": 5740,
+      "locale": "de",
+      "before": "Weinroter ",
+      "after": "Weinrot",
+      "kind": "value"
+    },
+    {
+      "stainID": 12,
+      "itemID": 5740,
+      "locale": "fr",
+      "before": "lie-de-vin",
+      "after": "Lie-de-vin",
+      "kind": "case"
+    },
+    {
+      "stainID": 13,
+      "itemID": 5741,
+      "locale": "en",
+      "before": "Coral Pink ",
+      "after": "Coral Pink",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 13,
+      "itemID": 5741,
+      "locale": "de",
+      "before": "Korallenrosa ",
+      "after": "Korallenrosa",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 13,
+      "itemID": 5741,
+      "locale": "fr",
+      "before": "rose corail",
+      "after": "Rose corail",
+      "kind": "case"
+    },
+    {
+      "stainID": 14,
+      "itemID": 5742,
+      "locale": "en",
+      "before": "Blood Red ",
+      "after": "Blood Red",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 14,
+      "itemID": 5742,
+      "locale": "de",
+      "before": "Blutroter ",
+      "after": "Blutrot",
+      "kind": "value"
+    },
+    {
+      "stainID": 14,
+      "itemID": 5742,
+      "locale": "fr",
+      "before": "rouge sang",
+      "after": "Rouge sang",
+      "kind": "case"
+    },
+    {
+      "stainID": 15,
+      "itemID": 5743,
+      "locale": "en",
+      "before": "Salmon Pink ",
+      "after": "Salmon Pink",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 15,
+      "itemID": 5743,
+      "locale": "de",
+      "before": "Lachsrosa ",
+      "after": "Lachsrosa",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 15,
+      "itemID": 5743,
+      "locale": "fr",
+      "before": "rose saumon",
+      "after": "Rose saumon",
+      "kind": "case"
+    },
+    {
+      "stainID": 16,
+      "itemID": 5744,
+      "locale": "en",
+      "before": "Sunset Orange ",
+      "after": "Sunset Orange",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 16,
+      "itemID": 5744,
+      "locale": "de",
+      "before": "Abendroter ",
+      "after": "Abendrot",
+      "kind": "value"
+    },
+    {
+      "stainID": 16,
+      "itemID": 5744,
+      "locale": "fr",
+      "before": "orange couchant",
+      "after": "Orange couchant",
+      "kind": "case"
+    },
+    {
+      "stainID": 17,
+      "itemID": 5745,
+      "locale": "en",
+      "before": "Mesa Red ",
+      "after": "Mesa Red",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 17,
+      "itemID": 5745,
+      "locale": "de",
+      "before": "Tafelbergroter ",
+      "after": "Tafelbergrot",
+      "kind": "value"
+    },
+    {
+      "stainID": 17,
+      "itemID": 5745,
+      "locale": "fr",
+      "before": "vermillon terne",
+      "after": "Vermillon terne",
+      "kind": "case"
+    },
+    {
+      "stainID": 18,
+      "itemID": 5746,
+      "locale": "en",
+      "before": "Bark Brown ",
+      "after": "Bark Brown",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 18,
+      "itemID": 5746,
+      "locale": "de",
+      "before": "Borkenbrauner ",
+      "after": "Borkenbraun",
+      "kind": "value"
+    },
+    {
+      "stainID": 18,
+      "itemID": 5746,
+      "locale": "fr",
+      "before": "marron écorce",
+      "after": "Marron écorce",
+      "kind": "case"
+    },
+    {
+      "stainID": 19,
+      "itemID": 5747,
+      "locale": "en",
+      "before": "Chocolate Brown ",
+      "after": "Chocolate Brown",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 19,
+      "itemID": 5747,
+      "locale": "de",
+      "before": "Schokoladenbrauner ",
+      "after": "Schokoladenbraun",
+      "kind": "value"
+    },
+    {
+      "stainID": 19,
+      "itemID": 5747,
+      "locale": "fr",
+      "before": "chocolat",
+      "after": "Chocolat",
+      "kind": "case"
+    },
+    {
+      "stainID": 20,
+      "itemID": 5748,
+      "locale": "en",
+      "before": "Russet Brown ",
+      "after": "Russet Brown",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 20,
+      "itemID": 5748,
+      "locale": "de",
+      "before": "Rotbrauner ",
+      "after": "Rotbraun",
+      "kind": "value"
+    },
+    {
+      "stainID": 20,
+      "itemID": 5748,
+      "locale": "fr",
+      "before": "brun fauve",
+      "after": "Brun fauve",
+      "kind": "case"
+    },
+    {
+      "stainID": 21,
+      "itemID": 5749,
+      "locale": "en",
+      "before": "Kobold Brown ",
+      "after": "Kobold Brown",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 21,
+      "itemID": 5749,
+      "locale": "de",
+      "before": "Koboldbrauner ",
+      "after": "Koboldbraun",
+      "kind": "value"
+    },
+    {
+      "stainID": 21,
+      "itemID": 5749,
+      "locale": "fr",
+      "before": "brun kobold",
+      "after": "Brun kobold",
+      "kind": "case"
+    },
+    {
+      "stainID": 22,
+      "itemID": 5750,
+      "locale": "en",
+      "before": "Cork Brown ",
+      "after": "Cork Brown",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 22,
+      "itemID": 5750,
+      "locale": "de",
+      "before": "Korkbrauner ",
+      "after": "Korkbraun",
+      "kind": "value"
+    },
+    {
+      "stainID": 22,
+      "itemID": 5750,
+      "locale": "fr",
+      "before": "brun liège",
+      "after": "Brun liège",
+      "kind": "case"
+    },
+    {
+      "stainID": 23,
+      "itemID": 5751,
+      "locale": "en",
+      "before": "Qiqirn Brown ",
+      "after": "Qiqirn Brown",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 23,
+      "itemID": 5751,
+      "locale": "de",
+      "before": "Qiqirnbrauner ",
+      "after": "Qiqirnbraun",
+      "kind": "value"
+    },
+    {
+      "stainID": 23,
+      "itemID": 5751,
+      "locale": "fr",
+      "before": "brun qiqirn",
+      "after": "Brun qiqirn",
+      "kind": "case"
+    },
+    {
+      "stainID": 24,
+      "itemID": 5752,
+      "locale": "en",
+      "before": "Opo-opo Brown ",
+      "after": "Opo-opo Brown",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 24,
+      "itemID": 5752,
+      "locale": "de",
+      "before": "Opo-Opobrauner ",
+      "after": "Opo-Opobraun",
+      "kind": "value"
+    },
+    {
+      "stainID": 24,
+      "itemID": 5752,
+      "locale": "fr",
+      "before": "brun opo-opo",
+      "after": "Brun opo-opo",
+      "kind": "case"
+    },
+    {
+      "stainID": 25,
+      "itemID": 5753,
+      "locale": "en",
+      "before": "Aldgoat Brown ",
+      "after": "Aldgoat Brown",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 25,
+      "itemID": 5753,
+      "locale": "de",
+      "before": "Steinbockbrauner ",
+      "after": "Steinbockbraun",
+      "kind": "value"
+    },
+    {
+      "stainID": 25,
+      "itemID": 5753,
+      "locale": "fr",
+      "before": "brun bouquetin",
+      "after": "Brun bouquetin",
+      "kind": "case"
+    },
+    {
+      "stainID": 26,
+      "itemID": 5754,
+      "locale": "en",
+      "before": "Pumpkin Orange ",
+      "after": "Pumpkin Orange",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 26,
+      "itemID": 5754,
+      "locale": "de",
+      "before": "Kürbisoranger ",
+      "after": "Kürbisorange",
+      "kind": "value"
+    },
+    {
+      "stainID": 26,
+      "itemID": 5754,
+      "locale": "fr",
+      "before": "orange citrouille",
+      "after": "Orange citrouille",
+      "kind": "case"
+    },
+    {
+      "stainID": 27,
+      "itemID": 5755,
+      "locale": "en",
+      "before": "Acorn Brown ",
+      "after": "Acorn Brown",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 27,
+      "itemID": 5755,
+      "locale": "de",
+      "before": "Eichelbrauner ",
+      "after": "Eichelbraun",
+      "kind": "value"
+    },
+    {
+      "stainID": 27,
+      "itemID": 5755,
+      "locale": "fr",
+      "before": "brun noisette",
+      "after": "Brun noisette",
+      "kind": "case"
+    },
+    {
+      "stainID": 28,
+      "itemID": 5756,
+      "locale": "en",
+      "before": "Orchard Brown ",
+      "after": "Orchard Brown",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 28,
+      "itemID": 5756,
+      "locale": "de",
+      "before": "Obstbrauner ",
+      "after": "Obstbraun",
+      "kind": "value"
+    },
+    {
+      "stainID": 28,
+      "itemID": 5756,
+      "locale": "fr",
+      "before": "feuille-morte",
+      "after": "Feuille-morte",
+      "kind": "case"
+    },
+    {
+      "stainID": 29,
+      "itemID": 5757,
+      "locale": "en",
+      "before": "Chestnut Brown ",
+      "after": "Chestnut Brown",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 29,
+      "itemID": 5757,
+      "locale": "de",
+      "before": "Kastanienbrauner ",
+      "after": "Kastanienbraun",
+      "kind": "value"
+    },
+    {
+      "stainID": 29,
+      "itemID": 5757,
+      "locale": "fr",
+      "before": "brun châtaigne",
+      "after": "Brun châtaigne",
+      "kind": "case"
+    },
+    {
+      "stainID": 30,
+      "itemID": 5758,
+      "locale": "en",
+      "before": "Gobbiebag Brown ",
+      "after": "Gobbiebag Brown",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 30,
+      "itemID": 5758,
+      "locale": "de",
+      "before": "Kartonbrauner ",
+      "after": "Kartonbraun",
+      "kind": "value"
+    },
+    {
+      "stainID": 30,
+      "itemID": 5758,
+      "locale": "fr",
+      "before": "brun gobelin",
+      "after": "Brun gobelin",
+      "kind": "case"
+    },
+    {
+      "stainID": 31,
+      "itemID": 5759,
+      "locale": "en",
+      "before": "Shale Brown ",
+      "after": "Shale Brown",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 31,
+      "itemID": 5759,
+      "locale": "de",
+      "before": "Schieferbrauner ",
+      "after": "Schieferbraun",
+      "kind": "value"
+    },
+    {
+      "stainID": 31,
+      "itemID": 5759,
+      "locale": "fr",
+      "before": "brun schiste",
+      "after": "Brun schiste",
+      "kind": "case"
+    },
+    {
+      "stainID": 32,
+      "itemID": 5760,
+      "locale": "en",
+      "before": "Mole Brown ",
+      "after": "Mole Brown",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 32,
+      "itemID": 5760,
+      "locale": "de",
+      "before": "Maulwurfsbrauner ",
+      "after": "Maulwurfsbraun",
+      "kind": "value"
+    },
+    {
+      "stainID": 32,
+      "itemID": 5760,
+      "locale": "fr",
+      "before": "brun taupe",
+      "after": "Brun taupe",
+      "kind": "case"
+    },
+    {
+      "stainID": 33,
+      "itemID": 5761,
+      "locale": "en",
+      "before": "Loam Brown ",
+      "after": "Loam Brown",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 33,
+      "itemID": 5761,
+      "locale": "de",
+      "before": "Lehmbrauner ",
+      "after": "Lehmbraun",
+      "kind": "value"
+    },
+    {
+      "stainID": 33,
+      "itemID": 5761,
+      "locale": "fr",
+      "before": "brun argile",
+      "after": "Brun argile",
+      "kind": "case"
+    },
+    {
+      "stainID": 34,
+      "itemID": 5762,
+      "locale": "en",
+      "before": "Bone White ",
+      "after": "Bone White",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 34,
+      "itemID": 5762,
+      "locale": "de",
+      "before": "Knochenweißer ",
+      "after": "Knochenweiß",
+      "kind": "value"
+    },
+    {
+      "stainID": 34,
+      "itemID": 5762,
+      "locale": "fr",
+      "before": "ivoire",
+      "after": "Ivoire",
+      "kind": "case"
+    },
+    {
+      "stainID": 35,
+      "itemID": 5763,
+      "locale": "en",
+      "before": "Ul Brown ",
+      "after": "Ul Brown",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 35,
+      "itemID": 5763,
+      "locale": "de",
+      "before": "Ul'dahbrauner ",
+      "after": "Ul'dahbraun",
+      "kind": "value"
+    },
+    {
+      "stainID": 35,
+      "itemID": 5763,
+      "locale": "fr",
+      "before": "ocre uldien",
+      "after": "Ocre uldien",
+      "kind": "case"
+    },
+    {
+      "stainID": 36,
+      "itemID": 5764,
+      "locale": "en",
+      "before": "Desert Yellow ",
+      "after": "Desert Yellow",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 36,
+      "itemID": 5764,
+      "locale": "de",
+      "before": "Wüstengelber ",
+      "after": "Wüstengelb",
+      "kind": "value"
+    },
+    {
+      "stainID": 36,
+      "itemID": 5764,
+      "locale": "fr",
+      "before": "jaune désert",
+      "after": "Jaune désert",
+      "kind": "case"
+    },
+    {
+      "stainID": 37,
+      "itemID": 5765,
+      "locale": "en",
+      "before": "Honey Yellow ",
+      "after": "Honey Yellow",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 37,
+      "itemID": 5765,
+      "locale": "de",
+      "before": "Honiggelber ",
+      "after": "Honiggelb",
+      "kind": "value"
+    },
+    {
+      "stainID": 37,
+      "itemID": 5765,
+      "locale": "fr",
+      "before": "jaune miel",
+      "after": "Jaune miel",
+      "kind": "case"
+    },
+    {
+      "stainID": 38,
+      "itemID": 5766,
+      "locale": "en",
+      "before": "Millioncorn Yellow ",
+      "after": "Millioncorn Yellow",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 38,
+      "itemID": 5766,
+      "locale": "de",
+      "before": "Maisgelber ",
+      "after": "Maisgelb",
+      "kind": "value"
+    },
+    {
+      "stainID": 38,
+      "itemID": 5766,
+      "locale": "fr",
+      "before": "jaune milli-maïs",
+      "after": "Jaune milli-maïs",
+      "kind": "case"
+    },
+    {
+      "stainID": 39,
+      "itemID": 5767,
+      "locale": "en",
+      "before": "Coeurl Yellow ",
+      "after": "Coeurl Yellow",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 39,
+      "itemID": 5767,
+      "locale": "de",
+      "before": "Coeurlgelber ",
+      "after": "Coeurlgelb",
+      "kind": "value"
+    },
+    {
+      "stainID": 39,
+      "itemID": 5767,
+      "locale": "fr",
+      "before": "jaune coeurl",
+      "after": "Jaune coeurl",
+      "kind": "case"
+    },
+    {
+      "stainID": 40,
+      "itemID": 5768,
+      "locale": "en",
+      "before": "Cream Yellow ",
+      "after": "Cream Yellow",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 40,
+      "itemID": 5768,
+      "locale": "de",
+      "before": "Cremegelber ",
+      "after": "Cremegelb",
+      "kind": "value"
+    },
+    {
+      "stainID": 40,
+      "itemID": 5768,
+      "locale": "fr",
+      "before": "jaune crème",
+      "after": "Jaune crème",
+      "kind": "case"
+    },
+    {
+      "stainID": 41,
+      "itemID": 5769,
+      "locale": "en",
+      "before": "Halatali Yellow ",
+      "after": "Halatali Yellow",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 41,
+      "itemID": 5769,
+      "locale": "de",
+      "before": "Halataligelber ",
+      "after": "Halataligelb",
+      "kind": "value"
+    },
+    {
+      "stainID": 41,
+      "itemID": 5769,
+      "locale": "fr",
+      "before": "jaune Halatali",
+      "after": "Jaune Halatali",
+      "kind": "case"
+    },
+    {
+      "stainID": 42,
+      "itemID": 5770,
+      "locale": "en",
+      "before": "Raisin Brown ",
+      "after": "Raisin Brown",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 42,
+      "itemID": 5770,
+      "locale": "de",
+      "before": "Rosinenbrauner ",
+      "after": "Rosinenbraun",
+      "kind": "value"
+    },
+    {
+      "stainID": 42,
+      "itemID": 5770,
+      "locale": "fr",
+      "before": "raisin sec",
+      "after": "Raisin sec",
+      "kind": "case"
+    },
+    {
+      "stainID": 43,
+      "itemID": 5771,
+      "locale": "en",
+      "before": "Mud Green ",
+      "after": "Mud Green",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 43,
+      "itemID": 5771,
+      "locale": "de",
+      "before": "Schlammgrüner ",
+      "after": "Schlammgrün",
+      "kind": "value"
+    },
+    {
+      "stainID": 43,
+      "itemID": 5771,
+      "locale": "fr",
+      "before": "kaki",
+      "after": "Kaki",
+      "kind": "case"
+    },
+    {
+      "stainID": 44,
+      "itemID": 5772,
+      "locale": "en",
+      "before": "Sylph Green ",
+      "after": "Sylph Green",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 44,
+      "itemID": 5772,
+      "locale": "de",
+      "before": "Sylphengrüner ",
+      "after": "Sylphengrün",
+      "kind": "value"
+    },
+    {
+      "stainID": 44,
+      "itemID": 5772,
+      "locale": "fr",
+      "before": "vert sylphe",
+      "after": "Vert sylphe",
+      "kind": "case"
+    },
+    {
+      "stainID": 45,
+      "itemID": 5773,
+      "locale": "en",
+      "before": "Lime Green ",
+      "after": "Lime Green",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 45,
+      "itemID": 5773,
+      "locale": "de",
+      "before": "Limettengrüner ",
+      "after": "Limettengrün",
+      "kind": "value"
+    },
+    {
+      "stainID": 45,
+      "itemID": 5773,
+      "locale": "fr",
+      "before": "vert citron",
+      "after": "Vert citron",
+      "kind": "case"
+    },
+    {
+      "stainID": 46,
+      "itemID": 5774,
+      "locale": "en",
+      "before": "Moss Green ",
+      "after": "Moss Green",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 46,
+      "itemID": 5774,
+      "locale": "de",
+      "before": "Moosgrüner ",
+      "after": "Moosgrün",
+      "kind": "value"
+    },
+    {
+      "stainID": 46,
+      "itemID": 5774,
+      "locale": "fr",
+      "before": "vert mousse",
+      "after": "Vert mousse",
+      "kind": "case"
+    },
+    {
+      "stainID": 47,
+      "itemID": 5775,
+      "locale": "en",
+      "before": "Meadow Green ",
+      "after": "Meadow Green",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 47,
+      "itemID": 5775,
+      "locale": "de",
+      "before": "Grasgrüner ",
+      "after": "Grasgrün",
+      "kind": "value"
+    },
+    {
+      "stainID": 47,
+      "itemID": 5775,
+      "locale": "fr",
+      "before": "vert prairie",
+      "after": "Vert prairie",
+      "kind": "case"
+    },
+    {
+      "stainID": 48,
+      "itemID": 5776,
+      "locale": "en",
+      "before": "Olive Green ",
+      "after": "Olive Green",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 48,
+      "itemID": 5776,
+      "locale": "de",
+      "before": "Olivgrüner ",
+      "after": "Olivgrün",
+      "kind": "value"
+    },
+    {
+      "stainID": 48,
+      "itemID": 5776,
+      "locale": "fr",
+      "before": "vert olive",
+      "after": "Vert olive",
+      "kind": "case"
+    },
+    {
+      "stainID": 49,
+      "itemID": 5777,
+      "locale": "en",
+      "before": "Marsh Green ",
+      "after": "Marsh Green",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 49,
+      "itemID": 5777,
+      "locale": "de",
+      "before": "Sumpfgrüner ",
+      "after": "Sumpfgrün",
+      "kind": "value"
+    },
+    {
+      "stainID": 49,
+      "itemID": 5777,
+      "locale": "fr",
+      "before": "vert viridien",
+      "after": "Vert viridien",
+      "kind": "case"
+    },
+    {
+      "stainID": 50,
+      "itemID": 5778,
+      "locale": "en",
+      "before": "Apple Green ",
+      "after": "Apple Green",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 50,
+      "itemID": 5778,
+      "locale": "de",
+      "before": "Apfelgrüner ",
+      "after": "Apfelgrün",
+      "kind": "value"
+    },
+    {
+      "stainID": 50,
+      "itemID": 5778,
+      "locale": "fr",
+      "before": "vert pomme",
+      "after": "Vert pomme",
+      "kind": "case"
+    },
+    {
+      "stainID": 51,
+      "itemID": 5779,
+      "locale": "en",
+      "before": "Cactuar Green ",
+      "after": "Cactuar Green",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 51,
+      "itemID": 5779,
+      "locale": "de",
+      "before": "Kaktusgrüner ",
+      "after": "Kaktusgrün",
+      "kind": "value"
+    },
+    {
+      "stainID": 51,
+      "itemID": 5779,
+      "locale": "fr",
+      "before": "vert cactuar",
+      "after": "Vert cactuar",
+      "kind": "case"
+    },
+    {
+      "stainID": 52,
+      "itemID": 5780,
+      "locale": "en",
+      "before": "Hunter Green ",
+      "after": "Hunter Green",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 52,
+      "itemID": 5780,
+      "locale": "de",
+      "before": "Jägergrüner ",
+      "after": "Jägergrün",
+      "kind": "value"
+    },
+    {
+      "stainID": 52,
+      "itemID": 5780,
+      "locale": "fr",
+      "before": "vert chasseur",
+      "after": "Vert chasseur",
+      "kind": "case"
+    },
+    {
+      "stainID": 53,
+      "itemID": 5781,
+      "locale": "en",
+      "before": "Ochu Green ",
+      "after": "Ochu Green",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 53,
+      "itemID": 5781,
+      "locale": "de",
+      "before": "Ochugrüner ",
+      "after": "Ochugrün",
+      "kind": "value"
+    },
+    {
+      "stainID": 53,
+      "itemID": 5781,
+      "locale": "fr",
+      "before": "vert otyugh",
+      "after": "Vert otyugh",
+      "kind": "case"
+    },
+    {
+      "stainID": 54,
+      "itemID": 5782,
+      "locale": "en",
+      "before": "Adamantoise Green ",
+      "after": "Adamantoise Green",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 54,
+      "itemID": 5782,
+      "locale": "de",
+      "before": "Adaman-Taimaigrüner ",
+      "after": "Adaman-Taimaigrün",
+      "kind": "value"
+    },
+    {
+      "stainID": 54,
+      "itemID": 5782,
+      "locale": "fr",
+      "before": "vert adamankhélone",
+      "after": "Vert adamankhélone",
+      "kind": "case"
+    },
+    {
+      "stainID": 55,
+      "itemID": 5783,
+      "locale": "en",
+      "before": "Nophica Green ",
+      "after": "Nophica Green",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 55,
+      "itemID": 5783,
+      "locale": "de",
+      "before": "Nophicagrüner ",
+      "after": "Nophicagrün",
+      "kind": "value"
+    },
+    {
+      "stainID": 55,
+      "itemID": 5783,
+      "locale": "fr",
+      "before": "vert Nophica",
+      "after": "Vert Nophica",
+      "kind": "case"
+    },
+    {
+      "stainID": 56,
+      "itemID": 5784,
+      "locale": "en",
+      "before": "Deepwood Green ",
+      "after": "Deepwood Green",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 56,
+      "itemID": 5784,
+      "locale": "de",
+      "before": "Waldgrüner ",
+      "after": "Waldgrün",
+      "kind": "value"
+    },
+    {
+      "stainID": 56,
+      "itemID": 5784,
+      "locale": "fr",
+      "before": "vert sapin",
+      "after": "Vert sapin",
+      "kind": "case"
+    },
+    {
+      "stainID": 57,
+      "itemID": 5785,
+      "locale": "en",
+      "before": "Celeste Green ",
+      "after": "Celeste Green",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 57,
+      "itemID": 5785,
+      "locale": "de",
+      "before": "Mintgrüner ",
+      "after": "Mintgrün",
+      "kind": "value"
+    },
+    {
+      "stainID": 57,
+      "itemID": 5785,
+      "locale": "fr",
+      "before": "vert céleste",
+      "after": "Vert céleste",
+      "kind": "case"
+    },
+    {
+      "stainID": 58,
+      "itemID": 5786,
+      "locale": "en",
+      "before": "Turquoise Green ",
+      "after": "Turquoise Green",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 58,
+      "itemID": 5786,
+      "locale": "de",
+      "before": "Türkiser ",
+      "after": "Türkis",
+      "kind": "value"
+    },
+    {
+      "stainID": 58,
+      "itemID": 5786,
+      "locale": "fr",
+      "before": "turquoise",
+      "after": "Turquoise",
+      "kind": "case"
+    },
+    {
+      "stainID": 59,
+      "itemID": 5787,
+      "locale": "en",
+      "before": "Morbol Green ",
+      "after": "Morbol Green",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 59,
+      "itemID": 5787,
+      "locale": "de",
+      "before": "Morbolgrüner ",
+      "after": "Morbolgrün",
+      "kind": "value"
+    },
+    {
+      "stainID": 59,
+      "itemID": 5787,
+      "locale": "fr",
+      "before": "vert morbol",
+      "after": "Vert morbol",
+      "kind": "case"
+    },
+    {
+      "stainID": 60,
+      "itemID": 5788,
+      "locale": "en",
+      "before": "Ice Blue ",
+      "after": "Ice Blue",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 60,
+      "itemID": 5788,
+      "locale": "de",
+      "before": "Eisblauer ",
+      "after": "Eisblau",
+      "kind": "value"
+    },
+    {
+      "stainID": 60,
+      "itemID": 5788,
+      "locale": "fr",
+      "before": "bleu glace",
+      "after": "Bleu glace",
+      "kind": "case"
+    },
+    {
+      "stainID": 61,
+      "itemID": 5789,
+      "locale": "en",
+      "before": "Sky Blue ",
+      "after": "Sky Blue",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 61,
+      "itemID": 5789,
+      "locale": "de",
+      "before": "Himmelblauer ",
+      "after": "Himmelblau",
+      "kind": "value"
+    },
+    {
+      "stainID": 61,
+      "itemID": 5789,
+      "locale": "fr",
+      "before": "bleu ciel",
+      "after": "Bleu ciel",
+      "kind": "case"
+    },
+    {
+      "stainID": 62,
+      "itemID": 5790,
+      "locale": "en",
+      "before": "Seafog Blue ",
+      "after": "Seafog Blue",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 62,
+      "itemID": 5790,
+      "locale": "de",
+      "before": "Seenebelblauer ",
+      "after": "Seenebelblau",
+      "kind": "value"
+    },
+    {
+      "stainID": 62,
+      "itemID": 5790,
+      "locale": "fr",
+      "before": "bleu horizon",
+      "after": "Bleu horizon",
+      "kind": "case"
+    },
+    {
+      "stainID": 63,
+      "itemID": 5791,
+      "locale": "en",
+      "before": "Peacock Blue ",
+      "after": "Peacock Blue",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 63,
+      "itemID": 5791,
+      "locale": "de",
+      "before": "Pfauenblauer ",
+      "after": "Pfauenblau",
+      "kind": "value"
+    },
+    {
+      "stainID": 63,
+      "itemID": 5791,
+      "locale": "fr",
+      "before": "bleu paon",
+      "after": "Bleu paon",
+      "kind": "case"
+    },
+    {
+      "stainID": 64,
+      "itemID": 5792,
+      "locale": "en",
+      "before": "Rhotano Blue ",
+      "after": "Rhotano Blue",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 64,
+      "itemID": 5792,
+      "locale": "de",
+      "before": "Rhotanoblauer ",
+      "after": "Rhotanoblau",
+      "kind": "value"
+    },
+    {
+      "stainID": 64,
+      "itemID": 5792,
+      "locale": "fr",
+      "before": "bleu de Rhotano",
+      "after": "Bleu de Rhotano",
+      "kind": "case"
+    },
+    {
+      "stainID": 65,
+      "itemID": 5793,
+      "locale": "en",
+      "before": "Corpse Blue ",
+      "after": "Corpse Blue",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 65,
+      "itemID": 5793,
+      "locale": "de",
+      "before": "Leichenblauer ",
+      "after": "Leichenblau",
+      "kind": "value"
+    },
+    {
+      "stainID": 65,
+      "itemID": 5793,
+      "locale": "fr",
+      "before": "bleu charron",
+      "after": "Bleu charron",
+      "kind": "case"
+    },
+    {
+      "stainID": 66,
+      "itemID": 5794,
+      "locale": "en",
+      "before": "Ceruleum Blue ",
+      "after": "Ceruleum Blue",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 66,
+      "itemID": 5794,
+      "locale": "de",
+      "before": "Erdseimblauer ",
+      "after": "Erdseimblau",
+      "kind": "value"
+    },
+    {
+      "stainID": 66,
+      "itemID": 5794,
+      "locale": "fr",
+      "before": "bleu céruleum",
+      "after": "Bleu céruleum",
+      "kind": "case"
+    },
+    {
+      "stainID": 67,
+      "itemID": 5795,
+      "locale": "en",
+      "before": "Woad Blue ",
+      "after": "Woad Blue",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 67,
+      "itemID": 5795,
+      "locale": "de",
+      "before": "Indigoblauer ",
+      "after": "Indigoblau",
+      "kind": "value"
+    },
+    {
+      "stainID": 67,
+      "itemID": 5795,
+      "locale": "fr",
+      "before": "bleu guède",
+      "after": "Bleu guède",
+      "kind": "case"
+    },
+    {
+      "stainID": 68,
+      "itemID": 5796,
+      "locale": "en",
+      "before": "Ink Blue ",
+      "after": "Ink Blue",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 68,
+      "itemID": 5796,
+      "locale": "de",
+      "before": "Tintenblauer ",
+      "after": "Tintenblau",
+      "kind": "value"
+    },
+    {
+      "stainID": 68,
+      "itemID": 5796,
+      "locale": "fr",
+      "before": "bleu encre",
+      "after": "Bleu encre",
+      "kind": "case"
+    },
+    {
+      "stainID": 69,
+      "itemID": 5797,
+      "locale": "en",
+      "before": "Raptor Blue ",
+      "after": "Raptor Blue",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 69,
+      "itemID": 5797,
+      "locale": "de",
+      "before": "Raptorenblauer ",
+      "after": "Raptorenblau",
+      "kind": "value"
+    },
+    {
+      "stainID": 69,
+      "itemID": 5797,
+      "locale": "fr",
+      "before": "bleu raptor",
+      "after": "Bleu raptor",
+      "kind": "case"
+    },
+    {
+      "stainID": 70,
+      "itemID": 5798,
+      "locale": "en",
+      "before": "Othard Blue ",
+      "after": "Othard Blue",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 70,
+      "itemID": 5798,
+      "locale": "de",
+      "before": "Othardblauer ",
+      "after": "Othardblau",
+      "kind": "value"
+    },
+    {
+      "stainID": 70,
+      "itemID": 5798,
+      "locale": "fr",
+      "before": "bleu d'Othard",
+      "after": "Bleu d'Othard",
+      "kind": "case"
+    },
+    {
+      "stainID": 71,
+      "itemID": 5799,
+      "locale": "en",
+      "before": "Storm Blue ",
+      "after": "Storm Blue",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 71,
+      "itemID": 5799,
+      "locale": "de",
+      "before": "Sturmblauer ",
+      "after": "Sturmblau",
+      "kind": "value"
+    },
+    {
+      "stainID": 71,
+      "itemID": 5799,
+      "locale": "fr",
+      "before": "bleu tempête",
+      "after": "Bleu tempête",
+      "kind": "case"
+    },
+    {
+      "stainID": 72,
+      "itemID": 5800,
+      "locale": "en",
+      "before": "Void Blue ",
+      "after": "Void Blue",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 72,
+      "itemID": 5800,
+      "locale": "de",
+      "before": "Nichtsblauer ",
+      "after": "Nichtsblau",
+      "kind": "value"
+    },
+    {
+      "stainID": 72,
+      "itemID": 5800,
+      "locale": "fr",
+      "before": "bleu du néant",
+      "after": "Bleu du néant",
+      "kind": "case"
+    },
+    {
+      "stainID": 73,
+      "itemID": 5801,
+      "locale": "en",
+      "before": "Royal Blue ",
+      "after": "Royal Blue",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 73,
+      "itemID": 5801,
+      "locale": "de",
+      "before": "Königsblauer ",
+      "after": "Königsblau",
+      "kind": "value"
+    },
+    {
+      "stainID": 73,
+      "itemID": 5801,
+      "locale": "fr",
+      "before": "bleu royal",
+      "after": "Bleu royal",
+      "kind": "case"
+    },
+    {
+      "stainID": 74,
+      "itemID": 5802,
+      "locale": "en",
+      "before": "Midnight Blue ",
+      "after": "Midnight Blue",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 74,
+      "itemID": 5802,
+      "locale": "de",
+      "before": "Mitternachtsblauer ",
+      "after": "Mitternachtsblau",
+      "kind": "value"
+    },
+    {
+      "stainID": 74,
+      "itemID": 5802,
+      "locale": "fr",
+      "before": "bleu de minuit",
+      "after": "Bleu de minuit",
+      "kind": "case"
+    },
+    {
+      "stainID": 75,
+      "itemID": 5803,
+      "locale": "en",
+      "before": "Shadow Blue ",
+      "after": "Shadow Blue",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 75,
+      "itemID": 5803,
+      "locale": "de",
+      "before": "Schattenblauer ",
+      "after": "Schattenblau",
+      "kind": "value"
+    },
+    {
+      "stainID": 75,
+      "itemID": 5803,
+      "locale": "fr",
+      "before": "bleu turquin",
+      "after": "Bleu turquin",
+      "kind": "case"
+    },
+    {
+      "stainID": 76,
+      "itemID": 5804,
+      "locale": "en",
+      "before": "Abyssal Blue ",
+      "after": "Abyssal Blue",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 76,
+      "itemID": 5804,
+      "locale": "de",
+      "before": "Tiefblauer ",
+      "after": "Tiefblau",
+      "kind": "value"
+    },
+    {
+      "stainID": 76,
+      "itemID": 5804,
+      "locale": "fr",
+      "before": "bleu marine",
+      "after": "Bleu marine",
+      "kind": "case"
+    },
+    {
+      "stainID": 77,
+      "itemID": 5805,
+      "locale": "en",
+      "before": "Lavender Purple ",
+      "after": "Lavender Purple",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 77,
+      "itemID": 5805,
+      "locale": "de",
+      "before": "Lavendelblauer ",
+      "after": "Lavendelblau",
+      "kind": "value"
+    },
+    {
+      "stainID": 77,
+      "itemID": 5805,
+      "locale": "fr",
+      "before": "lavande",
+      "after": "Lavande",
+      "kind": "case"
+    },
+    {
+      "stainID": 78,
+      "itemID": 5806,
+      "locale": "en",
+      "before": "Gloom Purple ",
+      "after": "Gloom Purple",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 78,
+      "itemID": 5806,
+      "locale": "de",
+      "before": "Düstervioletter ",
+      "after": "Düsterviolett",
+      "kind": "value"
+    },
+    {
+      "stainID": 78,
+      "itemID": 5806,
+      "locale": "fr",
+      "before": "colombin",
+      "after": "Colombin",
+      "kind": "case"
+    },
+    {
+      "stainID": 79,
+      "itemID": 5807,
+      "locale": "en",
+      "before": "Currant Purple ",
+      "after": "Currant Purple",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 79,
+      "itemID": 5807,
+      "locale": "de",
+      "before": "Johannisbeerenvioletter ",
+      "after": "Johannisbeerenviolett",
+      "kind": "value"
+    },
+    {
+      "stainID": 79,
+      "itemID": 5807,
+      "locale": "fr",
+      "before": "cassis",
+      "after": "Cassis",
+      "kind": "case"
+    },
+    {
+      "stainID": 80,
+      "itemID": 5808,
+      "locale": "en",
+      "before": "Iris Purple ",
+      "after": "Iris Purple",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 80,
+      "itemID": 5808,
+      "locale": "de",
+      "before": "Irisvioletter ",
+      "after": "Irisviolett",
+      "kind": "value"
+    },
+    {
+      "stainID": 80,
+      "itemID": 5808,
+      "locale": "fr",
+      "before": "iris",
+      "after": "Iris",
+      "kind": "case"
+    },
+    {
+      "stainID": 81,
+      "itemID": 5809,
+      "locale": "en",
+      "before": "Grape Purple ",
+      "after": "Grape Purple",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 81,
+      "itemID": 5809,
+      "locale": "de",
+      "before": "Weintraubenvioletter ",
+      "after": "Weintraubenviolett",
+      "kind": "value"
+    },
+    {
+      "stainID": 81,
+      "itemID": 5809,
+      "locale": "fr",
+      "before": "raisin",
+      "after": "Raisin",
+      "kind": "case"
+    },
+    {
+      "stainID": 82,
+      "itemID": 5810,
+      "locale": "en",
+      "before": "Lotus Pink ",
+      "after": "Lotus Pink",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 82,
+      "itemID": 5810,
+      "locale": "de",
+      "before": "Lotusrosa ",
+      "after": "Lotusrosa",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 82,
+      "itemID": 5810,
+      "locale": "fr",
+      "before": "mauve lotus",
+      "after": "Mauve lotus",
+      "kind": "case"
+    },
+    {
+      "stainID": 83,
+      "itemID": 5811,
+      "locale": "en",
+      "before": "Colibri Pink ",
+      "after": "Colibri Pink",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 83,
+      "itemID": 5811,
+      "locale": "de",
+      "before": "Kolibrirosa ",
+      "after": "Kolibrirosa",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 83,
+      "itemID": 5811,
+      "locale": "fr",
+      "before": "mauve colibri",
+      "after": "Mauve colibri",
+      "kind": "case"
+    },
+    {
+      "stainID": 84,
+      "itemID": 5812,
+      "locale": "en",
+      "before": "Plum Purple ",
+      "after": "Plum Purple",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 84,
+      "itemID": 5812,
+      "locale": "de",
+      "before": "Pflaumenvioletter ",
+      "after": "Pflaumenviolett",
+      "kind": "value"
+    },
+    {
+      "stainID": 84,
+      "itemID": 5812,
+      "locale": "fr",
+      "before": "prune",
+      "after": "Prune",
+      "kind": "case"
+    },
+    {
+      "stainID": 85,
+      "itemID": 5813,
+      "locale": "en",
+      "before": "Regal Purple ",
+      "after": "Regal Purple",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 85,
+      "itemID": 5813,
+      "locale": "de",
+      "before": "Königsvioletter ",
+      "after": "Königsviolett",
+      "kind": "value"
+    },
+    {
+      "stainID": 85,
+      "itemID": 5813,
+      "locale": "fr",
+      "before": "byzantium",
+      "after": "Byzantium",
+      "kind": "case"
+    },
+    {
+      "stainID": 86,
+      "itemID": 30116,
+      "locale": "en",
+      "before": "Ruby Red ",
+      "after": "Ruby Red",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 86,
+      "itemID": 30116,
+      "locale": "de",
+      "before": "Rubinroter ",
+      "after": "Rubinrot",
+      "kind": "value"
+    },
+    {
+      "stainID": 86,
+      "itemID": 30116,
+      "locale": "fr",
+      "before": "rouge rubis",
+      "after": "Rouge rubis",
+      "kind": "case"
+    },
+    {
+      "stainID": 87,
+      "itemID": 30117,
+      "locale": "en",
+      "before": "Cherry Pink ",
+      "after": "Cherry Pink",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 87,
+      "itemID": 30117,
+      "locale": "de",
+      "before": "Kirschpinker ",
+      "after": "Kirschpink",
+      "kind": "value"
+    },
+    {
+      "stainID": 87,
+      "itemID": 30117,
+      "locale": "fr",
+      "before": "rose cerise",
+      "after": "Rose cerise",
+      "kind": "case"
+    },
+    {
+      "stainID": 88,
+      "itemID": 30118,
+      "locale": "en",
+      "before": "Canary Yellow ",
+      "after": "Canary Yellow",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 88,
+      "itemID": 30118,
+      "locale": "de",
+      "before": "Kanariengelber ",
+      "after": "Kanariengelb",
+      "kind": "value"
+    },
+    {
+      "stainID": 88,
+      "itemID": 30118,
+      "locale": "fr",
+      "before": "jaune serin",
+      "after": "Jaune serin",
+      "kind": "case"
+    },
+    {
+      "stainID": 89,
+      "itemID": 30119,
+      "locale": "en",
+      "before": "Vanilla Yellow ",
+      "after": "Vanilla Yellow",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 89,
+      "itemID": 30119,
+      "locale": "de",
+      "before": "Vanillegelber ",
+      "after": "Vanillegelb",
+      "kind": "value"
+    },
+    {
+      "stainID": 89,
+      "itemID": 30119,
+      "locale": "fr",
+      "before": "jaune vanille",
+      "after": "Jaune vanille",
+      "kind": "case"
+    },
+    {
+      "stainID": 90,
+      "itemID": 30120,
+      "locale": "en",
+      "before": "Dragoon Blue ",
+      "after": "Dragoon Blue",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 90,
+      "itemID": 30120,
+      "locale": "de",
+      "before": "Dragoonblauer ",
+      "after": "Dragoonblau",
+      "kind": "value"
+    },
+    {
+      "stainID": 90,
+      "itemID": 30120,
+      "locale": "fr",
+      "before": "bleu dragon",
+      "after": "Bleu dragon",
+      "kind": "case"
+    },
+    {
+      "stainID": 91,
+      "itemID": 30121,
+      "locale": "en",
+      "before": "Turquoise Blue ",
+      "after": "Turquoise Blue",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 91,
+      "itemID": 30121,
+      "locale": "de",
+      "before": "Cyanblauer ",
+      "after": "Cyanblau",
+      "kind": "value"
+    },
+    {
+      "stainID": 91,
+      "itemID": 30121,
+      "locale": "fr",
+      "before": "bleu turquoise",
+      "after": "Bleu turquoise",
+      "kind": "case"
+    },
+    {
+      "stainID": 92,
+      "itemID": 30122,
+      "locale": "en",
+      "before": "Gunmetal Black ",
+      "after": "Gunmetal Black",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 92,
+      "itemID": 30122,
+      "locale": "de",
+      "before": "Cermetgrauer ",
+      "after": "Cermetgrau",
+      "kind": "value"
+    },
+    {
+      "stainID": 92,
+      "itemID": 30122,
+      "locale": "fr",
+      "before": "bronze à canon",
+      "after": "Bronze à canon",
+      "kind": "case"
+    },
+    {
+      "stainID": 93,
+      "itemID": 30123,
+      "locale": "en",
+      "before": "Pearl White ",
+      "after": "Pearl White",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 93,
+      "itemID": 30123,
+      "locale": "fr",
+      "before": "blanc perlé",
+      "after": "Blanc perlé",
+      "kind": "case"
+    },
+    {
+      "stainID": 94,
+      "itemID": 30124,
+      "locale": "en",
+      "before": "Metallic Brass ",
+      "after": "Metallic Brass",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 94,
+      "itemID": 30124,
+      "locale": "de",
+      "before": "Metallic messingfarbener ",
+      "after": "Metallic Messing",
+      "kind": "value"
+    },
+    {
+      "stainID": 94,
+      "itemID": 30124,
+      "locale": "fr",
+      "before": "cuivre jaune",
+      "after": "Cuivre jaune",
+      "kind": "case"
+    },
+    {
+      "stainID": 95,
+      "itemID": 48227,
+      "locale": "en",
+      "before": "Carmine Red ",
+      "after": "Carmine Red",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 95,
+      "itemID": 48227,
+      "locale": "de",
+      "before": "Karmesinroter ",
+      "after": "Karmesinrot",
+      "kind": "value"
+    },
+    {
+      "stainID": 95,
+      "itemID": 48227,
+      "locale": "fr",
+      "before": "rouge carmin",
+      "after": "Rouge carmin",
+      "kind": "case"
+    },
+    {
+      "stainID": 96,
+      "itemID": 48163,
+      "locale": "en",
+      "before": "Neon Pink ",
+      "after": "Neon Pink",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 96,
+      "itemID": 48163,
+      "locale": "de",
+      "before": "Neonpinker ",
+      "after": "Neonpink",
+      "kind": "value"
+    },
+    {
+      "stainID": 96,
+      "itemID": 48163,
+      "locale": "fr",
+      "before": "rose néon",
+      "after": "Rose néon",
+      "kind": "case"
+    },
+    {
+      "stainID": 97,
+      "itemID": 48164,
+      "locale": "en",
+      "before": "Bright Orange ",
+      "after": "Bright Orange",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 97,
+      "itemID": 48164,
+      "locale": "de",
+      "before": "Knalloranger ",
+      "after": "Knallorange",
+      "kind": "value"
+    },
+    {
+      "stainID": 97,
+      "itemID": 48164,
+      "locale": "fr",
+      "before": "orange brillant",
+      "after": "Orange brillant",
+      "kind": "case"
+    },
+    {
+      "stainID": 98,
+      "itemID": 48166,
+      "locale": "en",
+      "before": "Neon Yellow ",
+      "after": "Neon Yellow",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 98,
+      "itemID": 48166,
+      "locale": "de",
+      "before": "Neongelber ",
+      "after": "Neongelb",
+      "kind": "value"
+    },
+    {
+      "stainID": 98,
+      "itemID": 48166,
+      "locale": "fr",
+      "before": "jaune néon",
+      "after": "Jaune néon",
+      "kind": "case"
+    },
+    {
+      "stainID": 99,
+      "itemID": 48165,
+      "locale": "en",
+      "before": "Neon Green ",
+      "after": "Neon Green",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 99,
+      "itemID": 48165,
+      "locale": "de",
+      "before": "Neongrüner ",
+      "after": "Neongrün",
+      "kind": "value"
+    },
+    {
+      "stainID": 99,
+      "itemID": 48165,
+      "locale": "fr",
+      "before": "vert néon",
+      "after": "Vert néon",
+      "kind": "case"
+    },
+    {
+      "stainID": 100,
+      "itemID": 48168,
+      "locale": "en",
+      "before": "Azure Blue ",
+      "after": "Azure Blue",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 100,
+      "itemID": 48168,
+      "locale": "de",
+      "before": "Azurblauer ",
+      "after": "Azurblau",
+      "kind": "value"
+    },
+    {
+      "stainID": 100,
+      "itemID": 48168,
+      "locale": "fr",
+      "before": "bleu azur",
+      "after": "Bleu azur",
+      "kind": "case"
+    },
+    {
+      "stainID": 101,
+      "itemID": 13114,
+      "locale": "en",
+      "before": "Pure White ",
+      "after": "Pure White",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 101,
+      "itemID": 13114,
+      "locale": "de",
+      "before": "Wolkenweißer ",
+      "after": "Wolkenweiß",
+      "kind": "value"
+    },
+    {
+      "stainID": 101,
+      "itemID": 13114,
+      "locale": "fr",
+      "before": "blanc immaculé",
+      "after": "Blanc immaculé",
+      "kind": "case"
+    },
+    {
+      "stainID": 102,
+      "itemID": 13115,
+      "locale": "en",
+      "before": "Jet Black ",
+      "after": "Jet Black",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 102,
+      "itemID": 13115,
+      "locale": "de",
+      "before": "Rabenschwarzer ",
+      "after": "Rabenschwarz",
+      "kind": "value"
+    },
+    {
+      "stainID": 102,
+      "itemID": 13115,
+      "locale": "fr",
+      "before": "noir de jais",
+      "after": "Noir de jais",
+      "kind": "case"
+    },
+    {
+      "stainID": 103,
+      "itemID": 13708,
+      "locale": "en",
+      "before": "Pastel Pink ",
+      "after": "Pastel Pink",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 103,
+      "itemID": 13708,
+      "locale": "de",
+      "before": "Pastellrosa ",
+      "after": "Pastellrosa",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 103,
+      "itemID": 13708,
+      "locale": "fr",
+      "before": "rose pastel",
+      "after": "Rose pastel",
+      "kind": "case"
+    },
+    {
+      "stainID": 104,
+      "itemID": 13709,
+      "locale": "en",
+      "before": "Dark Red ",
+      "after": "Dark Red",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 104,
+      "itemID": 13709,
+      "locale": "de",
+      "before": "Dunkelroter ",
+      "after": "Dunkelrot",
+      "kind": "value"
+    },
+    {
+      "stainID": 104,
+      "itemID": 13709,
+      "locale": "fr",
+      "before": "rouge foncé",
+      "after": "Rouge foncé",
+      "kind": "case"
+    },
+    {
+      "stainID": 105,
+      "itemID": 13710,
+      "locale": "en",
+      "before": "Dark Brown ",
+      "after": "Dark Brown",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 105,
+      "itemID": 13710,
+      "locale": "de",
+      "before": "Dunkelbrauner ",
+      "after": "Dunkelbraun",
+      "kind": "value"
+    },
+    {
+      "stainID": 105,
+      "itemID": 13710,
+      "locale": "fr",
+      "before": "brun foncé",
+      "after": "Brun foncé",
+      "kind": "case"
+    },
+    {
+      "stainID": 106,
+      "itemID": 13711,
+      "locale": "en",
+      "before": "Pastel Green ",
+      "after": "Pastel Green",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 106,
+      "itemID": 13711,
+      "locale": "de",
+      "before": "Pastellgrüner ",
+      "after": "Pastellgrün",
+      "kind": "value"
+    },
+    {
+      "stainID": 106,
+      "itemID": 13711,
+      "locale": "fr",
+      "before": "vert pastel",
+      "after": "Vert pastel",
+      "kind": "case"
+    },
+    {
+      "stainID": 107,
+      "itemID": 13712,
+      "locale": "en",
+      "before": "Dark Green ",
+      "after": "Dark Green",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 107,
+      "itemID": 13712,
+      "locale": "de",
+      "before": "Dunkelgrüner ",
+      "after": "Dunkelgrün",
+      "kind": "value"
+    },
+    {
+      "stainID": 107,
+      "itemID": 13712,
+      "locale": "fr",
+      "before": "vert foncé",
+      "after": "Vert foncé",
+      "kind": "case"
+    },
+    {
+      "stainID": 108,
+      "itemID": 13713,
+      "locale": "en",
+      "before": "Pastel Blue ",
+      "after": "Pastel Blue",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 108,
+      "itemID": 13713,
+      "locale": "de",
+      "before": "Pastellblauer ",
+      "after": "Pastellblau",
+      "kind": "value"
+    },
+    {
+      "stainID": 108,
+      "itemID": 13713,
+      "locale": "fr",
+      "before": "bleu pastel",
+      "after": "Bleu pastel",
+      "kind": "case"
+    },
+    {
+      "stainID": 109,
+      "itemID": 13714,
+      "locale": "en",
+      "before": "Dark Blue ",
+      "after": "Dark Blue",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 109,
+      "itemID": 13714,
+      "locale": "de",
+      "before": "Dunkelblauer ",
+      "after": "Dunkelblau",
+      "kind": "value"
+    },
+    {
+      "stainID": 109,
+      "itemID": 13714,
+      "locale": "fr",
+      "before": "bleu foncé",
+      "after": "Bleu foncé",
+      "kind": "case"
+    },
+    {
+      "stainID": 110,
+      "itemID": 13715,
+      "locale": "en",
+      "before": "Pastel Purple ",
+      "after": "Pastel Purple",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 110,
+      "itemID": 13715,
+      "locale": "de",
+      "before": "Pastellvioletter ",
+      "after": "Pastellviolett",
+      "kind": "value"
+    },
+    {
+      "stainID": 110,
+      "itemID": 13715,
+      "locale": "fr",
+      "before": "violet pastel",
+      "after": "Violet pastel",
+      "kind": "case"
+    },
+    {
+      "stainID": 111,
+      "itemID": 13716,
+      "locale": "en",
+      "before": "Dark Purple ",
+      "after": "Dark Purple",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 111,
+      "itemID": 13716,
+      "locale": "de",
+      "before": "Dunkelvioletter ",
+      "after": "Dunkelviolett",
+      "kind": "value"
+    },
+    {
+      "stainID": 111,
+      "itemID": 13716,
+      "locale": "fr",
+      "before": "violet foncé",
+      "after": "Violet foncé",
+      "kind": "case"
+    },
+    {
+      "stainID": 112,
+      "itemID": 13116,
+      "locale": "en",
+      "before": "Metallic Silver ",
+      "after": "Metallic Silver",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 112,
+      "itemID": 13116,
+      "locale": "de",
+      "before": "Metallic silberner ",
+      "after": "Metallic Silber",
+      "kind": "value"
+    },
+    {
+      "stainID": 112,
+      "itemID": 13116,
+      "locale": "fr",
+      "before": "argent brillant",
+      "after": "Argent brillant",
+      "kind": "case"
+    },
+    {
+      "stainID": 113,
+      "itemID": 13117,
+      "locale": "en",
+      "before": "Metallic Gold ",
+      "after": "Metallic Gold",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 113,
+      "itemID": 13117,
+      "locale": "de",
+      "before": "Metallic goldener ",
+      "after": "Metallic Gold",
+      "kind": "value"
+    },
+    {
+      "stainID": 113,
+      "itemID": 13117,
+      "locale": "fr",
+      "before": "or brillant",
+      "after": "Or brillant",
+      "kind": "case"
+    },
+    {
+      "stainID": 114,
+      "itemID": 13717,
+      "locale": "en",
+      "before": "Metallic Red ",
+      "after": "Metallic Red",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 114,
+      "itemID": 13717,
+      "locale": "de",
+      "before": "Metallic roter ",
+      "after": "Metallic Rot",
+      "kind": "value"
+    },
+    {
+      "stainID": 114,
+      "itemID": 13717,
+      "locale": "fr",
+      "before": "rouge métallique",
+      "after": "Rouge métallique",
+      "kind": "case"
+    },
+    {
+      "stainID": 115,
+      "itemID": 13718,
+      "locale": "en",
+      "before": "Metallic Orange ",
+      "after": "Metallic Orange",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 115,
+      "itemID": 13718,
+      "locale": "de",
+      "before": "Metallic orangefarbener ",
+      "after": "Metallic Orange",
+      "kind": "value"
+    },
+    {
+      "stainID": 115,
+      "itemID": 13718,
+      "locale": "fr",
+      "before": "orange métallique",
+      "after": "Orange métallique",
+      "kind": "case"
+    },
+    {
+      "stainID": 116,
+      "itemID": 13719,
+      "locale": "en",
+      "before": "Metallic Yellow ",
+      "after": "Metallic Yellow",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 116,
+      "itemID": 13719,
+      "locale": "de",
+      "before": "Metallic gelber ",
+      "after": "Metallic Gelb",
+      "kind": "value"
+    },
+    {
+      "stainID": 116,
+      "itemID": 13719,
+      "locale": "fr",
+      "before": "jaune métallique",
+      "after": "Jaune métallique",
+      "kind": "case"
+    },
+    {
+      "stainID": 117,
+      "itemID": 13720,
+      "locale": "en",
+      "before": "Metallic Green ",
+      "after": "Metallic Green",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 117,
+      "itemID": 13720,
+      "locale": "de",
+      "before": "Metallic grüner ",
+      "after": "Metallic Grün",
+      "kind": "value"
+    },
+    {
+      "stainID": 117,
+      "itemID": 13720,
+      "locale": "fr",
+      "before": "vert métallique",
+      "after": "Vert métallique",
+      "kind": "case"
+    },
+    {
+      "stainID": 118,
+      "itemID": 13721,
+      "locale": "en",
+      "before": "Metallic Sky Blue ",
+      "after": "Metallic Sky Blue",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 118,
+      "itemID": 13721,
+      "locale": "de",
+      "before": "Metallic himmelblauer ",
+      "after": "Metallic Himmelblau",
+      "kind": "value"
+    },
+    {
+      "stainID": 118,
+      "itemID": 13721,
+      "locale": "fr",
+      "before": "bleu ciel métallique",
+      "after": "Bleu ciel métallique",
+      "kind": "case"
+    },
+    {
+      "stainID": 119,
+      "itemID": 13722,
+      "locale": "en",
+      "before": "Metallic Blue ",
+      "after": "Metallic Blue",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 119,
+      "itemID": 13722,
+      "locale": "de",
+      "before": "Metallic blauer ",
+      "after": "Metallic Blau",
+      "kind": "value"
+    },
+    {
+      "stainID": 119,
+      "itemID": 13722,
+      "locale": "fr",
+      "before": "bleu métallique",
+      "after": "Bleu métallique",
+      "kind": "case"
+    },
+    {
+      "stainID": 120,
+      "itemID": 13723,
+      "locale": "en",
+      "before": "Metallic Purple ",
+      "after": "Metallic Purple",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 120,
+      "itemID": 13723,
+      "locale": "de",
+      "before": "Metallic violetter ",
+      "after": "Metallic Violett",
+      "kind": "value"
+    },
+    {
+      "stainID": 120,
+      "itemID": 13723,
+      "locale": "fr",
+      "before": "violet métallique",
+      "after": "Violet métallique",
+      "kind": "case"
+    },
+    {
+      "stainID": 121,
+      "itemID": 48167,
+      "locale": "en",
+      "before": "Violet Purple ",
+      "after": "Violet Purple",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 121,
+      "itemID": 48167,
+      "locale": "de",
+      "before": "Purpurvioletter ",
+      "after": "Purpurviolett",
+      "kind": "value"
+    },
+    {
+      "stainID": 121,
+      "itemID": 48167,
+      "locale": "fr",
+      "before": "violet pourpre",
+      "after": "Violet pourpre",
+      "kind": "case"
+    },
+    {
+      "stainID": 122,
+      "itemID": 48169,
+      "locale": "en",
+      "before": "Metallic Pink ",
+      "after": "Metallic Pink",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 122,
+      "itemID": 48169,
+      "locale": "de",
+      "before": "Metallic pinker ",
+      "after": "Metallic Pink",
+      "kind": "value"
+    },
+    {
+      "stainID": 122,
+      "itemID": 48169,
+      "locale": "fr",
+      "before": "rose métallique",
+      "after": "Rose métallique",
+      "kind": "case"
+    },
+    {
+      "stainID": 123,
+      "itemID": 48170,
+      "locale": "en",
+      "before": "Metallic Ruby Red ",
+      "after": "Metallic Ruby Red",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 123,
+      "itemID": 48170,
+      "locale": "de",
+      "before": "Metallic rubinroter ",
+      "after": "Metallic Rubinrot",
+      "kind": "value"
+    },
+    {
+      "stainID": 123,
+      "itemID": 48170,
+      "locale": "fr",
+      "before": "rouge rubis métallique",
+      "after": "Rouge rubis métallique",
+      "kind": "case"
+    },
+    {
+      "stainID": 124,
+      "itemID": 48171,
+      "locale": "en",
+      "before": "Metallic Cobalt Green ",
+      "after": "Metallic Cobalt Green",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 124,
+      "itemID": 48171,
+      "locale": "de",
+      "before": "Metallic kobaltgrüner ",
+      "after": "Metallic Kobaltgrün",
+      "kind": "value"
+    },
+    {
+      "stainID": 124,
+      "itemID": 48171,
+      "locale": "fr",
+      "before": "vert de cobalt métallique",
+      "after": "Vert de cobalt métallique",
+      "kind": "case"
+    },
+    {
+      "stainID": 125,
+      "itemID": 48172,
+      "locale": "en",
+      "before": "Metallic Dark Blue ",
+      "after": "Metallic Dark Blue",
+      "kind": "whitespace"
+    },
+    {
+      "stainID": 125,
+      "itemID": 48172,
+      "locale": "de",
+      "before": "Metallic dunkelblauer ",
+      "after": "Metallic Dunkelblau",
+      "kind": "value"
+    },
+    {
+      "stainID": 125,
+      "itemID": 48172,
+      "locale": "fr",
+      "before": "bleu foncé métallique",
+      "after": "Bleu foncé métallique",
+      "kind": "case"
+    }
+  ]
+}

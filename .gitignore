@@ -57,6 +57,9 @@ e2e-coverage/
 __pycache__/
 *.pyc
 
+# Local scratch of the superpowers agent workflow (plans, reports, logs).
+.superpowers/
+
 # Local agent worktrees. (.claude/skills is a tracked symlink to .agents/skills and .claude/agents holds the tracked
 # role agents — do not ignore .claude/ wholesale.)
 .claude/worktrees/

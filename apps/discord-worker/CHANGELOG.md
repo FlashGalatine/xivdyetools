@@ -5,13 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [5.9.8] - 2026-10-29
+## [5.9.10] - 2026-10-29
 
 ### Changed
 
 - Conditional Core 6/SVG/Bot Logic 5 adoption; preserve original-byte guards and card/embed adapters.
 - Source preparation only: preserve the earlier release, registry and consumer-acceptance gates.
   Merging waits until October 30 or later, satisfied prerequisites and new explicit authorization; publication, deployment and activation remain held.
+
+## [5.9.9] - 2026-11-01
+
+### Changed
+
+- Privacy Policy (all six languages): the Author name row said the `XIVAuth User` name applies when
+  no verified character is available at sign-in. oauth 3.2.2 makes that false for one case: when XIVAuth
+  cannot return the characters, an existing account keeps the name it already has. The row now
+  separates the cases, and a new account in that case gets the `XIVAuth User` name. Policy text only,
+  with no code change. "Last Updated" stays November 1, 2026.
+
+## [5.9.8] - 2026-11-01
+
+### Changed
+
+- Privacy Policy (all six languages): the Author name row now covers every web-app sign-in, not
+  only XIVAuth. It says which name a Bot, Discord web and XIVAuth web submission shows, that each
+  web sign-in replaces the author name on all of the presets under the account that signed in with
+  the name from that sign-in (not while a ban is active), that Bot-submitted presets belong to the
+  Discord account and are included for a Discord sign-in or an XIVAuth account linked to Discord,
+  and that an XIVAuth account not linked to Discord has a separate set, updated only by its own
+  sign-in. Policy text only, with no code change. `apps/web-app/PRIVACY.md` covers the refresh for
+  the account, so the bot's policy is corrected first, in its own release. "Last Updated" is now November 1, 2026.
 
 ## [5.9.7] - 2026-10-27
 
@@ -36,6 +59,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   an unused text copy.
 - Clan autocomplete and validation use official localized race/clan labels while keeping canonical
   saved values. Command registration localizes Swatch order/slots and preset sort choices.
+- Retry an /extractor image once, after 500 ms, when image-worker reports its single processing
+  slot busy (503 "Image processing unavailable"), inside the same 10 s request budget; a second
+  busy reply keeps the generic localized failure. No other failure is retried.
 
 ### Security
 
@@ -102,7 +128,17 @@ adoption; this patch does not register translated choices early.
 ### Changed
 
 - Prepare the Japanese and Simplified Chinese fonts for the pending shared bot catalog while retaining every existing codepoint, glyph shape and metric. Add the three required characters without changing handlers, bindings or registered commands.
-- Keep this font-readiness deployment separate from the later bot-logic and private notification-provider adoption. Production activation remains held.
+- Its production deploy is not run on its own: the maintainer ruled on 2026-10-31 that Discord 5.9.7 (unit 9) carries these fonts. Production activation remains held.
+
+### Security
+
+- **`/glamour` is limited to 5 requests per minute** (2026-10-26 security FINDING-017). Worker-kit
+  1.6.0 gives it an explicit preset with no burst allowance, which Discord's shared lookup maps to
+  the existing RL_5 binding; it previously inherited the 15/minute command default. The limit
+  reaches production with the first approved Discord run after worker-kit 1.6.0 merges (release
+  cut 04, #374, whose run redeploys 5.9.0), so 5.9.1 is the first version to record it. It narrows the
+  load one caller can place on api-worker's shared service budget; it does not remove contention
+  between users in that budget. Command registration is unchanged.
 
 ## [5.9.0] - 2026-10-26
 

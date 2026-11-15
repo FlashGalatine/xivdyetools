@@ -1,0 +1,13 @@
+pnpm.CMD : $ node scripts/analyze-unused-keys.js
+At C:\dev\XIVProjects\xivdyetools\.claude\worktrees\deep-i18n-audits-20261026\docs\audits\2026-10-26-i18n\evidence\scri
+pts\run-gates.ps1:7 char:3
++   & $exe @arguments *> "$out/$id.txt"
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ node scripts/analyze-unused-keys.js:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+
+🌍 i18n orphan check — 1195 keys in en.json (meta.* excluded)
+   used: 1195   orphaned: 0
+
+✅ No orphaned keys.

@@ -57,13 +57,6 @@ export function getAllowedRedirectOrigins(env: {
 export const STATE_EXPIRY_SECONDS = 600; // 10 minutes
 
 /**
- * FINDING-036: one-time UTC issuance cutoff for states signed without a domain
- * prefix. In-flight legacy states may finish for at most STATE_EXPIRY_SECONDS
- * after this instant. Never extend this cutoff in later releases.
- */
-export const LEGACY_STATE_ISSUANCE_CUTOFF_SECONDS = Date.parse('2026-10-28T00:00:00Z') / 1000;
-
-/**
  * Request timeout for external API calls (milliseconds)
  */
 export const REQUEST_TIMEOUT_MS = 10000; // 10 seconds

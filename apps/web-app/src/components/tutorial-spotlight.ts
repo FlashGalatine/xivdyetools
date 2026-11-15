@@ -103,6 +103,21 @@ export class TutorialSpotlight extends BaseComponent {
    */
   private releaseModal: (() => void) | null = null;
 
+  /**
+   * The delay a step holds: its tooltip's first render (BUG-085's 100 ms) or,
+   * for a missing target, the skip to the next step. It goes when the next
+   * step shows and when the tour ends. Left running it outlived both, and the
+   * test environment too: the render ran after jsdom was torn down and
+   * `createElement` threw `document is not defined`.
+   */
+  private stepTimer: ReturnType<typeof setTimeout> | null = null;
+
+  /** hide()'s fade-out. A tour shown again inside it would be hidden by it. */
+  private hideTimer: ReturnType<typeof setTimeout> | null = null;
+
+  /** show()'s fade-in. A tour ended before it would be faded back in. */
+  private fadeInFrame: number | null = null;
+
   private readonly handleAncestorScroll = (): void => {
     if (this.currentStep) {
       this.updatePositions();
@@ -266,7 +281,9 @@ export class TutorialSpotlight extends BaseComponent {
 
   private showStep(step: TutorialStep, stepIndex: number, totalSteps: number): void {
     this.currentStep = step;
-    // The previous step's scrollers go first, before a missing target returns
+    // The previous step's delay and scrollers go first, before a missing
+    // target returns
+    this.clearStepTimer();
     this.unwatchScrollAncestors();
 
     // Find target element (supports Shadow DOM traversal)
@@ -274,7 +291,7 @@ export class TutorialSpotlight extends BaseComponent {
     if (!target) {
       logger.warn(`Tutorial target not found: ${step.target}`);
       // Skip to next step if target not found
-      setTimeout(() => TutorialService.next(), 100);
+      this.stepTimer = this.safeTimeout(() => TutorialService.next(), 100);
       return;
     }
 
@@ -291,7 +308,7 @@ export class TutorialSpotlight extends BaseComponent {
     // getBoundingClientRect(), and on the first step the tooltip is still empty
     // when updatePositions() runs -- a 0x0 box, so the placement maths is done
     // against a size the tooltip never has.
-    setTimeout(() => {
+    this.stepTimer = this.safeTimeout(() => {
       this.updateTooltipContent(step, stepIndex, totalSteps);
       this.updatePositions();
     }, 100);
@@ -620,9 +637,12 @@ export class TutorialSpotlight extends BaseComponent {
   override show(): void {
     if (this.element) {
       this.releaseModal ??= ModalService.registerExternal();
+      this.clearHideTimer();
       this.element.style.display = 'block';
       // Fade in
-      requestAnimationFrame(() => {
+      this.cancelFadeIn();
+      this.fadeInFrame = requestAnimationFrame(() => {
+        this.fadeInFrame = null;
         if (this.overlay) this.overlay.style.opacity = '1';
         if (this.spotlight) this.spotlight.style.opacity = '1';
         if (this.tooltip) this.tooltip.style.opacity = '1';
@@ -632,6 +652,8 @@ export class TutorialSpotlight extends BaseComponent {
 
   override hide(): void {
     this.releaseModalRegistration();
+    this.clearStepTimer();
+    this.cancelFadeIn();
 
     if (this.element) {
       // Fade out
@@ -639,7 +661,9 @@ export class TutorialSpotlight extends BaseComponent {
       if (this.spotlight) this.spotlight.style.opacity = '0';
       if (this.tooltip) this.tooltip.style.opacity = '0';
 
-      setTimeout(
+      // hide() runs twice per tour end (tutorial:end, then the state change)
+      this.clearHideTimer();
+      this.hideTimer = this.safeTimeout(
         () => {
           if (this.element) {
             this.element.style.display = 'none';
@@ -666,6 +690,23 @@ export class TutorialSpotlight extends BaseComponent {
     this.releaseModal = null;
   }
 
+  // Each is safe when nothing is pending. destroy() needs only the frame:
+  // BaseComponent clears every safeTimeout.
+  private clearStepTimer(): void {
+    if (this.stepTimer !== null) this.clearSafeTimeout(this.stepTimer);
+    this.stepTimer = null;
+  }
+
+  private clearHideTimer(): void {
+    if (this.hideTimer !== null) this.clearSafeTimeout(this.hideTimer);
+    this.hideTimer = null;
+  }
+
+  private cancelFadeIn(): void {
+    if (this.fadeInFrame !== null) cancelAnimationFrame(this.fadeInFrame);
+    this.fadeInFrame = null;
+  }
+
   // ============================================================================
   // Cleanup
   // ============================================================================
@@ -673,6 +714,7 @@ export class TutorialSpotlight extends BaseComponent {
   override destroy(): void {
     // First, so a throwing cleanup below cannot leave every shortcut off
     this.releaseModalRegistration();
+    this.cancelFadeIn();
 
     if (this.unsubscribe) {
       this.unsubscribe();
