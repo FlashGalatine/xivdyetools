@@ -1,0 +1,6 @@
+$ node scripts/analyze-unused-keys.js "--" "--json"
+{
+  "total": 1195,
+  "used": 1195,
+  "unused": []
+}

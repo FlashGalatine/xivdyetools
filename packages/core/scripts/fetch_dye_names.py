@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """
-Fetch localized dye names from XIVAPI and generate a CSV file.
+Fetch localized dye Item names from XIVAPI and generate a CSV file.
+
+Legacy Item-label helper: canonical dye color names come from Stain.Name.
+For dyenames.csv refreshes, use the pinned audit:dyes capture and the workflow
+in docs/maintainer/adding-dyes.md; Item names can use different grammatical forms.
 
 This script reads the dyes.json file (schema v2) containing FFXIV dye data,
 queries the XIVAPI v2 for each dye's name in multiple languages,

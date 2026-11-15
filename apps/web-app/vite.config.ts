@@ -3,6 +3,7 @@ import { resolve } from 'path'
 import { asyncCss } from './vite-plugin-async-css'
 import { changelogParser } from './vite-plugin-changelog-parser'
 import { betaBranding } from './vite-plugin-beta-branding'
+import { coreJsonCompatibility } from './vite-plugin-core-json'
 import pkg from './package.json'
 
 // Set by .github/workflows/deploy-web-app-beta.yml. Absent everywhere else.
@@ -78,6 +79,7 @@ export default defineConfig({
     postcss: './postcss.config.js',
   },
   plugins: [
+    coreJsonCompatibility(),
     asyncCss(),
     changelogParser(),
     betaBranding(isBeta),

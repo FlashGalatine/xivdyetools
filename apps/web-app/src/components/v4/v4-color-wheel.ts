@@ -105,7 +105,7 @@ export class V4ColorWheel extends BaseLitComponent {
   nodeAngles: number[] = [];
 
   /**
-   * Size of the wheel in pixels
+   * Size of the wheel in pixels, which it shrinks below to fit a narrower container
    */
   @property({ type: Number })
   size: number = 300;
@@ -116,17 +116,25 @@ export class V4ColorWheel extends BaseLitComponent {
   @property({ type: Boolean })
   empty: boolean = false;
 
+  // A puck is 42px on any wheel of 263px and up, which is every phone from 320px, so
+  // a touch target doesn't shrink there. On the wheel of a narrow pane it's 16% of the
+  // wheel, down to 24px, or the base puck would cover the digits on Shades' neighbors
+  // and Monochromatic's inner puck. This is here because a comment in the css would ship.
   static override styles: CSSResultGroup = [
     BaseLitComponent.baseStyles,
     css`
       :host {
         display: block;
+        max-width: 100%;
       }
 
+      /* Shrinks to fit a narrow pane and stays round. Node positions and the
+         spokes are percentages, so they follow it down. */
       .harmony-circle-container {
         position: relative;
         width: var(--wheel-size, 300px);
-        height: var(--wheel-size, 300px);
+        max-width: 100%;
+        aspect-ratio: 1;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -147,8 +155,8 @@ export class V4ColorWheel extends BaseLitComponent {
       /* 1A: node pucks — 42px tap targets, not 14px dots */
       .harmony-node {
         position: absolute;
-        width: 42px;
-        height: 42px;
+        width: clamp(24px, 16%, 42px);
+        aspect-ratio: 1;
         padding: 0;
         background: var(--theme-card-background, #1e1e1e);
         border: 3px solid var(--theme-background, #0b0b0c);
@@ -215,11 +223,13 @@ export class V4ColorWheel extends BaseLitComponent {
         border-top: 1px dashed rgba(255, 255, 255, 0.2);
       }
 
-      /* 1A hub: 114px button carrying the base dye — tapping opens the picker */
+      /* 1A hub: 114px button carrying the base dye — tapping opens the picker.
+         Below a 248px wheel it shrinks too, or it would cover the nodes. */
       .main-swatch-display {
         position: absolute;
-        width: 114px;
-        height: 114px;
+        width: min(114px, 46%);
+        aspect-ratio: 1;
+        min-height: 0;
         padding: 6px;
         border-radius: 50%;
         box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
@@ -279,7 +289,7 @@ export class V4ColorWheel extends BaseLitComponent {
         color: var(--theme-text-muted, #a0a0a0);
         pointer-events: none;
         text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-        margin-top: 80px; /* Offset below center circle */
+        margin-top: calc(100% * 80 / 300); /* Below the hub: 80px on a 300px wheel */
       }
 
       .harmony-label.empty {
@@ -399,7 +409,7 @@ export class V4ColorWheel extends BaseLitComponent {
         (angle) => html`
           <div
             class="harmony-line empty"
-            style="width: ${this.size * 0.35}px; transform: rotate(${angle - 90}deg);"
+            style="width: 35%; transform: rotate(${angle - 90}deg);"
           ></div>
         `
       );
@@ -413,10 +423,7 @@ export class V4ColorWheel extends BaseLitComponent {
       // Subtract 90° to align with hueToPosition which also offsets by -90
       const lineAngle = angle - 90;
       return html`
-        <div
-          class="harmony-line"
-          style="width: ${this.size * 0.35}px; transform: rotate(${lineAngle}deg);"
-        ></div>
+        <div class="harmony-line" style="width: 35%; transform: rotate(${lineAngle}deg);"></div>
       `;
     });
   }
