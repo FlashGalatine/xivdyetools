@@ -256,7 +256,7 @@ function fit(content: string, maxPx: number, size: number, mono = false): string
   return chars.slice(0, keep).join('').trimEnd() + '…';
 }
 
-/** CJK by codepoint, never by "has no spaces" — so is `Rußschwarzer`. */
+/** CJK by codepoint, never by "has no spaces" — so is `Rußschwarz`. */
 const CJK_RE = /[　-ヿ㐀-䶿一-鿿豈-﫿가-힯]/;
 
 /**

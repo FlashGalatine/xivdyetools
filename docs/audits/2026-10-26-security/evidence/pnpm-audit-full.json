@@ -1,0 +1,132 @@
+{
+  "advisories": {
+    "1242622": {
+      "findings": [
+        {
+          "version": "6.4.3",
+          "paths": [
+            "apps__api-worker>vitepress>@vitejs/plugin-vue>vite",
+            "apps__api-worker>vitepress>vite"
+          ],
+          "dev": true,
+          "optional": false,
+          "bundled": false
+        }
+      ],
+      "id": 1242622,
+      "title": "launch-editor: escapeCmdArgs() omits % escaping on Windows",
+      "module_name": "vite",
+      "vulnerable_versions": "<=6.4.3",
+      "patched_versions": ">=6.4.4",
+      "severity": "moderate",
+      "cwe": "CWE-78",
+      "github_advisory_id": "GHSA-698v-4r3x-3vcv",
+      "url": "https://github.com/advisories/GHSA-698v-4r3x-3vcv"
+    },
+    "1242651": {
+      "findings": [
+        {
+          "version": "6.4.3",
+          "paths": [
+            "apps__api-worker>vitepress>@vitejs/plugin-vue>vite",
+            "apps__api-worker>vitepress>vite"
+          ],
+          "dev": true,
+          "optional": false,
+          "bundled": false
+        }
+      ],
+      "id": 1242651,
+      "title": "launch-editor: Editor CLI flag misinterpretation causing arbitrary command execution for some editors",
+      "module_name": "vite",
+      "vulnerable_versions": "<=6.4.3",
+      "patched_versions": ">=6.4.4",
+      "severity": "moderate",
+      "cwe": "CWE-88",
+      "github_advisory_id": "GHSA-r825-w8mm-5pxw",
+      "url": "https://github.com/advisories/GHSA-r825-w8mm-5pxw"
+    },
+    "1242658": {
+      "findings": [
+        {
+          "version": "6.4.3",
+          "paths": [
+            "apps__api-worker>vitepress>@vitejs/plugin-vue>vite",
+            "apps__api-worker>vitepress>vite"
+          ],
+          "dev": true,
+          "optional": false,
+          "bundled": false
+        }
+      ],
+      "id": 1242658,
+      "title": "launch-editor: `fs.existsSync()` existence check can be bypassed on Windows",
+      "module_name": "vite",
+      "vulnerable_versions": "<=6.4.3",
+      "patched_versions": ">=6.4.4",
+      "severity": "high",
+      "cwe": "CWE-77",
+      "github_advisory_id": "GHSA-587h-7wmj-h5pm",
+      "url": "https://github.com/advisories/GHSA-587h-7wmj-h5pm"
+    },
+    "1242724": {
+      "findings": [
+        {
+          "version": "6.4.3",
+          "paths": [
+            "apps__api-worker>vitepress>@vitejs/plugin-vue>vite",
+            "apps__api-worker>vitepress>vite"
+          ],
+          "dev": true,
+          "optional": false,
+          "bundled": false
+        }
+      ],
+      "id": 1242724,
+      "title": "Vite: Cross origin script execution through Vite custom middleware",
+      "module_name": "vite",
+      "vulnerable_versions": "<=6.4.3",
+      "patched_versions": ">=6.4.4",
+      "severity": "low",
+      "cwe": "CWE-80",
+      "github_advisory_id": "GHSA-9jrq-w75r-8gcw",
+      "url": "https://github.com/advisories/GHSA-9jrq-w75r-8gcw"
+    },
+    "1242730": {
+      "findings": [
+        {
+          "version": "6.4.3",
+          "paths": [
+            "apps__api-worker>vitepress>@vitejs/plugin-vue>vite",
+            "apps__api-worker>vitepress>vite"
+          ],
+          "dev": true,
+          "optional": false,
+          "bundled": false
+        }
+      ],
+      "id": 1242730,
+      "title": "Vite: Files outside `server.fs.allow` could be served when project paths match system paths on non-Windows machine",
+      "module_name": "vite",
+      "vulnerable_versions": "<=6.4.3",
+      "patched_versions": ">=6.4.4",
+      "severity": "moderate",
+      "cwe": "CWE-22, CWE-284",
+      "github_advisory_id": "GHSA-rq7h-c2jc-7f22",
+      "url": "https://github.com/advisories/GHSA-rq7h-c2jc-7f22"
+    }
+  },
+  "metadata": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 1,
+      "moderate": 3,
+      "high": 1,
+      "critical": 0
+    },
+    "dependencies": 28,
+    "devDependencies": 689,
+    "optionalDependencies": 236,
+    "totalDependencies": 717
+  }
+}

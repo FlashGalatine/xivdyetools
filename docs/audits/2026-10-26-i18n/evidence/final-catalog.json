@@ -1,0 +1,181 @@
+{
+  "snapshot": "6da3ff5b",
+  "findings": [
+    {
+      "candidate_id": "CONTENT-001",
+      "title": "The localized fatal startup screen always renders an English detail sentence",
+      "kind": "HC",
+      "tier": "P1",
+      "locales": [
+        "ja",
+        "de",
+        "fr",
+        "ko",
+        "zh"
+      ],
+      "unit": "apps/web-app",
+      "locations": [
+        "apps/web-app/src/main.ts:187",
+        "apps/web-app/src/shared/error-handler.ts:71",
+        "apps/web-app/src/shared/error-handler.ts:86",
+        "apps/web-app/src/shared/constants.ts:135",
+        "apps/web-app/src/shared/fatal-error.ts:61"
+      ],
+      "evidence": "main.ts supplies translated FATAL_STRINGS for the heading/body/button, but supplies ErrorHandler.createUserMessage(appError) separately as the detail. That method always returns one of the English ERROR_MESSAGES constants. renderFatalError paints that value with textContent. The startup table exception is justified because LanguageService may itself have failed, but the detail was omitted from that standalone localization design.",
+      "repro": "Use a supported non-English navigator.language and make an awaited startup dependency reject (for example block the dynamically imported v4-layout module), then reload. The localized heading and reload button surround 'An unexpected error occurred. Please try again.' Source tracing establishes the outcome; no browser fault injection was performed.",
+      "fix": "Extend the existing dependency-free six-language fatal copy table with a localized detail (or localized safe error-code details), and use it without calling LanguageService on this failure path. Keep the default English fallback. Assert all displayed fatal-screen sentences in each locale.",
+      "generated": false,
+      "id": "HC-001",
+      "status": "OPEN",
+      "test_gap": "Fatal rendering tests supply arbitrary details, not all localized startup sentences."
+    },
+    {
+      "candidate_id": "CONTENT-006",
+      "title": "Clan preference autocomplete and invalid-clan options print only English names",
+      "kind": "HC",
+      "tier": "P1",
+      "locales": [
+        "ja",
+        "de",
+        "fr",
+        "ko",
+        "zh"
+      ],
+      "unit": "apps/discord-worker",
+      "locations": [
+        "apps/discord-worker/src/index.ts:1182",
+        "apps/discord-worker/src/index.ts:1235",
+        "apps/discord-worker/src/index.ts:1288",
+        "apps/discord-worker/src/index.ts:1301",
+        "apps/discord-worker/src/types/preferences.ts:202",
+        "apps/discord-worker/src/types/preferences.ts:225",
+        "apps/discord-worker/src/handlers/commands/preferences.ts:785",
+        "packages/bot-logic/src/localization.ts:201"
+      ],
+      "evidence": "The autocomplete handler resolves locale but calls getClanAutocompleteChoices(query) without it. The helper filters and prints SUBRACE_DISPLAY_NAMES-derived English clan/race names. Invalid-clan validation inserts the same English table into an otherwise translated sentence. Core already carries the official six-language clan/race names and bot-logic exports their getters. Canonical English option values can remain identifiers; their displayed names need not be English. The clan preference is currently stored but unused by commands, which lowers this candidate's practical priority.",
+      "repro": "In a Japanese Discord client open /preferences set clan and type a localized clan name, e.g. サンシーカー: the helper matches only its English table and returns no corresponding choice. With an empty query it displays Seeker of the Sun (Miqo'te). Enter an invalid clan to see the English-only valid-name list in a localized error.",
+      "fix": "Carry locale into autocomplete, match/display official localized race/clan names while preserving existing canonical stored values, and render localized names alongside canonical tokens in validation. Keep this optional preference's dormant consumer status explicit.",
+      "generated": false,
+      "overlap": "Related root class to 2026-10-04-i18n/HC-001, but different live sites: that finding fixed tribeDisplay on cards in packages/bot-logic; it did not cover preference autocomplete or validation.",
+      "id": "HC-002",
+      "status": "OPEN",
+      "test_gap": "Existing helper tests pin English canonical table labels, not localized display/search.",
+      "qualification": "P1 follows the skill rule for live hardcoded UI. The optional preference has no command consumer today; that limits practical urgency but not reachability."
+    },
+    {
+      "candidate_id": "CONTENT-004",
+      "title": "The default Harmony OG card advertises six harmony types while the tool and worker support ten",
+      "kind": "I18N",
+      "tier": "P1",
+      "locales": [
+        "en",
+        "ja",
+        "de",
+        "fr",
+        "ko",
+        "zh"
+      ],
+      "unit": "apps/og-worker",
+      "locations": [
+        "apps/og-worker/src/services/og-strings.ts:43",
+        "apps/og-worker/src/services/og-strings.ts:56",
+        "apps/og-worker/src/services/og-strings.ts:69",
+        "apps/og-worker/src/services/og-strings.ts:82",
+        "apps/og-worker/src/services/og-strings.ts:95",
+        "apps/og-worker/src/services/og-strings.ts:108",
+        "apps/og-worker/src/og-params.ts:48",
+        "apps/web-app/src/services/harmony-generator.ts:39",
+        "apps/og-worker/src/services/svg/default-card.ts:176"
+      ],
+      "evidence": "Every OG_DECK harmony.sub still says six (Six / sechs / six / 6 / 6 / 六). The live web HARMONY_TYPE_IDS and OG VALID_HARMONY_TYPES each enumerate ten, including inverted tetradic, square, compound and shades. The default card paints options.sub. The old confirmed-design provenance does not make the factual count current.",
+      "repro": "Request the default Harmony OG card without a selected dye in any supported locale; its subtitle promises six types. Open the Harmony Explorer and count the ten selectable types.",
+      "fix": "Update the count in all six authored deck subtitles, or remove the brittle number, then perform the OG string/font gates and re-subset only if required by the changed glyphs. Bump the OG cache version so existing cached cards receive the corrected copy.",
+      "generated": false,
+      "id": "I18N-002",
+      "status": "OPEN",
+      "test_gap": "Existing fixtures repeat the stale six-type subtitle instead of deriving the supported count.",
+      "qualification": "Wrong factual text is P1. This subtitle is shown only in the default Discord frame; the X frame omits the deck."
+    },
+    {
+      "candidate_id": "CONTENT-002",
+      "title": "Twelve plain-language slash-command choices remain English despite translated descriptions",
+      "kind": "I18N",
+      "tier": "P2",
+      "locales": [
+        "ja",
+        "de",
+        "fr",
+        "ko",
+        "zh"
+      ],
+      "unit": "apps/discord-worker",
+      "locations": [
+        "apps/discord-worker/src/commands/localize.ts:138",
+        "apps/discord-worker/src/commands/localize.ts:204",
+        "apps/discord-worker/src/commands/localize.ts:221",
+        "apps/discord-worker/src/commands/schemas.ts:919",
+        "apps/discord-worker/src/commands/schemas.ts:929",
+        "apps/discord-worker/src/commands/schemas.ts:1022",
+        "packages/bot-logic/src/i18n/locales/ja.json:615"
+      ],
+      "evidence": "choiceLocalizations has no branches for swatch/order, swatch/slot or preset/sort. After initializing every locale and running localizeCommands, the two row-order choices, seven body-slot choices and three preset sort choices have no name_localizations. The swatch option descriptions do carry Japanese. Existing card.swatchSlotName.* supplies all seven body labels in all six locales. Current tests exhaustively gate descriptions, but only selected choice lists.",
+      "repro": "Run the read-only ESM probe in review-content.md. In a Japanese Discord client inspect /swatch slot or order and /preset list sort: the choices are Skin, Hair, Slots — file order (default), Most Popular, etc. The probe confirms the registered payload shape; no command registration was performed.",
+      "fix": "Reuse card.swatchSlotName.* for slot display names while preserving emoji and canonical values. Author six-language row-order and sort display keys, then cover these three choice families in localize.test.ts. Deliberately English method tags, endonyms and preset categories are outside this finding.",
+      "generated": false,
+      "id": "I18N-001",
+      "status": "OPEN",
+      "test_gap": "Description gates and selected choice tests omit these three choice families.",
+      "qualification": "Primary owner is Discord command metadata; new order/sort locale keys are authored and published in bot-logic before the consumer deploy. Preserve canonical option values."
+    },
+    {
+      "candidate_id": "CONTENT-003",
+      "title": "Five Korean web strings still call the Hue coordinate 색조 instead of the pinned 색상",
+      "kind": "TERM",
+      "tier": "P2",
+      "locales": [
+        "ko"
+      ],
+      "unit": "apps/web-app",
+      "locations": [
+        "apps/web-app/src/locales/ko.json:145",
+        "apps/web-app/src/locales/ko.json:198",
+        "apps/web-app/src/locales/ko.json:201",
+        "apps/web-app/src/locales/ko.json:291",
+        "apps/web-app/src/locales/ko.json:499",
+        ".agents/skills/audit-shared/traps/i18n-fonts.md:73"
+      ],
+      "evidence": "The house rule explicitly pins Korean Hue to 색상, not 색조. config.hueMatchingDesc says 색조 각도, config.colorSpaceHsvDesc and colorSpaceLchDesc say 색조, harmony.types.monochromaticDesc says 단일 색조, and gradient.mode.hsv says 색조 기반. English explicitly means hue in each case. The same file already uses 색상 for config.mixingHsl, mixer.modelHsl and comparison.deltaHue. The 2026-09-19 pass corrected two HSL config keys but left these five distinct-English strings outside same-English parity.",
+      "repro": "Select Korean. Inspect the Harmony matching description, Gradient HSV option and interpolation descriptions; compare them with the Mixer HSL label. The terminology split is visible despite structural and same-English gates passing.",
+      "fix": "Apply the established 색상 house term to these five Hue uses, retaining the surrounding Korean wording. This is an existing project terminology decision, not a new translation or a guessed game-client term.",
+      "generated": false,
+      "id": "TERM-001",
+      "status": "OPEN",
+      "test_gap": "Structural and same-English parity gates do not enforce this five-key term rule."
+    },
+    {
+      "candidate_id": "CONTENT-005",
+      "title": "Chinese OG cards can select Japanese CJK glyphs because their font buffers always load JP first",
+      "kind": "FONT",
+      "tier": "P3",
+      "locales": [
+        "zh"
+      ],
+      "unit": "apps/og-worker",
+      "locations": [
+        "apps/og-worker/src/services/fonts.ts:68",
+        "apps/og-worker/src/services/fonts.ts:81",
+        "apps/og-worker/src/services/renderer.ts:112",
+        "apps/og-worker/src/services/svg/tokens.ts:18",
+        "apps/og-worker/src/services/svg/accessibility.ts:102",
+        "apps/discord-worker/src/services/fonts.ts:126"
+      ],
+      "evidence": "OG getFontBuffers has one cache and always returns the Latin faces, JP, SC, KR; its renderer accepts no locale. With the real bundled fonts and resvg-wasm, a generated zh achromatopsia accessibility card (dyeIds:[1]) contains 全色盲 · 1 种染剂 and hashes 8a6489e3327c10046bcaf86bab19454f16017a6c1a61ef25f26524c983db6750 in current order versus 753a4f649355bf648fc15fc4071aa770612cfa337c7f96db59d431afa6651b59 in SC-first order. Shared single-character probes select the JP-only result in current order and the SC-only result in reversed order. The sibling Discord renderer already threads locale and tests this behavior. This is regional font selection, not missing glyphs/tofu.",
+      "repro": "Use the saved read-only render probe in review-content.md with apps/og-worker as cwd; compare real generated zh card renders under current and SC-first buffer order. No production HTTP request or stored image is needed.",
+      "fix": "Thread locale to the OG renderer/font loader and use JP-first for ja, SC-first for zh (and the existing intended fallback for the other locales), mirroring the tested Discord approach. Add actual regional-face render assertions. Schedule after string fixes; no re-subset is inherently required for a load-order change.",
+      "generated": false,
+      "id": "FONT-001",
+      "status": "OPEN",
+      "test_gap": "Coverage/face-presence tests do not assert regional load order with actual rendered glyphs."
+    }
+  ]
+}

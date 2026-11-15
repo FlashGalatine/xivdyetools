@@ -300,9 +300,11 @@ protections describe console/adapter output.
 
 Discord `/webhooks/<numeric-id>/<token>` and
 `/interactions/<numeric-id>/<token>` path shapes are secret-shaped values,
-including full URLs, follow-up message URLs and relative paths. Context values
-and array items containing them become `[REDACTED]`; messages and error messages
-keep the URL prefix/suffix and replace the token. Matching uses the path shape,
+including full URLs, follow-up message URLs and relative paths. A context value
+or array item that is such a URL or path becomes `[REDACTED]`, and one that
+carries it inside longer text keeps the text and loses only the token; messages
+and error messages (when `sanitizeErrors` is on) keep the URL prefix/suffix and
+replace the token. Matching uses the path shape,
 regardless of host. With `sanitizeErrors: false`, field/value redaction remains
 active, while free-text message/error sanitization and stack suppression are off.
 

@@ -861,6 +861,13 @@ describe('localized embed copy', () => {
     expect((await generateOGDataForTool('presets', new URLSearchParams(), mockEnv, 'fr', 'gc-maelstrom')).title).toContain('Préréglages communautaires');
   });
 
+  it('German titles carry the 5.16.0 dye names, not the earlier inflected ones (PR #390)', async () => {
+    const de = await generateOGDataForTool('gradient', new URLSearchParams('start=1&end=102&steps=5'), mockEnv, 'de');
+    expect(de.title).not.toContain('Schneeweißer');
+    expect(de.title).not.toContain('Rabenschwarzer');
+    expect(de.title).toMatch(/Schneeweiß(?!er)/);
+  });
+
   it('tool names in the title match the card deck, not core tools.* (OG-I18N-005)', async () => {
     const de = await generateOGDataForTool('gradient', new URLSearchParams(), mockEnv, 'de');
     expect(de.title).toContain('Verlauf-Ersteller');

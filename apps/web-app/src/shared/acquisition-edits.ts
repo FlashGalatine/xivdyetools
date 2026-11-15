@@ -38,6 +38,17 @@ export function gearHash(slot: string, familyItemId: number, stainIds: readonly 
   return hash.toString(16).padStart(8, '0');
 }
 
+/**
+ * The storage key for a piece's Abridged line, in the same store as its full
+ * line. Two levels, so a shortened line never overwrites the full one: Abridged
+ * shows this edit when there is one, else the abridged form of the full line
+ * (the piece's full edit, else its generated line). The full form never reads
+ * this key.
+ */
+export function abridgedEditKey(hash: string): string {
+  return `${hash}:abridged`;
+}
+
 function readAll(): Record<string, AcquisitionEdit> {
   const stored = StorageService.getItem<Record<string, AcquisitionEdit>>(KEY);
   return stored && typeof stored === 'object' ? stored : {};

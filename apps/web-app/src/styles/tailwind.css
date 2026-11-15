@@ -13,8 +13,14 @@
    spinner, the error boundary. */
 @import './tool-content.css';
 
-/* Import Tailwind CSS v4 */
-@import "tailwindcss";
+/* Import Tailwind CSS v4. `source("../")` (relative to this file: src/) is the
+   whole class-scan root. Left implicit, the base is Vite's cwd (apps/web-app),
+   so the scan read CHANGELOG.md and shipped ~2.5 KB of utilities nothing
+   renders, and a checkout under an ignored folder such as `.turbo/` turned the
+   scanner's ignore rules off and pulled in node_modules, dist and .git, nearly
+   doubling this file. Every class the app renders comes from src/ (index.html
+   included); public/ and functions/ carry no markup. */
+@import "tailwindcss" source("../");
 
 /* Link to the config file for custom theme extensions */
 @config "../../tailwind.config.js";

@@ -28,6 +28,13 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 });
 
+// jsdom has no layout, so it leaves ResizeObserver out
+globalThis.ResizeObserver ??= class {
+  observe(): void {}
+  unobserve(): void {}
+  disconnect(): void {}
+};
+
 // Mock the logger module to prevent SSR import issues
 // Use vi.fn() so tests can spy on these methods
 vi.mock('@shared/logger', () => {

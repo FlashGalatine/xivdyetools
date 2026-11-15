@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [5.16.5] - 2026-10-29
+## [5.17.1] - 2026-10-29
 
 ### Changed
 
@@ -15,14 +15,420 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Source preparation only: preserve the earlier release, registry and consumer-acceptance gates.
   Merging waits until October 30 or later, satisfied prerequisites and new explicit authorization; publication, deployment and activation remain held.
 
+## [5.17.0] - 2026-11-02
+
+### Added
+
+- **The Glamour list sheet has an Abridged toggle.** It writes the shorter social-media form of the GPOSERS
+  list: no `Glamour Items:` header, the whole `Slot: Name` line in bold, one `Dyes:` line if the piece wears
+  a dye (accessories and facewear never have one) and one `Obtained:` line. The toggle is off by default and
+  remembered on the device (`FORMAT_KEY` in `glamour-sheet.ts`; if storage refuses, it lasts until the page
+  is left). It switches the preview, the fields, Copy list and Save .md together, and the download is
+  `glamour-equipment-abridged.md`. `Dyes:` reads `A / B`, `A / None` or `None / B` on a piece that takes two
+  dyes and wears one, and `A` on a one-dye piece or on a piece dyed only on channel 1 whose dye count is
+  unknown (the resolve failed or returned no rules). The labels `Dyes:`, `Obtained:` and `None` are English
+  form words in every language; item and dye names follow the app language, and the source lines are English.
+  The full list, the API and the `/glamour` bot are unchanged.
+- **`shared/glamour-abridged.ts` picks the one source for `Obtained:`.** It reads the full line's text, in
+  this order: (1) every dungeon, trial or raid at the lowest difficulty among those leading the line, up to
+  the first craft, priced vendor or known non-instance (none, then Hard, Extreme, Savage, Ultimate; The
+  Minstrel's Ballad counts as Extreme); (2) the first craft, with job and level; (3) the first Gil vendor, with
+  the price; (4) the first other vendor, with no amounts or upgrade items; (5) otherwise the line as it is. A
+  map dungeon such as The Aquapolis loses to any other source: when the line names one, the map dungeons are
+  dropped before these steps (maintainer ruling, 2026-11-13).
+- **A line typed in Abridged stays word for word, and only in Abridged.** It is stored under its own key
+  (`abridgedEditKey`). A full-list edit carries over to Abridged, trimmed by the same rules, until it is
+  typed over. Typing the picked source back removes the edit. Reset all clears both forms.
+- **Each row of the Glamour list sheet has its own switch, in both forms.** Switching a piece off leaves it out
+  of the preview, Copy list and Save .md. A switch belongs to one outfit, the file's full set of worn gear and
+  dyes: a file with a different outfit starts with every piece on, even one switched off in another outfit; one
+  dye changed anywhere makes a different outfit, a dye moved to the piece's other channel included; and the same outfit loaded again (SWAP, or the file dropped
+  again) keeps its switches. A switch stays off until the page reloads: it is held in a module-level set
+  (`offPieces` in `glamour-sheet.ts`, keyed by the piece's `offKeys`: every worn slot's model key and dyed channels from the file
+  alone, then the piece's own, not the `hash`, so a twin pick or the names lookup landing later does not turn
+  it back on) and is never written to `localStorage`, so reopening the sheet or flipping Abridged keeps it and
+  a reload turns every piece back on. Edits stay keyed by the gear and still carry between files. A merged
+  `Rings:` row has one switch for both rings; different rings have one each. An off row stays in the sheet, dimmed, with its field and its warning's buttons locked, and what was typed there
+  comes back when it is switched on. FILLED, EDITED and BLANK count only the pieces that are on. Reset all
+  turns every piece of this outfit back on, including one with no row in this view, as well as clearing edits, and leaves other outfits' switches alone. It also now forgets a line typed while the names lookup was down; a line filed under the item stays while the lookup is down, because nothing names the item then. With
+  every piece off, Copy list and Save .md are disabled in both forms. The switch's accessible name is the new `glamour.sheet.includePiece` string. The
+  reader's own piece list, the API and the `/glamour` bot are unchanged, and a list with every piece on is
+  byte for byte what it was.
+- **CI's always-run step now runs `src/shared/__tests__/glamour-abridged.test.ts`.** It pins every line of
+  api-worker's `acquisition.en.json` where Abridged's instance rule drops a source (a result with no craft
+  and no priced vendor) against `glamour-abridged-drops.json`, so a table refresh that adds one fails in its
+  own pull request instead of on the next unrelated web-app one. Lines cut down to a craft or a vendor are
+  covered only by the whole-table invariants and the worked examples. The step runs it with `--root` on that
+  folder, which needs no build.
+  `docs/maintainer/acquisition-generation.md` says what to do when it fails.
+
+### Changed
+
+- **The `glamour: export sheet` bundle budget goes from 16 KB to 20 KB.** The chunk measures 17.52 KB with the
+  Abridged form and the per-piece switches, past the old limit; 20 KB gives it about 14% headroom.
+
+## [5.16.15] - 2026-11-02
+
 ### Fixed
 
-- Restore Hair and Skin palette loading in Vite development after Core adopted native JSON import attributes. A client-only transform adapts two compiled Core modules during `vite dev`, retaining native Node imports, lazy loading, source maps and production chunking. Regression tests assert actual race-specific colors and reject live module errors.
+- **The Dye Mixer's result slot no longer glows gold.** Its border took the theme's accent, but the glow
+  around it was written out as `rgba(212, 175, 55, 0.3)`, the gold of the retired themes, so Light and Dark
+  both showed a red border in a gold halo. The glow is now `color-mix(in srgb, var(--theme-primary) 30%,
+  transparent)`, the idiom the app already uses for its other accent tints.
+
+### Changed
+
+- **33 fallbacks that could never paint are gone.** `var(--theme-primary, #d4af37)` is now
+  `var(--theme-primary)` in the Mixer, the config sidebar, the palette drawer, the preset detail, the range
+  slider, the result card, the share button, the toggle switch and the layout shell. `themes.css` declares
+  `--theme-primary` and ThemeService sets it on the document for both palettes, so the fallback was never
+  read. With the glow, no non-test source names the gold of the retired themes any more. The status ambers
+  and the logo are untouched.
+- **Size.** The code shrinks by 263 bytes: each fallback was 9 bytes, 297 in all, and the glow's new color
+  costs 34. The one-locale payload goes from 2,289,023 to 2,288,661 bytes, 362 fewer, and stays at 99.3% of
+  its budget; the other 99 bytes are What's New, whose bounded window slides by one release when this entry
+  is added. The layout shell is 189 bytes smaller and goes from 99.7% to 99.6% of its budget. No limit moved.
+
+### Tests
+
+- **`theme-token-contract.test.ts` now fails on the retired gold in any non-test source**, not only in a hover
+  rule. Run against the code before this change it listed all 34 lines: the 33 fallbacks and the glow.
+
+## [5.16.14] - 2026-11-02
+
+### Fixed
+
+- **Hovering no longer shows the gold of the retired themes.** No theme ever defined
+  `--theme-primary-hover`, so a toggle that is on and the palette drawer's Apply button painted their
+  fallbacks on hover in Light and Dark alike, `#c49d2f` and `#c49f2f`. `themes.css` now declares the token
+  beside its other aliases, from `--v4-accent-hover`: both palettes already pick that color as `accentHover`,
+  `#B01C1C` on Light and `#FF6257` on Dark. That goes deeper on Light and brighter on Dark, which one
+  `color-mix` of the accent can't do, and a new palette field would only have repeated the value. The
+  palette drawer's Random button had the same gold written out as its hover tint,
+  `rgba(212, 175, 55, 0.1)`, and now takes a 10% tint of the accent. The fallbacks in the other hover rules
+  that named it, on Random, the favorite star and the share button, could never paint and are gone.
+
+- **The labels on the accent read properly in Light.** The Apply button and active filter chips read
+  `--theme-text-on-primary`, which nothing declared either, so they painted its `#000` fallback: fine on gold,
+  3.88:1 on the resting red and 3.03:1 on the new deeper hover. `themes.css` now aliases it to
+  `--theme-text-header`, the token the other activated buttons use, and both `#000` fallbacks are gone. Light
+  becomes white at 5.42:1 resting and 6.93:1 on hover. Dark becomes near-black at 5.00:1 and 6.73:1, down from
+  5.30:1 and 7.14:1 on pure black.
+- **Bundle:** the code in these fixes shrinks by 32 bytes and the What's New entry adds 457, so the one-locale
+  payload grows by a net 425 and stays at 99.3% of its budget. No limit moved.
+
+### Tests
+
+- **`theme-token-contract.test.ts` fails on any `--theme-*` token the app reads and nothing declares**, the
+  gap that let this hide, and on the retired gold in any hover rule. The one token still undeclared,
+  `--theme-empty-state-background`, sits in an allow-list with its reason, and an entry that stops being a gap
+  fails too.
+- **`e2e/theme-hover.spec.ts` hovers the toggle, Apply and Random in a real browser and measures the label
+  contrast**, switching theme with the page open, because only a browser resolves these tokens through the
+  stylesheet and the applied palette.
+
+## [5.16.13] - 2026-11-02
+
+### Fixed
+
+- **The Dye Mixer no longer scrolls sideways in a narrow pane.** With both side panels open and two dyes
+  picked, the pane scrolled sideways by 217 px at 769 px, 186 at 800, 126 at 860, 86 at 900 and 26 at 960.
+  With one dye or none it didn't. Two things pushed it, measured by hiding one at a time: the mixing field's
+  grid wouldn't go under 348 px, and the results header (title, Export, Share) wouldn't wrap, which alone
+  left 120 px at 769 px. The field now gives way in order, following its own width rather than the window's:
+  its cells narrow from 52 to 32 px and its row names from 68 to 52 px, then the tool's 32 px of side padding
+  goes (`clamp(0px, calc((100% - 232px) / 2), 32px)`, a percentage because a side panel changes the pane with
+  no window resize), and under 232 px each row name takes a line of its own, so the cells get the whole width.
+  With both panels open that's 926 px for the padding and 862 px for the row names. All 30 cells stay on
+  screen down to 769 px, at 26 px wide. The six rows are taller there, and with three-decimal ΔE values
+  (OKLab) a cell's label nearly fills it.
+- **A phone's Mixer had the same bug.** 56 px of padding and a 348 px field need 404 px, so a 390 px phone
+  scrolled 14 px sideways (24 px in a window with a real scrollbar) and a 320 px one 84 px. On a 390 or 412 px
+  phone only the field's cells change, and the padding stays until a window under about 344 px. A 360 px
+  phone also moves Export and Share under the results title, whose row was already 3 px too wide there.
+- **The results headers wrap, but only when they have to.** The Mixer's title takes what's left beside
+  Export and Share, as it did, until its longest word and those two can't share a line. The Gradient's
+  label and controls work the same way: its header overflowed by 9 px at 769 px. Long words break, because
+  "CORRESPONDANTES" and "VERLAUFSERGEBNISSE" are wider than the 139 px a 769 px window leaves.
+- **The Gradient Builder's endpoint cards fit and read.** Below an 872 px window its From and To cards were
+  too narrow for their own 30 px swatch, so the swatch spilled out under the swap button and the text had a
+  width of 0. At 769 px that text was also the pane's 10 px overflow, with no dye picked or with one. The
+  tool's side padding now gives way first (`clamp(0px, calc((100% - 238px) / 2), 32px)`, from 932 px with both
+  panels open), and under 238 px of width, an 868 px window, the cards stack with the swap between them.
+- **The Mixer's empty icon fits.** Its 150 px didn't at 769 px.
+
+With both panels open, the tools' geometry is identical to `main` from 934 px up for the Gradient and from
+1,042 px up for the Mixer, in English, empty and with one or two dyes, apart from the one box each that
+draws nothing: the Mixer's title and the Gradient's control cluster are now as wide as the room beside them.
+Measured at 11 window widths from 930 to 2,560 px and 6 phone widths from 320 to 768 px (102 records, 20,723
+element boxes). A phone's Gradient is unchanged, and so is a phone's Mixer with no pair picked, except that
+at 320 px its padding goes from 32 to 20 px. At 769, 830, 860 and 960 px nothing passes the pane's padding
+in any of the six languages, with a long dye name (160 records, three matching methods in English). A result
+card's decorative notches are the exception, half outside the card as designed.
+
+### Changed
+
+- **`e2e/tool-narrow-pane.spec.ts` covers both tools:** at five window sizes their field, slots, cards, rail
+  and results headers sit inside the pane's padding and nothing scrolls sideways. It also covers the far
+  corner of the field taking a click, a panel closing with no window resize, the widest ΔE, German and
+  French headers, 390 and 412 px phones, and the designed sizes where there's room.
+
+## [5.16.12] - 2026-11-02
+
+### Fixed
+
+- **A result card's menu and submenus stay inside the scroll pane.** The menu opens from the card's right
+  corner and each submenu opens left of that. With both panels open at 769 px the pane starts at x=252, but
+  the menu started at 214 and its submenus at 7. No submenu item could be hit in Comparison, Harmony or
+  Accessibility from 769 px to at least 860 px. At 1024 px their first 27 to 47 px were cut off, and on a
+  390 px phone they ran up to 78 px off the screen. The card now measures this when the menu opens, and again
+  on a window resize while it's open. The menu narrows to fit, and never moves right, because past the card's
+  own edge it goes under the next card in a phone's two-column grid. A submenu with no room on its left
+  overlaps the menu from 8 px inside the pane and leaves 44 px of each row uncovered, so a pointer or a finger
+  can reach the next row. Long words in a submenu break, such as German "Barrierefreiheitsprüfung". With room
+  for the designed layout nothing changes (`--submenu-right` and `--submenu-width` stay unset).
+- **Harmony's pucks follow a small wheel.** A fixed 42 px on a 139 px wheel put the base puck over its
+  neighbors: at 769 px the Monochromatic and Shades digits were under it, and only 2 or 3 of nine points
+  across each puck reached it. A puck is now `clamp(24px, 16%, 42px)` with `aspect-ratio: 1`, so at 769 px each
+  digit is on its own puck and 6 to 8 of those nine points reach it. It stays 42 px on a wheel of 263 px and up,
+  which is every phone from 320 px wide (a 272 px wheel). Nothing adds a minimum wheel size or scrolling.
+- **Comparison's "What actually differs" rows wrap.** A 92 px label and two values on one line left the values
+  0 px wide at 769 px, 0 to 7 px at 800 px, 15 to 22 px at 830 px and 30 to 37 px at 860 px. The two values and
+  the delta now move under the label when they'd have under 138 px beside it, and the delta takes its own line
+  when even that doesn't fit, as at 769 px. A value too long for its column wraps instead of ending in an
+  ellipsis. Rows are the same one line at 1024 px and up unless a value doesn't fit.
+- **A keyboard pick in the Swatch Matcher keeps the focused cell on screen.** At 1366x768 the scroll to the
+  verdict left cell 0 at y=-176 and cell 60 at y=34, above the pane, which starts at 54. The focused cell now
+  stays 8 px inside the pane with as much of the results as fits below it. In the first three rows of a
+  192-cell palette at that size, the verdict's label is still just below the fold. Pointer picks scroll as they
+  did (`block: 'nearest'`).
+- **Closing a side panel keeps revealed Swatch results on screen.** The results move up beside the grid and the
+  scroll position doesn't follow them, so at 1366x768 the verdict ended up at y=-391 to y=-560. A
+  `ResizeObserver` on the row now brings them back when they stop being under the grid. It doesn't act on
+  results that were never revealed or a pane that only resizes.
+- **The Swatch grid panel gets the whole of a narrow pane.** The tool's side padding gives way from 32 px to 0,
+  then the panel's from 20 px to 8 px. At 769 px the panel goes from 75 px to 139 px, and the grid starts 1,279 px
+  down instead of 5,440 px, most of which was the Evercold notice breaking in a 33 px column. With both panels
+  open, all eight columns show without sideways scrolling from an 884 px window instead of 972 px. Below that the
+  grid still scrolls sideways inside its panel. Padding is unchanged from 972 px up and on phones.
+
+Measured geometry with menus closed is unchanged at 972, 1024, 1440 and 1920 px in English, German and Japanese
+across the Swatch Matcher, Harmony, Comparison and Accessibility (84 records, 233,460 element boxes). The
+exceptions are the one wrapper each Comparison row gains and German at 972 px, where "Farbstoffverkäufer" now takes
+two lines instead of an ellipsis. Two limits remain: with a card at the pane's very bottom, the lowest submenu runs
+28 px past it, as it did before, and hovering its row again after scrolling shows all of it. In German at 769 px,
+Comparison's "Was sich unterscheidet" heading overhangs by 3 px and the Swatch Matcher's content by 22 px, down
+from 4 px and 54 px, and both can be scrolled to.
+
+### Changed
+
+- **`e2e/tool-narrow-pane.spec.ts` and `e2e/swatch-narrow-pane.spec.ts`** cover all of the above with real
+  scrollbars: menus at 769, 814, 860, 1024 and 390 px in three tools, including a click on a submenu item,
+  pucks at 769, 785 and 800 px, "What actually differs" at 769 to 860 px, and the designed sizes where
+  there's room. The vitest setup stubs `ResizeObserver`, which jsdom doesn't have.
+
+## [5.16.11] - 2026-11-02
+
+### Fixed
+
+- **Harmony, Comparison and Accessibility no longer lose their left edge in a narrow pane.** With both
+  side panels open below about 870 px wide, each one centered something wider than its pane. Centering
+  splits the excess across both sides, and nothing can scroll to what hangs off the left. At 800x600
+  the pane starts at x=252, but the wheel started at 216, the result cards at 226, the row of "Add Dye" slots
+  at 246 and the vision tabs at 234. All of these can shrink, so none needed sideways scrolling of its own.
+  The wheel's circle takes `max-width: 100%` and `aspect-ratio: 1`, with its spokes and label offset now
+  percentages, and `size` is the largest it gets. Its hub is `min(114px, 46%)`, because a fixed 114 px
+  would sit on the nodes of a smaller wheel. Comparison's single-dye and pair cards and its pair chips
+  take `max-width: 100%`. Vision tab labels wrap, and the lens grid's tracks can go below 180 px.
+- **The Comparison and Accessibility empty states fit a narrow pane and still read.** The slots row and
+  the message box take `max-width: 100%`, and their sideways padding gives way as the pane narrows
+  (`min(2rem, 5cqw)` below about 640 px of container width, `min(40px, 8cqw)` below 500 and
+  `min(20px, 5cqw)` below 400). It is `cqw` because a percentage counts as 0
+  while a shrink-to-fit box measures itself, and Accessibility's four slots then stacked in one column
+  in a 1600 px window. With the full padding at 769 px there would be no room left for either.
+- **Accessibility's share row wraps.** The "As designed → as perceived" row didn't, so once a dye was
+  picked the whole pane scrolled sideways: 77 px at 1024x768, or 87 px with a real scrollbar, and 139 px
+  on a 390 px phone (149 px in a 390 px window with a real scrollbar). The "Can you tell them apart?" row
+  wraps as well.
+- **Header rows wrap in longer languages.** Comparison's Export and Share row is `justify-content:
+  flex-end`, so in German at 800x600 "Exportieren" was cut off on the left. Comparison's "What differs"
+  row in German and Harmony's results row in French overflowed to the right.
+- **A word too long for its line breaks.** "Barrierefreiheitsanalyse" in Accessibility's empty message
+  hung 4 px off the left of the pane in German at 769 px.
+
+Measured geometry is unchanged at 1440, 1536, 1600, 1718, 1920 and 2560 px in English, German and
+Japanese, empty and with one, two and four dyes (240 records, 47,808 element boxes), and at 768x1024 in
+English. At 769, 800 and 1024 px, with menus closed, nothing starts left of the pane in any of the six
+languages. An open card menu is the exception: at 769 and 800 px it starts left of the pane and its
+submenu opens off the pane's left, out of a mouse's reach, while the keyboard and closing Options still
+work; at 1024 px the submenu starts left of the pane but stays clickable. Harmony and Accessibility
+already did this. So did Comparison's submenu, and at 800 px its narrower cards now start the open menu
+left of the pane as well.
+
+### Changed
+
+- **New `e2e/tool-narrow-pane.spec.ts`:** at 769x700, 800x600 and 1024x768 with both panels open, each
+  tool's wheel, cards, chips, slots, tabs and share controls sit inside the pane's padding, nothing drawn
+  starts left of it, nothing scrolls sideways and the shell is the only vertical scroller (#372). It also
+  covers the German and French header rows, a phone's share row and the designed sizes at 1440x900. It
+  runs with real scrollbars, because the 10 px that headless Chromium's hidden ones leave the pane
+  concealed a pair chip's 4 px overflow.
+
+## [5.16.10] - 2026-11-02
+
+### Fixed
+
+- **The Swatch Matcher no longer cuts off its grid in a narrow pane.** With both side panels open at
+  1024x768 the heading read "OLORS (192)", the Eye tab and the panel's left edge could not be reached,
+  and the matches column had no width at all, so a pick showed no result cards. The palette tabs' one-line width
+  (521 px in English) set the grid panel's width: it is `flex: 0 0 auto`, and `updateSwatchLayout()`
+  clears its `width: fit-content`. The row's `justify-content: center` then split the excess across both
+  sides of the 340 px or so inside the pane's padding, and nothing can scroll to what hangs off the left.
+  The panel now has
+  `max-width: 100%`, so its tabs wrap, and it scrolls sideways inside itself if even the 236 px grid
+  does not fit. The row wraps too, which moves the matches under the grid when they would have under
+  190 px beside it. With both panels open in English that is below about 1,430 px, or about 1,530 px on
+  Lips and Face paint, whose Dark/Light toggle widens the panel, and it also ends the right-edge clipping
+  of the matches at 1280 and 1366. Longer languages stack sooner, up to about 1,680 px on French Lips.
+  Both follow the pane rather than the window, so closing a side panel re-lays the tool out with no
+  resize. In English, measured geometry is unchanged at 1536, 1600, 1718, 1920 and 2560 px, and at 1440 px
+  on the palettes without that toggle, with and without a selection. In the six languages nothing stacks
+  at 1718 px and wider.
+- **A phone can reach the grid's first column.** The 44 px grid overflows its panel on a phone, and
+  `align-items: center` put its start 51 px left of the panel at 390 px wide, where scrolling could
+  not reach it. `align-items: safe center` starts it at the panel's edge.
+- **A grid pick, or in a desktop window a palette pick, shared link or dye from another tool, brings
+  its results into view where they sit under the grid.** The check was `window.innerWidth < 768`, but a
+  desktop window can stack them now too, and the grid panel can be taller than the window, so a pick
+  there could have changed nothing on screen. A grid pick or a shared
+  link's cell goes to the verdict, and a dye or custom color from the palette, or a dye sent from another
+  tool, goes to the closest swatches. A desktop window uses `block: 'nearest'`, which moves nothing if
+  they're already on screen and keeps rows of the grid in view for the next pick, unless the results are
+  too tall for the pane, as a palette pick's are at 800x600. A phone's grid pick still takes the card to
+  the top, and at 768 px and under palette picks still don't scroll, since the open palette covers the
+  tool. A THIS CHARACTER slot doesn't scroll, because its own card shows the answer, and neither do results
+  beside the grid, even where a long column reaches past a short grid's bottom. A double-click's second
+  click is ignored, because the grid may have moved under the pointer. The scroll now honors
+  `prefers-reduced-motion`, on phones too.
+
+### Changed
+
+- **The Swatch Matcher's pane no longer declares `overflow-y: auto`.** It was the one tool panel left
+  with it after 5.16.5 moved scrolling to the shell. It never overflowed vertically, but it made the
+  pane a sideways scroll container of its own.
+- **New `e2e/swatch-narrow-pane.spec.ts`:** at 1024x768 and 1280x800 with both panels open, the
+  heading, all seven tabs and both ends of the top row sit inside the pane, with no sideways overflow
+  and the shell as the only vertical scroller. It also covers the stacked matches and the scroll to the
+  verdict, the re-layout when panels close, the grid's own scrolling at 800x600 and 390x844, and the
+  1920x1080 layout. Its five narrow-pane tests failed on the old code; the phone test was added with the
+  fix, and removing `safe center` fails it. It runs with real scrollbars, and also covers palette picks,
+  shared links, a grid pick that keeps cells in view, no jump with the verdict already on screen, and the
+  results staying beside the grid at 1440 on Eye and at 1536 on Lips and Face paint, after a palette pick
+  too.
+
+## [5.16.9] - 2026-11-02
+
+### Fixed
+
+- **The Color Palette has no sideways scrollbar, and its dye tooltips are no longer cut off at the
+  sides.** Each swatch's name is a `::after` tooltip that rests at `opacity: 0`, and a hidden box
+  still counts as scrollable overflow. Centered on a last-column swatch, a long name ran past
+  `.drawer-content`: client width 309 and scroll width 322 at the 320px drawer with a classic
+  scrollbar (334 in French; 316 and 322 on Budget Suggestions), on all seven tools with the palette, at any window width. On hover the
+  same centering cut names off: the scroller clipped the outer columns (38 px of the longest French
+  name in the first column, where no scrolling could reach it), and the Favorites section's
+  `overflow: hidden` clipped them tighter. Tooltips in the first and last of the five columns now
+  line up with their swatch's outer edge and grow inward.
+  `overflow-x` stays as it was, so a future overflow shows up rather than clipping a name silently.
+- **Dye tooltips are no longer cut off at the top of the scrolled panel.** A tooltip opens above its
+  swatch, so the scroller cut it off for a swatch within about 35 px of its top edge.
+  `placeSwatchTooltip` now opens it below such a swatch, on hover and on scroll, because a swatch can
+  also rise to the edge under a still pointer. `.favorites-section` drops `overflow: hidden`, which
+  would have cut off a tooltip opened below a single row of Favorites; its header rounds its own
+  corners instead. A hovered swatch now ranks above the favorite stars (`z-index` 21 over 20), because
+  the tooltip lives in its stacking context and the stars of the row it opens over would paint across
+  the name.
+- **New checks in `e2e/content-scroll.spec.ts`:** no sideways scroll on each palette tool and at
+  769, 768, 390 and 320 px windows. In all six languages the widest tooltip of each column, in the
+  main grid and in Favorites, stays inside everything that clips it while hovered, at a 320px drawer
+  and at 310px (the columns a classic scrollbar leaves, which headless Chromium hides). Tooltips also
+  stay whole -15 to 60 px from the panel's top in both grids, stay above a swatch with room, and move
+  when the swatch scrolls up under a still pointer. They fail on the old code.
+
+## [5.16.8] - 2026-11-01
+
+### Changed
+
+- **Privacy Guide, Terms and the sign-in note (`preset.privacyNote`), all six languages:** they said
+  the `XIVAuth User` name applies when no verified character is available at sign-in. oauth 3.2.2 makes
+  that false for one case: when XIVAuth cannot return the characters, an existing account keeps the name
+  it already has. The text now separates the cases. No verified character gives the `XIVAuth User`
+  name; a failed lookup keeps the name on the account, and a new account gets the `XIVAuth User` name.
+  `Last updated` is 2026-11-01 on all twelve documents. The note ships in the bundle, while
+  `PRIVACY*.md` and `TERMS_OF_SERVICE*.md` are served from `main` (`about-modal.ts`
+  `POLICY_DOCS_BASE`), so they are live at merge. No other source changed.
+
+## [5.16.7] - 2026-11-01
+
+### Fixed
+
+- **The tutorial spotlight cancels its own delays.** It scheduled four and kept none: a step's
+  100 ms tooltip render, the 100 ms skip past a missing target, `show()`'s fade-in frame and
+  `hide()`'s 300 ms fade-out. Each now holds its handle (the timers through BaseComponent's
+  `safeTimeout`, so `destroy()` clears them) and goes when it no longer applies:
+  - the step's delay when the next step shows and when the tour ends, so an ended tour no longer
+    renders a tooltip or skips ahead, and a step that replaced a missing target is no longer skipped;
+  - the fade-out when a tour shows again inside it, which used to hide the new tour;
+  - the fade-in when the tour ends before its frame, which used to fade an ended tour back in.
+- **A green web-app test run no longer fails on an unhandled error.** The tooltip render outlived
+  `tutorial-spotlight.test.ts`, ran after jsdom was torn down and threw
+  `ReferenceError: document is not defined` from `createElement`, so Vitest exited 1 with every test
+  passing (PR #404, CI run 41213879557, attempt 1). Eight new tests drive each delay under fake
+  timers and fail on the old code.
+
+No player-facing What's New entry: the changed paths are races inside 100-300 ms of a tour step.
+
+## [5.16.6] - 2026-11-01
+
+Build hardening only; nothing a visitor sees changes.
+
+### Maintenance
+
+- **Tailwind's class scan is rooted at `src/`.** `src/styles/tailwind.css` now reads
+  `@import "tailwindcss" source("../")`. Without `source()`, `@tailwindcss/postcss` scanned from
+  Vite's cwd (`apps/web-app`), and two things followed from that:
+  - The scan read this changelog, so 15 utilities named only in its prose shipped as dead CSS
+    (`bg-pink-600`, `bg-purple-600`, `bg-green-600`, `bg-blue-100`, `bg-gray-900`, `bg-gradient-to-r`,
+    `text-3xl`, `text-blue-900`, `text-green-600`, `border-blue-200`, `tabular-nums`, and the
+    `dark:` variants `border-blue-800`, `bg-blue-900`, `text-blue-100`, `text-green-400`), together
+    with their theme variables and the five `--tw-numeric-*` / `--tw-ordinal` / `--tw-slashed-zero`
+    `@property` rules. The index CSS drops from 55.6 KB to 53.1 KB. Every removed rule was checked
+    against `src/`, `public/`, `functions/` and `index.html`: none of them is rendered (the `src/`
+    mentions are `dark:bg-gray-900`, `dark:bg-blue-900/30` and the `font-variant-numeric` value, all
+    still generated or plain CSS), and no class is built from string pieces.
+  - The result depended on where the checkout lived. Inside a folder on Tailwind's ignored-dir list
+    (`.turbo`, `.next`, `.vercel`, `.svelte-kit`, ...), the oxide scanner turned off its ignore rules
+    and read `node_modules`, `dist` and `.git`, nearly doubling the index CSS (107.8 KB) and failing
+    a local `build:check` against the 105 KB CSS budget that CI passes at 53%. `src/` holds none of
+    those, so the CSS is now the same wherever the checkout sits.
+
+## [5.16.5] - 2026-11-01
+
+### Fixed
+
+- Main-content scrollbars sat inside the shell's 24px padding because each tool panel, including Community Presets, created a second scroll container (#368). Let the shell own scrolling and let the tool wrapper grow with its content. The scrollbar now meets the content-pane edge, including the window edge when the palette is closed. Preserve content padding and print expansion.
+- The Dye Mixer restored an inner `height: 100%` / `overflow-y: auto` panel after shell layout, producing a second scrollbar from just 3–5px of overflow. Let the panel grow in the shell, keeping all matching results reachable and Options/Color Palette scrolling independent.
+- On phones, the Palette Extractor pinned its image, color bar and palette header by giving the workspace the tool panel's full height, which the shell change above removed: they scrolled away and the card sheet kept a scrollbar of its own. Make them sticky inside the shell's scroller on a glass ground, so the cards scroll under them with the shell's single scrollbar, on phones at least 560px tall; on shorter (often landscape) phones they scroll away with the cards, which stay reachable.
+- Add browser regression checks for desktop palette states, mobile scrolling, bottom-content reachability, the Mixer's single scroll owner with all result details enabled, the Extractor's pinned image on phones and reachable cards on a landscape phone, and the sidebar-free reader's print layout.
 
 ## [5.16.4] - 2026-10-28
 
 ### Fixed
 
+- Keep companion dyes when a 4.x saved palette from the German UI is migrated. Core 5.16.0
+  adopts XIVAPI's German names (118 change, for example Schneeweißer to Schneeweiß), so the
+  one-time migration also accepts a frozen table of the earlier German names, in any UI
+  locale; a current name always wins.
 - Restore Swatch match cards and sharing after locale changes without reloading the
   character or duplicating live subscriptions. Close pending and open Glamour export
   sheets when the loaded character changes.
@@ -39,6 +445,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Localize every fatal startup sentence without requiring LanguageService, correct five
   Korean Hue terms, and truncate file names without splitting surrogate pairs within the
   existing 256 UTF-16-unit limit.
+- Restore Hair and Skin palette loading in Vite development after Core adopted native
+  JSON import attributes. A client-only transform adapts two compiled Core modules during
+  `vite dev`, retaining native Node imports, lazy loading, source maps and production
+  chunking. Regression tests assert actual race-specific colors and reject live module
+  errors.
 
 ### Maintenance
 
@@ -51,6 +462,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   errors move to the standalone localized copy; retain normalization and logging.
 - Remove unused spectral/dye-selector chunk rules and stale documentation. Fresh builds
   remain byte-identical; retain the generic future-vendor 30 KB guard and all active limits.
+- Do not cache a resolve answer whose item or facewear failed validation, so the next import
+  retries instead of keeping slot-only rows until reload.
 
 ### Security
 

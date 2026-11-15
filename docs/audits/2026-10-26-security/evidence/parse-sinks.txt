@@ -1,0 +1,224 @@
+apps/api-worker/docs/.vitepress/search-index.ts:18:  const m = tag.match(new RegExp(`\\b${name}="([^"]*)"`))
+apps/api-worker/docs/.vitepress/search-index.ts:30:      params.push(`\`${m[1]}\` — ${m[2].replace(/\\'/g, "'")}`)
+apps/api-worker/docs/.vitepress/theme/lib/live.ts:83:      const m = line.match(/^(\s*)("[^"]*")(:\s*)(.*)$/);
+apps/api-worker/docs/.vitepress/theme/lib/live.ts:117:      json = JSON.parse(text);
+apps/api-worker/docs/.vitepress/theme/lib/live.ts:175:    json = JSON.parse(text);
+apps/api-worker/docs/.vitepress/theme/lib/live.ts:210:    return `curl -X POST "${url}" -H "Content-Type: application/json" -d '${body.replace(/'/g, "'\\''")}'`;
+apps/api-worker/scripts/acquisition/inputs.ts:339:  const name = raw.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+apps/api-worker/scripts/acquisition/inputs.ts:368:    const shopPatterns = rule.shops.map((p) => new RegExp(p));
+apps/api-worker/scripts/acquisition/inputs.ts:377:      ...rule.names.map((p): [RegExp, RegExp] => [new RegExp(p), /(?:)/]),
+apps/api-worker/scripts/acquisition/inputs.ts:378:      ...rule.toolNames.map((p): [RegExp, RegExp] => [new RegExp(p), TOOL_CATEGORY]),
+apps/api-worker/scripts/acquisition/inputs.ts:379:      ...rule.weaponNames.map((p): [RegExp, RegExp] => [new RegExp(p), WEAPON_CATEGORY]),
+apps/api-worker/scripts/build-acquisition.ts:278:  return JSON.parse(readFileSync(join(TABLES_DIR, file), 'utf8')) as T;
+apps/api-worker/scripts/build-acquisition.ts:387:    ? (JSON.parse(readFileSync(join(DATA_DIR, 'acquisition.meta.json'), 'utf8')) as { teamcraftCommit: string; xivapiVersion: string })
+apps/api-worker/src/chara/icon-cache.ts:36:      const response = await edge.match(this.key(context, iconId));
+apps/api-worker/src/chara/router.ts:170:    return JSON.parse(text) as unknown;
+apps/api-worker/src/chara/xivapi.ts:97:  return typeof value === 'string' ? value.replace(/­/g, '').trim() : '';
+apps/api-worker/src/chara/xivapi.ts:264:    this.base = new URL(env.XIVAPI_BASE ?? DEFAULT_XIVAPI_BASE).toString().replace(/\/$/, '');
+apps/api-worker/src/chara/xivapi.ts:326:      const body = JSON.parse(
+apps/api-worker/src/lib/validation.ts:61:  return harmonyType.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());
+apps/api-worker/src/telemetry/router.ts:87:    json = JSON.parse(text);
+apps/api-worker/src/universalis/services/cache-service.ts:124:      const cached = await cache.match(cacheRequest);
+apps/api-worker/src/universalis/services/cached-fetch.ts:112:    const parsed = JSON.parse(await readBounded(response)) as T;
+apps/api-worker/src/universalis/services/cached-fetch.ts:215:      const parsed: unknown = JSON.parse(await readBounded(response));
+apps/discord-worker/scripts/gen-option-description-keys.ts:69:  const en = JSON.parse(readFileSync(EN, 'utf8')) as { commands: Record<string, OptionDescriptionNode> };
+apps/discord-worker/scripts/upload-emojis.ts:111:    .replace(/[^a-z0-9]+/g, '_')
+apps/discord-worker/scripts/upload-emojis.ts:112:    .replace(/^_+|_+$/g, '')
+apps/discord-worker/scripts/upload-emojis.ts:179:  const dyes: DyeEntry[] = JSON.parse(readFileSync(DYE_DATA_PATH, 'utf8'));
+apps/discord-worker/scripts/upload-emojis.ts:180:  const mapping: EmojiMappingFile = JSON.parse(readFileSync(MAPPING_PATH, 'utf8'));
+apps/discord-worker/src/commands/localize.ts:128:const snakeToCamel = (s: string): string => s.replace(/[-_]([a-z0-9])/g, (_, c: string) => c.toUpperCase());
+apps/discord-worker/src/handlers/commands/dye.ts:263:        name: `dye-${dye.name.toLowerCase().replace(/\s+/g, '-')}.png`,
+apps/discord-worker/src/index.ts:347:    payload = JSON.parse(bodyText) as PresetNotificationPayload;
+apps/discord-worker/src/index.ts:673:    payload = JSON.parse(rawBody) as GitHubPushPayload;
+apps/discord-worker/src/index.ts:819:    interaction = JSON.parse(body) as DiscordInteraction;
+apps/discord-worker/src/services/budget/price-cache.ts:65:    const response = await cache.match(url);
+apps/discord-worker/src/services/changelog-parser.ts:65:    const versionMatch = line.match(/^## \[([^\]]+)\]\s*-\s*(.+)$/);
+apps/discord-worker/src/services/changelog-parser.ts:75:    const sectionMatch = line.match(/^### (.+)$/);
+apps/discord-worker/src/services/changelog-parser.ts:83:    const itemMatch = line.match(/^[-*]\s+(.+)$/);
+apps/discord-worker/src/services/preferences.ts:198:    parsed = JSON.parse(data);
+apps/discord-worker/src/services/preferences.ts:654:      const worldPref = JSON.parse(legacyWorldData) as { world?: string };
+apps/discord-worker/src/services/preset-favorites.ts:95:      parsed = JSON.parse(v2);
+apps/discord-worker/src/services/preset-favorites.ts:119:  const parsedV1: unknown = JSON.parse(v1);
+apps/moderation-worker/src/services/bot-i18n.ts:128:  return template.replace(/\{(\w+)\}/g, (match, key: string) => {
+apps/moderation-worker/src/utils/safe-json.ts:111:    parsed = JSON.parse(body);
+apps/moderation-worker/src/utils/sql-helpers.ts:82:  return query.replace(/[%_\\]/g, '\\$&');
+apps/oauth/src/utils/state-signing.ts:73:    const state = JSON.parse(json) as StateData;
+apps/oauth/src/utils/state-signing.ts:96:      state = JSON.parse(json) as StateData;
+apps/og-worker/src/index.ts:515:  const hit = await cache.match(cacheKey);
+apps/og-worker/src/og-data-generator.ts:912:    .replace(/&/g, '&amp;')
+apps/og-worker/src/og-data-generator.ts:913:    .replace(/</g, '&lt;')
+apps/og-worker/src/og-data-generator.ts:914:    .replace(/>/g, '&gt;')
+apps/og-worker/src/og-data-generator.ts:915:    .replace(/"/g, '&quot;')
+apps/og-worker/src/og-data-generator.ts:916:    .replace(/'/g, '&#039;');
+apps/og-worker/src/og-data-generator.ts:1060:          .map((c) => c.trim().replace(/^#/, '').toUpperCase())
+apps/og-worker/src/services/og-embed.ts:351:  return template.replace(/\{(\w+)\}/g, (_, name: string) =>
+apps/og-worker/src/services/og-strings.ts:284:  return template.replace(/\{(\w+)\}/g, (_, k: string) =>
+apps/og-worker/src/services/translator.ts:38:  return harmony.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase()) as HarmonyTypeKey;
+apps/presets-api/scripts/migrate-presets.ts:61:  return str.replace(/'/g, "''");
+apps/presets-api/scripts/migrate-presets.ts:70:  const data: PresetData = JSON.parse(rawData);
+apps/presets-api/src/services/moderation-service.ts:31:  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+apps/presets-api/src/services/moderation-service.ts:81:    combinedPattern = new RegExp(`\\b(${asciiWords.map(escapeRegex).join('|')})\\b`, 'i');
+apps/presets-api/src/services/moderation-service.ts:86:    cjkPattern = new RegExp(cjkWords.map(escapeRegex).join('|'), 'i');
+apps/presets-api/src/services/moderation-service.ts:135:    const match = pattern.source.match(/\\b\(?([\w|]+)\)?\\b/);
+apps/presets-api/src/services/moderation-service.ts:143:      ? new RegExp(`\\b(${words.map(escapeRegex).join('|')})\\b`, 'i')
+apps/presets-api/src/services/notification-service.ts:476:    parsed = JSON.parse(row.payload);
+apps/presets-api/src/services/preset-service.ts:33:  return str.replace(/[%_\\]/g, '\\$&');
+apps/presets-api/src/services/preset-service.ts:57:    dyes = JSON.parse(row.dyes) as CommunityPreset['dyes'];
+apps/presets-api/src/services/preset-service.ts:63:    tags = JSON.parse(row.tags) as CommunityPreset['tags'];
+apps/presets-api/src/services/preset-service.ts:71:      previous_values = JSON.parse(row.previous_values) as CommunityPreset['previous_values'];
+apps/presets-api/src/services/preset-service.ts:84:      const parsed = JSON.parse(row.secondary_categories) as unknown;
+apps/stoat-worker/src/services/response-formatter.ts:83:const INVISIBLE_CHARS = new RegExp(
+apps/web-app/e2e/budget-tool.spec.ts:141:            JSON.parse(localStorage.getItem('xivdyetools_v4_config_budget') ?? '{}') as {
+apps/web-app/e2e/collection-manager.spec.ts:131:            const parsed = JSON.parse(raw);
+apps/web-app/e2e/fixtures/coverage.ts:155:    const coverage: V8CoverageEntry[] = JSON.parse(content);
+apps/web-app/e2e/fixtures/navigation.ts:115:const APP_VERSION = JSON.parse(
+apps/web-app/e2e/glamour-reader.spec.ts:150:        ...JSON.parse(FIXTURE),
+apps/web-app/e2e/telemetry.spec.ts:93:    const bodies = beacons.map((r) => JSON.parse(r.postData() ?? '{}'));
+apps/web-app/src/components/accessibility-tool.ts:760:          .replace(/\s+/g, ' ')
+apps/web-app/src/components/accessibility-tool.ts:822:          .replace(/\s+/g, ' ')
+apps/web-app/src/components/accessibility-tool.ts:965:          .replace(/\s+/g, ' ')
+apps/web-app/src/components/accessibility-tool.ts:981:          .replace(/\s+/g, ' ')
+apps/web-app/src/components/accessibility-tool.ts:1003:            .replace(/\s+/g, ' ')
+apps/web-app/src/components/accessibility-tool.ts:1031:            .replace(/\s+/g, ' ')
+apps/web-app/src/components/accessibility-tool.ts:1051:            .replace(/\s+/g, ' ')
+apps/web-app/src/components/accessibility-tool.ts:1077:          .replace(/\s+/g, ' ')
+apps/web-app/src/components/accessibility-tool.ts:1092:          .replace(/\s+/g, ' ')
+apps/web-app/src/components/accessibility-tool.ts:1108:          .replace(/\s+/g, ' ')
+apps/web-app/src/components/advanced-options-panel.ts:317:        const parsed: unknown = JSON.parse(text);
+apps/web-app/src/components/budget-tool.ts:506:      this.targetDye = makeCustomDye(`#${hexParam.replace(/^#/, '')}`);
+apps/web-app/src/components/collection-manager-modal.ts:544:  const slug = collection.name.replace(/[^\p{L}\p{M}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '');
+apps/web-app/src/components/comparison-tool.ts:742:          .replace(/\s+/g, ' ')
+apps/web-app/src/components/comparison-tool.ts:756:          .replace(/\s+/g, ' ')
+apps/web-app/src/components/comparison-tool.ts:795:          .replace(/\s+/g, ' ')
+apps/web-app/src/components/comparison-tool.ts:822:          .replace(/\s+/g, ' ')
+apps/web-app/src/components/comparison-tool.ts:841:          .replace(/\s+/g, ' ')
+apps/web-app/src/components/comparison-tool.ts:900:          .replace(/\s+/g, ' ')
+apps/web-app/src/components/comparison-tool.ts:1027:          .replace(/\s+/g, ' ')
+apps/web-app/src/components/comparison-tool.ts:1043:          .replace(/\s+/g, ' ')
+apps/web-app/src/components/comparison-tool.ts:1065:            .replace(/\s+/g, ' ')
+apps/web-app/src/components/comparison-tool.ts:1093:            .replace(/\s+/g, ' ')
+apps/web-app/src/components/comparison-tool.ts:1113:            .replace(/\s+/g, ' ')
+apps/web-app/src/components/comparison-tool.ts:1139:          .replace(/\s+/g, ' ')
+apps/web-app/src/components/comparison-tool.ts:1154:          .replace(/\s+/g, ' ')
+apps/web-app/src/components/comparison-tool.ts:1170:          .replace(/\s+/g, ' ')
+apps/web-app/src/components/extractor-tool.ts:2077:        message.match(/status[:\s]*(\d{3})/i) ||
+apps/web-app/src/components/extractor-tool.ts:2078:        message.match(/(\d{3})[:\s]*(rate limit|too many|forbidden|not found|server error)/i);
+apps/web-app/src/components/glamour-block.ts:210:  (color) => ({ id: color.id, re: new RegExp(`\\b${color.name}\\b`, 'i') })
+apps/web-app/src/components/glamour-block.ts:1822:      this.fileName?.replace(/\.chara$/i, '') ||
+apps/web-app/src/components/harmony-tool.ts:608:      this.applyCustomBase(`#${hexParam.replace(/^#/, '')}`);
+apps/web-app/src/components/image-zoom-controller.ts:152:          .replace(/\s+/g, ' ')
+apps/web-app/src/components/image-zoom-controller.ts:170:      .replace(/\s+/g, ' ')
+apps/web-app/src/components/offline-banner.ts:95:      .replace(/\s+/g, ' ');
+apps/web-app/src/components/swatch-tool.ts:1636:    const currentBase = current.replace(/(Dark|Light)$/, '');
+apps/web-app/src/components/swatch-tool.ts:1707:    const currentBase = current.replace(/(Dark|Light)$/, '');
+apps/web-app/src/components/toast-container.ts:222:          .replace(/\s+/g, ' ')
+apps/web-app/src/components/v4/theme-modal.ts:128:      const localeKey = theme.name.replace(/-([a-z])/g, (_, letter: string) =>
+apps/web-app/src/components/v4/v4-color-wheel.ts:387:    const camelKey = this.harmonyType.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());
+apps/web-app/src/services/api-worker-origin.ts:17:  if (env) return env.replace(/\/$/, '');
+apps/web-app/src/services/auth-service.ts:855:      let base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+apps/web-app/src/services/auth-service.ts:867:      return JSON.parse(new TextDecoder().decode(bytes));
+apps/web-app/src/services/auth-service.ts:901:    return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+apps/web-app/src/services/collection-service.ts:918:      const data = JSON.parse(json) as CollectionExport;
+apps/web-app/src/services/harmony-generator.ts:62:    const camelCaseKey = id.replace(/-([a-z])/g, (_, letter: string) => letter.toUpperCase());
+apps/web-app/src/services/language-service.ts:207:      translation = translation.replace(new RegExp(`\\{${param}\\}`, 'g'), () => String(value));
+apps/web-app/src/services/share-service.ts:192: * `.replace(/^#/, '').toUpperCase()` then `/^[0-9A-F]{6}$/` — so a 3-digit
+apps/web-app/src/services/share-service.ts:412:    const cleaned = text.trim().replace(/^#/, '').toUpperCase();
+apps/web-app/src/services/share-service.ts:430:    const cleaned = text.trim().replace(/^#/, '').toLowerCase();
+apps/web-app/src/services/storage-service.ts:80:        return JSON.parse(item) as T;
+apps/web-app/src/services/storage-service.ts:196:              result[key] = JSON.parse(value) as T;
+apps/web-app/src/services/theme-service.ts:233:    const baseName = this.currentTheme.replace(/-dark$|(-light)$/, '');
+apps/web-app/src/shared/beta-branding.ts:146:  const titled = html.replace(/<title>([\s\S]*?)<\/title>/, (match, title: string) =>
+apps/web-app/src/shared/beta-branding.ts:150:  const linksRewritten = titled.replace(/<link\b[^>]*>/g, (tag) => {
+apps/web-app/src/shared/beta-branding.ts:161:    return tag.replace(/\bhref="\/assets\/icons\/(?!beta\/)/, `href="${BETA_ICON_PATH}`);
+apps/web-app/src/shared/beta-branding.ts:181:  return linksRewritten.replace(/<meta\b[^>]*>/g, (tag) => {
+apps/web-app/src/shared/beta-branding.ts:183:      return tag.replace(/\bcontent="[^"]*"/, 'content="noindex, nofollow"');
+apps/web-app/src/shared/item-links.ts:95:  const title = encodeURIComponent(names.en.replace(/ /g, '_'));
+apps/web-app/src/shared/item-links.ts:120:  const q = encodeURIComponent(name).replace(/%20/g, '+');
+apps/web-app/src/shared/utils.ts:27:  return value.replace(/[&<>"']/g, (char) => HTML_ESCAPES[char]);
+apps/web-app/vite-plugin-changelog-parser.ts:70:    .replace(/\*\*(.+?)\*\*/g, '$1') // bold
+apps/web-app/vite-plugin-changelog-parser.ts:71:    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1') // links → label
+apps/web-app/vite-plugin-changelog-parser.ts:72:    .replace(/`([^`]+)`/g, '$1') // inline code
+apps/web-app/vite-plugin-changelog-parser.ts:284:    const bulletMatch = line.match(/^\s*-\s+(.+)/);
+apps/web-app/vite.config.ts:15:    __BUILD_DATE__: JSON.stringify(new Date().toISOString().slice(0, 10).replace(/-/g, '.')),
+docs/historical/web-app/20260531-Mockups/MockupShell.ts:103:        `.replace(/\s+/g, ' '),
+packages/auth/src/discord.ts:67: * const interaction = JSON.parse(result.body);
+packages/auth/src/encoding/base64.ts:53:  return btoa(parts.join('')).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+packages/auth/src/encoding/base64.ts:69:  let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+packages/auth/src/encoding/index.ts:17: * const decoded = JSON.parse(base64UrlDecode(payload));
+packages/auth/src/jwt.ts:122:    return JSON.parse(payloadJson) as JWTPayload;
+packages/auth/src/jwt.ts:148:  const header: JWTHeader = JSON.parse(headerJson) as JWTHeader;
+packages/auth/src/jwt.ts:175:  const payload: unknown = JSON.parse(payloadJson);
+packages/bot-logic/src/commands/__fixtures__/chara-fixtures.ts:12:  return JSON.parse(text) as Record<string, unknown>;
+packages/bot-logic/src/commands/glamour.ts:385:  return text.replace(/([*_~`|\\])/g, '\\$1');
+packages/bot-logic/src/discord-markdown.ts:22:const INVISIBLE = new RegExp(
+packages/bot-logic/src/discord-markdown.ts:48:    .replace(/@(everyone|here)/gi, `@${ZWJ}$1`)
+packages/bot-logic/src/discord-markdown.ts:49:    .replace(/<@[!&]?(\d+)>/g, '@$1');
+packages/bot-logic/src/discord-markdown.ts:63:  const cleaned = defuseMentions(text.replace(INVISIBLE, '').replace(/\s+/g, ' ').trim());
+packages/bot-logic/src/i18n/locale-resolution.ts:179:      prefs = JSON.parse(unifiedData) as { language?: string } | null;
+packages/bot-logic/src/i18n/translator.ts:38:  return template.replace(/\{(\w+)\}/g, (match, key: string) => {
+packages/bot-logic/src/localization.ts:213:  const words = key.replace(/([a-z])([A-Z])/g, '$1 $2');
+packages/core/scripts/build-locales.ts:126:  const dyes = JSON.parse(fs.readFileSync(dyesPath, 'utf-8')) as unknown;
+packages/core/scripts/build-locales.ts:134:  const facewearColors = JSON.parse(fs.readFileSync(facewearPath, 'utf-8')) as unknown;
+packages/core/scripts/build-locales.ts:360:    const parsed = JSON.parse(fs.readFileSync(outputPath, 'utf-8')) as unknown;
+packages/core/scripts/stain-audit/compare.ts:36:  const raw: unknown = JSON.parse(inputs.dyesJson);
+packages/core/scripts/stain-audit/compare.ts:86:  const rulesSource = record(JSON.parse(inputs.rulesJson) as unknown, 'rules');
+packages/core/scripts/stain-audit/fetch.ts:163:      const value: unknown = JSON.parse(body);
+packages/core/scripts/stain-audit/output.ts:133:    const page = validatePage(JSON.parse(p.body) as unknown, pins);
+packages/core/scripts/stain-audit/output.ts:178:  const manifest = record(JSON.parse(manifestText) as unknown, 'manifest');
+packages/core/scripts/stain-audit/output.ts:202:      page: validatePage(JSON.parse(body) as unknown, pins),
+packages/core/scripts/stain-audit/output.ts:229:    .replace(/[\r\n]+/g, ' ');
+packages/core/src/services/APIService.ts:783:        return JSON.parse(text) as { results?: UniversalisItemResult[] };
+packages/core/src/services/APIService.ts:974:    return dataCenterID.replace(/[^\p{L}\p{N}]/gu, '');
+packages/core/src/services/chara/chara-gposers.ts:120:  return value?.replace(/\s*[\r\n]+\s*/g, ' ').trim() ?? '';
+packages/core/src/services/chara/chara-parser.ts:445:    data = JSON.parse(text);
+packages/core/src/services/localization/TranslationProvider.ts:519:      .replace(/([A-Z])/g, ' $1')
+packages/core/src/services/localization/TranslationProvider.ts:520:      .replace(/^./, (str) => str.toUpperCase())
+packages/core/src/utils/index.ts:483:    .replace(/[^\p{L}\p{N}]/gu, '')
+packages/core/src/utils/index.ts:521:  const prefolded = s.normalize('NFKC').toLowerCase().replace(/ß/g, 'ss');
+packages/logger/src/core/base-logger.ts:29:  return key.toLowerCase().replace(/[_-]/g, '');
+packages/logger/src/core/base-logger.ts:904:    new RegExp(re.source, re.flags.includes('g') ? re.flags : `${re.flags}g`);
+packages/logger/src/core/base-logger.ts:907:    new RegExp(`${K(name)}${V}`, 'gi'),
+packages/logger/src/core/base-logger.ts:913:    [new RegExp(`\\b(${AUTH_SCHEME_ALT})\\s+\\S+`, 'gi'), '$1 [REDACTED]'],
+packages/logger/src/core/base-logger.ts:966:      new RegExp(
+packages/svg/src/base.ts:18:const XML_ILLEGAL = new RegExp(
+packages/svg/src/base.ts:32:    .replace(/&/g, '&amp;')
+packages/svg/src/base.ts:33:    .replace(/</g, '&lt;')
+packages/svg/src/base.ts:34:    .replace(/>/g, '&gt;')
+packages/svg/src/base.ts:35:    .replace(/"/g, '&quot;')
+packages/svg/src/base.ts:36:    .replace(/'/g, '&apos;');
+packages/svg/src/base.ts:302:  return sign + digits.replace(/\B(?=(\d{3})+(?!\d))/g, fmt.thou);
+packages/svg/src/emitted-glyphs.ts:263: * (`new RegExp('[\u{4E00}-\u{9FFF}]')`) its escapes are decoded like any
+packages/svg/src/emitted-glyphs.ts:324:   * walks into `.replace(/"/g, '&quot;')` (base.ts:35), reads that `"` as a
+packages/test-utils/src/cloudflare/kv.ts:149:          return JSON.parse(value);
+packages/test-utils/src/cloudflare/r2.ts:180:        json: async <T = unknown>() => JSON.parse(new TextDecoder().decode(body)) as T,
+packages/worker-kit/src/body-guards/body-guards.ts:113:    if (enforceExemptSize && exemption?.match(c)) {
+packages/worker-kit/src/body-guards/body-guards.ts:125:    if (exemption?.match(c)) {
+packages/worker-kit/src/body-guards/body-guards.ts:148:      parsed = JSON.parse(text);
+packages/worker-kit/src/middleware/logger.ts:108: *   sanitizePath: (path) => path.replace(/token=[^&]+/, 'token=***'),
+packages/worker-kit/src/rate-limiter/backends/kv.ts:145:      const entry: KVEntry | null = data ? (JSON.parse(data) as KVEntry) : null;
+packages/worker-kit/src/rate-limiter/backends/kv.ts:224:          ? (JSON.parse(result) as KVEntry)
+packages/worker-kit/src/rate-limiter/key-scope.ts:79:  const scope = keyPrefix?.replace(/[:|]+$/, '');
+scripts/check-dead-code.ts:141:  s = s.replace(/^[ \t]*\*[ \t]?/, '');
+scripts/check-dead-code.ts:168:  const startRe = new RegExp(String.raw`^[ \t]*(?:\/\*\*|\*)?[ \t]*@${tag}\b(.*)$`, 'i');
+scripts/check-dead-code.ts:199:  return new RegExp(String.raw`^[ \t]*(?:\/\*\*|\*)?[ \t]*@${tag}\b`, 'im').test(docblock);
+scripts/check-dead-code.ts:542:  return out.replace(/,(\s*[}\]])/g, '$1');
+scripts/check-dead-code.ts:568:      const parsed = JSON.parse(stripJsonc(readFileSync(`${ws}/tsconfig.json`, 'utf8'))) as {
+scripts/check-dead-code.ts:582:        target: `${ws}/${target.slice(0, -1).replace(/^\.[/]/, '')}`,
+scripts/check-dead-code.ts:748:    const base = basename(file).replace(/\.(tsx?|jsx?)$/, '');
+scripts/check-dead-code.ts:774:const escapeRe = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+scripts/check-dead-code.ts:849:      const word = new RegExp(`\\b${escapeRe(name)}\\b`);
+scripts/check-dead-code.ts:1503:      const dotted = new RegExp(`\\.${escapeRe(name)}\\b`);
+scripts/check-dead-code.ts:1504:      const bracketed = new RegExp(`\\[\\s*(['"\`])${escapeRe(name)}\\1\\s*\\]`);
+scripts/check-doc-links.ts:78:    .map((l) => l.trim().replace(/\\/g, '/'))
+scripts/check-doc-links.ts:112:      target = target.replace(/#.*$/, '').replace(/\?.*$/, '');
+scripts/check-doc-links.ts:130:    .normalize(posixPath.join(base, decoded.replace(/^\//, '')))
+scripts/check-doc-links.ts:131:    .replace(/\/+$/, '');
+scripts/check-doc-versions.ts:78:      const pkg = JSON.parse(readFileSync(pkgPath, 'utf8')) as { name?: string; version?: string };
+scripts/check-doc-versions.ts:104:  return line.trim().replace(/^\|/, '').replace(/\|$/, '').split('|');
+scripts/check-doc-versions.ts:120:    const norm = candidate.replace(/^\.\//, '').replace(/\/+$/, '');
+scripts/check-worker-logs.ts:94:  const text = stripTomlComments(rawText.replace(/\r\n/g, '\n'));
+scripts/coverage-report.ts:120:      summary = JSON.parse(readFileSync(summaryPath, 'utf8'));
+scripts/coverage-report.ts:140:          const relPath = filePath.replace(/^.*?[/\\](src[/\\].*)/, '$1');
+scripts/markdown-mask.ts:23:  return text.replace(/[^\n]/g, ' ');
+scripts/markdown-mask.ts:33:  let out = text.replace(/<!--[\s\S]*?-->/g, blank);
+scripts/markdown-mask.ts:63:  return maskBlockCode(text).replace(/(`+)[^`\n]*?\1/g, blank);

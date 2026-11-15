@@ -110,12 +110,12 @@ const svgTexts = (svg: string): string[] => [...svg.matchAll(/<text [^>]*>([^<]*
 describe('executeGlamour', () => {
   describe('resolver text safety (F014)', () => {
     const hostile = '[Claim](https://evil.example)\r\n# Admin <#123> @everyone';
-    const literal = '\\[Claim\\]\\(https://evil.example\\) \\# Admin \\<\\#123\\> @\u200deveryone';
+    const literal = '\\[Claim\\](https://evil.example) # Admin \\<#123> @\u200deveryone';
 
     it.each(['ordinary', 'fixed', 'blocked', 'company'] as const)(
       'keeps complete backslash escapes in %s names, acquisition and advisory text (T1-R1)', async (kind) => {
-        const value = 'a' + '\\'.repeat(200);
-        const safe = 'a' + '\\'.repeat(254) + '…';
+        const value = 'a' + '\\'.repeat(400);
+        const safe = 'a' + '\\'.repeat(698) + '…';
         const item = {
           itemId: 1, names: names(value), acquisition: value,
           alternates: kind === 'fixed' ? [{ itemId: 2, names: names(value), acquisition: value }] : [],
@@ -175,14 +175,25 @@ describe('executeGlamour', () => {
       expect(note).not.toContain('\n# Admin');
     });
 
-    it('bounds resolver values including escape growth and keeps parentheses readable as literals', async () => {
+    it('bounds resolver values including escape growth and leaves parentheses bare', async () => {
       const result = await executeGlamour(input({ resolve: async () => ({ items: {
         Body: { itemId: 2, names: names('['.repeat(1000)), alternates: [],
           rules: [rules([2], { dyeCount: 2 })], acquisition: 'Crafted (WVR Lvl. 1)' },
       } }) }));
       if (!result.ok) throw new Error(result.errorMessage);
-      expect(result.embed.description).toContain(`**Body:** ${'\\['.repeat(127)}…\n`);
-      expect(result.embed.description).toContain('Acquisition: Crafted \\(WVR Lvl. 1\\)');
+      expect(result.embed.description).toContain(`**Body:** ${'\\['.repeat(349)}…\n`);
+      expect(result.embed.description).toContain('Acquisition: Crafted (WVR Lvl. 1)\n');
+    });
+
+    it('keeps the longest acquisition line api-worker ships (659 code points) whole', async () => {
+      const line = `Talan - Mor Dhona - Revenant's Toll (1 Spruce Plywood) / ${'x'.repeat(602)}`;
+      expect([...line]).toHaveLength(659);
+      const result = await executeGlamour(input({ resolve: async () => ({ items: {
+        Body: { itemId: 2, names: names('Body'), alternates: [],
+          rules: [rules([2], { dyeCount: 2 })], acquisition: line },
+      } }) }));
+      if (!result.ok) throw new Error(result.errorMessage);
+      expect(result.embed.description).toContain(`Acquisition: ${line}\n`);
     });
   });
 
@@ -232,7 +243,7 @@ describe('executeGlamour', () => {
       let extra = 3990 - tailFor().length;
       expect(extra).toBeGreaterThan(0);
       for (let i = 0; i < others.length && extra > 0; i++) {
-        const add = Math.min(256 - others[i].length, extra);
+        const add = Math.min(700 - others[i].length, extra); // stay under the per-value cap
         others[i] += 'x'.repeat(add);
         extra -= add;
       }
@@ -385,7 +396,7 @@ describe('executeGlamour', () => {
     expect(result.embed.title).toBe('Glamour · 5 dyed pieces');
     expect(d).toContain('**Glamour Items:**');
     expect(d).toContain('**Main Hand:** Curtana Zenith Replica\nDye 1: Metallic Gold\nAcquisition: Zodiac Weapons Saga');
-    expect(d).toContain('**Head:** Hempen Coif\nDye 1: Snow White\nAcquisition: Crafted \\(WVR Lvl. 1\\)');
+    expect(d).toContain('**Head:** Hempen Coif\nDye 1: Snow White\nAcquisition: Crafted (WVR Lvl. 1)');
     expect(d).toContain('**Body:** Lady’s Yukata\nDye 1: Wine Red\nDye 2: Dalamud Red\nAcquisition:');
     // Undyed pieces are in the list too — the embed carries what the cap drops
     expect(d).toContain('**Feet:** Hempen Boots\nAcquisition:');
@@ -791,7 +802,7 @@ describe('executeGlamour', () => {
   });
 
   describe('a list longer than an embed (BUG-127)', () => {
-    const LONG = `Purchased from ${'a very patient vendor '.repeat(40).trim()}`;
+    const LONG = `Purchased from ${'a very patient vendor '.repeat(80).trim()}`;
     const plainItem = (itemId: number, name: string) => ({
       itemId,
       names: names(name),
@@ -801,7 +812,7 @@ describe('executeGlamour', () => {
     });
     const LONG_ANSWER: GlamourResolveAnswer = {
       items: {
-        MainHand: plainItem(7001, 'Long Sword'),
+        MainHand: { ...plainItem(7001, 'Long Sword'), acquisition: 'Crafted (BSM Lvl. 1)' },
         OffHand: ANSWER.items.OffHand,
         HeadGear: plainItem(7002, 'Long Hat'),
         Body: plainItem(7003, 'Long Coat'),
@@ -818,13 +829,15 @@ describe('executeGlamour', () => {
       const tail = '\n\nMore on character files: `/manual topic:👤`\nhttps://xivdyetools.app/glamour';
 
       // Raw resolver values would exceed the aggregate budget; each is capped first.
-      expect(LONG.length * 6).toBeGreaterThan(4096);
+      expect(LONG.length * 5).toBeGreaterThan(4096);
       expect(d.length).toBeLessThanOrEqual(4000);
       expect(d.endsWith(tail)).toBe(true);
       const kept = d.slice(0, -tail.length).split('\n');
       expect(kept[0]).toBe('**Glamour Items:**');
       expect(kept.length).toBeGreaterThan(4);
-      for (const line of kept.filter((l) => l.startsWith('Acquisition:'))) expect(line).toBe(`Acquisition: ${LONG.slice(0, 255)}…`);
+      for (const line of kept.filter((l) => l.startsWith('Acquisition: Purchased'))) expect(line).toBe(`Acquisition: ${LONG.slice(0, 699)}…`);
+      expect(kept.filter((l) => l.startsWith('Acquisition: Purchased'))).toHaveLength(5);
+      expect(d).toContain('Acquisition: Crafted (BSM Lvl. 1)\n');
       expect(d).toContain('Long Boots');
     });
 
