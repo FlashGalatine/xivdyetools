@@ -269,7 +269,15 @@
     "noDyesAvailable": "没有可用的染剂",
     "randomDyeSelected": "已选择 {name}",
     "mobileHint": "第一次使用？点击调色板按钮即可选择染料。",
-    "favoritesWithCount": "收藏夹（{count}）"
+    "favoritesWithCount": "收藏夹（{count}）",
+    "slotStripLabel": "染剂槽位",
+    "slotChipEmpty": "槽位 {slot}，空",
+    "slotChipFilled": "槽位 {slot}：{name}",
+    "swatchInSlot": "{name}，位于槽位 {slot}",
+    "swatchInUse": "{name}，使用中",
+    "choosingDyeOf": "正在选择第 {current} 种染剂（共 {total} 种）",
+    "choosingDyeNamed": "正在选择染剂 {slot}",
+    "choosingEndpoint": "正在选择{slot}颜色"
   },
   "harmony": {
     "companionDyes": "每个和谐颜色的额外染剂",

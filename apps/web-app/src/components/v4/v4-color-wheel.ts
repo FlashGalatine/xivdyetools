@@ -58,6 +58,14 @@ export type HarmonyType =
 @customElement('v4-color-wheel')
 export class V4ColorWheel extends BaseLitComponent {
   /**
+   * The hub is the slot tap, so focus goes there. `delegatesFocus` would pick
+   * the first harmony node instead.
+   */
+  override focus(options?: FocusOptions): void {
+    this.renderRoot.querySelector<HTMLElement>('.main-swatch-display')?.focus(options);
+  }
+
+  /**
    * Base color (hex with #)
    */
   @property({ type: String, attribute: 'base-color' })
