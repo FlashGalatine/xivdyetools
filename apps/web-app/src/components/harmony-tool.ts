@@ -1172,7 +1172,7 @@ export class HarmonyTool extends BaseComponent {
       className: 'section-header',
       attributes: {
         style:
-          'display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;',
+          'display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: center; margin-bottom: 1rem;',
       },
     });
 

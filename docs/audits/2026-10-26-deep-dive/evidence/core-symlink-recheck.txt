@@ -1,0 +1,30 @@
+
+ RUN  v5.0.5 C:/dev/XIVProjects/xivdyetools/.claude/worktrees/deep-i18n-audits-20261026/packages/core
+
+ ❯ scripts/stain-audit/output.test.ts (15 tests | 1 failed) 601ms
+   ❯ auditable bundle and offline replay (15)
+     × rejects a symlink escaping the selected capture directory 43ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  scripts/stain-audit/output.test.ts > auditable bundle and offline replay > rejects a symlink escaping the selected capture directory
+Error: EPERM: operation not permitted, rename 'C:\Users\DrawF\AppData\Local\Packages\sandbox.{1182d6bc-3fb2-4daf-b8e8-3b49b429addc}\AC\Temp\xiv-stain-output-8ABFZe\bundle\raw' -> 'C:\Users\DrawF\AppData\Local\Packages\sandbox.{1182d6bc-3fb2-4daf-b8e8-3b49b429addc}\AC\Temp\xiv-stain-output-8ABFZe\outside'
+ ❯ scripts/stain-audit/output.test.ts:174:5
+    172|     await save(dir);
+    173|     const outside = join(root, 'outside');
+    174|     await fs.rename(join(dir, 'raw'), outside);
+       |     ^
+    175|     await fs.symlink(outside, join(dir, 'raw'), 'junction');
+    176|     await expect(readAuditBundle(dir)).rejects.toThrow(/outside|escape…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 14 passed (15)
+   Start at  20:29:29
+   Duration  1.08s (tests 72%, transform 16%, import 9%, worker 3%)
+
+undefined
+C:\dev\XIVProjects\xivdyetools\.claude\worktrees\deep-i18n-audits-20261026\packages\core:
+[ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL] Command failed with exit code 1: vitest run scripts/stain-audit/output.test.ts "--coverage.enabled=false"

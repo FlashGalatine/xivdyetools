@@ -4,6 +4,7 @@
  */
 
 import { Hono } from 'hono';
+import { getLogger } from '@xivdyetools/worker-kit';
 import type { Env, DiscordTokenResponse, DiscordUser, AuthResponse } from '../types.js';
 import { createJWTForUser, getAvatarUrl } from '../services/jwt-service.js';
 import { findOrCreateUser } from '../services/user-service.js';
@@ -266,6 +267,8 @@ callbackRouter.post('/callback', async (c) => {
     });
   } catch (err) {
     if (err instanceof IdentityError) {
+      // The refusal code only: never the message, internal, Discord or XIVAuth IDs.
+      getLogger(c)?.warn('OAuth callback identity refusal', { code: err.code });
       return c.json<AuthResponse>({ success: false, error: 'Authentication temporarily unavailable. Sign in again.' }, 503);
     }
     // Sanitize logs in production - only log error name and message
