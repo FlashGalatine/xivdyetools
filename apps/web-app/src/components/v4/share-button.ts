@@ -166,7 +166,7 @@ export class ShareButton extends BaseLitComponent {
 
       button:hover:not(:disabled) {
         background: var(--theme-card-hover, rgba(255, 255, 255, 0.1));
-        border-color: var(--theme-primary, #d4af37);
+        border-color: var(--theme-primary);
         transform: translateY(-1px);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
       }
