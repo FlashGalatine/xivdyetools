@@ -306,10 +306,10 @@ Barrel exports the sections above do not cover:
 - Consolidation: `CONSOLIDATED_DYES` (the Type A/B/C items with localized
   names, acquisition and price) and `getMarketItemID(dye)` (legacy item ID →
   consolidated market ID).
-- Legacy `.chara` import: `parseCharaFile(text)` and the async
-  `resolveCharaColors(parsed, characterColors, dyeLookup?)` remain available with deprecation
-  guidance; removal is gated separately in [DEPRECATIONS.md](../../../DEPRECATIONS.md).
-  `CHARA_DYEABLE_SLOTS` remains the live set of seven gear slots that carry dye channels.
+- Conditional Core 6 removes the deprecated legacy parser/resolver and their legacy-only exports.
+  Migrate to the current APIs below; publication and consumer acceptance remain gated by
+  [DEPRECATIONS.md](../../../DEPRECATIONS.md). `CHARA_DYEABLE_SLOTS` remains the live set
+  of seven gear slots that carry dye channels.
 - Current `.chara` import on `xivcharakit`:
   `inspectCharaForTools(bytesOrText)` reads a document under the 8,192-byte cap;
   `resolveCharaForTools(inspection, characterColors, dyeLookup?)` projects it to an

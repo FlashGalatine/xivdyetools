@@ -17,6 +17,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   @AsheJunius, so the old URL pointed at a handle that no longer exists. The label and every other link
   are unchanged.
 
+## [6.0.0] - 2026-10-29
+
+### Removed
+
+- Conditional Core 6 source: retire the six deprecated legacy character APIs and executable host parity half while preserving live contracts and all 261 library cases.
+- Source preparation only: preserve the earlier release, registry and consumer-acceptance gates.
+  Merging waits until October 30 or later, satisfied prerequisites and new explicit authorization; publication, deployment and activation remain held.
+- Migrate removed parser/resolver callers to `inspectCharaForTools` plus `resolveCharaForTools`,
+  or the palette-free `/chara` reader and `resolveCharaWithProvider`. The 8,192-byte cap, nine
+  relocated live contracts, shaders and retained library oracles are unchanged.
+
+### Fixed
+
+- Preserve emitted declarations for the five existing public utility helpers when building with `stripInternal`.
+
 ## [5.16.0] - 2026-10-27
 
 ### Hardening adoption

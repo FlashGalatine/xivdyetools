@@ -6,9 +6,7 @@
  * fallback to `displayHex` or a preview colour. A slot whose `matchHex` is null
  * (unknown activation, inactive, unresolved) gives no row, no slot: target and
  * no strip colour. The lip matches its live composite, `lipComposite?.hex ??
- * matchHex`, gated on `matchHex`. `SwatchResult.character` keeps its legacy
- * `Omit<ResolvedCharaCharacter, 'nickname'>` shape, mapped back from the
- * projection.
+ * matchHex`, gated on `matchHex`. Success exposes only the card and embed.
  *
  * Expected colours and dyes are pinned independently of the parser: the
  * palette hex comes from `CharacterColorService` (or a literal), the dye from
@@ -22,7 +20,12 @@ import {
   resolveCharaForTools,
 } from '@xivdyetools/core';
 import { generateNearestSheet, generateSwatchCard } from '@xivdyetools/svg';
-import { executeSwatch, type SwatchInput } from './swatch.js';
+import { executeSwatch, type SwatchInput, type SwatchResult } from './swatch.js';
+
+// @ts-expect-error — bot-logic 5 removes the published legacy character type.
+export type { SwatchCharacter } from '../index.js';
+// @ts-expect-error — a success exposes presentation outputs only.
+export type RemovedSuccessCharacter = Extract<SwatchResult, { ok: true }>['character'];
 import { dyeService } from '../input-resolution.js';
 import { createTranslator } from '../i18n/index.js';
 import {
@@ -86,23 +89,6 @@ const MIDLANDER = { Tribe: 'Midlander', Gender: 'Feminine' };
 
 /** Hair index 10 on a Midlander woman's sheet — `#FFE7A1` (R2·C3). */
 const HAIR_ONLY: Doc = { ...MIDLANDER, HairTone: 10 };
-
-/** The legacy `ResolvedCharaSlot` members (required, then optional). */
-const LEGACY_SLOT_KEYS = [
-  'slot',
-  'kind',
-  'verdict',
-  'index',
-  'sheetIndex',
-  'sheetVariant',
-  'gridAddress',
-  'indexHex',
-  'floatHex',
-  'deltaE',
-  'alpha',
-  'blendHex',
-];
-const LEGACY_SLOT_OPTIONAL_KEYS = ['inertReason', 'error', 'indexWinNote'];
 
 // ============================================================================
 // 1. Colour states
@@ -333,7 +319,6 @@ describe('winning eye colours (BUG-002)', () => {
   it('keeps EXT-28 as distinct L/R rows with independent nearest-dye distances', async () => {
     const result = await run(SHARED_INDEX_DIFFERENT_COLOURS);
     if (!result.ok) throw new Error(result.errorMessage);
-    expect(result.character.eyesShareIndex).toBe(true); // legacy metadata still means index equality
     expect(lastCard().stripHexes).toEqual(['#87C0A3', '#DCBA6C']);
     expect(rowLabels()).toEqual(['EYES·L', 'EYES·R']);
     expect(lastCard().rows).toHaveLength(2);
@@ -361,7 +346,6 @@ describe('winning eye colours (BUG-002)', () => {
     if (!result.ok) throw new Error(result.errorMessage);
     expect(rowLabels()).toEqual(['EYES·LR']);
     expect(lastCard().stripHexes).toEqual(['#0000FF']);
-    expect(result.character.eyesShareIndex).toBe(false);
   });
 });
 
@@ -587,189 +571,35 @@ describe('colour data the file holds but that cannot be used: one fixed localize
 });
 
 // ============================================================================
-// 2. SwatchResult.character keeps the legacy shape
+// 3. Presentation behavior retained after the legacy character payload removal
 // ============================================================================
 
-describe('SwatchCharacter keeps the legacy shape', () => {
-  it.each([undefined, 'hair'] as const)('has the required legacy character members on success (slot:%s), no nickname or issues', async (slot) => {
-    const result = await run({ ...DUSK, Mouth: 130, Nickname: 'Real Name' }, { slot });
+describe('presentation without a character payload', () => {
+  it('lists distinct worn gear dyes once each in the embed', async () => {
+    const result = await run(DUSK);
     if (!result.ok) throw new Error(result.errorMessage);
-    expect(Object.keys(result.character).sort()).toEqual(
-      [
-        'eyesShareIndex',
-        'extendedDeclared',
-        'extendedValid',
-        'gearDyes',
-        'gearModels',
-        'gender',
-        'glassesId',
-        'producer',
-        'race',
-        'slots',
-        'tribe',
-      ].sort()
-    );
-    expect(result.character).toMatchObject({
-      race: 'Elezen',
-      tribe: 'Duskwight',
-      gender: 'Female',
-      eyesShareIndex: false,
-      glassesId: null,
-      extendedValid: true,
-      extendedDeclared: true,
-    });
-  });
-
-  it('every slot carries the legacy members and none of the projection’s', async () => {
-    const result = await run({ ...DUSK, Mouth: 130 });
-    if (!result.ok) throw new Error(result.errorMessage);
-    expect(result.character.slots.map((s) => s.slot)).toEqual([
-      'leftEye',
-      'rightEye',
-      'hair',
-      'highlights',
-      'skin',
-      'limbal',
-      'lip',
-      'facePaint',
-    ]);
-    for (const s of result.character.slots) {
-      for (const key of LEGACY_SLOT_KEYS) expect(s, `${s.slot}.${key}`).toHaveProperty(key);
-      for (const key of Object.keys(s)) {
-        expect([...LEGACY_SLOT_KEYS, ...LEGACY_SLOT_OPTIONAL_KEYS], `${s.slot}.${key}`).toContain(key);
-      }
+    expect(result.embed.description).toContain('Gunmetal Black · Snow White · Bright Orange');
+    for (const name of ['Gunmetal Black', 'Snow White', 'Bright Orange']) {
+      expect(result.embed.description?.split(name)).toHaveLength(2);
     }
   });
 
-  it('keeps the worn gear and its dyes', async () => {
-    const result = await run(DUSK);
+  it('a stored float that is not live keeps the palette colour', async () => {
+    const result = await run({ ...HAIR_ONLY, HairColor: '1, 0, 0' });
     if (!result.ok) throw new Error(result.errorMessage);
-    expect(result.character.gearModels[0]).toEqual({ slot: 'MainHand', set: 5603, base: 9, variant: 3 });
-    expect(result.character.gearModels.map((m) => m.slot)).not.toContain('OffHand');
-    expect(result.character.gearDyes.map((g) => [g.slot, g.channel, g.stainId, g.dye?.name ?? null])).toEqual([
-      ['HeadGear', 1, 92, 'Gunmetal Black'],
-      ['HeadGear', 2, 1, 'Snow White'],
-      ['Body', 1, 97, 'Bright Orange'],
-      ['Body', 2, 92, 'Gunmetal Black'],
-      ['Hands', 1, 97, 'Bright Orange'],
-      ['Legs', 1, 97, 'Bright Orange'],
-      ['Feet', 1, 97, 'Bright Orange'],
-    ]);
-  });
-
-  /** The legacy colour members of a slot with no `matchHex`. */
-  const NO_COLOURS = { indexHex: null, floatHex: null, gridAddress: null, blendHex: null } as const;
-
-  describe('unknown activation (active === null) maps to inert with no colours and no reason', () => {
-    const slotOf = async (doc: Doc, slotId: string) => {
-      const result = await run(doc);
-      if (!result.ok) throw new Error(result.errorMessage);
-      const legacy = result.character.slots.find((s) => s.slot === slotId);
-      expect(legacy, slotId).toBeDefined();
-      return legacy!;
-    };
-    /** What the projection itself says about the slot, before the mapping. */
-    const projected = async (slotId: string) => {
-      const out = await vi.mocked(resolveCharaForTools).mock.results.at(-1)!.value;
-      return (out as Awaited<ReturnType<typeof resolveCharaForTools>>).slots.find((s) => s.slot === slotId)!;
-    };
-
-    it.each([
-      ['a palette highlight with no EnableHighlights', { ...HAIR_ONLY, Highlights: 5 }, 'highlights', 'palette'],
-      [
-        'an off-grid highlight with no EnableHighlights',
-        { ...DUSK, EnableHighlights: null, HairHighlight: '0, 0, 1' },
-        'highlights',
-        'offGrid',
-      ],
-      ['a live lip with no Mouth (its composite included)', { ...DUSK, Mouth: null }, 'lip', 'palette'],
-    ])('%s', async (_label, doc, slotId, interpretation) => {
-      const legacy = await slotOf(doc as Doc, slotId);
-      // the case really is unknown activation with colours the old mapping carried
-      const source = await projected(slotId);
-      expect(source).toMatchObject({ active: null, interpretation, matchHex: null });
-      expect(source.displayHex).not.toBeNull();
-      if (slotId === 'lip') expect(source.lipComposite).not.toBeNull();
-
-      expect(legacy).toMatchObject({ verdict: 'inert', ...NO_COLOURS });
-      expect(legacy).not.toHaveProperty('inertReason');
-      expect(legacy).not.toHaveProperty('error');
-      expect(legacy).not.toHaveProperty('indexWinNote');
-    });
-  });
-
-  const HET_OFF_GRID = {
-    IsExtendedAppearanceValid: true,
-    REyeColor: 42,
-    LEyeColor: 169,
-    LeftEyeColor: '0, 0, 1',
-    RightEyeColor: '1, 0, 0',
-  };
-
-  it.each([
-    ['palette → index', HAIR_ONLY, 'hair', { kind: 'hair', verdict: 'index', index: 10, indexHex: '#FFE7A1', gridAddress: 'R2·C3', floatHex: null }],
-    ['offGrid → offGrid', HET_OFF_GRID, 'leftEye', { verdict: 'offGrid', index: 169, indexHex: '#87C0A3', floatHex: '#0000FF' }],
-    ['extendedOnly → floatOnly', { IsExtendedAppearanceValid: true, LeftEyeColor: '0, 0, 1' }, 'leftEye', { verdict: 'floatOnly', index: null, indexHex: null, floatHex: '#0000FF' }],
-    // no matchHex: none of the colours the matching rule excludes travels in the legacy shape
-    ['inactive (EnableHighlights false) → inert', { ...HAIR_ONLY, EnableHighlights: false, Highlights: 5 }, 'highlights', { verdict: 'inert', inertReason: 'highlightsDisabled', ...NO_COLOURS }],
-    ['inactive (FacePaint 128) → inert', { ...HAIR_ONLY, FacePaint: 128, FacePaintColor: 5 }, 'facePaint', { verdict: 'inert', inertReason: 'facePaintNone', ...NO_COLOURS }],
-    ['inactive (lip bit clear) → inert', { ...HAIR_ONLY, Mouth: 2, LipsToneFurPattern: 5 }, 'lip', { verdict: 'inert', inertReason: 'noLip', ...NO_COLOURS }],
-    ['unresolved (no tribe) → error', { LEyeColor: 42, REyeColor: 42, HairTone: 10 }, 'hair', { verdict: 'error', ...NO_COLOURS }],
-    ['limbalOrTattoo (race unknown) → tattoo', { LimbalEyes: 30 }, 'limbal', { kind: 'tattoo', verdict: 'index', indexHex: '#746040' }],
-    ['a live lip → index with alpha and blend', { ...DUSK, Mouth: 130 }, 'lip', { kind: 'lip', verdict: 'index', indexHex: '#621C33', alpha: 0.6, blendHex: '#AE8F98' }],
-  ] as const)('maps %s', async (_label, doc, slotId, expected) => {
-    const result = await run(doc as Doc);
-    if (!result.ok) throw new Error(result.errorMessage);
-    expect(result.character.slots.find((s) => s.slot === slotId)).toMatchObject(expected);
-  });
-
-  describe('the legacy error and note members (added with the implementation)', () => {
-    const slotOf = async (doc: Doc, slotId: string) => {
-      const result = await run({ ...HAIR_ONLY, ...doc });
-      if (!result.ok) throw new Error(result.errorMessage);
-      return result.character.slots.find((s) => s.slot === slotId);
-    };
-
-    it.each([
-      ['a lip index in the 96-127 gap', { LipsToneFurPattern: 100, Mouth: 130 }, 'lip', 'midRangeIndex'],
-      ['a fractional lip index in the gap (96.5)', { LipsToneFurPattern: 96.5, Mouth: 130 }, 'lip', 'midRangeIndex'],
-      ['an eye index past its sheet', { LEyeColor: 250, REyeColor: 250 }, 'leftEye', 'indexOutOfRange'],
-    ])('%s is an error with the legacy code and no stored value in its text', async (_label, doc, slotId, code) => {
-      const slot = await slotOf(doc, slotId);
-      expect(slot).toMatchObject({ verdict: 'error', error: { code } });
-      expect(slot?.error?.message).not.toMatch(/96\.5|100|250/);
-    });
-
-    it('hair without a tribe is the legacy noTribe error', async () => {
-      const result = await run({ HairTone: 10, LEyeColor: 42, REyeColor: 42 });
-      if (!result.ok) throw new Error(result.errorMessage);
-      expect(result.character.slots.find((s) => s.slot === 'hair')).toMatchObject({
-        verdict: 'error',
-        error: { code: 'noTribe' },
-      });
-    });
-
-    it('a slot the file leaves empty stays inert, not an error, as the legacy resolver answered', async () => {
-      const slot = await slotOf({}, 'skin');
-      expect(slot?.verdict).toBe('inert');
-      expect(slot).not.toHaveProperty('error');
-    });
-
-    it('a stored float that is not live keeps the index and says so (extendedMissing)', async () => {
-      const slot = await slotOf({ HairColor: '1, 0, 0' }, 'hair');
-      expect(slot).toMatchObject({ verdict: 'index', indexHex: '#FFE7A1', floatHex: '#FF0000', indexWinNote: 'extendedMissing' });
-      expect(rowLabels()).toEqual([en.t('card.slotHair')]);
-      expect(lastCard().rows[0].sourceHex).toBe('#FFE7A1');
-    });
+    expect(rowLabels()).toEqual(['HAIR']);
+    expect(lastCard().rows[0].sourceHex).toBe('#FFE7A1');
+    expect(lastCard().stripHexes).toEqual(['#FFE7A1']);
+    expect(result.embed.description).not.toContain('#FF0000');
   });
 
   it('labels a race-unknown limbal slot as a tattoo row', async () => {
     const result = await run({ LimbalEyes: 30 });
     if (!result.ok) throw new Error(result.errorMessage);
-    expect(rowLabels()).toEqual([en.t('card.slotTattoo')]);
+    expect(rowLabels()).toEqual(['TATT.']);
+    expect(lastCard().rows[0].sourceHex).toBe('#746040');
   });
 });
-
 // ============================================================================
 // 4. Byte input
 // ============================================================================
@@ -874,20 +704,30 @@ describe('privacy canaries', () => {
   const generatorInputs = (): string =>
     JSON.stringify([...vi.mocked(generateSwatchCard).mock.calls, ...vi.mocked(generateNearestSheet).mock.calls]);
 
-  const CANARY_DOC = withCharaCanaries({ ...HAIR_ONLY, LEyeColor: 42, REyeColor: 42 });
+  const CANARY_DOC = withCharaCanaries({
+    ...HAIR_ONLY,
+    LEyeColor: 42,
+    REyeColor: 42,
+    TypeName: 'CANARY_PRODUCER Firstname Lastname',
+  });
 
   it('the canary document really carries every canary', () => {
     const text = JSON.stringify(CANARY_DOC);
-    for (const c of ['CANARY_NICK', 'CANARY_AUTHOR', 'CANARY_DESC', 'CANARY_UNKNOWN', 'CANARY_TAG', 'CANARY_LANE', 'CANARY_GLASSES']) {
+    for (const c of ['CANARY_PRODUCER', 'CANARY_NICK', 'CANARY_AUTHOR', 'CANARY_DESC', 'CANARY_UNKNOWN', 'CANARY_TAG', 'CANARY_LANE', 'CANARY_GLASSES']) {
       expect(text).toContain(c);
     }
   });
 
+  it.each([undefined, 'hair'] as const)('success has exactly the presentation keys (slot:%s)', async (slot) => {
+    const result = await run(CANARY_DOC, { slot });
+    if (!result.ok) throw new Error(result.errorMessage);
+    expect(Object.keys(result).sort()).toEqual(['embed', 'ok', 'svgString']);
+  });
   it.each([
     ['the card', {}],
     ['the slot: route', { slot: 'hair' as const }],
     ['the hardest order', { order: 'hardest' as const }],
-  ])('none reaches %s, the embed, the character, the generators or the logs', async (_label, over) => {
+  ])('none reaches %s, the full result, the generators or the logs', async (_label, over) => {
     const { logger, logged } = capture();
     const result = await run(CANARY_DOC, { ...over, logger });
     if (!result.ok) throw new Error(result.errorMessage);
