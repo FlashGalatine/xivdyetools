@@ -21,6 +21,9 @@ Rules:
 - Push edits to this file as their own small commit — the announcement
   fires on any push to main touching this exact root path, and a focused
   commit keeps the announced release readable.
+- The announcement only fires while the bot's GitHub webhook is active. A
+  release pushed while it is disabled is not announced; the next push to
+  main that touches this file announces the newest entry.
 
   (This line used to add "the announcement webhook caps payloads at 10 KB",
   which was wrong twice over and would push someone into trimming release
