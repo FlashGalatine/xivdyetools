@@ -143,6 +143,7 @@ checklist §2.
       [SECRET_ROTATION.md](SECRET_ROTATION.md) §4–§5
       ([rotation log](SECRET_ROTATION.md#rotation-log)). It was hygiene, deferred from the
       2026-11-09 rotation until the M-line merges' deploys had finished green.
+      The bot tokens took two resets that day: the first pass missed the GitHub copies.
 - [ ] Dispatch *Deploy Discord Worker* and *Deploy Moderation Worker* from `main` to prove the
       GitHub `production` copies of the bot tokens set on 2026-11-16 (`DISCORD_TOKEN`,
       `MODERATION_DISCORD_TOKEN`). Their *Register Discord commands* step is the only reader of
