@@ -1856,8 +1856,9 @@ describe('SwatchTool', () => {
 
       const cells = swatches();
       expect(cells[5].style.outline).toContain('var(--theme-primary)');
-      expect(cells[4].style.outline).toBe('none');
-      expect(cells[6].style.outline).toBe('none');
+      // outlineStyle, not the shorthand: jsdom 31 serializes `outline: none` as 'medium'
+      expect(cells[4].style.outlineStyle).toBe('none');
+      expect(cells[6].style.outlineStyle).toBe('none');
     });
 
     it('moves the outline when a different cell is picked', async () => {
@@ -1871,7 +1872,7 @@ describe('SwatchTool', () => {
 
       const cells = swatches();
       expect(cells[9].style.outline).toContain('var(--theme-primary)');
-      expect(cells[5].style.outline).toBe('none');
+      expect(cells[5].style.outlineStyle).toBe('none');
     });
 
     it('re-renders the grid when the colour sheet changes', async () => {

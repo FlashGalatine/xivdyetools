@@ -264,7 +264,8 @@ describe('ImageZoomController', () => {
       btn('matcher.zoomIn').click();
 
       expect(canvas().style.transform).toBe('scale(1.1)');
-      expect(canvas().style.transformOrigin).toBe('top left');
+      // The source writes 'top left'; jsdom 31 serializes the origin x-first, so it reads back 'left top'
+      expect(canvas().style.transformOrigin).toBe('left top');
     });
 
     it('switches the cursor to move once the image overflows', () => {

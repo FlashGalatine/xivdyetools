@@ -797,7 +797,10 @@ describe('ModalContainer', () => {
 
         touch(row, 'touchcancel');
         expect(dialog.style.transform).toBe('');
-        expect(dialog.style.transition).toBe('transform 0.2s ease');
+        // Longhands, not the shorthand: jsdom 31 drops the default `ease` from `transition`'s serialization
+        expect(dialog.style.transitionProperty).toBe('transform');
+        expect(dialog.style.transitionDuration).toBe('0.2s');
+        expect(dialog.style.transitionTimingFunction).toBe('ease');
 
         // The cancelled gesture is over: a stray end must not act on its delta
         touch(row, 'touchend');
@@ -829,7 +832,10 @@ describe('ModalContainer', () => {
 
         ModalService.show({ type: 'custom', title: 'On top' });
         expect(dialog.style.transform).toBe('');
-        expect(dialog.style.transition).toBe('transform 0.2s ease');
+        // Longhands, not the shorthand: jsdom 31 drops the default `ease` from `transition`'s serialization
+        expect(dialog.style.transitionProperty).toBe('transform');
+        expect(dialog.style.transitionDuration).toBe('0.2s');
+        expect(dialog.style.transitionTimingFunction).toBe('ease');
 
         // The covered sheet's gesture is over: the rest of it moves nothing...
         touch(row, 'touchmove', 260);
