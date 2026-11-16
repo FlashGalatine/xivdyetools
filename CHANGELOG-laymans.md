@@ -31,6 +31,40 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.14.0] - 2026-11-16
+### 👆 Tap a slot to pick its dye
+- Web app: tap an empty slot or card in a tool to open the Color Palette and fill it with the next dye you pick. Tap a filled slot to replace its dye.
+- Web app: the Color Palette marks every dye the tool is using with a ring and a check mark, and highlights the dye in the slot you're filling.
+- Web app: in the Dye Mixer, Gradient Builder, Dye Comparison and Accessibility Checker, the Color Palette shows one button per slot and says which slot you're filling, for example "Choosing dye 2 of 4".
+- Web app: in the Dye Mixer, Gradient Builder, Dye Comparison and Accessibility Checker, tapping a marked dye in the Color Palette removes it when no slot is selected.
+- Web app: on phones, the Color Palette closes by itself after a pick when a slot tap opened it. Opened with the round palette button, it stays open.
+- Web app: Dye Comparison and the Accessibility Checker show an "Add Dye" tile after your dyes until all four slots are full.
+- Web app: the Dye Mixer no longer takes the same dye twice. A saved or shared pair with the same dye in both slots loads with only the first slot filled.
+
+### 📋 Glamour Reader: a shorter list for social media
+- Web app: the Glamour Reader's list sheet has a new Abridged switch. It gives a short version for a post, with one Obtained line per piece and one Dyes line when the piece is wearing a dye.
+- Web app: in the Glamour Reader, Copy list and Save .md follow the Abridged switch, and the app remembers your choice on this device.
+- Web app: every piece in the Glamour Reader's list sheet has its own switch, so you can leave pieces out of the copied or saved list until you reload.
+
+### 🖥️ Smaller windows and phones
+- Web app: dye card menus stay on screen in smaller windows and on phones, so every option can be clicked.
+- Web app: with Options and the Color Palette both open, the Dye Mixer and Gradient Builder no longer scroll sideways, and the Dye Mixer's grid of 30 blends stays whole.
+- Web app: in smaller windows, Harmony Explorer dye markers shrink with the color wheel, Dye Comparison's "What actually differs" values stay readable, and the Swatch Matcher grid gets more room.
+- Web app: in the Swatch Matcher, a swatch chosen with the keyboard stays in view, and closing a side panel keeps your result in view.
+
+### 🎨 Light and Dark themes
+- Web app: hover highlights and the glow around the Dye Mixer's result now use your theme's red instead of gold, in both Light and Dark.
+- Web app: in the Light theme, the Color Palette's Apply button and selected filters now have white text on red, which is easier to read.
+
+### 🔗 Link previews and links
+- Link previews: Chinese cards now show Simplified Chinese character shapes, and Japanese cards show Japanese ones.
+- Web app and Discord bot: the X link in the About window and in `/about` now goes to @FlashGalatine, the account's new name.
+
+### ⚙️ Behind the scenes
+- Web app: the app is about 65 KB lighter to load.
+- Web app and Discord bot: the Palette Extractor and `/extractor` build a palette from an image faster, with the same results.
+- Behind the scenes: updated moderation tools for community presets.
+
 ## [5.13.0] - 2026-11-02
 ### 🖥️ Smaller windows and easier scrolling
 - Web app: the main scrollbar sits against the edge of the content area, long tool pages scroll all the way down on desktop and mobile, and the Dye Mixer shows one main scrollbar.
