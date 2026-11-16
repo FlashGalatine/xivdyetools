@@ -60,8 +60,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/worker-kit
       hono:
-        specifier: ^4.13.16
-        version: 4.13.16
+        specifier: ^4.13.18
+        version: 4.13.18
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^5.20261030.1
@@ -118,8 +118,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/worker-kit
       hono:
-        specifier: ^4.13.16
-        version: 4.13.16
+        specifier: ^4.13.18
+        version: 4.13.18
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^5.20261030.1
@@ -158,8 +158,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/worker-kit
       hono:
-        specifier: ^4.13.16
-        version: 4.13.16
+        specifier: ^4.13.18
+        version: 4.13.18
     devDependencies:
       '@types/node':
         specifier: ^26.6.6
@@ -195,8 +195,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/worker-kit
       hono:
-        specifier: ^4.13.16
-        version: 4.13.16
+        specifier: ^4.13.18
+        version: 4.13.18
     devDependencies:
       '@types/node':
         specifier: ^26.6.6
@@ -232,8 +232,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/worker-kit
       hono:
-        specifier: ^4.13.16
-        version: 4.13.16
+        specifier: ^4.13.18
+        version: 4.13.18
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^5.20261030.1
@@ -275,8 +275,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/worker-kit
       hono:
-        specifier: ^4.13.16
-        version: 4.13.16
+        specifier: ^4.13.18
+        version: 4.13.18
     devDependencies:
       '@types/node':
         specifier: ^26.6.6
@@ -303,8 +303,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/worker-kit
       hono:
-        specifier: ^4.13.16
-        version: 4.13.16
+        specifier: ^4.13.18
+        version: 4.13.18
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^5.20261030.1
@@ -566,8 +566,8 @@ importers:
   packages/worker-kit:
     dependencies:
       '@upstash/redis':
-        specifier: ^1.40.0
-        version: 1.40.0
+        specifier: ^1.41.0
+        version: 1.41.0
       '@xivdyetools/logger':
         specifier: workspace:*
         version: link:../logger
@@ -579,8 +579,8 @@ importers:
         specifier: ^5.1.0
         version: 5.1.0(vitest@5.1.0)
       hono:
-        specifier: ^4.13.16
-        version: 4.13.16
+        specifier: ^4.13.18
+        version: 4.13.18
       vitest:
         specifier: ^5.1.0
         version: 5.1.0(@types/node@26.6.6)(@vitest/coverage-v8@5.1.0)(@vitest/ui@5.1.0)(jsdom@30.1.3)(msw@3.0.5(@types/node@26.6.6)(graphql@16.14.2)(supports-color@10.2.2)(typescript@5.9.3)(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)))(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
@@ -2289,8 +2289,8 @@ packages:
     resolution: {integrity: sha512-WmoN8qaIAo7WTYWbAZuG8PYEhn5fkz7dZrqTBZ7dtt//lL2Gwms1IcnQ5yHqjDfX8Ft5j4YzDM23f87zBfDe9g==}
     deprecated: Potential CWE-502 - Update to 1.3.1 or higher
 
-  '@upstash/redis@1.40.0':
-    resolution: {integrity: sha512-F6+V7Kof2McJtGWclusZLt7hBRmIMZg+albS32/5TuNRg/92FM2nkyKPY9wWEieMj9hjyUi4iURsN1djsHNbwA==}
+  '@upstash/redis@1.41.0':
+    resolution: {integrity: sha512-TIu9C1B0ToXQLXt2M1LQuGZ6nkMjOZPIdJyU0GGWKZToa/MvJF8x2IRDOPMIAw2BLGXGhi1aZr5AnhlXu4YLXg==}
 
   '@vitejs/plugin-vue@5.2.4':
     resolution: {integrity: sha512-7Yx/SXSOcQq5HiiV3orevHUFn+pmMB4cgbEkDYgnkUWb0WfeQ/wa2yFv6D5ICiCQOVpjA7vYDXrC7AGO8yjDHA==}
@@ -2859,8 +2859,8 @@ packages:
   headers-polyfill@5.0.1:
     resolution: {integrity: sha512-1TJ6Fih/b8h5TIcv+1+Hw0PDQWJTKDKzFZzcKOiW1wJza3XoAQlkCuXLbymPYB8+ZQyw8mHvdw560e8zVFIWyA==}
 
-  hono@4.13.16:
-    resolution: {integrity: sha512-AOLOEhvrV+iH92xXCnFr/5+3KjPKcI3xP63XJtX5spAnkznPdHijlIsUTpi7/9EhWqrTCekw5c5zh1K+YsVw7A==}
+  hono@4.13.18:
+    resolution: {integrity: sha512-H9q/E1XizaWstJxUW881dmLxEj+t/TrGGnyxINkm4+sK0qUwsMtFdo2BWI9Vs3cIS19MU6b6iCijoUoEf4f3DA==}
     engines: {node: '>=16.9.0'}
 
   hookable@5.5.3:
@@ -5183,7 +5183,7 @@ snapshots:
 
   '@ungap/structured-clone@1.3.0': {}
 
-  '@upstash/redis@1.40.0':
+  '@upstash/redis@1.41.0':
     dependencies:
       uncrypto: 0.1.3
 
@@ -5811,7 +5811,7 @@ snapshots:
       '@types/set-cookie-parser': 2.4.10
       set-cookie-parser: 3.1.1
 
-  hono@4.13.16: {}
+  hono@4.13.18: {}
 
   hookable@5.5.3: {}
 
