@@ -144,10 +144,13 @@ checklist §2.
       ([rotation log](SECRET_ROTATION.md#rotation-log)). It was hygiene, deferred from the
       2026-11-09 rotation until the M-line merges' deploys had finished green.
       The bot tokens took two resets that day: the first pass missed the GitHub copies.
-- [ ] Dispatch *Deploy Discord Worker* and *Deploy Moderation Worker* from `main` to prove the
-      GitHub `production` copies of the bot tokens set on 2026-11-16 (`DISCORD_TOKEN`,
-      `MODERATION_DISCORD_TOKEN`). Their *Register Discord commands* step is the only reader of
-      those copies, and no run has used them yet.
+- [x] Prove the GitHub `production` copies of the bot tokens set on 2026-11-16 (`DISCORD_TOKEN`,
+      `MODERATION_DISCORD_TOKEN`). Done 2026-11-16 by the first push deploys after the rotation,
+      so no dispatch was needed: *Register Discord commands* passed in *Deploy Discord Worker*
+      [43902124023](https://github.com/FlashGalatine/xivdyetools/actions/runs/43902124023) and in
+      *Deploy Moderation Worker*
+      [43904550208](https://github.com/FlashGalatine/xivdyetools/actions/runs/43904550208). The
+      `beta` copy (`BETA_DISCORD_TOKEN`) has not been used by a run since the rotation.
 - [x] Confirm production `moderation-worker` `DISCORD_TOKEN` and `discord-worker`
       `MODERATION_BOT_TOKEN` carry the token that was reset on 2026-08-29. Superseded
       2026-11-16: the moderation bot token was reset again and all three holders were updated
