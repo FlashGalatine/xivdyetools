@@ -2058,8 +2058,8 @@ describe('index.ts', () => {
       );
     });
 
-    // 2026-11-16: the `main` branch URL is CDN-cached, so the push that added
-    // 5.14.0 read a stale file, hit 5.13.0's memo and silently skipped 5.14.0.
+    // The `main` branch URL is CDN-cached, so a fetch right after a push can
+    // read the pre-push file, hit the previous version's memo and skip the new one.
     // The changelog is fetched at the pushed commit.
     describe('changelog fetched at the pushed commit', () => {
       it('uses `after` in the URL, never the main branch', async () => {

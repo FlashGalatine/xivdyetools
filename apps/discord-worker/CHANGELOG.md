@@ -11,8 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `/webhooks/github` now reads `CHANGELOG-laymans.md` at the pushed commit (`after`, validated as
   40 lowercase hex, falling back to `head_commit.id`) instead of the `main` branch URL. GitHub
-  caches that URL for minutes, so on 2026-11-16 the push that added 5.14.0 fetched the pre-push
-  file, saw 5.13.0 as the newest entry, answered `Already announced`, and 5.14.0 was never posted.
+  caches that URL for minutes, so a fetch right after the push could return the pre-push file,
+  whose newest entry is already announced; the route would answer `Already announced` and the new
+  release would never be posted.
   A payload with no valid SHA answers 400 `Invalid commit SHA`. The repository in the URL is still
   the pinned constant.
 - A version older than the newest one already announced is not announced again. A redelivered

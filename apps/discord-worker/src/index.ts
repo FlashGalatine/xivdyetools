@@ -766,10 +766,11 @@ app.post('/webhooks/github', async (c) => {
   });
 
   // Read the changelog at the pushed commit, never the `main` branch URL: that
-  // is cached by GitHub for minutes, and on 2026-11-16 the push that added
-  // 5.14.0 read the stale file, saw 5.13.0 (already memoized) as newest and
-  // answered "Already announced", so 5.14.0 was silently never announced. The
-  // SHA is validated (40 hex) and the repository stays the pinned constant.
+  // is cached by GitHub for minutes, so a fetch right after the push can return
+  // the pre-push file, whose newest entry is already memoized: the handler
+  // would answer "Already announced" and the new release would never be
+  // posted. The SHA is validated (40 hex) and the repository stays the pinned
+  // constant.
   const commitSha = resolveCommitSha(payload.after, payload.head_commit?.id);
   if (!commitSha) {
     logger.warn('GitHub webhook rejected: no valid commit SHA');
