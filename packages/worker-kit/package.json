@@ -1,6 +1,6 @@
 {
   "name": "@xivdyetools/worker-kit",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "Shared Cloudflare Worker toolkit for xivdyetools: Hono middleware (request ID, logger, rate limit) + request body guards + magic-byte image sniffing + rate limiting backends (Memory, KV, Upstash)",
   "author": "XIV Dye Tools",
   "license": "MIT",
@@ -72,7 +72,7 @@
   },
   "peerDependencies": {
     "@cloudflare/workers-types": "^4.0.0 || ^5.0.0",
-    "hono": "^4.13.7"
+    "hono": "^4.13.18"
   },
   "peerDependenciesMeta": {
     "@cloudflare/workers-types": {

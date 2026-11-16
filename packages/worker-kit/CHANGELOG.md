@@ -2,6 +2,25 @@
 
 All notable changes to `@xivdyetools/worker-kit` (formerly `@xivdyetools/worker-middleware`) will be documented in this file.
 
+## [1.6.1] - 2026-11-16
+
+Packaging patch. No source change: the code is the same as 1.6.0.
+
+### Security
+
+- **The optional `hono` peer range is now `^4.13.18` (was `^4.13.7`).** `./body-guards` calls
+  `bodyLimit()` from `hono/body-limit` at runtime. Before 4.13.18 that function kept one object
+  per transfer chunk, so a body inside the configured limit, sent in very small chunks, could
+  exhaust memory (GHSA-39q9-qp46-w8xg). The old range let a consumer pair this package with an
+  affected hono. A consumer on an older hono 4.13 now gets a peer warning and should upgrade.
+  The Workers in this repository already run 4.13.18.
+
+### Changed
+
+- **`@upstash/redis` range is `^1.41.0` (was `^1.39.0` in the published 1.6.0).** The range moved
+  on `main` on 2026-11-02 and 2026-11-16 without a version bump, so 1.6.0 on npm and 1.6.0 in the
+  repository declared different ranges. This release brings them back in line.
+
 ## [1.6.0] - 2026-10-27
 
 ### Hardening adoption
