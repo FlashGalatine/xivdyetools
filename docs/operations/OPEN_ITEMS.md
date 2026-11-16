@@ -1,6 +1,6 @@
 # Open operational items
 
-**Status:** living list, last walked 2026-09-05; individual items updated through 2026-11-09.
+**Status:** living list, last walked 2026-09-05; individual items updated through 2026-11-16.
 **Owner:** the maintainer — every item needs credentials CI does not have (GitHub settings,
 the Cloudflare dashboard, `wrangler` against production, a browser session).
 **Where it came from:** the 5.0 post-merge checklist
@@ -138,28 +138,24 @@ checklist §2.
 
 ## 3. Secrets
 
-- [ ] **Rotate the Discord credentials after the M-line release → prod.** These are the main,
-      moderation and beta bot tokens, plus `DISCORD_CLIENT_SECRET`. The schedule only calls for
-      rotating them after a compromise. FINDING-023's condition for resetting the bot tokens was
-      never met: every run of the workflows that read the production bot tokens has been on
-      `main` (checked 2026-11-09). So this is hygiene, and the main bot token has no logged
-      rotation. It was deferred from the 2026-11-09 rotation to 2026-11-15:
-  - Start only **after the M-line merges' deploys have finished green**. Both bot deploys run
-    *Register Discord commands* with the GitHub copy, so resetting a token while one of them is
-    pending would turn that step red.
-  - Per [SECRET_ROTATION.md](SECRET_ROTATION.md) §4–§5, update every holder of a token in one
-    sitting, pasting the value at wrangler's prompt.
-  - Then dispatch *Deploy Discord Worker* and *Deploy Moderation Worker* from `main` to prove
-    the new GitHub copies.
-  - Log it. Resetting the moderation bot token also settles the next item.
-- [ ] Confirm production `moderation-worker` `DISCORD_TOKEN` and `discord-worker`
-      `MODERATION_BOT_TOKEN` carry the token that was reset on 2026-08-29 (moderation embeds and
-      channel posts 401 otherwise) — [SECRET_ROTATION.md](SECRET_ROTATION.md) rotation log.
+- [x] **Rotate the Discord credentials after the M-line release → prod.** Done 2026-11-16: the
+      main, moderation and beta bot tokens and `DISCORD_CLIENT_SECRET`, per
+      [SECRET_ROTATION.md](SECRET_ROTATION.md) §4–§5
+      ([rotation log](SECRET_ROTATION.md#rotation-log)). It was hygiene, deferred from the
+      2026-11-09 rotation until the M-line merges' deploys had finished green.
+- [ ] Dispatch *Deploy Discord Worker* and *Deploy Moderation Worker* from `main` to prove the
+      GitHub `production` copies of the bot tokens set on 2026-11-16 (`DISCORD_TOKEN`,
+      `MODERATION_DISCORD_TOKEN`). Their *Register Discord commands* step is the only reader of
+      those copies, and no run has used them yet.
+- [x] Confirm production `moderation-worker` `DISCORD_TOKEN` and `discord-worker`
+      `MODERATION_BOT_TOKEN` carry the token that was reset on 2026-08-29. Superseded
+      2026-11-16: the moderation bot token was reset again and all three holders were updated
+      in one sitting ([rotation log](SECRET_ROTATION.md#rotation-log)).
 - [ ] Any secret set with a bare `wrangler secret put` before 2026-08-21 landed on the **dev**
       worker — re-set it on production (`--env production`) per SECRET_ROTATION.md.
       2026-11-09: `wrangler secret list` on all four production workers showed every secret the
       code reads, and the four quarterly secrets were re-set there that day. The Discord
-      credentials will be re-set by the item above. What remains unproven is whether the older
+      credentials were re-set on 2026-11-16. What remains unproven is whether the older
       configuration values (`PERSPECTIVE_API_KEY`, `MODERATOR_IDS`, the channel IDs,
       `STATS_AUTHORIZED_USERS`) are current on production. Close this item after the Discord
       rotation, once those have been checked.
