@@ -284,6 +284,7 @@ describe('index.ts', () => {
           body: JSON.stringify({
             repository: { full_name: 'FlashGalatine/xivdyetools' },
             ref: 'refs/heads/main',
+            after: 'c'.repeat(40),
             commits: [{ added: [], modified: ['CHANGELOG-laymans.md'] }],
             head_commit: null,
           }),
@@ -1811,9 +1812,15 @@ describe('index.ts', () => {
       ANNOUNCEMENT_CHANNEL_ID: 'test-announcement-channel',
     });
 
+    const AFTER_SHA = 'a'.repeat(39) + '1';
+    const HEAD_SHA = 'b'.repeat(39) + '2';
+    const shaUrl = (sha: string) =>
+      `https://raw.githubusercontent.com/FlashGalatine/xivdyetools/${sha}/CHANGELOG-laymans.md`;
+
     /** A push payload shaped like GitHub's, padded to a realistic size. */
     const pushPayload = (overrides: Record<string, unknown> = {}) => ({
       ref: 'refs/heads/main',
+      after: AFTER_SHA,
       repository: {
         full_name: 'FlashGalatine/xivdyetools',
         html_url: 'https://github.com/FlashGalatine/xivdyetools',
@@ -1829,7 +1836,7 @@ describe('index.ts', () => {
 
     /** A head commit whose file list touches the product-level changelog. */
     const changelogCommit = (overrides: Record<string, unknown> = {}) => ({
-      id: 'abc',
+      id: HEAD_SHA,
       message: 'Merge pull request',
       timestamp: '2026-08-28T23:36:41Z',
       url: 'https://github.com/FlashGalatine/xivdyetools/commit/abc',
@@ -1972,10 +1979,7 @@ describe('index.ts', () => {
       );
 
       expect(res.status).toBe(200);
-      expect(fetched).toHaveBeenCalledWith(
-        'https://raw.githubusercontent.com/FlashGalatine/xivdyetools/main/CHANGELOG-laymans.md',
-        expect.anything(),
-      );
+      expect(fetched).toHaveBeenCalledWith(shaUrl(AFTER_SHA), expect.anything());
       expect(sendAnnouncement).toHaveBeenCalledWith(
         'test-token',
         'test-announcement-channel',
@@ -2045,16 +2049,174 @@ describe('index.ts', () => {
       );
 
       expect(res.status).toBe(200);
-      expect(fetched).toHaveBeenCalledWith(
-        'https://raw.githubusercontent.com/FlashGalatine/xivdyetools/main/CHANGELOG-laymans.md',
-        expect.anything(),
-      );
+      expect(fetched).toHaveBeenCalledWith(shaUrl(AFTER_SHA), expect.anything());
       expect(sendAnnouncement).toHaveBeenCalledWith(
         'test-token',
         'test-announcement-channel',
         entry,
         'https://github.com/FlashGalatine/xivdyetools',
       );
+    });
+
+    // The `main` branch URL is CDN-cached, so a fetch right after a push can
+    // read the pre-push file, hit the previous version's memo and skip the new one.
+    // The changelog is fetched at the pushed commit.
+    describe('changelog fetched at the pushed commit', () => {
+      it('uses `after` in the URL, never the main branch', async () => {
+        const { fetchSpy: fetched } = await arrangeAnnounce();
+        await postPush(JSON.stringify(pushPayload({ head_commit: changelogCommit() })));
+        expect(fetched).toHaveBeenCalledTimes(1);
+        expect(String(fetched.mock.calls[0]![0])).toBe(shaUrl(AFTER_SHA));
+        expect(String(fetched.mock.calls[0]![0])).not.toContain('/main/');
+      });
+
+      it.each([
+        ['missing', undefined],
+        ['non-hex', 'z'.repeat(40)],
+        ['too short', 'a'.repeat(39)],
+        ['all zeros', '0'.repeat(40)],
+        ['not a string', 12345],
+      ])('falls back to head_commit.id when `after` is %s', async (_l, after) => {
+        const { fetchSpy: fetched } = await arrangeAnnounce();
+        const res = await postPush(
+          JSON.stringify(pushPayload({ after, head_commit: changelogCommit() })),
+        );
+        expect(res.status).toBe(200);
+        expect(String(fetched.mock.calls[0]![0])).toBe(shaUrl(HEAD_SHA));
+      });
+
+      it.each([
+        ['non-hex', 'g'.repeat(40)],
+        ['wrong length', 'a'.repeat(41)],
+        ['uppercase', 'A'.repeat(40)],
+        ['path-ish', '../../evil/repo/' + 'a'.repeat(24)],
+        ['branch name', 'main'],
+        ['all zeros', '0'.repeat(40)],
+      ])('answers 400 and fetches nothing when both SHAs are invalid (%s)', async (_l, bad) => {
+        const { fetchSpy: fetched, sendAnnouncement } = await arrangeAnnounce();
+        const lines = captureLogLines();
+        const res = await postPush(
+          JSON.stringify(pushPayload({ after: bad, head_commit: changelogCommit({ id: bad }) })),
+        );
+        expect(res.status).toBe(400);
+        expect(await res.json()).toEqual({ error: 'Invalid commit SHA' });
+        expect(fetched).not.toHaveBeenCalled();
+        expect(sendAnnouncement).not.toHaveBeenCalled();
+        expect(lines.join('\n')).not.toContain(bad);
+      });
+
+      it('answers 400 when after is absent and head_commit is null-ish but changelog listed in commits', async () => {
+        const { fetchSpy: fetched } = await arrangeAnnounce();
+        const res = await postPush(
+          JSON.stringify(
+            pushPayload({ after: undefined, commits: [changelogCommit()], head_commit: null }),
+          ),
+        );
+        expect(res.status).toBe(400);
+        expect(fetched).not.toHaveBeenCalled();
+      });
+
+      it('keeps the pinned repository in the URL whatever the payload carries', async () => {
+        const { fetchSpy: fetched } = await arrangeAnnounce();
+        await postPush(
+          JSON.stringify(
+            pushPayload({
+              head_commit: changelogCommit(),
+              compare: 'https://github.com/evil/repo/compare/a...b',
+              pusher: { name: 'evil/repo' },
+            }),
+          ),
+        );
+        expect(String(fetched.mock.calls[0]![0])).toBe(shaUrl(AFTER_SHA));
+      });
+    });
+
+    // A redelivered old push reads the changelog at that old commit; once its
+    // 90-day memo expired it would re-announce an old release.
+    describe('announced:latest high-water mark', () => {
+      const withLatest = (latest: string | null) => {
+        const kv = announceKV();
+        kv.get.mockImplementation(async (key: string) =>
+          key === 'announced:latest' ? latest : null,
+        );
+        return kv;
+      };
+      const post = (kv: ReturnType<typeof announceKV>) =>
+        postPush(JSON.stringify(pushPayload({ head_commit: changelogCommit() })), {
+          env: githubEnv(kv),
+        });
+
+      it('skips a version older than the latest announced, with no send and no writes', async () => {
+        const { sendAnnouncement } = await arrangeAnnounce();
+        const kv = withLatest('5.0.1');
+        const res = await post(kv);
+        expect(res.status).toBe(200);
+        expect(await res.json()).toEqual({
+          success: true,
+          message: 'Older than latest announced version',
+          version: '5.0.0',
+        });
+        expect(sendAnnouncement).not.toHaveBeenCalled();
+        expect(kv.put).not.toHaveBeenCalled();
+      });
+
+      it('compares numerically, not lexically (5.9.0 < 5.14.0)', async () => {
+        const { sendAnnouncement, entry } = await arrangeAnnounce();
+        entry.version = '5.9.0';
+        const res = await post(withLatest('5.14.0'));
+        expect(await res.json()).toMatchObject({ message: 'Older than latest announced version' });
+        expect(sendAnnouncement).not.toHaveBeenCalled();
+      });
+
+      it('proceeds and rewrites announced:latest when the version equals the stored one', async () => {
+        const { sendAnnouncement } = await arrangeAnnounce();
+        const kv = withLatest('5.0.0');
+        const res = await post(kv);
+        expect(res.status).toBe(200);
+        expect(sendAnnouncement).toHaveBeenCalledOnce();
+        expect(kv.put).toHaveBeenCalledWith('announced:latest', '5.0.0');
+      });
+
+      it('proceeds and raises announced:latest for a newer version (no TTL)', async () => {
+        const { sendAnnouncement } = await arrangeAnnounce();
+        const kv = withLatest('4.9.9');
+        await post(kv);
+        expect(sendAnnouncement).toHaveBeenCalledOnce();
+        expect(kv.put).toHaveBeenCalledWith('announced:latest', '5.0.0');
+      });
+
+      it.each([
+        ['absent', null],
+        ['unparseable', 'garbage'],
+      ])('proceeds when announced:latest is %s', async (_l, stored) => {
+        const { sendAnnouncement } = await arrangeAnnounce();
+        const kv = withLatest(stored);
+        const res = await post(kv);
+        expect(res.status).toBe(200);
+        expect(sendAnnouncement).toHaveBeenCalledOnce();
+        expect(kv.put).toHaveBeenCalledWith('announced:latest', '5.0.0');
+      });
+
+      it('answers 200 when the announced:latest write fails after a successful send', async () => {
+        const { sendAnnouncement } = await arrangeAnnounce();
+        const kv = withLatest(null);
+        kv.put.mockImplementation(async (key: string) => {
+          if (key === 'announced:latest') throw new Error('KV unavailable');
+        });
+        const res = await post(kv);
+        expect(res.status).toBe(200);
+        expect(await res.json()).toMatchObject({ success: true, version: '5.0.0' });
+        expect(sendAnnouncement).toHaveBeenCalledOnce();
+        expect(kv.put).toHaveBeenCalledWith('announced:v:5.0.0', '1', expect.anything());
+      });
+
+      it('skips the guard when the entry version is not x.y.z', async () => {
+        const { sendAnnouncement, entry } = await arrangeAnnounce();
+        entry.version = '5.1.0-beta';
+        const res = await post(withLatest('9.9.9'));
+        expect(res.status).toBe(200);
+        expect(sendAnnouncement).toHaveBeenCalledOnce();
+      });
     });
 
     // FINDING-021: GitHub signs the `ping` it sends when a hook is created.
