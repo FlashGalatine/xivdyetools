@@ -1979,10 +1979,7 @@ describe('index.ts', () => {
       );
 
       expect(res.status).toBe(200);
-      expect(fetched).toHaveBeenCalledWith(
-        shaUrl(AFTER_SHA),
-        expect.anything(),
-      );
+      expect(fetched).toHaveBeenCalledWith(shaUrl(AFTER_SHA), expect.anything());
       expect(sendAnnouncement).toHaveBeenCalledWith(
         'test-token',
         'test-announcement-channel',
@@ -2052,10 +2049,7 @@ describe('index.ts', () => {
       );
 
       expect(res.status).toBe(200);
-      expect(fetched).toHaveBeenCalledWith(
-        shaUrl(AFTER_SHA),
-        expect.anything(),
-      );
+      expect(fetched).toHaveBeenCalledWith(shaUrl(AFTER_SHA), expect.anything());
       expect(sendAnnouncement).toHaveBeenCalledWith(
         'test-token',
         'test-announcement-channel',
@@ -2191,25 +2185,16 @@ describe('index.ts', () => {
         expect(kv.put).toHaveBeenCalledWith('announced:latest', '5.0.0');
       });
 
-      it.each([['absent', null], ['unparseable', 'garbage']])(
-        'proceeds when announced:latest is %s',
-        async (_l, stored) => {
-          const { sendAnnouncement } = await arrangeAnnounce();
-          const kv = withLatest(stored);
-          const res = await post(kv);
-          expect(res.status).toBe(200);
-          expect(sendAnnouncement).toHaveBeenCalledOnce();
-          expect(kv.put).toHaveBeenCalledWith('announced:latest', '5.0.0');
-        },
-      );
-
-      it('does not lower announced:latest', async () => {
-        // Equal-or-newer is the only write path; a lower stored value is raised, never the reverse.
+      it.each([
+        ['absent', null],
+        ['unparseable', 'garbage'],
+      ])('proceeds when announced:latest is %s', async (_l, stored) => {
         const { sendAnnouncement } = await arrangeAnnounce();
-        const kv = withLatest('5.0.0');
-        await post(kv);
+        const kv = withLatest(stored);
+        const res = await post(kv);
+        expect(res.status).toBe(200);
         expect(sendAnnouncement).toHaveBeenCalledOnce();
-        expect(kv.put).not.toHaveBeenCalledWith('announced:latest', expect.stringMatching(/^[0-4]\./));
+        expect(kv.put).toHaveBeenCalledWith('announced:latest', '5.0.0');
       });
 
       it('answers 200 when the announced:latest write fails after a successful send', async () => {
@@ -2222,6 +2207,7 @@ describe('index.ts', () => {
         expect(res.status).toBe(200);
         expect(await res.json()).toMatchObject({ success: true, version: '5.0.0' });
         expect(sendAnnouncement).toHaveBeenCalledOnce();
+        expect(kv.put).toHaveBeenCalledWith('announced:v:5.0.0', '1', expect.anything());
       });
 
       it('skips the guard when the entry version is not x.y.z', async () => {

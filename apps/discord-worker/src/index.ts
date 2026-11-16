@@ -767,7 +767,7 @@ app.post('/webhooks/github', async (c) => {
 
   // Read the changelog at the pushed commit, never the `main` branch URL: that
   // is cached by GitHub for minutes, and on 2026-11-16 the push that added
-  // 5.14.0 read the stale file, saw 5.13.0 (already memoised) as newest and
+  // 5.14.0 read the stale file, saw 5.13.0 (already memoized) as newest and
   // answered "Already announced", so 5.14.0 was silently never announced. The
   // SHA is validated (40 hex) and the repository stays the pinned constant.
   const commitSha = resolveCommitSha(payload.after, payload.head_commit?.id);
@@ -876,9 +876,10 @@ app.post('/webhooks/github', async (c) => {
     });
   }
 
-  // High-water mark, no TTL, best-effort for the same reason as the memo. Only
-  // raised, never lowered. Nothing is seeded: the first announce after deploy
-  // writes it.
+  // High-water mark, no TTL, best-effort for the same reason as the memo. This
+  // request only raises it (KV has no compare-and-set, so two overlapping
+  // deliveries can still race). Nothing is seeded: the first announce after
+  // deploy writes it.
   if (entryVersion) {
     try {
       if (!storedVersion || compareSemver(entryVersion, storedVersion) >= 0) {
