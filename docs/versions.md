@@ -4,7 +4,7 @@
 
 **Single source of truth for all XIV Dye Tools project versions**
 
-*Last Updated: October 31, 2026*
+*Last Updated: November 15, 2026*
 
 > **Versions below match each project's `package.json` in this checkout** and are checked
 > against it by `pnpm docs:check-versions` (`scripts/check-doc-versions.ts`, run in CI), so
@@ -137,7 +137,7 @@
 | v5.18.1 | Nov 2026 | Build only: production builds collapse the indentation inside Lit `html`, `svg` and `css` templates (`vite-plugin-minify-templates.ts`). JS payload 2,251.71 KB to 2,186.67 KB, layout shell 226.23 KB to 188.34 KB; the payload limit returns to 2,250 KB and the layout shell row drops from 228 KB to 200 KB. No change to what the app does |
 | v5.18.0 | Nov 2026 | Slot-aware dye picking (issue 422, first slice): tapping a slot or an empty-state card in a tool opens the Color Palette for that slot, a pick fills or replaces it, and on a phone the palette closes again after a pick a slot tap started. The palette marks every dye the tool holds, and multi-dye tools get a strip of slot chips, a header line naming the target slot and, with no slot targeted, tap-again-to-remove (with a slot targeted, a marked dye moves into it). Dye Comparison and Accessibility Checker gain an "Add Dye" tile; Dye Mixer no longer holds the same dye twice |
 | v5.17.2 | Nov 2026 | The X/Twitter account was renamed from @AsheJunius to @FlashGalatine: the About modal's X link (core's `SOCIAL_LINKS`) and the `twitter:site` / `twitter:creator` share-card tags now name the new handle. No other source changed |
-| v5.17.1 | Oct 2026 | Conditional Core 6/SVG adoption; preserve inspection-worker protocol, matching and bundle budget; restore development Hair/Skin loading while retaining native Node JSON attributes; registry/publication/consumer acceptance held |
+| v5.17.1 | Nov 2026 | Conditional Core 6/SVG adoption; preserve inspection-worker protocol, matching and bundle budget; restore development Hair/Skin loading while retaining native Node JSON attributes; registry/publication/consumer acceptance held |
 | v5.17.0 | Nov 2026 | The Glamour Reader's Glamour list sheet gains an Abridged toggle (off by default, remembered on the device) for the shorter social-media form: no header, the whole `Slot: Name` line bold, one `Dyes:` line if the piece wears a dye and an `Obtained:` line cut to the best source — every dungeon, trial or raid at the lowest difficulty (a map dungeon loses to any other source), else the craft, else a Gil vendor with its price, else another vendor without its currency, else the line as written. Preview, fields, Copy list and Save .md follow it (`glamour-equipment-abridged.md`); a line typed in Abridged is kept apart, and a full-list edit carries over until typed over. Each row also gets its own include switch (both forms): a piece switched off is dimmed and left out of the preview, counts, Copy list and Save .md until the page reloads (never stored); Reset all turns the outfit's pieces back on, and with all off Copy list and Save .md disable. The full list, the API and the `/glamour` bot are unchanged. CI's always-run step runs `glamour-abridged.test.ts` |
 | v5.16.15 | Nov 2026 | The Dye Mixer's result slot glows in the theme's accent instead of the gold of the retired themes, and the 33 `var(--theme-primary, #d4af37)` fallbacks that could never paint are gone, so no non-test source names that gold any more. The theme-token contract test now checks every source, not only hover rules. The one-locale payload shrinks by 362 bytes and stays at 99.3% of its budget |
 | v5.16.14 | Nov 2026 | A hovered toggle that is on and the palette drawer's Apply and Random buttons stop turning gold: `--theme-primary-hover` is declared at last, from each palette's own hover accent (`#B01C1C` on Light, `#FF6257` on Dark), the palette's Apply button and active filter chips get a readable label (`--theme-text-on-primary`, white on Light), and a new contract test fails any `--theme-*` token the app reads but nothing declares |
@@ -238,7 +238,7 @@
 | Version | Date | Highlights |
 |---------|------|------------|
 | v5.9.11 | Nov 2026 | The X/Twitter account was renamed from @AsheJunius to @FlashGalatine: `/about` prints the new X link from core's `SOCIAL_LINKS`. No discord-worker source changed; the production deploy's `register-commands` step re-registers an unchanged roster |
-| v5.9.10 | Oct 2026 | Conditional Core 6/SVG/Bot Logic 5 adoption; preserve original-byte guards and card/embed adapters; registry/publication/consumer acceptance held |
+| v5.9.10 | Nov 2026 | Conditional Core 6/SVG/Bot Logic 5 adoption; preserve original-byte guards and card/embed adapters; registry/publication/consumer acceptance held |
 | v5.9.9 | Nov 2026 | Documents only — the Privacy Policy's Author name row in all six languages now says that when XIVAuth cannot return the characters, the name already on the account stays and a new account gets the `XIVAuth User` name, matching oauth 3.2.2. No discord-worker source changed; the production deploy's `register-commands` step re-registers an unchanged roster |
 | v5.9.8 | Nov 2026 | Documents only — the Privacy Policy in all six languages now covers every web sign-in, not only XIVAuth: each sign-in replaces the author name on the presets under that account with the name from that sign-in (not while a ban is active), bot-submitted ones included for a Discord or linked XIVAuth sign-in. No discord-worker source changed |
 | v5.9.7 | Oct 2026 | A-DISCORD: one-request favorite lists, bounded/checkable delivery, localized choices/clan labels, byte-only attachments, preview attribution removal and native request guards; bot-logic 4.12.0 locale companion must publish first |
@@ -447,7 +447,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| v1.9.2 | Oct 2026 | Activation: linked-ID ban confirmation is on in production (`LINKED_BAN_CONFIRMATION_ENABLED`); the development worker stays off |
+| v1.9.2 | Nov 2026 | Activation: linked-ID ban confirmation is on in production (`LINKED_BAN_CONFIRMATION_ENABLED`); the development worker stays off |
 | v1.9.1 | Oct 2026 | Conditional Bot Logic 5 adoption; preserve sanitization, private replies and inactive confirmation behavior; registry/publication/consumer acceptance held |
 | v1.9.0 | Oct 2026 | Inactive private linked-ID confirmation, explicit partial-ban expansion, recorded-scope unban and neutral decision posts |
 | v1.8.4 | Oct 2026 | Complete path-only link reviews, revision-bound action guards and stale-message refresh; companion for later metadata-moderation activation |
@@ -478,8 +478,8 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| v2.12.4 | Oct 2026 | Conditional F-OG source: locale-aware regional glyph selection, real route/font regression tests and new cache identity; release and deployed acceptance held |
-| v2.12.3 | Oct 2026 | Conditional Core 6/SVG adoption; preserve card rendering and advance the app-version cache identity; registry/publication/consumer acceptance held |
+| v2.12.4 | Nov 2026 | Conditional F-OG source: locale-aware regional glyph selection, real route/font regression tests and new cache identity; release and deployed acceptance held |
+| v2.12.3 | Nov 2026 | Conditional Core 6/SVG adoption; preserve card rendering and advance the app-version cache identity; registry/publication/consumer acceptance held |
 | v2.12.2 | Oct 2026 | A-OG-COPY: default Harmony subtitles say ten types in all six languages; new Worker cache version retires prior beta cards |
 | v2.12.1 | Oct 2026 | SVG 4.4.1: default-card text fitting is linear with unchanged content, font measurements, layout and routes |
 | v2.12.0 | Oct 2026 | 2026-10-04 remediation, Sprint 11: gradient previews follow the shared `interpolation` (new query key) and draw the page's own steps (6,682 / 6,682 share links match the page end to end); the extractor card follows `?algo=`; legacy `?algo=` spellings fixed on harmony; custom-color shares unfurl named; cache key splits only where a route reads the key; a repeated query key gets a 400; fr presets name and de Glamour Reader description fixed; resvg allocations freed |
@@ -706,7 +706,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| v0.21.3 | Oct 2026 | Conditional Core 6 adoption; preserve public v1 Chara response and family-size contracts; registry/publication/consumer acceptance held |
+| v0.21.3 | Nov 2026 | Conditional Core 6 adoption; preserve public v1 Chara response and family-size contracts; registry/publication/consumer acceptance held |
 | v0.21.2 | Nov 2026 | Maintenance acquisition generation validates fixed game/schema pins, supports exact-request offline replay and completes review requests before output adoption; runtime tables unchanged |
 | v0.21.1 | Oct 2026 | A-API: bounded and sanitized upstream character data, dedicated cache-miss soft budgets, current-version-only icon overrides, IPv6 /64 adoption and numeric-only telemetry versions; pinned/checksummed item-name inputs and controlled ko/zh/ja refresh with 65 additional Korean names, using unchanged fonts |
 | v0.21.0 | Oct 2026 | Snapshot/schema-aware equipment caching, optional versioned icon URLs and conditional PNG refresh, isolate-local Item/Glasses miss coalescing |
