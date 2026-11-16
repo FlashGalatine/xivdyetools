@@ -181,7 +181,10 @@ describe('V4ColorWheel rendering', () => {
   it('keeps every node on the same ring when the spokes differ', async () => {
     await mount({ baseColor: '#ff0000', harmonyType: 'triadic' });
 
-    for (const node of nodes()) expect(radiusOf(node)).toBeCloseTo(42, 5);
+    // style.left/top are read back from the DOM, and jsdom 31 serializes numbers to six
+    // significant digits (50 + 42cos θ → "13.2988%"), so each coordinate is off by up to ~5e-5.
+    // 3 digits (±5e-4) absorbs that and is still far tighter than the 13-point depth step.
+    for (const node of nodes()) expect(radiusOf(node)).toBeCloseTo(42, 3);
   });
 
   it('steps coincident nodes inward so none hides under another', async () => {
