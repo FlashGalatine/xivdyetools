@@ -20,7 +20,7 @@
     "@cf-wasm/photon": "0.4.0",
     "@cloudflare/workers-types": "^5.20261030.1",
     "@xivdyetools/worker-kit": "workspace:*",
-    "hono": "^4.13.16"
+    "hono": "^4.13.18"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^5.1.0",
