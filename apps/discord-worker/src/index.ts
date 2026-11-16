@@ -118,6 +118,44 @@ const GITHUB_ANNOUNCE_REPO = 'FlashGalatine/xivdyetools';
 const GITHUB_ANNOUNCE_REPO_URL = 'https://github.com/FlashGalatine/xivdyetools';
 
 /**
+ * A commit SHA safe to put in the raw.githubusercontent.com path: exactly 40
+ * lowercase hex characters and not the all-zero SHA GitHub sends for a deleted
+ * ref. Anything else (path-ish strings, `main`, uppercase) is refused so the
+ * payload can never steer the fetch URL beyond choosing a commit.
+ */
+const COMMIT_SHA_PATTERN = /^[0-9a-f]{40}$/;
+const resolveCommitSha = (...candidates: unknown[]): string | null => {
+  for (const candidate of candidates) {
+    if (
+      typeof candidate === 'string' &&
+      COMMIT_SHA_PATTERN.test(candidate) &&
+      !/^0+$/.test(candidate)
+    ) {
+      return candidate;
+    }
+  }
+  return null;
+};
+
+/**
+ * KV key holding the highest version ever announced (no TTL). The per-version
+ * memo expires after 90 days; this high-water mark keeps a redelivered old
+ * push — whose changelog is now read at that old commit — from re-announcing
+ * an older release once its memo is gone.
+ */
+const ANNOUNCED_LATEST_KEY = 'announced:latest';
+
+/** Parse `x.y.z` into numbers; null when it is not exactly that shape. */
+const parseSemver = (version: string): [number, number, number] | null => {
+  const m = /^(\d+)\.(\d+)\.(\d+)$/.exec(version.trim());
+  return m ? [Number(m[1]), Number(m[2]), Number(m[3])] : null;
+};
+
+/** Numeric major.minor.patch compare: negative when a < b, 0 equal, positive a > b. */
+const compareSemver = (a: [number, number, number], b: [number, number, number]): number =>
+  a[0] - b[0] || a[1] - b[1] || a[2] - b[2];
+
+/**
  * How long an announced version stays memoised in KV (90 days). The hook fires
  * as the push lands, before `deploy-discord-worker.yml` has shipped the build,
  * so a *Redeliver* from GitHub's delivery log is part of the normal release
@@ -727,8 +765,20 @@ app.post('/webhooks/github', async (c) => {
     repo: GITHUB_ANNOUNCE_REPO,
   });
 
+  // Read the changelog at the pushed commit, never the `main` branch URL: that
+  // is cached by GitHub for minutes, so a fetch right after the push can return
+  // the pre-push file, whose newest entry is already memoized: the handler
+  // would answer "Already announced" and the new release would never be
+  // posted. The SHA is validated (40 hex) and the repository stays the pinned
+  // constant.
+  const commitSha = resolveCommitSha(payload.after, payload.head_commit?.id);
+  if (!commitSha) {
+    logger.warn('GitHub webhook rejected: no valid commit SHA');
+    return c.json({ error: 'Invalid commit SHA' }, 400);
+  }
+
   // Fetch the raw changelog from GitHub
-  const changelogUrl = `https://raw.githubusercontent.com/${GITHUB_ANNOUNCE_REPO}/main/CHANGELOG-laymans.md`;
+  const changelogUrl = `https://raw.githubusercontent.com/${GITHUB_ANNOUNCE_REPO}/${commitSha}/CHANGELOG-laymans.md`;
   // BUG-074: bounded — a hung GitHub response must not hold the request open
   const changelogResponse = await fetch(changelogUrl, { signal: AbortSignal.timeout(10_000) });
 
@@ -764,6 +814,26 @@ app.post('/webhooks/github', async (c) => {
     return c.json({
       success: true,
       message: 'Already announced',
+      version: latestEntry.version,
+    });
+  }
+
+  // A redelivered old push reads the changelog as of that old commit, so once
+  // its memo has expired it would re-announce an old release. Never announce a
+  // version older than the newest one already announced. Absent or unparseable
+  // stored value (bootstrap) proceeds; so does an entry that is not x.y.z.
+  // Unguarded read, like the memo read: a KV outage answers 500 and announces
+  // nothing, the safe direction.
+  const entryVersion = parseSemver(latestEntry.version);
+  const storedLatest = entryVersion ? await env.KV.get(ANNOUNCED_LATEST_KEY) : null;
+  const storedVersion = storedLatest ? parseSemver(storedLatest) : null;
+  if (entryVersion && storedVersion && compareSemver(storedVersion, entryVersion) > 0) {
+    logger.info('Version older than latest announced, skipping', {
+      version: latestEntry.version,
+    });
+    return c.json({
+      success: true,
+      message: 'Older than latest announced version',
       version: latestEntry.version,
     });
   }
@@ -805,6 +875,23 @@ app.post('/webhooks/github', async (c) => {
       version: latestEntry.version,
       errorName: err instanceof Error ? err.name : 'unknown',
     });
+  }
+
+  // High-water mark, no TTL, best-effort for the same reason as the memo. This
+  // request only raises it (KV has no compare-and-set, so two overlapping
+  // deliveries can still race). Nothing is seeded: the first announce after
+  // deploy writes it.
+  if (entryVersion) {
+    try {
+      if (!storedVersion || compareSemver(entryVersion, storedVersion) >= 0) {
+        await env.KV.put(ANNOUNCED_LATEST_KEY, latestEntry.version);
+      }
+    } catch (err) {
+      logger.warn('Announcement high-water mark write failed', {
+        version: latestEntry.version,
+        errorName: err instanceof Error ? err.name : 'unknown',
+      });
+    }
   }
 
   logger.info('Changelog announcement sent', { version: latestEntry.version });
