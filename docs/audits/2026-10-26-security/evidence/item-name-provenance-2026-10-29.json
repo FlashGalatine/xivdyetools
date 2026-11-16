@@ -1,0 +1,280 @@
+{
+  "schema": 1,
+  "baseCommit": "d132dc5e554473c67e5b7c5cc5e2e2846ad740ab",
+  "recordedAt": "2026-10-29T12:41:27.350Z",
+  "scope": "Controlled source-data refresh; no deployed acceptance or terminal-font completion",
+  "sourceAcquisition": {
+    "started": "2026-10-29T12:13:17.880Z",
+    "finished": "2026-10-29T12:13:20.864Z",
+    "limits": {
+      "timeoutMs": 30000,
+      "maxBytes": 67108864,
+      "redirect": "error"
+    },
+    "records": [
+      {
+        "url": "https://api.github.com/repos/xivapi/ffxiv-datamining/commits/master",
+        "size": 40,
+        "sha256": "d728de4aa8b5203e1b07238befbc723d3026e4c3408252c65395ac998fb2ff0b",
+        "fetched": "2026-10-29T12:13:18.144Z",
+        "status": 200,
+        "commit": "44948e4cda5846eab0baa9872122a888fcc4f1b1"
+      },
+      {
+        "url": "https://api.github.com/repos/ffxiv-teamcraft/ffxiv-teamcraft/commits/staging",
+        "size": 40,
+        "sha256": "64a06db97d47bbf3620c26325835866f56e76930fb7f8e8aa55c075aa183adee",
+        "fetched": "2026-10-29T12:13:18.318Z",
+        "status": 200,
+        "commit": "c022ca5385ae41ec0d747599ef16ce74e4fbfdcf"
+      },
+      {
+        "url": "https://raw.githubusercontent.com/xivapi/ffxiv-datamining/44948e4cda5846eab0baa9872122a888fcc4f1b1/csv/en/Item.csv",
+        "size": 19945674,
+        "sha256": "67dc31b8c0fa410bb878bfda8b27ca92696703a220c7e45efd8fcacb789218c3",
+        "fetched": "2026-10-29T12:13:19.372Z",
+        "status": 200
+      },
+      {
+        "url": "https://raw.githubusercontent.com/xivapi/ffxiv-datamining/44948e4cda5846eab0baa9872122a888fcc4f1b1/csv/ja/Item.csv",
+        "size": 19385762,
+        "sha256": "b198264923261454c94cc1bc42876b77aa318d96ee6f35ecaa34506ba085e3b4",
+        "fetched": "2026-10-29T12:13:20.283Z",
+        "status": 200
+      },
+      {
+        "url": "https://raw.githubusercontent.com/ffxiv-teamcraft/ffxiv-teamcraft/c022ca5385ae41ec0d747599ef16ce74e4fbfdcf/libs/data/src/lib/json/ko/ko-items.json",
+        "size": 2923663,
+        "sha256": "c62dbc73790a8b77ca53d4a16b506915e1178eb6464d94f5b31730ae3017bc0c",
+        "fetched": "2026-10-29T12:13:20.582Z",
+        "status": 200
+      },
+      {
+        "url": "https://raw.githubusercontent.com/ffxiv-teamcraft/ffxiv-teamcraft/c022ca5385ae41ec0d747599ef16ce74e4fbfdcf/libs/data/src/lib/json/zh/zh-items.json",
+        "size": 2611736,
+        "sha256": "366dd6521adb197c7a77a37fe0debf3a4189fd841ef331558e3a063c384574c1",
+        "fetched": "2026-10-29T12:13:20.863Z",
+        "status": 200
+      }
+    ]
+  },
+  "replay": {
+    "builderSha256": "3d90e904e9451bae74fa3c5e573fa5440e8e1fc7b7e31c147d4f8d136ad48b55",
+    "cacheCalls": 6,
+    "rejectsOtherNetworkAndSubprocesses": true
+  },
+  "tables": {
+    "ko": {
+      "before": 28986,
+      "candidate": 29051,
+      "additions": 65,
+      "removals": 0,
+      "changedNames": 2,
+      "controlsBefore": 2,
+      "controlsAfter": 0,
+      "codepointsAdded": [],
+      "codepointsRemoved": [
+        "U+200F"
+      ],
+      "missingCmapCodepoints": [],
+      "missingNames": {},
+      "newCodepointsMissingFromCmap": [],
+      "jaCjkMissingFromJp": [],
+      "jaNamesMissingJp": 0,
+      "candidateSha256": "d9afcab8e81f0bd930965299d23adf66169da40d5262ea39cdf2af211b2b72e2",
+      "sha256": "d9afcab8e81f0bd930965299d23adf66169da40d5262ea39cdf2af211b2b72e2",
+      "bytes": 1106068
+    },
+    "zh": {
+      "before": 28992,
+      "candidate": 28992,
+      "additions": 0,
+      "removals": 0,
+      "changedNames": 0,
+      "controlsBefore": 0,
+      "controlsAfter": 0,
+      "codepointsAdded": [],
+      "codepointsRemoved": [],
+      "missingCmapCodepoints": [],
+      "missingNames": {},
+      "newCodepointsMissingFromCmap": [],
+      "jaCjkMissingFromJp": [],
+      "jaNamesMissingJp": 0,
+      "candidateSha256": "2a0f663aed59795673433a8a0fa14d4891f432d5a1b5822c051d8943b13612ac",
+      "sha256": "2a0f663aed59795673433a8a0fa14d4891f432d5a1b5822c051d8943b13612ac",
+      "bytes": 899454
+    },
+    "ja": {
+      "before": 29057,
+      "candidate": 29057,
+      "additions": 0,
+      "removals": 0,
+      "changedNames": 0,
+      "controlsBefore": 0,
+      "controlsAfter": 0,
+      "codepointsAdded": [],
+      "codepointsRemoved": [],
+      "missingCmapCodepoints": [],
+      "missingNames": {},
+      "newCodepointsMissingFromCmap": [],
+      "jaCjkMissingFromJp": [],
+      "jaNamesMissingJp": 0,
+      "candidateSha256": "e2585c7c2216ca44e3cc7ccc5752b1dbe05ae1e55a5cfa655dc8b195b49c1ef4",
+      "sha256": "e2585c7c2216ca44e3cc7ccc5752b1dbe05ae1e55a5cfa655dc8b195b49c1ef4",
+      "bytes": 1508629
+    }
+  },
+  "metadataSha256": "bff4291435564d362ba1036aacbc846c66c029a39b95a073b02c2d817c356957",
+  "independentReview": {
+    "addedIds": [
+      "47470",
+      "47472",
+      "47474",
+      "50727",
+      "50728",
+      "50729",
+      "50730",
+      "50731",
+      "50732",
+      "50733",
+      "50734",
+      "50735",
+      "50736",
+      "50737",
+      "50738",
+      "50739",
+      "50740",
+      "50741",
+      "50742",
+      "50743",
+      "50744",
+      "50745",
+      "50746",
+      "50747",
+      "50748",
+      "50749",
+      "50750",
+      "50751",
+      "50752",
+      "50753",
+      "50754",
+      "50755",
+      "50756",
+      "50757",
+      "50758",
+      "50759",
+      "50760",
+      "50761",
+      "50762",
+      "50763",
+      "50764",
+      "50765",
+      "50766",
+      "50767",
+      "50768",
+      "50769",
+      "50770",
+      "50771",
+      "50772",
+      "50773",
+      "50774",
+      "50775",
+      "50776",
+      "50777",
+      "50778",
+      "51736",
+      "51737",
+      "51739",
+      "51740",
+      "51745",
+      "52428",
+      "52429",
+      "52430",
+      "52431",
+      "52432"
+    ],
+    "all65AddedRowsEligibleAndExactNames": true,
+    "allThreeTablesRecomputedIndependently": true,
+    "changedExistingIds": [
+      "1200",
+      "1238"
+    ],
+    "existingChangesOnlyU200FRemoval": true
+  },
+  "fonts": {
+    "fontToolsVersion": "4.61.1",
+    "faces": {
+      "FragmentMono-Regular.ttf": 487,
+      "NotoSansJP-Subset.ttf": 1096,
+      "NotoSansKR-Subset.ttf": 961,
+      "NotoSansSC-Subset.ttf": 2414,
+      "Onest-Bold.ttf": 470,
+      "Onest-Regular.ttf": 470,
+      "Onest-SemiBold.ttf": 470,
+      "SpaceGrotesk-Bold.ttf": 735,
+      "SpaceGrotesk-Regular.ttf": 735,
+      "SpaceGrotesk-SemiBold.ttf": 735
+    },
+    "unchangedHashes": [
+      {
+        "path": "apps/discord-worker/src/fonts/NotoSansKR-Subset.ttf",
+        "sha256": "cc6a0dcee794f8f74775ea546e6cedb3ce6e7c2a664f23a24bb8f6dfc691b58b"
+      },
+      {
+        "path": "apps/discord-worker/src/fonts/NotoSansSC-Subset.ttf",
+        "sha256": "aace1e2fee85773a213562d4d852ec6e776ea633a61049b4c3986a2dee1c287c"
+      },
+      {
+        "path": "apps/discord-worker/src/fonts/NotoSansJP-Subset.ttf",
+        "sha256": "92cf520a0f9e3a404e700ff61d2e57902d58ac1c12ed43b5b5744c9742bce387"
+      },
+      {
+        "path": "apps/discord-worker/src/fonts/FragmentMono-Regular.ttf",
+        "sha256": "0fe011f425873c2e0fc73a189e394e340ad48d2b9a99a576bdeec75cee000460"
+      },
+      {
+        "path": "apps/discord-worker/src/fonts/Onest-Regular.ttf",
+        "sha256": "0292f2d577f1316ffdb5f595bc37b210881513d3e87a9428d7b7b91bd9d63cfe"
+      },
+      {
+        "path": "apps/discord-worker/src/fonts/Onest-SemiBold.ttf",
+        "sha256": "864a0255b8968f152d052cdf1eabd546bd29ad65b13989bad44f466c9282f929"
+      },
+      {
+        "path": "apps/discord-worker/src/fonts/Onest-Bold.ttf",
+        "sha256": "35fc264f8460a88ad596c46871d5d3008c13bbe6c06b4fb902d72270e4505a45"
+      },
+      {
+        "path": "apps/discord-worker/src/fonts/SpaceGrotesk-Regular.ttf",
+        "sha256": "514900c5769eae15da340c303bb02311be0cbfb72b271dcbb4c5d2e6daee460c"
+      },
+      {
+        "path": "apps/discord-worker/src/fonts/SpaceGrotesk-SemiBold.ttf",
+        "sha256": "b76fed133daa1f0394dbac9000dd9253e6125d0cd790b8a2d8ca4b70dba5dd2c"
+      },
+      {
+        "path": "apps/discord-worker/src/fonts/SpaceGrotesk-Bold.ttf",
+        "sha256": "7aaa99fdc31beb6c47e8883e7726b2af31c73c4a81d2b3e660ea9f4b4432c02f"
+      }
+    ],
+    "addedCodepoints": [],
+    "missingCandidateCodepoints": [],
+    "japaneseCjkMissingFromJp": []
+  },
+  "proofHashes": {
+    "provenance.json": "50c4a67819075fddc929f3e56651b51d4d792fe94728ecb45c127ea2ef81cc4d",
+    "comparison.json": "f6c81bdc6d97bb5266bb72cb33f7fa5506c08aa8e9a685e6b1d0b76eb4c25e79",
+    "independent-review.json": "3c5deb22148eaa6215ac7480f9c4c44fa311d2cdb43ec6a12c626727f2a025f7",
+    "independent-review.py": "092d46daf2962d88417a1e4941ba2885a55d77a2a4d4c8687b655c563d96caea",
+    "replay.mjs": "4141c40be734dd26e5a780c48802aa6b3a71fd4c697b5d0114a27ebc0c742dc7",
+    "replay-preload.cjs": "a9eb43125235204dad146a85b5d40d0ba24a1f30d597eafd07679a3a77578602",
+    "validation.json": "b9ccfa91e6d984e47fbf020e17cabb7f1263f75fc521bc931690879f410e3fd5",
+    "replay-result.json": "873af485f33d1e0e4b5336426b7800e6f65b42d4042d44e8e31c127ee634c3d3"
+  },
+  "limitations": [
+    "Pins and checksums bind this refresh, not historic provenance or upstream build honesty",
+    "Legacy shared metadata remains historical; current provenance/counts are per-language",
+    "No font downloads/regeneration; final terminal F sprints remain separate",
+    "No deployment, publication, migration or production activation"
+  ]
+}
