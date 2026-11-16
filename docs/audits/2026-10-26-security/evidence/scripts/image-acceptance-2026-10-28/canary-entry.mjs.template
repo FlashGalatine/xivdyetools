@@ -1,0 +1,123 @@
+// Additional acceptance code, never a product entry. Product imports are unchanged.
+import worker from __PRODUCT_ENTRY__;
+import { initPhoton } from '@cf-wasm/photon/others';
+
+const NOT_AFTER = __NOT_AFTER__;
+let bootID;
+const FIXTURE_URL = 'https://cdn.discordapp.com/acceptance-fixture';
+const INPUT_LIMIT = 5 * 1024 * 1024 + 1;
+let busy = false;
+let fixture = null;
+let requests = 0;
+
+// Deliberately no reference to the real network fetch is retained.
+globalThis.fetch = async (input, options) => {
+  const url = input instanceof Request ? input.url : String(input);
+  const method = options?.method ?? (input instanceof Request ? input.method : 'GET');
+  const signal = options?.signal ?? (input instanceof Request ? input.signal : undefined);
+  signal?.throwIfAborted();
+  if (!busy || !fixture || url !== FIXTURE_URL || method !== 'GET') {
+    throw new Error('Acceptance outbound denied');
+  }
+  return new Response(fixture, {
+    headers: { 'Content-Type': 'application/octet-stream', 'Content-Length': String(fixture.byteLength) },
+  });
+};
+
+function refusal(status) {
+  return new Response('Acceptance request refused', {
+    status,
+    headers: { 'Content-Type': 'text/plain', 'Cache-Control': 'no-store' },
+  });
+}
+
+function authenticated(request, env) {
+  const token = env.ACCEPTANCE_TOKEN;
+  const supplied = request.headers.get('Authorization');
+  if (typeof token !== 'string' || !/^[a-f0-9]{64}$/.test(token) || supplied?.length !== 71) return false;
+  const expected = 'Bearer ' + token;
+  let difference = 0;
+  for (let i = 0; i < expected.length; i++) difference |= expected.charCodeAt(i) ^ supplied.charCodeAt(i);
+  return difference === 0;
+}
+
+async function readFixture(request) {
+  const declared = request.headers.get('Content-Length');
+  if (declared !== null && (!/^\d+$/.test(declared) || Number(declared) > INPUT_LIMIT)) throw new Error('Input limit');
+  if (!request.body) return new Uint8Array();
+  const reader = request.body.getReader();
+  const chunks = [];
+  let length = 0;
+  const abort = () => { void reader.cancel().catch(() => {}); };
+  request.signal.addEventListener('abort', abort, { once: true });
+  try {
+    for (;;) {
+      request.signal.throwIfAborted();
+      const { value, done } = await reader.read();
+      request.signal.throwIfAborted();
+      if (done) break;
+      if (value.byteLength > INPUT_LIMIT - length) throw new Error('Input limit');
+      length += value.byteLength;
+      chunks.push(value);
+    }
+    const bytes = new Uint8Array(length);
+    let offset = 0;
+    for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+    return bytes;
+  } finally {
+    request.signal.removeEventListener('abort', abort);
+    await reader.cancel().catch(() => {});
+    reader.releaseLock();
+  }
+}
+
+async function dispatch(request, env, context) {
+  if (!authenticated(request, env)) return refusal(401);
+  const deadline = Number(env.ACCEPTANCE_DEADLINE);
+  if (!Number.isSafeInteger(deadline) || deadline !== NOT_AFTER || Date.now() >= deadline) return refusal(410);
+  if (++requests > 128) return refusal(429);
+  const url = new URL(request.url);
+  if (request.method !== 'POST' || !['/acceptance/thumbnail', '/acceptance/extract'].includes(url.pathname)) return refusal(404);
+  const parameters = [...url.searchParams.keys()];
+  if (parameters.some(key => key !== 'maxDimension') || parameters.length > 1 ||
+      (url.pathname.endsWith('/thumbnail') && parameters.length)) return refusal(400);
+  const max = url.searchParams.get('maxDimension');
+  if (max !== null && !/^\d{1,3}$/.test(max)) return refusal(400);
+  if (busy) return refusal(503);
+  busy = true;
+  try {
+    bootID ??= crypto.randomUUID();
+    fixture = await readFixture(request);
+    request.signal.throwIfAborted();
+    // Use the same singleton already synchronously initialized by photon-runtime.ts.
+    const memory = (await initPhoton.ensure()).memory;
+    const thumbnail = url.pathname.endsWith('/thumbnail');
+    const candidate = new Request('https://image-worker.internal/' + (thumbnail ? 'thumbnail' : 'extract'), {
+      method: 'POST', signal: request.signal,
+      headers: thumbnail
+        ? { 'Content-Type': 'application/octet-stream', 'Content-Length': String(fixture.byteLength) }
+        : { 'Content-Type': 'application/json' },
+      body: thumbnail ? fixture : JSON.stringify({ url: FIXTURE_URL, ...(max === null ? {} : { maxDimension: Number(max) }) }),
+    });
+    const response = await worker.fetch(candidate, {}, context);
+    // Stream the real product body without reading/re-encoding it; no product error rewriting.
+    const headers = new Headers(response.headers);
+    headers.set('X-Acceptance-Boot', bootID);
+    headers.set('X-Acceptance-Wasm-Capacity', String(memory.buffer.byteLength));
+    return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+  } catch {
+    return refusal(400);
+  } finally {
+    // Held through the complete candidate dispatch, including cancellation/failed decode.
+    fixture = null;
+    busy = false;
+  }
+}
+
+export default {
+  fetch(request, env, context) {
+    const work = dispatch(request, env, context);
+    context.waitUntil(work.catch(() => undefined));
+    return work;
+  },
+};
