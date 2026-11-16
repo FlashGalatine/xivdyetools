@@ -33,7 +33,7 @@
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
 | **Web Application** | v5.18.1 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v5.9.11 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
+| **Discord Bot** | v5.9.12 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.5 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.9.2 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.2.2 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
@@ -237,6 +237,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.9.12 | Nov 2026 | `/webhooks/github` reads `CHANGELOG-laymans.md` at the pushed commit SHA instead of the cached `main` branch URL (the 2026-11-16 push that added 5.14.0 read the pre-push file and announced nothing), and never announces a version older than the newest already announced (`announced:latest` KV key) |
 | v5.9.11 | Nov 2026 | The X/Twitter account was renamed from @AsheJunius to @FlashGalatine: `/about` prints the new X link from core's `SOCIAL_LINKS`. No discord-worker source changed; the production deploy's `register-commands` step re-registers an unchanged roster |
 | v5.9.10 | Nov 2026 | Conditional Core 6/SVG/Bot Logic 5 adoption; preserve original-byte guards and card/embed adapters; registry/publication/consumer acceptance held |
 | v5.9.9 | Nov 2026 | Documents only — the Privacy Policy's Author name row in all six languages now says that when XIVAuth cannot return the characters, the name already on the account stays and a new account gets the `XIVAuth User` name, matching oauth 3.2.2. No discord-worker source changed; the production deploy's `register-commands` step re-registers an unchanged roster |

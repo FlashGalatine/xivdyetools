@@ -12,6 +12,13 @@ export interface GitHubPushPayload {
   /** Full git ref, e.g. "refs/heads/main" */
   ref: string;
 
+  /**
+   * Head SHA of the ref after the push (40 hex characters). The announce
+   * handler fetches the changelog at this commit rather than at the `main`
+   * branch URL, which GitHub's raw CDN caches for minutes.
+   */
+  after: string;
+
   /** Array of commits included in the push */
   commits: GitHubCommit[];
 

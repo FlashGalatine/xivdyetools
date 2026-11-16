@@ -187,7 +187,7 @@ Per-user, per-command limits via `@xivdyetools/worker-kit/rate-limiter` (`DISCOR
 
 ### User Storage
 
-KV holds per-user preferences (`prefs:v1:*`), preset favorites, analytics counters, the announced-version memo (`announced:v:<version>`) and the rate-limit fallback counters. Button state travels in the component's own `custom_id`; the KV-backed button-context store was removed in 2026-08-18 (nothing consumed it). The v4 favorites/collections store is gone and its orphaned keys were swept once against production on 2026-08-29.
+KV holds per-user preferences (`prefs:v1:*`), preset favorites, analytics counters, the announced-version memo (`announced:v:<version>`) and high-water mark (`announced:latest`) and the rate-limit fallback counters. Button state travels in the component's own `custom_id`; the KV-backed button-context store was removed in 2026-08-18 (nothing consumed it). The v4 favorites/collections store is gone and its orphaned keys were swept once against production on 2026-08-29.
 
 ---
 

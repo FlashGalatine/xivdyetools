@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.9.12] - 2026-11-16
+
+### Fixed
+
+- `/webhooks/github` now reads `CHANGELOG-laymans.md` at the pushed commit (`after`, validated as
+  40 lowercase hex, falling back to `head_commit.id`) instead of the `main` branch URL. GitHub
+  caches that URL for minutes, so on 2026-11-16 the push that added 5.14.0 fetched the pre-push
+  file, saw 5.13.0 as the newest entry, answered `Already announced`, and 5.14.0 was never posted.
+  A payload with no valid SHA answers 400 `Invalid commit SHA`. The repository in the URL is still
+  the pinned constant.
+- A version older than the newest one already announced is not announced again. A redelivered
+  old push now reads that commit's changelog, and once its 90-day `announced:v:<version>` memo
+  expires it would have re-posted an old release. The new `announced:latest` KV key (no TTL, a
+  best-effort write after a successful send) records the highest announced version, and an
+  older version answers 200 `Older than latest announced version`.
+
 ## [5.9.11] - 2026-11-15
 
 ### Changed
