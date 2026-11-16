@@ -52,7 +52,7 @@
 | **Types** | v3.3.0 | `@xivdyetools/types` | npm | Active |
 | **Auth** (incl. `/encoding`) | v3.0.0 | `@xivdyetools/auth` | npm | Active |
 | **Logger** | v2.4.0 | `@xivdyetools/logger` | npm | Active |
-| **Worker Kit** (middleware + `/rate-limiter`) | v1.6.0 | `@xivdyetools/worker-kit` | npm | Active |
+| **Worker Kit** (middleware + `/rate-limiter`) | v1.6.1 | `@xivdyetools/worker-kit` | npm | Active |
 | **SVG** | v4.4.2 | `@xivdyetools/svg` | npm | Active |
 | **Bot Logic** (incl. `/i18n`) | v5.0.0 | `@xivdyetools/bot-logic` | npm | Active |
 | **Test Utils** | v3.0.0 | `@xivdyetools/test-utils` | workspace-private | Active (never published) |
@@ -581,6 +581,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v1.6.1 | Nov 2026 | Packaging patch, no source change — the optional `hono` peer range is `^4.13.18` (was `^4.13.7`), so `./body-guards` can no longer be paired with a hono whose `bodyLimit()` keeps one object per transfer chunk (GHSA-39q9-qp46-w8xg); `@upstash/redis` is `^1.41.0`, matching `main`, where the range had moved since the 1.6.0 publish without a bump |
 | v1.6.0 | Oct 2026 | Opt-in `getClientIp` IPv6 /64 network keys with mapped-IPv4 and malformed-input compatibility; existing callers stay opted out; explicit `/glamour` 5/minute preset without burst selects Discord's existing RL_5 binding |
 | v1.5.0 | Oct 2026 | 2026-10-04 remediation Sprint 16 — minor, for behavior changes (as 1.2.0 and 1.3.0): `jsonDepthLimit` recognizes JSON case-insensitively and `+json` while still guarding anything the old substring test did (BUG-149); a `formatError` response gets the computed `X-RateLimit-*` / `Retry-After` headers it lacks (BUG-150); `KVRateLimiter.reset()` / `resetAll()` page the KV cursor and delete the whole prefix (BUG-151); pins logger 2.3.0 |
 | v1.4.1 | Sep 2026 | Packaging patch — the optional `@cloudflare/workers-types` peer range admits 5.x as well as 4.x (was `^4.0.0`, so `npm install` next to the 5.x line every Worker here uses failed with `ERESOLVE`); the optional `hono` peer stays at 1.4.0's `^4.13.7`; no code change — the published files differ from 1.4.0 only in `package.json` and the README line quoting the peer ranges |
