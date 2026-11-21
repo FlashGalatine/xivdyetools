@@ -21,17 +21,17 @@ custom-agent settings that take precedence. These are workflow assignments, not 
 equivalence across vendors, and an effort name does not mean the same amount of thinking on
 different models.
 
-| Role / task | Claude Code agent: model · effort | Codex baseline (2026-10-06): `model` · `reasoning_effort` | Any other runtime |
+| Role / task | Claude Code agent: model · effort | Codex baseline: `model` · `reasoning_effort` | Any other runtime |
 |---|---|---|---|
 | `collector` | `xivdye-collector`: `haiku` · `low` | `gpt-6-luna` · `low` | Its smallest model that runs shell commands reliably, at its lowest effort |
-| `worker` | `xivdye-worker`: `sonnet` · `medium` | `gpt-6.1-sol` · `medium` | Its default mid-tier model at its balanced effort |
-| `worker` (difficult) | `xivdye-worker` + `model: 'opus'` + `effort: 'high'`: `opus` · `high` (`model` alone keeps the file's `medium`) | `gpt-6.1-sol` · `high`; raise to `xhigh` when needed | A stronger model or higher effort for an unfamiliar subsystem, cross-unit refactor, or subtle concurrency |
-| `verifier` (ordinary) | `xivdye-verifier`: `opus` · `high` | `gpt-6.1-sol` · `xhigh` | A strong reasoning model at high effort; inline if the coordinator already meets that task's requirements |
-| `verifier` (escalated) | `xivdye-verifier` + `model: 'fable'` · `high` | `gpt-6-astra` · `high` | Its strongest reasoning model for no clear verifier majority, a security-critical final call, or a root cause the ordinary verifier missed |
+| `worker` | `xivdye-worker`: `sonnet` · `medium` | `gpt-6.2-sol` · `medium` | Its default mid-tier model at its balanced effort |
+| `worker` (difficult) | `xivdye-worker` + `model: 'opus'` + `effort: 'high'`: `opus` · `high` (`model` alone keeps the file's `medium`) | `gpt-6.2-sol` · `high` (raise to `xhigh` when needed) | A stronger model or higher effort for an unfamiliar subsystem, cross-unit refactor, or subtle concurrency |
+| `verifier` (ordinary) | `xivdye-verifier`: `opus` · `high` | `gpt-6.2-sol` · `xhigh` | A strong reasoning model at high effort; inline if the coordinator already meets that task's requirements |
+| `verifier` (escalated) | `xivdye-verifier` + `model: 'fable'` · `high` | `gpt-6.2-astra` · `high` | Its strongest reasoning model for no clear verifier majority, a security-critical final call, or a root cause the ordinary verifier missed |
 
-The Codex IDs are dated baselines, not permanent version pins. Resolve the latest available
-compatible model in each assigned tier per run as described under *Codex* below; ordinary Sol
-verification and required Astra escalation are separate assignments.
+On 2026-11-17 the native Codex spawn tool advertised Sol 6.2 and Astra 6.2 at the efforts
+listed above. The Luna baseline comes from the 2026-10-06 check. Resolve the latest available
+compatible model in each assigned tier per run as described under *Codex* below.
 
 The Claude Code agents live in `xivdyetools/.claude/agents/<agent>.md`; change a level there and in
 this table together. They name model **aliases**, not exact IDs, so each role runs the newest model

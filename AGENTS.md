@@ -45,7 +45,8 @@ For Codex, use this task policy:
 
 - **Resolve versions per run:** unless the user pins a subagent model/version, select the latest
   available compatible model in the assigned tier from the active runtime's advertised models.
-  The current Codex baselines (2026-10-06) are `gpt-6-luna`, `gpt-6.1-sol`, and `gpt-6-astra`.
+  The 2026-11-17 Codex baselines for Sol and Astra are `gpt-6.2-sol` and `gpt-6.2-astra`.
+  The Luna collector baseline is `gpt-6-luna` (checked 2026-10-06).
   Treat versions in the shared reference as checked baselines; this policy governs Codex version
   selection. Validate the model's supported effort, record the resolved model and effort, and keep
   that pair for the run. Pass an actual model ID; do not invent a versionless `latest` tier alias.
