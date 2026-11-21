@@ -39,6 +39,7 @@ For Codex, use this task policy:
 |---|---|---|
 | Fixed commands, inventories, gate runs, and mechanical collection | Luna | `low` |
 | Bounded implementation, one review lens, one test file, or a draft | Sol | `medium` |
+| Bounded visual review, a computer-use task with a defined result, a short internal draft from supplied sources, or a scoped fix with explicit checks | Terra (optional worker) | `medium` |
 | Difficult implementation, unfamiliar subsystems, or subtle concurrency | Sol | `high`; raise to `xhigh` when needed |
 | Ordinary verification and verdicts that change what ships | Sol | `xhigh` |
 | Escalated verdict: no clear verifier majority, a security-critical final call, or a root cause the verifier missed | Astra | `high` |
@@ -50,6 +51,10 @@ For Codex, use this task policy:
   Treat versions in the shared reference as checked baselines; this policy governs Codex version
   selection. Validate the model's supported effort, record the resolved model and effort, and keep
   that pair for the run. Pass an actual model ID; do not invent a versionless `latest` tier alias.
+- **Optional Terra worker.** The Terra baseline is `gpt-6.1-terra` (checked 2026-11-21).
+  Sol is the default worker. Choose Terra within its own family when the native spawn tool
+  supports the selected ID and effort. If unavailable, disclose a fallback to Sol at the assigned worker
+  effort or handle a small task inline. Terra follows the worker contract.
 - **Set model and effort explicitly:** pass both on every Codex spawn using the native tool's
   schema. Where supported, use `fork_turns: "none"` or a short history slice; a full-history fork
   inherits the coordinator's settings and cannot accept these overrides. Custom-agent files can

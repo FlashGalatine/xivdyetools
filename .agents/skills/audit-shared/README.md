@@ -10,7 +10,7 @@ read at its Step 0, so a run loads only the slices it needs. `model-routing.md` 
 
 | File | Words | Read it when |
 |---|---|---|
-| `model-routing.md` | ~2,900 | **Before executing a skill, authoring a workflow, or delegating an ad-hoc task or any step of a remediation sprint** — role/task tiers and efforts per runtime, difficult-worker and Fable/Astra escalation, Codex version resolution and custom-agent precedence, native tools, coordinator rules, when delegation helps, and the remediation-sprint steps (fix, review, gate, release) mapped to roles |
+| `model-routing.md` | ~3,900 | **Before executing a skill, authoring a workflow, or delegating an ad-hoc task or any step of a remediation sprint** — role/task tiers and efforts per runtime, the optional Codex Terra worker, difficult-worker and Fable/Astra escalation, Codex version resolution and custom-agent precedence, native tools, coordinator rules, when delegation helps, and the remediation-sprint steps (fix, review, gate, release) mapped to roles |
 | `conventions.md` | ~1,000 | Starting any audit — output folder, IDs, finding/report/README skeletons, evidence rules, fan-out contract (+ §7a, the audit short form of model routing), confirmation gate, planner hand-off |
 | `units.md` | ~430 | Tagging a finding's deploy unit / exposure class (17 units: filter names, kind, notes) |
 | `release-mechanics.md` | ~300 | Writing a sprint's "Ends with" line, deciding a version bump, the standing verification gate (planner, dead-code) |

@@ -25,6 +25,7 @@ different models.
 |---|---|---|---|
 | `collector` | `xivdye-collector`: `haiku` · `low` | `gpt-6-luna` · `low` | Its smallest model that runs shell commands reliably, at its lowest effort |
 | `worker` | `xivdye-worker`: `sonnet` · `medium` | `gpt-6.2-sol` · `medium` | Its default mid-tier model at its balanced effort |
+| `worker` (optional, bounded visual or scoped task) | Same as `worker` | `gpt-6.1-terra` · `medium` | Same as `worker` |
 | `worker` (difficult) | `xivdye-worker` + `model: 'opus'` + `effort: 'high'`: `opus` · `high` (`model` alone keeps the file's `medium`) | `gpt-6.2-sol` · `high` (raise to `xhigh` when needed) | A stronger model or higher effort for an unfamiliar subsystem, cross-unit refactor, or subtle concurrency |
 | `verifier` (ordinary) | `xivdye-verifier`: `opus` · `high` | `gpt-6.2-sol` · `xhigh` | A strong reasoning model at high effort; inline if the coordinator already meets that task's requirements |
 | `verifier` (escalated) | `xivdye-verifier` + `model: 'fable'` · `high` | `gpt-6.2-astra` · `high` | Its strongest reasoning model for no clear verifier majority, a security-critical final call, or a root cause the ordinary verifier missed |
@@ -150,7 +151,8 @@ cost across clients or models. A single short command still runs inline (*Delega
 except under a Fable coordinator, which delegates every role.
 
 **Codex — resolve versions:** use the task policy in `AGENTS.md` and the table above: Luna for
-mechanical collection, Sol for workers and ordinary verification, Astra for escalated verdicts.
+mechanical collection, Sol for general workers and ordinary verification, Terra for the optional bounded
+worker tasks below, and Astra for escalated verdicts.
 Unless the user pins a subagent model/version, resolve the latest available compatible model in
 the assigned tier from the active runtime's advertised models before its first spawn. Validate
 that it supports the assigned effort, record the resolved model and effort per task variant, and
@@ -159,6 +161,19 @@ available IDs, supported efforts, and optional upgrade metadata; an upgrade must
 assigned tier. Pass an actual advertised ID, and do not invent a versionless `latest` alias.
 An older available model in the same tier can be a disclosed fallback. An unavailable Astra
 escalation follows the stricter rule below.
+
+**Codex — optional Terra worker.** Sol is the default worker. A coordinator may choose Terra
+at `medium` for a bounded visual review, a computer-use task with a defined result, a short
+internal draft from supplied sources, or a scoped fix with explicit regression checks. Give the
+worker the inputs, allowed paths, and completion criteria. Inspect the result or run the checks.
+The usual worker contract applies, including coordinator ownership of outward-facing prose.
+
+Resolve Terra within its own family and check that the native spawn tool supports its ID and
+effort. If unavailable, use Sol at the assigned worker effort and disclose the fallback, or handle
+a small task inline. Ordinary verification stays with Sol and escalated verdicts with Astra.
+
+On 2026-11-21 the native Codex spawn tool accepted a request for `gpt-6.1-terra` at `medium`.
+The worker read the merged routing table and correctly reported the Sol and Astra assignments.
 
 **Codex — native spawns:** use the available native collaboration tool. In a runtime exposing
 `collaboration.spawn_agent`, pass `task_name`, a self-contained `message`, `fork_turns: "none"`

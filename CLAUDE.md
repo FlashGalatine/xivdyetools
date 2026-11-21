@@ -114,6 +114,7 @@ Short form of `.agents/skills/audit-shared/traps/git-worktrees-and-finishing.md`
   | Escalation only: verifier votes with no clear majority, a security-critical final call, a root cause Opus missed | `agentType: 'xivdye-verifier', model: 'fable'` | Fable · `high` — about 2.5× Opus per token as of Fable 5.1 / Opus 5.5, a handful per run |
 
   A single short command doesn't earn an agent — the 2026-10-06 Claude setup observed ~75k tokens of start-up context per spawn — so run it inline, and batch related items into one assignment (independent verifier votes stay separate agents). That observation is specific to that setup; context and billing vary across clients and models. A Fable session instead delegates every role, even one command, and makes the escalation call itself rather than spawning Fable. Option semantics and the rest of the coordinator rules: `.agents/skills/audit-shared/model-routing.md`.
+- **Codex routing** is documented in `AGENTS.md`, including when Terra can take a bounded worker task.
 - **Finishing a branch** means opening a PR against `main`; merging is the production deploy, so "done" also needs the version bump, both changelogs where they apply, and any hand-run step named in `docs/developer-guides/contributing.md` (D1 migrations go through `wrangler d1 execute --file`, never `d1 migrations apply`). Never merge locally into `main` or push it.
 
 ## Key Technical Details
