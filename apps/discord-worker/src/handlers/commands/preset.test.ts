@@ -132,6 +132,8 @@ vi.mock('@xivdyetools/svg', async (importOriginal) => {
 const mockIsApiEnabled = vi.fn().mockReturnValue(true);
 const mockGetPresets = vi.fn().mockResolvedValue({ presets: [mockPreset], total: 1 });
 const mockGetPreset = vi.fn().mockResolvedValue(mockPreset);
+const mockGetMyPreset = vi.fn().mockResolvedValue(mockPreset);
+const mockGetMyPresets = vi.fn().mockResolvedValue([]);
 const mockGetPresetBatch = vi.fn();
 const mockGetPresetByName = vi.fn().mockResolvedValue(null);
 const mockGetRandomPreset = vi.fn().mockResolvedValue(mockPreset);
@@ -150,6 +152,8 @@ vi.mock('../../services/preset-api.js', () => ({
   isApiEnabled: (...args: unknown[]) => mockIsApiEnabled(...args),
   getPresets: (...args: unknown[]) => mockGetPresets(...args),
   getPreset: (...args: unknown[]) => mockGetPreset(...args),
+  getMyPreset: (...args: unknown[]) => mockGetMyPreset(...args),
+  getMyPresets: (...args: unknown[]) => mockGetMyPresets(...args),
   getPresetBatch: (...args: unknown[]) => mockGetPresetBatch(...args),
   getPresetByName: (...args: unknown[]) => mockGetPresetByName(...args),
   getRandomPreset: (...args: unknown[]) => mockGetRandomPreset(...args),
@@ -209,6 +213,9 @@ const translator = {
       'errors.unknownSubcommand': 'Unknown subcommand: {name}',
       'preset.edit.noFields': 'Please provide at least one field to update.',
       'preset.edit.duplicateTitle': 'Duplicate Dye Combination',
+      'preset.edit.duplicateIntro': 'This dye combination already exists in another preset:',
+      'preset.edit.duplicateHint': 'Please use a different dye combination.',
+      'preset.edit.revisionConflict': 'This preset changed while you were editing it. Run the command again to retry.',
       'preset.editFailed': 'Failed to edit preset.',
       'preset.voteFailed': 'Failed to process vote.',
       // FINDING-019 sanitisation assertions need the author/tag labels resolved
@@ -279,6 +286,23 @@ async function settleBackgroundWork(): Promise<void> {
   );
 }
 
+function editInteraction(input: string): DiscordInteraction {
+  return {
+    ...baseInteraction,
+    data: {
+      ...baseInteraction.data,
+      options: [{
+        type: 1,
+        name: 'edit',
+        options: [
+          { name: 'preset', value: input },
+          { name: 'name', value: 'Updated Name' },
+        ],
+      }],
+    },
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
@@ -288,6 +312,8 @@ describe('/preset command', () => {
     vi.clearAllMocks();
     mockIsApiEnabled.mockReturnValue(true);
     mockGetPreset.mockResolvedValue(mockPreset);
+    mockGetMyPreset.mockResolvedValue(mockPreset);
+    mockGetMyPresets.mockResolvedValue([]);
     mockGetPresetByName.mockResolvedValue(null);
     mockGetPresets.mockResolvedValue({ presets: [mockPreset], total: 1 });
     mockHasVoted.mockResolvedValue(false);
@@ -818,6 +844,66 @@ describe('/preset command', () => {
   });
 
   describe('/preset edit', () => {
+    it.each(['pending', 'rejected'])('uses the signed owner detail for a %s selection and defers privately', async (status) => {
+      mockGetMyPreset.mockResolvedValueOnce({ ...mockPreset, status });
+      mockGetPreset.mockResolvedValue(null);
+
+      const res = await handlePresetCommand(editInteraction(PRESET_ID), env, ctx);
+      await settleBackgroundWork();
+
+      expect(await res.json()).toEqual({ type: 5, data: { flags: 64 } });
+      expect(mockGetMyPreset).toHaveBeenCalledWith(env, 'user-1', PRESET_ID);
+      expect(mockGetPreset).not.toHaveBeenCalled();
+      expect(mockEditPreset).toHaveBeenCalledWith(env, PRESET_ID, { name: 'Updated Name' }, 'user-1', 'Tester');
+      expect(mockSendMessage).not.toHaveBeenCalled();
+    });
+
+    it('does not edit or reveal a foreign unpublished preset returned to a moderator', async () => {
+      mockGetMyPreset.mockResolvedValueOnce({
+        ...mockPreset,
+        name: 'Foreign private preset',
+        status: 'pending',
+        author_discord_id: 'different-user',
+      });
+
+      const moderatorEnv = { ...env, MODERATOR_IDS: 'user-1' };
+      await handlePresetCommand(editInteraction(PRESET_ID), moderatorEnv, ctx);
+      await settleBackgroundWork();
+
+      expect(mockEditPreset).not.toHaveBeenCalled();
+      expect(mockEditOriginalResponse.mock.lastCall?.[2].embeds[0].description).toBe('Preset not found');
+    });
+
+    it('prioritizes a case-insensitive exact owned name beyond 25 partial matches', async () => {
+      const exactId = '12345678-1234-4123-8123-123456789abd';
+      const partialMatches = Array.from({ length: 26 }, (_, i) => ({ ...mockPreset, name: `Test Preset ${i}` }));
+      mockGetMyPresets.mockResolvedValueOnce([
+        ...partialMatches,
+        { ...mockPreset, id: exactId, status: 'rejected' },
+      ]);
+
+      await handlePresetCommand(editInteraction('test preset'), env, ctx);
+      await settleBackgroundWork();
+
+      expect(mockGetMyPresets).toHaveBeenCalledWith(env, 'user-1');
+      expect(mockGetPresetByName).not.toHaveBeenCalled();
+      expect(mockEditPreset).toHaveBeenCalledWith(env, exactId, { name: 'Updated Name' }, 'user-1', 'Tester');
+    });
+
+    it.each([
+      ['DUPLICATE_RESOURCE', '⚠️ Duplicate Dye Combination', 'Please use a different dye combination.'],
+      ['CONFLICT', '❌ Error', 'This preset changed while you were editing it. Run the command again to retry.'],
+    ])('uses localized copy for a %s without a summary', async (error, title, description) => {
+      mockEditPreset.mockResolvedValueOnce({ success: false, error, message: 'Opaque upstream details' });
+
+      await handlePresetCommand(editInteraction(PRESET_ID), env, ctx);
+      await settleBackgroundWork();
+
+      expect(mockEditOriginalResponse.mock.lastCall?.[2].embeds).toEqual([
+        expect.objectContaining({ title, description }),
+      ]);
+    });
+
     it('returns error when preset ID is missing', async () => {
       const interaction: DiscordInteraction = {
         ...baseInteraction,
@@ -879,7 +965,7 @@ describe('/preset command', () => {
 
     it('returns error when preset not found', async () => {
       // FINDING-020: 'nonexistent' is not a UUID, so it is resolved as a NAME
-      mockGetPresetByName.mockResolvedValueOnce(null);
+      mockGetMyPresets.mockResolvedValueOnce([]);
 
       const interaction: DiscordInteraction = {
         ...baseInteraction,
@@ -915,7 +1001,7 @@ describe('/preset command', () => {
     });
 
     it('returns error when user does not own the preset', async () => {
-      mockGetPreset.mockResolvedValueOnce({
+      mockGetMyPreset.mockResolvedValueOnce({
         ...mockPreset,
         author_discord_id: 'different-user',
       });
@@ -1046,7 +1132,7 @@ describe('/preset command', () => {
     });
 
     it('edits preset with dye addition extending array', async () => {
-      mockGetPreset.mockResolvedValueOnce({
+      mockGetMyPreset.mockResolvedValueOnce({
         ...mockPreset,
         dyes: [1, 2, 3], // three stored stainIDs; the edit adds a fourth
       });
@@ -1117,7 +1203,7 @@ describe('/preset command', () => {
     });
 
     it('returns error when dye count falls below 3', async () => {
-      mockGetPreset.mockResolvedValueOnce({
+      mockGetMyPreset.mockResolvedValueOnce({
         ...mockPreset,
         dyes: [1, 2], // Only 2 dyes (invalid for the 5.0 API)
       });
@@ -1159,7 +1245,7 @@ describe('/preset command', () => {
     // replacement, so a new dye that collides with a position the user did not
     // touch is caught too — presets-api would answer it with a bare 400.
     it('refuses an edit whose rebuilt dye list repeats a dye, before calling the API', async () => {
-      mockGetPreset.mockResolvedValueOnce({ ...mockPreset, dyes: [11, 12, 13] });
+      mockGetMyPreset.mockResolvedValueOnce({ ...mockPreset, dyes: [11, 12, 13] });
 
       const interaction: DiscordInteraction = {
         ...baseInteraction,
@@ -1194,7 +1280,7 @@ describe('/preset command', () => {
     // after the defer, so it loads the user's locale before naming any dye.
     it("loads the user's locale before resolving and naming the edit's dyes", async () => {
       const { initializeLocale } = await import('../../services/i18n.js');
-      mockGetPreset.mockResolvedValueOnce({ ...mockPreset, dyes: [11, 12, 13] });
+      mockGetMyPreset.mockResolvedValueOnce({ ...mockPreset, dyes: [11, 12, 13] });
 
       const interaction: DiscordInteraction = {
         ...baseInteraction,
@@ -1223,14 +1309,13 @@ describe('/preset command', () => {
       );
     });
 
-    it('handles duplicate_dyes error from API', async () => {
+    it('renders a visible duplicate with an escaped name and author', async () => {
       mockEditPreset.mockResolvedValueOnce({
         success: false,
-        error: 'duplicate_dyes',
+        error: 'DUPLICATE_RESOURCE',
         duplicate: {
-          id: 'other-preset',
-          name: 'Existing Preset',
-          author_name: 'Other Author',
+          name: '*Existing Preset*',
+          author_name: '_Other Author_',
         },
       });
 
@@ -1251,9 +1336,10 @@ describe('/preset command', () => {
         },
       };
 
-      await handlePresetCommand(interaction, env, ctx);
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      const res = await handlePresetCommand(interaction, env, ctx);
+      await settleBackgroundWork();
 
+      expect(await res.json()).toEqual({ type: 5, data: { flags: 64 } });
       expect(mockEditOriginalResponse).toHaveBeenCalledWith(
         expect.anything(),
         expect.anything(),
@@ -1261,6 +1347,7 @@ describe('/preset command', () => {
           embeds: expect.arrayContaining([
             expect.objectContaining({
               title: expect.stringContaining('Duplicate'),
+              description: expect.stringContaining('**"\\*Existing Preset\\*"** by \\_Other Author\\_'),
             }),
           ]),
         }),
@@ -1787,7 +1874,7 @@ describe('/preset command', () => {
     // content_revision and the revert snapshot. The bot's own copy carried
     // neither, so it is gone; the user still gets the pending confirmation.
     it('posts nothing to the moderation channel for a pending edit', async () => {
-      mockGetPreset.mockResolvedValueOnce({
+      mockGetMyPreset.mockResolvedValueOnce({
         ...mockPreset,
         name: 'Original Name',
         description: 'Original description',
@@ -1870,7 +1957,7 @@ describe('/preset command', () => {
       await handlePresetCommand(interaction, env, ctx);
       await new Promise((resolve) => setTimeout(resolve, 100));
 
-      // PresetAPIError uses the message in the embed
+      // The error response uses localized text, not the upstream message.
       expect(mockEditOriginalResponse).toHaveBeenCalled();
       const call = mockEditOriginalResponse.mock.calls[0];
       expect(call[2].embeds[0].title).toContain('Error');
@@ -2193,7 +2280,7 @@ describe('/preset command', () => {
     });
 
     it('/preset edit with a non-UUID resolves by name and edits the resolved ID', async () => {
-      mockGetPresetByName.mockResolvedValueOnce(mockPreset);
+      mockGetMyPresets.mockResolvedValueOnce([mockPreset]);
       const interaction: DiscordInteraction = {
         ...baseInteraction,
         data: {

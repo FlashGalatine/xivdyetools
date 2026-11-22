@@ -155,7 +155,16 @@ The Worker bundle is close enough to Cloudflare's compressed limit to be worth w
 | `POST /webhooks/preset-submission` | Bearer (`INTERNAL_WEBHOOK_SECRET`) | Preset submissions forwarded from the web app |
 | `POST /webhooks/github` | HMAC-SHA256 (`GITHUB_WEBHOOK_SECRET`) | Push events updating the root (product-level) `CHANGELOG-laymans.md`, announced to the release channel |
 
-Only `push` events from `FlashGalatine/xivdyetools` are announced, and each version is announced once (the repository the changelog is fetched from and the posted link are pinned constants, and the version is memoized in KV for 90 days), so redelivering a qualifying delivery is safe. The memo is keyed by version (`announced:v:<version>`), so a corrected changelog re-pushed for an already-announced version is not re-announced automatically — clear that KV key to force a re-announcement. The changelog is read at the pushed commit (`after`, validated as 40 lowercase hex, falling back to `head_commit.id`; an invalid SHA answers 400 `Invalid commit SHA`), because the `main` branch URL is CDN-cached (2026-11-16). A high-water mark (`announced:latest`, no TTL) keeps a redelivered older push from announcing a version older than the newest announced (`200 {"message":"Older than latest announced version"}`).
+The GitHub webhook reads the root changelog at the pushed commit in `FlashGalatine/xivdyetools`. It validates the 40-character lowercase commit SHA from `after` or `head_commit.id` and returns 400 for an invalid SHA. Reading at the commit avoids GitHub's cache for the `main` branch URL.
+
+### Reannouncing a release
+
+After Discord accepts an announcement, the worker records `announced:v:<version>` in KV without an expiry. A later delivery that reads the record returns `Already announced`. A separate `announced:latest` record tracks the highest announced version. KV writes are best-effort, so overlapping deliveries or a failure to save both records can still result in a duplicate.
+
+- To reannounce the current release deliberately, delete its `announced:v:<version>` key. Allow the KV change to propagate, then redeliver the qualifying GitHub push.
+- For a release last announced by a worker that used 90-day keys, check for its version key or a matching `announced:latest` value. If either survives, redelivering its qualifying push can upgrade the record without posting. If both are missing, treat redelivery as a new announcement.
+- Before deliberately deleting a migrated current release's version key, verify that `announced:latest` matches the release and its KV metadata contains `"durableVersionMemo": true`. If the upgrade failed, redeliver while the legacy record still exists to retry it.
+- To reannounce an **older** release deliberately, also lower `announced:latest` below the target version or remove it before redelivery. This changes protection against older deliveries.
 
 Webhook payloads are capped before parsing: 10 KB for `/webhooks/preset-submission`, 1 MiB for `/webhooks/github` (`GITHUB_WEBHOOK_MAX_BYTES` — a real GitHub push payload runs far past 10 KB; the github route also re-checks the actual body length, since `Content-Length` can be missing or spoofed). Discord interaction bodies are capped at 100 KB, with `Content-Length` validated before the body is read.
 

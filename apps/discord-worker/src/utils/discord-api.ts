@@ -253,6 +253,8 @@ interface SafeCallLogger {
  * on "thinking…" forever), and catch-path edits could themselves throw
  * (5s AbortSignal timeout) and reject the waitUntil promise unhandled.
  * Use this for BOTH success and error-path edits in background processors.
+ * Log only the HTTP status or a fixed diagnostic: response bodies can echo
+ * private content, and thrown errors can include the interaction webhook URL.
  *
  * @returns true when Discord accepted the edit
  */
@@ -265,20 +267,19 @@ export async function safeEditOriginalResponse(
   try {
     const res = await editOriginalResponse(applicationId, interactionToken, options);
     if (!res.ok) {
-      const body = await res.text().catch(() => '');
       if (logger) {
-        logger.error('Discord follow-up edit failed', undefined, { status: res.status, body });
+        logger.error('Discord follow-up edit failed', undefined, { status: res.status });
       } else {
-        console.error('Discord follow-up edit failed', res.status, body);
+        console.error('Discord follow-up edit failed', res.status);
       }
       return false;
     }
     return true;
-  } catch (e) {
+  } catch {
     if (logger) {
-      logger.error('Discord follow-up edit threw', e instanceof Error ? e : undefined);
+      logger.error('Discord follow-up edit threw');
     } else {
-      console.error('Discord follow-up edit threw', e);
+      console.error('Discord follow-up edit threw');
     }
     return false;
   }

@@ -276,6 +276,7 @@
       "duplicateTitle": "중복된 염료 조합",
       "duplicateIntro": "이 염료 조합은 다른 프리셋에 이미 있습니다:",
       "duplicateHint": "다른 염료 조합을 사용해 주세요.",
+      "revisionConflict": "편집하는 동안 프리셋이 변경되었습니다. 명령어를 다시 실행해 주세요.",
       "updatedPending": "프리셋 수정됨 - 검토 대기 중",
       "updated": "프리셋 수정됨",
       "pendingDescription": "콘텐츠 검토를 위해 변경 사항이 검토 대기열에 제출되었습니다.",

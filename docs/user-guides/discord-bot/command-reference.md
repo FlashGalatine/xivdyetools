@@ -312,7 +312,7 @@ Toggle your vote on a preset.
 ---
 
 ### /preset edit
-Edit one of your own presets (name, description, tags, dyes — all optional).
+Choose one of your presets from autocomplete or type its name. You can edit its name, description, tags or dyes, including when resubmitting a rejected preset. Only you can see the edit reply.
 
 ---
 

@@ -276,6 +276,7 @@
       "duplicateTitle": "Duplicate Dye Combination",
       "duplicateIntro": "This dye combination already exists in another preset:",
       "duplicateHint": "Please use a different dye combination.",
+      "revisionConflict": "This preset changed while you were editing it. Run the command again to retry.",
       "updatedPending": "Preset Updated - Pending Review",
       "updated": "Preset Updated",
       "pendingDescription": "Your changes have been submitted for review due to content moderation.",

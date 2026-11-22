@@ -11,7 +11,9 @@ import {
   getPresetByName,
   getRandomPreset,
   submitPreset,
+  getMyPreset,
   getMyPresets,
+  getMyPresetSuggestions,
   editPreset,
   voteForPreset,
   removeVote,
@@ -454,7 +456,7 @@ describe('preset-api.ts', () => {
 
   describe('getMyPresets', () => {
     it('should fetch presets owned by user', async () => {
-      const env = createMockEnv({ withUrlConfig: true });
+      const env = createMockEnv({ withUrlConfig: true, withBotSigningSecret: true });
       const mockPresets = [{ id: '1', name: 'My Preset', author_discord_id: 'user123' }];
 
       mockFetch.mockResolvedValueOnce({
@@ -467,7 +469,48 @@ describe('preset-api.ts', () => {
       expect(result).toEqual(mockPresets);
       expect(mockFetch.mock.calls[0][1].headers).toMatchObject({
         'X-User-Discord-ID': 'user123',
+        [BOT_SIGNATURE_V2_HEADER]: expect.stringMatching(/^[0-9a-f]{64}$/),
       });
+    });
+  });
+
+  describe('signed owner reads', () => {
+    it('uses the caller identity for owner detail and leaves the public read anonymous', async () => {
+      const env = createMockEnv({ withServiceBinding: true, withBotSigningSecret: true });
+      const preset = { id: PRESET_ID, status: 'pending' };
+      env.PRESETS_API.fetch
+        .mockResolvedValueOnce(Response.json(preset))
+        .mockResolvedValueOnce(Response.json({ error: 'NOT_FOUND' }, { status: 404 }));
+
+      await expect(getMyPreset(env, 'user123', PRESET_ID)).resolves.toEqual(preset);
+      await expect(getPreset(env, PRESET_ID)).resolves.toBeNull();
+
+      const [[owner], [publicRequest]] = env.PRESETS_API.fetch.mock.calls as [[Request], [Request]];
+      expect(new URL(owner.url).pathname).toBe(`/api/v1/presets/${PRESET_ID}`);
+      expect(owner.headers.get('X-User-Discord-ID')).toBe('user123');
+      expect(owner.headers.get(BOT_SIGNATURE_V2_HEADER)).toMatch(/^[0-9a-f]{64}$/);
+      expect(publicRequest.headers.get('X-User-Discord-ID')).toBeNull();
+    });
+
+    it('uses the compact owner suggestion route with the literal query and v2 signature', async () => {
+      const env = createMockEnv({ withServiceBinding: true, withBotSigningSecret: true });
+      const presets = [{ id: PRESET_ID, name: 'Café & Cream', status: 'rejected' }];
+      env.PRESETS_API.fetch.mockResolvedValueOnce(Response.json({ presets }));
+
+      await expect(getMyPresetSuggestions(env, 'user123', 'Café & Cream')).resolves.toEqual(presets);
+      const [[request]] = env.PRESETS_API.fetch.mock.calls as [[Request]];
+      const url = new URL(request.url);
+      expect(url.pathname).toBe('/api/v1/presets/mine/suggestions');
+      expect(url.searchParams.get('q')).toBe('Café & Cream');
+      expect(request.headers.get('X-User-Discord-ID')).toBe('user123');
+      expect(request.headers.get(BOT_SIGNATURE_V2_HEADER)).toMatch(/^[0-9a-f]{64}$/);
+    });
+
+    it('refuses an owner suggestion request when signing is unavailable', async () => {
+      const env = createMockEnv({ withServiceBinding: true });
+
+      await expect(getMyPresetSuggestions(env, 'user123', '')).rejects.toMatchObject({ statusCode: 503 });
+      expect(env.PRESETS_API.fetch).not.toHaveBeenCalled();
     });
   });
 
@@ -475,6 +518,7 @@ describe('preset-api.ts', () => {
     it('should edit a preset successfully', async () => {
       const env = createMockEnv({ withUrlConfig: true });
       const mockResponse = {
+        success: true,
         preset: { id: 'preset123', name: 'Updated Name' },
         moderation_triggered: false,
       };
@@ -505,7 +549,7 @@ describe('preset-api.ts', () => {
       );
     });
 
-    it('should throw error on duplicate dye combination', async () => {
+    it('should throw for a 409 without a recognized error code', async () => {
       const env = createMockEnv({ withUrlConfig: true });
 
       mockFetch.mockResolvedValueOnce({
@@ -517,6 +561,38 @@ describe('preset-api.ts', () => {
       await expect(
         editPreset(env, 'preset123', { dyes: [1, 2] }, 'user123', 'TestUser'),
       ).rejects.toThrow(PresetAPIError);
+    });
+
+    it.each([
+      {
+        name: 'visible duplicate',
+        body: { error: 'DUPLICATE_RESOURCE', duplicate: { id: PRESET_ID, name: 'Other Preset', author_name: null } },
+        result: { error: 'DUPLICATE_RESOURCE', duplicate: { name: 'Other Preset', author_name: null } },
+      },
+      {
+        name: 'withheld duplicate',
+        body: { error: 'DUPLICATE_RESOURCE' },
+        result: { error: 'DUPLICATE_RESOURCE' },
+      },
+      {
+        name: 'incomplete duplicate summary',
+        body: { error: 'DUPLICATE_RESOURCE', duplicate: { id: PRESET_ID, name: 'Private', author_name: {} } },
+        result: { error: 'DUPLICATE_RESOURCE' },
+      },
+      {
+        name: 'revision conflict',
+        body: { error: 'CONFLICT', duplicate: { id: PRESET_ID, name: 'Private', author_name: null } },
+        result: { error: 'CONFLICT' },
+      },
+    ])('maps HTTP 409 $name without forwarding the server message', async ({ body, result }) => {
+      const env = createMockEnv({ withUrlConfig: true });
+      mockFetch.mockResolvedValueOnce(Response.json(
+        { success: false, message: 'upstream error text', ...body },
+        { status: 409 },
+      ));
+
+      await expect(editPreset(env, PRESET_ID, { dyes: [11, 12, 13] }, 'user123', 'TestUser'))
+        .resolves.toEqual({ success: false, ...result });
     });
   });
 

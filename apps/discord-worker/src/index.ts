@@ -138,12 +138,16 @@ const resolveCommitSha = (...candidates: unknown[]): string | null => {
 };
 
 /**
- * KV key holding the highest version ever announced (no TTL). The per-version
- * memo expires after 90 days; this high-water mark keeps a redelivered old
- * push — whose changelog is now read at that old commit — from re-announcing
- * an older release once its memo is gone.
+ * KV key holding the highest version ever announced (no TTL). This also keeps
+ * a redelivered old push from announcing a release whose legacy memo expired.
  */
 const ANNOUNCED_LATEST_KEY = 'announced:latest';
+
+interface AnnouncementWatermarkMetadata {
+  durableVersionMemo: true;
+}
+
+const DURABLE_VERSION_MEMO: AnnouncementWatermarkMetadata = { durableVersionMemo: true };
 
 /** Parse `x.y.z` into numbers; null when it is not exactly that shape. */
 const parseSemver = (version: string): [number, number, number] | null => {
@@ -154,16 +158,6 @@ const parseSemver = (version: string): [number, number, number] | null => {
 /** Numeric major.minor.patch compare: negative when a < b, 0 equal, positive a > b. */
 const compareSemver = (a: [number, number, number], b: [number, number, number]): number =>
   a[0] - b[0] || a[1] - b[1] || a[2] - b[2];
-
-/**
- * How long an announced version stays memoised in KV (90 days). The hook fires
- * as the push lands, before `deploy-discord-worker.yml` has shipped the build,
- * so a *Redeliver* from GitHub's delivery log is part of the normal release
- * flow — without a memo it re-posted the same release (three times on
- * 2026-08-29). 90 days outlives any plausible redelivery window while still
- * letting the key expire.
- */
-const ANNOUNCED_VERSION_TTL_SECONDS = 90 * 24 * 60 * 60;
 
 /**
  * BUG-047: how long `/preset favorite remove` autocomplete waits for the
@@ -798,18 +792,45 @@ app.post('/webhooks/github', async (c) => {
     return c.json({ success: true, message: 'No version entry found' });
   }
 
-  // FINDING-021: announce each version exactly once. The changelog is fetched
-  // from the pinned repository, so this key is derived from our own release
-  // notes rather than from anything the payload said.
-  //
-  // This read is deliberately unguarded, unlike the write below. A KV outage
-  // here throws, which falls through to the app's error handler and answers
-  // 500 — GitHub logs a failed delivery and no announcement is sent until a
-  // Redeliver succeeds. That is the safe direction: it blocks an announcement
-  // rather than risking one it cannot confirm is new, so it can never cause a
-  // double post.
+  // FINDING-021: derive the memo key from the pinned release notes. KV read
+  // failures answer 500 before sending, so GitHub can redeliver once KV recovers.
   const announcedKey = `announced:v:${latestEntry.version}`;
-  if (await env.KV.get(announcedKey)) {
+  const announced = await env.KV.get(announcedKey);
+  const entryVersion = parseSemver(latestEntry.version);
+  const { value: storedLatest, metadata } = entryVersion
+    ? await env.KV.getWithMetadata<AnnouncementWatermarkMetadata>(ANNOUNCED_LATEST_KEY)
+    : { value: null, metadata: null };
+  const storedVersion = storedLatest ? parseSemver(storedLatest) : null;
+  const versionOrder =
+    entryVersion && storedVersion ? compareSemver(entryVersion, storedVersion) : null;
+
+  // BUG-004: either a legacy memo or an equal legacy watermark proves this
+  // release already posted. Repair missing state without sending it again.
+  // Once the watermark is marked durable, deleting the memo permits a resend.
+  const legacyLatest =
+    storedLatest === latestEntry.version && metadata?.durableVersionMemo !== true;
+  const memoWithoutWatermark = announced && (versionOrder === null || versionOrder > 0);
+  if (announced || legacyLatest) {
+    if (entryVersion && (legacyLatest || memoWithoutWatermark)) {
+      try {
+        await env.KV.put(announcedKey, '1');
+        const current =
+          await env.KV.getWithMetadata<AnnouncementWatermarkMetadata>(ANNOUNCED_LATEST_KEY);
+        const currentVersion = current.value ? parseSemver(current.value) : null;
+        const legacyCurrent =
+          current.value === latestEntry.version && current.metadata?.durableVersionMemo !== true;
+        if (!currentVersion || compareSemver(entryVersion, currentVersion) > 0 || legacyCurrent) {
+          await env.KV.put(ANNOUNCED_LATEST_KEY, latestEntry.version, {
+            metadata: DURABLE_VERSION_MEMO,
+          });
+        }
+      } catch (err) {
+        logger.warn('Announcement memo migration failed', {
+          version: latestEntry.version,
+          errorName: err instanceof Error ? err.name : 'unknown',
+        });
+      }
+    }
     logger.info('Version already announced, skipping', { version: latestEntry.version });
     return c.json({
       success: true,
@@ -818,16 +839,9 @@ app.post('/webhooks/github', async (c) => {
     });
   }
 
-  // A redelivered old push reads the changelog as of that old commit, so once
-  // its memo has expired it would re-announce an old release. Never announce a
-  // version older than the newest one already announced. Absent or unparseable
-  // stored value (bootstrap) proceeds; so does an entry that is not x.y.z.
-  // Unguarded read, like the memo read: a KV outage answers 500 and announces
-  // nothing, the safe direction.
-  const entryVersion = parseSemver(latestEntry.version);
-  const storedLatest = entryVersion ? await env.KV.get(ANNOUNCED_LATEST_KEY) : null;
-  const storedVersion = storedLatest ? parseSemver(storedLatest) : null;
-  if (entryVersion && storedVersion && compareSemver(storedVersion, entryVersion) > 0) {
+  // Absent or unparseable high-water marks and non-x.y.z entries rely on
+  // their own version memo.
+  if (versionOrder !== null && versionOrder < 0) {
     logger.info('Version older than latest announced, skipping', {
       version: latestEntry.version,
     });
@@ -848,9 +862,7 @@ app.post('/webhooks/github', async (c) => {
   );
 
   // BUG-026: a rejected send must not leave the memo behind. Answering 502
-  // makes GitHub log a failed delivery, which is what makes a Redeliver both
-  // possible and correct — the memo below is the only thing that would have
-  // suppressed it, and it has not been written.
+  // makes GitHub log a failed delivery and allows a redelivery to retry the send.
   if (!sent.ok) {
     logger.error('Announcement send rejected by Discord', undefined, {
       version: latestEntry.version,
@@ -868,8 +880,10 @@ app.post('/webhooks/github', async (c) => {
   // is best-effort — the release has already been posted by the time it runs,
   // so a KV failure must not turn into a 500: that shows up as a failed
   // delivery and invites exactly the Redeliver that double-posts.
+  let memoWritten = false;
   try {
-    await env.KV.put(announcedKey, '1', { expirationTtl: ANNOUNCED_VERSION_TTL_SECONDS });
+    await env.KV.put(announcedKey, '1');
+    memoWritten = true;
   } catch (err) {
     logger.warn('Announcement memo write failed', {
       version: latestEntry.version,
@@ -877,14 +891,20 @@ app.post('/webhooks/github', async (c) => {
     });
   }
 
-  // High-water mark, no TTL, best-effort for the same reason as the memo. This
-  // request only raises it (KV has no compare-and-set, so two overlapping
-  // deliveries can still race). Nothing is seeded: the first announce after
-  // deploy writes it.
+  // Re-read the high-water mark after the send to avoid replacing a newer
+  // value already visible here. KV has no compare-and-set for overlapping
+  // writes. If only this write succeeds, the legacy path suppresses a retry
+  // and repairs the failed memo before it enables the operator override.
   if (entryVersion) {
     try {
-      if (!storedVersion || compareSemver(entryVersion, storedVersion) >= 0) {
-        await env.KV.put(ANNOUNCED_LATEST_KEY, latestEntry.version);
+      const currentLatest = await env.KV.get(ANNOUNCED_LATEST_KEY);
+      const currentVersion = currentLatest ? parseSemver(currentLatest) : null;
+      if (!currentVersion || compareSemver(entryVersion, currentVersion) >= 0) {
+        await env.KV.put(
+          ANNOUNCED_LATEST_KEY,
+          latestEntry.version,
+          memoWritten ? { metadata: DURABLE_VERSION_MEMO } : undefined,
+        );
       }
     } catch (err) {
       logger.warn('Announcement high-water mark write failed', {
@@ -1396,19 +1416,10 @@ async function getMyPresetsAutocompleteChoices(
   logger: ExtendedLogger,
 ): Promise<Array<{ name: string; value: string }>> {
   try {
-    const presets = await presetApi.getMyPresets(env, userId);
-
-    if (presets.length === 0) {
-      return [];
-    }
-
-    // Filter by query (case-insensitive)
-    const lowerQuery = query.toLowerCase();
-    const filtered =
-      query.length > 0 ? presets.filter((p) => p.name.toLowerCase().includes(lowerQuery)) : presets;
+    const presets = await presetApi.getMyPresetSuggestions(env, userId, query);
 
     // Return up to 25 choices (Discord's maximum)
-    return filtered.slice(0, 25).map((preset) => ({
+    return presets.slice(0, 25).map((preset) => ({
       // Format: "Name (status)" to help user identify pending edits.
       // REFACTOR-003: Discord caps a choice name at 100 characters.
       name: (preset.status === 'approved'
@@ -1417,11 +1428,9 @@ async function getMyPresetsAutocompleteChoices(
       ).slice(0, 100),
       value: preset.id,
     }));
-  } catch (error) {
-    logger.error(
-      'Failed to get user presets for autocomplete',
-      error instanceof Error ? error : undefined,
-    );
+  } catch {
+    // Upstream errors can include the private query or preset data.
+    logger.error('Failed to get user presets for autocomplete');
     return [];
   }
 }

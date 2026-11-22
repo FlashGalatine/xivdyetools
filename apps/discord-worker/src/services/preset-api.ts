@@ -18,6 +18,7 @@ import {
 } from '@xivdyetools/auth';
 import type { Env } from '../types/env.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
+import type { PresetEditDuplicateInfo, PresetEditSuccessResponse } from '@xivdyetools/types';
 import {
   type CommunityPreset,
   type PresetListResponse,
@@ -235,8 +236,28 @@ export async function getPresets(
  * @returns Preset or null if not found
  */
 export async function getPreset(env: Env, id: string): Promise<CommunityPreset | null> {
+  return getPresetDetail(env, id);
+}
+
+/** Read detail in the editing user's context, including their unpublished presets. */
+export async function getMyPreset(
+  env: Env,
+  userDiscordId: string,
+  id: string,
+): Promise<CommunityPreset | null> {
+  requireSignedUser(env, userDiscordId);
+  return getPresetDetail(env, id, userDiscordId);
+}
+
+async function getPresetDetail(
+  env: Env,
+  id: string,
+  userDiscordId?: string,
+): Promise<CommunityPreset | null> {
   try {
-    return await request<CommunityPreset>(env, 'GET', `/api/v1/presets/${encodeURIComponent(id)}`);
+    return await request<CommunityPreset>(env, 'GET', `/api/v1/presets/${encodeURIComponent(id)}`, {
+      userDiscordId,
+    });
   } catch (error) {
     if (error instanceof PresetAPIError && error.statusCode === 404) {
       return null;
@@ -379,6 +400,7 @@ export async function submitPreset(
  * Sorted by creation date (newest first)
  */
 export async function getMyPresets(env: Env, userDiscordId: string): Promise<CommunityPreset[]> {
+  requireSignedUser(env, userDiscordId);
   const response = await request<{ presets: CommunityPreset[]; total: number }>(
     env,
     'GET',
@@ -388,14 +410,45 @@ export async function getMyPresets(env: Env, userDiscordId: string): Promise<Com
   return response.presets;
 }
 
+type OwnerPresetSuggestion = Pick<CommunityPreset, 'id' | 'name' | 'status'>;
+
+/** Fetch only the compact matches for an autocomplete query. */
+export async function getMyPresetSuggestions(
+  env: Env,
+  userDiscordId: string,
+  query: string,
+): Promise<OwnerPresetSuggestion[]> {
+  requireSignedUser(env, userDiscordId);
+  const params = new URLSearchParams({ q: query });
+  const response = await request<{ presets: OwnerPresetSuggestion[] }>(
+    env,
+    'GET',
+    `/api/v1/presets/mine/suggestions?${params.toString()}`,
+    { userDiscordId },
+  );
+  return response.presets;
+}
+
+function requireSignedUser(env: Env, userDiscordId: string): void {
+  if (!env.BOT_SIGNING_SECRET || !userDiscordId) {
+    throw new PresetAPIError(503, 'Signed preset owner context is unavailable');
+  }
+}
+
+type EditDuplicateSummary = Pick<PresetEditDuplicateInfo, 'name' | 'author_name'>;
+
+type PresetEditResult =
+  | PresetEditSuccessResponse
+  | { success: false; error: 'DUPLICATE_RESOURCE'; duplicate?: EditDuplicateSummary }
+  | { success: false; error: 'CONFLICT' };
+
 /**
  * Edit a preset (owner only)
  *
  * If name/description changes trigger content moderation and content is flagged,
  * the preset will be set to 'pending' status with previous values stored for revert.
  *
- * @returns Edit response with updated preset and moderation status
- * @throws PresetAPIError with status 409 if dye combination is duplicate
+ * @returns The updated preset or a recognized edit conflict
  */
 export async function editPreset(
   env: Env,
@@ -403,17 +456,44 @@ export async function editPreset(
   updates: PresetEditRequest,
   userDiscordId: string,
   userName: string,
-): Promise<PresetEditResponse> {
-  return request<PresetEditResponse>(
-    env,
-    'PATCH',
-    `/api/v1/presets/${encodeURIComponent(presetId)}`,
-    {
-      body: updates,
-      userDiscordId,
-      userName,
-    },
-  );
+): Promise<PresetEditResult> {
+  try {
+    const response = await request<PresetEditResponse>(
+      env,
+      'PATCH',
+      `/api/v1/presets/${encodeURIComponent(presetId)}`,
+      { body: updates, userDiscordId, userName },
+    );
+    if (response.success !== true) {
+      throw new PresetAPIError(502, 'Invalid preset edit response');
+    }
+    return response;
+  } catch (error) {
+    if (!(error instanceof PresetAPIError) || error.statusCode !== 409) throw error;
+    const { details } = error;
+    if (typeof details !== 'object' || details === null || !('error' in details)) throw error;
+
+    if (details.error === 'CONFLICT') return { success: false, error: 'CONFLICT' };
+    if (details.error !== 'DUPLICATE_RESOURCE') throw error;
+
+    // The API decides visibility. When it withholds the summary, there is
+    // nothing to display and no follow-up lookup to make.
+    const duplicate = 'duplicate' in details ? details.duplicate : undefined;
+    if (
+      typeof duplicate === 'object' && duplicate !== null &&
+      'id' in duplicate && typeof duplicate.id === 'string' &&
+      'name' in duplicate && typeof duplicate.name === 'string' &&
+      'author_name' in duplicate &&
+      (duplicate.author_name === null || typeof duplicate.author_name === 'string')
+    ) {
+      return {
+        success: false,
+        error: 'DUPLICATE_RESOURCE',
+        duplicate: { name: duplicate.name, author_name: duplicate.author_name },
+      };
+    }
+    return { success: false, error: 'DUPLICATE_RESOURCE' };
+  }
 }
 
 // ============================================================================

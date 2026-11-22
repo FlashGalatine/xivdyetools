@@ -276,6 +276,7 @@
       "duplicateTitle": "重复的染剂组合",
       "duplicateIntro": "此染剂组合已存在于另一个预设中：",
       "duplicateHint": "请使用不同的染剂组合。",
+      "revisionConflict": "编辑期间，此预设已发生更改。请重新运行命令再试一次。",
       "updatedPending": "预设已更新 - 等待审核",
       "updated": "预设已更新",
       "pendingDescription": "由于内容审核，您的更改已提交审核。",

@@ -276,6 +276,7 @@
       "duplicateTitle": "Doppelte Farbstoffkombination",
       "duplicateIntro": "Diese Farbstoffkombination existiert bereits in einer anderen Vorlage:",
       "duplicateHint": "Bitte verwende eine andere Farbstoffkombination.",
+      "revisionConflict": "Die Vorlage wurde während deiner Bearbeitung geändert. Führe den Befehl erneut aus.",
       "updatedPending": "Vorlage aktualisiert – Prüfung ausstehend",
       "updated": "Vorlage aktualisiert",
       "pendingDescription": "Deine Änderungen wurden zur Prüfung eingereicht (Inhaltsmoderation).",

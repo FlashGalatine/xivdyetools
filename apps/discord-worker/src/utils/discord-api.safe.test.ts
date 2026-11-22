@@ -38,41 +38,36 @@ describe('discord-api safe wrappers', () => {
         expect(await call('app-id', 'token', { content: 'hi' })).toBe(true);
       });
 
-      it('reports false and logs the status on a non-OK response', async () => {
-        vi.mocked(fetch).mockResolvedValue(new Response('rate limited', { status: 429 }));
+      it('reports false and logs only the status on a non-OK response', async () => {
+        vi.mocked(fetch).mockResolvedValue(new Response('private edit content', { status: 429 }));
         const logger = silentLogger();
 
         expect(await call('app-id', 'token', { content: 'hi' }, logger as never)).toBe(false);
-        expect(logger.error).toHaveBeenCalledWith(
-          expect.stringContaining('failed'),
-          undefined,
-          expect.objectContaining({ status: 429 }),
-        );
+        expect(logger.error.mock.calls).toEqual([
+          ['Discord follow-up edit failed', undefined, { status: 429 }],
+        ]);
       });
 
-      it('falls back to console on a non-OK response with no logger', async () => {
-        vi.mocked(fetch).mockResolvedValue(new Response('nope', { status: 500 }));
+      it('reports only the status to console with no logger', async () => {
+        vi.mocked(fetch).mockResolvedValue(new Response('private edit content', { status: 500 }));
 
         expect(await call('app-id', 'token', { content: 'hi' })).toBe(false);
-        expect(consoleError).toHaveBeenCalled();
+        expect(consoleError.mock.calls).toEqual([['Discord follow-up edit failed', 500]]);
       });
 
-      it('reports false and logs when the request throws', async () => {
-        vi.mocked(fetch).mockRejectedValue(new Error('socket hang up'));
+      it('reports a thrown request without logging its error or interaction URL', async () => {
+        vi.mocked(fetch).mockRejectedValue(new Error('Fetch failed: /webhooks/app-id/private-token/messages/@original'));
         const logger = silentLogger();
 
-        expect(await call('app-id', 'token', { content: 'hi' }, logger as never)).toBe(false);
-        expect(logger.error).toHaveBeenCalledWith(
-          expect.stringContaining('threw'),
-          expect.any(Error),
-        );
+        expect(await call('app-id', 'private-token', { content: 'hi' }, logger as never)).toBe(false);
+        expect(logger.error.mock.calls).toEqual([['Discord follow-up edit threw']]);
       });
 
-      it('falls back to console when the request throws with no logger', async () => {
-        vi.mocked(fetch).mockRejectedValue(new Error('socket hang up'));
+      it('reports the same fixed diagnostic to console when the request throws', async () => {
+        vi.mocked(fetch).mockRejectedValue(new Error('Fetch failed: /webhooks/app-id/private-token/messages/@original'));
 
-        expect(await call('app-id', 'token', { content: 'hi' })).toBe(false);
-        expect(consoleError).toHaveBeenCalled();
+        expect(await call('app-id', 'private-token', { content: 'hi' })).toBe(false);
+        expect(consoleError.mock.calls).toEqual([['Discord follow-up edit threw']]);
       });
 
       it('passes a non-Error rejection through without crashing the logger', async () => {
@@ -80,15 +75,16 @@ describe('discord-api safe wrappers', () => {
         const logger = silentLogger();
 
         expect(await call('app-id', 'token', { content: 'hi' }, logger as never)).toBe(false);
-        expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('threw'), undefined);
+        expect(logger.error.mock.calls).toEqual([['Discord follow-up edit threw']]);
       });
 
-      it('still reports false when reading the error body itself fails', async () => {
-        const unreadable = new Response('x', { status: 500 });
-        vi.spyOn(unreadable, 'text').mockRejectedValue(new Error('body already consumed'));
-        vi.mocked(fetch).mockResolvedValue(unreadable);
+      it('reports a rejected edit without reading the response body', async () => {
+        const response = new Response('private edit content', { status: 500 });
+        const readBody = vi.spyOn(response, 'text');
+        vi.mocked(fetch).mockResolvedValue(response);
 
         expect(await call('app-id', 'token', { content: 'hi' })).toBe(false);
+        expect(readBody).not.toHaveBeenCalled();
       });
     },
   );
