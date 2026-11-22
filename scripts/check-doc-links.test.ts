@@ -170,6 +170,28 @@ test('checkFile reports a missing target with file, line and resolved path, and 
   assert.equal(broken[0]?.resolved, 'docs/does-not-exist.md');
 });
 
+const inlineTitles = {
+  'single-quoted': String.raw`'the author\'s guide'`,
+  parenthesized: String.raw`(the \(draft\) guide)`,
+};
+
+for (const [style, title] of Object.entries(inlineTitles)) {
+  test(`checkFile validates links with ${style} titles`, () => {
+    const md = `[existing](index.md ${title})\n[missing](does-not-exist.md ${title})`;
+    assert.deepEqual(checkFile('docs/fixture.md', md, known), {
+      links: 2,
+      broken: [
+        {
+          file: 'docs/fixture.md',
+          line: 2,
+          target: 'does-not-exist.md',
+          resolved: 'docs/does-not-exist.md',
+        },
+      ],
+    });
+  });
+}
+
 test('a target that differs from the tracked path only by case is broken (github.com and Linux CI are case-sensitive)', () => {
   const { broken } = checkFile('docs/index.md', '[v](VERSIONS.md)', known);
   assert.equal(broken.length, 1);
