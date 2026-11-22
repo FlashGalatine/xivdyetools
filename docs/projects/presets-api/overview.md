@@ -96,6 +96,7 @@ src/
 |----------|--------|-------------|
 | `/api/v1/presets` | POST | Submit new preset |
 | `/api/v1/presets/mine` | GET | Get user's presets |
+| `/api/v1/presets/mine/suggestions` | GET | Find up to 25 of the caller's presets by name |
 | `/api/v1/votes/:id` | POST | Vote on preset |
 | `/api/v1/votes/:id` | DELETE | Remove vote |
 

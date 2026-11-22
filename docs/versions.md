@@ -37,7 +37,7 @@
 | **Image Worker** | v1.3.5 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.9.2 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.2.2 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
-| **Presets API** | v2.8.3 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
+| **Presets API** | v2.9.0 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
 | **Public REST API** | v0.21.3 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
 | **OpenGraph Worker** | v2.12.4 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.3.5 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
@@ -348,6 +348,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v2.9.0 | Nov 2026 | Alphabetical preset pagination and up to 25 name suggestions for an authenticated owner |
 | v2.8.3 | Nov 2026 | Retry detached preview deletion and edge purge through a durable D1 cleanup queue |
 | v2.8.2 | Oct 2026 | Prepared named Discord notification binding companion after provider acceptance; protocol and separate activation holds retained |
 | v2.8.1 | Oct 2026 | Prepared base hardening and continuity release with default Discord notification binding retained; named-provider selection is a separate companion |

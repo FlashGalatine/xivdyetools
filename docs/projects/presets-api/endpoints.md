@@ -103,7 +103,7 @@ List approved presets with pagination.
 | `page` | number | `1` | Page number (clamped to 1–10,000 before offset arithmetic) |
 | `limit` | number | `20` | Results per page (clamped to 1–50) |
 | `category` | string | — | Filter by category |
-| `sort` | string | — | Sort order: `popular`, `recent`, or `name` |
+| `sort` | string | — | `popular`, `recent`, or `name` (English collation at base sensitivity, then ascending ID, before pagination) |
 | `search` | string | — | Free-text search |
 | `status` | string | `approved` | Moderators only for anything other than `approved`; unknown values → 400 |
 | `is_curated` | `true` \| `false` | — | Restrict to curated (or community) presets |
@@ -180,6 +180,10 @@ pre-check passed.
 ### `GET /api/v1/presets/mine`
 
 Get the authenticated user's own presets. Returns presets in all statuses, including `hidden`.
+
+### `GET /api/v1/presets/mine/suggestions`
+
+Returns up to 25 of the authenticated user's presets in any status, newest first. Supply `q` to match a literal substring of the name before the limit. Simple case pairs match, so `été` finds `Été`. Accents remain significant. Equal creation dates sort by ascending ID. The response has a `presets` array with `id`, `name` and `status` on each entry.
 
 ### `PATCH /api/v1/presets/:id`
 

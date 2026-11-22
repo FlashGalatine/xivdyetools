@@ -171,7 +171,7 @@ List presets with filtering and pagination. Public.
 | `category` | string | — | Category slug; matches primary **or** secondary |
 | `search` | string | — | Substring match on name / description / tags |
 | `status` | string | `approved` | `pending`, `approved`, `rejected`, `flagged`. Anything else → 400; anything but `approved` → 403 unless the caller is a moderator. `hidden` is never listable. |
-| `sort` | string | `popular` | `popular` (votes desc, then newest), `recent`, `name` |
+| `sort` | string | `popular` | `popular` (votes desc, then newest), `recent`, `name` (English collation at base sensitivity, then ascending ID, before pagination) |
 | `page` | number | `1` | Clamped to 1–10,000 before offset arithmetic |
 | `limit` | number | `20` | Clamped to 1–50 |
 | `is_curated` | `true` \| `false` | — | Filter curated presets |
@@ -208,6 +208,14 @@ The caller's own presets in every status (including `hidden`), newest first, eac
 
 ```json
 { "presets": [ { …preset…, "rejection_reason": "Description is not about the palette" } ], "total": 3 }
+```
+
+### GET /presets/mine/suggestions
+
+Requires authentication and user context. The optional `q` filters the caller's preset names by literal substring. It matches simple upper/lowercase pairs (`É` and `é`, for example) and keeps accents significant. Wildcards are literal, and composed and decomposed spellings are matched as entered. A query longer than the 50 UTF-16 units allowed for a preset name, or one containing NUL, returns an empty list. An empty query returns the newest 25 or fewer across all statuses. Matching precedes the limit. The newest creation date comes first and equal dates sort by ascending ID. Responses use `Cache-Control: private, no-store`.
+
+```json
+{ "presets": [{ "id": "03f1551c-f3f5-4bd0-a43e-18605574fb94", "name": "Éclair", "status": "pending" }] }
 ```
 
 ### GET /presets/rate-limit
