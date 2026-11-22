@@ -44,10 +44,9 @@ interface CacheServiceLogger {
 const CACHE_URL_ORIGIN = 'https://cache.internal';
 
 export class CacheService {
-  private cache: Cache | null = null;
   private ctx: ExecutionContext;
   private cacheName: string;
-  private cacheInitPromise: Promise<Cache> | null = null;
+  private cacheInitPromise: Promise<Cache | null> | null = null;
   private logger?: CacheServiceLogger;
 
   /**
@@ -70,7 +69,7 @@ export class CacheService {
   }
 
   /**
-   * Get the default cache (lazy initialization)
+   * Share the named cache across operations, including concurrent opens.
    */
   private async getCache(): Promise<Cache | null> {
     // Cache API is not available in local development
@@ -78,16 +77,14 @@ export class CacheService {
       return null;
     }
 
-    if (this.cache) {
-      return this.cache;
-    }
-
-    if (!this.cacheInitPromise) {
-      this.cacheInitPromise = caches.open(this.cacheName);
-    }
-
-    this.cache = await this.cacheInitPromise;
-    return this.cache;
+    this.cacheInitPromise ??= Promise.resolve()
+      .then(() => caches.open(this.cacheName))
+      .catch(() => {
+        // All waiters see a miss. The next operation can retry the open.
+        this.cacheInitPromise = null;
+        return null;
+      });
+    return this.cacheInitPromise;
   }
 
   /**

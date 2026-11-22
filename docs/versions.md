@@ -38,7 +38,7 @@
 | **Moderation Bot** | v1.9.2 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.2.2 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.9.0 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
-| **Public REST API** | v0.21.3 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
+| **Public REST API** | v0.21.4 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
 | **OpenGraph Worker** | v2.12.4 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.3.5 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
@@ -714,6 +714,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v0.21.4 | Nov 2026 | Market and character-resolution requests can continue when the edge cache fails to open and resume caching on a later operation |
 | v0.21.3 | Nov 2026 | Conditional Core 6 adoption; preserve public v1 Chara response and family-size contracts; registry/publication/consumer acceptance held |
 | v0.21.2 | Nov 2026 | Maintenance acquisition generation validates fixed game/schema pins, supports exact-request offline replay and completes review requests before output adoption; runtime tables unchanged |
 | v0.21.1 | Oct 2026 | A-API: bounded and sanitized upstream character data, dedicated cache-miss soft budgets, current-version-only icon overrides, IPv6 /64 adoption and numeric-only telemetry versions; pinned/checksummed item-name inputs and controlled ko/zh/ja refresh with 65 additional Korean names, using unchanged fonts |
