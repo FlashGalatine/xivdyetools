@@ -3,7 +3,6 @@
  * These handlers intercept network requests and return mock responses
  */
 import { http, HttpResponse } from 'msw';
-import type { PresetCategory } from '@xivdyetools/types';
 
 // API base URL - must match the URL in community-preset-service.ts
 const API_URL = 'https://api.xivdyetools.app';
@@ -46,65 +45,6 @@ export const mockPresets = [
     created_at: '2024-01-10T08:00:00Z',
     updated_at: '2024-01-12T14:30:00Z',
     preview_image_status: 'none',
-  },
-];
-
-/**
- * The five live `PresetCategory` members. `id` is typed rather than left as a
- * string so that dropping a member from the union is a compile error here, the
- * way it now is in `presetCategoryLabel`'s map.
- *
- * This fixture used to seed a sixth, `community`, which 5.0 retired (BUG-001).
- * A fixture carrying a category production no longer has lets tests assert
- * behaviour for it and pass.
- */
-export const mockCategories: {
-  id: PresetCategory;
-  name: string;
-  description: string;
-  icon: string | null;
-  is_curated: boolean;
-  preset_count: number;
-}[] = [
-  {
-    id: 'jobs',
-    name: 'Jobs',
-    description: 'Color palettes themed after FFXIV jobs',
-    icon: null,
-    is_curated: true,
-    preset_count: 25,
-  },
-  {
-    id: 'grand-companies',
-    name: 'Grand Companies',
-    description: 'Colors representing the three Grand Companies',
-    icon: null,
-    is_curated: true,
-    preset_count: 12,
-  },
-  {
-    id: 'seasons',
-    name: 'Seasons',
-    description: 'Palettes drawn from the seasons',
-    icon: null,
-    is_curated: true,
-    preset_count: 8,
-  },
-  {
-    id: 'events',
-    name: 'Events',
-    description: 'Palettes for seasonal FFXIV events',
-    icon: null,
-    is_curated: true,
-    preset_count: 6,
-  },
-  {
-    id: 'aesthetics',
-    name: 'Aesthetics',
-    description: 'User-submitted palettes grouped by look',
-    icon: null,
-    is_curated: false,
-    preset_count: 100,
   },
 ];
 
@@ -175,11 +115,6 @@ export const handlers = [
     }
 
     return HttpResponse.json(preset);
-  }),
-
-  // Get categories
-  http.get(`${API_URL}/api/v1/categories`, () => {
-    return HttpResponse.json({ categories: mockCategories });
   }),
 
   // Submit preset (authenticated)
