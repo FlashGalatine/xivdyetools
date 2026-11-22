@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.18.4] - 2026-11-22
+
+### Removed
+
+- Removed the unused web client method for fetching preset categories and its response type. The public presets API still serves category counts.
+
 ## [5.18.3] - 2026-11-22
 
 ### Removed

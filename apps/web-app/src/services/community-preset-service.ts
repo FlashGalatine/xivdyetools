@@ -17,15 +17,6 @@ import type { CommunityPreset, PresetFilters, PresetListResponse } from '@xivdye
 // `@services/community-preset-service` imports keep working unchanged.
 export type { CommunityPreset, PresetFilters, PresetListResponse };
 
-export interface CategoryWithCount {
-  id: string;
-  name: string;
-  description: string;
-  icon: string | null;
-  is_curated: boolean;
-  preset_count: number;
-}
-
 /**
  * Why a vote failure is a code and not a sentence: this service has no locale,
  * so every English string it used to return was toasted verbatim by
@@ -391,17 +382,6 @@ export class CommunityPresetService {
       if (error instanceof PresetApiError && [401, 403, 404].includes(error.status)) return null;
       throw error;
     }
-  }
-
-  /**
-   * Get all categories with preset counts
-   */
-  async getCategories(): Promise<CategoryWithCount[]> {
-    const response = await this.request<{ categories: CategoryWithCount[] }>(
-      '/api/v1/categories',
-      'categories'
-    );
-    return response.categories;
   }
 
   /**

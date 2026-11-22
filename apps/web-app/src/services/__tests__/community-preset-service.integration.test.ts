@@ -7,7 +7,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { server } from '../../__tests__/mocks/server';
-import { mockPresets, mockCategories } from '../../__tests__/mocks/handlers';
+import { mockPresets } from '../../__tests__/mocks/handlers';
 
 // Mock authService before importing the service
 vi.mock('../auth-service', () => ({
@@ -408,23 +408,35 @@ describe('CommunityPresetService Integration Tests', () => {
       const preset = await service.getPreset('preset-1');
       expect(preset).not.toBeNull();
     });
-  });
 
-  // ============================================
-  // Categories Tests
-  // ============================================
+    it('keeps the fresh detail cached when an older request finishes after invalidation', async () => {
+      const old = mockPresets[0];
+      const fresh = { ...old, name: 'Updated preset' };
+      let release!: () => void;
+      const held = new Promise<void>((resolve) => (release = resolve));
+      let requests = 0;
+      server.use(
+        http.get(`${API_URL}/api/v1/presets/${old.id}`, async () => {
+          requests++;
+          if (requests === 1) {
+            await held;
+            return HttpResponse.json(old);
+          }
+          return HttpResponse.json(fresh);
+        })
+      );
 
-  describe('getCategories', () => {
-    beforeEach(async () => {
-      await service.initialize();
-    });
-
-    it('should fetch categories with counts', async () => {
-      const categories = await service.getCategories();
-
-      expect(categories).toBeInstanceOf(Array);
-      expect(categories.length).toBe(mockCategories.length);
-      expect(categories[0]).toHaveProperty('preset_count');
+      const beforeInvalidation = service.getPreset(old.id);
+      try {
+        await vi.waitFor(() => expect(requests).toBe(1));
+        service.invalidatePresets(old.id);
+        expect(await service.getPreset(old.id)).toEqual(fresh);
+      } finally {
+        release();
+      }
+      expect(await beforeInvalidation).toEqual(old);
+      expect(await service.getPreset(old.id)).toEqual(fresh);
+      expect(requests).toBe(2);
     });
   });
 
@@ -697,7 +709,8 @@ describe('CommunityPresetService Integration Tests', () => {
     it('should clear all cache', async () => {
       // Populate cache
       await service.getPresets();
-      await service.getCategories();
+      const id = mockPresets[0].id;
+      await service.getPreset(id);
 
       // Clear cache
       service.clearCache();
@@ -712,12 +725,16 @@ describe('CommunityPresetService Integration Tests', () => {
             limit: 20,
             has_more: false,
           });
-        })
+        }),
+        http.get(`${API_URL}/api/v1/presets/${id}`, () =>
+          HttpResponse.json({ ...mockPresets[0], name: 'Modified detail' })
+        )
       );
 
       // Should fetch fresh data
       const response = await service.getPresets();
       expect(response.presets[0].name).toBe('Modified Name');
+      expect((await service.getPreset(id))?.name).toBe('Modified detail');
     });
   });
 
