@@ -94,8 +94,10 @@ export function trackedPathSet(tracked: readonly string[]): Set<string> {
 }
 
 // `](` then either `<destination>` or a bare destination with one level of
-// balanced parentheses, then an optional "title", then `)`.
-const LINK = /\]\(\s*(?:<([^>\n]*)>|((?:[^()\s]|\([^()\s]*\))+))(?:\s+"[^"]*")?\s*\)/g;
+// balanced parentheses, then an optional title in double quotes, single quotes,
+// or parentheses. Backslash escapes allow title delimiters inside the title.
+const LINK =
+  /\]\(\s*(?:<([^>\n]*)>|((?:[^()\s]|\([^()\s]*\))+))(?:\s+(?:"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\((?:\\.|[^()\\])*\)))?\s*\)/g;
 
 /** Every relative link target in a masked markdown document, with its line. */
 export function extractRelativeLinks(masked: string): { target: string; line: number }[] {
