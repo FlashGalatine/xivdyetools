@@ -154,7 +154,7 @@ const RACE_SPECIFIC_CATEGORIES: ColorCategory[] = ['hairColors', 'skinColors'];
 
 /**
  * Categories whose preset palettes are retired by the Evercold expansion
- * (January 2027): eye, hair, and skin colors switch to a free color picker
+ * (February 23, 2027): eye, hair, and skin colors switch to a free color picker
  * in the character creator, so these preset grids will be replaced by a
  * color-picker input. A notice banner is shown while they remain.
  * (highlightColors may join this set if hair highlights are confirmed to use
@@ -1659,7 +1659,7 @@ export class SwatchTool extends BaseComponent implements PaletteSlotSource {
    * Show or remove the Evercold deprecation notice above the swatch grid,
    * depending on whether the active category's preset palette is being
    * retired (eye/hair/skin → free color picker in the Evercold expansion,
-   * January 2027).
+   * February 23, 2027).
    */
   private updateEvercoldNotice(): void {
     const parent = this.colorGridContainer?.parentElement;

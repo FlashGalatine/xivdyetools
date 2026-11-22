@@ -2,6 +2,12 @@
 
 ---
 
+## Web-App Version 5.18.5 — November 22, 2026
+
+### Swatch Matcher
+
+- The eye, hair, and skin palettes now show Evercold's confirmed release date of February 23, 2027.
+
 ## Web-App Version 5.18.2 — November 22, 2026
 
 ### Finding presets

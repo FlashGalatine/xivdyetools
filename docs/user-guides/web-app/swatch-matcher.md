@@ -49,7 +49,7 @@ Every swatch has a grid address — **R3·C5** means row 3, column 5, counted th
 
 ### Evercold notice
 
-The Eye, Hair and Skin sheets carry a note: *"Evercold (January 2027): preset palettes are being retired."* Those three are switching to a free color picker in the Evercold expansion, and the preset swatches here will be replaced by a picker when it launches. The other four palettes are not affected.
+The Eye, Hair and Skin sheets carry a note: *"Evercold (February 23, 2027): preset palettes are being retired."* Those three are switching to a free color picker in the Evercold expansion, and the preset swatches here will be replaced by a picker when it launches. The other four palettes are not affected.
 
 ---
 

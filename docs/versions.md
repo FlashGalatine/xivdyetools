@@ -32,7 +32,7 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.18.4 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Web Application** | v5.18.5 | `xivdyetools-web-app` | Cloudflare Pages | Active |
 | **Discord Bot** | v5.9.13 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.5 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.9.2 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
@@ -135,6 +135,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.18.5 | Nov 2026 | Corrected the Evercold release date in Swatch Matcher |
 | v5.18.4 | Nov 2026 | Removed the unused Community Presets category client and added a regression for overlapping preset detail requests |
 | v5.18.3 | Nov 2026 | Removed unused preset, storage, and modal methods from the web app |
 | v5.18.2 | Nov 2026 | Localized preset search and sorting, saved preset availability, duplicate navigation, palette keyboard focus and random dye feedback. Clears temporary sign-in data and updates all six privacy guides |
