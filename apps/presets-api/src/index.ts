@@ -27,7 +27,8 @@ import {
 } from './middleware/body-validation.js';
 import { validateEnv, logValidationErrors, logValidationWarnings } from './utils/env-validation.js';
 import { ErrorCode } from './utils/api-response.js';
-import { scheduled } from './retention-job.js';
+import { scheduled as scheduleRetention } from './retention-job.js';
+import { retryPreviewImageCleanup } from './services/preview-image-cleanup.js';
 
 // Extend Hono context with our custom variables
 type Variables = MiddlewareVariables & {
@@ -300,8 +301,16 @@ app.onError((err, c) => {
   );
 });
 
+function scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext): void {
+  if (controller.cron === '*/10 * * * *') {
+    ctx.waitUntil(retryPreviewImageCleanup(env));
+  } else if (controller.cron === '23 4 * * *') {
+    scheduleRetention(controller, env, ctx);
+  }
+}
+
 // Export for Cloudflare Workers: the Hono app (which already carries `fetch`)
-// plus the daily retention `scheduled` handler. Assigning onto the app, rather
+// plus the `scheduled` handler. Assigning onto the app, rather
 // than exporting a `{ fetch, scheduled }` literal, keeps `app.request` /
 // `app.fetch` working unchanged for every test that imports the default export.
 export default Object.assign(app, { scheduled });

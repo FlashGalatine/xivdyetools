@@ -184,8 +184,8 @@ Preview mutation rules use owner/key/status CAS and actual removed-key capture. 
 retains the slot, including image-worker overload and binding/response-read failure; service
 unavailability returns a generic 503 while invalid-image responses remain 400. Cheap validation
 and proven storage/DB failure refund. Unconfirmed DB writes
-retain the slot and return 503; clean only proven-unreferenced objects. R2 cleanup is best-effort,
-not a D1/R2 transaction or a guarantee against null→image→null ABA/crash orphans.
+retain the slot and return 503. Cleanup of newly uploaded objects that never attached is
+best-effort. The worker queues previously attached keys when it detaches them.
 
 Vars: `ENVIRONMENT`, `API_VERSION = v1`, `CORS_ORIGIN`, `ADDITIONAL_CORS_ORIGINS` (CSV), `JWT_ISSUER`, `CACHE_PURGE_ZONE_ID` (production only — the `xivdyetools.app` zone id behind `shots.xivdyetools.app`, FINDING-018). Custom domain: `api.xivdyetools.app` only. The retired `api.xivdyetools.projectgalatine.com` was removed in the dashboard on 2026-10-05, and `tests/wrangler-config.test.ts` pins the single route so a deploy cannot re-attach it.
 
@@ -204,11 +204,11 @@ Vars: `ENVIRONMENT`, `API_VERSION = v1`, `CORS_ORIGIN`, `ADDITIONAL_CORS_ORIGINS
 | Secret | Purpose |
 |--------|---------|
 | `PERSPECTIVE_API_KEY` | Google Perspective API for ML toxicity scoring. **⚠️ The service shuts down 2026-12-31** — delete this secret on or before that date, or FINDING-005's fail-closed branch queues every submission for manual review. With no key set the local word list still flags, but it holds no profanity, so a clean local pass is reported as `method: 'unscored'` (`passed: false`) and new presets and text edits go to the moderator queue as `pending` (FINDING-019). See `DEPRECATIONS.md` |
-| `CACHE_PURGE_API_TOKEN` | FINDING-018: API token scoped to *Zone → Cache Purge* on the `xivdyetools.app` zone (the zone that serves `shots.xivdyetools.app`); pairs with the `CACHE_PURGE_ZONE_ID` **var** in `wrangler.toml` `[env.production]` (a zone id is config, not a secret). When set, every preview-image takedown purges the image URL from the edge cache and logs `[preview-image] cache purged …`. Absent → purge skipped, the object's one-day `s-maxage` is the only bound. Set on production 2026-08-21 |
+| `CACHE_PURGE_API_TOKEN` | FINDING-018: API token scoped to *Zone → Cache Purge* on the `xivdyetools.app` zone (the zone that serves `shots.xivdyetools.app`); pairs with the `CACHE_PURGE_ZONE_ID` **var** in `wrangler.toml` `[env.production]` (a zone id is config, not a secret). When set, every preview-image takedown purges the image URL from the edge cache and logs `[preview-image] cache purged …`. Missing purge configuration leaves production cleanup queued for retry. Set on production 2026-08-21 |
 
 ## Database
 
-### Tables (`schema.sql` + numbered migrations through `0016` + `002_add_composite_indexes.sql`)
+### Tables (`schema.sql` + numbered migrations through `0017` + `002_add_composite_indexes.sql`)
 
 `presets.content_revision` is an internal optimistic concurrency token. Migration 0014's
 trigger owns all increments when content, ownership, status, or revert snapshots change,
@@ -246,7 +246,7 @@ The prune runs in two places: **daily** from the retention job below, and best-e
 
 ### Daily retention job (`src/retention-job.ts`)
 
-A Cron Trigger (`[env.production.triggers]`, `23 4 * * *` UTC, **production only** — the top-level block is the routeless dev worker) calls the `scheduled` handler, which runs `pruneSubmissionEvents` (30 d), `pruneFailedNotifications` (30 d resolved / 90 d unresolved) and `pruneModerationRecords`, plus bounded continuity/confirmation cleanup, under `Promise.allSettled`, so one failing never stops the others. Logs counts, prune names and error names only. Each prune resolves `true` when its sweep ran and `false` when it caught its own D1 error; `runRetentionJob` resolves `{ fulfilled, rejected, failed }`, where `failed` names every prune that threw *or* reported `false` (BUG-066), and logs those names with `console.error`. Because Workers Logs are pinned off (FINDING-022) that log reaches nobody, so `scheduled` hands `ctx.waitUntil` a promise that **rejects** — with an `Error` naming only the failed prunes — whenever `failed` is non-empty. Cloudflare documents the first failing `waitUntil` as the invocation's status in the Cron Events table; that this worker's failed sweeps actually show up there as failures is **not yet confirmed** — check the dashboard after the next production deploy. The lazy write-path prunes stay (cheap, idempotent). `src/index.ts` still default-exports the Hono app, with `scheduled` attached via `Object.assign(app, { scheduled })` so `app.request` / `app.fetch` keep working. `tests/wrangler-config.test.ts` pins exactly one daily cron in production and none at the top level.
+A Cron Trigger (`[env.production.triggers]`, `23 4 * * *` UTC, **production only** — the top-level block is the routeless dev worker) calls the `scheduled` handler, which runs `pruneSubmissionEvents` (30 d), `pruneFailedNotifications` (30 d resolved / 90 d unresolved) and `pruneModerationRecords`, plus bounded continuity/confirmation cleanup, under `Promise.allSettled`, so one failing never stops the others. Logs counts, prune names and error names only. Each prune resolves `true` when its sweep ran and `false` when it caught its own D1 error; `runRetentionJob` resolves `{ fulfilled, rejected, failed }`, where `failed` names every prune that threw *or* reported `false` (BUG-066), and logs those names with `console.error`. Because Workers Logs are pinned off (FINDING-022) that log reaches nobody, so `scheduled` hands `ctx.waitUntil` a promise that **rejects** — with an `Error` naming only the failed prunes — whenever `failed` is non-empty. Cloudflare documents the first failing `waitUntil` as the invocation's status in the Cron Events table; that this worker's failed sweeps actually show up there as failures is **not yet confirmed** — check the dashboard after the next production deploy. The lazy write-path prunes stay (cheap, idempotent). `src/index.ts` still default-exports the Hono app, with `scheduled` attached via `Object.assign(app, { scheduled })` so `app.request` / `app.fetch` keep working. `tests/wrangler-config.test.ts` pins the daily retention and ten-minute preview cleanup schedules in production. Development has neither trigger.
 
 ### Composite Indexes (`migrations/002_add_composite_indexes.sql`)
 
@@ -335,7 +335,7 @@ POST /presets/:id/preview-image  (raw bytes)
                cacheControl: 'public, max-age=31536000, immutable, s-maxage=86400'
 ```
 
-The UUID in the key is what makes the browser-side `immutable` safe: every key is single-use, so a URL can never come to mean a different image. The **edge** TTL (`s-maxage`) is one day (FINDING-018) — takedown is not complete while the edge still serves the URL. Replacing a preview writes a new key and deletes the old one; `deletePreviewImage` deletes the object **and then** purges `https://shots.xivdyetools.app/<key>` through the Cloudflare single-file cache-purge API when `CACHE_PURGE_ZONE_ID` + `CACHE_PURGE_API_TOKEN` are set (`purgePreviewImageCache`, best-effort, never throws, skipped when unset); a missing key is success. Delete first, purge second — purging before a failed delete would only let the edge re-cache the object.
+The UUID in the key is what makes the browser-side `immutable` safe: every key is single-use, so a URL can never come to mean a different image. The **edge** TTL (`s-maxage`) is one day (FINDING-018) — takedown is not complete while the edge still serves the URL. Replacing, clearing or deleting a stored preview records its old key in `preview_image_cleanup` in the same D1 batch as the preset change. Cleanup deletes that exact R2 object, purges the URL, then removes the queue entry. A ten-minute production cron retries unfinished entries. An owner DELETE can return `202` with `cleanup: "pending"` while the gallery change is already visible. See the [rollout instructions](README.md#preview-cleanup-rollout).
 
 `preview_image_status` (`'none' | 'pending' | 'approved'`) gates display, and moderators move it via `PATCH /moderation/:presetId/preview-image`. Note that the `CommunityPreset` shape deliberately **hides** `preview_image_key`, so any handler that needs the raw key must do its own row-level read rather than reusing the public getter.
 

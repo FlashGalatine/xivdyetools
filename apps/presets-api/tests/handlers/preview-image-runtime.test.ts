@@ -1,13 +1,16 @@
 import { Hono } from 'hono';
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { MockInstance } from 'vitest';
 import { presetsRouter } from '../../src/handlers/presets';
 import { moderationRouter } from '../../src/handlers/moderation';
+import worker from '../../src/index';
 import type { AuthContext, Env } from '../../src/types';
 import { createD1Runtime } from '../d1-runtime';
 import { createMockEnv } from '../test-utils';
 import { loggerMiddleware } from '@xivdyetools/worker-kit';
 
 const png = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 0]);
+const purgeEndpoint = 'https://api.cloudflare.com/client/v4/zones/local-test-zone/purge_cache';
 function barrier() {
   let release!: () => void;
   const promise = new Promise<void>(resolve => { release = resolve; });
@@ -22,12 +25,13 @@ describe('preview ownership and attempt accounting on real D1', () => {
   let live: Set<string>; let deleted: string[]; let notifications: Record<string, unknown>[];
   let pending: Promise<unknown>[]; let decodes: number;
   let queryHook: undefined | ((query: string, execute: () => Promise<unknown>) => Promise<unknown>);
-  let batchHook: undefined | (() => Promise<void>);
+  let beforeWholeDeleteBatch: undefined | (() => Promise<void>);
+  let purge: MockInstance<typeof fetch>;
 
   // Wrap the real driver only at scheduling/failure boundaries. All successful
   // SQL results, including CAS zero rows and RETURNING keys, come from workerd.
   function databaseBoundary(): D1Database {
-    const originalStatements = new WeakMap<object, D1PreparedStatement>();
+    const originalStatements = new WeakMap<object, { actual: D1PreparedStatement; query: string }>();
     function statement(actual: D1PreparedStatement, query: string): D1PreparedStatement {
       const wrapped = new Proxy(actual, { get(target, property) {
         if (property === 'bind') return (...args: unknown[]) => statement(target.bind(...args), query);
@@ -39,14 +43,19 @@ describe('preview ownership and attempt accounting on real D1', () => {
         };
         return value.bind(target);
       } });
-      originalStatements.set(wrapped, actual);
+      originalStatements.set(wrapped, { actual, query });
       return wrapped;
     }
     return new Proxy(db, { get(target, property) {
       if (property === 'prepare') return (query: string) => statement(target.prepare(query), query);
       if (property === 'batch') return async (statements: D1PreparedStatement[]) => {
-        await batchHook?.();
-        return target.batch(statements.map(s => originalStatements.get(s) ?? s));
+        const queries = statements.map(s => originalStatements.get(s)?.query ?? '');
+        if (queries.some(query => /^\s*DELETE FROM presets WHERE/.test(query))) {
+          await beforeWholeDeleteBatch?.();
+        }
+        const execute = () => target.batch(statements.map(s => originalStatements.get(s)?.actual ?? s));
+        const previewMutation = queries.find(query => /^\s*UPDATE presets SET preview_image_key =/.test(query));
+        return previewMutation && queryHook ? queryHook(previewMutation, execute) : execute();
       };
       const value = Reflect.get(target, property);
       return typeof value === 'function' ? value.bind(target) : value;
@@ -54,12 +63,19 @@ describe('preview ownership and attempt accounting on real D1', () => {
   }
   beforeAll(async () => { runtime = await createD1Runtime(); db = runtime.db; }, 30000);
   afterAll(async () => { await runtime?.dispose(); });
+  afterEach(() => { purge?.mockRestore(); });
   beforeEach(async () => {
-    queryHook = undefined; batchHook = undefined; decodes = 0; loggingEnabled = false; errorCalls = [];
-    await db.batch(['votes', 'moderation_log', 'failed_notifications', 'presets', 'submission_events', 'banned_users'].map(t => db.prepare(`DELETE FROM ${t}`)));
+    queryHook = undefined; beforeWholeDeleteBatch = undefined; decodes = 0; loggingEnabled = false; errorCalls = [];
+    await db.batch(['votes', 'moderation_log', 'failed_notifications', 'presets', 'preview_image_cleanup', 'submission_events', 'banned_users'].map(t => db.prepare(`DELETE FROM ${t}`)));
     await db.prepare("INSERT INTO presets (id,name,description,category_id,dyes,tags,status,author_discord_id,preview_image_key,preview_image_status) VALUES ('p','Palette','Description','jobs','[1,2,3]','[]','approved','owner','p/old.webp','pending')").run();
     live = new Set(['p/old.webp']); deleted = []; notifications = []; pending = [];
+    purge = vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
+      if (input !== purgeEndpoint) throw new Error('Unexpected outbound request');
+      return Response.json({ success: true });
+    });
     env = createMockEnv({ DB: databaseBoundary(), INTERNAL_WEBHOOK_SECRET: 'local-test-only',
+      CACHE_PURGE_ZONE_ID: 'local-test-zone', CACHE_PURGE_API_TOKEN: 'local-test-token',
+      MODERATOR_IDS: '123456789012345678',
       IMAGE_WORKER: { fetch: async () => { decodes++; return new Response(png); } } as unknown as Fetcher,
       THUMBNAILS: { put: async (key: string) => { live.add(key); }, delete: async (key: string) => { deleted.push(key); live.delete(key); } } as unknown as R2Bucket,
       DISCORD_WORKER: { fetch: async (request: Request) => { notifications.push(await request.json()); return new Response('{}'); } } as unknown as Fetcher,
@@ -179,7 +195,7 @@ describe('preview ownership and attempt accounting on real D1', () => {
   });
   it('whole delete atomically captures the actual key from a concurrent winning upload', async () => {
     const entered = barrier(); const resume = barrier();
-    batchHook = async () => { entered.release(); await resume.promise; };
+    beforeWholeDeleteBatch = async () => { entered.release(); await resume.promise; };
     const deletion = request('DELETE', '/presets/p'); await entered.promise;
     expect((await request()).status).toBe(200); const uploadedKey = (await row())!.preview_image_key!;
     resume.release(); expect((await deletion).status).toBe(200);
@@ -191,6 +207,7 @@ describe('preview ownership and attempt accounting on real D1', () => {
     expect((await request()).status).toBe(200); const current = await row(); gate.release();
     expect((await deletion).status).toBe(409); expect(await row()).toEqual(current);
     expect([...live]).toEqual([current!.preview_image_key]); expect(await events()).toBe(1); expect(await sent()).toHaveLength(1);
+    expect((await db.prepare('SELECT object_key FROM preview_image_cleanup').all()).results).toEqual([]);
   });
   it.each(['whole', 'image'])('successful upload followed by %s delete removes its actual new key and retains charge', async kind => {
     expect((await request()).status).toBe(200); const key = (await row())!.preview_image_key!;
@@ -224,7 +241,7 @@ describe('preview ownership and attempt accounting on real D1', () => {
     const tables = ['votes', 'moderation_log', 'failed_notifications', 'submission_events'];
     const snapshot = () => Promise.all(tables.map(table => db.prepare(`SELECT * FROM ${table}`).all()));
     const before = await snapshot();
-    batchHook = async () => { await db.prepare("UPDATE presets SET author_discord_id='new-owner' WHERE id='p'").run(); };
+    beforeWholeDeleteBatch = async () => { await db.prepare("UPDATE presets SET author_discord_id='new-owner' WHERE id='p'").run(); };
     expect((await request('DELETE', '/presets/p')).status).toBe(409);
     expect((await snapshot()).map(r => r.results)).toEqual(before.map(r => r.results));
     expect(await row()).toMatchObject({ author_discord_id: 'new-owner', preview_image_key: 'p/old.webp' }); expect([...live]).toEqual(['p/old.webp']);
@@ -316,8 +333,11 @@ describe('preview ownership and attempt accounting on real D1', () => {
       expect(attachedKey).not.toBe('p/old.webp'); expect(await events()).toBe(1);
       const next = operation === 'approve' || operation === 'reject' ? await review(operation, attachedKey)
         : operation === 'upload' ? await request() : await request('DELETE', operation === 'whole' ? '/presets/p' : undefined);
-      expect(next.status).toBe(200); const final = await row();
+      const final = await row();
       resume.release(); const response = await upload;
+      const removed = operation === 'whole' || operation === 'image';
+      expect(next.status).toBe(removed ? 202 : 200);
+      if (removed) expect(await next.json()).toMatchObject({ success: true, cleanup: 'pending' });
       expect(response.status).toBe(200); expect(await response.json()).toEqual({ success: true, status: 'pending' });
       expect(await row()).toEqual(final); expect(await events()).toBe(operation === 'upload' ? 2 : 1);
       expect([...live]).toEqual(operation === 'approve' || operation === 'upload' ? [final!.preview_image_key] : []);
@@ -387,12 +407,126 @@ describe('preview ownership and attempt accounting on real D1', () => {
     gate.release(); expect((await upload).status).toBe(409); expect(live.has('p/old.webp')).toBe(true);
     expect(await events()).toBe(1); expect(await sent()).toHaveLength(0);
   });
-  it.each(['upload', 'whole', 'image'])('cleanup failure leaves successful %s DB result intact', async kind => {
+  it('cleanup failure leaves successful upload DB result intact', async () => {
     env.THUMBNAILS.delete = async () => { throw new Error('cleanup failed'); };
-    const response = kind === 'upload' ? await request() : await request('DELETE', kind === 'whole' ? '/presets/p' : undefined);
+    const response = await request();
     expect(response.status).toBe(200);
-    if (kind === 'whole') expect(await row()).toBeNull();
-    else expect(await row()).toMatchObject({ preview_image_status: kind === 'upload' ? 'pending' : 'none' });
+    expect(await row()).toMatchObject({ preview_image_status: 'pending' });
     expect(live.has('p/old.webp')).toBe(true);
+  });
+  it.each(['whole', 'image'])('rolls back %s deletion when D1 cannot enqueue cleanup', async kind => {
+    await db.prepare("UPDATE presets SET preview_image_status='approved' WHERE id='p'").run();
+    await db.prepare("INSERT INTO votes (preset_id,user_discord_id) VALUES ('p','voter')").run();
+    await db.prepare(`CREATE TRIGGER fail_cleanup_enqueue BEFORE INSERT ON preview_image_cleanup
+      BEGIN SELECT RAISE(ABORT, 'test cleanup queue unavailable'); END`).run();
+    try {
+      const response = await request('DELETE', kind === 'whole' ? '/presets/p' : '/presets/p/preview-image');
+      expect(response.status).toBeGreaterThanOrEqual(500);
+      expect(await row()).toMatchObject({ preview_image_key: 'p/old.webp', preview_image_status: 'approved' });
+      expect((await db.prepare('SELECT preset_id FROM votes').all()).results).toEqual([{ preset_id: 'p' }]);
+      expect([...live]).toEqual(['p/old.webp']);
+      expect(deleted).toEqual([]);
+      expect(purge).not.toHaveBeenCalled();
+    } finally {
+      await db.prepare('DROP TRIGGER fail_cleanup_enqueue').run();
+    }
+  });
+  it('keeps cleanup pending after R2 deletion when purge credentials are absent', async () => {
+    await db.prepare("UPDATE presets SET preview_image_status='approved' WHERE id='p'").run();
+    env.CACHE_PURGE_ZONE_ID = undefined;
+    env.CACHE_PURGE_API_TOKEN = undefined;
+    const response = await request('DELETE');
+    expect(response.status).toBe(202);
+    expect(await response.json()).toMatchObject({ success: true, cleanup: 'pending' });
+    expect(await row()).toMatchObject({ preview_image_key: null, preview_image_status: 'none' });
+    expect(live.has('p/old.webp')).toBe(false);
+    expect(purge).not.toHaveBeenCalled();
+    expect((await db.prepare('SELECT object_key FROM preview_image_cleanup').all()).results).toEqual([{ object_key: 'p/old.webp' }]);
+  });
+  it.each([
+    ['whole', 503],
+    ['image', 200],
+  ] as const)('retries storage and cache cleanup after %s deletion of a public preview', async (kind, purgeFailureStatus) => {
+    const key = 'p/old.webp';
+    const url = 'https://shots.xivdyetools.app/p/old.webp';
+    const path = kind === 'whole' ? '/presets/p' : '/presets/p/preview-image';
+    await db.prepare("UPDATE presets SET preview_image_status='approved' WHERE id='p'").run();
+    const remove = env.THUMBNAILS.delete.bind(env.THUMBNAILS);
+    const removeObject = vi.fn<R2Bucket['delete']>()
+      .mockRejectedValueOnce(new Error('temporary R2 failure'))
+      .mockImplementation(remove);
+    env.THUMBNAILS.delete = removeObject;
+
+    let cached = true;
+    purge
+      .mockResolvedValueOnce(Response.json({ success: false }, { status: purgeFailureStatus }))
+      .mockImplementation(async () => {
+        cached = false;
+        return Response.json({ success: true });
+      });
+    const now = vi.spyOn(Date, 'now');
+    const gallery = () => worker.request('/api/v1/presets', undefined, env);
+    const publicImage = () => cached || live.has(key) ? new Response(png) : new Response(null, { status: 404 });
+    const cleanupJob = () => db.prepare('SELECT next_attempt_at FROM preview_image_cleanup WHERE object_key = ?')
+      .bind(key).first<{ next_attempt_at: number }>();
+    async function runCleanup() {
+      const job = await cleanupJob();
+      const scheduledTime = Math.max(Date.now(), job?.next_attempt_at ?? 0);
+      now.mockReturnValue(scheduledTime);
+      const jobs: Promise<unknown>[] = [];
+      worker.scheduled({ cron: '*/10 * * * *', scheduledTime } as ScheduledController, env, {
+        waitUntil: (job: Promise<unknown>) => { jobs.push(job); },
+        passThroughOnException() {},
+      } as ExecutionContext);
+      return Promise.allSettled(jobs);
+    }
+
+    try {
+      expect(await (await gallery()).json()).toMatchObject({ presets: [{ id: 'p', preview_image_url: url }] });
+
+      const response = await request('DELETE', path);
+      const listing = await gallery();
+      expect(listing.status).toBe(200);
+      expect(await listing.json()).toMatchObject({
+        presets: kind === 'image' ? [{ id: 'p', preview_image_url: null }] : [],
+      });
+      expect(live.has(key)).toBe(true);
+      expect(new Uint8Array(await publicImage().arrayBuffer())).toEqual(png);
+      expect(removeObject.mock.calls).toEqual([[key]]);
+      expect(purge).not.toHaveBeenCalled();
+      expect(response.status).toBe(202);
+      expect(await response.json()).toMatchObject({ success: true, cleanup: 'pending' });
+      expect(await cleanupJob()).not.toBeNull();
+      if (kind === 'image') {
+        const repeated = await request('DELETE', path);
+        expect(repeated.status).toBe(202);
+        expect(await repeated.json()).toMatchObject({ success: true, cleanup: 'pending' });
+      }
+
+      await runCleanup();
+      expect(live.has(key)).toBe(false);
+      expect(new Uint8Array(await publicImage().arrayBuffer())).toEqual(png);
+      expect(purge).toHaveBeenCalledTimes(1);
+      expect(await cleanupJob()).not.toBeNull();
+
+      expect(await runCleanup()).toMatchObject([{ status: 'fulfilled' }]);
+      expect(publicImage().status).toBe(404);
+      expect(purge).toHaveBeenCalledTimes(2);
+      expect(await cleanupJob()).toBeNull();
+      for (const [endpoint, init] of purge.mock.calls) {
+        expect(endpoint).toBe(purgeEndpoint);
+        expect(init?.method).toBe('POST');
+        expect(JSON.parse(String(init?.body))).toEqual({ files: [url] });
+      }
+
+      const completedStorageAttempts = removeObject.mock.calls.length;
+      expect((await request('DELETE', path)).status).toBe(kind === 'image' ? 200 : 404);
+      expect(await runCleanup()).toMatchObject([{ status: 'fulfilled' }]);
+      expect(removeObject).toHaveBeenCalledTimes(completedStorageAttempts);
+      expect(purge).toHaveBeenCalledTimes(2);
+      expect(publicImage().status).toBe(404);
+    } finally {
+      now.mockRestore();
+    }
   });
 });

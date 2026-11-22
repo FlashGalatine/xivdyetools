@@ -81,6 +81,11 @@ import {
   MAX_PREVIEW_IMAGE_BYTES,
   PreviewImageStoreError,
 } from '../services/preview-image-service.js';
+import {
+  cleanDetachedPreviewImage,
+  enqueueDetachedPreviewImage,
+  finishPresetPreviewCleanup,
+} from '../services/preview-image-cleanup.js';
 
 // REFACTOR-017: category cache moved to category-service; re-exported because
 // tests (and any external callers) reach it through this module
@@ -433,15 +438,14 @@ presetsRouter.delete('/:id', async (c) => {
     return forbiddenResponse(c, "Cannot delete another user's preset");
   }
 
-  // Each dependent delete rechecks current ownership inside the same atomic
-  // batch. A rekey after the read must not erase a new owner's history/votes.
-  const authorization = 'EXISTS (SELECT 1 FROM presets WHERE id = ? AND (author_discord_id = ? OR ? = 1))';
+  // Each dependent write rechecks current ownership inside the same atomic
+  // batch. A rekey after the read must preserve the new owner's data.
+  const authorizedPreset = 'id = ? AND (author_discord_id = ? OR ? = 1)';
+  const authorization = `EXISTS (SELECT 1 FROM presets WHERE ${authorizedPreset})`;
   const moderator = auth.isModerator ? 1 : 0;
 
-  // Delete votes, dead letters and preset in transaction
-  // PRESETS-PERF-001: Using batch() for atomicity guarantee, not performance.
-  // D1 batch() ensures every delete succeeds or none does.
-  // For 3 queries, overhead is negligible vs. transaction safety benefit.
+  // Delete votes, dead letters, audit records and preset in one transaction.
+  // Capture the current preview key in the cleanup outbox in that same batch.
   //
   // FINDING-017 (2026-08-29 security audit): a dead-letter row names the preset
   // whose moderation embed never arrived. Once the preset is gone there is
@@ -451,7 +455,7 @@ presetsRouter.delete('/:id', async (c) => {
   // `json_valid` guards the extract: SQLite raises on malformed JSON, and this
   // delete must not be the thing that fails an owner's DELETE. `$.preset.id` is
   // the pre-FINDING-017 shape, still present in rows that have not aged out.
-  const deletion = await c.env.DB.batch<{ preview_image_key: string | null }>([
+  const [, , , , deletion] = await c.env.DB.batch<{ preview_image_key: string | null }>([
     c.env.DB.prepare(`DELETE FROM votes WHERE preset_id = ? AND ${authorization}`).bind(id, id, auth.userDiscordId, moderator),
     c.env.DB.prepare(
       `DELETE FROM failed_notifications
@@ -463,33 +467,24 @@ presetsRouter.delete('/:id', async (c) => {
     // enforces the FK's ON DELETE CASCADE, but the cascade is a foreign-key
     // setting, not something this delete should depend on — say it explicitly.
     c.env.DB.prepare(`DELETE FROM moderation_log WHERE preset_id = ? AND ${authorization}`).bind(id, id, auth.userDiscordId, moderator),
-    c.env.DB.prepare('DELETE FROM presets WHERE id = ? AND (author_discord_id = ? OR ? = 1) RETURNING preview_image_key').bind(id, auth.userDiscordId, moderator),
+    c.env.DB.prepare(
+      `INSERT INTO preview_image_cleanup (object_key, preset_id)
+       SELECT preview_image_key, id FROM presets WHERE ${authorizedPreset} AND preview_image_key IS NOT NULL
+       ON CONFLICT(object_key) DO NOTHING`
+    ).bind(id, auth.userDiscordId, moderator),
+    c.env.DB.prepare(`DELETE FROM presets WHERE ${authorizedPreset} RETURNING preview_image_key`)
+      .bind(id, auth.userDiscordId, moderator),
   ]);
-  const removed = deletion[3].results[0];
+  const removed = deletion.results[0];
   if (!removed) {
     const current = await getPresetImageState(c.env.DB, id);
     return current ? previewImageChangedResponse(c) : notFoundResponse(c, 'Preset');
   }
-  // RETURNING names the image actually removed, including an upload that won
-  // between the initial read and this batch. Never clean the stale read's key.
-  const previousKey = removed.preview_image_key;
-
-  // DB write before the R2 delete, deliberately (same rule as the upload and
-  // moderator-reject paths): if the batch throws, leaving the delete undone
-  // just orphans the object in R2 — invisible and cheap to clean up later.
-  // Delete first would risk the opposite: a row still pointing at a key that
-  // no longer exists, so an approved preset's card serves a broken image.
-  // Never trade a broken live image for a tidy bucket.
-  //
-  // The row is already gone by this point, so an R2 hiccup here must not turn
-  // a completed delete into a 500 the caller would reasonably retry.
-  try {
-    await deletePreviewImage(c.env, previousKey, c.get('logger'));
-  } catch (err) {
-    c.get('logger')?.error('[preview-image] R2 delete failed after preset delete', err, { presetId: id });
-  }
-
-  return c.json({ success: true, message: 'Preset deleted' });
+  // RETURNING names the key captured by the outbox even if an upload won
+  // between the initial read and this batch.
+  const cleaned = await finishPresetPreviewCleanup(c.env, id, removed.preview_image_key, c.get('logger'));
+  const response = { success: true, message: 'Preset deleted' };
+  return cleaned ? c.json(response) : c.json({ ...response, cleanup: 'pending' }, 202);
 });
 
 /**
@@ -1292,12 +1287,13 @@ presetsRouter.post('/:id/preview-image', async (c) => {
 
   const previousKey = preset.preview_image_key;
   try {
-    const attachment = await c.env.DB.prepare(
-      `UPDATE presets SET preview_image_key = ?, preview_image_status = 'pending', updated_at = ?
-       WHERE id = ? AND author_discord_id = ? AND preview_image_key IS ? AND preview_image_status IS ?`
-    )
-      .bind(key, new Date().toISOString(), presetId, auth.userDiscordId, previousKey, preset.preview_image_status)
-      .run();
+    const [attachment] = await c.env.DB.batch([
+      c.env.DB.prepare(
+        `UPDATE presets SET preview_image_key = ?, preview_image_status = 'pending', updated_at = ?
+         WHERE id = ? AND author_discord_id = ? AND preview_image_key IS ? AND preview_image_status IS ?`
+      ).bind(key, new Date().toISOString(), presetId, auth.userDiscordId, previousKey, preset.preview_image_status),
+      enqueueDetachedPreviewImage(c.env.DB, presetId, previousKey),
+    ]);
     if (attachment.meta.changes === 0) {
       // A returned zero-row CAS proves no attachment. Only our own unique new
       // object is ours to remove; the captured previous image may still be live.
@@ -1324,15 +1320,9 @@ presetsRouter.post('/:id/preview-image', async (c) => {
     }
   }
 
-  // Replace any previous image so an abandoned object is not orphaned.
-  // The DB already points at the new key, so the author's upload has fully
-  // succeeded; an R2 hiccup deleting the *old* object must not be reported to
-  // them as a failed upload. The orphan is the accepted failure mode here.
-  try {
-    await deletePreviewImage(c.env, previousKey, c.get('logger'));
-  } catch (err) {
-    c.get('logger')?.error('[preview-image] R2 delete of replaced image failed', err, { presetId });
-  }
+  // The upload is committed. A failed attempt to erase its predecessor can
+  // be retried from the outbox without changing the upload response.
+  await cleanDetachedPreviewImage(c.env, previousKey, c.get('logger'));
 
   // Cleanup awaited external work after the attachment committed. Recheck now:
   // moderation, replacement or deletion may already have superseded this image.
@@ -1419,27 +1409,21 @@ presetsRouter.delete('/:id/preview-image', async (c) => {
   // retrying, and the end state it asked for already holds.
   const previousKey = preset.preview_image_key;
 
-  // DB UPDATE before the R2 delete, as everywhere else in this file: a failed
-  // delete orphans an invisible object, while the reverse leaves a row pointing
-  // at a key that no longer exists.
-  const removal = await c.env.DB.prepare(
-    `UPDATE presets SET preview_image_key = NULL, preview_image_status = 'none', updated_at = ?
-     WHERE id = ? AND author_discord_id = ? AND preview_image_key IS ? AND preview_image_status IS ?`
-  )
-    .bind(new Date().toISOString(), presetId, auth.userDiscordId, previousKey, preset.preview_image_status)
-    .run();
+  const [removal] = await c.env.DB.batch([
+    c.env.DB.prepare(
+      `UPDATE presets SET preview_image_key = NULL, preview_image_status = 'none', updated_at = ?
+       WHERE id = ? AND author_discord_id = ? AND preview_image_key IS ? AND preview_image_status IS ?`
+    ).bind(new Date().toISOString(), presetId, auth.userDiscordId, previousKey, preset.preview_image_status),
+    enqueueDetachedPreviewImage(c.env.DB, presetId, previousKey),
+  ]);
   if (removal.meta.changes === 0) {
     const current = await getPresetImageState(c.env.DB, presetId);
     return current ? previewImageChangedResponse(c) : notFoundResponse(c, 'Preset');
   }
 
-  try {
-    await deletePreviewImage(c.env, previousKey, c.get('logger'));
-  } catch (err) {
-    c.get('logger')?.error('[preview-image] R2 delete failed after author removal', err, { presetId });
-  }
-
-  return c.json({ success: true, preview_image_status: 'none' });
+  const cleaned = await finishPresetPreviewCleanup(c.env, presetId, previousKey, c.get('logger'));
+  const response = { success: true, preview_image_status: 'none' };
+  return cleaned ? c.json(response) : c.json({ ...response, cleanup: 'pending' }, 202);
 });
 
 // ============================================

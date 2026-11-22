@@ -40,10 +40,8 @@ import {
   resolveFailedNotification,
 } from '../services/notification-service.js';
 import { pruneModerationRecords } from '../services/moderation-retention-service.js';
-import {
-  deletePreviewImage,
-  getPresetImageState,
-} from '../services/preview-image-service.js';
+import { getPresetImageState } from '../services/preview-image-service.js';
+import { cleanDetachedPreviewImage, enqueueDetachedPreviewImage } from '../services/preview-image-cleanup.js';
 
 type Variables = {
   auth: AuthContext;
@@ -451,32 +449,23 @@ moderationRouter.patch('/:presetId/preview-image', async (c) => {
     return c.json({ success: true, preview_image_status: 'approved' });
   }
 
-  // DB UPDATE before the R2 delete, deliberately (Task 4 ruling, same logic
-  // applies here): if the UPDATE throws, leaving the delete undone just
-  // orphans the object in R2 — invisible and cheap to clean up later. Delete
-  // first would risk the opposite: a row still pointing at a key that no
-  // longer exists, so the card serves a broken image. Never trade a broken
-  // live image for a tidy bucket.
+  // Capture the rejected key with the image and audit writes. R2 cleanup
+  // starts only after all three writes commit.
   const [result] = await c.env.DB.batch([
     c.env.DB.prepare(
       `UPDATE presets SET preview_image_key = NULL, preview_image_status = 'none', updated_at = ?
        WHERE id = ? AND preview_image_key = ? AND preview_image_status = 'pending'`
     ).bind(now, presetId, reviewedKey),
     logImageAction('image_reject'),
+    // The audit insert itself only changes a row when the UPDATE applied.
+    enqueueDetachedPreviewImage(c.env.DB, presetId, reviewedKey),
   ]);
   if (result.meta.changes !== 1) return staleReview();
 
   // FINDING-005: age-based retention rides the write path; never fails it.
   await pruneModerationRecords(c.env.DB, c.get('logger'));
 
-  // The DB already reflects the rejection, so the moderator's action has
-  // succeeded. An R2 hiccup here must not 500 a request whose state is already
-  // correct — the orphaned object is the accepted failure mode by design.
-  try {
-    await deletePreviewImage(c.env, reviewedKey, c.get('logger'));
-  } catch (err) {
-    c.get('logger')?.error('[preview-image] R2 delete failed after rejection', err, { presetId });
-  }
+  await cleanDetachedPreviewImage(c.env, reviewedKey, c.get('logger'));
 
   return c.json({ success: true, preview_image_status: 'none' });
 });

@@ -24,7 +24,8 @@ vi.mock('../src/services/moderation-retention-service', () => ({
 }));
 vi.mock('../src/services/ban-continuity-retention', () => ({ pruneContinuityRecords: mocks.continuity }));
 
-import { runRetentionJob, scheduled } from '../src/retention-job';
+import { runRetentionJob } from '../src/retention-job';
+import app from '../src/index';
 import { createMockEnv } from './test-utils';
 
 describe('retention job', () => {
@@ -123,7 +124,7 @@ describe('retention job', () => {
   /** Invoke the Cron entry point; returns the one promise it handed to ctx.waitUntil. */
   function runScheduled(env = createMockEnv()): Promise<unknown> {
     const waitUntil = vi.fn();
-    scheduled({ cron: '23 4 * * *' } as ScheduledController, env, { waitUntil } as unknown as ExecutionContext);
+    app.scheduled({ cron: '23 4 * * *' } as ScheduledController, env, { waitUntil } as unknown as ExecutionContext);
     expect(waitUntil).toHaveBeenCalledTimes(1);
     return waitUntil.mock.calls[0][0] as Promise<unknown>;
   }

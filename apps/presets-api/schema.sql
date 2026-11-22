@@ -113,6 +113,19 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_presets_dye_signature
   ON presets(dye_signature)
   WHERE status IN ('approved', 'pending');
 
+-- Preview image erasure outbox (migration 0017). Records survive preset deletion.
+CREATE TABLE IF NOT EXISTS preview_image_cleanup (
+  object_key TEXT NOT NULL PRIMARY KEY,
+  preset_id TEXT NOT NULL,
+  next_attempt_at INTEGER NOT NULL DEFAULT (CAST(strftime('%s', 'now') AS INTEGER) * 1000)
+);
+
+CREATE INDEX IF NOT EXISTS idx_preview_image_cleanup_due
+  ON preview_image_cleanup(next_attempt_at, object_key);
+
+CREATE INDEX IF NOT EXISTS idx_preview_image_cleanup_preset
+  ON preview_image_cleanup(preset_id);
+
 -- ============================================
 -- VOTES TABLE
 -- One vote per user per preset (composite PK)
