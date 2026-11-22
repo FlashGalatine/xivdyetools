@@ -17,6 +17,7 @@ vi.mock('./services/renderer', () => ({
       headers: {
         'Content-Type': 'image/png',
         'Cache-Control': 'public, max-age=86400, s-maxage=604800',
+        'CDN-Cache-Control': 'max-age=604800',
       },
     });
   }),
@@ -289,6 +290,7 @@ describe('/og/* edge cache', () => {
 
   beforeEach(() => {
     vi.mocked(renderOGImage).mockClear();
+    vi.mocked(execCtx.waitUntil).mockClear();
     caches = fakeCacheStorage();
     vi.stubGlobal('caches', caches);
   });
@@ -307,6 +309,63 @@ describe('/og/* edge cache', () => {
     expect(await second.text()).toBe('mock-png-data');
     expect(renderOGImage).toHaveBeenCalledTimes(1);
     expect(caches.store.size).toBe(1);
+  });
+
+  async function expectRenderedPreview(res: Response): Promise<void> {
+    expect(res.status).toBe(200);
+    expect(await res.text()).toBe('mock-png-data');
+    expect(res.headers.get('Content-Type')).toBe('image/png');
+    expect(res.headers.get('Cache-Control')).toBe('public, max-age=86400, s-maxage=604800');
+    expect(res.headers.get('CDN-Cache-Control')).toBe('max-age=604800');
+    expect(res.headers.get('X-Content-Type-Options')).toBe('nosniff');
+    expect(renderOGImage).toHaveBeenCalledTimes(1);
+  }
+
+  it('serves the rendered PNG when the cache read rejects', async () => {
+    vi.mocked(caches.default.match).mockRejectedValueOnce(new Error('Cache unavailable'));
+
+    const res = await app.request('/og/harmony/1/complementary', {}, TEST_ENV, execCtx);
+    await expectRenderedPreview(res);
+    await Promise.all(vi.mocked(execCtx.waitUntil).mock.calls.map(([task]) => task));
+    expect(caches.store.size).toBe(1);
+  });
+
+  it('serves the rendered PNG before a background cache write rejects', async () => {
+    let rejectWrite!: (reason: Error) => void;
+    const pendingWrite = new Promise<void>((_, reject) => { rejectWrite = reject; });
+    vi.mocked(caches.default.put).mockReturnValueOnce(pendingWrite);
+
+    const res = await app.request('/og/harmony/1/complementary', {}, TEST_ENV, execCtx);
+    await expectRenderedPreview(res);
+    expect(caches.default.put).toHaveBeenCalledTimes(1);
+    const tasks = vi.mocked(execCtx.waitUntil).mock.calls.map(([task]) => task);
+    expect(tasks).toHaveLength(1);
+    rejectWrite(new Error('Cache unavailable'));
+    await Promise.all(tasks);
+  });
+
+  it('serves the PNG when an inline cache write fails without an execution context', async () => {
+    vi.mocked(caches.default.put).mockRejectedValueOnce(new Error('Cache unavailable'));
+
+    const res = await app.request('/og/harmony/1/complementary', {}, TEST_ENV);
+    expect(res.status).toBe(200);
+    expect(await res.text()).toBe('mock-png-data');
+    expect(caches.default.put).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns the renderer error after a cache read fails', async () => {
+    vi.mocked(caches.default.match).mockRejectedValueOnce(new Error('Cache unavailable'));
+    vi.mocked(renderOGImage).mockResolvedValueOnce(
+      new Response('Image generation failed', { status: 500, headers: { 'Content-Type': 'text/plain' } }),
+    );
+
+    const res = await app.request('/og/harmony/1/complementary', {}, TEST_ENV, execCtx);
+    expect(res.status).toBe(500);
+    expect(await res.text()).toBe('Image generation failed');
+    expect(res.headers.get('Content-Type')).toBe('text/plain');
+    expect(res.headers.get('X-Content-Type-Options')).toBe('nosniff');
+    expect(renderOGImage).toHaveBeenCalledTimes(1);
+    expect(caches.default.put).not.toHaveBeenCalled();
   });
 
   // 2026-08-29 FINDING-024 (OG-4, ruling S7-R8): Hono re-dispatches a HEAD
