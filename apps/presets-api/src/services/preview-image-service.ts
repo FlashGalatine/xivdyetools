@@ -38,7 +38,7 @@ export const MAX_PREVIEW_IMAGE_BYTES = 5 * 1024 * 1024;
  */
 export const PREVIEW_IMAGE_CACHE_CONTROL = 'public, max-age=31536000, immutable, s-maxage=86400';
 
-/** The purge API is best-effort; never let a slow call hold a takedown hostage. */
+/** Limit how long a purge attempt holds up an HTTP response or the retry job. */
 const CACHE_PURGE_TIMEOUT_MS = 5_000;
 
 /**
@@ -58,13 +58,9 @@ export type CachePurgeResult = 'purged' | 'skipped' | 'failed';
  * Evict a preview image's public URL from the Cloudflare edge cache
  * (FINDING-018). Single-file purge via the zone `purge_cache` API — needs
  * `CACHE_PURGE_ZONE_ID` (the zone serving shots.xivdyetools.app) and
- * `CACHE_PURGE_API_TOKEN` (a token with Zone.Cache Purge). Both optional:
- * without them this is a no-op and `PREVIEW_IMAGE_CACHE_CONTROL`'s one-day
- * `s-maxage` bounds the exposure instead.
- *
- * Never throws. A failed purge is logged and reported as 'failed'; the
- * caller's DB + R2 state is already correct and must not be rolled back or
- * reported as an error over it.
+ * `CACHE_PURGE_API_TOKEN` (a token with Zone.Cache Purge). A non-production
+ * environment with neither credential reports a skipped attempt, while
+ * missing production or partial credentials report failure.
  */
 export async function purgePreviewImageCache(
   env: Env,
@@ -74,7 +70,11 @@ export async function purgePreviewImageCache(
   if (!key) return 'skipped';
   const zoneId = env.CACHE_PURGE_ZONE_ID?.trim();
   const token = env.CACHE_PURGE_API_TOKEN?.trim();
-  if (!zoneId || !token) return 'skipped';
+  if (!zoneId || !token) {
+    if (env.ENVIRONMENT !== 'production' && !zoneId && !token) return 'skipped';
+    (logger ?? console).error('[preview-image] cache purge configuration incomplete');
+    return 'failed';
+  }
 
   const url = previewImagePublicUrl(key);
   try {
@@ -87,19 +87,26 @@ export async function purgePreviewImageCache(
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ files: [url] }),
+        redirect: 'manual',
         signal: AbortSignal.timeout(CACHE_PURGE_TIMEOUT_MS),
       }
     );
     if (!response.ok) {
+      await response.body?.cancel();
       (logger ?? console).error(`[preview-image] cache purge failed for ${url}: HTTP ${response.status}`);
       return 'failed';
     }
-    // Success is logged too, so a production tail can prove the purge path is
-    // live (not merely that it did not fail) once the optional credentials are set.
+    const payload: unknown = await response.json();
+    if (!payload || typeof payload !== 'object' || !('success' in payload) || payload.success !== true) {
+      (logger ?? console).error(`[preview-image] cache purge was not confirmed for ${url}`);
+      return 'failed';
+    }
     (logger ?? console).info(`[preview-image] cache purged ${url}`);
     return 'purged';
   } catch (err) {
-    (logger ?? console).error(`[preview-image] cache purge failed for ${url}`, err);
+    (logger ?? console).error(`[preview-image] cache purge failed for ${url}`, undefined, {
+      cause: err instanceof Error ? err.name : 'unknown',
+    });
     return 'failed';
   }
 }
@@ -196,19 +203,17 @@ export async function storePreviewImage(
  *
  * Order matters (FINDING-018): delete FIRST, then purge. Purging before a
  * delete that then fails would just let the edge re-fetch and re-cache the
- * still-existing object. If the delete throws, the object is still there, so
- * there is nothing to purge and the error propagates to the caller (who
- * already treats an R2 failure as "orphaned object, not a failed request").
- * The purge itself never throws.
+ * still-existing object. If the delete throws, its outcome is unknown and
+ * the caller retries from R2 before attempting the purge.
  */
 export async function deletePreviewImage(
   env: Env,
   key: string | null,
   logger?: PreviewImageLogger
-): Promise<void> {
-  if (!key) return;
+): Promise<CachePurgeResult> {
+  if (!key) return 'skipped';
   await env.THUMBNAILS.delete(key);
-  await purgePreviewImageCache(env, key, logger);
+  return purgePreviewImageCache(env, key, logger);
 }
 
 /** The columns a mutating route needs to decide ownership, visibility and which object to touch. */

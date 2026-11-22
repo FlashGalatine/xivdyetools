@@ -184,7 +184,19 @@ upload stops reaching the moderation channel with no error and no dead-letter ro
 wrangler secret put CACHE_PURGE_API_TOKEN --env production  # API token scoped to Zone → Cache Purge on xivdyetools.app
 ```
 
-`CACHE_PURGE_ZONE_ID` (the `xivdyetools.app` zone that serves `shots.xivdyetools.app`) is **not** a secret — it ships as a var in `wrangler.toml`'s `[env.production]` block. When the token is set alongside it, every preview-image takedown (moderator reject, author delete, preset delete, replace) also purges the image URL from the Cloudflare edge cache (FINDING-018; set on production 2026-08-21). Without the token the purge is skipped and the object's one-day `s-maxage` is the only bound on how long a removed image stays reachable.
+`CACHE_PURGE_ZONE_ID` (the `xivdyetools.app` zone that serves `shots.xivdyetools.app`) is **not** a secret — it ships as a var in `wrangler.toml`'s `[env.production]` block. When the token is set alongside it, every preview-image takedown (moderator reject, author delete, preset delete, replace) also purges the image URL from the Cloudflare edge cache (FINDING-018; set on production 2026-08-21). If either setting is missing, the worker keeps the key pending. The routeless development worker shares the remote D1 and R2 bindings. Local development without purge credentials therefore also reports pending cleanup.
+
+### Preview cleanup rollout
+
+Before merging the worker change, apply the additive migration to the existing production D1 database from `apps/presets-api/`:
+
+```bash
+pnpm exec wrangler d1 execute xivdyetools-presets --env production --remote --file=./migrations/0017_preview_image_cleanup.sql
+```
+
+Once the updated worker is running, it records each key it detaches. Earlier deletions and direct SQL operations require separate reconciliation. Removing a preview or deleting its preset hides the image immediately. HTTP `202` with `cleanup: "pending"` means storage or cache cleanup is still outstanding. The production worker retries every ten minutes. Once the origin deletion and configured purge succeed, the queue entry can be removed. Browser copies retain their original cache lifetime.
+
+To check a rollout, remove a disposable approved preview. Verify that the gallery no longer returns its URL, the R2 object is absent, and the exact edge URL stops serving the image. Check the preview cron's invocation status and the remaining queue count with `SELECT COUNT(*) FROM preview_image_cleanup`.
 
 ## Dependencies
 

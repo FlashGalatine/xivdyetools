@@ -191,15 +191,13 @@ describe('wrangler.toml', () => {
    * retention periods hold; it runs in production only. A top-level trigger
    * would give the routeless dev worker a cron of its own.
    */
-  it('runs exactly one daily retention cron in production and none at the top level', () => {
+  it('schedules daily retention and ten-minute preview cleanup only in production', () => {
     expect(topLevel).not.toMatch(/^\[triggers\]$/m);
     expect(topLevel).not.toMatch(/^crons\s*=/m);
     expect(production).toMatch(/^\[env\.production\.triggers\]$/m);
     const crons = production.match(/^crons = \[([^\]]*)\]$/m)?.[1] ?? '';
     const entries = crons.split(',').map((s) => s.trim().replace(/^"|"$/g, ''));
-    expect(entries).toHaveLength(1);
-    // minute hour * * * : once a day.
-    expect(entries[0]).toMatch(/^\d{1,2} \d{1,2} \* \* \*$/);
+    expect(entries.sort()).toEqual(['*/10 * * * *', '23 4 * * *']);
   });
 
   it('configures no logpush and no tail consumers', () => {

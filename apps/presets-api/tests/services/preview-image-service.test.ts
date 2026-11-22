@@ -159,6 +159,7 @@ describe('purgePreviewImageCache / deletePreviewImage (FINDING-018)', () => {
     const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe('https://api.cloudflare.com/client/v4/zones/zone-123/purge_cache');
     expect(init.method).toBe('POST');
+    expect(init.redirect).toBe('manual');
     expect((init.headers as Record<string, string>).Authorization).toBe('Bearer purge-token');
     expect((init.headers as Record<string, string>)['Content-Type']).toBe('application/json');
     expect(JSON.parse(init.body as string)).toEqual({
@@ -221,14 +222,14 @@ describe('purgePreviewImageCache / deletePreviewImage (FINDING-018)', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('deletePreviewImage still succeeds when the purge fails — the takedown is the DB + R2 state', async () => {
+  it('deletePreviewImage reports a failed purge after removing the origin object', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     stubPurgeApi(async () => new Response('{}', { status: 500 }));
     const env = createMockEnv(purgeCredentials);
     const bucket = env.THUMBNAILS as unknown as MockR2Bucket;
     await bucket.put('preset-1/a.webp', new ArrayBuffer(4));
 
-    await expect(deletePreviewImage(env, 'preset-1/a.webp')).resolves.toBeUndefined();
+    await expect(deletePreviewImage(env, 'preset-1/a.webp')).resolves.toBe('failed');
     expect(bucket._store.has('preset-1/a.webp')).toBe(false);
   });
 

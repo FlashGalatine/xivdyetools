@@ -345,8 +345,10 @@ describe('moderation record retention (FINDING-005)', () => {
         executionCtx
       );
 
-      expect(response.status).toBe(200);
-      // The preset's own rows go; a user-level row (no preset) is untouched.
+      // The fixture has an image and no purge credentials. The preset's
+      // moderation rows still disappear as soon as the deletion commits.
+      expect(response.status).toBe(202);
+      expect(await response.json()).toMatchObject({ success: true, cleanup: 'pending' });
       expect(await ids('moderation_log')).toEqual(['user-row']);
     });
   });

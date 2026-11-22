@@ -28,6 +28,16 @@ describe('PresetsHandler', () => {
     let env: Env;
     let mockDb: ReturnType<typeof createMockD1Database>;
 
+    function mockDeleteRow(row: unknown) {
+        mockDb._setupMock((query) => query.includes('SELECT 1 FROM preview_image_cleanup') ? null : row);
+    }
+
+    function mockSuccessfulPreviewPurge() {
+        env.CACHE_PURGE_ZONE_ID = 'zone-123';
+        env.CACHE_PURGE_API_TOKEN = 'purge-token';
+        vi.stubGlobal('fetch', vi.fn(async () => Response.json({ success: true })));
+    }
+
     beforeEach(() => {
         resetCategoryCache(); // Reset category cache to prevent cross-test pollution
         mockDb = createMockD1Database();
@@ -2034,7 +2044,7 @@ describe('PresetsHandler', () => {
                 id: 'preset-123',
                 author_discord_id: '123',
             });
-            mockDb._setupMock(() => mockRow);
+            mockDeleteRow(mockRow);
 
             const res = await app.request(
                 '/api/v1/presets/preset-123',
@@ -2060,7 +2070,7 @@ describe('PresetsHandler', () => {
                 id: 'preset-123',
                 author_discord_id: '123',
             });
-            mockDb._setupMock(() => mockRow);
+            mockDeleteRow(mockRow);
 
             // A real D1 statement is opaque, but the mock carries the SQL it
             // was prepared from on `_query` -- across `bind()`, which returns a
@@ -2102,7 +2112,7 @@ describe('PresetsHandler', () => {
                 id: 'preset-123',
                 author_discord_id: 'other-user',
             });
-            mockDb._setupMock(() => mockRow);
+            mockDeleteRow(mockRow);
 
             const res = await app.request(
                 '/api/v1/presets/preset-123',
@@ -2127,7 +2137,7 @@ describe('PresetsHandler', () => {
                 author_discord_id: 'other-user',
                 status: 'pending',
             });
-            mockDb._setupMock(() => mockRow);
+            mockDeleteRow(mockRow);
 
             const res = await app.request(
                 '/api/v1/presets/preset-123',
@@ -2149,7 +2159,7 @@ describe('PresetsHandler', () => {
         it('refuses a banned owner with 403 USER_BANNED (FINDING-017)', async () => {
             mockDb._setBanStatus(true);
             const mockRow = createMockPresetRow({ id: 'preset-123', author_discord_id: '123' });
-            mockDb._setupMock(() => mockRow);
+            mockDeleteRow(mockRow);
 
             const res = await app.request(
                 '/api/v1/presets/preset-123',
@@ -2174,7 +2184,7 @@ describe('PresetsHandler', () => {
                 id: 'preset-123',
                 author_discord_id: 'other-user',
             });
-            mockDb._setupMock(() => mockRow);
+            mockDeleteRow(mockRow);
 
             const res = await app.request(
                 '/api/v1/presets/preset-123',
@@ -2210,12 +2220,13 @@ describe('PresetsHandler', () => {
         });
 
         it('removes the stored preview image when the preset is deleted', async () => {
+            mockSuccessfulPreviewPurge();
             const mockRow = createMockPresetRow({
                 id: 'preset-with-image',
                 author_discord_id: '123',
                 preview_image_key: 'preset-with-image/a.webp',
             });
-            mockDb._setupMock(() => mockRow);
+            mockDeleteRow(mockRow);
 
             const bucket = env.THUMBNAILS as unknown as MockR2Bucket;
             await bucket.put('preset-with-image/a.webp', new ArrayBuffer(4));
@@ -2247,7 +2258,7 @@ describe('PresetsHandler', () => {
                 id: 'preset-with-votes',
                 author_discord_id: '123',
             });
-            mockDb._setupMock(() => mockRow);
+            mockDeleteRow(mockRow);
 
             const res = await app.request(
                 '/api/v1/presets/preset-with-votes',
@@ -2281,7 +2292,7 @@ describe('PresetsHandler', () => {
                 id: presetId,
                 author_discord_id: '123',
             });
-            mockDb._setupMock(() => mockRow);
+            mockDeleteRow(mockRow);
 
             await app.request(
                 `/api/v1/presets/${presetId}`,
@@ -2312,7 +2323,7 @@ describe('PresetsHandler', () => {
                 id: 'order-test-preset',
                 author_discord_id: '123',
             });
-            mockDb._setupMock(() => mockRow);
+            mockDeleteRow(mockRow);
 
             await app.request(
                 '/api/v1/presets/order-test-preset',
@@ -3579,7 +3590,8 @@ describe('PresetsHandler', () => {
         // explicitly matches this file's convention elsewhere (Authorization:
         // 'Bearer test-bot-secret' + X-User-Discord-ID).
         it('clears the key and status for the author', async () => {
-            mockDb._setupMock(() => [
+            mockSuccessfulPreviewPurge();
+            mockDeleteRow([
                 { author_discord_id: '123456789', preview_image_key: 'p1/a.webp', preview_image_status: 'pending', name: 'Test' },
             ]);
 
@@ -3597,7 +3609,7 @@ describe('PresetsHandler', () => {
         // FINDING-016 / PAPI-11: a non-author on a non-approved preset gets the
         // same 404 as GET; the 403 is reserved for public (approved) rows.
         it('returns 404 (not 403) to a non-author when the preset is not approved (FINDING-016)', async () => {
-            mockDb._setupMock(() => [
+            mockDeleteRow([
                 { author_discord_id: '999999999', preview_image_key: 'p1/a.webp', name: 'Test', status: 'pending' },
             ]);
 
@@ -3614,7 +3626,7 @@ describe('PresetsHandler', () => {
         });
 
         it('still 403s a moderator who is not the author on a pending preset — they can see it', async () => {
-            mockDb._setupMock(() => [
+            mockDeleteRow([
                 { author_discord_id: '999999999', preview_image_key: 'p1/a.webp', name: 'Test', status: 'pending' },
             ]);
 
@@ -3630,7 +3642,7 @@ describe('PresetsHandler', () => {
         // FINDING-017 / PAPI-9: DELETE preview-image had no ban check
         it('refuses a banned author with 403 USER_BANNED (FINDING-017)', async () => {
             mockDb._setBanStatus(true);
-            mockDb._setupMock(() => [
+            mockDeleteRow([
                 { author_discord_id: '123456789', preview_image_key: 'p1/a.webp', name: 'Test', status: 'approved' },
             ]);
 
@@ -3647,7 +3659,7 @@ describe('PresetsHandler', () => {
         });
 
         it('refuses a non-author', async () => {
-            mockDb._setupMock(() => [
+            mockDeleteRow([
                 // approved: the preset is public, so a 403 does not reveal anything GET would not
                 { author_discord_id: '999999999', preview_image_key: 'p1/a.webp', name: 'Test', status: 'approved' },
             ]);
@@ -3662,7 +3674,7 @@ describe('PresetsHandler', () => {
         });
 
         it('404s an unknown preset', async () => {
-            mockDb._setupMock(() => []);
+            mockDeleteRow([]);
 
             const res = await app.request(
                 '/api/v1/presets/nope/preview-image',
@@ -3674,7 +3686,7 @@ describe('PresetsHandler', () => {
         });
 
         it('is idempotent when there is no image', async () => {
-            mockDb._setupMock(() => [
+            mockDeleteRow([
                 { author_discord_id: '123456789', preview_image_key: null, preview_image_status: 'none', name: 'Test' },
             ]);
 
@@ -3687,10 +3699,8 @@ describe('PresetsHandler', () => {
             expect(res.status).toBe(200);
         });
 
-        it('still succeeds when the R2 delete throws', async () => {
-            // The DB already reflects the removal; an R2 hiccup must not 500 a
-            // request whose state is already correct.
-            mockDb._setupMock(() => [
+        it('reports pending cleanup when the R2 delete throws', async () => {
+            mockDeleteRow([
                 { author_discord_id: '123456789', preview_image_key: 'p1/a.webp', preview_image_status: 'pending', name: 'Test' },
             ]);
             (env.THUMBNAILS as unknown as MockR2Bucket).delete = () => {
@@ -3703,7 +3713,8 @@ describe('PresetsHandler', () => {
                 env
             );
 
-            expect(res.status).toBe(200);
+            expect(res.status).toBe(202);
+            expect(await res.json()).toMatchObject({ success: true, cleanup: 'pending' });
         });
     });
 

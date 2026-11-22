@@ -385,8 +385,8 @@ The following order is a preparation checklist for an operator, not authorizatio
    blanket `DELETE WHERE moderator_discord_id=...` or ban-member deletion recipe.
 5. Using the keys of rows **actually deleted**, delete their R2 objects, then purge each exact
    public image URL. Keep the pre-delete manifest and `RETURNING` output until reconciliation.
-   A database failure means no image deletion. An R2 failure after DB success is an orphan
-   requiring retry, not a reason to repeat all DB mutations. Purging before R2 deletion can
+   The API queues detached keys for retry, but these direct SQL deletions still require the
+   operator to reconcile R2 and the edge. Keep the case open until both are verified. Purging before R2 deletion can
    refill the cache with the still-existing object.
 6. Delete only approved exact bot KV keys and verified Discord posts/content. Re-list KV with
    pagination and account for eventual consistency; repeat checks after its propagation window.
