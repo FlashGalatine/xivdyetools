@@ -34,6 +34,27 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.14.1] - 2026-11-22
+
+### Finding and sharing presets
+- In the web app, you can search official presets by their translated names, even offline. Alphabetical sorting now carries across pages, and switching languages updates your search.
+- Saved presets in the web app now tell you when a preset is unavailable to the public. If it becomes public again, it reappears in Saved.
+- If you submit a dye combination that already exists, the web app opens the matching preset when you have access to it.
+- If you delete a preset or remove its preview image, XIV Dye Tools now retries automatically if the image removal is interrupted.
+
+### Editing presets in Discord
+- Type part of a preset name in `/preset edit` to search all your presets, even if you have more than 25. You can edit a pending preset or resubmit a rejected one. Only you can see the bot’s reply.
+- The Discord bot now tells you whether another preset already uses your dyes or your preset changed while you were editing it.
+
+### Picking dyes and checking prices
+- The Swatch Matcher notice now shows Evercold’s confirmed release date of **February 23, 2027**, in all six languages. The Swatch Matcher guide has the date too.
+- On phones, canceling the web app’s Color Palette returns keyboard focus to the dye slot that opened it. Dye Comparison confirms a random pick only when it fills a slot.
+- Market price lookups can still return a price when it can’t be saved for reuse. Market and character lookups recover from temporary storage problems.
+- Shared XIV Dye Tools links can still show their preview cards on Discord and X when a saved copy of the image can’t be read or updated.
+
+### Sign-in and privacy
+- The web app clears temporary sign-in details when you return from Discord or XIVAuth. The Privacy Guide now explains in all six languages how to finish resetting Glamour edits if item names were unavailable during the first reset.
+
 ## [5.14.0] - 2026-11-16
 ### 👆 Tap a slot to pick its dye
 - Web app: tap an empty slot or card in a tool to open the Color Palette and fill it with the next dye you pick. Tap a filled slot to replace its dye.
