@@ -32,7 +32,7 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.18.1 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Web Application** | v5.18.2 | `xivdyetools-web-app` | Cloudflare Pages | Active |
 | **Discord Bot** | v5.9.12 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.5 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.9.2 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
@@ -134,6 +134,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.18.2 | Nov 2026 | Localized preset search and sorting, saved preset availability, duplicate navigation, palette keyboard focus and random dye feedback. Clears temporary sign-in data and updates all six privacy guides |
 | v5.18.1 | Nov 2026 | Build only: production builds collapse the indentation inside Lit `html`, `svg` and `css` templates (`vite-plugin-minify-templates.ts`). JS payload 2,251.71 KB to 2,186.67 KB, layout shell 226.23 KB to 188.34 KB; the payload limit returns to 2,250 KB and the layout shell row drops from 228 KB to 200 KB. No change to what the app does |
 | v5.18.0 | Nov 2026 | Slot-aware dye picking (issue 422, first slice): tapping a slot or an empty-state card in a tool opens the Color Palette for that slot, a pick fills or replaces it, and on a phone the palette closes again after a pick a slot tap started. The palette marks every dye the tool holds, and multi-dye tools get a strip of slot chips, a header line naming the target slot and, with no slot targeted, tap-again-to-remove (with a slot targeted, a marked dye moves into it). Dye Comparison and Accessibility Checker gain an "Add Dye" tile; Dye Mixer no longer holds the same dye twice |
 | v5.17.2 | Nov 2026 | The X/Twitter account was renamed from @AsheJunius to @FlashGalatine: the About modal's X link (core's `SOCIAL_LINKS`) and the `twitter:site` / `twitter:creator` share-card tags now name the new handle. No other source changed |

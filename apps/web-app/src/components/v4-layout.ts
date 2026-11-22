@@ -16,10 +16,12 @@ import { LanguageService, StorageService, ModalService, RouterService } from '@s
 import { TutorialService, type TutorialTool } from '@services/tutorial-service';
 import { TelemetryService, type ToolEntry } from '@services/telemetry-service';
 import { ShareService } from '@services/share-service';
+import { ToastService } from '@services/toast-service';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
 import { STORAGE_PREFIX } from '@shared/constants';
 import { makeCustomDye } from '@shared/custom-dye';
+import { localizedDyeName } from '@shared/dye-name';
 import type { Dye } from '@xivdyetools/types';
 import type { BaseComponent } from './base-component';
 import {
@@ -104,18 +106,16 @@ function routed<T>(call: () => T): T {
   }
 }
 
-/** The pre-contract path: selectDye, else addDye. Returns whether the tool took the dye. */
+/** Route untargeted picks, honoring explicit rejections from tools that report them. */
 function addDyeToTool(dye: Dye): boolean {
   if (activeTool && 'selectDye' in activeTool) {
-    const tool = activeTool as BaseComponent & { selectDye: (dye: unknown) => void };
-    routed(() => tool.selectDye(dye));
-    return true;
+    const tool = activeTool as BaseComponent & { selectDye: (dye: Dye) => boolean | void };
+    return routed(() => tool.selectDye(dye)) !== false;
   }
   if (activeTool && 'addDye' in activeTool) {
     // Fallback for tools that use addDye instead of selectDye
-    const tool = activeTool as BaseComponent & { addDye: (dye: unknown) => void };
-    routed(() => tool.addDye(dye));
-    return true;
+    const tool = activeTool as BaseComponent & { addDye: (dye: Dye) => boolean | void };
+    return routed(() => tool.addDye(dye)) !== false;
   }
   logger.debug(
     `[V4 Layout] Tool ${RouterService.getCurrentToolId()} does not support dye selection`
@@ -295,10 +295,14 @@ export async function initializeV4Layout(container: HTMLElement): Promise<void> 
     }
     syncPaletteSlots();
 
-    // Telemetry: a swatch click a tool took is a deliberate pick; the random
-    // button, a click that removed a held dye, and a click while no tool (or
-    // one without dye input) is mounted, are not
-    if (consumed && !random && typeof dye.stainID === 'number') {
+    if (!consumed) return;
+    if (random) {
+      ToastService.info(
+        LanguageService.tInterpolate('colorPalette.randomDyeSelected', {
+          name: localizedDyeName(dye),
+        })
+      );
+    } else if (typeof dye.stainID === 'number') {
       TelemetryService.trackDyePick(dye.stainID, 'drawer');
     }
   }) as EventListener);

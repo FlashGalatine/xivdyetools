@@ -6,7 +6,7 @@
  * picture-led cards with votes and saves on the face. The offline state is
  * the common case by design — the strip names it, and the Official tab is
  * what is left standing. Saved is the local, offline-proof shelf
- * (SavedPresetsService snapshots with tombstones).
+ * (SavedPresetsService snapshots with public availability markers).
  *
  * Spec: docs/research/monorepo-2.0/8a-gallery-port-spec.md
  *
@@ -19,7 +19,11 @@ import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { ICON_STATE_PRESETS_EMPTY, ICON_STATE_SEARCH } from '@shared/state-icons';
 import { BaseLitComponent } from './base-lit-component';
 import { ConfigController } from '@services/config-controller';
-import { hybridPresetService, sortPresets } from '@services/hybrid-preset-service';
+import {
+  hybridPresetService,
+  matchesPresetSearch,
+  sortPresets,
+} from '@services/hybrid-preset-service';
 import {
   resolvePresetDye,
   LanguageService,
@@ -33,7 +37,7 @@ import { communityPresetService } from '@services/community-preset-service';
 import { SavedPresetsService, type SavedPreset } from '@services/saved-presets-service';
 import { CollectionService, type Collection } from '@services/collection-service';
 import { logger } from '@shared/logger';
-import { presetCategoryLabel } from '@shared/preset-i18n';
+import { comparePresetNames, presetCategoryLabel } from '@shared/preset-i18n';
 import { sanitizeExampleLink, sanitizePreviewImageUrl } from '@shared/example-link';
 import type { UnifiedPreset, PresetPoolResult } from '@services/hybrid-preset-service';
 import type { CommunityPreset } from '@services/community-preset-service';
@@ -66,25 +70,16 @@ const SORT_ORDER = ['popular', 'recent', 'name'] as const;
  * How many presets one load asks for.
  *
  * BUG-020: this must match what presets-api will actually return, because
- * tombstone reconciliation treats "absent from the fetched pool" as "deleted
- * by its author". The server clamps `limit` to 50
+ * availability reconciliation needs to tell a full page from an exhaustive
+ * response. The server clamps `limit` to 50
  * (`apps/presets-api/src/handlers/presets.ts:240`), so asking for 100 quietly
- * produced a 50-row pool that reconciliation then read as 50 deletions.
+ * produced a full page that reconciliation then treated as exhaustive.
  */
 const PRESET_PAGE_LIMIT = 50;
 
 /** A local CollectionService palette's gallery id (see `localPaletteToUnified`). */
 function isLocalPaletteId(id: string): boolean {
   return id.startsWith('local-');
-}
-
-/** Name, description or a tag contains the (lower-cased) query. */
-function matchesSearch(preset: UnifiedPreset, q: string): boolean {
-  return (
-    preset.name.toLowerCase().includes(q) ||
-    preset.description.toLowerCase().includes(q) ||
-    preset.tags.some((t) => t.toLowerCase().includes(q))
-  );
 }
 
 /** A Saved-shelf row, with the sort keys the shelf itself holds. */
@@ -123,7 +118,7 @@ function sortShelf(rows: ShelfRow[], sort: PresetsConfig['sortBy']): UnifiedPres
         return b.votes - a.votes;
       case 'name':
       default:
-        return a.preset.name.localeCompare(b.preset.name);
+        return comparePresetNames(a.preset, b.preset);
     }
   });
   return ordered.map((row) => row.preset);
@@ -218,13 +213,14 @@ export class PresetTool extends BaseLitComponent {
   /** BUG-029 (2026-10-04 deep-dive): guards `loadPresets` against a superseded answer — see there. */
   private _loadSeq: number = 0;
   /**
-   * The search and sort the API pool was last fetched with. OPT-008
+   * The search, sort, and locale that produced the gallery pool. OPT-008
    * (2026-10-04 deep-dive): Saved and Mine search and sort locally, so a change
    * made there leaves the pool behind until an API tab is chosen again —
    * `handleTabSelect` refetches then.
    */
   private poolQuery: string = '';
   private poolSort: PresetsConfig['sortBy'] | null = null;
+  private poolLocale: string | null = null;
 
   static override styles: CSSResultGroup = [
     BaseLitComponent.baseStyles,
@@ -480,10 +476,19 @@ export class PresetTool extends BaseLitComponent {
     });
 
     this.isAuthenticated = authService.isAuthenticated();
+    let sessionToken = authService.getState().token;
     this.authUnsubscribe = authService.subscribe((state) => {
       const wasAuthenticated = this.isAuthenticated;
       this.isAuthenticated = state.isAuthenticated;
-      if (!wasAuthenticated && this.isAuthenticated) {
+      const sessionChanged = sessionToken !== state.token;
+      sessionToken = state.token;
+      if (sessionChanged && this.selectedPreset?.viewerOnly) {
+        this.selectedPreset = null;
+        history.replaceState({ toolId: 'presets' }, '', `/presets${window.location.search}`);
+      }
+      if (this.isAuthenticated && (!wasAuthenticated || sessionChanged)) {
+        this.userSubmissions = [];
+        this.userSubmissionsLoaded = false;
         void this.loadUserSubmissions();
       } else if (!this.isAuthenticated) {
         this.userSubmissionsGeneration++;
@@ -497,7 +502,13 @@ export class PresetTool extends BaseLitComponent {
     });
 
     this.savedList = SavedPresetsService.getAll();
-    this.languageUnsubscribe = LanguageService.subscribe(() => this.requestUpdate());
+    this.languageUnsubscribe = LanguageService.subscribe(() => {
+      this.requestUpdate();
+      if (this.isApiTab() && this.poolLocale !== null && this.poolLocaleIsStale()) {
+        clearTimeout(this._searchDebounce);
+        void this.loadPresets();
+      }
+    });
 
     this.savedUnsubscribe = SavedPresetsService.subscribe((saved) => {
       this.savedList = saved;
@@ -615,9 +626,11 @@ export class PresetTool extends BaseLitComponent {
       return;
     }
 
+    const viewerToken = authService.getState().token;
     try {
       const preset = await hybridPresetService.getPreset(presetId);
       if (seq !== this._restoreSeq) return; // superseded by a newer popstate
+      if (preset?.viewerOnly && viewerToken !== authService.getState().token) return;
       if (preset) {
         this.selectedPreset = preset;
       } else {
@@ -650,9 +663,11 @@ export class PresetTool extends BaseLitComponent {
     }
 
     const seq = ++this._restoreSeq;
+    const viewerToken = authService.getState().token;
     try {
       const preset = await hybridPresetService.getPreset(presetId);
       if (seq !== this._restoreSeq) return; // superseded by a newer popstate
+      if (preset?.viewerOnly && viewerToken !== authService.getState().token) return;
       if (preset) {
         this.selectedPreset = preset;
       } else {
@@ -679,6 +694,7 @@ export class PresetTool extends BaseLitComponent {
     const sort = this.config.sortBy;
     this.poolQuery = query;
     this.poolSort = sort;
+    this.poolLocale = LanguageService.getCurrentLocale();
     this.isLoading = true;
     try {
       // The category is NOT passed down: the rail's counts are computed over
@@ -693,7 +709,7 @@ export class PresetTool extends BaseLitComponent {
       if (seq !== this._loadSeq) return; // superseded by a newer load
       this.presets = result.presets;
       this.offline = !result.apiOk;
-      this.reconcileTombstones(result, query);
+      this.reconcilePublicAvailability(result, query);
       // The Saved shelf's Popular key for when a copy leaves the pool
       SavedPresetsService.recordVoteCounts(result.presets);
     } catch (error) {
@@ -706,55 +722,22 @@ export class PresetTool extends BaseLitComponent {
   }
 
   /**
-   * Detect saved community presets whose live copy is gone, and un-mark any
-   * that came back. This is the writer behind the "Removed by its author"
-   * chip and the Keep-deleted toggle — without it both were dead paths.
-   *
-   * A false tombstone is worse than a late one, so marking one needs proof of
-   * absence — all three of:
-   * - the community request answered (`apiOk`): an unreachable API, or one
-   *   failed request, is not a deletion (BUG-029, 2026-10-04 deep-dive — a
-   *   failed request was swallowed and read as "every preset is gone");
-   * - it was unfiltered: a search would tombstone everything it didn't match;
-   * - BUG-020: it returned less than a full page. presets-api caps `limit` at
-   *   50 regardless of what we ask for, so a full page means "there may be
-   *   more", and every saved community preset beyond it would look deleted.
-   *
-   * Each guard reads what was FETCHED — `fetchedQuery`, and the API ids from
-   * before the merged list's sort-and-cut — never the current state.
-   *
-   * Un-marking needs only an answer: a preset the API returned exists,
-   * whatever the query or page size. That is also what heals a false
-   * tombstone once the collection outgrows one page.
-   *
-   * Local palettes (`local-…`) never reach the API, so they are never marked,
-   * and a mark an earlier version left on one is cleared.
+   * Mark a saved community preset unavailable only when a successful,
+   * unfiltered, complete public listing omits it. The listing cannot identify
+   * the reason for its absence. Use API ids from before the merged sort and
+   * limit, and clear a mark as soon as the API lists the preset again.
    */
-  private reconcileTombstones(fetch: PresetPoolResult, fetchedQuery: string): void {
+  private reconcilePublicAvailability(fetch: PresetPoolResult, fetchedQuery: string): void {
     const live = new Set(fetch.apiIds);
-    const canTombstone = fetch.apiOk && !fetchedQuery && live.size < PRESET_PAGE_LIMIT;
-    if (fetch.apiOk && !fetchedQuery && !canTombstone) {
-      logger.info(
-        '[v4-preset-tool] Not tombstoning: the page is full, so the pool may be incomplete'
-      );
-    }
+    const hasCompletePublicList = fetch.apiOk && !fetchedQuery && live.size < PRESET_PAGE_LIMIT;
 
     for (const saved of this.savedList) {
-      // Curated palettes ship with the app — they can't be author-deleted
+      // Curated palettes ship with the app and local palettes never reach the API.
       if (saved.isCurated) continue;
-      let gone: boolean;
-      if (isLocalPaletteId(saved.id) || live.has(saved.id)) {
-        gone = false;
-      } else if (canTombstone) {
-        gone = true;
-      } else {
-        continue; // absent from a pool that cannot prove a deletion
-      }
-      if (gone !== Boolean(saved.deletedByAuthor)) {
-        SavedPresetsService.markDeleted(saved.id, gone);
-        logger.info(
-          `[v4-preset-tool] Saved preset ${saved.id} ${gone ? 'tombstoned' : 'restored'}`
-        );
+      const unavailable = !isLocalPaletteId(saved.id) && !live.has(saved.id);
+      if (unavailable && !hasCompletePublicList) continue;
+      if (unavailable !== Boolean(saved.deletedByAuthor)) {
+        SavedPresetsService.markPubliclyUnavailable(saved.id, unavailable);
       }
     }
   }
@@ -793,6 +776,7 @@ export class PresetTool extends BaseLitComponent {
       voteCount: preset.vote_count,
       isCurated: preset.is_curated,
       isFromAPI: true,
+      viewerOnly: preset.status !== 'approved',
       apiPresetId: preset.id,
       createdAt: preset.created_at,
       // WEB-14: read-path re-check of the server allowlist (see example-link.ts)
@@ -860,8 +844,8 @@ export class PresetTool extends BaseLitComponent {
    * sorts on its own keys: see `sortShelf`.)
    */
   private searchAndSortLocally(pool: UnifiedPreset[]): UnifiedPreset[] {
-    const q = this.searchQuery.toLowerCase();
-    const found = q ? pool.filter((p) => matchesSearch(p, q)) : pool;
+    const q = this.searchQuery;
+    const found = q ? pool.filter((p) => matchesPresetSearch(p, q)) : pool;
     return sortPresets(found, this.config.sortBy);
   }
 
@@ -940,10 +924,10 @@ export class PresetTool extends BaseLitComponent {
               votes: live?.voteCount ?? s.voteCount,
             };
           });
-        const q = this.searchQuery.toLowerCase();
+        const q = this.searchQuery;
         const rows = [...snapshots, ...locals];
         return sortShelf(
-          q ? rows.filter((row) => matchesSearch(row.preset, q)) : rows,
+          q ? rows.filter((row) => matchesPresetSearch(row.preset, q)) : rows,
           this.config.sortBy
         );
       }
@@ -1015,10 +999,19 @@ export class PresetTool extends BaseLitComponent {
     clearTimeout(this._searchDebounce);
     if (
       this.isApiTab(tab) &&
-      (this.searchQuery !== this.poolQuery || this.config.sortBy !== this.poolSort)
+      (this.searchQuery !== this.poolQuery ||
+        this.config.sortBy !== this.poolSort ||
+        this.poolLocaleIsStale())
     ) {
       void this.loadPresets();
     }
+  }
+
+  private poolLocaleIsStale(): boolean {
+    return (
+      (Boolean(this.searchQuery) || this.config.sortBy === 'name') &&
+      this.poolLocale !== LanguageService.getCurrentLocale()
+    );
   }
 
   private handleCategorySelect(category: PresetCategoryFilter): void {
@@ -1135,9 +1128,12 @@ export class PresetTool extends BaseLitComponent {
       logger.warn('[v4-preset-tool] Cannot find original community preset for editing');
       return;
     }
+    const viewerToken = authService.getState().token;
     const { showPresetEditForm } = await import('../preset-edit-form');
+    if (!this.isConnected || !this.isAuthenticated || viewerToken !== authService.getState().token)
+      return;
     showPresetEditForm(communityPreset, (result) => {
-      if (result.success) {
+      if (result.success && this.isConnected && viewerToken === authService.getState().token) {
         void this.loadPresets();
         void this.loadUserSubmissions();
         this.selectedPreset = null;
@@ -1159,6 +1155,7 @@ export class PresetTool extends BaseLitComponent {
 
     const confirmEl = document.createElement('p');
     confirmEl.textContent = LanguageService.t('preset.confirmDelete');
+    const viewerToken = authService.getState().token;
 
     // Destructive convention: outlined narrow Delete, solid wide Cancel.
     ModalService.showConfirm({
@@ -1168,11 +1165,18 @@ export class PresetTool extends BaseLitComponent {
       confirmText: LanguageService.t('common.delete'),
       cancelText: LanguageService.t('common.cancel'),
       onConfirm: async () => {
+        if (
+          !this.isConnected ||
+          !this.isAuthenticated ||
+          viewerToken !== authService.getState().token
+        )
+          return;
         ToastService.info(LanguageService.t('preset.deleting'));
         // BUG-032 (2026-10-04 deep-dive): deletePreset answers a failure
         // ({ success: false }) rather than throwing it, so this used to toast
         // "deleted" and leave for a list that still held the preset.
         const result = await presetSubmissionService.deletePreset(preset.apiPresetId!);
+        if (!this.isConnected || viewerToken !== authService.getState().token) return;
         if (!result.success) {
           logger.error('[v4-preset-tool] Failed to delete preset:', result.error);
           ToastService.error(LanguageService.t('errors.deletePresetFailed'));
@@ -1213,7 +1217,9 @@ export class PresetTool extends BaseLitComponent {
     // typed on Saved or Mine is fetched only when an API tab is chosen, and
     // until then these two would count the previous search. (A sort changes
     // no count.)
-    const poolStale = this.searchQuery !== this.poolQuery;
+    const poolStale =
+      this.searchQuery !== this.poolQuery ||
+      (Boolean(this.searchQuery) && this.poolLocaleIsStale());
     const tabs: Array<{ id: PresetTab; label: string; count: string }> = [
       {
         id: 'community',
@@ -1381,8 +1387,8 @@ export class PresetTool extends BaseLitComponent {
               .saved=${!!savedEntry}
               .voted=${this.votedIds.has(preset.id)}
               .showShot=${this.config.feedShots}
-              .tombstone=${
-                // A local palette can't be removed by an author (BUG-029)
+              .publiclyUnavailable=${
+                // Local palettes are independent of public availability.
                 this.tab === 'saved' &&
                 !!savedEntry?.deletedByAuthor &&
                 !isLocalPaletteId(preset.id)

@@ -31,6 +31,41 @@ const NOTE = EN.preset.privacyNote;
 // PRIVACY.md wraps lines, so compare against whitespace-collapsed text.
 const PRIVACY = PRIVACY_MD.replace(/\s+/g, ' ');
 const TERMS = readFileSync(resolve(APP_ROOT, 'TERMS_OF_SERVICE.md'), 'utf-8').replace(/\s+/g, ' ');
+
+describe('device storage disclosures in the published privacy guides', () => {
+  const lastUpdated = (guide: string) => guide.match(/^\*\*[^\n]+?\*\* (\d{4}-\d{2}-\d{2})/m)?.[1];
+  const englishDate = lastUpdated(PRIVACY_MD);
+  const whenNamesReturn = {
+    en: 'when the names are available',
+    de: 'sobald die Namen wieder verfügbar sind',
+    fr: 'lorsque les noms sont disponibles',
+    ja: '名前が再び表示されたら',
+    ko: '이름이 다시 표시되면',
+    zh: '等名称恢复显示后',
+  };
+
+  it.each(Object.entries(whenNamesReturn))(
+    '%s inventories both Glamour edit formats and temporary sign-in storage',
+    (locale, resetAdvice) => {
+      const guide = readFileSync(
+        resolve(APP_ROOT, locale === 'en' ? 'PRIVACY.md' : `PRIVACY.${locale}.md`),
+        'utf-8'
+      );
+      const labels = JSON.parse(
+        readFileSync(resolve(APP_ROOT, `src/locales/${locale}.json`), 'utf-8')
+      ) as {
+        glamour: { sheet: { abridged: string } };
+      };
+      const storage = guide.slice(guide.indexOf('`localStorage`'), guide.indexOf('`IndexedDB`'));
+      expect(storage).toContain(labels.glamour.sheet.abridged);
+      expect(storage).toContain('Obtained');
+      expect(storage.replace(/\s+/g, ' ')).toContain(resetAdvice);
+      expect(storage).toContain('`sessionStorage`');
+      expect(englishDate).toBeDefined();
+      expect(lastUpdated(guide)).toBe(englishDate);
+    }
+  );
+});
 // The fallback label is stored verbatim, so every translation quotes it in English.
 const NOTES_BY_LOCALE = Object.fromEntries(
   ['en', 'ja', 'de', 'fr', 'ko', 'zh'].map((lc) => {

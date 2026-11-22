@@ -45,6 +45,7 @@ sequenceDiagram
     OAuth->>WebApp: 302 to the allowlisted redirect_uri<br/>?code=&csrf=&state=[&provider=][&return_path=]
 
     Note over WebApp,OAuth: 8. SPA completes the exchange
+    WebApp->>WebApp: Read and clear this tab's verification and navigation data
     WebApp->>OAuth: POST /auth/callback<br/>{ code, code_verifier, state }
     OAuth->>OAuth: Verify the signed state, bind code_verifier to code_challenge
     OAuth->>OAuth: Sign JWT with HS256 (JWT_SECRET)

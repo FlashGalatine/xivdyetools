@@ -310,6 +310,24 @@ describe('CommunityPresetService Integration Tests', () => {
       await service.initialize();
     });
 
+    const signedOut: ReturnType<typeof authService.getState> = {
+      isAuthenticated: false,
+      token: null,
+      user: null,
+      expiresAt: null,
+      provider: null,
+    };
+
+    function setDetailSession(token: string | null): void {
+      const state = { ...signedOut, isAuthenticated: token !== null, token };
+      vi.mocked(authService.getState).mockReturnValue(state);
+      vi.mocked(authService.isAuthenticated).mockReturnValue(state.isAuthenticated);
+      vi.mocked(authService.getAuthHeaders).mockReturnValue(
+        state.token ? { Authorization: `Bearer ${state.token}` } : {}
+      );
+      vi.mocked(authService.subscribe).mock.calls.at(-1)?.[0](state);
+    }
+
     it('should fetch a single preset by ID', async () => {
       const preset = await service.getPreset('preset-1');
 
@@ -321,6 +339,60 @@ describe('CommunityPresetService Integration Tests', () => {
       const preset = await service.getPreset('non-existent-id');
 
       expect(preset).toBeNull();
+    });
+
+    it('opens a pending preset for its authorized viewer without caching the private response', async () => {
+      const pending = { ...mockPresets[0], status: 'pending' as const };
+      server.use(
+        http.get(`${API_URL}/api/v1/presets/${pending.id}`, ({ request }) => {
+          return request.headers.get('Authorization') === 'Bearer viewer'
+            ? HttpResponse.json(pending)
+            : HttpResponse.json({ message: 'Not found' }, { status: 404 });
+        })
+      );
+
+      try {
+        setDetailSession('viewer');
+        expect(await service.getPreset(pending.id)).toEqual(pending);
+
+        setDetailSession(null);
+        expect(await service.getPreset(pending.id)).toBeNull();
+      } finally {
+        setDetailSession(null);
+      }
+    });
+
+    it('drops a pending preset response that crossed a sign-out and sign-in', async () => {
+      const pending = { ...mockPresets[0], status: 'pending' as const };
+      let finishResponse!: () => void;
+      const holdResponse = new Promise<void>((resolve) => {
+        finishResponse = resolve;
+      });
+      let authenticatedRequest = false;
+      server.use(
+        http.get(`${API_URL}/api/v1/presets/${pending.id}`, async ({ request }) => {
+          if (!request.headers.has('Authorization')) {
+            return HttpResponse.json({ message: 'Not found' }, { status: 404 });
+          }
+          authenticatedRequest = true;
+          await holdResponse;
+          return HttpResponse.json(pending);
+        })
+      );
+
+      try {
+        setDetailSession('viewer');
+        const detail = service.getPreset(pending.id);
+        await vi.waitFor(() => expect(authenticatedRequest).toBe(true));
+        setDetailSession(null);
+        setDetailSession('viewer');
+        finishResponse();
+
+        await expect(detail).resolves.toBeNull();
+      } finally {
+        finishResponse();
+        setDetailSession(null);
+      }
     });
 
     it('should cache single preset responses', async () => {

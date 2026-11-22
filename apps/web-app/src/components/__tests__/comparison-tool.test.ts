@@ -1230,6 +1230,14 @@ describe('ComparisonTool', () => {
       return details;
     };
 
+    it('reports whether a palette pick was added to the comparison', () => {
+      mount([A, B, C]);
+
+      expect(tool!.selectDye(D)).toBe(true);
+      expect(tool!.selectDye(E)).toBe(false);
+      expect(heldIds()).toEqual([A.id, B.id, C.id, D.id]);
+    });
+
     it('getPaletteSlots always returns four slots, filled first', () => {
       mount([A, B]);
 

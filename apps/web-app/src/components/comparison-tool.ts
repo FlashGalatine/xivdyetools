@@ -2413,22 +2413,22 @@ export class ComparisonTool extends BaseComponent implements PaletteSlotHost {
 
   /**
    * Add a dye from external source (Color Palette drawer)
-   * Adds the dye to the comparison list if not already present.
+   * Returns whether the list accepted the dye.
    *
    * @param dye The dye to add to the comparison
    */
-  public addDye(dye: Dye): void {
-    if (!dye) return;
+  public addDye(dye: Dye): boolean {
+    if (!dye) return false;
 
     // Check if already in selection (max 4 dyes)
     if (this.selectedDyes.some((d) => d.id === dye.id)) {
       logger.debug(`[ComparisonTool] Dye already in selection: ${dye.name}`);
-      return;
+      return false;
     }
 
-    if (this.selectedDyes.length >= 4) {
-      logger.debug(`[ComparisonTool] Max dyes reached (4), cannot add: ${dye.name}`);
-      return;
+    if (this.selectedDyes.length >= MAX_DYES) {
+      logger.debug(`[ComparisonTool] Max dyes reached (${MAX_DYES}), cannot add: ${dye.name}`);
+      return false;
     }
 
     this.selectedDyes.push(dye);
@@ -2447,6 +2447,7 @@ export class ComparisonTool extends BaseComponent implements PaletteSlotHost {
     this.updateShareButton(); // Update share button with new dye selection
     void this.fetchAndUpdatePrices();
     notifyPaletteSlotsChanged(this.container);
+    return true;
   }
 
   // ============================================================================
@@ -2491,8 +2492,8 @@ export class ComparisonTool extends BaseComponent implements PaletteSlotHost {
   /**
    * Alias for addDye to support the selectDye interface
    */
-  public selectDye(dye: Dye): void {
-    this.addDye(dye);
+  public selectDye(dye: Dye): boolean {
+    return this.addDye(dye);
   }
 
   /**

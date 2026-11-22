@@ -52,6 +52,11 @@ export function presetDescription(preset: CuratedTextSource): string {
   return lookup(preset.id, 'description') ?? preset.description;
 }
 
+/** Compare the titles shown on cards in the active locale. */
+export function comparePresetNames(a: CuratedTextSource, b: CuratedTextSource): number {
+  return presetName(a).localeCompare(presetName(b), LanguageService.getCurrentLocale());
+}
+
 /**
  * Category slug -> locale key.
  *

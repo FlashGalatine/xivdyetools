@@ -14,6 +14,7 @@
 import { ModalService, type ModalId } from '@services/modal-service';
 import { LanguageService } from '@services/language-service';
 import { ToastService } from '@services/toast-service';
+import { authService } from '@services/auth-service';
 import { presetSubmissionService } from '@services/preset-submission-service';
 import { resolvePresetDye } from '@services/dye-service-wrapper';
 import { escapeHtml } from '@shared/utils';
@@ -96,6 +97,19 @@ function refreshIfStale(): void {
  * status chip, note, and per-status actions.
  */
 export async function showMySubmissionsModal(onChanged?: () => void): Promise<void> {
+  if (!authService.isAuthenticated()) return;
+  const viewerToken = authService.getState().token;
+  let viewerChanged = false;
+  const ownerModal: { id?: ModalId } = {};
+  const confirms = new Set<ModalId>();
+  const unsubscribeAuth = authService.subscribe((auth) => {
+    if (auth.isAuthenticated && auth.token === viewerToken) return;
+    viewerChanged = true;
+    for (const id of confirms) ModalService.dismiss(id);
+    if (ownerModal.id) ModalService.dismiss(ownerModal.id);
+  });
+  const isCurrentViewer = () =>
+    !viewerChanged && authService.isAuthenticated() && authService.getState().token === viewerToken;
   const t = (key: string) => LanguageService.t(key);
 
   // This fetch is the fresh list; a delete that lands from here on marks it stale again.
@@ -105,7 +119,12 @@ export async function showMySubmissionsModal(onChanged?: () => void): Promise<vo
     const response = await presetSubmissionService.getMySubmissions();
     presets = response.presets;
   } catch {
-    ToastService.error(t('errors.apiFailed'));
+    unsubscribeAuth();
+    if (isCurrentViewer()) ToastService.error(t('errors.apiFailed'));
+    return;
+  }
+  if (!isCurrentViewer()) {
+    unsubscribeAuth();
     return;
   }
 
@@ -205,6 +224,7 @@ export async function showMySubmissionsModal(onChanged?: () => void): Promise<vo
   `;
 
   content.addEventListener('click', (e) => {
+    if (!isCurrentViewer()) return;
     const btn = (e.target as HTMLElement).closest('button[data-action]');
     if (!btn) return;
     const preset = presets[Number(btn.getAttribute('data-index'))];
@@ -219,8 +239,9 @@ export async function showMySubmissionsModal(onChanged?: () => void): Promise<vo
     if (action === 'edit' || action === 'resubmit') {
       ModalService.dismissTop();
       void import('./preset-edit-form').then(({ showPresetEditForm }) => {
+        if (!isCurrentViewer()) return;
         showPresetEditForm(preset, (result) => {
-          if (result.success) onChanged?.();
+          if (result.success && isCurrentViewer()) onChanged?.();
         });
       });
       return;
@@ -234,13 +255,17 @@ export async function showMySubmissionsModal(onChanged?: () => void): Promise<vo
       // moment -- by which time the user may have opened another modal, and
       // `dismissTop()` would close THAT one. Hence refreshIfStale dismisses
       // the list by id, and only while the list is the top modal.
-      ModalService.showConfirm({
+      const confirmId = ModalService.showConfirm({
         title: t('preset.deleteTitle'),
         content: confirmEl,
         destructive: true,
         confirmText: t('common.delete'),
         cancelText: t('common.cancel'),
+        onClose: () => {
+          confirms.delete(confirmId);
+        },
         onConfirm: async () => {
+          if (!isCurrentViewer()) return;
           // Counted before the first await: modal-container dismisses the
           // confirm right after calling this, and that stack change must not
           // refresh the list while this DELETE is still running.
@@ -253,6 +278,10 @@ export async function showMySubmissionsModal(onChanged?: () => void): Promise<vo
           } finally {
             deletesInFlight--;
           }
+          if (!isCurrentViewer()) {
+            refreshIfStale();
+            return;
+          }
           if (result.success) {
             ToastService.success(t('preset.deleteSuccess'));
             onChanged?.();
@@ -264,6 +293,7 @@ export async function showMySubmissionsModal(onChanged?: () => void): Promise<vo
           refreshIfStale();
         },
       });
+      confirms.add(confirmId);
     }
   });
 
@@ -271,11 +301,12 @@ export async function showMySubmissionsModal(onChanged?: () => void): Promise<vo
   // that leaves it, the refresh's own dismiss) — ModalService calls onClose
   // on each — so a DELETE landing after the user closed it reopens nothing.
   let unsubscribe: (() => void) | null = null;
-  const modalId = ModalService.show({
+  ownerModal.id = ModalService.show({
     type: 'custom',
     onClose: () => {
       unsubscribe?.();
-      if (openList?.id === modalId) openList = null;
+      unsubscribeAuth();
+      if (openList?.id === ownerModal.id) openList = null;
     },
     title: t('preset.mySubmissions'),
     subtitle: `${LanguageService.tInterpolate(
@@ -288,7 +319,7 @@ export async function showMySubmissionsModal(onChanged?: () => void): Promise<vo
     content,
     panelWidth: 620,
   });
-  openList = { id: modalId, onChanged };
+  openList = { id: ownerModal.id, onChanged };
   // A refresh deferred while a confirm sat on top runs once the list is top
   // again. Queued, not run inside the notification: dismissing from within
   // it would hand the listeners after this one a stack that no longer exists.

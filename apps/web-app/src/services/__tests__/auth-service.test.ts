@@ -7,10 +7,20 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // We need to test the module fresh for each test
 describe('AuthService', () => {
+  const browserLocalStorage = window.localStorage;
+  const browserSessionStorage = window.sessionStorage;
   const mockLocalStorage: Record<string, string> = {};
   const mockSessionStorage: Record<string, string> = {};
+  let storageListeners: EventListenerOrEventListenerObject[];
 
   beforeEach(() => {
+    storageListeners = [];
+    const addEventListener = window.addEventListener.bind(window);
+    vi.spyOn(window, 'addEventListener').mockImplementation((type, listener, options) => {
+      if (type === 'storage') storageListeners.push(listener);
+      addEventListener(type, listener, options);
+    });
+
     // Clear storage mocks
     Object.keys(mockLocalStorage).forEach((key) => delete mockLocalStorage[key]);
     Object.keys(mockSessionStorage).forEach((key) => delete mockSessionStorage[key]);
@@ -80,6 +90,8 @@ describe('AuthService', () => {
   });
 
   afterEach(() => {
+    for (const listener of storageListeners) window.removeEventListener('storage', listener);
+    vi.mocked(window.addEventListener).mockRestore();
     vi.unstubAllGlobals();
     vi.resetModules();
   });
@@ -245,6 +257,96 @@ describe('AuthService', () => {
     });
   });
 
+  describe('cross-tab auth state', () => {
+    const tokenKey = 'xivdyetools_auth_token';
+
+    function storeSession(user: string, provider: 'discord' | 'xivauth'): string {
+      const exp = Math.floor(Date.now() / 1000) + 3600;
+      const token = createMockJWT({ sub: user, username: user, exp, auth_provider: provider });
+      localStorage.setItem('xivdyetools_auth_expires', String(exp));
+      localStorage.setItem('xivdyetools_auth_provider', provider);
+      localStorage.setItem(tokenKey, token);
+      return token;
+    }
+
+    function dispatchStorage(event: StorageEventInit): void {
+      window.dispatchEvent(new StorageEvent('storage', { storageArea: localStorage, ...event }));
+    }
+
+    beforeEach(() => {
+      browserLocalStorage.clear();
+      vi.stubGlobal('localStorage', browserLocalStorage);
+    });
+
+    afterEach(() => {
+      browserLocalStorage.clear();
+    });
+
+    it('synchronizes a different account while already signed in', async () => {
+      const previousToken = storeSession('first-user', 'discord');
+      const { authService } = await import('../auth-service');
+      await authService.initialize();
+      const listener = vi.fn();
+      authService.subscribe(listener);
+      listener.mockClear();
+
+      const token = storeSession('second-user', 'xivauth');
+      dispatchStorage({ key: tokenKey, oldValue: previousToken, newValue: token });
+
+      expect(authService.getState()).toMatchObject({
+        isAuthenticated: true,
+        token,
+        provider: 'xivauth',
+        user: { id: 'second-user' },
+      });
+      expect(authService.getAuthHeaders()).toEqual({ Authorization: `Bearer ${token}` });
+      expect(listener).toHaveBeenCalledExactlyOnceWith(authService.getState());
+    });
+
+    it('synchronizes a localStorage clear without revoking the token again', async () => {
+      const token = storeSession('first-user', 'discord');
+      const { authService } = await import('../auth-service');
+      await authService.initialize();
+      const listener = vi.fn();
+      authService.subscribe(listener);
+      listener.mockClear();
+
+      localStorage.clear();
+      dispatchStorage({ storageArea: browserSessionStorage });
+      expect(authService.getState().token).toBe(token);
+      expect(listener).not.toHaveBeenCalled();
+
+      dispatchStorage({ key: null });
+
+      expect(authService.getAuthHeaders()).toEqual({});
+      expect(listener).toHaveBeenCalledExactlyOnceWith({
+        isAuthenticated: false,
+        token: null,
+        expiresAt: null,
+        provider: null,
+        user: null,
+      });
+      expect(fetch).not.toHaveBeenCalled();
+    });
+
+    it('uses the current stored session when an earlier token removal is delivered late', async () => {
+      const previousToken = storeSession('first-user', 'discord');
+      const { authService } = await import('../auth-service');
+      await authService.initialize();
+      const listener = vi.fn();
+      authService.subscribe(listener);
+      listener.mockClear();
+
+      const token = storeSession('second-user', 'xivauth');
+      dispatchStorage({ key: tokenKey, oldValue: previousToken, newValue: null });
+      dispatchStorage({ key: tokenKey, oldValue: null, newValue: token });
+
+      expect(authService.getState().token).toBe(token);
+      expect(listener).toHaveBeenCalledExactlyOnceWith(authService.getState());
+      expect(fetch).not.toHaveBeenCalled();
+    });
+  });
+
   describe('subscribe', () => {
     it('should call listener immediately with current state', async () => {
       const { authService } = await import('../auth-service');
@@ -310,13 +412,14 @@ describe('AuthService', () => {
       expect(mockLocalStorage['xivdyetools_auth_expires']).toBeUndefined();
     });
 
-    it('clears the OAuth provider marker on logout (FINDING-032)', async () => {
-      mockSessionStorage['xivdyetools_oauth_provider'] = 'xivauth';
-
+    it('clears all pending OAuth data on logout', async () => {
       const { authService } = await import('../auth-service');
+      await authService.loginWithXIVAuth('/harmony', 'presets');
+      mockSessionStorage.other = 'keep me';
+
       await authService.logout();
 
-      expect(mockSessionStorage['xivdyetools_oauth_provider']).toBeUndefined();
+      expect(mockSessionStorage).toEqual({ other: 'keep me' });
     });
 
     it('should notify listeners on logout', async () => {
@@ -829,6 +932,72 @@ describe('AuthService', () => {
     });
   });
 
+  describe.each(['login', 'loginWithXIVAuth'] as const)('%s OAuth tab storage', (loginMethod) => {
+    it('drops an abandoned attempt’s return tool when a later attempt omits it', async () => {
+      const { authService } = await import('../auth-service');
+      await authService.loginWithXIVAuth('/harmony', 'presets');
+
+      await authService[loginMethod]('/mixer');
+
+      expect(mockSessionStorage['xivdyetools_oauth_return_tool']).toBeUndefined();
+      expect(mockSessionStorage['xivdyetools_oauth_return_path']).toBe('/mixer');
+    });
+
+    it('clears the prior attempt if calculating the new PKCE challenge fails', async () => {
+      const { authService } = await import('../auth-service');
+      await authService.loginWithXIVAuth('/harmony', 'presets');
+      vi.mocked(crypto.subtle.digest).mockRejectedValueOnce(new Error('Crypto error'));
+
+      await expect(authService[loginMethod]()).rejects.toThrow('Crypto error');
+
+      expect(mockSessionStorage).toEqual({});
+    });
+
+    it('clears the saved attempt if the browser throws while redirecting', async () => {
+      const { authService } = await import('../auth-service');
+      Object.defineProperty(window.location, 'href', {
+        set() {
+          throw new Error('Navigation error');
+        },
+      });
+
+      await expect(authService[loginMethod]('/harmony', 'presets')).rejects.toThrow(
+        'Navigation error'
+      );
+
+      expect(mockSessionStorage).toEqual({});
+    });
+  });
+
+  describe('interrupted sign-in starts', () => {
+    it.each(['another sign-in', 'logout'])(
+      'ignores a pending start superseded by %s',
+      async (action) => {
+        const { authService } = await import('../auth-service');
+        let finishDigest!: (value: ArrayBuffer) => void;
+        vi.mocked(crypto.subtle.digest).mockReturnValueOnce(
+          new Promise((resolve) => {
+            finishDigest = resolve;
+          })
+        );
+        const obsoleteStart = authService.loginWithXIVAuth('/mixer', 'presets');
+
+        if (action === 'logout') {
+          await authService.logout();
+        } else {
+          await authService.login('/harmony');
+        }
+        const currentStorage = { ...mockSessionStorage };
+        const currentUrl = window.location.href;
+        finishDigest(new ArrayBuffer(32));
+        await obsoleteStart;
+
+        expect(mockSessionStorage).toEqual(currentStorage);
+        expect(window.location.href).toBe(currentUrl);
+      }
+    );
+  });
+
   describe('OAuth callback handling', () => {
     it('should handle callback with authorization code', async () => {
       const futureTime = Math.floor(Date.now() / 1000) + 3600;
@@ -846,6 +1015,7 @@ describe('AuthService', () => {
 
       mockSessionStorage['xivdyetools_pkce_verifier'] = 'test-verifier';
       mockSessionStorage['xivdyetools_oauth_state'] = 'test-state';
+      mockSessionStorage['xivdyetools_oauth_return_path'] = '/harmony';
 
       (window.location as { search: string }).search = '?code=auth-code&csrf=test-state';
 
@@ -868,6 +1038,13 @@ describe('AuthService', () => {
           method: 'POST',
           body: expect.stringContaining('code'),
         })
+      );
+      expect(authService.isAuthenticated()).toBe(true);
+      expect(mockSessionStorage).toEqual({});
+      expect(window.history.replaceState).toHaveBeenCalledWith(
+        {},
+        '',
+        'http://localhost:3000/harmony'
       );
     });
 
@@ -897,6 +1074,7 @@ describe('AuthService', () => {
       mockSessionStorage['xivdyetools_pkce_verifier'] = 'test-verifier';
       mockSessionStorage['xivdyetools_oauth_state'] = 'test-state';
       mockSessionStorage['xivdyetools_oauth_provider'] = 'xivauth';
+      mockSessionStorage['xivdyetools_oauth_return_tool'] = 'presets';
 
       (window.location as { search: string }).search = '?code=auth-code&csrf=test-state';
 
@@ -918,15 +1096,59 @@ describe('AuthService', () => {
         expect.anything()
       );
       expect(authService.getUser()?.primary_character).toBeUndefined();
+      expect(authService.isAuthenticated()).toBe(true);
+      expect(mockSessionStorage).toEqual({});
+      expect(window.history.replaceState).toHaveBeenCalledWith(
+        {},
+        '',
+        'http://localhost:3000/presets'
+      );
     });
 
-    it('should handle callback with error parameter', async () => {
-      (window.location as { search: string }).search = '?error=access_denied';
+    it.each([
+      ['Discord', 'login', '?error=access_denied', undefined, 'harmony'],
+      [
+        'XIVAuth',
+        'loginWithXIVAuth',
+        '?error=access_denied&provider=xivauth',
+        'presets',
+        'presets',
+      ],
+    ] as const)(
+      'clears all temporary data and returns to the app when %s consent is canceled',
+      async (_provider, loginMethod, search, returnTool, returnRoute) => {
+        const { authService } = await import('../auth-service');
+        await authService[loginMethod]('/harmony', returnTool);
+        mockSessionStorage.other = 'keep me';
+        (window.location as { pathname: string }).pathname = '/auth/callback';
+        (window.location as { search: string }).search = search;
 
+        await authService.initialize();
+
+        expect(mockSessionStorage).toEqual({ other: 'keep me' });
+        expect(authService.isAuthenticated()).toBe(false);
+        expect(global.fetch).not.toHaveBeenCalled();
+        expect(window.history.replaceState).toHaveBeenCalledWith(
+          {},
+          '',
+          `http://localhost:3000/${returnRoute}`
+        );
+        expect(window.location.reload).toHaveBeenCalledOnce();
+      }
+    );
+
+    it('returns home when a terminal callback specifies an external return path', async () => {
       const { authService } = await import('../auth-service');
+      await authService.login('/harmony');
+      (window.location as { search: string }).search = `?${new URLSearchParams({
+        error: 'access_denied',
+        return_path: 'https://example.com',
+      })}`;
+
       await authService.initialize();
 
-      expect(authService.isAuthenticated()).toBe(false);
+      expect(window.history.replaceState).toHaveBeenCalledWith({}, '', 'http://localhost:3000/');
+      expect(mockSessionStorage).toEqual({});
     });
 
     it('should handle missing code verifier', async () => {
@@ -1012,19 +1234,34 @@ describe('AuthService', () => {
       expect(authService.isAuthenticated()).toBe(false);
     });
 
-    it('should handle token exchange network error', async () => {
-      mockSessionStorage['xivdyetools_pkce_verifier'] = 'test-verifier';
-      mockSessionStorage['xivdyetools_oauth_state'] = 'test-state';
+    it.each([
+      ['login', '/auth/callback'],
+      ['loginWithXIVAuth', '/auth/xivauth/callback'],
+    ] as const)(
+      'consumes temporary data before the %s token exchange and returns after a network error',
+      async (loginMethod, endpoint) => {
+        const { authService } = await import('../auth-service');
+        await authService[loginMethod]('/harmony', 'presets');
+        const state = mockSessionStorage['xivdyetools_oauth_state'];
+        (window.location as { search: string }).search = `?code=auth-code&csrf=${state}`;
+        const recordStorageAtExchange = vi.fn();
+        vi.mocked(fetch).mockImplementationOnce(async () => {
+          recordStorageAtExchange({ ...mockSessionStorage });
+          throw new Error('Network error');
+        });
 
-      (window.location as { search: string }).search = '?code=auth-code&csrf=test-state';
+        await authService.initialize();
 
-      (global.fetch as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Network error'));
-
-      const { authService } = await import('../auth-service');
-      await authService.initialize();
-
-      expect(authService.isAuthenticated()).toBe(false);
-    });
+        expect(recordStorageAtExchange).toHaveBeenCalledWith({});
+        expect(fetch).toHaveBeenCalledWith(expect.stringContaining(endpoint), expect.anything());
+        expect(authService.isAuthenticated()).toBe(false);
+        expect(window.history.replaceState).toHaveBeenCalledWith(
+          {},
+          '',
+          'http://localhost:3000/presets'
+        );
+      }
+    );
 
     it('should handle provider in URL parameter', async () => {
       const futureTime = Math.floor(Date.now() / 1000) + 3600;

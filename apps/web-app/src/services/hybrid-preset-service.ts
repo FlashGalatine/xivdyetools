@@ -11,7 +11,6 @@ import type {
   PresetData,
   PresetSortOption,
 } from '@xivdyetools/types';
-import { dyeService as sharedDyeService } from './dye-service-wrapper';
 import {
   CommunityPresetService,
   communityPresetService,
@@ -20,6 +19,9 @@ import {
 } from './community-preset-service';
 import { logger } from '@shared/logger';
 import { sanitizeExampleLink, sanitizePreviewImageUrl } from '@shared/example-link';
+import { comparePresetNames, presetDescription, presetName } from '@shared/preset-i18n';
+import { dyeNameMatches } from '@shared/dye-name';
+import { dyeService } from './dye-service-wrapper';
 
 // ============================================
 // Types
@@ -45,6 +47,8 @@ export interface UnifiedPreset {
   isCurated: boolean;
   /** Whether this preset is from the API (can be voted on) */
   isFromAPI: boolean;
+  /** The API lists this preset only to an authorized viewer. */
+  viewerOnly?: boolean;
   /** Original API preset ID (for voting) */
   apiPresetId?: string;
   /** Creation date for community presets */
@@ -108,8 +112,25 @@ export interface PresetPoolResult {
 }
 
 // ============================================
-// Sorting
+// Search and sorting
 // ============================================
+
+/** Match the displayed copy, source aliases, tags, and dye names. */
+export function matchesPresetSearch(preset: UnifiedPreset, query: string): boolean {
+  const needle = query.trim().toLowerCase();
+  const matches = (text: string): boolean => text.toLowerCase().includes(needle);
+  return (
+    matches(preset.name) ||
+    matches(preset.description) ||
+    matches(presetName(preset)) ||
+    matches(presetDescription(preset)) ||
+    preset.tags.some(matches) ||
+    preset.dyes.some((id) => {
+      const dye = dyeService.getByStainId(id);
+      return dye !== null && dyeNameMatches(dye, needle);
+    })
+  );
+}
 
 /**
  * Order presets by one of the gallery's three sorts. Never mutates `presets`.
@@ -129,7 +150,7 @@ export function sortPresets(presets: UnifiedPreset[], sort: PresetSortOption): U
       });
     case 'name':
     default:
-      return [...presets].sort((a, b) => a.name.localeCompare(b.name));
+      return [...presets].sort(comparePresetNames);
   }
 }
 
@@ -146,15 +167,12 @@ class HybridPresetService {
 
   private readonly localPresetService: PresetService;
   private readonly communityService: CommunityPresetService;
-  // Use shared singleton dyeService to avoid duplicate instantiation
-  private readonly dyeService = sharedDyeService;
   private initialized = false;
   private apiAvailable = false;
 
   private constructor() {
     this.localPresetService = new PresetService(presetData as PresetData);
     this.communityService = communityPresetService;
-    // dyeService is initialized from shared singleton above
   }
 
   /**
@@ -228,6 +246,7 @@ class HybridPresetService {
       voteCount: preset.vote_count,
       isCurated: preset.is_curated,
       isFromAPI: true,
+      viewerOnly: preset.status !== 'approved',
       apiPresetId: preset.id,
       createdAt: preset.created_at,
       // WEB-14: API → UI boundary. The server enforces the host allowlist;
@@ -300,17 +319,11 @@ class HybridPresetService {
     let apiIds: string[] = [];
 
     // Get local presets
-    let localPresets: PresetPalette[];
-    if (category) {
-      localPresets = this.localPresetService.getPresetsByCategory(category);
-    } else if (search) {
-      // Pass the dye service so a palette matches on its dye names too
-      localPresets = this.localPresetService.searchPresets(search, this.dyeService);
-    } else {
-      localPresets = this.localPresetService.getAllPresets();
-    }
-
+    const localPresets = category
+      ? this.localPresetService.getPresetsByCategory(category)
+      : this.localPresetService.getAllPresets();
     let presets = localPresets.map((p) => this.localToUnified(p));
+    if (search) presets = presets.filter((preset) => matchesPresetSearch(preset, search));
 
     // Add community presets if API is available
     if (this.apiAvailable && includeAPI) {
@@ -357,18 +370,15 @@ class HybridPresetService {
    * Get a single preset by ID
    */
   async getPreset(id: string): Promise<UnifiedPreset | null> {
-    // Check if it's a community preset
+    // An explicit detail link can work after a failed startup health check,
+    // for example when submitting a duplicate once the API has recovered.
     if (id.startsWith('community-')) {
-      const apiId = id.replace('community-', '');
-      if (this.apiAvailable) {
-        try {
-          const preset = await this.communityService.getPreset(apiId);
-          return preset ? this.communityToUnified(preset) : null;
-        } catch {
-          return null;
-        }
+      try {
+        const preset = await this.communityService.getPreset(id.slice('community-'.length));
+        return preset ? this.communityToUnified(preset) : null;
+      } catch {
+        return null;
       }
-      return null;
     }
 
     // Try local preset first

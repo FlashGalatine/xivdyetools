@@ -76,6 +76,24 @@ test.describe('slot-aware picking: phone', () => {
   // what matters; this runs the same in every project (CI runs only chromium).
   test.use({ viewport: { width: 375, height: 812 } });
 
+  test('Dye Mixer: keyboard dismissal returns focus to the opening slot and Tab continues', async ({
+    page,
+  }) => {
+    await open(page, 'mixer');
+    const opener = slot(page, 0);
+    await opener.focus();
+    await page.keyboard.press('Enter');
+    await expectOpen(page);
+    await expect(palette(page).locator('.close-btn')).toBeFocused();
+
+    await page.keyboard.press('Enter');
+    await expectClosed(page);
+    await expect(opener).toBeFocused();
+
+    await page.keyboard.press('Tab');
+    await expect(slot(page, 1)).toBeFocused();
+  });
+
   test('Dye Comparison: tap an empty slot, pick, palette closes, slot filled', async ({ page }) => {
     await open(page, 'comparison');
     await slot(page, 0).click();
@@ -233,6 +251,45 @@ test.describe('slot-aware picking: phone', () => {
 
 test.describe('slot-aware picking: desktop', () => {
   test.use({ viewport: { width: 1280, height: 800 } });
+
+  const randomButton = (page: Page) => palette(page).locator('.random-btn');
+  const selectedToast = (page: Page) => page.locator('#toast-container').getByText(/^Selected: /);
+
+  test('Dye Comparison: an accepted random pick announces the dye it added', async ({ page }) => {
+    await open(page, 'comparison');
+    await randomButton(page).click();
+
+    await expect(resultCards(page)).toHaveCount(1);
+    await expect(palette(page).locator('.swatch.in-use .swatch-pick')).toHaveAttribute(
+      'aria-label',
+      /, in slot 1$/
+    );
+    const label = await palette(page)
+      .locator('.swatch.in-use .swatch-pick')
+      .getAttribute('aria-label');
+    await expect(selectedToast(page)).toHaveText(`Selected: ${label!.replace(/, in slot 1$/, '')}`);
+  });
+
+  test('Dye Comparison: an untargeted random pick at capacity does not announce success', async ({
+    page,
+  }) => {
+    await open(page, 'comparison');
+    for (let i = 0; i < 4; i++) await pickUnmarked(page);
+    const held = palette(page).locator('.swatch.in-use .swatch-pick');
+    await expect(held).toHaveCount(4);
+    const labels = await held.evaluateAll((swatches) =>
+      swatches.map((s) => s.getAttribute('aria-label'))
+    );
+
+    await randomButton(page).click();
+
+    // The toast is inserted synchronously by the click path. Check visibility
+    // immediately so the assertion cannot pass after an erroneous toast expires.
+    expect(await selectedToast(page).count()).toBe(0);
+    expect(
+      await held.evaluateAll((swatches) => swatches.map((s) => s.getAttribute('aria-label')))
+    ).toEqual(labels);
+  });
 
   test('desktop: a slot click sets the target and the docked palette stays open after the pick', async ({
     page,

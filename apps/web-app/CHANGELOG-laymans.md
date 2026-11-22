@@ -2,6 +2,21 @@
 
 ---
 
+## Web-App Version 5.18.2 — November 22, 2026
+
+### Finding presets
+
+- Search official presets by the translated names on their cards, even offline. Changing languages updates your current search and alphabetical order.
+- Saved presets say when they are unavailable publicly. Submitting a duplicate opens the existing preset if you can view it.
+
+### Privacy
+
+- The app clears temporary sign-in details when you return from Discord or XIVAuth. All six privacy guides explain how to finish resetting Glamour list edits if item names were unavailable the first time.
+
+### Picking dyes
+
+- Close the Color Palette on a phone and keyboard focus returns to the slot that opened it. Dye Comparison shows the selected-dye message only when it adds the random dye.
+
 ## Web-App Version 5.18.1 — November 15, 2026
 
 ### A smaller download

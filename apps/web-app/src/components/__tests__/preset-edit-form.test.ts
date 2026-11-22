@@ -27,6 +27,8 @@ const {
   mockToastSuccess,
   mockToastWarning,
   mockEditPreset,
+  mockAuthState,
+  mockAuthSubscribe,
   mockDyes,
 } = vi.hoisted(() => {
   function makeDye(overrides: Record<string, unknown> = {}) {
@@ -61,6 +63,10 @@ const {
     mockToastSuccess: vi.fn(),
     mockToastWarning: vi.fn(),
     mockEditPreset: vi.fn(),
+    mockAuthState: vi.fn(() => ({ token: 'owner', isAuthenticated: true })),
+    mockAuthSubscribe: vi.fn<
+      (listener: (state: { token: string; isAuthenticated: boolean }) => void) => () => void
+    >(() => () => {}),
     mockDyes: [
       makeDye({ id: 1, itemID: 10001, stainID: 1, name: 'Snow White', hex: '#F0F0F0' }),
       makeDye({ id: 2, itemID: 10002, stainID: 2, name: 'Ash Grey', hex: '#808080' }),
@@ -95,6 +101,8 @@ vi.mock('@services/index', () => ({
   authService: {
     isAuthenticated: () => true,
     getUser: () => ({ id: 'author-1' }),
+    getState: mockAuthState,
+    subscribe: mockAuthSubscribe,
   },
   presetSubmissionService: {
     editPreset: mockEditPreset,
@@ -144,6 +152,7 @@ function getModalTitle(): string {
 describe('showPresetEditForm — localization', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockAuthState.mockReturnValue({ token: 'owner', isAuthenticated: true });
     mockShow.mockReturnValue('modal-id-preset-edit');
     mockEditPreset.mockResolvedValue({ success: true });
   });
@@ -174,6 +183,38 @@ describe('showPresetEditForm — localization', () => {
         .find((button) => button.textContent === 'common.cancel')!
         .click();
       expect(RealModalService.getModals().map((modal) => modal.id)).toEqual([other]);
+    });
+
+    it('dismisses only the prior account’s edit form and ignores its late PATCH result', async () => {
+      let finishEdit!: (result: object) => void;
+      mockEditPreset.mockReturnValueOnce(
+        new Promise((resolve) => {
+          finishEdit = resolve;
+        })
+      );
+      const onEdit = vi.fn();
+      showPresetEditForm(makePreset({ status: 'pending' }), onEdit);
+      const form = getFormContent();
+      const name = form.querySelector<HTMLInputElement>('#edit-preset-name')!;
+      name.value = 'Changed Name';
+      name.dispatchEvent(new Event('input'));
+      [...form.querySelectorAll('button')]
+        .find((button) => button.textContent === 'preset.saveChanges')!
+        .click();
+      await vi.waitFor(() => expect(mockEditPreset).toHaveBeenCalled());
+      const other = RealModalService.show({ type: 'custom', title: 'Other' });
+
+      const newViewer = { token: 'second-owner', isAuthenticated: true };
+      mockAuthState.mockReturnValue(newViewer);
+      mockAuthSubscribe.mock.calls.at(-1)?.[0](newViewer);
+      expect(RealModalService.getModals().map((modal) => modal.id)).toEqual([other]);
+
+      finishEdit({ success: true });
+      await Promise.resolve();
+
+      expect(RealModalService.getModals().map((modal) => modal.id)).toEqual([other]);
+      expect(mockToastSuccess).not.toHaveBeenCalled();
+      expect(onEdit).not.toHaveBeenCalled();
     });
 
     it.each(['patch', 'upload', 'removal'] as const)(

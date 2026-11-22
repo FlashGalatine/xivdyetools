@@ -167,6 +167,14 @@ describe('SavedPresetsService last-known vote count', () => {
     };
   }
 
+  it('does not persist a viewer-only version of a preset', async () => {
+    const store = await freshStore();
+
+    expect(store.toggle(unified({ viewerOnly: true }))).toBe(false);
+    expect(store.getAll()).toEqual([]);
+    expect(localStorageMock.getItem(STORAGE_KEY)).toBeNull();
+  });
+
   function wroteStore(): boolean {
     return localStorageMock.setItem.mock.calls.some(([key]) => key === STORAGE_KEY);
   }

@@ -64,7 +64,7 @@ export class PresetCard extends BaseLitComponent {
 
   /** Tombstone: a saved copy whose live preset the author removed */
   @property({ type: Boolean })
-  tombstone: boolean = false;
+  publiclyUnavailable: boolean = false;
 
   @property({ type: Boolean, reflect: true })
   selected: boolean = false;
@@ -174,7 +174,7 @@ export class PresetCard extends BaseLitComponent {
         color: var(--theme-primary, #ea4133);
       }
 
-      .chip--tombstone {
+      .chip--unavailable {
         background: rgba(244, 100, 90, 0.14);
         color: #f4645a;
       }
@@ -351,7 +351,7 @@ export class PresetCard extends BaseLitComponent {
     // BUG-029 (2026-10-04 deep-dive): a local palette already sits on the Saved
     // shelf, so Save only stored a duplicate snapshot. The button stays on one
     // an earlier version saved, so that copy can still be removed.
-    const showSave = this.saved || !preset.id.startsWith('local-');
+    const showSave = this.saved || (!preset.viewerOnly && !preset.id.startsWith('local-'));
 
     return html`
       <article
@@ -403,9 +403,9 @@ export class PresetCard extends BaseLitComponent {
           <div class="top-row">
             <span class="preset-name">${presetName(preset)}</span>
             ${
-              this.tombstone
-                ? html`<span class="chip chip--tombstone"
-                    >${LanguageService.t('preset.removedByAuthor')}</span
+              this.publiclyUnavailable
+                ? html`<span class="chip chip--unavailable"
+                    >${LanguageService.t('preset.unavailablePublicly')}</span
                   >`
                 : preset.isCurated
                   ? html`<span class="chip chip--official"
@@ -421,7 +421,7 @@ export class PresetCard extends BaseLitComponent {
             <span class="byline">${byline} · ${dyeCount} · ${this.ageText(preset)}</span>
             <span class="actions">
               ${
-                !preset.isCurated && preset.isFromAPI
+                !preset.isCurated && preset.isFromAPI && !preset.viewerOnly
                   ? html`<button
                       class="face-btn ${this.voted ? 'face-btn--on' : ''}"
                       @click=${this.handleVote}

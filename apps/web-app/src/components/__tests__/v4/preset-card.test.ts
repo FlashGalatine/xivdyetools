@@ -121,17 +121,27 @@ describe('PresetCard', () => {
   });
 
   /** Mount a card with the given data and wait for Lit to render. */
-  async function mountCard(data: PresetCardData): Promise<HTMLElement> {
+  async function mountCard(data: PresetCardData, unavailable = false): Promise<HTMLElement> {
     await import('../../v4/preset-card');
     const el = document.createElement('v4-preset-card') as HTMLElement & {
       data: PresetCardData;
+      publiclyUnavailable: boolean;
       updateComplete: Promise<unknown>;
     };
     el.data = data;
+    el.publiclyUnavailable = unavailable;
     container.appendChild(el);
     await el.updateComplete;
     return el;
   }
+
+  it('labels a saved copy by its public availability', async () => {
+    const el = await mountCard(baseCardData, true);
+
+    expect(el.shadowRoot!.querySelector('.top-row')?.textContent).toContain(
+      'preset.unavailablePublicly'
+    );
+  });
 
   it('renders the plural dye count in the byline', async () => {
     const el = await mountCard(baseCardData);

@@ -2,7 +2,7 @@
 
 > Ceci est une traduction fournie à titre pratique. La version anglaise fait foi ; en cas de divergence, c'est elle qui prévaut. [Anglais](PRIVACY.md)
 
-**Dernière mise à jour :** 2026-11-01 · Couvre **xivdyetools.app** et **beta.xivdyetools.app**. Le bot
+**Dernière mise à jour :** 2026-11-22 · Couvre **xivdyetools.app** et **beta.xivdyetools.app**. Le bot
 Discord a sa propre politique : [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.fr.md).
 
 XIV Dye Tools fonctionne dans votre navigateur. Les outils de couleur — l'Extracteur de palette,
@@ -63,8 +63,9 @@ en forment la liste complète.
 
 `localStorage` conserve des préférences légères et votre propre travail enregistré : thème, langue,
 réglages par outil (y compris le commutateur d'analyses ci-dessous), teintures favorites, palettes
-et collections enregistrées, les lignes d'obtention que vous avez réécrites dans la « Liste
-d'équipement » du Lecteur de mirages, et — si vous vous connectez — le jeton de session de vos
+et collections enregistrées, les lignes d’obtention modifiées dans la « Liste
+d’équipement » du Lecteur de mirages et les lignes « Obtained » enregistrées séparément pour
+la Version abrégée, et — si vous vous connectez — le jeton de session de vos
 préréglages communautaires. Rien ici n'est un identifiant de suivi. Les contrôles de
 données de site de votre navigateur effacent tout cela. Dans l'application, chacune de ces actions
 en efface une partie :
@@ -82,9 +83,18 @@ en efface une partie :
   enregistrez dans le Nuancier n'ont aucun contrôle de suppression dans l'application ; les contrôles
   de données de site de votre navigateur les effacent.
 - Se déconnecter supprime le jeton de session.
-- « Tout réinitialiser » dans la Liste d'équipement supprime la ligne réécrite de chaque pièce de
-  cette liste. Chaque ligne est conservée par pièce d'équipement, de sorte qu'une autre tenue qui
-  partage une pièce perd aussi cette ligne.
+- « Tout réinitialiser » dans la Liste d’équipement efface les deux versions de la ligne modifiée
+  pour chaque pièce identifiable. Les autres tenues qui utilisent cette pièce perdent aussi ces
+  modifications. Si les noms des objets sont indisponibles, les modifications enregistrées
+  quand ces noms étaient disponibles peuvent subsister. Utilisez de nouveau « Tout réinitialiser »
+  lorsque les noms sont disponibles.
+
+Quand vous vous connectez avec Discord ou XIVAuth, cet onglet conserve temporairement dans
+`sessionStorage` un vérificateur PKCE et une valeur aléatoire qui relie la réponse à votre demande. Il
+mémorise aussi le service de connexion si nécessaire et la page ou l’outil à rouvrir. L’application efface ces données dès qu’elle traite le résultat, y compris
+en cas d’annulation ou d’échec. Si vous quittez la connexion sans revenir dans l’application,
+elles peuvent subsister jusqu’à une nouvelle tentative de connexion, à votre déconnexion ou à
+la fin de la session de l’onglet.
 
 `IndexedDB` conserve une seule chose : un cache des prix du tableau des ventes déjà récupérés, afin
 de ne pas répéter la même recherche. Il ne contient aucune image — une version antérieure de
@@ -105,8 +115,9 @@ n'autorise rien d'autre) ainsi qu'avec les tiers nommés ci-dessous :
 2. **Noms et icônes d'équipement pour les imports `.chara`** — `data.xivdyetools.app` (voir
    ci-dessus).
 3. **Préréglages communautaires** (`api.xivdyetools.app`) : la navigation sans connexion n’envoie aucune information de compte. Lorsque vous êtes connecté,
-   ouvrir un préréglage envoie votre jeton de connexion pour vérifier si vous avez déjà voté.
-   Cette vérification ne conserve aucune trace de votre consultation. Se connecter via `auth.xivdyetools.app` avec Discord ou XIVAuth crée
+   ouvrir un préréglage communautaire public peut entraîner l’envoi de votre jeton de connexion pour vérifier si vous avez déjà voté.
+   Si le préréglage n’est pas accessible au public, l’application peut aussi envoyer votre jeton
+   pour vérifier si votre compte peut le consulter. Ces vérifications ne conservent aucune trace de votre consultation. Se connecter via `auth.xivdyetools.app` avec Discord ou XIVAuth crée
    immédiatement un enregistrement de compte, que vous alliez ou non ensuite soumettre ou voter.
    Avec Discord, l'enregistrement contient votre identifiant utilisateur Discord et votre nom
    d'affichage (votre nom d'utilisateur si vous n'avez pas de nom d'affichage). Avec XIVAuth,
@@ -129,8 +140,9 @@ n'autorise rien d'autre) ainsi qu'avec les tiers nommés ci-dessous :
    nouveau nom, la description, les étiquettes ou le lien d'exemple d'une modification apportée à un préréglage déjà publié, la version antérieure à la première
    modification de ce type, conservée jusqu'à ce qu'un modérateur la restaure ou que le
    préréglage soit supprimé — plus l'image d'aperçu facultative décrite sous Images ci-dessus. Pour
-   supprimer une image d'aperçu, utilisez le formulaire de modification du préréglage ;
-   supprimer un préréglage depuis **Mes soumissions** supprime aussi son image d'aperçu.
+   supprimer une image d'aperçu, utilisez le formulaire de modification du préréglage ou supprimez celui-ci
+   depuis **Mes soumissions**. Au prochain chargement du préréglage, la galerie n’affichera plus l’image. Son ancienne URL
+   peut encore fonctionner le temps que la suppression soit terminée (voir *Supprimer vos données*).
    Lorsque vous soumettez ou modifiez un préréglage, son nom, sa description, ses étiquettes et le texte du chemin du lien d'exemple peuvent être envoyés à la [Perspective API](https://perspectiveapi.com/) de Google pour un score de modération (facultatif — modération de contenu uniquement). La requête indique à Google de ne pas stocker ces textes (`doNotStore`). Les paramètres de requête, fragments, identifiants de connexion et noms d'hôte de l'URL sont exclus du texte du lien. Nous ne joignons aucun identifiant de compte au texte et n'accédons jamais au lien d'exemple fourni. Ce
    que nous conservons d'autre sur vos préréglages, et pour combien de temps, figure sous
    *Préréglages communautaires : ce que nous conservons* ci-dessous ; la façon de le
@@ -314,11 +326,13 @@ Vous pouvez en supprimer une partie vous-même, à tout moment, sauf si un modé
 préréglages communautaires (tant qu'un bannissement est actif, adressez-vous plutôt à
 nous) :
 
-- **Un préréglage :** supprimez-le depuis **Mes soumissions**. Son image d'aperçu, les
-  votes qui le concernent, les entrées du journal de modération à son sujet et tout enregistrement
+- **Un préréglage :** supprimez-le depuis **Mes soumissions**. Les votes qui le concernent, les entrées du journal de modération à son sujet et tout enregistrement
   de notification en échec qui le concerne sont supprimés avec lui. Ses compteurs de limite
   quotidienne expirent d'eux-mêmes après 30 jours, et les messages à son sujet sur notre serveur
   Discord restent, sauf si vous nous le demandez (ci-dessous).
+  Une galerie déjà ouverte peut afficher l’ancienne image jusqu’à son actualisation. Si la suppression du
+  fichier ou l’effacement du cache de son URL publique échoue, nous réessayons. En attendant,
+  l’ancienne URL peut encore afficher l’image. Les copies déjà enregistrées restent sur les appareils.
 - **Un vote :** sélectionnez de nouveau le bouton de vote (**Voter** / **Voté**) de ce préréglage.
 - **Votre session :** vous déconnecter (**Déconnexion**) supprime le jeton de session de ce
   navigateur et demande à notre service de connexion de le révoquer.

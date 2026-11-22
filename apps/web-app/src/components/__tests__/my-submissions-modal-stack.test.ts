@@ -40,6 +40,14 @@ vi.mock('@services/dye-service-wrapper', () => ({
   resolvePresetDye: (id: number) => ({ id, hex: '#FF0000' }),
 }));
 
+vi.mock('@services/auth-service', () => ({
+  authService: {
+    isAuthenticated: () => true,
+    getState: () => ({ token: 'owner' }),
+    subscribe: () => () => {},
+  },
+}));
+
 import { showMySubmissionsModal } from '../my-submissions-modal';
 
 function makePreset(id: string, name: string): CommunityPreset {

@@ -30,6 +30,7 @@ import type { SavedPreset } from '@services/saved-presets-service';
 import type { CommunityPreset } from '@services/community-preset-service';
 import type { Collection } from '@services/collection-service';
 import type { PresetsConfig } from '@shared/tool-config-types';
+import type { LocaleCode } from '@shared/i18n-types';
 import type { EditResult } from '@services/preset-submission-service';
 
 // ============================================================================
@@ -56,6 +57,7 @@ const showPresetEditFormMock = vi.hoisted(() =>
 );
 vi.mock('../../preset-edit-form', () => ({ showPresetEditForm: showPresetEditFormMock }));
 
+let onLocaleChange: (() => void) | undefined;
 const languageServiceMock = {
   t: vi.fn((key: string) => key),
   tInterpolate: vi.fn((key: string, params: Record<string, string | number>) =>
@@ -64,8 +66,14 @@ const languageServiceMock = {
       key
     )
   ),
-  getCurrentLocale: vi.fn(() => 'en'),
-  subscribe: vi.fn(() => () => {}),
+  getCurrentLocale: vi.fn<() => LocaleCode>(() => 'en'),
+  getDyeName: vi.fn(() => null),
+  subscribe: vi.fn((listener: () => void) => {
+    onLocaleChange = listener;
+    return () => {
+      onLocaleChange = undefined;
+    };
+  }),
 };
 
 // `@shared/preset-i18n` and `@shared/example-link` import LanguageService
@@ -74,9 +82,10 @@ vi.mock('@services/language-service', () => ({ LanguageService: languageServiceM
 
 const authServiceMock = {
   isAuthenticated: vi.fn(() => false),
-  subscribe: vi.fn<(listener: (state: { isAuthenticated: boolean }) => void) => () => void>(
-    () => () => {}
-  ),
+  getState: vi.fn<() => { token: string | null }>(() => ({ token: null })),
+  subscribe: vi.fn<
+    (listener: (state: { isAuthenticated: boolean; token: string | null }) => void) => () => void
+  >(() => () => {}),
 };
 
 const modalServiceMock = {
@@ -145,7 +154,7 @@ const savedPresetsServiceMock = {
   getAll: vi.fn(() => savedListMock),
   subscribe: vi.fn(() => () => {}),
   toggle: vi.fn(),
-  markDeleted: vi.fn(),
+  markPubliclyUnavailable: vi.fn(),
   recordVoteCounts: vi.fn(),
 };
 vi.mock('@services/saved-presets-service', () => ({
@@ -295,7 +304,7 @@ type CardEl = HTMLElement & {
   data: { preset: UnifiedPreset };
   voted: boolean;
   saved: boolean;
-  tombstone: boolean;
+  publiclyUnavailable: boolean;
 };
 
 const TAB_INDEX = { community: 0, official: 1, saved: 2, mine: 3 } as const;
@@ -348,6 +357,8 @@ describe('PresetTool', () => {
     mySubmissionsMock = [];
     configControllerConfig = defaultConfig();
     presetsConfigListener = null;
+    languageServiceMock.getCurrentLocale.mockReturnValue('en');
+    languageServiceMock.t.mockImplementation((key) => key);
     vi.clearAllMocks();
     // clearAllMocks keeps implementations (Vitest 5): reset every one a test
     // may change, so none leaks into the next.
@@ -359,6 +370,7 @@ describe('PresetTool', () => {
     routerServiceMock.getSubPath.mockReturnValue(null);
     routerServiceMock.getCurrentToolId.mockReturnValue('presets');
     authServiceMock.isAuthenticated.mockReturnValue(false);
+    authServiceMock.getState.mockReturnValue({ token: null });
     communityPresetServiceMock.voteForPreset.mockReset();
     communityPresetServiceMock.removeVote.mockReset();
     presetSubmissionServiceMock.deletePreset.mockReset();
@@ -366,7 +378,7 @@ describe('PresetTool', () => {
     presetSubmissionServiceMock.getMySubmissions.mockImplementation(async () => ({
       presets: mySubmissionsMock,
     }));
-    savedPresetsServiceMock.markDeleted.mockReset();
+    savedPresetsServiceMock.markPubliclyUnavailable.mockReset();
     resolvePresetDyeMock.mockReset();
     resolvePresetDyeMock.mockReturnValue(undefined);
   });
@@ -656,6 +668,74 @@ describe('PresetTool', () => {
     return el;
   }
 
+  describe('locale changes while browsing curated presets', () => {
+    const summer = makePreset({ id: 'season-summer', name: 'Summer', isCurated: true });
+    const winter = makePreset({ id: 'season-winter', name: 'Winter', isCurated: true });
+
+    function changeToFrench(): void {
+      languageServiceMock.getCurrentLocale.mockReturnValue('fr');
+      const labels: Record<string, string> = {
+        'preset.season-summer.name': 'Été',
+        'preset.season-winter.name': 'Hiver',
+      };
+      languageServiceMock.t.mockImplementation((key) => labels[key] ?? key);
+      onLocaleChange?.();
+    }
+
+    it('requeries an active offline Official search in the new language', async () => {
+      hybridPresetServiceMock.getPresets.mockResolvedValue(pool([summer], { apiOk: false }));
+      const el = await mountLoaded();
+      await clickTab(el, 'official');
+      expect(cardIds(el)).toEqual(['season-summer']);
+
+      hybridPresetServiceMock.getPresets.mockResolvedValue(pool([], { apiOk: false }));
+      typeSearch(el, 'Été');
+      await vi.waitFor(() => expect(cardIds(el)).toEqual([]));
+
+      hybridPresetServiceMock.getPresets.mockResolvedValue(pool([summer], { apiOk: false }));
+      changeToFrench();
+      await vi.waitFor(() => expect(cardIds(el)).toEqual(['season-summer']));
+      expect(el.shadowRoot.querySelector<HTMLInputElement>('.search-input')?.value).toBe('Été');
+    });
+
+    it('resorts Saved by the displayed name on a language change without fetching', async () => {
+      // English sorts Evergreen before Summer. French sorts Été before Hiver.
+      configControllerConfig = { ...defaultConfig(), sortBy: 'name' };
+      savedListMock = [
+        makeSaved({ id: summer.id, name: summer.name, isCurated: true }),
+        makeSaved({ id: winter.id, name: 'Evergreen', isCurated: true }),
+      ];
+      const el = await mountLoaded();
+      await clickTab(el, 'saved');
+      expect(cardIds(el)).toEqual(['season-winter', 'season-summer']);
+      hybridPresetServiceMock.getPresets.mockClear();
+
+      changeToFrench();
+      await vi.waitFor(() => expect(cardIds(el)).toEqual(['season-summer', 'season-winter']));
+      expect(hybridPresetServiceMock.getPresets).not.toHaveBeenCalled();
+    });
+  });
+
+  it('clears a viewer-only deep link when the account changes', async () => {
+    const privatePreset = makePreset({ id: 'community-pending', viewerOnly: true });
+    authServiceMock.getState.mockReturnValue({ token: 'first-account' });
+    routerServiceMock.getSubPath.mockReturnValue(privatePreset.id);
+    hybridPresetServiceMock.getPreset.mockResolvedValue(privatePreset);
+    const el = await mountLoaded(true);
+    const detail = () => el.shadowRoot.querySelector('v4-preset-detail');
+    await vi.waitFor(() => expect(detail()).not.toBeNull());
+
+    const replace = vi.spyOn(history, 'replaceState').mockImplementation(() => {});
+    authServiceMock.getState.mockReturnValue({ token: 'second-account' });
+    authServiceMock.subscribe.mock.calls.at(-1)![0]({
+      token: 'second-account',
+      isAuthenticated: true,
+    });
+
+    await vi.waitFor(() => expect(detail()).toBeNull());
+    expect(replace).toHaveBeenCalledWith({ toolId: 'presets' }, '', '/presets');
+  });
+
   describe('Mine after editing (BUG-023)', () => {
     async function openEdit(el: PresetToolEl): Promise<void> {
       const card = cards(el)[0];
@@ -741,7 +821,10 @@ describe('PresetTool', () => {
 
       await mountLoaded();
 
-      expect(savedPresetsServiceMock.markDeleted).not.toHaveBeenCalledWith('community-9', true);
+      expect(savedPresetsServiceMock.markPubliclyUnavailable).not.toHaveBeenCalledWith(
+        'community-9',
+        true
+      );
     });
 
     it('shows the offline strip, not an empty feed, when the community request failed', async () => {
@@ -762,7 +845,10 @@ describe('PresetTool', () => {
 
       await mountLoaded();
 
-      expect(savedPresetsServiceMock.markDeleted).not.toHaveBeenCalledWith('local-abc', true);
+      expect(savedPresetsServiceMock.markPubliclyUnavailable).not.toHaveBeenCalledWith(
+        'local-abc',
+        true
+      );
     });
 
     it('repairs a local palette an earlier version tombstoned', async () => {
@@ -772,7 +858,10 @@ describe('PresetTool', () => {
 
       await mountLoaded();
 
-      expect(savedPresetsServiceMock.markDeleted).toHaveBeenCalledWith('local-abc', false);
+      expect(savedPresetsServiceMock.markPubliclyUnavailable).toHaveBeenCalledWith(
+        'local-abc',
+        false
+      );
     });
 
     it('shows no "Removed by its author" chip on a local palette', async () => {
@@ -782,7 +871,7 @@ describe('PresetTool', () => {
       const el = await mountLoaded();
       await clickTab(el, 'saved');
 
-      expect(cardFor(el, 'local-abc').tombstone).toBe(false);
+      expect(cardFor(el, 'local-abc').publiclyUnavailable).toBe(false);
     });
 
     it('lists a saved local palette once on the Saved tab', async () => {
@@ -805,7 +894,10 @@ describe('PresetTool', () => {
 
       await mountLoaded();
 
-      expect(savedPresetsServiceMock.markDeleted).not.toHaveBeenCalledWith('community-9', true);
+      expect(savedPresetsServiceMock.markPubliclyUnavailable).not.toHaveBeenCalledWith(
+        'community-9',
+        true
+      );
     });
 
     it('drops a filtered response that lands after the search was cleared', async () => {
@@ -817,7 +909,7 @@ describe('PresetTool', () => {
         const el = await mountTool();
         await vi.advanceTimersByTimeAsync(0);
         await el.updateComplete;
-        savedPresetsServiceMock.markDeleted.mockClear();
+        savedPresetsServiceMock.markPubliclyUnavailable.mockClear();
 
         // A slow search for 'x' …
         let resolveX!: (value: ReturnType<typeof pool>) => void;
@@ -838,7 +930,10 @@ describe('PresetTool', () => {
         await vi.advanceTimersByTimeAsync(0);
         await el.updateComplete;
 
-        expect(savedPresetsServiceMock.markDeleted).not.toHaveBeenCalledWith('community-9', true);
+        expect(savedPresetsServiceMock.markPubliclyUnavailable).not.toHaveBeenCalledWith(
+          'community-9',
+          true
+        );
         expect(el.presets.map((p) => p.id)).toEqual(['community-9']);
       } finally {
         vi.useRealTimers();
@@ -854,7 +949,10 @@ describe('PresetTool', () => {
 
       await mountLoaded();
 
-      expect(savedPresetsServiceMock.markDeleted).toHaveBeenCalledWith('community-7', false);
+      expect(savedPresetsServiceMock.markPubliclyUnavailable).toHaveBeenCalledWith(
+        'community-7',
+        false
+      );
     });
 
     it('restores a tombstoned preset a search finds, and tombstones nothing a search misses', async () => {
@@ -867,7 +965,7 @@ describe('PresetTool', () => {
         hybridPresetServiceMock.getPresets.mockResolvedValue(pool([]));
         const el = await mountTool();
         await vi.advanceTimersByTimeAsync(0);
-        savedPresetsServiceMock.markDeleted.mockClear();
+        savedPresetsServiceMock.markPubliclyUnavailable.mockClear();
 
         hybridPresetServiceMock.getPresets.mockResolvedValueOnce(
           pool([makePreset({ id: 'community-7', name: 'Blue' })])
@@ -875,8 +973,14 @@ describe('PresetTool', () => {
         typeSearch(el, 'blue');
         await vi.advanceTimersByTimeAsync(300);
 
-        expect(savedPresetsServiceMock.markDeleted).toHaveBeenCalledWith('community-7', false);
-        expect(savedPresetsServiceMock.markDeleted).not.toHaveBeenCalledWith('community-8', true);
+        expect(savedPresetsServiceMock.markPubliclyUnavailable).toHaveBeenCalledWith(
+          'community-7',
+          false
+        );
+        expect(savedPresetsServiceMock.markPubliclyUnavailable).not.toHaveBeenCalledWith(
+          'community-8',
+          true
+        );
       } finally {
         vi.useRealTimers();
       }
@@ -888,7 +992,10 @@ describe('PresetTool', () => {
 
       await mountLoaded();
 
-      expect(savedPresetsServiceMock.markDeleted).toHaveBeenCalledWith('community-9', true);
+      expect(savedPresetsServiceMock.markPubliclyUnavailable).toHaveBeenCalledWith(
+        'community-9',
+        true
+      );
     });
   });
 
@@ -1115,7 +1222,7 @@ describe('PresetTool', () => {
       expect(tabCount(el, 'community')).toBe('2');
     });
 
-    it('Keep deleted off drops tombstoned copies from the Saved counts', async () => {
+    it('Hiding unavailable presets removes those copies from the Saved counts', async () => {
       configControllerConfig = { ...defaultConfig(), keepDeleted: false };
       savedListMock = [
         makeSaved({ id: 'community-8', name: 'Alive' }),
@@ -1340,7 +1447,7 @@ describe('PresetTool', () => {
     describe('signing out on Mine catches the pool up', () => {
       function signOut(): void {
         const listener = authServiceMock.subscribe.mock.calls.at(-1)![0];
-        listener({ isAuthenticated: false });
+        listener({ isAuthenticated: false, token: null });
       }
 
       it('fetches the search typed on Mine', async () => {

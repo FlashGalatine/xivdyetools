@@ -197,28 +197,25 @@ class AuthServiceImpl {
   // promise to every caller until it settles.
   private logoutPromise: Promise<void> | null = null;
 
+  // A newer sign-in or logout can supersede an asynchronous PKCE calculation.
+  private oauthStart: symbol | null = null;
+
   /**
    * Initialize auth service - restore session from storage
    */
   async initialize(): Promise<void> {
     if (this.initialized) return;
 
-    // BUG-002: Sync auth state across tabs via StorageEvent
-    // StorageEvent fires on all tabs EXCEPT the one that made the change — the originating tab
-    // already has its state updated. Because of the `if (this.initialized) return` guard above,
-    // this listener is registered exactly once per page lifetime.
+    // Only other tabs receive these events. Read current storage since more than
+    // one session change may have been queued before this listener runs.
     window.addEventListener('storage', (event) => {
-      if (event.key === TOKEN_STORAGE_KEY) {
-        if (event.newValue === null && this.state.isAuthenticated) {
-          // Token removed in another tab — log out this tab too
-          logger.info('Token cleared in another tab, synchronizing logout');
-          this.clearState();
-          this.notifyListeners();
-        } else if (event.newValue !== null && !this.state.isAuthenticated) {
-          // Token set in another tab — sync login state into this tab
-          this.loadFromStorage();
-          this.notifyListeners();
-        }
+      if (event.key !== TOKEN_STORAGE_KEY && event.key !== null) return;
+      if (event.storageArea !== localStorage) return;
+
+      const previousToken = this.state.token;
+      this.loadFromStorage();
+      if (this.state.token !== previousToken) {
+        this.notifyListeners();
       }
     });
 
@@ -233,52 +230,27 @@ class AuthServiceImpl {
       const urlParams = new URLSearchParams(window.location.search);
       const code = urlParams.get('code');
       const error = urlParams.get('error');
-      // `provider=<name>` is the oauth worker's marker on the XIVAuth callback
-      // redirect. SECURITY (FINDING-032 / WEB-3): honour it only on an actual
-      // callback (a `code` is present) and only for a known provider — it
-      // used to be persisted from ANY page load, so a crafted share link
-      // (`/presets?provider=xivauth`) could route the victim's next Discord
-      // code exchange to the XIVAuth endpoint and silently fail the sign-in.
-      const providerFromUrl = this.parseProvider(urlParams.get('provider'));
-      if (code && providerFromUrl) {
-        sessionStorage.setItem(OAUTH_PROVIDER_KEY, providerFromUrl);
-      }
-
-      if (import.meta.env.DEV) {
-        logger.info('🔐 [AuthService] URL params:', {
-          hasCode: !!code,
-          hasError: !!error,
-          provider: providerFromUrl,
-        });
-      }
-
-      if (code) {
-        // New secure PKCE flow: we receive the auth code, then exchange it with our stored code_verifier
-        if (import.meta.env.DEV) {
-          logger.info('🔐 [AuthService] Auth code found in URL, exchanging for token...');
-        }
-        await this.handleCallbackCode(code, urlParams.get('csrf'), urlParams.get('state'));
-        // Get return path before cleaning URL, default to home
-        // SECURITY: Sanitize to prevent open redirect attacks
-        const rawPath =
+      if (code || error) {
+        const returnPath =
           urlParams.get('return_path') || sessionStorage.getItem(OAUTH_RETURN_PATH_KEY);
-        const returnPath = sanitizeReturnPath(rawPath);
-        if (import.meta.env.DEV) {
-          logger.info(`🔐 [AuthService] Navigating to return path: ${returnPath}`);
+        const returnTool = sessionStorage.getItem(OAUTH_RETURN_TOOL_KEY);
+        const codeVerifier = sessionStorage.getItem(PKCE_VERIFIER_KEY);
+        const storedState = sessionStorage.getItem(OAUTH_STATE_KEY);
+        // FINDING-032: The worker's provider marker only selects this exchange.
+        // Use the tab's marker for older XIVAuth callbacks that omit it.
+        const provider =
+          this.parseProvider(urlParams.get('provider')) ??
+          this.parseProvider(sessionStorage.getItem(OAUTH_PROVIDER_KEY)) ??
+          'discord';
+
+        // Consume tab data before any network request or navigation can delay cleanup.
+        this.resetOAuthFlow();
+        if (code) {
+          await this.handleCallbackCode(code, urlParams, codeVerifier, storedState, provider);
+        } else {
+          logger.error('OAuth error:', error);
         }
-        sessionStorage.removeItem(OAUTH_RETURN_PATH_KEY);
-        // Clean up URL and navigate to return path
-        this.navigateAfterAuth(returnPath);
-      } else if (error) {
-        logger.error('OAuth error:', error);
-        // Get return path before cleaning URL
-        // SECURITY: Sanitize to prevent open redirect attacks
-        const rawPath =
-          urlParams.get('return_path') || sessionStorage.getItem(OAUTH_RETURN_PATH_KEY);
-        const returnPath = sanitizeReturnPath(rawPath);
-        sessionStorage.removeItem(OAUTH_RETURN_PATH_KEY);
-        // Clean up URL and navigate back (even on error)
-        this.navigateAfterAuth(returnPath);
+        this.navigateAfterAuth(sanitizeReturnPath(returnPath), returnTool);
       }
 
       this.initialized = true;
@@ -372,37 +344,34 @@ class AuthServiceImpl {
     return value === 'discord' || value === 'xivauth' ? value : null;
   }
 
-  /**
-   * Handle authorization code received from OAuth callback
-   * Exchanges the code for a token via POST to the OAuth worker
-   * This is the secure PKCE flow - the code_verifier never leaves the client
-   *
-   * @param code - Authorization code from the bounce
-   * @param csrf - The SPA's own state nonce echoed by the worker (CSRF check)
-   * @param signedState - The worker's signed state envelope (`?state=`), forwarded
-   *   so the worker can bind the verifier to its challenge; null on older bounces
-   */
-  private async handleCallbackCode(
-    code: string,
-    csrf: string | null,
-    signedState: string | null
-  ): Promise<void> {
-    // Retrieve the stored code_verifier (stored during login initiation)
-    const codeVerifier = sessionStorage.getItem(PKCE_VERIFIER_KEY);
-    const storedState = sessionStorage.getItem(OAUTH_STATE_KEY);
-    const provider = this.parseProvider(sessionStorage.getItem(OAUTH_PROVIDER_KEY)) ?? 'discord';
-
-    // Clean up PKCE session storage
+  /** Discard the current attempt and prevent an interrupted start from restoring it. */
+  private resetOAuthFlow(): void {
+    this.oauthStart = null;
     sessionStorage.removeItem(PKCE_VERIFIER_KEY);
     sessionStorage.removeItem(OAUTH_STATE_KEY);
     sessionStorage.removeItem(OAUTH_PROVIDER_KEY);
+    sessionStorage.removeItem(OAUTH_RETURN_PATH_KEY);
+    sessionStorage.removeItem(OAUTH_RETURN_TOOL_KEY);
+  }
 
+  /**
+   * Handle authorization code received from OAuth callback
+   * Exchanges the code for a token via POST to the OAuth worker
+   */
+  private async handleCallbackCode(
+    code: string,
+    urlParams: URLSearchParams,
+    codeVerifier: string | null,
+    storedState: string | null,
+    provider: AuthProvider
+  ): Promise<void> {
     if (!codeVerifier) {
       logger.error('Missing code_verifier - OAuth flow may have been tampered with');
       return;
     }
 
     // Verify CSRF state matches (fail-closed: reject if either value is missing)
+    const csrf = urlParams.get('csrf');
     if (!csrf || !storedState || csrf !== storedState) {
       logger.error('CSRF state validation failed');
       return;
@@ -424,6 +393,7 @@ class AuthServiceImpl {
       // envelope; forwarding it lets the worker bind this verifier to the
       // challenge it issued (S256(code_verifier) must equal state.code_challenge).
       // Older bounces carry none — then the body is exactly what it was.
+      const signedState = urlParams.get('state');
       const response = await fetch(callbackEndpoint, {
         method: 'POST',
         headers: {
@@ -495,9 +465,10 @@ class AuthServiceImpl {
     // SECURITY: Store token in localStorage (see TOKEN_STORAGE_KEY doc for security rationale)
     // Using localStorage instead of sessionStorage enables cross-tab session sharing
     // Token is never logged; only expiry metadata is logged below
-    localStorage.setItem(TOKEN_STORAGE_KEY, token);
     localStorage.setItem(EXPIRY_STORAGE_KEY, expiresAt.toString());
     localStorage.setItem(PROVIDER_STORAGE_KEY, provider);
+    // Publish the token last so receiving tabs can restore its metadata.
+    localStorage.setItem(TOKEN_STORAGE_KEY, token);
     logger.info(`Token stored, expires: ${new Date(expiresAt * 1000).toISOString()}`);
 
     // Build avatar URL based on provider
@@ -562,11 +533,7 @@ class AuthServiceImpl {
    * Navigate to the return path after OAuth callback
    * This handles both successful login and error cases
    */
-  private navigateAfterAuth(returnPath: string): void {
-    // Check if a returnTool was stored during login initiation
-    const returnTool = sessionStorage.getItem(OAUTH_RETURN_TOOL_KEY);
-    sessionStorage.removeItem(OAUTH_RETURN_TOOL_KEY);
-
+  private navigateAfterAuth(returnPath: string, returnTool: string | null): void {
     // If returnTool is specified, navigate to that tool's route instead
     let finalPath = returnPath;
     if (returnTool) {
@@ -664,43 +631,7 @@ class AuthServiceImpl {
    * This is the core security guarantee of PKCE.
    */
   async login(returnPath?: string, returnTool?: string): Promise<void> {
-    logger.info('Initiating Discord OAuth login...');
-
-    try {
-      // Generate PKCE code verifier and challenge
-      const codeVerifier = this.generateRandomString(64);
-      const codeChallenge = await this.sha256Base64Url(codeVerifier);
-      const state = this.generateRandomString(32);
-
-      // Store for callback verification - code_verifier stays here, never sent via URL
-      sessionStorage.setItem(PKCE_VERIFIER_KEY, codeVerifier);
-      sessionStorage.setItem(OAUTH_STATE_KEY, state);
-      sessionStorage.setItem(OAUTH_RETURN_PATH_KEY, returnPath || window.location.pathname);
-      // Each flow starts clean: a provider marker left by an earlier XIVAuth
-      // attempt (or a crafted link) must not route THIS code exchange to the
-      // XIVAuth callback (FINDING-032 / WEB-3).
-      sessionStorage.removeItem(OAUTH_PROVIDER_KEY);
-      // Store return tool if provided
-      if (returnTool) {
-        sessionStorage.setItem(OAUTH_RETURN_TOOL_KEY, returnTool);
-      }
-
-      // Build auth URL - ONLY send code_challenge, NOT code_verifier
-      const authUrl = new URL(`${OAUTH_WORKER_URL}/auth/discord`);
-      authUrl.searchParams.set('code_challenge', codeChallenge);
-      authUrl.searchParams.set('code_challenge_method', 'S256');
-      authUrl.searchParams.set('state', state);
-      authUrl.searchParams.set('redirect_uri', `${window.location.origin}/auth/callback`);
-      if (returnPath) {
-        authUrl.searchParams.set('return_path', returnPath);
-      }
-
-      // Redirect to OAuth
-      window.location.href = authUrl.toString();
-    } catch (err) {
-      logger.error('Failed to initiate OAuth login:', err);
-      throw err;
-    }
+    return this.startOAuthFlow('discord', returnPath, returnTool);
   }
 
   /**
@@ -712,25 +643,26 @@ class AuthServiceImpl {
    * character verification and can link to Discord accounts.
    */
   async loginWithXIVAuth(returnPath?: string, returnTool?: string): Promise<void> {
-    logger.info('Initiating XIVAuth OAuth login...');
+    return this.startOAuthFlow('xivauth', returnPath, returnTool);
+  }
 
+  private async startOAuthFlow(
+    provider: AuthProvider,
+    returnPath?: string,
+    returnTool?: string
+  ): Promise<void> {
+    const providerName = provider === 'xivauth' ? 'XIVAuth' : 'Discord';
+    logger.info(`Initiating ${providerName} OAuth login...`);
+    const start = Symbol();
     try {
-      // Generate PKCE code verifier and challenge
+      this.resetOAuthFlow();
+      this.oauthStart = start;
       const codeVerifier = this.generateRandomString(64);
       const codeChallenge = await this.sha256Base64Url(codeVerifier);
+      if (this.oauthStart !== start) return;
+
       const state = this.generateRandomString(32);
-
-      // Store for callback verification
-      sessionStorage.setItem(PKCE_VERIFIER_KEY, codeVerifier);
-      sessionStorage.setItem(OAUTH_STATE_KEY, state);
-      sessionStorage.setItem(OAUTH_RETURN_PATH_KEY, returnPath || window.location.pathname);
-      sessionStorage.setItem(OAUTH_PROVIDER_KEY, 'xivauth'); // Mark as XIVAuth flow
-      if (returnTool) {
-        sessionStorage.setItem(OAUTH_RETURN_TOOL_KEY, returnTool);
-      }
-
-      // Build XIVAuth auth URL (via our worker)
-      const authUrl = new URL(`${OAUTH_WORKER_URL}/auth/xivauth`);
+      const authUrl = new URL(`${OAUTH_WORKER_URL}/auth/${provider}`);
       authUrl.searchParams.set('code_challenge', codeChallenge);
       authUrl.searchParams.set('code_challenge_method', 'S256');
       authUrl.searchParams.set('state', state);
@@ -739,10 +671,21 @@ class AuthServiceImpl {
         authUrl.searchParams.set('return_path', returnPath);
       }
 
-      // Redirect to XIVAuth OAuth
+      // The verifier stays in the tab until the callback exchanges the code.
+      sessionStorage.setItem(PKCE_VERIFIER_KEY, codeVerifier);
+      sessionStorage.setItem(OAUTH_STATE_KEY, state);
+      sessionStorage.setItem(OAUTH_RETURN_PATH_KEY, returnPath || window.location.pathname);
+      if (provider === 'xivauth') {
+        sessionStorage.setItem(OAUTH_PROVIDER_KEY, provider);
+      }
+      if (returnTool) {
+        sessionStorage.setItem(OAUTH_RETURN_TOOL_KEY, returnTool);
+      }
+
       window.location.href = authUrl.toString();
     } catch (err) {
-      logger.error('Failed to initiate XIVAuth login:', err);
+      if (this.oauthStart === start) this.resetOAuthFlow();
+      logger.error(`Failed to initiate ${providerName} OAuth login:`, err);
       throw err;
     }
   }
@@ -784,7 +727,7 @@ class AuthServiceImpl {
     this.clearStorage();
     this.clearState();
     // A half-finished OAuth flow must not outlive the session it started in
-    sessionStorage.removeItem(OAUTH_PROVIDER_KEY);
+    this.resetOAuthFlow();
     // FINDING-008: Clear cached market prices so they don't persist across sessions
     void APIService.clearCache().catch(() => {});
     this.notifyListeners();

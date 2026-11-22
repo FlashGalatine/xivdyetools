@@ -1694,13 +1694,13 @@ export class ConfigSidebar extends BaseLitComponent {
           <div class="config-hint">${LanguageService.t('preset.cfgSavedFirstDesc')}</div>
           <div class="config-row">
             <v4-toggle-switch
-              label=${LanguageService.t('preset.cfgKeepDeleted')}
+              label=${LanguageService.t('preset.cfgKeepUnavailable')}
               .checked=${this.presetsConfig.keepDeleted}
               @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
                 this.handleConfigChange('presets', 'keepDeleted', e.detail.checked)}
             ></v4-toggle-switch>
           </div>
-          <div class="config-hint">${LanguageService.t('preset.cfgKeepDeletedDesc')}</div>
+          <div class="config-hint">${LanguageService.t('preset.cfgKeepUnavailableDesc')}</div>
           <div class="config-hint" style="margin-top: 6px; opacity: 0.85;">
             ${LanguageService.t('preset.cfgStoredLocallyHint')}
           </div>

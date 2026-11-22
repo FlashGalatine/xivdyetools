@@ -15,7 +15,7 @@
  *
  * @module services/__tests__/hybrid-preset-service.test
  */
-import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
+import { describe, it, expect, vi, afterAll, beforeAll, beforeEach } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { server } from '../../__tests__/mocks/server';
 import { mockPresets } from '../../__tests__/mocks/handlers';
@@ -37,8 +37,60 @@ vi.mock('../auth-service', () => ({
 
 import { hybridPresetService } from '../hybrid-preset-service';
 import { communityPresetService } from '../community-preset-service';
+import { LanguageService } from '../language-service';
 
 const API_URL = 'https://api.xivdyetools.app';
+
+it('opens a specific community detail while gallery health is unavailable', async () => {
+  const preset = mockPresets[0];
+  expect(hybridPresetService.isAPIAvailable()).toBe(false);
+  await expect(hybridPresetService.getPreset(`community-${preset.id}`)).resolves.toMatchObject({
+    name: preset.name,
+  });
+});
+
+describe('curated preset search and order in French with no community API', () => {
+  beforeAll(async () => {
+    await LanguageService.setLocale('fr');
+  });
+
+  it.each(['ÉTÉ', 'eau profonde du port'])(
+    'finds Summer before limiting the results for %s',
+    async (search) => {
+      const { presets } = await hybridPresetService.getPresets({
+        search,
+        limit: 1,
+        includeAPI: false,
+      });
+
+      expect(presets.map(({ id }) => id)).toEqual(['season-summer']);
+    }
+  );
+
+  it.each(['Summer', 'Ceruleum Blue'])('keeps the English %s search alias', async (search) => {
+    const { presets } = await hybridPresetService.getPresets({ search, includeAPI: false });
+
+    expect(presets.map(({ id }) => id)).toContain('season-summer');
+  });
+
+  it('limits the French alphabetical order by the displayed names', async () => {
+    const { presets } = await hybridPresetService.getPresets({
+      category: 'seasons',
+      limit: 3,
+      includeAPI: false,
+    });
+
+    expect(presets.map(({ id }) => id)).toEqual([
+      'season-autumn',
+      'season-summer',
+      'season-winter',
+    ]);
+  });
+
+  afterAll(async () => {
+    await LanguageService.setLocale('en');
+  });
+});
 
 describe('HybridPresetService.getPresets (BUG-029)', () => {
   beforeAll(async () => {

@@ -299,7 +299,7 @@ export class CommunityPresetService {
   /**
    * Make API request with error handling
    */
-  private async request<T>(path: string, cacheKey?: string): Promise<T> {
+  private async request<T>(path: string, cacheKey?: string, options?: RequestInit): Promise<T> {
     // Check cache first
     if (cacheKey) {
       const cached = this.cache.get(cacheKey) as T | null;
@@ -312,7 +312,7 @@ export class CommunityPresetService {
     const generation = this.cacheGeneration;
 
     try {
-      const response = await this.fetchWithTimeout(url);
+      const response = await this.fetchWithTimeout(url, options);
 
       if (!response.ok) {
         const errorData = (await response.json().catch(() => ({}))) as { message?: string };
@@ -373,15 +373,29 @@ export class CommunityPresetService {
    * Get a single preset by ID
    */
   async getPreset(id: string): Promise<CommunityPreset | null> {
+    const path = `/api/v1/presets/${encodeURIComponent(id)}`;
     try {
-      return await this.request<CommunityPreset>(
-        `/api/v1/presets/${encodeURIComponent(id)}`,
-        `preset:${id}`
-      );
+      return await this.request<CommunityPreset>(path, `preset:${id}`);
     } catch (error) {
-      if (error instanceof PresetApiError && error.status === 404) {
-        return null;
-      }
+      if (!(error instanceof PresetApiError) || error.status !== 404) throw error;
+    }
+
+    // A duplicate under review can be visible to its owner or a moderator.
+    // Keep that detail response out of public and browser caches.
+    const headers = authService.getAuthHeaders();
+    if (!headers.Authorization) return null;
+    this.reconcileAuthSession(authService.getState());
+    const session = this.authGeneration;
+    try {
+      const preset = await this.request<CommunityPreset>(path, undefined, {
+        headers,
+        cache: 'no-store',
+      });
+      if (!authService.isAuthenticated()) return null;
+      this.reconcileAuthSession(authService.getState());
+      return session === this.authGeneration ? preset : null;
+    } catch (error) {
+      if (error instanceof PresetApiError && [401, 403, 404].includes(error.status)) return null;
       throw error;
     }
   }

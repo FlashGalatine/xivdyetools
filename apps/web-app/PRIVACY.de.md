@@ -2,7 +2,7 @@
 
 > Dies ist eine zur Verständlichkeit bereitgestellte Übersetzung. Maßgeblich ist die englische Fassung; weichen beide voneinander ab, gilt die englische Fassung. [Englisch](PRIVACY.md)
 
-**Zuletzt aktualisiert:** 2026-11-01 · Gilt für **xivdyetools.app** und **beta.xivdyetools.app**. Der
+**Zuletzt aktualisiert:** 2026-11-22 · Gilt für **xivdyetools.app** und **beta.xivdyetools.app**. Der
 Discord-Bot hat eine eigene Richtlinie: [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.de.md).
 
 XIV Dye Tools läuft in deinem Browser. Die Farbwerkzeuge — Paletten-Extraktor, Harmonie-Explorer,
@@ -58,8 +58,8 @@ vollständige Liste.
 
 `localStorage` enthält leichtgewichtige Einstellungen und deine eigene gespeicherte Arbeit: Design,
 Sprache, Einstellungen pro Werkzeug (einschließlich des Analyse-Schalters unten), favorisierte
-Farbstoffe, gespeicherte Paletten und Sammlungen, Bezugsquellen, die du in der "Ausrüstungsliste"
-des Projektionslesers umgeschrieben hast, sowie — wenn du dich anmeldest — dein
+Farbstoffe, gespeicherte Paletten und Sammlungen, bearbeitete Bezugsquellen in der „Ausrüstungsliste“
+des Projektionslesers und die separat gespeicherten „Obtained“-Zeilen der Kurzfassung, sowie — wenn du dich anmeldest — dein
 Sitzungs-Token für die Community-Vorlagen. Nichts davon ist ein Tracking-Identifikator. Die
 Website-Daten-Steuerung deines Browsers löscht alles davon. In der App löscht jeder dieser Punkte
 einen Teil:
@@ -76,9 +76,18 @@ einen Teil:
   Farbmuster-Matcher speicherst, haben in der App kein Steuerelement zum Löschen; die
   Website-Daten-Steuerung deines Browsers löscht sie.
 - Das Abmelden löscht das Sitzungs-Token.
-- "Alles zurücksetzen" in der Ausrüstungsliste löscht die umgeschriebene Zeile jedes Teils in dieser
-  Liste. Jede Zeile wird pro Ausrüstungsteil gespeichert, sodass auch ein anderes Outfit mit
-  demselben Teil diese Zeile verliert.
+- „Alles zurücksetzen“ in der Ausrüstungsliste löscht beide Fassungen der bearbeiteten Zeile für
+  jedes erkennbare Ausrüstungsteil. Auch andere Outfits mit diesem Teil verlieren diese Änderungen.
+  Sind die Gegenstandsnamen gerade nicht verfügbar, können Änderungen aus der Zeit, in der die Namen
+  verfügbar waren, erhalten bleiben. Wähle „Alles zurücksetzen“ erneut, sobald die Namen
+  wieder verfügbar sind.
+
+Beim Anmelden mit Discord oder XIVAuth speichert dieser Tab in `sessionStorage` vorübergehend
+einen PKCE-Prüfwert und einen Zufallswert, der die Antwort deiner Anfrage zuordnet. Außerdem
+speichert er bei Bedarf den Anmeldeanbieter und die Seite oder das Werkzeug für die Rückkehr.
+Die App löscht diese Angaben, sobald sie das Ergebnis der Anmeldung verarbeitet, auch bei Abbruch
+oder Fehler. Kehrst du nicht zur App zurück, können die Angaben bis zur nächsten Anmeldung, zur
+Abmeldung oder bis zum Ende der Tab-Sitzung erhalten bleiben.
 
 `IndexedDB` enthält genau eine Sache: einen Cache bereits abgerufener Marktbrett-Preise, damit
 dieselbe Abfrage nicht wiederholt wird. Es enthält keine Bilder — eine frühere Version der App
@@ -97,8 +106,9 @@ erlaubt nichts anderes) sowie den unten genannten Drittanbietern:
    abruft.
 2. **Ausrüstungsnamen und -symbole für `.chara`-Importe** — `data.xivdyetools.app` (siehe oben).
 3. **Community-Vorlagen** (`api.xivdyetools.app`): Beim Durchsuchen ohne Anmeldung werden keine Kontoinformationen gesendet. Wenn du angemeldet
-   bist und eine Vorlage öffnest, wird dein Anmeldetoken gesendet, um zu prüfen, ob du bereits
-   abgestimmt hast. Diese Prüfung speichert keinen Eintrag über deinen Aufruf. Die
+   bist und eine öffentliche Community-Vorlage öffnest, kann die App dein Anmeldetoken senden, um zu prüfen, ob du bereits
+   abgestimmt hast. Wenn die Vorlage nicht öffentlich verfügbar ist, kann die App dein Token auch senden,
+   um zu prüfen, ob du sie mit deinem Konto ansehen darfst. Diese Prüfungen speichern keinen Eintrag über deinen Aufruf. Die
    Anmeldung über `auth.xivdyetools.app` mit Discord oder XIVAuth legt sofort einen
    Kontodatensatz an, unabhängig davon, ob du anschließend etwas einreichst oder abstimmst. Bei
    Discord enthält der Datensatz deine Discord-Benutzer-ID und deinen Anzeigenamen (deinen
@@ -119,9 +129,9 @@ erlaubt nichts anderes) sowie den unten genannten Drittanbietern:
    Formular eingibst — und, falls unsere automatische Kontrolle beim Bearbeiten einer bereits veröffentlichten Vorlage den neuen Namen, die neue Beschreibung, die Tags oder den Beispiellink zur Prüfung zurückhält, die Fassung vor der ersten solchen
    Bearbeitung, aufbewahrt, bis ein Moderator diese Fassung wiederherstellt oder die Vorlage gelöscht wird —
    plus das optionale Vorschaubild, das oben unter Bilder beschrieben ist. Um ein Vorschaubild zu
-   entfernen, nutze das Bearbeitungsformular der
-   Vorlage; wenn du eine Vorlage unter **Meine Einreichungen** löschst, wird auch ihr Vorschaubild
-   gelöscht. Wenn du eine Vorlage einreichst oder bearbeitest, können ihr Name, ihre Beschreibung, ihre Tags und der Pfadtext des Beispiellinks für eine Moderationsbewertung an Googles [Perspective API](https://perspectiveapi.com/) gesendet werden (optional — nur zur Inhaltsmoderation). Die Anfrage weist Google an, diese Texte nicht zu speichern (`doNotStore`). URL-Abfrageparameter, Fragmente, Zugangsdaten und Hostnamen werden aus dem Linktext ausgeschlossen. Wir senden keine Konto-IDs mit dem Text und rufen den angegebenen Beispiellink niemals ab. Was sonst noch zu deinen Vorlagen aufbewahrt wird und wie
+   entfernen, nutze das Bearbeitungsformular der Vorlage oder lösche die Vorlage unter
+   **Meine Einreichungen**. Sobald die Galerie die Vorlage neu abruft, zeigt sie kein Vorschaubild mehr. Bis die
+   Bereinigung abgeschlossen ist, kann die alte Bild-URL noch funktionieren (siehe *Deine Daten löschen*). Wenn du eine Vorlage einreichst oder bearbeitest, können ihr Name, ihre Beschreibung, ihre Tags und der Pfadtext des Beispiellinks für eine Moderationsbewertung an Googles [Perspective API](https://perspectiveapi.com/) gesendet werden (optional — nur zur Inhaltsmoderation). Die Anfrage weist Google an, diese Texte nicht zu speichern (`doNotStore`). URL-Abfrageparameter, Fragmente, Zugangsdaten und Hostnamen werden aus dem Linktext ausgeschlossen. Wir senden keine Konto-IDs mit dem Text und rufen den angegebenen Beispiellink niemals ab. Was sonst noch zu deinen Vorlagen aufbewahrt wird und wie
    lange, steht unten unter *Community-Vorlagen: was wir aufbewahren*; wie du es löschst,
    unter *Deine Daten löschen*. Vorschaubilder von Vorlagen werden von `shots.xivdyetools.app`
    ausgeliefert; Avatare laden vom CDN von Discord.
@@ -297,11 +307,15 @@ Unsere wird von Cloudflare verwaltet, und hier ist alles, was wir damit tun.
 Einiges kannst du jederzeit selbst löschen, es sei denn, ein Moderator hat dich für
 Community-Vorlagen gesperrt (solange eine Sperre aktiv ist, wende dich stattdessen an uns):
 
-- **Eine Vorlage:** Lösche sie unter **Meine Einreichungen**. Ihr Vorschaubild, die Stimmen dazu,
+- **Eine Vorlage:** Lösche sie unter **Meine Einreichungen**. Die Stimmen dazu,
   die Einträge im Moderationsprotokoll dazu und ein etwaiger Fehldatensatz zu fehlgeschlagenen
   Benachrichtigungen für diese Vorlage werden mit gelöscht. Ihre Tageslimit-Zähler laufen nach
   30 Tagen von selbst ab, und die Beiträge dazu auf unserem Discord-Server bleiben bestehen, es sei
   denn, du bittest uns darum (siehe unten).
+  Eine bereits geöffnete Galerie kann das bisherige Bild bis zur Aktualisierung anzeigen. Schlägt das Löschen des
+  Bildes oder das Leeren des Caches für seine öffentliche URL fehl, versuchen wir es erneut.
+  Bis dahin kann das Bild unter der alten URL erreichbar bleiben. Bereits gespeicherte Kopien
+  bleiben auf den jeweiligen Geräten.
 - **Eine Stimme:** Wähle bei dieser Vorlage erneut die Schaltfläche "Abstimmen" ("Abgestimmt", sobald
   du abgestimmt hast).
 - **Deine Sitzung:** Das Abmelden löscht das Sitzungs-Token aus diesem Browser und fordert unseren

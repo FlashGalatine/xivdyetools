@@ -2,7 +2,7 @@
 
 > Also available in: [日本語](PRIVACY.ja.md) · [Deutsch](PRIVACY.de.md) · [Français](PRIVACY.fr.md) · [한국어](PRIVACY.ko.md) · [中文](PRIVACY.zh.md). This English version is the authoritative text.
 
-**Last updated:** 2026-11-01 · Covers **xivdyetools.app** and **beta.xivdyetools.app**. The Discord
+**Last updated:** 2026-11-22 · Covers **xivdyetools.app** and **beta.xivdyetools.app**. The Discord
 bot has its own policy: [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.md).
 
 XIV Dye Tools runs in your browser. The color tools — the Palette Extractor, Harmony Explorer,
@@ -68,10 +68,17 @@ these clears one part:
 - Swaps you save in Budget Suggestions and character colors you save in the Swatch Matcher have no
   delete control in the app; your browser's site-data controls clear them.
 - Signing out deletes the session token.
-- "Reset all" in the Glamour list deletes the rewritten line of every piece in that list. Each
-  line is kept per piece of gear, so another outfit that shares a piece loses that line too. While
-  the item names can't be looked up, it can't reach a line you typed when they could; press it again
-  once the names are back.
+- "Reset all" in the Glamour list clears both forms of an edited line for each piece it can
+  identify. Other outfits that share that piece also lose those edits. If item names are
+  unavailable, edits you saved while the names were available can remain. Use "Reset all" again
+  when the names are available.
+
+When you start signing in with Discord or XIVAuth, this tab uses `sessionStorage` to remember
+a PKCE verifier and a random value that links the reply to your request. It also remembers
+the provider where needed and the page or tool to return to. The app
+clears these details when it processes the sign-in result, including cancellation or failure.
+If you leave sign-in before returning to the app, the details can remain until you start another
+sign-in, sign out, or end the tab session.
 
 `IndexedDB` holds one thing: a cache of market-board prices already fetched, so the same lookup is
 not repeated. It holds no images — an earlier version of the app kept your last extractor image
@@ -89,8 +96,8 @@ else) plus the third parties named below:
    [Universalis](https://universalis.app).
 2. **Gear names and icons for `.chara` imports** — `data.xivdyetools.app` (see above).
 3. **Community presets** (`api.xivdyetools.app`): browsing while signed out sends no account information. While signed in,
-   opening a preset sends your sign-in token to check whether you already voted. This check does
-   not store a record of your view. Signing in
+   opening a public community preset can send your sign-in token to check whether you already voted. If the preset is unavailable publicly, the app can also
+   send your token to check whether your account may view it. These checks do not store a record of your view. Signing in
    through `auth.xivdyetools.app` with Discord or XIVAuth creates an account record right away,
    whether or not you go on to submit or vote. With Discord, the record holds your Discord user ID
    and your display name (your username if you have no display name). With XIVAuth, the record
@@ -110,8 +117,9 @@ else) plus the third parties named below:
    name, description, tags or example link for review, the version from before the first such edit, kept until a
    moderator restores it or the preset is deleted — plus the optional preview image described under
    Images above. To remove a
-   preview image, use the preset's edit form; deleting a preset from **My Submissions** deletes its
-   preview image too. When you submit or edit a preset, its name, description, tags and example-link path text may also be sent to
+   preview image, use the preset’s edit form or delete the preset from **My Submissions**. The next time the gallery fetches that preset, it will show no
+   preview. The old image URL may still work while cleanup is pending
+   (see *Deleting your data*). When you submit or edit a preset, its name, description, tags and example-link path text may also be sent to
    Google's [Perspective API](https://perspectiveapi.com/) for a moderation score (optional —
    content moderation only); the request tells Google not to store them (`doNotStore`), and
    URL query strings, fragments, credentials and hostnames are excluded from that link text. We send no account identifiers with the text and never fetch the supplied example link. What else is kept about your presets, and
@@ -272,10 +280,13 @@ by Cloudflare, and here is the whole of what we do with it.
 Some of it you can delete yourself, at any time unless a moderator has banned you from community
 presets (while a ban is active, ask us instead):
 
-- **A preset:** delete it from **My Submissions**. Its preview image, the votes on it, the
+- **A preset:** delete it from **My Submissions**. The votes on it, the
   moderation-log entries about it and any failed-notification record for it are deleted with it.
   Its daily-limit counts expire on their own after 30 days, and the posts about it in our Discord
   server stay unless you ask us (below).
+  An already-open gallery can show the old preview until it refreshes. If deleting the stored image or
+  clearing its cached public URL fails, we retry. The old URL can still serve the image in the
+  meantime. Copies people have already saved stay on their devices.
 - **A vote:** select the vote button on that preset again.
 - **Your session:** signing out deletes the session token from this browser and asks our sign-in
   service to revoke it.

@@ -686,7 +686,7 @@ export class PresetDetail extends BaseLitComponent {
   private async checkVoteStatus(): Promise<void> {
     const generation = ++this.voteCheckGeneration;
 
-    if (!this.preset?.apiPresetId || !authService.isAuthenticated()) {
+    if (!this.preset?.apiPresetId || this.preset.viewerOnly || !authService.isAuthenticated()) {
       this.hasVoted = false;
       return;
     }
@@ -759,7 +759,7 @@ export class PresetDetail extends BaseLitComponent {
    * Handle share button click
    */
   private handleShare(): void {
-    if (!this.preset) return;
+    if (!this.preset || this.preset.viewerOnly) return;
     const url = `${window.location.origin}/presets/${this.preset.id}`;
     navigator.clipboard
       .writeText(url)
@@ -940,7 +940,7 @@ export class PresetDetail extends BaseLitComponent {
       `;
     }
 
-    const isVoteable = this.preset.isFromAPI && !this.preset.isCurated;
+    const isVoteable = this.preset.isFromAPI && !this.preset.isCurated && !this.preset.viewerOnly;
     const isAuthenticated = authService.isAuthenticated();
 
     return html`
@@ -1072,10 +1072,14 @@ export class PresetDetail extends BaseLitComponent {
 
         <!-- Actions -->
         <div class="actions">
-          <button class="action-btn share-btn" @click=${this.handleShare}>
-            <span class="icon">${unsafeHTML(ICON_LINK)}</span>
-            ${LanguageService.t('preset.copyLink')}
-          </button>
+          ${
+            this.preset.viewerOnly
+              ? nothing
+              : html`<button class="action-btn share-btn" @click=${this.handleShare}>
+                  <span class="icon">${unsafeHTML(ICON_LINK)}</span>
+                  ${LanguageService.t('preset.copyLink')}
+                </button>`
+          }
           ${
             isVoteable
               ? html`

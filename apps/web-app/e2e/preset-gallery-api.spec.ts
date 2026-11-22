@@ -17,7 +17,12 @@
  */
 import { test, expect } from './fixtures/coverage';
 import type { Page } from './fixtures/coverage';
-import { waitForAppReady, seedStartupStorage, gotoTool } from './fixtures/navigation';
+import {
+  waitForAppReady,
+  seedStartupStorage,
+  gotoTool,
+  openOptionsPanel,
+} from './fixtures/navigation';
 import type { CommunityPreset, PresetListResponse } from '@xivdyetools/types';
 
 // --- fixture payloads -------------------------------------------------------
@@ -150,6 +155,143 @@ async function openGallery(page: Page): Promise<void> {
 }
 
 const cards = (page: Page) => page.locator('v4-preset-card');
+
+test('updates an active official search and the offline Saved shelf when the language changes', async ({
+  page,
+}) => {
+  await page.route('**/health', (route) => route.fulfill({ status: 503 }));
+  await openGallery(page);
+  await page
+    .getByRole('button', { name: /^Official\b/ })
+    .first()
+    .click();
+  const summer = cards(page).filter({ has: page.locator('.preset-name', { hasText: /^Summer$/ }) });
+  await summer.getByRole('button', { name: 'Save', exact: true }).click();
+  const search = page.locator('.search-input');
+  await search.fill('eau profonde du port');
+  await expect(cards(page)).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Language', exact: true }).click();
+  await page.locator('.language-modal-content [data-locale="fr"]').click();
+  await page.keyboard.press('Escape');
+
+  await expect(search).toHaveValue('eau profonde du port');
+  await expect(cards(page).locator('.preset-name')).toHaveText(['Été']);
+  await page.locator('.tab-btn').nth(2).click();
+  await expect(cards(page).locator('.preset-name')).toHaveText(['Été']);
+});
+
+test('marks a saved preset as publicly unavailable during review and clears the mark after approval', async ({
+  page,
+}) => {
+  const approved = { ...PRESETS[0] };
+  const publicPresets = [approved];
+  await stubPresetsApi(page, publicPresets);
+  await openGallery(page);
+  const savedCard = cards(page).filter({ hasText: approved.name });
+  await savedCard.getByRole('button', { name: 'Save', exact: true }).click();
+
+  publicPresets.pop(); // Public list omits the pending edit.
+  await page.locator('.sort-btn').first().click();
+  await expect(savedCard).toHaveCount(0);
+  await page.locator('.tab-btn').nth(2).click();
+  await expect(savedCard).toContainText('Unavailable publicly — your saved copy');
+  await expect(savedCard).toContainText(approved.description);
+  await openOptionsPanel(page);
+  const showUnavailable = page.getByRole('switch', { name: 'Show unavailable presets' });
+  await showUnavailable.click();
+  await expect(savedCard).toHaveCount(0);
+  await showUnavailable.click();
+  await expect(savedCard).toBeVisible();
+
+  publicPresets.push(approved);
+  await page.locator('.tab-btn').first().click();
+  await page.locator('.sort-btn').first().click();
+  await expect(savedCard).toBeVisible();
+  await page.locator('.tab-btn').nth(2).click();
+  await expect(savedCard).toBeVisible();
+  await expect(savedCard).not.toContainText('Unavailable publicly');
+});
+
+for (const entry of ['presets', 'glamour'] as const) {
+  test(`opens a duplicate's detail after submitting from ${entry}`, async ({ page }) => {
+    await seedStartupStorage(page);
+    await page.addInitScript(() => {
+      const exp = Math.floor(Date.now() / 1000) + 3600;
+      const claims = btoa(JSON.stringify({ discord_id: '12345', username: 'Test Player', exp }));
+      localStorage.setItem('xivdyetools_auth_token', `test.${claims}.signature`);
+      localStorage.setItem('xivdyetools_auth_expires', String(exp));
+    });
+    const pending = entry === 'glamour';
+    const duplicate: StubPreset = pending
+      ? { ...PRESETS[0], name: 'A private palette in review', status: 'pending' }
+      : PRESETS[0];
+    await stubPresetsApi(page, pending ? [] : PRESETS);
+    if (pending) {
+      await page.route('**/health', (route) => route.fulfill({ status: 503 }));
+      await page.route(`**/api/v1/presets/${duplicate.id}`, async (route) => {
+        if (await route.request().headerValue('authorization')) {
+          await route.fulfill({ json: duplicate });
+        } else {
+          await route.fulfill({ status: 404, json: { message: 'Not found' } });
+        }
+      });
+    }
+    await page.route('**/api/v1/presets', (route) => {
+      if (route.request().method() !== 'POST') return route.fallback();
+      return route.fulfill({ json: { success: true, duplicate, vote_added: !pending } });
+    });
+    await page.route('**/api/v1/presets/mine', (route) => route.fulfill({ json: { presets: [] } }));
+    await page.route('**/api/v1/votes/*/check', (route) =>
+      route.fulfill({ json: { has_voted: true, vote_count: duplicate.vote_count } })
+    );
+    await gotoTool(page, entry);
+
+    if (entry === 'presets') {
+      await openOptionsPanel(page);
+      await page.getByRole('button', { name: '+ Submit Preset', exact: true }).click();
+      await page.locator('.grid.grid-cols-6 button').nth(0).click();
+      await page.locator('.grid.grid-cols-6 button').nth(1).click();
+      await page.locator('.grid.grid-cols-6 button').nth(2).click();
+    } else {
+      await page.route('**/v1/chara/resolve', (route) => route.fulfill({ status: 503 }));
+      await page.locator('input[type="file"][accept*=".chara"]').setInputFiles({
+        name: 'palette.chara',
+        mimeType: 'application/json',
+        buffer: Buffer.from(
+          JSON.stringify({
+            TypeName: 'Anamnesis Character File',
+            Nickname: 'Palette test',
+            Race: 'Hyur',
+            Tribe: 'Midlander',
+            Gender: 'Feminine',
+            HeadGear: { ModelBase: 361, ModelVariant: 5, DyeId: 2, DyeId2: 3 },
+            Body: { ModelBase: 6016, ModelVariant: 1, DyeId: 4, DyeId2: 0 },
+          })
+        ),
+      });
+      await page.getByRole('button', { name: 'Make a palette', exact: true }).click();
+      await page.getByRole('button', { name: 'Submit to Community', exact: true }).click();
+    }
+
+    await page.locator('#preset-name').fill('Duplicate preset test');
+    await page
+      .locator('#preset-description')
+      .fill('A preset with an existing combination of dyes.');
+    await page.locator('#submit-preset-btn').click();
+
+    await expect(page).toHaveURL(new RegExp(`/presets/community-${duplicate.id}$`));
+    const detail = page.locator('v4-preset-detail');
+    await expect(detail).toContainText(duplicate.name);
+    if (pending) await expect(detail.locator('.share-btn')).toHaveCount(0);
+    await expect(page.locator('#submit-preset-btn')).toHaveCount(0);
+    await page.goBack();
+    await expect(page).toHaveURL(new RegExp(`/${entry}$`));
+    await expect(detail).toHaveCount(0);
+    await page.goForward();
+    await expect(detail).toContainText(duplicate.name);
+  });
+}
 
 // ---------------------------------------------------------------------------
 
