@@ -98,13 +98,6 @@ export class WelcomeModal {
   }
 
   /**
-   * Reset welcome modal (for testing or settings)
-   */
-  static reset(): void {
-    StorageService.removeItem(STORAGE_KEYS.WELCOME_SEEN);
-  }
-
-  /**
    * Show the welcome modal
    */
   show(): void {
@@ -145,16 +138,6 @@ export class WelcomeModal {
         this.modalId = null;
       },
     });
-  }
-
-  /**
-   * Close the welcome modal
-   */
-  close(): void {
-    if (this.modalId) {
-      ModalService.dismiss(this.modalId);
-      this.modalId = null;
-    }
   }
 
   /**

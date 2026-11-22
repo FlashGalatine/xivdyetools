@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.18.3] - 2026-11-22
+
+### Removed
+
+- Removed unused methods for combining preset categories, clearing the hybrid preset cache, and reporting community preset availability.
+- Removed unused expiring-storage accessors and unused close and reset methods on the welcome, changelog, and theme dialogs.
+
 ## [5.18.2] - 2026-11-22
 
 ### Fixed

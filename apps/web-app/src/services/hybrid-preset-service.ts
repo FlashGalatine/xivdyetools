@@ -59,18 +59,6 @@ export interface UnifiedPreset {
   previewImageUrl?: string | null;
 }
 
-/**
- * Unified category with metadata
- */
-export interface UnifiedCategory {
-  id: PresetCategory;
-  name: string;
-  description: string;
-  icon: string;
-  presetCount: number;
-  isCurated: boolean;
-}
-
 // PresetSortOption is the shared `@xivdyetools/types` contract, re-exported
 // here so existing `@services/hybrid-preset-service` imports keep working.
 export type { PresetSortOption };
@@ -258,53 +246,6 @@ class HybridPresetService {
   }
 
   // ============================================
-  // Category Methods
-  // ============================================
-
-  /**
-   * Get all categories with preset counts
-   */
-  async getCategories(): Promise<UnifiedCategory[]> {
-    const localCategories = this.localPresetService.getCategories();
-
-    // Start with local categories
-    const categoryMap = new Map<PresetCategory, UnifiedCategory>();
-
-    for (const cat of localCategories) {
-      const localPresets = this.localPresetService.getPresetsByCategory(cat.id as PresetCategory);
-      categoryMap.set(cat.id as PresetCategory, {
-        id: cat.id as PresetCategory,
-        name: cat.name,
-        description: cat.description,
-        icon: cat.icon || '📁',
-        presetCount: localPresets.length,
-        isCurated: true,
-      });
-    }
-
-    // Try to get community counts if API is available
-    if (this.apiAvailable) {
-      try {
-        const apiCategories = await this.communityService.getCategories();
-        for (const apiCat of apiCategories) {
-          const existing = categoryMap.get(apiCat.id as PresetCategory);
-          if (existing) {
-            // Add community count to existing category
-            existing.presetCount += apiCat.preset_count;
-          }
-          // 5.0: the 'community' category value is dropped everywhere —
-          // community-ness is a source, not a category (rows carry their
-          // real category; the D1 migration removes the category row).
-        }
-      } catch (error) {
-        logger.warn('HybridPresetService: Failed to fetch API categories', error);
-      }
-    }
-
-    return Array.from(categoryMap.values());
-  }
-
-  // ============================================
   // Preset Methods
   // ============================================
 
@@ -398,17 +339,6 @@ class HybridPresetService {
     }
 
     return null;
-  }
-
-  // ============================================
-  // Utility Methods
-  // ============================================
-
-  /**
-   * Clear API cache
-   */
-  clearCache(): void {
-    this.communityService.clearCache();
   }
 }
 

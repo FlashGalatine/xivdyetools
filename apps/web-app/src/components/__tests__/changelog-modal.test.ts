@@ -8,6 +8,8 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import type { ModalConfig } from '@services/modal-service';
+import { APP_VERSION, STORAGE_KEYS } from '@shared/constants';
 
 const mockShowChangelog = vi.fn().mockReturnValue('modal-id-456');
 const mockDismiss = vi.fn();
@@ -19,14 +21,6 @@ vi.mock('@services/modal-service', () => ({
   },
 }));
 
-vi.mock('@services/storage-service', () => ({
-  StorageService: {
-    getItem: vi.fn().mockReturnValue(null),
-    setItem: vi.fn(),
-    removeItem: vi.fn(),
-  },
-}));
-
 vi.mock('@services/language-service', () => ({
   LanguageService: {
     t: (key: string) => key,
@@ -34,12 +28,9 @@ vi.mock('@services/language-service', () => ({
   },
 }));
 
-vi.mock('@shared/constants', () => ({
-  APP_NAME: 'XIV Dye Tools',
+vi.mock('@shared/constants', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@shared/constants')>()),
   APP_VERSION: '4.0.0',
-  STORAGE_KEYS: {
-    LAST_VERSION_VIEWED: 'lastVersionViewed',
-  },
 }));
 
 // webapp-modals-21: the fixture always contained an entry for the mocked
@@ -99,6 +90,7 @@ describe('ChangelogModal', () => {
   });
 
   afterEach(() => {
+    localStorage.removeItem(STORAGE_KEYS.LAST_VERSION_VIEWED);
     vi.restoreAllMocks();
   });
 
@@ -139,11 +131,6 @@ describe('ChangelogModal', () => {
     it('should have markAsViewed static method', async () => {
       const { ChangelogModal } = await import('../changelog-modal');
       expect(typeof ChangelogModal.markAsViewed).toBe('function');
-    });
-
-    it('should have reset static method', async () => {
-      const { ChangelogModal } = await import('../changelog-modal');
-      expect(typeof ChangelogModal.reset).toBe('function');
     });
   });
 
@@ -226,6 +213,24 @@ describe('ChangelogModal', () => {
   // ============================================================================
 
   describe('Lifecycle', () => {
+    it('records the running version on dismissal and allows the dialog to reopen', async () => {
+      const { ChangelogModal } = await import('../changelog-modal');
+      const modal = new ChangelogModal();
+      localStorage.setItem(STORAGE_KEYS.LAST_VERSION_VIEWED, '3.3.0');
+
+      expect(ChangelogModal.shouldShow()).toBe(true);
+      await modal.show({ mode: 'popup' });
+      expect(ChangelogModal.shouldShow()).toBe(true);
+
+      const { onClose } = mockShowChangelog.mock.calls[0][0] as ModalConfig;
+      onClose!();
+
+      expect(localStorage.getItem(STORAGE_KEYS.LAST_VERSION_VIEWED)).toBe(APP_VERSION);
+      expect(ChangelogModal.shouldShow()).toBe(false);
+      await modal.show({ mode: 'history' });
+      expect(mockShowChangelog).toHaveBeenCalledTimes(2);
+    });
+
     it('should dismiss modal when close is called', async () => {
       const { ChangelogModal } = await import('../changelog-modal');
       const modal = new ChangelogModal();
