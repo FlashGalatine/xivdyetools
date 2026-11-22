@@ -26,6 +26,19 @@ describe('verified row-cache partitions', () => {
   beforeEach(resetAllMocks);
   afterEach(() => vi.unstubAllGlobals());
 
+  it('treats a transient cache open failure as a miss and caches later rows', async () => {
+    vi.spyOn(caches, 'open').mockRejectedValueOnce(new Error('Cache unavailable'));
+    const ctx = createMockExecutionContext();
+    const cache = new CharaRowCache(ctx, 'verified-identity');
+
+    expect((await cache.getRows([lookup])).has(lookupKey(lookup))).toBe(false);
+
+    cache.storeRows(lookup, [row]);
+    await flush(ctx);
+
+    expect((await cache.getRows([lookup])).get(lookupKey(lookup))).toEqual([row]);
+  });
+
   it('isolates row families and cached Glasses null by base and schema, including old keys', async () => {
     const ctx = createMockExecutionContext();
     const namespaces = await Promise.all(

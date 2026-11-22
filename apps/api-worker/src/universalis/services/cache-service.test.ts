@@ -232,6 +232,23 @@ describe('CacheService', () => {
   });
 
   describe('concurrent access', () => {
+    it('shares a failed open and retries on the next operation', async () => {
+      const open = vi.spyOn(caches, 'open').mockRejectedValueOnce(new Error('Cache unavailable'));
+
+      const [miss] = await Promise.all([
+        cacheService.get('price'),
+        cacheService.store('price', { gil: 100 }, testConfig),
+      ]);
+      expect(miss).toBeNull();
+      expect(open).toHaveBeenCalledTimes(1);
+
+      expect(await cacheService.get('price')).toBeNull();
+      await cacheService.store('price', { gil: 200 }, testConfig);
+      const hit = await cacheService.get('price');
+      expect(await hit?.response.json()).toEqual({ gil: 200 });
+      expect(open.mock.calls).toEqual([['universalis-proxy'], ['universalis-proxy']]);
+    });
+
     it('should handle multiple simultaneous reads', async () => {
       const testData = { items: [1, 2, 3] };
       await cacheService.store('concurrent-test', testData, testConfig);

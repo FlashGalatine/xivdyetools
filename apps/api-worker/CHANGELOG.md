@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.21.4] - 2026-11-22
+
+### Fixed
+
+- A temporary failure to open the edge cache now lets market and character-resolution requests continue through their usual cache-miss paths. The next cache operation retries initialization.
+
 ## [0.21.3] - 2026-11-15
 
 ### Changed

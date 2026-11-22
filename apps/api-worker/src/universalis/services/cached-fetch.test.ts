@@ -72,6 +72,28 @@ describe('cachedFetch', () => {
       });
     });
 
+    it('serves upstream data and caches it after a transient cache open failure', async () => {
+      vi.spyOn(caches, 'open').mockRejectedValueOnce(new Error('Cache unavailable'));
+      const upstreamData = { items: [{ id: 1, price: 100 }] };
+      mockFetch.mockResolvedValueOnce(Response.json(upstreamData));
+      const options = { cacheKey: 'cache-open-recovery', config: testConfig, upstreamUrl, ctx: mockCtx };
+
+      await expect(cachedFetch(options)).resolves.toEqual({
+        data: upstreamData,
+        source: 'upstream',
+        isStale: false,
+      });
+      await vi.runAllTimersAsync();
+      await Promise.all(vi.mocked(mockCtx.waitUntil).mock.calls.map(([task]) => task));
+
+      await expect(cachedFetch(options)).resolves.toEqual({
+        data: upstreamData,
+        source: 'cache-api',
+        isStale: false,
+      });
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
     it('refuses a redirecting upstream instead of following it (FINDING-025 / API-9)', async () => {
       mockFetch.mockResolvedValueOnce(
         new Response(null, {
