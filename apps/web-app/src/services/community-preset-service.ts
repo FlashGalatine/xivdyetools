@@ -268,13 +268,6 @@ export class CommunityPresetService {
   }
 
   /**
-   * Check if the service is available
-   */
-  isAvailable(): boolean {
-    return this.available;
-  }
-
-  /**
    * Fetch with timeout
    */
   private async fetchWithTimeout(

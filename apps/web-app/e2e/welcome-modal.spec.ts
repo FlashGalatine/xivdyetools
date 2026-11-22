@@ -9,7 +9,7 @@
  * NOT seed it.
  *
  * The load-bearing block is BUG-077. `markAsSeen()` runs from `onClose`, so
- * *every* dismissal — the Get-started button, the X, Escape, a backdrop tap —
+ * *every* dismissal — the footer buttons, the X, Escape, a backdrop tap —
  * has to persist. When it only ran from the confirm button, the modal nagged
  * on every visit, and because `markAsSeen` is also the first writer of
  * `last_version_viewed` it permanently suppressed the changelog popup for
@@ -18,7 +18,7 @@
  */
 import { test, expect } from './fixtures/coverage';
 import type { Page } from './fixtures/coverage';
-import { waitForAppReady, seedStartupStorage } from './fixtures/navigation';
+import { APP_VERSION, waitForAppReady, seedStartupStorage } from './fixtures/navigation';
 
 const WELCOME_SEEN = 'xivdyetools_welcome_seen';
 const LAST_VERSION = 'xivdyetools_last_version_viewed';
@@ -98,10 +98,10 @@ test.describe('Welcome modal — BUG-077: every close counts as seen', () => {
     await dismiss();
     await expect(dialog(page)).toHaveCount(0);
 
-    expect(await storage(page, WELCOME_SEEN)).not.toBeNull();
+    expect(await storage(page, WELCOME_SEEN)).toBe('true');
     // markAsSeen is the first writer of LAST_VERSION_VIEWED. If it is left
     // unset here the changelog auto-popup is suppressed forever for this user.
-    expect(await storage(page, LAST_VERSION)).not.toBeNull();
+    expect(await storage(page, LAST_VERSION)).toBe(APP_VERSION);
 
     await page.reload();
     await waitForAppReady(page).catch(() => undefined);
@@ -115,6 +115,12 @@ test.describe('Welcome modal — BUG-077: every close counts as seen', () => {
         .getByRole('button', { name: /Get started/i })
         .first()
         .click();
+    });
+  });
+
+  test('via the Take the tour button', async ({ page }) => {
+    await assertDismissalSticks(page, async () => {
+      await dialog(page).getByRole('button', { name: /Take the tour/i }).click();
     });
   });
 
@@ -168,18 +174,6 @@ test.describe('Welcome modal — where it sends you', () => {
       .toMatch(
         /^\/(harmony|extractor|accessibility|comparison|gradient|mixer|presets|budget|swatch)$/
       );
-  });
-
-  test('Take the tour dismisses and marks seen too', async ({ page }) => {
-    await firstVisit(page);
-
-    await page
-      .getByRole('button', { name: /Take the tour/i })
-      .first()
-      .click();
-    await expect(dialog(page)).toHaveCount(0);
-
-    expect(await storage(page, WELCOME_SEEN)).not.toBeNull();
   });
 });
 

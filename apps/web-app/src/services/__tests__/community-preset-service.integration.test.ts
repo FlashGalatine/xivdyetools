@@ -192,7 +192,6 @@ describe('CommunityPresetService Integration Tests', () => {
       const available = await service.initialize();
 
       expect(available).toBe(true);
-      expect(service.isAvailable()).toBe(true);
     });
 
     it('should handle API unavailability gracefully', async () => {
@@ -206,7 +205,6 @@ describe('CommunityPresetService Integration Tests', () => {
       const available = await service.initialize();
 
       expect(available).toBe(false);
-      expect(service.isAvailable()).toBe(false);
     });
 
     it('should cache initialization state', async () => {

@@ -3,7 +3,8 @@
  * Tests for safe localStorage wrapper
  */
 
-import { StorageService } from '../storage-service';
+import { STORAGE_KEYS } from '@shared/constants';
+import { appStorage, StorageService } from '../storage-service';
 
 describe('StorageService', () => {
   beforeEach(() => {
@@ -214,49 +215,6 @@ describe('StorageService', () => {
   });
 
   // ============================================================================
-  // TTL (Time-To-Live) Tests
-  // ============================================================================
-
-  describe('setItemWithTTL and getItemWithTTL', () => {
-    it('should store and retrieve items with TTL', () => {
-      if (!StorageService.isAvailable()) {
-        expect(true).toBe(true);
-        return;
-      }
-
-      StorageService.setItemWithTTL('tempKey', 'tempValue', 10000);
-      const result = StorageService.getItemWithTTL('tempKey');
-      expect(result).toBe('tempValue');
-    });
-
-    it('should return null for expired items', async () => {
-      if (!StorageService.isAvailable()) {
-        expect(true).toBe(true);
-        return;
-      }
-
-      StorageService.setItemWithTTL('expireKey', 'value', 10); // 10ms TTL
-      await new Promise((resolve) => setTimeout(resolve, 50)); // Wait 50ms
-
-      const result = StorageService.getItemWithTTL('expireKey');
-      expect(result).toBeNull();
-    });
-
-    it('should return default value for expired items', async () => {
-      if (!StorageService.isAvailable()) {
-        expect(true).toBe(true);
-        return;
-      }
-
-      StorageService.setItemWithTTL('expireKey2', 'value', 10);
-      await new Promise((resolve) => setTimeout(resolve, 50));
-
-      const result = StorageService.getItemWithTTL('expireKey2', 'default');
-      expect(result).toBe('default');
-    });
-  });
-
-  // ============================================================================
   // NamespacedStorage Tests
   // ============================================================================
 
@@ -309,31 +267,29 @@ describe('StorageService', () => {
       expect(StorageService.hasItem('other_key')).toBe(true);
     });
 
-    it('should support TTL in namespace', async () => {
-      if (!StorageService.isAvailable()) {
-        expect(true).toBe(true);
-        return;
-      }
+    it('reads and writes theme strings at the existing browser storage key', () => {
+      const key = 'xivdyetools_xivdyetools_theme';
+      localStorage.setItem(key, 'hydaelyn-light');
 
-      // Two entries, not one. `expiresAt` is `Date.now() + ttlMs` and the read
-      // compares against `Date.now()`, so asserting that a 10 ms entry is STILL
-      // PRESENT on the very next statement is a race with the scheduler: any
-      // pause over 10 ms between the write and the read — trivial on a loaded CI
-      // runner — reads it as expired. That is what failed CI on 2026-09-02, on a
-      // test untouched since long before. The two sibling tests above are safe
-      // because they only ever assert expiry, after waiting five times the TTL.
-      //
-      // Splitting the assertions removes the race in both directions: a
-      // long-lived entry cannot expire early, and a 1 ms entry read 50 ms later
-      // cannot still be alive.
-      const ns = StorageService.createNamespace('ttl_');
+      expect(appStorage.getItem(STORAGE_KEYS.THEME)).toBe('hydaelyn-light');
+      expect(appStorage.setItem(STORAGE_KEYS.THEME, 'standard-light')).toBe(true);
+      expect(localStorage.getItem(key)).toBe('standard-light');
+    });
 
-      ns.setItemWithTTL('alive', 'value', 10_000);
-      expect(ns.getItemWithTTL('alive')).toBe('value');
+    it('reads previously stored market board category settings as JSON', () => {
+      const key = 'xivdyetools_market_board_categories';
+      const stored =
+        '{"baseDyes":true,"craftDyes":false,"alliedSocietyDyes":true,"cosmicDyes":false,"specialDyes":true}';
+      localStorage.setItem(key, stored);
 
-      ns.setItemWithTTL('doomed', 'value', 1);
-      await new Promise((resolve) => setTimeout(resolve, 50));
-      expect(ns.getItemWithTTL('doomed')).toBeNull();
+      expect(appStorage.getItem('market_board_categories')).toEqual({
+        baseDyes: true,
+        craftDyes: false,
+        alliedSocietyDyes: true,
+        cosmicDyes: false,
+        specialDyes: true,
+      });
+      expect(localStorage.getItem(key)).toBe(stored);
     });
   });
 
@@ -405,43 +361,6 @@ describe('StorageService', () => {
       localStorage.setItem('invalidArray', '[invalid');
       const result = StorageService.getItem('invalidArray');
       expect(result).toBe('[invalid');
-    });
-
-    it('should handle getItemWithTTL with invalid data structure', () => {
-      if (!StorageService.isAvailable()) {
-        expect(true).toBe(true);
-        return;
-      }
-
-      // Store invalid TTL structure
-      StorageService.setItem('invalidTTL', { wrong: 'structure' });
-      const result = StorageService.getItemWithTTL('invalidTTL', 'default');
-      // Should return default when structure is invalid
-      expect(result).toBe('default');
-    });
-
-    it('should handle getItemWithTTL with missing expiresAt', () => {
-      if (!StorageService.isAvailable()) {
-        expect(true).toBe(true);
-        return;
-      }
-
-      // Store TTL data without expiresAt
-      StorageService.setItem('noExpiry', { value: 'test' });
-      const result = StorageService.getItemWithTTL('noExpiry', 'default');
-      expect(result).toBe('test');
-    });
-
-    it('should handle getItemWithTTL with missing value', () => {
-      if (!StorageService.isAvailable()) {
-        expect(true).toBe(true);
-        return;
-      }
-
-      // Store TTL data without value
-      StorageService.setItem('noValue', { expiresAt: Date.now() + 10000 });
-      const result = StorageService.getItemWithTTL('noValue', 'default');
-      expect(result).toBe('default');
     });
   });
 
@@ -732,56 +651,6 @@ describe('StorageService', () => {
   });
 
   // ============================================================================
-  // TTL Error Handling Tests
-  // ============================================================================
-
-  describe('TTL Error Handling', () => {
-    it('should handle error in setItemWithTTL', () => {
-      if (!StorageService.isAvailable()) {
-        expect(true).toBe(true);
-        return;
-      }
-
-      const originalSetItem = StorageService.setItem;
-      StorageService.setItem = () => {
-        throw new Error('Storage error');
-      };
-
-      const result = StorageService.setItemWithTTL('test', 'value', 1000);
-      expect(result).toBe(false);
-
-      StorageService.setItem = originalSetItem;
-    });
-
-    it('should handle error when getItemWithTTL throws', () => {
-      if (!StorageService.isAvailable()) {
-        expect(true).toBe(true);
-        return;
-      }
-
-      const originalGetItem = StorageService.getItem;
-      StorageService.getItem = () => {
-        throw new Error('Get error');
-      };
-
-      const result = StorageService.getItemWithTTL('test', 'default');
-      expect(result).toBe('default');
-
-      StorageService.getItem = originalGetItem;
-    });
-
-    it('should handle null data in getItemWithTTL', () => {
-      if (!StorageService.isAvailable()) {
-        expect(true).toBe(true);
-        return;
-      }
-
-      const result = StorageService.getItemWithTTL('nonExistent');
-      expect(result).toBeNull();
-    });
-  });
-
-  // ============================================================================
   // NamespacedStorage Error Handling Tests
   // ============================================================================
 
@@ -851,25 +720,6 @@ describe('StorageService', () => {
       }
 
       localStorage.setItem = originalSetItem;
-    });
-
-    it('should handle TTL in namespace with error', () => {
-      if (!StorageService.isAvailable()) {
-        expect(true).toBe(true);
-        return;
-      }
-
-      const ns = StorageService.createNamespace('ttlerr_');
-      const originalSetItem = StorageService.setItemWithTTL;
-      StorageService.setItemWithTTL = () => {
-        throw new Error('TTL error');
-      };
-
-      expect(() => {
-        ns.setItemWithTTL('key', 'value', 1000);
-      }).toThrow();
-
-      StorageService.setItemWithTTL = originalSetItem;
     });
   });
 

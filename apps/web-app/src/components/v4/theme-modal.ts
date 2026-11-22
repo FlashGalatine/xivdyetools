@@ -64,16 +64,6 @@ class ThemeModal {
   }
 
   /**
-   * Close the theme modal
-   */
-  close(): void {
-    if (this.modalId) {
-      ModalService.dismiss(this.modalId);
-      this.cleanup();
-    }
-  }
-
-  /**
    * Cleanup resources
    */
   private cleanup(): void {

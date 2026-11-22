@@ -112,7 +112,7 @@ export async function switchToolViaMenu(page: Page, toolId: string): Promise<voi
  * The app's real version, read from package.json — the same source Vite feeds
  * into `__APP_VERSION__`.
  */
-const APP_VERSION = JSON.parse(
+export const APP_VERSION = JSON.parse(
   readFileSync(new URL('../../package.json', import.meta.url), 'utf8')
 ).version as string;
 

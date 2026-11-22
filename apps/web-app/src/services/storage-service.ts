@@ -238,46 +238,6 @@ export class StorageService {
   }
 
   /**
-   * Store data with TTL (time to live)
-   */
-  static setItemWithTTL<T>(key: string, value: T, ttlMs: number): boolean {
-    try {
-      const data = {
-        value,
-        expiresAt: Date.now() + ttlMs,
-      };
-
-      return this.setItem(key, data);
-    } catch (error) {
-      logger.error(`Failed to set item with TTL: ${key}`, error);
-      return false;
-    }
-  }
-
-  /**
-   * Get data with TTL, returns null if expired
-   */
-  static getItemWithTTL<T>(key: string, defaultValue?: T): T | null {
-    try {
-      const data = this.getItem<{ value: T; expiresAt: number }>(key);
-
-      if (!data) {
-        return defaultValue ?? null;
-      }
-
-      if (data.expiresAt && Date.now() > data.expiresAt) {
-        this.removeItem(key);
-        return defaultValue ?? null;
-      }
-
-      return data.value ?? defaultValue ?? null;
-    } catch (error) {
-      logger.warn(`Failed to get item with TTL: ${key}`, error);
-      return defaultValue ?? null;
-    }
-  }
-
-  /**
    * Create a namespaced storage instance
    */
   static createNamespace(prefix: string): NamespacedStorage {
@@ -327,14 +287,6 @@ export class NamespacedStorage {
 
   getAll<T = unknown>(): Record<string, T> {
     return StorageService.getItemsByPrefix(this.prefix);
-  }
-
-  setItemWithTTL<T>(key: string, value: T, ttlMs: number): boolean {
-    return StorageService.setItemWithTTL(this.getFullKey(key), value, ttlMs);
-  }
-
-  getItemWithTTL<T>(key: string, defaultValue?: T): T | null {
-    return StorageService.getItemWithTTL(this.getFullKey(key), defaultValue);
   }
 }
 

@@ -5,15 +5,14 @@
  * or TelemetryService directly, so it cannot emit or miss the event on its own.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { createTestContainer, cleanupTestContainer } from '../../../__tests__/component-utils';
+import { ModalContainer } from '../../modal-container';
 
-const { mockShow, mockSwitchTheme } = vi.hoisted(() => ({
-  mockShow: vi.fn().mockReturnValue('modal-1'),
+const { mockSwitchTheme, mockUnsubscribe } = vi.hoisted(() => ({
   mockSwitchTheme: vi.fn(),
+  mockUnsubscribe: vi.fn(),
 }));
 
-vi.mock('@services/modal-service', () => ({
-  ModalService: { show: mockShow, dismiss: vi.fn() },
-}));
 vi.mock('@services/theme-service', () => ({
   ThemeService: {
     getCurrentTheme: () => 'standard-dark',
@@ -27,7 +26,7 @@ vi.mock('@services/theme-service', () => ({
         palette: { background: '#000', cardBackground: '#111', primary: '#0ff' },
       },
     ],
-    subscribe: vi.fn().mockReturnValue(() => {}),
+    subscribe: vi.fn().mockReturnValue(mockUnsubscribe),
     setTheme: vi.fn(),
   },
 }));
@@ -37,28 +36,29 @@ vi.mock('@services/language-service', () => ({
 vi.mock('@services/theme-switch', () => ({ switchTheme: mockSwitchTheme }));
 
 import { showThemeModal } from '../../v4/theme-modal';
+import { ModalService } from '@services/modal-service';
 import { ThemeService } from '@services/theme-service';
 
-function contentOf(): HTMLElement {
-  return mockShow.mock.calls[0][0].content as HTMLElement;
-}
-
 describe('theme modal theme switching', () => {
+  let container: HTMLElement;
+  let modalContainer: ModalContainer;
+
   beforeEach(() => {
-    mockShow.mockClear();
-    mockSwitchTheme.mockClear();
-    vi.mocked(ThemeService.setTheme).mockClear();
+    vi.clearAllMocks();
+    container = createTestContainer();
+    modalContainer = new ModalContainer(container);
+    modalContainer.init();
   });
 
   afterEach(() => {
-    // The module keeps a singleton; close it so the next test gets a fresh show()
-    const onClose = mockShow.mock.calls[0]?.[0]?.onClose as (() => void) | undefined;
-    onClose?.();
+    ModalService.dismissAll();
+    modalContainer.destroy();
+    cleanupTestContainer(container);
   });
 
   it('applies a tap on the other theme through the shared switch', () => {
     showThemeModal();
-    const light = contentOf().querySelector<HTMLButtonElement>('[data-theme="standard-light"]')!;
+    const light = container.querySelector<HTMLButtonElement>('[data-theme="standard-light"]')!;
     light.click();
     expect(mockSwitchTheme).toHaveBeenCalledWith('standard-light');
     expect(ThemeService.setTheme).not.toHaveBeenCalled();
@@ -66,9 +66,24 @@ describe('theme modal theme switching', () => {
 
   it('applies a re-tap of the current theme through the same switch (live preview)', () => {
     showThemeModal();
-    const dark = contentOf().querySelector<HTMLButtonElement>('[data-theme="standard-dark"]')!;
+    const dark = container.querySelector<HTMLButtonElement>('[data-theme="standard-dark"]')!;
     dark.click();
     // switchTheme decides that nothing changed and records nothing — see theme-switch.test.ts
     expect(mockSwitchTheme).toHaveBeenCalledWith('standard-dark');
+  });
+
+  it('releases the theme subscription on Done and can reopen the picker', () => {
+    showThemeModal();
+
+    const done = container.querySelector<HTMLButtonElement>('[data-action="confirm"]')!;
+    expect(done.textContent).toBe('common.done');
+    done.click();
+
+    expect(container.querySelector('[role="dialog"]')).toBeNull();
+    expect(mockUnsubscribe).toHaveBeenCalledTimes(1);
+
+    showThemeModal();
+    expect(container.querySelector('[role="dialog"]')).not.toBeNull();
+    expect(ThemeService.subscribe).toHaveBeenCalledTimes(2);
   });
 });

@@ -96,13 +96,6 @@ export class ChangelogModal {
   }
 
   /**
-   * Reset changelog modal (for testing or settings)
-   */
-  static reset(): void {
-    StorageService.removeItem(STORAGE_KEYS.LAST_VERSION_VIEWED);
-  }
-
-  /**
    * Show the changelog modal
    *
    * Resolves once the modal is open (or once the call was found to be a
