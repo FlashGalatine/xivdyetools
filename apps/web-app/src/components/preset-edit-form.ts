@@ -34,6 +34,9 @@ import type { EditResult, PresetEditRequest } from '@services/preset-submission-
 
 interface FormState {
   modalId: ReturnType<typeof ModalService.show> | null;
+  isCurrentViewer: () => boolean;
+  isSaving: boolean;
+  stopWatchingViewer: () => void;
   name: string;
   description: string;
   /** Editable since 5.0 — was a locked read-only display */
@@ -120,8 +123,17 @@ export function showPresetEditForm(preset: CommunityPreset, onEdit?: OnEditCallb
     .filter((d): d is Dye => d !== null);
 
   // Initialize form state with existing values
+  const viewerToken = authService.getState().token;
+  let viewerChanged = false;
+  const viewerWatch: { unsubscribe?: () => void } = {};
   const state: FormState = {
     modalId: null,
+    isCurrentViewer: () =>
+      !viewerChanged &&
+      authService.isAuthenticated() &&
+      authService.getState().token === viewerToken,
+    isSaving: false,
+    stopWatchingViewer: () => viewerWatch.unsubscribe?.(),
     name: preset.name,
     description: preset.description,
     categories: {
@@ -147,6 +159,15 @@ export function showPresetEditForm(preset: CommunityPreset, onEdit?: OnEditCallb
     content,
     size: 'lg',
     closable: true,
+    onClose: () => {
+      state.modalId = null;
+      if (!state.isSaving) state.stopWatchingViewer();
+    },
+  });
+  viewerWatch.unsubscribe = authService.subscribe((auth) => {
+    if (auth.isAuthenticated && auth.token === viewerToken) return;
+    viewerChanged = true;
+    if (state.modalId) ModalService.dismiss(state.modalId);
   });
 }
 
@@ -678,6 +699,7 @@ function createSubmitButton(
   });
 
   submitBtn.addEventListener('click', async () => {
+    if (!state.isCurrentViewer()) return;
     // Build the patch from what actually CHANGED, not from everything on the
     // form. Two reasons: an image-only edit would otherwise send a body full of
     // unchanged fields, and — because the API runs content moderation whenever
@@ -800,12 +822,14 @@ function createSubmitButton(
 
     submitBtn.disabled = true;
     submitBtn.textContent = LanguageService.t('preset.saving');
+    state.isSaving = true;
 
     try {
       let result: EditResult = { success: true };
 
       if (hasFieldChanges) {
         result = await presetSubmissionService.editPreset(presetId, updates);
+        if (!state.isCurrentViewer()) return;
 
         if (!result.success) {
           if (result.duplicate) {
@@ -843,16 +867,20 @@ function createSubmitButton(
           await uploadPreviewImage(presetId, state.newPreviewImage);
           imageUploaded = true;
         } catch {
-          ToastService.warning(LanguageService.t('preset.previewImageFailed'));
+          if (state.isCurrentViewer())
+            ToastService.warning(LanguageService.t('preset.previewImageFailed'));
         }
       } else if (state.clearPreviewImage) {
         try {
           await removePreviewImage(presetId);
           imageCleared = true;
         } catch {
-          ToastService.warning(LanguageService.t('preset.previewImageRemoveFailed'));
+          if (state.isCurrentViewer())
+            ToastService.warning(LanguageService.t('preset.previewImageRemoveFailed'));
         }
       }
+
+      if (!state.isCurrentViewer()) return;
 
       // A new picture is the more surprising outcome — it is invisible until a
       // moderator approves it — so when one actually landed it wins the message.
@@ -871,8 +899,11 @@ function createSubmitButton(
       // during the request; closing it must never dismiss a later modal.
       onEdit?.(result);
     } catch {
-      ToastService.error(LanguageService.t('errors.saveChangesFailed'));
+      if (state.isCurrentViewer())
+        ToastService.error(LanguageService.t('errors.saveChangesFailed'));
     } finally {
+      state.isSaving = false;
+      if (!state.modalId) state.stopWatchingViewer();
       submitBtn.disabled = false;
       submitBtn.textContent = LanguageService.t('preset.saveChanges');
     }

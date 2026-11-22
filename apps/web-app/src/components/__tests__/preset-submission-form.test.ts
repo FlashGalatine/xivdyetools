@@ -33,6 +33,7 @@ const {
   mockToastWarning,
   mockToastInfo,
   mockSubmitPreset,
+  mockAuthState,
   mockUploadPreviewImage,
   mockDyes,
 } = vi.hoisted(() => {
@@ -68,6 +69,7 @@ const {
     mockToastWarning: vi.fn(),
     mockToastInfo: vi.fn(),
     mockSubmitPreset: vi.fn(),
+    mockAuthState: vi.fn<() => { token: string | null }>(() => ({ token: 'viewer' })),
     mockUploadPreviewImage: vi.fn(),
     // webapp-modals-20: `id` and `stainID` used to be the SAME number here, so
     // an assertion on the submitted payload could not tell a stainID from a
@@ -88,8 +90,10 @@ vi.mock('@services/index', async () => {
   const actual = await vi.importActual<typeof import('@services/preset-submission-service')>(
     '@services/preset-submission-service'
   );
+  const { RouterService } = await import('@services/router-service');
 
   return {
+    RouterService,
     ModalService: {
       show: mockShow,
       dismiss: mockDismiss,
@@ -110,6 +114,7 @@ vi.mock('@services/index', async () => {
     },
     authService: {
       isAuthenticated: () => true,
+      getState: mockAuthState,
     },
     presetSubmissionService: {
       submitPreset: mockSubmitPreset,
@@ -130,6 +135,7 @@ import { showPresetSubmissionForm } from '../preset-submission-form';
 // Not mocked: only the `@services/index` barrel is. The race tests below route
 // the barrel's ModalService through this real stack.
 import { ModalService as RealModalService, type ModalConfig } from '@services/modal-service';
+import { RouterService } from '@services/router-service';
 
 /** The modal content is a detached DOM tree — grab it off the ModalService.show call. */
 function getFormContent(): HTMLElement {
@@ -297,6 +303,7 @@ describe('showPresetSubmissionForm — preview image', () => {
 describe('showPresetSubmissionForm — after the awaited request (BUG-102)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockAuthState.mockReturnValue({ token: 'viewer' });
     mockUploadPreviewImage.mockResolvedValue(undefined);
   });
 
@@ -308,6 +315,8 @@ describe('showPresetSubmissionForm — after the awaited request (BUG-102)', () 
     mockDismiss.mockReset();
     mockDismissTop.mockReset();
     RealModalService.dismissAll();
+    RouterService.destroy();
+    history.replaceState(null, '', '/');
     sessionStorage.clear();
   });
 
@@ -345,33 +354,55 @@ describe('showPresetSubmissionForm — after the awaited request (BUG-102)', () 
     expect(RealModalService.getModals().map((m) => m.id)).toEqual([otherId]);
   });
 
-  it('still opens a found duplicate when session storage is blocked', async () => {
-    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
-      throw new DOMException('blocked', 'SecurityError');
-    });
+  it('opens a found duplicate through the router without touching session storage', async () => {
+    history.replaceState(null, '', '/glamour');
+    const setItem = vi.spyOn(Storage.prototype, 'setItem');
     mockSubmitPreset.mockResolvedValueOnce({
       success: true,
       duplicate: { id: 'dup-1', name: 'Dup' },
       vote_added: false,
     });
-    const navigate = vi.fn();
-    window.addEventListener('navigate-to-preset', navigate);
     const onSubmit = vi.fn();
 
-    try {
-      showPresetSubmissionForm(onSubmit);
-      const content = getFormContent();
-      fillValidForm(content);
-      clickSubmit(content);
-      await flush();
+    showPresetSubmissionForm(onSubmit);
+    const content = getFormContent();
+    fillValidForm(content);
+    clickSubmit(content);
+    await flush();
 
-      expect(setItem).toHaveBeenCalledWith('pendingPresetId', 'dup-1');
-      expect(mockToastInfo).toHaveBeenCalledTimes(1);
-      expect(mockToastError).not.toHaveBeenCalled();
-      expect(navigate).toHaveBeenCalledTimes(1);
-      expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
-    } finally {
-      window.removeEventListener('navigate-to-preset', navigate);
-    }
+    expect(window.location.pathname).toBe('/presets/community-dup-1');
+    expect(RouterService.getCurrentToolId()).toBe('presets');
+    expect(setItem).not.toHaveBeenCalled();
+    expect(mockToastInfo).toHaveBeenCalledTimes(1);
+    expect(mockToastError).not.toHaveBeenCalled();
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
+  });
+
+  it('discards a private duplicate result received after the viewer changes', async () => {
+    history.replaceState(null, '', '/glamour');
+    let resolveSubmit!: (value: unknown) => void;
+    mockSubmitPreset.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveSubmit = resolve;
+      })
+    );
+    const onSubmit = vi.fn();
+    showPresetSubmissionForm(onSubmit);
+    const content = getFormContent();
+    fillValidForm(content);
+    clickSubmit(content);
+    await flush();
+
+    mockAuthState.mockReturnValue({ token: 'other-viewer' });
+    resolveSubmit({
+      success: true,
+      duplicate: { id: 'private-id', name: 'Private', status: 'pending' },
+    });
+    await flush();
+
+    expect(mockDismiss).toHaveBeenCalledWith('modal-id-preset-submit');
+    expect(window.location.pathname).toBe('/glamour');
+    expect(mockToastInfo).not.toHaveBeenCalled();
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 });

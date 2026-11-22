@@ -200,7 +200,7 @@ export interface PresetsConfig {
   feedHideUnbuyable: boolean;
   /** Saved shelf: pin saved presets to the top of every tab */
   savedFirst: boolean;
-  /** Saved shelf: keep author-deleted saved presets, marked */
+  /** Saved shelf: show publicly unavailable presets (original persisted key). */
   keepDeleted: boolean;
   /** Display options for dye cards in preset details */
   displayOptions: DisplayOptionsConfig;

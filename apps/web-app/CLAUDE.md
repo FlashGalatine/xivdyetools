@@ -232,6 +232,8 @@ the core runtime chunk named `modals`; the dye selector is shared through
 
 All `StorageService` keys are prefixed with `xivdyetools_`. Tutorial-offered flags use `${STORAGE_PREFIX}_tutorial_offered_${tool}`.
 
+Sign-in attempts use the initiating tab’s `sessionStorage` for PKCE, state, provider selection and return navigation. Both providers’ terminal callbacks consume those records before exchanging a code or returning to the app. The authenticated session uses `localStorage`.
+
 ### Universalis Pricing
 
 `MarketBoardService` calls Universalis through `data.xivdyetools.app/universalis` (api-worker's absorbed proxy routes — formerly the standalone universalis-proxy worker), never the upstream directly — this is the only way the browser gets reliable CORS. Market calls filter on `dye.itemID > 0` (see `budget-tool.ts`) rather than null-checking; `Dye.itemID` is always a number.

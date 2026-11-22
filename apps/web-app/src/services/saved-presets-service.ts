@@ -3,8 +3,8 @@
  *
  * The dead `showFavorites` toggle became a real store: local snapshots that
  * work signed out and with the presets worker down. A saved preset stores a
- * SNAPSHOT, not a reference — a community preset its author later deletes
- * survives here with a tombstone mark instead of vanishing.
+ * snapshot, so a community preset can remain saved even when it is no longer
+ * publicly listed.
  *
  * Deliberately a dedicated store rather than a CollectionService kind:
  * collection records are dye lists; a preset snapshot carries author,
@@ -45,7 +45,7 @@ export interface SavedPreset {
    * saved before it existed; those sort after every known count.
    */
   voteCount?: number;
-  /** The author removed the live preset; the local copy stays, marked. */
+  /** Public listing availability marker, using the original on-disk key. */
   deletedByAuthor?: boolean;
 }
 
@@ -73,7 +73,7 @@ export class SavedPresetsService {
    * stainID rewrite still holds whatever ID space the API served that day.
    * `resolvePresetDye` is stainID-only, so without this pass those snapshots
    * render as an empty palette on every path that falls back to the local copy
-   * (author-deleted preset, offline, live row outside the fetched page).
+   * (publicly unavailable, offline, live row outside the fetched page).
    *
    * Deliberately conservative in two ways. It does nothing while the dye
    * database is still cold, because every lookup would miss and the pass would
@@ -152,6 +152,7 @@ export class SavedPresetsService {
       this.persist();
       return false;
     }
+    if (preset.viewerOnly) return false;
     if (this.saved.length >= MAX_SAVED) {
       this.saved.shift();
     }
@@ -179,12 +180,12 @@ export class SavedPresetsService {
     if (changed) this.persist();
   }
 
-  /** Mark a saved community preset whose live copy no longer exists. */
-  static markDeleted(id: string, deleted: boolean = true): void {
+  /** Record whether an authoritative public list omitted a saved community preset. */
+  static markPubliclyUnavailable(id: string, unavailable: boolean): void {
     this.load();
     const entry = this.saved.find((p) => p.id === id);
-    if (entry && entry.deletedByAuthor !== deleted) {
-      entry.deletedByAuthor = deleted;
+    if (entry && entry.deletedByAuthor !== unavailable) {
+      entry.deletedByAuthor = unavailable;
       this.persist();
     }
   }

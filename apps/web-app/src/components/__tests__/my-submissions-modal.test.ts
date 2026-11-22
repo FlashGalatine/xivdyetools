@@ -25,6 +25,8 @@ const {
   mockDeletePreset,
   mockToastSuccess,
   mockToastError,
+  mockAuthState,
+  mockAuthSubscribe,
 } = vi.hoisted(() => ({
   mockShow: vi.fn().mockReturnValue('modal-id-my-submissions'),
   mockShowConfirm: vi.fn().mockReturnValue('modal-id-confirm'),
@@ -33,6 +35,10 @@ const {
   mockDeletePreset: vi.fn(),
   mockToastSuccess: vi.fn(),
   mockToastError: vi.fn(),
+  mockAuthState: vi.fn(() => ({ token: 'first-account', isAuthenticated: true })),
+  mockAuthSubscribe: vi.fn<
+    (listener: (state: { token: string; isAuthenticated: boolean }) => void) => () => void
+  >(() => () => {}),
 }));
 
 // My Submissions is the top modal throughout; the stack-order cases run on
@@ -73,6 +79,14 @@ vi.mock('@services/dye-service-wrapper', () => ({
   resolvePresetDye: (id: number) => ({ id, hex: '#FF0000' }),
 }));
 
+vi.mock('@services/auth-service', () => ({
+  authService: {
+    getState: mockAuthState,
+    isAuthenticated: () => mockAuthState().isAuthenticated,
+    subscribe: mockAuthSubscribe,
+  },
+}));
+
 import { showMySubmissionsModal } from '../my-submissions-modal';
 
 function makePreset(overrides: Partial<CommunityPreset> = {}): CommunityPreset {
@@ -109,9 +123,40 @@ describe('showMySubmissionsModal', () => {
     mockDismiss.mockClear();
     mockToastSuccess.mockClear();
     mockToastError.mockClear();
+    mockAuthState.mockReturnValue({ token: 'first-account', isAuthenticated: true });
+    mockAuthSubscribe.mockClear();
     mockGetMySubmissions.mockReset();
     // No default: every delete test states what the DELETE answers.
     mockDeletePreset.mockReset();
+  });
+
+  function switchAccount(): void {
+    const newViewer = { token: 'second-account', isAuthenticated: true };
+    mockAuthState.mockReturnValue(newViewer);
+    mockAuthSubscribe.mock.calls.at(-1)?.[0](newViewer);
+  }
+
+  it('discards the pending list when the account changes before it is displayed', async () => {
+    let finishList!: (response: object) => void;
+    mockGetMySubmissions.mockReturnValueOnce(
+      new Promise((resolve) => {
+        finishList = resolve;
+      })
+    );
+    const opening = showMySubmissionsModal();
+    switchAccount();
+    finishList({ presets: [makePreset({ status: 'pending' })] });
+    await opening;
+
+    expect(mockShow).not.toHaveBeenCalled();
+  });
+
+  it('dismisses the displayed list when the account changes', async () => {
+    mockGetMySubmissions.mockResolvedValue({ presets: [makePreset({ status: 'pending' })] });
+    await showMySubmissionsModal();
+    switchAccount();
+
+    expect(mockDismiss).toHaveBeenCalledWith('modal-id-my-submissions');
   });
 
   it('renders one row per submission with its status chip and actions (positive control)', async () => {

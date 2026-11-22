@@ -10,6 +10,7 @@ import {
   ModalService,
   LanguageService,
   ToastService,
+  RouterService,
   dyeService,
   authService,
   presetSubmissionService,
@@ -26,7 +27,6 @@ import {
 import { presetErrorMessage, presetValidationMessage } from '@shared/preset-i18n';
 import { exampleLinkError } from '@shared/example-link';
 import { dyeNameMatches, localizedDyeName } from '@shared/dye-name';
-import { logger } from '@shared/logger';
 import { createCategorySelector, type CategorySelection } from './preset-category-selector';
 
 // ============================================
@@ -724,33 +724,30 @@ function createSubmitButton(state: FormState, onSubmit?: OnSubmitCallback): HTML
     submitBtn.textContent = LanguageService.t('preset.submitting');
 
     try {
+      const submissionToken = authService.getState().token;
       const result = await presetSubmissionService.submitPreset(submission);
 
       if (result.success) {
         if (result.duplicate) {
+          if (
+            result.duplicate.status !== 'approved' &&
+            (!authService.isAuthenticated() || submissionToken !== authService.getState().token)
+          ) {
+            closeForm(state);
+            return;
+          }
           const duplicateName = result.duplicate.name || LanguageService.t('preset.anotherPreset');
           const message = result.vote_added
             ? LanguageService.tInterpolate('preset.duplicateWithVote', { name: duplicateName })
             : LanguageService.tInterpolate('preset.duplicateFound', { name: duplicateName });
           ToastService.info(message);
 
-          // Navigate to the duplicate preset after dismissing modal
           closeForm(state);
 
-          // Store the duplicate preset ID for navigation
           if (result.duplicate.id) {
-            // BUG-102 (2026-10-04 deep-dive): blocked storage throws here, and
-            // inside the outer try that read as a failed submission right
-            // after the duplicate toast. The event still goes out without it.
-            try {
-              sessionStorage.setItem('pendingPresetId', result.duplicate.id);
-            } catch {
-              logger.warn('[PresetSubmissionForm] sessionStorage unavailable for pendingPresetId');
-            }
-            // Dispatch event to notify preset browser to switch and show the preset
-            window.dispatchEvent(
-              new CustomEvent('navigate-to-preset', { detail: { presetId: result.duplicate.id } })
-            );
+            RouterService.navigateTo('presets', undefined, {
+              subPath: `community-${result.duplicate.id}`,
+            });
           }
 
           onSubmit?.(result);

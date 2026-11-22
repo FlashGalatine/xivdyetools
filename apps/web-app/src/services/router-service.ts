@@ -169,8 +169,13 @@ export class RouterService {
    * Navigate to a tool
    * @param toolId - The tool to navigate to
    * @param additionalParams - Additional query parameters to add
+   * @param options.subPath - An optional single route segment under the tool path
    */
-  static navigateTo(toolId: ToolId, additionalParams?: Record<string, string>): void {
+  static navigateTo(
+    toolId: ToolId,
+    additionalParams?: Record<string, string>,
+    options?: { subPath?: string }
+  ): void {
     if (!this.initialized) this.initialize();
 
     // Build the new URL
@@ -199,7 +204,10 @@ export class RouterService {
 
     // Build URL
     const queryString = newParams.toString();
-    const url = route.path + (queryString ? `?${queryString}` : '');
+    const path = options?.subPath
+      ? `${route.path}/${encodeURIComponent(options.subPath)}`
+      : route.path;
+    const url = path + (queryString ? `?${queryString}` : '');
 
     const documentTitle = this.composeDocumentTitle(route);
 

@@ -644,7 +644,7 @@ describe('V4LayoutShell — palette drawer default + first-run hint', () => {
             .find((n) => n.classList.contains('visible'))!
             .click(),
       ],
-    ])('closing with %s clears the target and the slot-tap flag', async (_label, close) => {
+    ])('closing with %s restores focus and resets the picker', async (_label, close) => {
       const { el, targetChanges } = await mountMulti(true);
       slotTap(el, 2);
       await el.updateComplete;
@@ -655,6 +655,7 @@ describe('V4LayoutShell — palette drawer default + first-run hint', () => {
       expect(isOpen(el)).toBe(false);
       expect(el.paletteTarget).toBeNull();
       expect(targetChanges).toEqual([2, null]);
+      await vi.waitFor(() => expect(el.shadowRoot!.activeElement).toBe(slotButton(el, 2)));
 
       // Reopened from the round button, a pick neither closes nor targets.
       fab(el).click();

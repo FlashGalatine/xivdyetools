@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.18.2] - 2026-11-22
+
+### Fixed
+
+- Curated preset search and alphabetical sorting use the translated card text, including offline. Switching languages reapplies the current search. A saved preset that drops out of the public list is described as unavailable and can reappear when it is public again.
+- Submitting a visible duplicate opens its detail page and supports Back and Forward. An owner can open a duplicate that is still in review. The app keeps that detail out of the public cache and Saved presets.
+- Canceling a slot-opened palette on a phone restores keyboard focus. Dye Comparison confirms a random pick only after adding the dye to a slot.
+
+### Security
+
+- Discord and XIVAuth callbacks clear temporary sign-in and return-navigation data from the tab. All six privacy guides describe that storage, separate Glamour list edits in Abridged mode, and how to finish resetting those edits when item names are available again.
+
 ## [5.18.1] - 2026-11-15
 
 ### Changed

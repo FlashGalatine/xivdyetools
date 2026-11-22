@@ -15,7 +15,7 @@ import { classMap } from 'lit/directives/class-map.js';
 import { BaseLitComponent } from './base-lit-component';
 import { DyeService, type Dye } from '@services/dye-service-wrapper';
 import { filterDyesBySpectra, ALL_SPECTRA } from '@shared/spectrum-filter-utils';
-import { dyeNameMatches, localizedDyeName } from '@shared/dye-name';
+import { dyeNameMatches } from '@shared/dye-name';
 import type { SpectrumKey } from '@shared/spectrum-filter-utils';
 import { CollectionService } from '@services/collection-service';
 import { ToastService } from '@services/toast-service';
@@ -1157,12 +1157,6 @@ export class DyePaletteDrawer extends BaseLitComponent {
 
     // `random: true` lets the layout exclude this from dye-popularity telemetry
     this.emit('dye-selected', { dye: randomDye, random: true });
-    logger.debug(`[DyePaletteDrawer] Random dye selected: ${randomDye.name}`);
-    ToastService.info(
-      LanguageService.tInterpolate('colorPalette.randomDyeSelected', {
-        name: localizedDyeName(randomDye),
-      })
-    );
   }
 
   /**

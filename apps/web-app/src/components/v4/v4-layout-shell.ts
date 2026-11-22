@@ -622,14 +622,6 @@ export class V4LayoutShell extends BaseLitComponent {
   }
 
   /**
-   * Handle drawer overlay click (close palette drawer on mobile)
-   */
-  private handleDrawerOverlayClick(): void {
-    this.paletteDrawerOpen = false;
-    this.resetPaletteTarget();
-  }
-
-  /**
    * Re-emit config changes from the Simple-Settings column for v4-layout
    */
   private handleConfigChange(e: CustomEvent): void {
@@ -644,25 +636,26 @@ export class V4LayoutShell extends BaseLitComponent {
    * Toggle palette drawer visibility
    */
   private togglePaletteDrawer(): void {
-    this.paletteDrawerOpen = !this.paletteDrawerOpen;
     if (this.paletteDrawerOpen) {
-      // The user found the palette — the hint has done its job.
-      this.dismissPaletteHint();
-      // Opened for browsing: keep a target set on desktop, but a pick no
-      // longer closes the palette.
-      this.openedBySlotTap = false;
-      this.openingSlot = null;
-    } else {
-      this.resetPaletteTarget();
+      this.closePaletteDrawer();
+      return;
     }
+    this.paletteDrawerOpen = true;
+    // The user found the palette — the hint has done its job.
+    this.dismissPaletteHint();
+    // Opened for browsing: keep a target set on desktop, but a pick no
+    // longer closes the palette.
+    this.openedBySlotTap = false;
+    this.openingSlot = null;
   }
 
-  /**
-   * Handle drawer toggle from DyePaletteDrawer close button
-   */
-  private handlePaletteDrawerToggle(): void {
+  /** Close the picker and hand focus back to what opened it on a phone. */
+  private closePaletteDrawer(): void {
+    const restoreFocus = this.isMobile && this.openedBySlotTap;
+    const slot = this.openingSlot;
     this.paletteDrawerOpen = false;
     this.resetPaletteTarget();
+    if (restoreFocus) void this.returnFocusAfterClose(slot);
   }
 
   /**
@@ -695,7 +688,7 @@ export class V4LayoutShell extends BaseLitComponent {
   }
 
   /**
-   * A pick closed the palette: hand focus back to the slot that opened it,
+   * The palette closed: hand focus back to the slot that opened it,
    * else any slot, else the round button. v4-layout mounts the tool inside
    * this shadow root's content scroller, so search there, not light DOM.
    */
@@ -718,12 +711,10 @@ export class V4LayoutShell extends BaseLitComponent {
    * palette that a slot tap opened closes again.
    */
   private afterPick(): void {
-    this.setTarget(null);
     if (this.isMobile && this.openedBySlotTap) {
-      const slot = this.openingSlot;
-      this.paletteDrawerOpen = false;
-      this.resetPaletteTarget();
-      void this.returnFocusAfterClose(slot);
+      this.closePaletteDrawer();
+    } else {
+      this.setTarget(null);
     }
   }
 
@@ -893,7 +884,7 @@ export class V4LayoutShell extends BaseLitComponent {
           class="v4-drawer-overlay ${
             this.paletteDrawerOpen && this.isMobile && this.shouldShowPalette ? 'visible' : ''
           }"
-          @click=${this.handleDrawerOverlayClick}
+          @click=${this.closePaletteDrawer}
           role="button"
           tabindex="-1"
           aria-label="${LanguageService.t('aria.closePalette')}"
@@ -922,7 +913,7 @@ export class V4LayoutShell extends BaseLitComponent {
                   .slotMode=${this.paletteSlotMode}
                   .slotTarget=${this.target}
                   @slot-target-change=${this.handleSlotTargetChange}
-                  @drawer-toggle=${this.handlePaletteDrawerToggle}
+                  @drawer-toggle=${this.closePaletteDrawer}
                   @dye-selected=${this.handleDyeSelected}
                   @custom-color-selected=${this.handleCustomColorSelected}
                   @clear-all-dyes=${this.handleClearAllDyes}
