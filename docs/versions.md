@@ -33,7 +33,7 @@
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
 | **Web Application** | v5.18.2 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v5.9.12 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
+| **Discord Bot** | v5.9.13 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.5 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.9.2 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.2.2 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
@@ -54,7 +54,7 @@
 | **Logger** | v2.4.0 | `@xivdyetools/logger` | npm | Active |
 | **Worker Kit** (middleware + `/rate-limiter`) | v1.6.1 | `@xivdyetools/worker-kit` | npm | Active |
 | **SVG** | v4.4.2 | `@xivdyetools/svg` | npm | Active |
-| **Bot Logic** (incl. `/i18n`) | v5.0.0 | `@xivdyetools/bot-logic` | npm | Active |
+| **Bot Logic** (incl. `/i18n`) | v5.0.1 | `@xivdyetools/bot-logic` | npm | Active |
 | **Test Utils** | v3.0.0 | `@xivdyetools/test-utils` | workspace-private | Active (never published) |
 
 ### Deprecated
@@ -238,6 +238,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.9.13 | Nov 2026 | Private owner-scoped preset edits, duplicate and revision feedback, and durable release announcement records |
 | v5.9.12 | Nov 2026 | `/webhooks/github` reads `CHANGELOG-laymans.md` at the pushed commit SHA instead of the cached `main` branch URL (a fetch right after the push could return the pre-push file and skip the new release), and never announces a version older than the newest already announced (`announced:latest` KV key) |
 | v5.9.11 | Nov 2026 | The X/Twitter account was renamed from @AsheJunius to @FlashGalatine: `/about` prints the new X link from core's `SOCIAL_LINKS`. No discord-worker source changed; the production deploy's `register-commands` step re-registers an unchanged roster |
 | v5.9.10 | Nov 2026 | Conditional Core 6/SVG/Bot Logic 5 adoption; preserve original-byte guards and card/embed adapters; registry/publication/consumer acceptance held |
@@ -637,6 +638,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.0.1 | Nov 2026 | Localized retry guidance for conflicting preset edits |
 | v5.0.0 | Oct 2026 | Conditional Bot Logic 5 source: remove the legacy character projection; successes expose only card/embed presentation data; registry/publication/consumer acceptance held |
 | v4.12.0 | Oct 2026 | A-BOT-LOGIC: metric-correct harmony distances, effective-color eye pairing, bounded glamour descriptions and shared sanitizer hardening; deprecated but retained legacy swatch result, legacy-oracle/fixture cleanup and five preparatory choice keys in six locales. Includes A-DISCORD favorite-list/neutral-preview locale companion; publish that source after core 5.16.0 and SVG 4.4.1, before the Discord consumer |
 | v4.11.0 | Oct 2026 | `/swatch` and `/glamour` read through core 5.15.0's `xivcharakit` facade: optional `fileBytes` input (wins over `fileText`), matching on `matchHex` alone with the lip on its live blend, `SwatchCharacter` keeps its shape and carries no color for a slot `matchHex` excludes, four fixed lines in six languages (`card.swatchActivityUnknown`, `card.swatchUnusable`, `card.glamourGearSkipped`, `card.glamourDyeInvalid`); intentional differences in `docs/research/2026-10-22-xivcharakit-integration.md` |

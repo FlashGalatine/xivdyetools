@@ -729,8 +729,8 @@ async function handleEditSubcommand(
     });
   }
 
-  // Defer response
-  const deferResponse = deferredResponse();
+  // An edit can return unpublished preset details visible only to the caller.
+  const deferResponse = deferredResponse(true);
 
   ctx.waitUntil(
     processEditCommand(
@@ -759,7 +759,7 @@ async function processEditCommand(
   t: Translator,
   userId: string,
   userName: string,
-  presetId: string,
+  presetInput: string,
   updates: {
     name?: string;
     description?: string;
@@ -769,10 +769,12 @@ async function processEditCommand(
   logger?: ExtendedLogger,
 ): Promise<void> {
   try {
-    // First, verify the preset exists and user owns it
-    // FINDING-020: UUID → by id; anything else is a typed name (search query)
-    const existingPreset = await lookupPreset(env, presetId);
-    if (!existingPreset) {
+    const existingPreset = await lookupPresetForEdit(env, userId, presetInput);
+    // A moderator's signed detail read can see others' unpublished presets.
+    // The owner-only edit command treats those UUIDs as missing.
+    if (!existingPreset || (
+      existingPreset.author_discord_id !== userId && existingPreset.status !== 'approved'
+    )) {
       await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [errorEmbed(t.t('common.error'), t.t('preset.notFound'))],
       });
@@ -880,34 +882,36 @@ async function processEditCommand(
       userName,
     );
 
-    // Handle duplicate dyes error
-    if (!response.success && 'duplicate' in response) {
-      await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-        embeds: [
-          {
-            title: `⚠️ ${t.t('preset.edit.duplicateTitle')}`,
-            description: [
-              t.t('preset.edit.duplicateIntro'),
-              `**"${sanitizePresetName(response.duplicate.name)}"** ${t.t('preset.byAuthor', { author: response.duplicate.author_name ? sanitizePresetName(response.duplicate.author_name) : t.t('preset.unknownAuthor') })}`,
-              '',
-              t.t('preset.edit.duplicateHint'),
-            ].join('\n'),
-            color: STATE.error,
-          },
-        ],
-      });
-      return;
-    }
-
-    // Handle other errors
     if (!response.success) {
+      markCommandOutcome(interaction, 'rejected');
+      let embed;
+      if (response.error === 'CONFLICT') {
+        embed = errorEmbed(t.t('common.error'), t.t('preset.edit.revisionConflict'));
+      } else {
+        const duplicate = response.duplicate;
+        const hint = t.t('preset.edit.duplicateHint');
+        const description = duplicate
+          ? [
+              t.t('preset.edit.duplicateIntro'),
+              `**"${sanitizePresetName(duplicate.name)}"** ${t.t('preset.byAuthor', {
+                author: sanitizePresetName(duplicate.author_name ?? '') || t.t('preset.unknownAuthor'),
+              })}`,
+              '',
+              hint,
+            ].join('\n')
+          : hint;
+        embed = {
+          title: `⚠️ ${t.t('preset.edit.duplicateTitle')}`,
+          description,
+          color: STATE.error,
+        };
+      }
       await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-        embeds: [errorEmbed(t.t('common.error'), response.error)],
+        embeds: [embed],
       });
       return;
     }
 
-    // Handle success — response is now PresetEditSuccessResponse
     const updatedPreset = response.preset;
     const isPending = response.moderation_status === 'pending';
 
@@ -945,9 +949,9 @@ async function processEditCommand(
     });
   } catch (error) {
     markCommandOutcome(interaction, classifyError(error));
-    if (logger) {
-      logger.error('Edit preset error', error instanceof Error ? error : undefined);
-    }
+    logger?.error('Edit preset error', undefined, {
+      statusCode: error instanceof PresetAPIError ? error.statusCode : undefined,
+    });
     // SECURITY: Use getSafeMessage() to prevent exposing internal API details
     const message =
       error instanceof PresetAPIError ? t.t(error.getSafeMessageKey()) : t.t('preset.editFailed');
@@ -975,6 +979,26 @@ async function lookupPreset(env: Env, input: string): Promise<CommunityPreset | 
     return presetApi.getPreset(env, input);
   }
   return presetApi.getPresetByName(env, input);
+}
+
+/** A typed name searches every owned preset, independent of the autocomplete limit. */
+async function lookupPresetForEdit(
+  env: Env,
+  userId: string,
+  input: string,
+): Promise<CommunityPreset | null> {
+  const query = input.toLowerCase();
+  if (isValidPresetId(input)) return presetApi.getMyPreset(env, userId, input);
+
+  const ownedPresets = await presetApi.getMyPresets(env, userId);
+  let partial: CommunityPreset | null = null;
+  for (const preset of ownedPresets) {
+    if (preset.author_discord_id !== userId) continue;
+    const name = preset.name.toLowerCase();
+    if (name === query) return preset;
+    if (!partial && name.includes(query)) partial = preset;
+  }
+  return partial;
 }
 
 /** The first stainID that appears more than once in `stainIds`, or null. */

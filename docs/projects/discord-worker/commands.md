@@ -435,7 +435,7 @@ Toggle your vote on a preset.
 
 ### /preset edit
 
-Edit one of your own presets. All fields optional; only provided values change.
+Choose one of your own presets from autocomplete or type its name. You can edit a pending preset or resubmit a rejected preset this way. Supply at least one change. Discord shows the result only to you.
 
 | Option | Type | Required | Description |
 |--------|------|----------|-------------|

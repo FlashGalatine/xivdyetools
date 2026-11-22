@@ -11,6 +11,7 @@ import {
 } from './types/env.js';
 import type { Env } from './types/env.js';
 import type { CommunityPreset } from '@xivdyetools/types/preset';
+import { createMockKV } from '@xivdyetools/test-utils/cloudflare';
 
 // Observe dispatch while preserving the real shared logger and its output.
 const contextErrorCalls = vi.hoisted(() => vi.fn());
@@ -83,7 +84,7 @@ vi.mock('./services/rate-limiter.js', async (importOriginal) => ({
 
 vi.mock('./services/preset-api.js', () => ({
   searchPresetsForAutocomplete: vi.fn(),
-  getMyPresets: vi.fn(),
+  getMyPresetSuggestions: vi.fn(),
   // the favourites name back-fill in /preset favorite remove autocomplete
   getPreset: vi.fn(),
 }));
@@ -1968,7 +1969,7 @@ describe('index.ts', () => {
       );
 
       expect(res.status).toBe(200);
-      expect(kv.put).toHaveBeenCalledWith(`announced:v:${entry.version}`, '1', expect.anything());
+      expect(kv.put).toHaveBeenCalledWith(`announced:v:${entry.version}`, '1');
     });
 
     it('announces when only head_commit lists CHANGELOG-laymans.md (commits truncated)', async () => {
@@ -2139,6 +2140,7 @@ describe('index.ts', () => {
         kv.get.mockImplementation(async (key: string) =>
           key === 'announced:latest' ? latest : null,
         );
+        kv.getWithMetadata.mockResolvedValue({ value: latest, metadata: null });
         return kv;
       };
       const post = (kv: ReturnType<typeof announceKV>) =>
@@ -2168,21 +2170,14 @@ describe('index.ts', () => {
         expect(sendAnnouncement).not.toHaveBeenCalled();
       });
 
-      it('proceeds and rewrites announced:latest when the version equals the stored one', async () => {
-        const { sendAnnouncement } = await arrangeAnnounce();
-        const kv = withLatest('5.0.0');
-        const res = await post(kv);
-        expect(res.status).toBe(200);
-        expect(sendAnnouncement).toHaveBeenCalledOnce();
-        expect(kv.put).toHaveBeenCalledWith('announced:latest', '5.0.0');
-      });
-
       it('proceeds and raises announced:latest for a newer version (no TTL)', async () => {
         const { sendAnnouncement } = await arrangeAnnounce();
         const kv = withLatest('4.9.9');
         await post(kv);
         expect(sendAnnouncement).toHaveBeenCalledOnce();
-        expect(kv.put).toHaveBeenCalledWith('announced:latest', '5.0.0');
+        expect(kv.put).toHaveBeenCalledWith('announced:latest', '5.0.0', {
+          metadata: { durableVersionMemo: true },
+        });
       });
 
       it.each([
@@ -2194,7 +2189,9 @@ describe('index.ts', () => {
         const res = await post(kv);
         expect(res.status).toBe(200);
         expect(sendAnnouncement).toHaveBeenCalledOnce();
-        expect(kv.put).toHaveBeenCalledWith('announced:latest', '5.0.0');
+        expect(kv.put).toHaveBeenCalledWith('announced:latest', '5.0.0', {
+          metadata: { durableVersionMemo: true },
+        });
       });
 
       it('answers 200 when the announced:latest write fails after a successful send', async () => {
@@ -2207,7 +2204,7 @@ describe('index.ts', () => {
         expect(res.status).toBe(200);
         expect(await res.json()).toMatchObject({ success: true, version: '5.0.0' });
         expect(sendAnnouncement).toHaveBeenCalledOnce();
-        expect(kv.put).toHaveBeenCalledWith('announced:v:5.0.0', '1', expect.anything());
+        expect(kv.put).toHaveBeenCalledWith('announced:v:5.0.0', '1');
       });
 
       it('skips the guard when the entry version is not x.y.z', async () => {
@@ -2215,6 +2212,186 @@ describe('index.ts', () => {
         entry.version = '5.1.0-beta';
         const res = await post(withLatest('9.9.9'));
         expect(res.status).toBe(200);
+        expect(sendAnnouncement).toHaveBeenCalledOnce();
+      });
+    });
+
+    describe('durable announcement deduplication', () => {
+      const latestKey = 'announced:latest';
+      const versionKey = 'announced:v:5.0.0';
+      const legacyTtl = 90 * 24 * 60 * 60;
+      const initialTime = new Date('2026-01-01T00:00:00Z');
+      const afterLegacyExpiry = new Date('2026-04-02T00:00:00Z');
+      const post = (kv: ReturnType<typeof createMockKV>, after = AFTER_SHA) =>
+        postPush(JSON.stringify(pushPayload({ after, head_commit: changelogCommit() })), {
+          env: { ...githubEnv(), KV: kv as unknown as KVNamespace },
+        });
+
+      beforeEach(() => vi.setSystemTime(initialTime));
+      afterEach(() => vi.useRealTimers());
+
+      it('skips a routine correction pushed after 90 days', async () => {
+        const { sendAnnouncement } = await arrangeAnnounce();
+        const kv = createMockKV();
+        const first = await post(kv);
+        expect(first.status).toBe(200);
+
+        vi.setSystemTime(afterLegacyExpiry);
+        const correction = await post(kv, HEAD_SHA);
+
+        expect(await correction.json()).toMatchObject({ message: 'Already announced' });
+        expect(sendAnnouncement).toHaveBeenCalledOnce();
+      });
+
+      it('backfills a legacy latest announcement whose memo already expired', async () => {
+        const { sendAnnouncement } = await arrangeAnnounce();
+        const kv = createMockKV();
+        await kv.put(versionKey, '1', { expirationTtl: legacyTtl });
+        await kv.put(latestKey, '5.0.0');
+        vi.setSystemTime(afterLegacyExpiry);
+        expect(await kv.get(versionKey)).toBeNull();
+
+        const correction = await post(kv, HEAD_SHA);
+
+        expect(await correction.json()).toMatchObject({ message: 'Already announced' });
+        expect(sendAnnouncement).not.toHaveBeenCalled();
+        expect(await kv.get(versionKey)).toBe('1');
+      });
+
+      it('backfills a legacy memo before it expires', async () => {
+        const { sendAnnouncement } = await arrangeAnnounce();
+        const kv = createMockKV();
+        await kv.put(versionKey, '1', { expirationTtl: legacyTtl });
+        await kv.put(latestKey, '5.0.0');
+
+        const correction = await post(kv, HEAD_SHA);
+        expect(await correction.json()).toMatchObject({ message: 'Already announced' });
+        expect(sendAnnouncement).not.toHaveBeenCalled();
+
+        vi.setSystemTime(afterLegacyExpiry);
+        expect(await kv.get(versionKey)).toBe('1');
+      });
+
+      it.each([null, 'malformed', '4.9.9'])(
+        'keeps a legacy memo durable when the watermark is %s',
+        async (latest) => {
+          const { sendAnnouncement } = await arrangeAnnounce();
+          const kv = createMockKV();
+          await kv.put(versionKey, '1', { expirationTtl: legacyTtl });
+          if (latest) await kv.put(latestKey, latest);
+
+          const redelivery = await post(kv);
+          expect(await redelivery.json()).toMatchObject({ message: 'Already announced' });
+
+          vi.setSystemTime(afterLegacyExpiry);
+          const correction = await post(kv, HEAD_SHA);
+          expect(await correction.json()).toMatchObject({ message: 'Already announced' });
+          expect(await kv.getWithMetadata(latestKey)).toMatchObject({
+            value: '5.0.0',
+            metadata: { durableVersionMemo: true },
+          });
+          expect(sendAnnouncement).not.toHaveBeenCalled();
+        },
+      );
+
+      it('keeps a future watermark when redelivering an older memoised version', async () => {
+        const { sendAnnouncement } = await arrangeAnnounce();
+        const kv = createMockKV();
+        await kv.put(versionKey, '1', { expirationTtl: legacyTtl });
+        await kv.put(latestKey, '5.0.1', { metadata: { durableVersionMemo: true } });
+
+        const redelivery = await post(kv);
+        expect(await redelivery.json()).toMatchObject({ message: 'Already announced' });
+
+        vi.setSystemTime(afterLegacyExpiry);
+        const correction = await post(kv, HEAD_SHA);
+        expect(await correction.json()).toMatchObject({
+          message: 'Older than latest announced version',
+        });
+        expect(await kv.getWithMetadata(latestKey)).toMatchObject({
+          value: '5.0.1',
+          metadata: { durableVersionMemo: true },
+        });
+        expect(sendAnnouncement).not.toHaveBeenCalled();
+      });
+
+      it('reannounces an older release when the operator deletes both keys', async () => {
+        const { sendAnnouncement } = await arrangeAnnounce();
+        const kv = createMockKV();
+        await kv.put(versionKey, '1');
+        await kv.put(latestKey, '5.0.1', { metadata: { durableVersionMemo: true } });
+
+        await kv.delete(versionKey);
+        await kv.delete(latestKey);
+        const override = await post(kv);
+
+        expect(await override.json()).toMatchObject({ success: true, version: '5.0.0' });
+        expect(sendAnnouncement).toHaveBeenCalledOnce();
+      });
+
+      it('reannounces exactly once when the operator deletes the migrated version memo', async () => {
+        const { sendAnnouncement } = await arrangeAnnounce();
+        const kv = createMockKV();
+        await kv.put(latestKey, '5.0.0');
+        const correction = await post(kv, HEAD_SHA);
+        expect(await correction.json()).toMatchObject({ message: 'Already announced' });
+
+        await kv.delete(versionKey);
+        const override = await post(kv, HEAD_SHA);
+        expect(await override.json()).toMatchObject({ success: true, version: '5.0.0' });
+
+        vi.setSystemTime(afterLegacyExpiry);
+        const repeated = await post(kv, HEAD_SHA);
+        expect(await repeated.json()).toMatchObject({ message: 'Already announced' });
+        expect(sendAnnouncement).toHaveBeenCalledOnce();
+      });
+
+      it('still skips an expired legacy version when the memo backfill fails and retries later', async () => {
+        const { sendAnnouncement } = await arrangeAnnounce();
+        const kv = createMockKV();
+        await kv.put(latestKey, '5.0.0');
+        vi.spyOn(kv, 'put').mockRejectedValueOnce(new Error('KV unavailable'));
+
+        const failed = await post(kv);
+        expect(await failed.json()).toMatchObject({ message: 'Already announced' });
+        expect(await kv.get(versionKey)).toBeNull();
+
+        const retried = await post(kv);
+        expect(await retried.json()).toMatchObject({ message: 'Already announced' });
+        expect(await kv.get(versionKey)).toBe('1');
+        expect(sendAnnouncement).not.toHaveBeenCalled();
+      });
+
+      it('does not overwrite a newer watermark observed after the backfill', async () => {
+        const { sendAnnouncement } = await arrangeAnnounce();
+        const kv = createMockKV();
+        await kv.put(latestKey, '5.0.0');
+        const put = kv.put;
+        vi.spyOn(kv, 'put').mockImplementationOnce(async (...args) => {
+          await put(...args);
+          await put(latestKey, '5.0.1');
+        });
+
+        const correction = await post(kv);
+
+        expect(await correction.json()).toMatchObject({ message: 'Already announced' });
+        expect(await kv.get(latestKey)).toBe('5.0.1');
+        expect(await kv.get(versionKey)).toBe('1');
+        expect(sendAnnouncement).not.toHaveBeenCalled();
+      });
+
+      it('still skips a correction if only the version memo write failed after Discord accepted the release', async () => {
+        const { sendAnnouncement } = await arrangeAnnounce();
+        const kv = createMockKV();
+        vi.spyOn(kv, 'put').mockRejectedValueOnce(new Error('KV unavailable'));
+
+        const first = await post(kv);
+        expect(first.status).toBe(200);
+        expect(await kv.get(versionKey)).toBeNull();
+
+        const correction = await post(kv, HEAD_SHA);
+        expect(await correction.json()).toMatchObject({ message: 'Already announced' });
+        expect(await kv.get(versionKey)).toBe('1');
         expect(sendAnnouncement).toHaveBeenCalledOnce();
       });
     });
@@ -2271,30 +2448,14 @@ describe('index.ts', () => {
       expect(sendAnnouncement).not.toHaveBeenCalled();
     });
 
-    // FINDING-021: the hook fires before the deploy finishes, so a Redeliver is
-    // routine — it must not re-post a version that already went out (3× on
-    // 2026-08-29).
-    it('memoises the announced version for 90 days', async () => {
-      const { sendAnnouncement } = await arrangeAnnounce();
-      const kv = announceKV();
-
-      const res = await postPush(JSON.stringify(pushPayload({ head_commit: changelogCommit() })), {
-        env: githubEnv(kv),
-      });
-
-      expect(res.status).toBe(200);
-      expect(sendAnnouncement).toHaveBeenCalledOnce();
-      expect(kv.put).toHaveBeenCalledWith(
-        'announced:v:5.0.0',
-        '1',
-        expect.objectContaining({ expirationTtl: 7_776_000 }),
-      );
-    });
-
-    it('skips a version the memo already holds', async () => {
+    it('skips a version that already has a durable memo and watermark', async () => {
       const { sendAnnouncement } = await arrangeAnnounce();
       const kv = announceKV();
       kv.get.mockImplementation(async (key: string) => (key === 'announced:v:5.0.0' ? '1' : null));
+      kv.getWithMetadata.mockResolvedValue({
+        value: '5.0.0',
+        metadata: { durableVersionMemo: true },
+      });
 
       const res = await postPush(JSON.stringify(pushPayload({ head_commit: changelogCommit() })), {
         env: githubEnv(kv),
@@ -3014,7 +3175,7 @@ describe('index.ts', () => {
 
       it('should handle preset edit autocomplete (user own presets)', async () => {
         const { verifyDiscordRequest } = await import('@xivdyetools/auth');
-        const { getMyPresets } = await import('./services/preset-api.js');
+        const { getMyPresetSuggestions } = await import('./services/preset-api.js');
 
         vi.mocked(verifyDiscordRequest).mockResolvedValue({
           isValid: true,
@@ -3034,9 +3195,9 @@ describe('index.ts', () => {
           }),
           error: '',
         });
-        vi.mocked(getMyPresets).mockResolvedValue([
-          { id: 'preset-1', name: 'My Preset', status: 'approved' } as CommunityPreset,
-          { id: 'preset-2', name: 'My Pending Preset', status: 'pending' } as CommunityPreset,
+        vi.mocked(getMyPresetSuggestions).mockResolvedValue([
+          { id: 'preset-1', name: 'My Preset', status: 'approved' },
+          { id: 'preset-2', name: 'My Pending Preset', status: 'pending' },
         ]);
 
         const req = new Request('http://localhost/', {
@@ -3059,15 +3220,23 @@ describe('index.ts', () => {
 
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(200);
-        await res.json();
-        expect(getMyPresets).toHaveBeenCalledWith(mockEnv, 'user-123');
+        expect(await res.json()).toMatchObject({
+          type: InteractionResponseType.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT,
+          data: {
+            choices: [
+              { name: 'My Preset', value: 'preset-1' },
+              { name: 'My Pending Preset (pending)', value: 'preset-2' },
+            ],
+          },
+        });
+        expect(getMyPresetSuggestions).toHaveBeenCalledWith(mockEnv, 'user-123', 'my');
       });
 
       // REFACTOR-003: Discord caps a choice name at 100 characters; a long
       // preset name plus the " (pending)" status suffix must be truncated.
-      it('truncates a long preset name in the edit autocomplete choices', async () => {
+      it('limits edit autocomplete to 25 choices with names of at most 100 characters', async () => {
         const { verifyDiscordRequest } = await import('@xivdyetools/auth');
-        const { getMyPresets } = await import('./services/preset-api.js');
+        const { getMyPresetSuggestions } = await import('./services/preset-api.js');
 
         const interactionBody = JSON.stringify({
           type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
@@ -3089,9 +3258,13 @@ describe('index.ts', () => {
           body: interactionBody,
           error: '',
         });
-        vi.mocked(getMyPresets).mockResolvedValue([
-          { id: 'preset-1', name: 'P'.repeat(120), status: 'pending' } as CommunityPreset,
-        ]);
+        vi.mocked(getMyPresetSuggestions).mockResolvedValue(
+          Array.from({ length: 26 }, (_, index) => ({
+            id: `preset-${index}`,
+            name: 'P'.repeat(120),
+            status: 'pending',
+          })),
+        );
 
         const req = new Request('http://localhost/', {
           method: 'POST',
@@ -3102,7 +3275,8 @@ describe('index.ts', () => {
         const data = (await res.json()) as InteractionResponseBody;
         const choices = data.data!.choices as Array<{ name: string; value: string }>;
 
-        expect(choices[0].name.length).toBeLessThanOrEqual(100);
+        expect(choices).toHaveLength(25);
+        expect(choices[0]).toEqual({ name: 'P'.repeat(100), value: 'preset-0' });
       });
 
       it('should handle preset show autocomplete (approved presets)', async () => {
@@ -3284,9 +3458,9 @@ describe('index.ts', () => {
         expect(data.type).toBe(InteractionResponseType.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT);
       });
 
-      it('should handle getMyPresets with empty presets', async () => {
+      it('should handle empty edit autocomplete suggestions', async () => {
         const { verifyDiscordRequest } = await import('@xivdyetools/auth');
-        const { getMyPresets } = await import('./services/preset-api.js');
+        const { getMyPresetSuggestions } = await import('./services/preset-api.js');
 
         vi.mocked(verifyDiscordRequest).mockResolvedValue({
           isValid: true,
@@ -3306,7 +3480,7 @@ describe('index.ts', () => {
           }),
           error: '',
         });
-        vi.mocked(getMyPresets).mockResolvedValue([]);
+        vi.mocked(getMyPresetSuggestions).mockResolvedValue([]);
 
         const req = new Request('http://localhost/', {
           method: 'POST',
@@ -3332,9 +3506,9 @@ describe('index.ts', () => {
         expect(data.data!.choices).toEqual([]);
       });
 
-      it('should handle getMyPresets error gracefully', async () => {
+      it('returns empty edit autocomplete choices and logs a content-free diagnostic on error', async () => {
         const { verifyDiscordRequest } = await import('@xivdyetools/auth');
-        const { getMyPresets } = await import('./services/preset-api.js');
+        const { getMyPresetSuggestions } = await import('./services/preset-api.js');
 
         vi.mocked(verifyDiscordRequest).mockResolvedValue({
           isValid: true,
@@ -3354,7 +3528,9 @@ describe('index.ts', () => {
           }),
           error: '',
         });
-        vi.mocked(getMyPresets).mockRejectedValue(new Error('API error'));
+        vi.mocked(getMyPresetSuggestions).mockRejectedValue(
+          new Error('Upstream response contained the owner’s private preset name'),
+        );
 
         const req = new Request('http://localhost/', {
           method: 'POST',
@@ -3378,6 +3554,9 @@ describe('index.ts', () => {
         expect(res.status).toBe(200);
         const data = (await res.json()) as InteractionResponseBody;
         expect(data.data!.choices).toEqual([]);
+        expect(contextErrorCalls).toHaveBeenCalledExactlyOnceWith(
+          'Failed to get user presets for autocomplete',
+        );
       });
 
       // BUG-046 (2026-10-04 deep-dive): the router's subcommand-GROUP walk

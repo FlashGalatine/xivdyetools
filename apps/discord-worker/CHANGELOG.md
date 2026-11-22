@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.9.13] - 2026-11-22
+
+### Fixed
+
+- `/preset edit` now uses the owner's identity for autocomplete, lookup and submission. Pending presets can be edited, and rejected presets can be resubmitted. Edit replies are visible only to the caller.
+- A duplicate dye combination shows a specific warning. The bot names the conflicting preset only when the API supplies that information. A concurrent edit asks the user to retry.
+- Release announcements keep a durable per-version record after a successful send. See the [operator instructions](README.md#reannouncing-a-release) to deliberately reannounce a corrected release.
+
 ## [5.9.12] - 2026-11-16
 
 ### Fixed

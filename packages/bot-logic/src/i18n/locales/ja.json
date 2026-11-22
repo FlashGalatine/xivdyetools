@@ -276,6 +276,7 @@
       "duplicateTitle": "重複するカララントの組み合わせ",
       "duplicateIntro": "このカララントの組み合わせは別のプリセットにすでに存在します：",
       "duplicateHint": "別のカララントの組み合わせを使用してください。",
+      "revisionConflict": "編集中にプリセットが更新されました。もう一度コマンドを実行してください。",
       "updatedPending": "プリセットを更新しました - 審査待ち",
       "updated": "プリセットを更新しました",
       "pendingDescription": "コンテンツ審査のため、変更内容は審査に提出されました。",

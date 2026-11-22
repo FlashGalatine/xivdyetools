@@ -276,6 +276,7 @@
       "duplicateTitle": "Combinaison de teintures en double",
       "duplicateIntro": "Cette combinaison de teintures existe déjà dans un autre préréglage :",
       "duplicateHint": "Veuillez utiliser une autre combinaison de teintures.",
+      "revisionConflict": "Ce préréglage a changé pendant votre modification. Relancez la commande pour réessayer.",
       "updatedPending": "Préréglage mis à jour - en attente de validation",
       "updated": "Préréglage mis à jour",
       "pendingDescription": "Vos modifications ont été soumises à validation (modération du contenu).",

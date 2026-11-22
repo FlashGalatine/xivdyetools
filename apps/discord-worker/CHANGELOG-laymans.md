@@ -35,6 +35,11 @@ Rules:
   path filter.
 -->
 
+## [5.9.13] - 2026-11-22
+### Editing your presets
+- Use `/preset edit` to update a pending preset or resubmit a rejected one. Only you can see the bot's reply.
+- If another preset already uses your dye combination, the bot explains what to change. If your preset changed while you were editing it, the bot asks you to run the command again.
+
 ## [5.9.11] - 2026-11-15
 ### Changed
 - `/about` now links to @FlashGalatine on X, the account's new name.

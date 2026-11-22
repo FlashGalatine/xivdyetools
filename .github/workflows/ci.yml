@@ -230,6 +230,15 @@ jobs:
           status=$((status + $?))
           exit $status
 
+      # The signed edit flow runs in discord-worker and uses the sibling API router
+      # and schema. An API-only change does not select discord-worker in Turbo.
+      - name: Check Discord preset editing when the Presets API changes
+        shell: bash
+        run: |
+          if git diff --quiet HEAD^ HEAD -- apps/presets-api; then exit 0; fi
+          pnpm turbo run build --filter=xivdyetools-discord-worker...
+          pnpm --filter xivdyetools-discord-worker exec vitest run tests/preset-edit-flow.test.ts --coverage.enabled=false
+
       - name: Lint (affected)
         run: pnpm turbo run lint --filter='...[HEAD^]'
 
