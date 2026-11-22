@@ -3,6 +3,7 @@
  * Phase 3.3: Target 70-90 tests covering caching, rate limiting, API calls, and edge cases
  */
 
+import { setImmediate } from 'node:timers/promises';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   APIService,
@@ -411,7 +412,8 @@ describe('APIService', () => {
         ttl: API_CACHE_TTL,
         version: '0.0.0', // Old version
       };
-      memoryCache.set(`${itemID}_global`, cachedData);
+      memoryCache.set(`${itemID}:global`, cachedData);
+      const deleteEntry = vi.spyOn(memoryCache, 'delete');
 
       // Setup mock for fresh fetch
       const mockResponse = {
@@ -428,6 +430,7 @@ describe('APIService', () => {
       });
 
       const result = await apiService.getPriceData(itemID);
+      expect(deleteEntry).toHaveBeenCalledExactlyOnceWith(`${itemID}:global`);
       expect(result?.currentAverage).toBe(2000); // Fresh data, not cached
     });
 
@@ -445,7 +448,8 @@ describe('APIService', () => {
         ttl: API_CACHE_TTL,
         version: API_CACHE_VERSION,
       };
-      memoryCache.set(`${itemID}_global`, cachedData);
+      memoryCache.set(`${itemID}:global`, cachedData);
+      const deleteEntry = vi.spyOn(memoryCache, 'delete');
 
       const mockResponse = {
         results: [
@@ -461,6 +465,7 @@ describe('APIService', () => {
       });
 
       const result = await apiService.getPriceData(itemID);
+      expect(deleteEntry).toHaveBeenCalledExactlyOnceWith(`${itemID}:global`);
       expect(result?.currentAverage).toBe(2000); // Fresh data
     });
 
@@ -479,7 +484,8 @@ describe('APIService', () => {
         version: API_CACHE_VERSION,
         checksum: 'invalid_checksum',
       };
-      memoryCache.set(`${itemID}_global`, cachedData);
+      memoryCache.set(`${itemID}:global`, cachedData);
+      const deleteEntry = vi.spyOn(memoryCache, 'delete');
 
       const mockResponse = {
         results: [
@@ -499,6 +505,7 @@ describe('APIService', () => {
       const result = await apiService.getPriceData(itemID);
       warnSpy.mockRestore();
 
+      expect(deleteEntry).toHaveBeenCalledExactlyOnceWith(`${itemID}:global`);
       expect(result?.currentAverage).toBe(2000); // Fresh data
     });
   });
@@ -536,6 +543,75 @@ describe('APIService', () => {
 
       const result = await errorService.getPriceData(itemID);
       expect(result?.currentAverage).toBe(1000);
+    });
+
+    describe.each(['single', 'batch'] as const)('%s lookup', (lookup) => {
+      describe.each(['throws', 'rejects'] as const)('when cache deletion %s', (failure) => {
+        it.each([
+          { reason: 'version mismatch', invalidFields: { version: '0.0.0' } },
+          { reason: 'expiry', invalidFields: { timestamp: 0 } },
+          { reason: 'checksum mismatch', invalidFields: { checksum: 'invalid_checksum' } },
+        ])(
+          'refreshes a cache entry with $reason without leaking the error (BUG-007)',
+          async ({ invalidFields }) => {
+            const itemID = 5729;
+            const cacheKey = `${itemID}:dc:Aether`;
+            memoryCache.set(cacheKey, {
+              data: {
+                itemID,
+                currentAverage: 1000,
+                currentMinPrice: 1000,
+                currentMaxPrice: 1000,
+                lastUpdate: Date.now(),
+              },
+              timestamp: Date.now(),
+              ttl: API_CACHE_TTL,
+              version: API_CACHE_VERSION,
+              ...invalidFields,
+            });
+            const deletionError = new Error('Cache deletion failed');
+            const deleteEntry = vi.fn<(key: string) => void>();
+            let rejectDeletion: (() => void) | undefined;
+            // Vitest spies attach a rejection handler to returned promises.
+            memoryCache.delete = (key) => {
+              deleteEntry(key);
+              if (failure === 'throws') throw deletionError;
+              return new Promise<void>((_, reject) => {
+                rejectDeletion = () => reject(deletionError);
+              });
+            };
+            mockFetch.setResponse(`https://universalis.app/api/v2/aggregated/Aether/${itemID}`, {
+              status: 200,
+              body: {
+                results: [{ itemId: itemID, nq: { minListing: { dc: { price: 2000 } } } }],
+              },
+            });
+
+            const onUnhandledRejection = vi.fn();
+            process.on('unhandledRejection', onUnhandledRejection);
+            try {
+              const refresh =
+                lookup === 'single'
+                  ? apiService.getPriceData(itemID, undefined, 'Aether')
+                  : apiService
+                      .getPricesForDataCenter([itemID], 'Aether')
+                      .then((prices) => prices.get(itemID));
+              const result = await Promise.race([refresh, setImmediate(undefined)]);
+              rejectDeletion?.();
+              await refresh;
+              // Let Node report any unhandled rejection from the eviction.
+              await setImmediate();
+
+              expect(deleteEntry).toHaveBeenCalledExactlyOnceWith(cacheKey);
+              expect(result?.currentAverage).toBe(2000);
+              expect(mockFetch.callHistory).toHaveLength(1);
+              expect(onUnhandledRejection).not.toHaveBeenCalled();
+            } finally {
+              process.off('unhandledRejection', onUnhandledRejection);
+            }
+          },
+        );
+      });
     });
   });
 
@@ -698,6 +774,60 @@ describe('APIService', () => {
       // Both should get the same data
       expect(result1?.currentAverage).toBe(1000);
     });
+
+    it.each([
+      { outcome: 'succeeds', rejects: false, nextPrice: 1000, totalFetches: 1 },
+      { outcome: 'rejects', rejects: true, nextPrice: 2000, totalFetches: 2 },
+    ])(
+      'deduplicates until the delayed cache write $outcome (BUG-006)',
+      async ({ rejects, nextPrice, totalFetches }) => {
+        const itemID = 5729;
+        const url = `https://universalis.app/api/v2/aggregated/universal/${itemID}`;
+        const setPrice = (price: number) =>
+          mockFetch.setResponse(url, {
+            status: 200,
+            body: { results: [{ itemId: itemID, nq: { minListing: { dc: { price } } } }] },
+          });
+        setPrice(1000);
+
+        let notifyWriteStarted!: () => void;
+        const writeStarted = new Promise<void>((resolve) => {
+          notifyWriteStarted = resolve;
+        });
+        let finishWrite!: () => void;
+        const writeCanFinish = new Promise<void>((resolve) => {
+          finishWrite = resolve;
+        });
+        const storeEntry = memoryCache.set.bind(memoryCache);
+        const writeCache = vi
+          .spyOn(memoryCache, 'set')
+          .mockImplementationOnce(async (key, entry) => {
+            notifyWriteStarted();
+            await writeCanFinish;
+            if (rejects) throw new Error('Cache write failed');
+            storeEntry(key, entry);
+          });
+
+        const first = apiService.getPriceData(itemID);
+        await Promise.race([writeStarted, first]);
+        setPrice(2000);
+        const overlap = apiService.getPriceData(itemID);
+        // Give a duplicate fetch a chance to complete before releasing the first write.
+        await setImmediate();
+        finishWrite();
+
+        const [firstPrice, overlappingPrice] = await Promise.all([first, overlap]);
+        expect(firstPrice?.currentAverage).toBe(1000);
+        expect(overlappingPrice).toEqual(firstPrice);
+        expect(mockFetch.callHistory).toHaveLength(1);
+        expect(writeCache).toHaveBeenCalledTimes(1);
+
+        const next = await apiService.getPriceData(itemID);
+        expect(next?.currentAverage).toBe(nextPrice);
+        expect(mockFetch.callHistory).toHaveLength(totalFetches);
+        expect(writeCache).toHaveBeenCalledTimes(totalFetches);
+      },
+    );
   });
 
   // ==========================================================================

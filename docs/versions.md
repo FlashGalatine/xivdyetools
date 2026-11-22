@@ -48,7 +48,7 @@
 
 | Package | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Core** (incl. `/blending` + schema-v2 data) | v6.0.1 | `@xivdyetools/core` | npm | Active |
+| **Core** (incl. `/blending` + schema-v2 data) | v6.0.2 | `@xivdyetools/core` | npm | Active |
 | **Types** | v3.3.0 | `@xivdyetools/types` | npm | Active |
 | **Auth** (incl. `/encoding`) | v3.0.0 | `@xivdyetools/auth` | npm | Active |
 | **Logger** | v2.4.0 | `@xivdyetools/logger` | npm | Active |
@@ -78,6 +78,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v6.0.2 | Nov 2026 | Coalesce single-price lookups through slow cache writes and refresh prices when eviction fails |
 | v6.0.1 | Nov 2026 | Faster k-means assignment in `PaletteService` (per-cluster sums, squared-distance ranking on byte input) with identical `extractPalette` results, pinned by a seeded parity test against the previous implementation; no API or output change |
 | v6.0.0 | Oct 2026 | Conditional Core 6 source: retire the six deprecated legacy character APIs and executable host parity half while preserving live contracts and all 261 library cases; registry/publication/consumer acceptance held |
 | v5.16.0 | Oct 2026 | A-CORE remediation: legacy character APIs deprecated for core 6 after release/acceptance gates; shared limit and nine live types relocated with unchanged exports; imported labels preserve surrogate pairs within 256 UTF-16 units; GPOSERS newline joining made linear with unchanged output; facade docs and xivcharakit attribution refreshed; German and French dye names from XIVAPI's `Stain.Name` (e-02, from #390: 118 German wording and 125 French capitalization changes) |

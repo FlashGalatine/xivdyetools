@@ -461,15 +461,13 @@ export class APIService {
 
     // Check cache version
     if (cached.version && cached.version !== API_CACHE_VERSION) {
-      // OPT-003: Fire-and-forget — cache cleanup is best-effort, don't block request path
-      void this.cache.delete(cacheKey);
+      void this.tryDeleteCachedPrice(cacheKey);
       return null;
     }
 
     // Check if cache has expired
     if (Date.now() - cached.timestamp > cached.ttl) {
-      // OPT-003: Fire-and-forget — cache cleanup is best-effort, don't block request path
-      void this.cache.delete(cacheKey);
+      void this.tryDeleteCachedPrice(cacheKey);
       return null;
     }
 
@@ -478,13 +476,21 @@ export class APIService {
       const computedChecksum = generateChecksum(cached.data);
       if (computedChecksum !== cached.checksum) {
         this.logger.warn(`Cache corruption detected for key: ${cacheKey}`);
-        // OPT-003: Fire-and-forget — cache cleanup is best-effort, don't block request path
-        void this.cache.delete(cacheKey);
+        void this.tryDeleteCachedPrice(cacheKey);
         return null;
       }
     }
 
     return cached.data;
+  }
+
+  /** Eviction is best-effort. A lookup can refresh an invalid entry while cleanup runs. */
+  private async tryDeleteCachedPrice(cacheKey: string): Promise<void> {
+    try {
+      await this.cache.delete(cacheKey);
+    } catch {
+      // The entry already counts as a miss. The refresh can replace it.
+    }
   }
 
   /**
@@ -574,17 +580,12 @@ export class APIService {
       const cached = await this.getCachedPrice(cacheKey);
       if (cached) {
         this.logger.info(`Price cache hit for item ${itemID}`);
-        this.pendingRequests.delete(cacheKey);
         resolvePromise!(cached);
         return cached;
       }
 
       // Fetch from API
       const data = await this.fetchPriceData(itemID, worldID, dataCenterID);
-
-      // CORE-BUG-002 FIX: Always delete from pending map before resolving/rejecting
-      // This ensures cleanup happens in a predictable order
-      this.pendingRequests.delete(cacheKey);
 
       if (data) {
         // BUG-011 (2026-07-18 audit): a cache-write failure must not discard
@@ -595,14 +596,15 @@ export class APIService {
       resolvePromise!(data);
       return data;
     } catch (error) {
-      // CORE-BUG-002 FIX: Clean up on error path as well
-      this.pendingRequests.delete(cacheKey);
       this.logger.error('Failed to fetch price data', error);
 
       // Resolve with null instead of rejecting to maintain existing behavior
       // where errors return null rather than throwing
       resolvePromise!(null);
       return null;
+    } finally {
+      // A reader arriving during a slow write must still join this request.
+      this.pendingRequests.delete(cacheKey);
     }
   }
 
