@@ -5,6 +5,12 @@ All notable changes to the XIV Dye Tools OpenGraph Worker will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.12.5] - 2026-11-22
+
+### Fixed
+
+- Preview image requests now render a fresh card when the edge cache cannot read an entry. A failed cache write still returns the rendered PNG with its original headers. Renderer errors retain their status and body.
+
 ## [2.12.4] - 2026-11-15
 
 ### Fixed

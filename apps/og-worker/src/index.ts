@@ -482,6 +482,14 @@ function ogCacheKey(c: Context<{ Bindings: Env }>): Request {
   return new Request(`${url.origin}${path}?${params.toString()}`, { method: 'GET' });
 }
 
+async function storePreview(cache: Cache, key: Request, response: Response): Promise<void> {
+  try {
+    await cache.put(key, response.clone());
+  } catch {
+    // The rendered response is still usable if the cache cannot store its copy.
+  }
+}
+
 /**
  * Edge cache for rendered PNGs. The `Cache-Control` / `CDN-Cache-Control`
  * headers set by renderOGImage describe the TTLs but do nothing by themselves
@@ -512,16 +520,18 @@ app.use('/og/*', async (c, next) => {
   }
 
   const cacheKey = ogCacheKey(c);
-  const hit = await cache.match(cacheKey);
-  if (hit) {
-    return hit;
+  try {
+    const hit = await cache.match(cacheKey);
+    if (hit) return hit;
+  } catch {
+    // Treat an unavailable cache as a miss and render through the normal route.
   }
 
   await next();
 
   const res = c.res;
   if (res.status === 200) {
-    const put = cache.put(cacheKey, res.clone());
+    const put = storePreview(cache, cacheKey, res);
     try {
       c.executionCtx.waitUntil(put);
     } catch {
