@@ -272,6 +272,7 @@ Route order is load-bearing in `presets.ts` and `moderation.ts`: literal paths (
 ### Public
 
 - `GET /presets` — `category`, `search`, `status`, `sort`, `page`, `limit` (capped at 50), `is_curated`.
+  For `sort=name`, the Worker collates the matching ID/name pairs with a fixed English `Intl.Collator` at base sensitivity and breaks ties by ID. It fetches full rows only for the requested page and rechecks their names and filters. The total comes from the first read, so a concurrent rename or visibility change can shorten a page.
 - `GET /presets/featured` — top 10 by `vote_count` among `approved` presets. There is **no** `is_curated` filter (`getFeaturedPresets`); a community preset with enough votes appears here.
 - `GET /presets/:id` — single preset.
 - `GET /categories`, `GET /categories/:id` — categories with computed approved-preset counts (a preset counts toward its primary **and** its `secondary_categories`).
@@ -284,6 +285,7 @@ Route order is load-bearing in `presets.ts` and `moderation.ts`: literal paths (
 - `DELETE /presets/:id` — author **or moderator**; a preset the caller could not GET answers 404.
 - `PATCH /presets/refresh-author` — re-sync the caller's denormalized author name across their presets.
 - `GET /presets/mine` — requester's submissions across all statuses.
+- `GET /presets/mine/suggestions` — up to 25 owner-scoped IDs, names and statuses, newest first, with an optional name substring in `q`.
 - `GET /presets/rate-limit` — remaining submissions today.
 - `POST /presets/:id/preview-image` — upload a preview (raw image bytes → image-worker → R2).
 - `DELETE /presets/:id/preview-image` — remove the caller's preview image.

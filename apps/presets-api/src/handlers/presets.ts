@@ -40,6 +40,7 @@ import {
   toPublicPreset,
   type PublicPreset,
 } from '../services/preset-service.js';
+import { getOwnerSuggestions } from '../services/owner-suggestions.js';
 import { moderateContent } from '../services/moderation-service.js';
 import { presetModerationInput, presetSnapshotView, metadataModerationEnabled, type PresetSnapshot } from '../services/preset-moderation-input.js';
 // PRESETS-REF-001 FIX: Import from centralized validation service
@@ -298,6 +299,17 @@ presetsRouter.get('/mine', async (c) => {
     presets: presets.map((preset) => presetForViewer(preset, auth, { keepAuditData: true, metadataEnabled: metadataModerationEnabled(c.env) })),
     total: presets.length,
   });
+});
+
+/** GET /api/v1/presets/mine/suggestions — compact name matches across the owner's statuses. */
+presetsRouter.get('/mine/suggestions', async (c) => {
+  c.header('Cache-Control', 'private, no-store');
+  const error = requireAuth(c) ?? requireUserContext(c);
+  if (error) return error;
+
+  const { userDiscordId } = c.get('auth');
+  const presets = await getOwnerSuggestions(c.env.DB, userDiscordId!, c.req.query('q') ?? '');
+  return c.json({ presets });
 });
 
 /**

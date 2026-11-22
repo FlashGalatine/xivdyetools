@@ -207,6 +207,58 @@ function rowsToPresets(rows: PresetRow[], logger?: PresetServiceLogger): Communi
   });
 }
 
+// All callers share English Unicode collation. Case and accents compare equally;
+// the preset ID keeps those ties deterministic across page boundaries.
+const presetNameCollator = new Intl.Collator('en', { sensitivity: 'base' });
+
+async function getPresetsByName(
+  db: D1Database,
+  whereClause: string,
+  params: (string | number)[],
+  page: number,
+  limit: number,
+  logger?: PresetServiceLogger,
+): Promise<PresetListResponse> {
+  // D1's SQLite collations cannot sort Unicode this way. Fetch only the keys
+  // needed to order the whole filtered collection, then load one page of rows.
+  const keys = await db
+    .prepare(`SELECT id, name FROM presets WHERE ${whereClause}`)
+    .bind(...params)
+    .raw<[id: string, name: string]>();
+  keys.sort(([id, name], [otherId, otherName]) => {
+    const order = presetNameCollator.compare(name, otherName);
+    if (order !== 0 || id === otherId) return order;
+    return id < otherId ? -1 : 1;
+  });
+
+  const offset = (page - 1) * limit;
+  const pageKeys = keys.slice(offset, offset + limit);
+  let rows: PresetRow[] = [];
+  if (pageKeys.length > 0) {
+    // Recheck the filters and the projected name in case a preset changes
+    // between reads. The ordinal in the bound array preserves the global order.
+    const result = await db
+      .prepare(`
+      SELECT presets.*
+      FROM json_each(?) AS page_keys
+      CROSS JOIN presets ON presets.id = json_extract(page_keys.value, '$[0]')
+      WHERE ${whereClause} AND presets.name = json_extract(page_keys.value, '$[1]')
+      ORDER BY page_keys.key
+    `)
+      .bind(JSON.stringify(pageKeys), ...params)
+      .all<PresetRow>();
+    rows = result.results;
+  }
+
+  return {
+    presets: rowsToPresets(rows, logger),
+    total: keys.length,
+    page,
+    limit,
+    has_more: offset + pageKeys.length < keys.length,
+  };
+}
+
 /**
  * Get presets with filtering and pagination
  *
@@ -260,21 +312,9 @@ export async function getPresets(
   }
 
   const whereClause = conditions.join(' AND ');
+  if (sort === 'name') return getPresetsByName(db, whereClause, params, page, limit, logger);
 
-  // Build ORDER BY clause
-  let orderBy: string;
-  switch (sort) {
-    case 'recent':
-      orderBy = 'created_at DESC';
-      break;
-    case 'name':
-      orderBy = 'name ASC';
-      break;
-    case 'popular':
-    default:
-      orderBy = 'vote_count DESC, created_at DESC';
-      break;
-  }
+  const orderBy = sort === 'recent' ? 'created_at DESC' : 'vote_count DESC, created_at DESC';
 
   // PERFORMANCE: Use window function to get total count in same query
   // This reduces database round-trips from 2 to 1 for paginated requests

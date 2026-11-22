@@ -323,7 +323,7 @@ Production: https://api.xivdyetools.app
 > [Presets API endpoints](../projects/presets-api/endpoints.md) and its
 > [rate limits](../projects/presets-api/rate-limiting.md). The corrections below track it, but that
 > reference wins on any difference. It also covers routes this design never listed: `/categories/:id`,
-> `/presets/mine`, `/presets/rate-limit`, `/presets/refresh-author`, edit and delete of a preset, the
+> `/presets/mine`, `/presets/mine/suggestions`, `/presets/rate-limit`, `/presets/refresh-author`, edit and delete of a preset, the
 > preview-image routes (author upload and removal, moderator review), `/votes/:presetId/check`, and the
 > moderation single-preset, revert, history, stats and failed-notification routes.
 
@@ -349,7 +349,7 @@ List presets with filtering and pagination.
 | `category` | string | — | Filter by category ID |
 | `search` | string | — | Search name, description, tags |
 | `status` | string | `approved` | Filter by status |
-| `sort` | string | `popular` | `popular` \| `recent` \| `name` |
+| `sort` | string | `popular` | `popular` \| `recent` \| `name` (English base collation, then ascending ID, before pagination) |
 | `page` | number | `1` | Page number |
 | `limit` | number | `20` | Results per page (max 50) |
 | `is_curated` | boolean | — | Filter curated/community |

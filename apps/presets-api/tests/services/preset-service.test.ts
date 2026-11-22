@@ -2,7 +2,9 @@
  * Preset Service Tests
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { URL } from 'node:url';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
     generateDyeSignature,
     rowToPreset,
@@ -26,6 +28,7 @@ import {
 } from '../test-utils';
 import type { AuthContext, PresetRow } from '../../src/types';
 import { presetSnapshotView } from '../../src/services/preset-moderation-input';
+import { SqliteD1 } from '../sqlite-d1.js';
 
 describe('PresetService', () => {
     beforeEach(() => {
@@ -231,14 +234,103 @@ describe('PresetService', () => {
             expect(db._queries.some((q) => q.includes('created_at DESC'))).toBe(true);
         });
 
-        it('should sort by name', async () => {
-            const db = createMockD1Database();
-            // Return empty array - service uses window function COUNT(*) OVER() not separate count query
-            db._setupMock(() => []);
+        describe('alphabetical pagination in SQLite', () => {
+            let sqlite: SqliteD1;
+            let db: D1Database;
 
-            await getPresets(db, { sort: 'name' });
+            beforeEach(() => {
+                sqlite = new SqliteD1(readFileSync(new URL('../../schema.sql', import.meta.url), 'utf8'));
+                db = sqlite as unknown as D1Database;
+            });
 
-            expect(db._queries.some((q) => q.includes('name ASC'))).toBe(true);
+            afterEach(() => sqlite.close());
+
+            it('orders the filtered collection by base letters and breaks ties by ID across pages', async () => {
+                const insert = sqlite.database.prepare(`
+                    INSERT INTO presets
+                        (id, name, category_id, secondary_categories, description, dyes, tags, status, is_curated)
+                    VALUES (?, ?, ?, ?, ?, '[1,2,3]', '[]', ?, ?)
+                `);
+                const seed = (id: string, name: string, {
+                    category = 'jobs', secondary = '[]', description = 'Uses 10% sky blue',
+                    status = 'approved', curated = 0,
+                } = {}) => insert.run(id, name, category, secondary, description, status, curated);
+
+                seed('preset-08', 'Zebra');
+                seed('preset-07', 'e\u0301clair');
+                seed('preset-09', '紅葉の庭');
+                seed('preset-06', 'ECLAIR');
+                seed('preset-05', 'Éclair', { category: 'seasons', secondary: '["jobs"]' });
+                seed('preset-04', 'beta');
+                seed('preset-03', 'Alpha');
+                seed('preset-02', 'Aardvark', { status: 'hidden' });
+                seed('preset-01', 'Aardvark', { status: 'pending' });
+                seed('wrong-category', 'Aardvark', { category: 'seasons' });
+                seed('wrong-curation', 'Aardvark', { curated: 1 });
+                seed('wrong-search', 'Aardvark', { description: 'Uses 100% sky blue' });
+
+                const pages = await Promise.all([1, 2, 3, 4, 5].map((page) => getPresets(db, {
+                    sort: 'name', category: 'jobs', search: '10%', is_curated: false, limit: 2, page,
+                })));
+
+                expect(pages.map((result) => ({
+                    ids: result.presets.map((preset) => preset.id),
+                    total: result.total,
+                    page: result.page,
+                    limit: result.limit,
+                    has_more: result.has_more,
+                }))).toEqual([
+                    { ids: ['preset-03', 'preset-04'], total: 7, page: 1, limit: 2, has_more: true },
+                    { ids: ['preset-05', 'preset-06'], total: 7, page: 2, limit: 2, has_more: true },
+                    { ids: ['preset-07', 'preset-08'], total: 7, page: 3, limit: 2, has_more: true },
+                    { ids: ['preset-09'], total: 7, page: 4, limit: 2, has_more: false },
+                    { ids: [], total: 7, page: 5, limit: 2, has_more: false },
+                ]);
+            });
+
+            it('counts a requested moderation status and returns a zero total for an empty filter', async () => {
+                sqlite.database.exec(`
+                    INSERT INTO presets (id, name, category_id, description, dyes, tags, status)
+                    VALUES
+                        ('pending-1', 'beta', 'jobs', 'Pending palette', '[1,2,3]', '[]', 'pending'),
+                        ('pending-2', 'Alpha', 'jobs', 'Pending palette', '[1,2,3]', '[]', 'pending'),
+                        ('approved', 'Aardvark', 'jobs', 'Approved palette', '[1,2,3]', '[]', 'approved');
+                `);
+
+                const pending = await getPresets(db, { sort: 'name', status: 'pending', limit: 1 });
+                expect(pending.presets.map((preset) => preset.id)).toEqual(['pending-2']);
+                expect(pending).toMatchObject({ total: 2, page: 1, limit: 1, has_more: true });
+
+                const rejected = await getPresets(db, { sort: 'name', status: 'rejected' });
+                expect(rejected).toEqual({ presets: [], total: 0, page: 1, limit: 20, has_more: false });
+            });
+
+            it('omits presets hidden or renamed between the ordering read and page hydration', async () => {
+                sqlite.database.exec(`
+                    INSERT INTO presets (id, name, category_id, description, dyes, tags, status)
+                    VALUES
+                        ('hidden-mid-read', 'Alpha', 'jobs', 'Approved palette', '[1,2,3]', '[]', 'approved'),
+                        ('renamed-mid-read', 'Beta', 'jobs', 'Approved palette', '[1,2,3]', '[]', 'approved'),
+                        ('unchanged', 'Gamma', 'jobs', 'Approved palette', '[1,2,3]', '[]', 'approved'),
+                        ('next-page', 'Zebra', 'jobs', 'Approved palette', '[1,2,3]', '[]', 'approved');
+                `);
+
+                let reads = 0;
+                sqlite.setBeforeStatement(({ database }) => {
+                    reads += 1;
+                    if (reads === 2) {
+                        database.exec(`
+                            UPDATE presets SET status = 'hidden' WHERE id = 'hidden-mid-read';
+                            UPDATE presets SET name = 'Zinnia' WHERE id = 'renamed-mid-read';
+                        `);
+                    }
+                });
+
+                const result = await getPresets(db, { sort: 'name', limit: 3 });
+
+                expect(result.presets.map((preset) => preset.id)).toEqual(['unchanged']);
+                expect(result).toMatchObject({ total: 4, page: 1, limit: 3, has_more: true });
+            });
         });
 
         it('should paginate correctly', async () => {

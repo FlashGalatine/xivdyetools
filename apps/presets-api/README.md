@@ -16,6 +16,7 @@ All routes are mounted under `/api/v1`.
 | `POST` | `/batch` | Signed bot-only approved lookup, 1–50 IDs; unique request order and separate missing IDs |
 | `GET` | `/featured` | Curated featured presets |
 | `GET` | `/mine` | The authenticated user's own presets (any status) |
+| `GET` | `/mine/suggestions` | Up to 25 of the caller’s presets across all statuses. Use `q` for a literal substring of the name. Each result contains `id`, `name` and `status`. |
 | `GET` | `/rate-limit` | Remaining submissions today for the caller |
 | `PATCH` | `/refresh-author` | Re-sync the caller's denormalized author name |
 | `GET` | `/:id` | Single preset by ID |
@@ -24,6 +25,8 @@ All routes are mounted under `/api/v1`.
 | `DELETE` | `/:id` | Delete a preset you own |
 | `POST` | `/:id/preview-image` | Upload a preview picture (raw bytes → image-worker WebP → R2; shown only once a moderator approves) |
 | `DELETE` | `/:id/preview-image` | Remove your preview picture |
+
+For `sort=name`, all clients share English alphabetical order at base sensitivity. Case and accent variants such as `Eclair` and `éclair` tie. Preset IDs break ties in ascending order before pagination.
 
 ### Votes — `/api/v1/votes`
 
