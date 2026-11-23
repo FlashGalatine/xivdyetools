@@ -21,10 +21,10 @@
     "test:research-privacy": "node --test scripts/check-research-privacy.test.mjs docs/research/2026-10-11-chat-platform-expansion/evidence/scripts/collectors.test.mjs"
   },
   "devDependencies": {
-    "turbo": "^2.11.11",
+    "turbo": "^2.11.13",
     "typescript": "^5.9.3",
     "eslint": "^10.15.0",
-    "knip": "^6.45.1",
+    "knip": "^6.47.0",
     "@eslint/js": "^10.0.1",
     "@types/node": "^26.6.6",
     "typescript-eslint": "^8.73.0",
