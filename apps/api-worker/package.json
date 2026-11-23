@@ -25,10 +25,10 @@
     "@xivdyetools/core": "workspace:*",
     "@xivdyetools/types": "workspace:*",
     "@xivdyetools/worker-kit": "workspace:*",
-    "hono": "^4.13.18"
+    "hono": "^4.13.19"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20261030.1",
+    "@cloudflare/workers-types": "^5.20261120.1",
     "vitepress": "^1.6.4",
     "vue": "^3.5.45",
     "@xivdyetools/svg": "workspace:*",
