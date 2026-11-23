@@ -80,11 +80,11 @@
   "devDependencies": {
     "@types/culori": "^4.0.1",
     "@types/node": "^26.6.6",
-    "@vitest/coverage-v8": "^5.1.0",
+    "@vitest/coverage-v8": "^5.1.1",
     "csv-parse": "^7.0.3",
     "culori": "^4.0.2",
     "tsx": "^4.23.15",
-    "vitest": "^5.1.0",
+    "vitest": "^5.1.1",
     "yaml": "^2.9.1"
   },
   "engines": {
