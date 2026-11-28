@@ -2,7 +2,7 @@
 
 Read this before executing a skill, authoring a workflow, or delegating an ad-hoc task or any step
 of a remediation sprint in xivdyetools. It supplies the runtime details for the shared policy in
-`AGENTS.md` and `CLAUDE.md` for Claude Code, Codex, and other coding agents. No skill executes the
+`AGENTS.md` and `CLAUDE.md` for Claude Code, Codex, Antigravity, and other coding agents. No skill executes the
 sprinting stage (the planner only schedules it), so [*Remediation sprints*](#remediation-sprints)
 below maps its steps to the same roles. The `collector`, `worker`, and `verifier` names describe
 tasks, not tool arguments or model names. Difficult worker tasks and escalated verifier tasks
@@ -14,21 +14,24 @@ retain their role's permissions and return contract; they do not require new age
 | `worker` | Mid-tier general model | Balanced, usually `medium` | One bounded review or writing task: a deploy unit against a checklist, one test file, a failing test plus its source, a draft table. Return the requested schema, normally ≤ 40 lines; save longer evidence to its assigned file. |
 | `verifier` | Strong reasoning model; escalate unresolved or critical final calls | High: enough to settle a verdict, short of the maximum | Judgment where a wrong answer changes what ships: confirm findings, Severity × Exposure, dead-code verdicts, test-versus-source regressions, published-package semver, sprint ordering, unfamiliar root causes. Return a verdict and the evidence that settles it. |
 
-Every delegated role runs at a set model **and** effort, never at whatever effort the coordinator's
-session happens to use: Claude Code uses its project agent defaults and the overrides below; a
-Codex coordinator resolves the task's model and passes both settings on every spawn, checking for
-custom-agent settings that take precedence. These are workflow assignments, not claims of model
-equivalence across vendors, and an effort name does not mean the same amount of thinking on
-different models.
+Every delegated role runs at a set model (and effort where the runtime exposes one), never
+inheriting the coordinator's session settings by accident: Claude Code uses its project agent
+defaults and the overrides below; a Codex coordinator resolves the task's model and passes both
+settings on every spawn, checking for custom-agent settings that take precedence; Antigravity
+passes an explicit `Model` / `model` capability tier on `invoke_subagent` and `run_workflow`
+(neither exposes a separate per-spawn effort parameter, and omitting `Model` / `model` defaults to
+`'inherit'`) or selects an advertised model inside an active `/swarm`. These are workflow
+assignments, not claims of model equivalence across vendors, and an effort name or tier label does
+not mean the same amount of thinking on different models.
 
-| Role / task | Claude Code agent: model · effort | Codex baseline: `model` · `reasoning_effort` | Any other runtime |
-|---|---|---|---|
-| `collector` | `xivdye-collector`: `haiku` · `low` | `gpt-6-luna` · `low` | Its smallest model that runs shell commands reliably, at its lowest effort |
-| `worker` | `xivdye-worker`: `sonnet` · `medium` | `gpt-6.2-sol` · `medium` | Its default mid-tier model at its balanced effort |
-| `worker` (optional, bounded visual or scoped task) | Same as `worker` | `gpt-6.1-terra` · `medium` | Same as `worker` |
-| `worker` (difficult) | `xivdye-worker` + `model: 'opus'` + `effort: 'high'`: `opus` · `high` (`model` alone keeps the file's `medium`) | `gpt-6.2-sol` · `high` (raise to `xhigh` when needed) | A stronger model or higher effort for an unfamiliar subsystem, cross-unit refactor, or subtle concurrency |
-| `verifier` (ordinary) | `xivdye-verifier`: `opus` · `high` | `gpt-6.2-sol` · `xhigh` | A strong reasoning model at high effort; inline if the coordinator already meets that task's requirements |
-| `verifier` (escalated) | `xivdye-verifier` + `model: 'fable'` · `high` | `gpt-6.2-astra` · `high` | Its strongest reasoning model for no clear verifier majority, a security-critical final call, or a root cause the ordinary verifier missed |
+| Role / task | Claude Code agent: model · effort | Codex baseline: `model` · `reasoning_effort` | Antigravity: `Model` / `model` tier | Any other runtime |
+|---|---|---|---|---|
+| `collector` | `xivdye-collector`: `haiku` · `low` | `gpt-6-luna` · `low` | `flash_lite` (`self` or write-enabled subagent when saving logs) | Its smallest model that runs shell commands reliably, at its lowest effort |
+| `worker` | `xivdye-worker`: `sonnet` · `medium` | `gpt-6.2-sol` · `medium` | `flash` (read-only subagent for reviews; `self` / write-enabled for edits) | Its default mid-tier model at its balanced effort |
+| `worker` (optional, bounded visual or scoped task) | Same as `worker` | `gpt-6.1-terra` · `medium` | `flash` (built-in `browser` for live UI) | Same as `worker` |
+| `worker` (difficult) | `xivdye-worker` + `model: 'opus'` + `effort: 'high'`: `opus` · `high` (`model` alone keeps the file's `medium`) | `gpt-6.2-sol` · `high` (raise to `xhigh` when needed) | `pro` | A stronger model or higher effort for an unfamiliar subsystem, cross-unit refactor, or subtle concurrency |
+| `verifier` (ordinary) | `xivdye-verifier`: `opus` · `high` | `gpt-6.2-sol` · `xhigh` | `pro` (read-only subagent; inline if coordinator is `pro`/frontier at high effort) | A strong reasoning model at high effort; inline if the coordinator already meets that task's requirements |
+| `verifier` (escalated) | `xivdye-verifier` + `model: 'fable'` · `high` | `gpt-6.2-astra` · `high` | Frontier coordinator inline / `inherit` read-only; `/swarm` strongest model; else disclose (no tier above `pro`) | Its strongest reasoning model for no clear verifier majority, a security-critical final call, or a root cause the ordinary verifier missed |
 
 On 2026-11-17 the native Codex spawn tool advertised Sol 6.2 and Astra 6.2 at the efforts
 listed above. The Luna baseline comes from the 2026-10-06 check. Resolve the latest available
@@ -207,6 +210,71 @@ escalated verdict unverified. Do not count a Sol fallback as the completed Astra
 user's coordinator model and effort. The Claude Fable coordinator's delegate-every-role quota
 rule remains specific to Claude; Codex uses *Delegate when it helps* above.
 
+**Antigravity — subagents (`invoke_subagent` and `define_subagent`):** pass `Model` explicitly on
+every `invoke_subagent` call (`'flash_lite'`, `'flash'`, `'pro'`, or `'inherit'`). Omitting
+`Model` defaults to `'inherit'`, which runs the child on the coordinator's session model. Neither
+`invoke_subagent` nor `define_subagent` accepts a raw model ID or a separate per-spawn effort
+parameter; Antigravity maps each abstract tier to its configured backing model. Built-in subagent
+types are `self` (inherits the coordinator's tools and instructions), `research` (read-only sandbox
+with `read_file`, `search_web`, and read-only `run_command` with no network and no file-edit
+tools), `browser` (Chrome DevTools for live web UI checks; no shell or filesystem tools), and
+`image-generator`.
+
+Use `define_subagent` (session-scoped) when a role needs a reusable prompt and enforced tool
+boundaries: leave `EnableWriteTools: false` (the default) for `verifier` and read-only review
+`worker` lenses so `write_file`, `edit_file`, and `run_command` are absent, and set
+`EnableWriteTools: true` (or use `TypeName: 'self'`) for `collector` commands that write logs or
+build/test caches and for file-editing `worker` assignments. `define_subagent` takes no `Model`
+field — pass `Model` on every `invoke_subagent` call. If `flash_lite` is unreliable on a complex
+shell collection batch, escalate that collection task to `flash` and disclose the fallback. Set
+`Workspace` to `'inherit'` (default, for read-only roles or disjoint-file edits), `'share'`
+(shared repository storage, like a git worktree), or `'branch'` (isolated clone); land any work
+from `'share'` or `'branch'` before killing the subagent, since `manage_subagents` `kill` deletes
+branched workspaces. Continue an existing subagent with `send_message` instead of spawning a
+duplicate, and wait for its completion message rather than polling.
+
+**Antigravity — dynamic workflows (`run_workflow`):** for scripted fan-out, staged pipelines, or
+JSON-schema aggregation across many files or deploy units, use `run_workflow` (Python script with
+`agent()`, `parallel()`, `pipeline()`, and `phase()`). Pass `model` explicitly on every `agent()`
+call (`"flash_lite"`, `"flash"`, `"pro"`, or `"inherit"`): omitting `model` defaults to `"inherit"`
+and runs at the coordinator's model. `agent()` exposes the same four tier values as
+`invoke_subagent` with no separate effort argument, plus `type_name` (default `"self"`, or any
+available custom agent), `workspace` (`"inherit"`, `"share"`, or `"branch"`), `role`, and a
+required JSON `schema` enforced through the agent's `finish` tool. Workflow agents cannot prompt
+the user for approvals (`call_tool` calls that require ungranted approval are denied), so keep
+approval-gated operations with the coordinator.
+
+**Antigravity — swarms (`/swarm`):** only use the `swarm` tool when the user explicitly invoked
+`/swarm`, a skill explicitly instructs it, or this conversation already has an active swarm — never
+start or inspect a swarm unprompted for routine skill or sprint work. Unlike `invoke_subagent` and
+`run_workflow`, an active swarm supports explicit model selection: call
+`swarm(action="models", all=True)` to inspect available models, then pass `model` (model name or
+display name) on `swarm(action="add", ...)` to match each role's tier (smallest fast model for
+`collector`, mid-tier for `worker`, strong reasoning model for `verifier`, and the strongest
+available reasoning model for escalated verdicts). Omitting `model` runs the worker on the
+coordinator's own model. Use `workspace: "share"` (or `"branch"`) for parallel writing workers and
+`"inherit"` for read-only reviewers or verifiers, and land a worker's changes before calling
+`swarm(action="kill", ...)`.
+
+**Antigravity — verification and escalation:** a coordinator already running a `pro`-class or
+stronger frontier model at `high` effort (or above) may perform ordinary verifier work inline when
+*Delegate when it helps* favors inline execution; any lighter coordinator, or one unsure of its own
+model or effort, delegates ordinary verification to a read-only `Model: 'pro'` subagent. For the
+escalated verdict triggers (no clear verifier majority, a security-critical final call, or a root
+cause the ordinary verifier missed), `invoke_subagent` and `run_workflow` expose no tier above
+`'pro'` and no per-spawn effort knob:
+
+- If the coordinator session runs a stronger frontier model at high effort (above the runtime's
+  default `pro` tier), make the escalated call inline — or spawn a fresh read-only verifier with
+  `Model: 'inherit'` when context isolation is needed.
+- Inside an active `/swarm`, pin the escalated verifier to the strongest available reasoning model
+  from `swarm(action="models", all=True)`.
+- Otherwise, disclose the limitation and leave the escalated verdict unverified rather than
+  counting a second ordinary `pro` pass as a higher-tier escalation.
+
+Preserve the user's selected coordinator model and effort. The Claude Fable delegate-every-role
+quota rule remains specific to Claude; Antigravity uses *Delegate when it helps* above.
+
 **Any other runtime:** use its native delegation mechanism and the tier and effort columns above.
 With no delegation at all, run every role inline in the order the skill gives, keep verbose command
 output in files rather than the conversation, and do the verifier pass as a separate, explicit
@@ -215,9 +283,9 @@ re-read of each `file:line` before filing anything.
 If native delegation, the requested model, or a way to set its effort is unavailable, do not
 invent a tool/model or launch a separate CLI to simulate it. Continue inline when capable, or use
 an available suitable model and disclose a material fallback. Mark unresolved verdicts as
-unverified; a required Codex Astra escalation still follows the stricter rule above. These
-instructions do not install models, enable features, or override runtime tool/permission
-restrictions.
+unverified; a required escalated verdict (Codex Astra, or Antigravity when no tier above `pro` is
+available) still follows the stricter disclosure rule above. These instructions do not install
+models, enable features, or override runtime tool/permission restrictions.
 
 **Shared skills and shell:** `allowed-tools` frontmatter uses Claude Code's tool names because
 Claude Code enforces the field; a runtime that does not support it ignores it and uses its
@@ -290,6 +358,22 @@ probe. The 2026-09-28 Codex probe remains historical evidence. A future behavior
 record each child's effective model and effort, including custom-agent precedence and Astra
 escalation. Resolver guidance:
 [App Server model discovery](https://learn.chatgpt.com/docs/app-server#list-models-modellist).
+
+Antigravity routing checked 2026-11-28 by running it in an Antigravity session: `invoke_subagent`
+accepted `Model: 'flash_lite'` on `research` (confirmed read-only sandbox tools: `read_file`,
+`search_web`, `run_command`, `send_message`, `schedule`, `manage_task`, with no `write_file` or
+`edit_file`), `Model: 'flash'` on `self` (confirmed `write_file`, `edit_file`, and `run_command`
+available), and `Model: 'pro'` on a `define_subagent` role with `EnableWriteTools: false`
+(confirmed read-only tools: `read_file`, `search_web`, `generate_image`, `send_message`,
+`schedule`, `manage_task`, with no `write_file`, `edit_file`, or `run_command`). `run_workflow`
+(`agent(model=...)`) exposes the same four tier values (`"inherit"`, `"flash_lite"`, `"flash"`,
+`"pro"`) with no per-spawn effort parameter; `swarm` (`action="models"`, `action="add"`) supports
+explicit model selection only inside an active `/swarm` session. Subagent and workflow tool results
+do not expose the child's resolved backing model ID to the parent, so re-verify tier availability
+and tool boundaries if Antigravity adds per-spawn effort controls or a tier above `pro`. Sources:
+the [Antigravity documentation index](https://antigravity.google/llms.txt) and
+[Antigravity features](https://antigravity.google/docs/features.md).
+
 When changing a routing policy, update this reference and the entry-point summaries together.
 When availability changes, resolve the runtime's advertised IDs and efforts per run; update any
 deliberately pinned agent definitions and dated baselines together.

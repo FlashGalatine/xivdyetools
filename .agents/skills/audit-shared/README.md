@@ -6,11 +6,11 @@ skills (`prepare-release`, `changelog-laymans`, `test-resolver`, `unit-test-writ
 `SKILL.md` here on purpose: nothing in this folder is auto-loaded. Each skill names the files to
 read at its Step 0, so a run loads only the slices it needs. `model-routing.md` is the one file
 **both** groups read before executing a workflow: it holds every runtime-specific convention
-(Claude Code, Codex, any other agent), so the skills themselves stay vendor-neutral.
+(Claude Code, Codex, Antigravity, any other agent), so the skills themselves stay vendor-neutral.
 
 | File | Words | Read it when |
 |---|---|---|
-| `model-routing.md` | ~3,900 | **Before executing a skill, authoring a workflow, or delegating an ad-hoc task or any step of a remediation sprint** — role/task tiers and efforts per runtime, the optional Codex Terra worker, difficult-worker and Fable/Astra escalation, Codex version resolution and custom-agent precedence, native tools, coordinator rules, when delegation helps, and the remediation-sprint steps (fix, review, gate, release) mapped to roles |
+| `model-routing.md` | ~4,900 | **Before executing a skill, authoring a workflow, or delegating an ad-hoc task or any step of a remediation sprint** — role/task tiers and efforts per runtime (Claude Code, Codex, Antigravity), the optional Codex Terra worker, difficult-worker and Fable/Astra/Antigravity escalation, Codex version resolution and custom-agent precedence, Antigravity subagent/workflow tiers and `/swarm` model selection, native tools, coordinator rules, when delegation helps, and the remediation-sprint steps (fix, review, gate, release) mapped to roles |
 | `conventions.md` | ~1,000 | Starting any audit — output folder, IDs, finding/report/README skeletons, evidence rules, fan-out contract (+ §7a, the audit short form of model routing), confirmation gate, planner hand-off |
 | `units.md` | ~430 | Tagging a finding's deploy unit / exposure class (17 units: filter names, kind, notes) |
 | `release-mechanics.md` | ~300 | Writing a sprint's "Ends with" line, deciding a version bump, the standing verification gate (planner, dead-code) |
@@ -27,8 +27,8 @@ read at its Step 0, so a run loads only the slices it needs. `model-routing.md` 
 ## Discovery — where agents find these skills
 
 The canonical, git-tracked files live in the monorepo at `xivdyetools/.agents/skills/` — the
-cross-runtime location that Codex, Copilot CLI and Gemini CLI scan natively, from the working
-directory up to the repository root. Claude Code scans `.claude/skills/` instead, so
+cross-runtime location that Codex, Antigravity, Copilot CLI and Gemini CLI scan natively, from the
+working directory up to the repository root. Claude Code scans `.claude/skills/` instead, so
 `xivdyetools/.claude/skills` is a **tracked symlink** to `../.agents/skills`. Every agent reads
 the same `SKILL.md`, scripts and shared references; edit the `.agents/skills/` files once. The
 repo-root `AGENTS.md` points non-Claude agents at the `CLAUDE.md` project context and at
@@ -39,8 +39,11 @@ The Claude Code agents that pin each role's model and effort (see `model-routing
 beside them in `xivdyetools/.claude/agents/`. Codex resolves the task's model version and passes
 both model and effort on each native spawn. Optional custom roles can live in `.codex/agents/`
 or `~/.codex/agents/`; for dynamic version selection, keep those templates instruction-only,
-because a file's model/effort settings override the spawn request. Follow `model-routing.md`
-for compatible definitions, the verifier's read-only contract, and Astra escalation.
+because a file's model/effort settings override the spawn request. Antigravity selects subagent and
+`run_workflow` models by capability tier (`flash_lite`, `flash`, `pro`, `inherit`) on each call,
+uses `define_subagent` for session-scoped read-only or write-enabled role contracts, and selects
+exact advertised models only inside an active `/swarm` session. Follow `model-routing.md` for
+compatible definitions, the verifier's read-only contract, and escalation rules.
 
 - **Windows:** the symlink needs Developer Mode (or an elevated shell) plus `core.symlinks=true`.
   Without both, git checks it out as a one-line text file and Claude Code finds no skills —

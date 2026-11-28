@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Entry point for coding agents that read `AGENTS.md` (Codex, Copilot CLI, Gemini CLI, and others).
+Entry point for coding agents that read `AGENTS.md` (Codex, Antigravity, Copilot CLI, Gemini CLI, and others).
 Claude Code reads `CLAUDE.md` directly; both routes lead to the same facts.
 
 ## Project context
@@ -71,6 +71,30 @@ For Codex, use this task policy:
   capacity; short commands and small, understood tasks can run inline. Preserve the user's
   selected coordinator model and effort, and keep approvals, commits, pushes, and outward-facing
   prose with the coordinator.
+
+For Antigravity, use this task policy:
+
+| Task | `invoke_subagent` / `run_workflow` tier | Notes |
+|---|---|---|
+| Fixed commands, inventories, gate runs, and mechanical collection | `flash_lite` | Use `self` or `define_subagent(EnableWriteTools: true)` when writing logs/caches; `research` for read-only sweeps; escalate to `flash` if unreliable |
+| Bounded implementation, one review lens, one test file, or a draft | `flash` | Use `research` or `EnableWriteTools: false` for read-only reviews, `self` / `EnableWriteTools: true` for edits, and built-in `browser` for live UI |
+| Difficult implementation, unfamiliar subsystems, or subtle concurrency | `pro` | Highest tier available on `invoke_subagent` and `run_workflow` |
+| Ordinary verification and verdicts that change what ships | `pro` | Read-only subagent (`EnableWriteTools: false` or `research`); inline if the coordinator already runs a `pro`-class or stronger model at high effort |
+| Escalated verdict: no clear verifier majority, a security-critical final call, or a root cause the verifier missed | Frontier coordinator inline / `inherit` read-only, or `/swarm` strongest model | `invoke_subagent` and `run_workflow` have no tier above `pro`; disclose and leave unverified if neither a stronger frontier coordinator nor an active `/swarm` is available |
+
+- **Set the tier explicitly:** pass `Model` on every `invoke_subagent` call and `model` on every
+  `run_workflow` `agent()` call (`flash_lite`, `flash`, `pro`, or `inherit`). Omitting it defaults
+  to `inherit` and runs on the coordinator's session model. Neither tool exposes a separate
+  per-spawn effort parameter or raw model ID.
+- **Enforce read-only roles with `define_subagent`:** use `EnableWriteTools: false` (default) for
+  `verifier` and read-only review `worker` roles so file-edit and shell tools are omitted; pass
+  `Model` at invocation time, since `define_subagent` takes no model setting.
+- **Use `/swarm` model selection only inside an active swarm:** never start or inspect a swarm
+  unprompted. When `/swarm` is already active, inspect `swarm(action="models", all=True)` and pass
+  `model` on `swarm(action="add", ...)` to match each role's tier (including the strongest
+  available reasoning model for escalated verdicts).
+- **Preserve coordinator ownership:** follow the *Delegate when useful* rule above and keep user
+  approvals, commits, pushes, and outward-facing prose with the coordinator.
 
 ## Non-negotiables
 
